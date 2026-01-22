@@ -25,6 +25,7 @@ import { ProblemStatementTargetedRefinementRequest } from 'app/openapi/model/pro
 import { Subscription, finalize } from 'rxjs';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 
+import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
@@ -124,9 +125,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     allowSplitView = signal(true);
     addedLineCount = signal(0);
     removedLineCount = signal(0);
-    originalProblemStatement = signal('');
-
-    refinedProblemStatement = signal('');
 
     private templateProblemStatement = signal<string>('');
     private currentProblemStatement = signal<string>('');
@@ -137,9 +135,11 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     // Template references
     readonly editableInstructions = viewChild<ProgrammingExerciseEditableInstructionComponent>('editableInstructions');
 
+    private artemisIntelligenceService = inject(ArtemisIntelligenceService);
+
     // Inline comment state
     /** True if any AI operation is in progress (refinement or generation) */
-    protected isAnyApplying = computed(() => this.isRefining() || this.isGenerating());
+    protected isAnyApplying = computed(() => this.isRefining() || this.isGenerating() || this.artemisIntelligenceService.isLoading());
 
     /**
      * Lifecycle hook to capture the initial problem statement for comparison.
@@ -269,7 +269,9 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Refines an existing problem statement using the user's prompt
+     * Refines an existing problem statement using the user's prompt.
+     * Changes are applied directly to the editor and sync immediately.
+     * Opens diff view to show what changed (left = snapshot, right = live).
      */
     refineProblemStatement(): void {
         const exercise = this.programmingExercise();
@@ -300,10 +302,16 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                 next: (response) => {
                     // Check if refinement was successful
                     if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
-                        // Store original and refined content for diff view
-                        this.originalProblemStatement.set(exercise?.problemStatement || '');
-                        this.refinedProblemStatement.set(response.refinedProblemStatement);
+                        // Open diff view FIRST to capture the snapshot of current state
                         this.showDiff.set(true);
+
+                        // Apply refined content directly to the editor (syncs immediately)
+                        // Capture in const to preserve type narrowing inside setTimeout
+                        const refinedContent = response.refinedProblemStatement;
+                        setTimeout(() => {
+                            this.editableInstructions()?.applyRefinedContent(refinedContent);
+                        }, 50);
+
                         this.userPrompt = '';
                     } else if (response.originalProblemStatement) {
                         // Refinement failed: keep the original problem statement
@@ -319,39 +327,42 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Accepts the refined problem statement and applies the changes.
-     * Gets the actual content from the editor (which may have been modified by the user in diff mode).
+     * Closes the diff view. In live-synced mode, changes are already applied.
+     * The user can use Monaco's inline revert buttons to undo specific hunks.
      */
-    acceptRefinement(): void {
+    /**
+     * Closes the diff view. In live-synced mode, changes are already applied.
+     * The user can use Monaco's inline revert buttons to undo specific hunks.
+     */
+    closeDiffView(): void {
         const exercise = this.programmingExercise();
-        // Get the actual content from the editor - this captures any user edits made in diff mode
-        const editorContent = this.editableInstructions()?.getCurrentContent();
-        // Fall back to the signal value if editor content is not available
-        const refined = editorContent ?? this.refinedProblemStatement();
-        if (exercise && refined) {
-            exercise.problemStatement = refined;
+        // Get the current content from the editor (already synced)
+        const currentContent = this.editableInstructions()?.getCurrentContent();
+        if (exercise && currentContent) {
+            exercise.problemStatement = currentContent;
             this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
-            this.problemStatementChange.emit(refined);
+            this.problemStatementChange.emit(currentContent);
             this.programmingExerciseChange.emit(exercise);
-            this.currentProblemStatement.set(refined);
-            this.closeDiff();
+            this.currentProblemStatement.set(currentContent);
         }
-    }
-
-    /**
-     * Rejects the refined problem statement and keeps the original
-     */
-    rejectRefinement(): void {
-        this.closeDiff();
-    }
-
-    /**
-     * Closes the diff view and resets diff state
-     */
-    closeDiff(): void {
         this.showDiff.set(false);
-        this.originalProblemStatement.set('');
-        this.refinedProblemStatement.set('');
+    }
+
+    /**
+     * Reverts all changes and closes the diff view.
+     * Restores the content to the state before refinement was applied.
+     */
+    revertAllChanges(): void {
+        // Restore original content using Monaco's snapshot
+        this.editableInstructions()?.revertAll();
+
+        // We still need to sync the reverted content back to the exercise model
+        // revertAll updates the editor model, which should trigger change events?
+        // But we called closeDiffView immediately.
+        // It's safer to get the content *after* revertAll to ensure sync?
+        // editableInstructions.revertAll() is synchronous for Monaco (setValue).
+
+        this.closeDiffView();
     }
 
     /**
@@ -385,13 +396,14 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
 
     /**
      * Handles inline refinement request from editor selection.
-     * Calls the Hyperion API with the selected text and instruction, then shows diff.
+     * Calls the Hyperion API with the selected text and instruction, then applies changes directly.
      */
     onInlineRefinement(event: { instruction: string; startLine: number; endLine: number; startColumn: number; endColumn: number }): void {
         const exercise = this.programmingExercise();
         const courseId = exercise?.course?.id ?? exercise?.exerciseGroup?.exam?.course?.id;
+        const currentContent = this.editableInstructions()?.getCurrentContent() ?? exercise?.problemStatement;
 
-        if (!courseId || !exercise?.problemStatement?.trim()) {
+        if (!courseId || !currentContent?.trim()) {
             this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
             return;
         }
@@ -399,7 +411,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         this.isRefining.set(true);
 
         const request: ProblemStatementTargetedRefinementRequest = {
-            problemStatementText: exercise.problemStatement,
+            problemStatementText: currentContent,
             startLine: event.startLine,
             endLine: event.endLine,
             startColumn: event.startColumn,
@@ -418,10 +430,16 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: (response) => {
                     if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
-                        // Store original and refined content for diff view
-                        this.originalProblemStatement.set(exercise.problemStatement || '');
-                        this.refinedProblemStatement.set(response.refinedProblemStatement);
+                        // Open diff view FIRST to capture the snapshot of current state
                         this.showDiff.set(true);
+
+                        // Apply refined content directly to the editor (syncs immediately)
+                        // Capture in const to preserve type narrowing inside setTimeout
+                        const refinedContent = response.refinedProblemStatement;
+                        setTimeout(() => {
+                            this.editableInstructions()?.applyRefinedContent(refinedContent);
+                        }, 50);
+
                         this.alertService.success('artemisApp.programmingExercise.inlineRefine.success');
                     } else {
                         this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');

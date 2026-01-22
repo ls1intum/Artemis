@@ -260,6 +260,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly consistencyIssues = input<ConsistencyIssue[]>([]);
 
     isButtonLoading = input<boolean>(false);
+    readonly isAiLoading = input<boolean>(false);
     isFormGroupValid = input<boolean>(false);
     isInCommunication = input<boolean>(false);
     editType = input<PostingEditType>();
@@ -389,27 +390,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         });
 
         // Handle diff content updates
-        effect(() => {
-            const currentMode = this.mode();
-            if (currentMode === 'diff' && this.monacoEditor) {
-                const original = this.originalMarkdown();
-                const modified = this.modifiedMarkdown();
-                if (original !== undefined && modified !== undefined) {
-                    this.monacoEditor.setDiffContents(original, modified, 'original.md', 'modified.md');
-                    // Update the markdown property to reflect the modified (refined) content
-                    this.markdown = modified;
-                    // Adjust dimensions after diff content is set
-                    // Use RAF + setTimeout to ensure CSS has fully resolved
-                    requestAnimationFrame(() => {
-                        setTimeout(() => {
-                            if (this.monacoEditor) {
-                                this.adjustEditorDimensions();
-                            }
-                        }, 50);
-                    });
-                }
-            }
-        });
     }
 
     /**
@@ -813,5 +793,30 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             startLine: sel.startLineNumber,
             endLine: sel.endLineNumber,
         };
+    }
+
+    /**
+     * Applies new content to the right (modified) side of the diff editor.
+     * In live-synced mode, changes sync immediately as the model is shared.
+     * @param content The new content to apply.
+     */
+    applyDiffContent(content: string): void {
+        this.monacoEditor?.applyDiffContent(content);
+    }
+
+    /**
+     * Applies the refined content to the editor in diff mode.
+     * @param refined The new content to show in the modified editor.
+     */
+    applyRefinedContent(refined: string): void {
+        this.monacoEditor?.applyDiffContent(refined);
+    }
+
+    /**
+     * Reverts all changes in the diff editor (both inline edits and the refinement itself)
+     * by restoring the snapshot taken when diff mode was entered.
+     */
+    revertAll(): void {
+        this.monacoEditor?.revertAll();
     }
 }

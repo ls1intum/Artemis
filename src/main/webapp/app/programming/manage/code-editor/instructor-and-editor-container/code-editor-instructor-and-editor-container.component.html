@@ -301,14 +301,16 @@
                                 />
                             </div>
                         </div>
-                        <div class="d-flex gap-2">
+
+                        <div class="d-flex gap-2 align-items-center">
+                            <span class="text-muted small" jhiTranslate="artemisApp.programmingExercise.problemStatement.useRevertButtons"></span>
+                            <button class="btn btn-outline-danger btn-sm" type="button" (click)="revertAllRefinement()">
+                                <fa-icon [icon]="faBan" class="me-1" />
+                                <span jhiTranslate="artemisApp.programmingExercise.problemStatement.revertAll"></span>
+                            </button>
                             <button class="btn btn-success btn-sm" type="button" (click)="acceptRefinement()">
                                 <fa-icon [icon]="faSave" class="me-1" />
-                                <span jhiTranslate="artemisApp.programmingExercise.problemStatement.acceptChanges"></span>
-                            </button>
-                            <button class="btn btn-secondary btn-sm" type="button" (click)="rejectRefinement()">
-                                <fa-icon [icon]="faBan" class="me-1" />
-                                <span jhiTranslate="artemisApp.programmingExercise.problemStatement.rejectChanges"></span>
+                                <span jhiTranslate="artemisApp.programmingExercise.problemStatement.doneReviewing"></span>
                             </button>
                         </div>
                     </div>
@@ -325,8 +327,6 @@
                         [consistencyIssues]="consistencyIssues()"
                         [isRefining]="isInlineRefining()"
                         [mode]="showDiff() ? 'diff' : 'normal'"
-                        [originalContent]="showDiff() ? originalProblemStatement() : undefined"
-                        [modifiedContent]="showDiff() ? refinedProblemStatement() : undefined"
                         [renderSideBySide]="allowSplitView()"
                         (diffLineChange)="onDiffLineChange($event)"
                         class="flex-grow-1 overflow-auto"

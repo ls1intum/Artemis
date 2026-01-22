@@ -233,7 +233,7 @@
                         <!-- AI Assistance -->
                         @if (displayedActions.artemisIntelligence.length > 0) {
                             <div class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
-                                @if (artemisIntelligenceService.isLoading()) {
+                                @if (artemisIntelligenceService.isLoading() || isAiLoading()) {
                                     <fa-icon [icon]="faSpinner" animation="spin" />
                                 } @else {
                                     <button

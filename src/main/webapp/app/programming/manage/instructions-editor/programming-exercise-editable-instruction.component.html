@@ -26,6 +26,7 @@
             [showPreviewButton]="showPreview"
             [showEditButton]="showPreview"
             [readOnly]="isRefining()"
+            [isAiLoading]="isRefining()"
             [renderSideBySide]="renderSideBySide()"
             [consistencyIssues]="consistencyIssues()"
             (markdownChange)="updateProblemStatement($event)"

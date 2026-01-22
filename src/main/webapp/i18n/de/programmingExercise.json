@@ -251,12 +251,14 @@
                 "refinementFailed": "Aufgabenstellung konnte nicht verfeinert werden. Die ursprüngliche Aufgabenstellung wurde beibehalten.",
                 "reviewChanges": "Änderungen überprüfen",
                 "reviewChangesDescription": "Grüne Zeilen werden hinzugefügt, rote Zeilen werden entfernt.",
-                "acceptChanges": "Änderungen akzeptieren",
-                "rejectChanges": "Änderungen ablehnen",
+                "changesAppliedLive": "Änderungen werden sofort angewendet. Klicke auf die Rückgängig-Buttons, um einzelne Änderungen rückgängig zu machen.",
+                "useRevertButtons": "Klicke auf Pfeile im Rand, um einzelne Änderungen rückgängig zu machen",
+                "revertAll": "Alles zurücksetzen",
+                "doneReviewing": "Fertig mit Überprüfung",
                 "changesApplied": "Änderungen wurden auf die Aufgabenstellung angewendet.",
-                "aiRefining": "KI verfeinert die Aufgabenstellung...",
+                "aiRefining": "KI aktualisiert die Aufgabenstellung...",
                 "inlineRefinement": {
-                    "triggerButton": "Mit KI verfeinern",
+                    "triggerButton": "Mit KI aktualisieren",
                     "placeholder": "Beschreibe, wie dieser Abschnitt verbessert werden soll...",
                     "submitTooltip": "Verfeinerung anwenden"
                 },

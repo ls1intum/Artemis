@@ -381,6 +381,21 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     /**
+     * Sets the editor text directly.
+     * Use this to revert content in the editor.
+     *
+     * @param text The text to set in the editor.
+     */
+    setText(text: string): void {
+        const monacoEditor = this.markdownEditorMonaco?.monacoEditor;
+        if (!monacoEditor) {
+            return;
+        }
+
+        monacoEditor.setText(text);
+    }
+
+    /**
      * Scrolls the Monaco editor to the specified line immediately.
      *
      * @param {number} lineNumber
@@ -456,5 +471,29 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     onInlineRefine(event: { instruction: string; startLine: number; endLine: number; startColumn: number; endColumn: number }): void {
         this.onInlineRefinement.emit(event);
         this.hideInlineRefinementButton();
+    }
+
+    /**
+     * Applies the refined content to the editor in diff mode.
+     * @param refined The new content to show in the modified editor.
+     */
+    applyRefinedContent(refined: string): void {
+        this.markdownEditorMonaco?.applyRefinedContent(refined);
+        // Also update our internal model so that if the user edits immediately, they edit the refined version
+        this.exercise.problemStatement = refined;
+        this.instructionChange.emit(refined);
+        this.generateHtmlSubject.next();
+    }
+
+    /**
+     * Reverts all changes in the diff editor (both inline edits and the refinement itself)
+     * by restoring the snapshot taken when diff mode was entered.
+     */
+    revertAll(): void {
+        this.markdownEditorMonaco?.revertAll();
+        // Since we reverted, the problem statement should effectively be the snapshot baseline
+        // But we rely on onDiffLineChange or other mechanisms to sync back if needed.
+        // Actually, revertAll in Monaco replaces the text with the baseline.
+        // That triggers onDidChangeModelContent, which updates the 'exercise.problemStatement' via the normal binding flow (if connected).
     }
 }

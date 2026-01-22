@@ -280,8 +280,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     // Diff mode properties
     showDiff = signal(false);
-    originalProblemStatement = signal('');
-    refinedProblemStatement = signal('');
 
     // Full problem statement refinement prompt state
     showRefinementPrompt = signal(false);
@@ -359,17 +357,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Accepts the refined problem statement and applies the changes.
      * Gets the actual content from the editor (which may have been modified by the user in diff mode).
      */
+    /**
+     * Accepts the refined problem statement and applies the changes.
+     * Gets the actual content from the editor (which may have been modified by the user in diff mode).
+     */
     acceptRefinement(): void {
-        // Get the actual content from the editor - this captures any user edits made in diff mode
-        const editorContent = this.editableInstructions?.getCurrentContent();
-        // Fall back to the signal value if editor content is not available
-        const refined = editorContent ?? this.refinedProblemStatement();
-        if (refined?.trim()) {
-            this.exercise.problemStatement = refined;
-            this.editableInstructions?.updateProblemStatement(refined);
-            this.closeDiff();
-            this.alertService.success('artemisApp.programmingExercise.problemStatement.changesApplied');
-        }
+        this.closeDiff();
     }
 
     /**
@@ -395,16 +388,14 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     /**
-     * Rejects the refined problem statement and keeps the original.
+     * Reverts all changes made during the refinement session and restores the original/snapshot state.
      */
-    rejectRefinement(): void {
-        this.closeDiff();
+    revertAllRefinement(): void {
+        this.editableInstructions.revertAll();
     }
 
     closeDiff(): void {
         this.showDiff.set(false);
-        this.originalProblemStatement.set('');
-        this.refinedProblemStatement.set('');
     }
 
     /**
@@ -498,9 +489,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     private handleRefinementResponse(response: ProblemStatementRefinementResponse): void {
         if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
-            this.originalProblemStatement.set(this.exercise.problemStatement || '');
-            this.refinedProblemStatement.set(response.refinedProblemStatement);
             this.showDiff.set(true);
+            setTimeout(() => {
+                this.editableInstructions.applyRefinedContent(response.refinedProblemStatement!);
+            }, 50);
             this.alertService.success('artemisApp.programmingExercise.inlineRefine.success');
         } else {
             this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');

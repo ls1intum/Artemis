@@ -82,7 +82,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private textChangedEmitTimeouts = new Map<string, NodeJS.Timeout>();
     private customBackspaceCommandId: string | undefined;
     private diffEditorFocusListener?: Disposable;
-    private diffOriginalBaseline?: string;
+    private diffSnapshotModel?: monaco.editor.ITextModel;
+    private useLiveSyncedDiff = false;
 
     /*
      * Injected services and elements.
@@ -167,12 +168,30 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     /**
      * Initializes the diff editor and hides the normal editor.
+     * In live-synced mode, the right (modified) side uses the SAME model as the normal editor,
+     * so changes sync immediately. The left (original) side shows a frozen snapshot.
      * @private
      */
     private initializeDiffEditor(): void {
         if (this._diffEditor) {
             return;
         }
+
+        // Capture current content as snapshot BEFORE hiding normal editor
+        const currentModel = this._editor.getModel();
+        const currentContent = currentModel?.getValue() ?? '';
+        const currentLanguage = currentModel?.getLanguageId() ?? 'markdown';
+
+        // Create a frozen snapshot model for the left (original) side
+        const snapshotUri = monaco.Uri.parse(`inmemory://model/snapshot-${this._editor.getId()}/${Date.now()}`);
+        this.diffSnapshotModel = monaco.editor.createModel(currentContent, currentLanguage, snapshotUri);
+        this.models.push(this.diffSnapshotModel);
+
+        // Capture current computed dimensions from normal editor container BEFORE hiding it
+        // We must use computed pixels because '100%' height will collapse if the parent relies on content
+        const rect = this.monacoEditorContainerElement.getBoundingClientRect();
+        const width = `${rect.width}px`;
+        const height = `${rect.height}px`;
 
         // Hide the normal editor
         this.renderer.setStyle(this.monacoEditorContainerElement, 'display', 'none');
@@ -181,6 +200,11 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         const diffEditorContainer = this.renderer.createElement('div');
         this.renderer.addClass(diffEditorContainer, 'monaco-diff-editor-container');
         this.renderer.addClass(diffEditorContainer, MonacoEditorComponent.SHRINK_TO_FIT_CLASS);
+
+        // Apply captured dimensions to diff container to prevent collapse
+        this.renderer.setStyle(diffEditorContainer, 'width', width);
+        this.renderer.setStyle(diffEditorContainer, 'height', height);
+
         this.renderer.appendChild(this.elementRef.nativeElement, diffEditorContainer);
         this.diffEditorContainer = diffEditorContainer;
 
@@ -192,6 +216,16 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             originalEditable: false,
             renderSideBySide: this.renderSideBySide(),
         });
+
+        // LIVE-SYNCED MODE: Use the existing normal editor model for the right side
+        // This means edits in diff mode sync immediately (same model as normal editor)
+        if (currentModel) {
+            this._diffEditor.setModel({
+                original: this.diffSnapshotModel,
+                modified: currentModel,
+            });
+            this.useLiveSyncedDiff = true;
+        }
 
         // Update the text editor adapter to point to the modified (editable) side of the diff editor
         // This is crucial for toolbar actions to work correctly in diff mode
@@ -240,16 +274,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     /**
      * Disposes the diff editor and shows the normal editor.
-     * Transfers the modified content from the diff editor to the normal editor before disposing.
+     * In live-synced mode, NO content transfer is needed - the right side uses the same model.
      * @private
      */
     private disposeDiffEditor(): void {
         if (!this._diffEditor) {
             return;
         }
-
-        // Get the modified content from the diff editor BEFORE disposing it
-        const modifiedContent = this._diffEditor.getModifiedEditor().getValue();
 
         // Clean up diff editor listeners
         this.diffUpdateListener?.dispose();
@@ -265,8 +296,12 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         // The dimensions are already set on the container from layoutWithFixedSize
         this.renderer.setStyle(this.monacoEditorContainerElement, 'display', 'block');
 
-        // Transfer the modified content to the normal editor
-        this._editor.setValue(modifiedContent);
+        // In live-synced mode, NO content transfer needed - the model is shared
+        // In legacy mode (setDiffContents was called), we still need to transfer
+        if (!this.useLiveSyncedDiff) {
+            const modifiedContent = this._diffEditor.getModifiedEditor().getValue();
+            this._editor.setValue(modifiedContent);
+        }
 
         // Restore the text editor adapter
         this.textEditorAdapter = new MonacoTextEditorAdapter(this._editor);
@@ -274,12 +309,22 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         // Layout the normal editor with its current container dimensions
         this._editor.layout();
 
-        // Remove the diff editor
+        // Remove the diff editor (but don't dispose the shared model)
         const diffEditorContainer = this._diffEditor.getContainerDomNode();
         this._diffEditor.dispose();
         this._diffEditor = undefined;
         this.renderer.removeChild(this.elementRef.nativeElement, diffEditorContainer);
         this.diffEditorContainer = undefined;
+
+        // Clean up snapshot model (left side)
+        if (this.diffSnapshotModel) {
+            const snapshotIndex = this.models.indexOf(this.diffSnapshotModel);
+            if (snapshotIndex !== -1) {
+                this.models.splice(snapshotIndex, 1);
+            }
+            this.diffSnapshotModel.dispose();
+            this.diffSnapshotModel = undefined;
+        }
 
         // Restore text change listener for normal editor
         this.ngZone.runOutsideAngular(() => {
@@ -296,8 +341,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         // Emit text change to notify parent of mode switch
         this.emitTextChangeEvent();
 
-        // Clear the baseline so the next diff mode session starts fresh
-        this.diffOriginalBaseline = undefined;
+        // Reset live-synced flag for next diff session
+        this.useLiveSyncedDiff = false;
     }
 
     /**
@@ -321,57 +366,43 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Sets the contents for diff comparison.
-     * Only works when mode is 'diff'.
+     * Updates the modified (right) side content in live-synced diff mode.
+     * This applies new content directly to the shared model, which syncs immediately.
+     * The left side remains frozen at the snapshot taken when diff mode opened.
+     * @param newContent The new content to apply to the right side.
      */
-    setDiffContents(original: string, modified: string, originalFileName: string = 'original', modifiedFileName: string = 'modified'): void {
+    applyDiffContent(newContent: string): void {
         if (this.mode() !== 'diff' || !this._diffEditor) {
             return;
         }
 
-        // On first call, store the original as our baseline for comparison.
-        // This ensures that multiple refinements/rewrites always diff against
-        // the state from before entering diff mode, not the most recent state.
-        if (this.diffOriginalBaseline === undefined) {
-            this.diffOriginalBaseline = original;
-        }
-
-        const effectiveOriginal = this.diffOriginalBaseline;
-
         // Emit not ready state while diff is being computed
         this.diffChanged.emit({ ready: false, lineChange: { addedLineCount: 0, removedLineCount: 0 } });
 
-        const originalModelUri = monaco.Uri.parse(`inmemory://model/original-${this._diffEditor.getId()}/${originalFileName}`);
-        const modifiedFileUri = monaco.Uri.parse(`inmemory://model/modified-${this._diffEditor.getId()}/${modifiedFileName}`);
-
-        // Check if models exist or need to be created, and track newly created models for disposal
-        let originalModel = monaco.editor.getModel(originalModelUri);
-        if (!originalModel) {
-            originalModel = monaco.editor.createModel(effectiveOriginal, 'markdown', originalModelUri);
-            this.models.push(originalModel);
-        }
-
-        let modifiedModel = monaco.editor.getModel(modifiedFileUri);
-        if (!modifiedModel) {
-            modifiedModel = monaco.editor.createModel(modified, 'markdown', modifiedFileUri);
-            this.models.push(modifiedModel);
-        }
-
-        originalModel.setValue(effectiveOriginal);
-        modifiedModel.setValue(modified);
-
-        this._diffEditor.setModel({
-            original: originalModel,
-            modified: modifiedModel,
-        });
+        // Apply content directly to the modified (right) side
+        // This is the shared model, so changes sync immediately
+        this._diffEditor.getModifiedEditor().setValue(newContent);
 
         // Layout after setting content to ensure proper sizing
         const parentElement = this.elementRef.nativeElement as HTMLElement;
         const width = parentElement.clientWidth || parentElement.offsetWidth;
         const height = parentElement.clientHeight || parentElement.offsetHeight;
+
         if (width > 0 && height > 0) {
             this._diffEditor.layout({ width, height });
         }
+    }
+
+    /**
+     * Reverts all changes in the modified editor by restoring the snapshot content.
+     * Only works when mode is 'diff'.
+     */
+    revertAll(): void {
+        if (this.mode() !== 'diff' || !this._diffEditor || !this.diffSnapshotModel) {
+            return;
+        }
+        const snapshotContent = this.diffSnapshotModel.getValue();
+        this._diffEditor.getModifiedEditor().setValue(snapshotContent);
     }
 
     /**
@@ -567,7 +598,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     getContentHeight(): number {
         const activeEditor = this.getActiveEditor();
-        return activeEditor.getContentHeight() + activeEditor.getOption(monaco.editor.EditorOption.lineHeight);
+        const contentHeight = activeEditor.getContentHeight() + activeEditor.getOption(monaco.editor.EditorOption.lineHeight);
+        return contentHeight;
     }
 
     isConvertedToEmoji(originalText: string, convertedText: string): boolean {
