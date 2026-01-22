@@ -53,6 +53,7 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
     testUpdateHandler(test: ProgrammingExerciseTestCase) {
         this.programmingExerciseTaskService.initializeTask(this.task);
         test.changed = true;
+        // TODO: The 'emit' function requires a mandatory void argument
         this.updateTasksEvent.emit();
     }
 
@@ -77,6 +78,7 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
             }
         });
 
+        // TODO: The 'emit' function requires a mandatory void argument
         this.updateTasksEvent.emit();
     }
 

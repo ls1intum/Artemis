@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, input } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -58,24 +58,24 @@ export enum TooltipPlacement {
 export class ButtonComponent {
     protected readonly faCircleNotch = faCircleNotch;
 
-    @Input() btnType = ButtonType.PRIMARY;
-    @Input() btnSize = ButtonSize.MEDIUM;
+    readonly btnType = input(ButtonType.PRIMARY);
+    readonly btnSize = input(ButtonSize.MEDIUM);
 
     /** You might need to set d-flex as well when using the button */
     fullWidth = input<boolean>(false);
     // Fa-icon name.
-    @Input() icon: IconProp;
+    readonly icon = input<IconProp>(undefined!);
     // Translation placeholders, will be translated in the component.
-    @Input() title: string;
-    @Input() tooltip: string;
-    @Input() tooltipPlacement: TooltipPlacement = TooltipPlacement.TOP;
+    readonly title = input<string>(undefined!);
+    readonly tooltip = input<string>(undefined!);
+    readonly tooltipPlacement = input<TooltipPlacement>(TooltipPlacement.TOP);
 
-    @Input() disabled = false;
-    @Input() isLoading = false;
-    @Input() featureToggle: FeatureToggle | FeatureToggle[]; // Disable by feature toggle.
+    readonly disabled = input(false);
+    readonly isLoading = input(false);
+    readonly featureToggle = input<FeatureToggle | FeatureToggle[]>(undefined!); // Disable by feature toggle.
 
-    @Input() shouldSubmit = true;
-    @Input() shouldToggle = false;
+    readonly shouldSubmit = input(true);
+    readonly shouldToggle = input(false);
 
-    @Output() onClick = new EventEmitter<MouseEvent>();
+    readonly onClick = output<MouseEvent>();
 }

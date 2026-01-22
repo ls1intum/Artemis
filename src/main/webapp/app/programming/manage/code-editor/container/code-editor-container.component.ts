@@ -261,6 +261,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         }
         this.monacoEditor?.onFileChange(fileChange);
 
+        // TODO: The 'emit' function requires a mandatory void argument
         this.onFileChanged.emit();
     }
 
@@ -297,6 +298,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
      */
     onFileContentChange({ fileName, text }: { fileName: string; text: string }) {
         this.unsavedFiles = { ...this.unsavedFiles, [fileName]: text };
+        // TODO: The 'emit' function requires a mandatory void argument
         this.onFileChanged.emit();
     }
 

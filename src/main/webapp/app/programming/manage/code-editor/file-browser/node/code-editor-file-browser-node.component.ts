@@ -51,6 +51,7 @@ export abstract class CodeEditorFileBrowserNodeComponent implements OnChanges {
      */
     clearRenamingNode(event: any) {
         event.stopPropagation();
+        // TODO: The 'emit' function requires a mandatory void argument
         this.onClearRenamingNode.emit();
     }
 
@@ -62,6 +63,7 @@ export abstract class CodeEditorFileBrowserNodeComponent implements OnChanges {
         if (!event.target.value || !this.isBeingRenamed) {
             return;
         } else if (event.target.value === this.item.text) {
+            // TODO: The 'emit' function requires a mandatory void argument
             this.onClearRenamingNode.emit();
             return;
         }
