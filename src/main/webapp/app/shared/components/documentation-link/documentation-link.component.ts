@@ -16,7 +16,7 @@ export type DocumentationType = keyof typeof DocumentationLinks;
     imports: [TranslateDirective],
 })
 export class DocumentationLinkComponent {
-    readonly BASE_URL = 'https://ls1intum.github.io/Artemis/';
+    readonly BASE_URL = 'https://docs.artemis.tum.de/';
     readonly DocumentationLinks = DocumentationLinks;
 
     documentationType = input<string>();
