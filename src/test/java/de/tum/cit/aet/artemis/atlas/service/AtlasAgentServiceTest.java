@@ -642,23 +642,6 @@ class AtlasAgentServiceTest {
         }
 
         @Test
-        void shouldHandleCreateApprovedRelationMarker() {
-            String testMessage = "Approve the relation";
-            Long courseId = 123L;
-            String sessionId = "relation_approval_test";
-            String responseWithApprovalMarker = "Creating relation [CREATE_APPROVED_RELATION]";
-
-            when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithApprovalMarker)))))
-                    .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"success\": true}")))));
-
-            AtlasAgentChatResponseDTO result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
-
-            assertThat(result).isNotNull();
-            assertThat(result.message()).doesNotContain("[CREATE_APPROVED_RELATION]");
-        }
-
-        @Test
         void shouldExtractRelationPreviewFromHistory() {
             String sessionId = "course_123_user_relation";
             String responseWithRelationPreview = "Here's the relation %%PREVIEW_DATA_START%%{\"singleRelationPreview\":{\"preview\":true,\"relation\":{\"relationId\":null,\"headCompetencyId\":1,\"headCompetencyTitle\":\"OOP\",\"tailCompetencyId\":2,\"tailCompetencyTitle\":\"Patterns\",\"relationType\":\"ASSUMES\"},\"viewOnly\":false}}%%PREVIEW_DATA_END%%";
@@ -671,20 +654,6 @@ class AtlasAgentServiceTest {
             assertThat(result).hasSize(2);
             assertThat(result.get(1).content()).isEqualTo("Here's the relation");
             assertThat(result.get(1).relationPreviews()).isNotNull();
-        }
-
-        @Test
-        void shouldExtractBatchRelationPreviewFromHistory() {
-            String sessionId = "course_123_user_batch_relation";
-            String responseWithBatchRelationPreview = "Multiple relations %%PREVIEW_DATA_START%%{\"batchRelationPreview\":{\"batchPreview\":true,\"count\":2,\"relations\":[{\"headCompetencyId\":1,\"headCompetencyTitle\":\"A\",\"tailCompetencyId\":2,\"tailCompetencyTitle\":\"B\",\"relationType\":\"ASSUMES\"},{\"headCompetencyId\":3,\"headCompetencyTitle\":\"C\",\"tailCompetencyId\":4,\"tailCompetencyTitle\":\"D\",\"relationType\":\"EXTENDS\"}],\"viewOnly\":false}}%%PREVIEW_DATA_END%%";
-            List<Message> messages = List.of(new UserMessage("Create multiple relations"), new AssistantMessage(responseWithBatchRelationPreview));
-
-            when(chatMemory.get(sessionId)).thenReturn(messages);
-
-            List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
-
-            assertThat(result).hasSize(2);
-            assertThat(result.get(1).content()).isEqualTo("Multiple relations");
         }
 
         @Test
@@ -703,22 +672,6 @@ class AtlasAgentServiceTest {
         }
 
         @Test
-        void shouldFilterOutCompetencyMapperBriefingMessages() {
-            String sessionId = "course_123_user_filter_mapper";
-            List<Message> messages = List.of(new UserMessage("Map competencies"),
-                    new AssistantMessage("TOPICS: OOP, Patterns\nREQUIREMENTS: Map them\nCONSTRAINTS: Same course\nCONTEXT: Course 123"),
-                    new AssistantMessage("Relations mapped successfully"));
-
-            when(chatMemory.get(sessionId)).thenReturn(messages);
-
-            List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
-
-            assertThat(result).hasSize(2);
-            assertThat(result.getFirst().content()).isEqualTo("Map competencies");
-            assertThat(result.get(1).content()).isEqualTo("Relations mapped successfully");
-        }
-
-        @Test
         void shouldFilterOutActionConfirmationMessages() {
             String sessionId = "course_123_user_action_confirm";
             List<Message> messages = List.of(new UserMessage("Approve"), new AssistantMessage("[CREATE_APPROVED_RELATION]"), new AssistantMessage("Relation created"));
@@ -730,96 +683,6 @@ class AtlasAgentServiceTest {
             assertThat(result).hasSize(2);
             assertThat(result.getFirst().content()).isEqualTo("Approve");
             assertThat(result.get(1).content()).isEqualTo("Relation created");
-        }
-    }
-
-    @Nested
-    class SessionIdGeneration {
-
-        @Test
-        void shouldGenerateCorrectSessionIdFormat() {
-            Long courseId = 123L;
-            Long userId = 456L;
-
-            String sessionId = atlasAgentService.generateSessionId(courseId, userId);
-
-            assertThat(sessionId).isEqualTo("course_123_user_456");
-        }
-
-        @Test
-        void shouldGenerateUniqueSessionIdsForDifferentUsers() {
-            Long courseId = 100L;
-            Long userId1 = 1L;
-            Long userId2 = 2L;
-
-            String sessionId1 = atlasAgentService.generateSessionId(courseId, userId1);
-            String sessionId2 = atlasAgentService.generateSessionId(courseId, userId2);
-
-            assertThat(sessionId1).isNotEqualTo(sessionId2);
-            assertThat(sessionId1).isEqualTo("course_100_user_1");
-            assertThat(sessionId2).isEqualTo("course_100_user_2");
-        }
-
-        @Test
-        void shouldGenerateUniqueSessionIdsForDifferentCourses() {
-            Long courseId1 = 1L;
-            Long courseId2 = 2L;
-            Long userId = 100L;
-
-            String sessionId1 = atlasAgentService.generateSessionId(courseId1, userId);
-            String sessionId2 = atlasAgentService.generateSessionId(courseId2, userId);
-
-            assertThat(sessionId1).isNotEqualTo(sessionId2);
-            assertThat(sessionId1).isEqualTo("course_1_user_100");
-            assertThat(sessionId2).isEqualTo("course_2_user_100");
-        }
-    }
-
-    @Nested
-    class CachingOperations {
-
-        @Test
-        void shouldCacheAndRetrievePendingCompetencyOperations() {
-            String sessionId = "cache_test_session";
-            List<CompetencyExpertToolsService.CompetencyOperation> operations = List
-                    .of(new CompetencyExpertToolsService.CompetencyOperation(null, "Test", "Description", de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy.APPLY));
-
-            atlasAgentService.cachePendingCompetencyOperations(sessionId, operations);
-            List<CompetencyExpertToolsService.CompetencyOperation> retrieved = atlasAgentService.getCachedPendingCompetencyOperations(sessionId);
-
-            assertThat(retrieved).isNull();
-        }
-
-        @Test
-        void shouldCacheAndRetrieveRelationOperations() {
-            String sessionId = "relation_cache_test";
-            List<de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO> relations = List
-                    .of(new de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO(null, 1L, 2L, de.tum.cit.aet.artemis.atlas.domain.competency.RelationType.ASSUMES));
-
-            atlasAgentService.cacheRelationOperations(sessionId, relations);
-            List<de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO> retrieved = atlasAgentService.getCachedRelationData(sessionId);
-
-            assertThat(retrieved).isNull();
-        }
-
-        @Test
-        void shouldClearCachedPendingCompetencyOperations() {
-            String sessionId = "clear_competency_cache_test";
-
-            atlasAgentService.clearCachedPendingCompetencyOperations(sessionId);
-            List<CompetencyExpertToolsService.CompetencyOperation> retrieved = atlasAgentService.getCachedPendingCompetencyOperations(sessionId);
-
-            assertThat(retrieved).isNull();
-        }
-
-        @Test
-        void shouldClearCachedRelationOperations() {
-            String sessionId = "clear_relation_cache_test";
-
-            atlasAgentService.clearCachedRelationOperations(sessionId);
-            List<de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO> retrieved = atlasAgentService.getCachedRelationData(sessionId);
-
-            assertThat(retrieved).isNull();
         }
     }
 

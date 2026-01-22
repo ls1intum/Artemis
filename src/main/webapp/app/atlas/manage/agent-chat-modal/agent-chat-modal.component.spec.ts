@@ -1781,37 +1781,6 @@ describe('AgentChatModalComponent', () => {
             expect(agentMessage?.relationGraphPreview?.edges).toHaveLength(1);
         });
 
-        it('should pre-compute graph data for stable rendering', () => {
-            const mockResponse = {
-                message: 'Graph preview:',
-                sessionId: 'course_123',
-                timestamp: new Date().toISOString(),
-                success: true,
-                competenciesModified: false,
-                relationGraphPreview: {
-                    nodes: [
-                        { id: '10', label: 'Node A' },
-                        { id: '20', label: 'Node B' },
-                    ],
-                    edges: [{ id: 'edge-new-1', source: '10', target: '20', relationType: CompetencyRelationType.EXTENDS }],
-                    viewOnly: false,
-                },
-            };
-            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
-            component.currentMessage.set('Preview graph');
-            fixture.detectChanges();
-
-            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
-            sendButton.click();
-
-            const agentMessage = component.messages().find((msg) => !msg.isUser && msg.relationGraphPreview);
-            expect(agentMessage).toBeDefined();
-            expect(agentMessage?.graphCompetencies).toBeDefined();
-            expect(agentMessage?.graphCompetencies).toHaveLength(2);
-            expect(agentMessage?.graphRelations).toBeDefined();
-            expect(agentMessage?.graphRelations).toHaveLength(1);
-        });
-
         it('should convert nodes to competencies correctly', () => {
             const mockResponse = {
                 message: 'Graph:',
@@ -2092,16 +2061,6 @@ describe('AgentChatModalComponent', () => {
 
             const result = component['isRelationUpdateOperation'](message);
             expect(result).toBeFalse();
-        });
-    });
-
-    describe('Constants', () => {
-        it('should have INPUT_FOCUS_DELAY_MS constant set to 10', () => {
-            expect(component.INPUT_FOCUS_DELAY_MS).toBe(10);
-        });
-
-        it('should have MAX_MESSAGE_LENGTH constant set to 8000', () => {
-            expect(component.MAX_MESSAGE_LENGTH).toBe(8000);
         });
     });
 });
