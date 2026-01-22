@@ -1,3 +1,6 @@
+'' Use Smetana layout engine (pure Java) to avoid dependency on external Graphviz installation
+!pragma layout smetana
+
 '' Basically using the default theme, but we add the modifications from the templates here
 
 skinparam ArrowFontSize 16

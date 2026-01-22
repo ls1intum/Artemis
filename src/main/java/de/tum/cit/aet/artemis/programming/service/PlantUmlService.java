@@ -33,6 +33,11 @@ public class PlantUmlService {
 
     private static final String LIGHT_THEME_FILE_NAME = "puml-theme-artemislight.puml";
 
+    /**
+     * Smetana is PlantUML's built-in Java layout engine that doesn't require external Graphviz installation.
+     */
+    private static final String SMETANA_PRAGMA = "!pragma layout smetana\n";
+
     private final ResourceLoaderService resourceLoaderService;
 
     private String darkThemeContent;
@@ -110,8 +115,13 @@ public class PlantUmlService {
         }
 
         if (!plantUml.contains("!theme")) {
+            // Apply Artemis theme (which includes Smetana pragma)
             String themeContent = useDarkTheme ? darkThemeContent : lightThemeContent;
             return plantUml.replace("@startuml", "@startuml\n" + themeContent);
+        }
+        // User has custom theme - still apply Smetana to avoid Graphviz dependency
+        if (!plantUml.contains("!pragma layout")) {
+            return plantUml.replace("@startuml", "@startuml\n" + SMETANA_PRAGMA);
         }
         return plantUml;
     }
