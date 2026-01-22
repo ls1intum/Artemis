@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, Injector, OnDestroy, OnInit, afterNextRender, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { faBan, faSave, faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
@@ -69,7 +69,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     problemStatementChange = output<string>();
     programmingExerciseChange = output<ProgrammingExercise>();
 
-    userPrompt = '';
+    userPrompt = signal('');
     isGenerating = signal(false);
     private currentGenerationSubscription: Subscription | undefined = undefined;
     private profileService = inject(ProfileService);
@@ -89,6 +89,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     private hyperionApiService = inject(HyperionProblemStatementApiService);
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
+    private injector = inject(Injector);
 
     /**
      * Lifecycle hook that is called when the component is destroyed.
@@ -213,14 +214,14 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     generateProblemStatement(): void {
         const exercise = this.programmingExercise();
         const courseId = exercise?.course?.id ?? exercise?.exerciseGroup?.exam?.course?.id;
-        if (!this.userPrompt?.trim() || !courseId) {
+        if (!this.userPrompt()?.trim() || !courseId) {
             return;
         }
 
         this.isGenerating.set(true);
 
         const request: ProblemStatementGenerationRequest = {
-            userPrompt: this.userPrompt.trim(),
+            userPrompt: this.userPrompt().trim(),
         };
 
         this.currentGenerationSubscription = this.hyperionApiService
@@ -239,15 +240,30 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                     }
 
                     if (response.draftProblemStatement && exercise) {
-                        exercise.problemStatement = response.draftProblemStatement;
-                        this.currentProblemStatement.set(response.draftProblemStatement);
+                        const draftContent = response.draftProblemStatement;
+                        const editorComponent = this.editableInstructions();
+
+                        // Try to update the editor first
+                        const editorUpdated = editorComponent?.markdownEditorMonaco?.monacoEditor?.setText(draftContent);
+
+                        // Always update the model/state
+                        exercise.problemStatement = draftContent;
+                        this.currentProblemStatement.set(draftContent);
                         this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
-                        this.problemStatementChange.emit(response.draftProblemStatement);
+                        this.problemStatementChange.emit(draftContent);
                         this.programmingExerciseChange.emit(exercise);
 
-                        this.editableInstructions()?.markdownEditorMonaco?.monacoEditor?.setText(response.draftProblemStatement);
+                        // If editor update failed or was unavailable, schedule a retry when ready
+                        if (!editorUpdated && editorComponent) {
+                            afterNextRender(
+                                () => {
+                                    editorComponent.markdownEditorMonaco?.monacoEditor?.setText(draftContent);
+                                },
+                                { injector: this.injector },
+                            );
+                        }
                     }
-                    this.userPrompt = '';
+                    this.userPrompt.set('');
 
                     // Show success alert
                     this.alertService.success('artemisApp.programmingExercise.problemStatement.generationSuccess');
@@ -268,7 +284,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         const courseId = exercise?.course?.id ?? exercise?.exerciseGroup?.exam?.course?.id;
         const currentContent = this.editableInstructions()?.getCurrentContent() ?? exercise?.problemStatement;
 
-        if (!this.userPrompt?.trim() || !courseId || !currentContent) {
+        if (!this.userPrompt()?.trim() || !courseId || !currentContent) {
             return;
         }
 
@@ -276,7 +292,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
 
         const request: ProblemStatementGlobalRefinementRequest = {
             problemStatementText: currentContent,
-            userPrompt: this.userPrompt.trim(),
+            userPrompt: this.userPrompt().trim(),
         };
 
         this.currentGenerationSubscription = this.hyperionApiService
@@ -292,11 +308,14 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                     if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
                         this.showDiff.set(true);
                         const refinedContent = response.refinedProblemStatement;
-                        setTimeout(() => {
-                            this.editableInstructions()?.applyRefinedContent(refinedContent);
-                        }, 50);
+                        afterNextRender(
+                            () => {
+                                this.editableInstructions()?.applyRefinedContent(refinedContent);
+                            },
+                            { injector: this.injector },
+                        );
 
-                        this.userPrompt = '';
+                        this.userPrompt.set('');
                     } else if (response.originalProblemStatement) {
                         // Refinement failed: keep the original problem statement
                         this.alertService.warning('artemisApp.programmingExercise.problemStatement.refinementFailed');
@@ -358,7 +377,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     /**
      * Handles changes to competency links
      */
-    onCompetencyLinksChange(competencyLinks: any): void {
+    onCompetencyLinksChange(competencyLinks: ProgrammingExercise['competencyLinks']): void {
         const exercise = this.programmingExercise();
         if (exercise) {
             exercise.competencyLinks = competencyLinks;
@@ -405,9 +424,12 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                         this.showDiff.set(true);
 
                         const refinedContent = response.refinedProblemStatement;
-                        setTimeout(() => {
-                            this.editableInstructions()?.applyRefinedContent(refinedContent);
-                        }, 50);
+                        afterNextRender(
+                            () => {
+                                this.editableInstructions()?.applyRefinedContent(refinedContent);
+                            },
+                            { injector: this.injector },
+                        );
 
                         this.alertService.success('artemisApp.programmingExercise.inlineRefine.success');
                     } else {

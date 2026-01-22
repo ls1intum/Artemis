@@ -100,7 +100,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         mockHyperionApiService.generateProblemStatement.mockReturnValue(of(mockResponse));
 
         // Trigger the generation
-        comp.userPrompt = userPrompt;
+        comp.userPrompt.set(userPrompt);
         comp.generateProblemStatement();
 
         // Verify the API was called correctly
@@ -118,7 +118,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         programmingExercise.course = { id: 42 } as any;
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
-        comp.userPrompt = '';
+        comp.userPrompt.set('');
         comp.generateProblemStatement();
 
         expect(mockHyperionApiService.generateProblemStatement).not.toHaveBeenCalled();
@@ -129,7 +129,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         // No course set
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
-        comp.userPrompt = 'Test prompt';
+        comp.userPrompt.set('Test prompt');
         comp.generateProblemStatement();
 
         expect(mockHyperionApiService.generateProblemStatement).not.toHaveBeenCalled();
@@ -142,7 +142,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         mockHyperionApiService.generateProblemStatement.mockReturnValue(throwError(() => new Error('API error')));
 
-        comp.userPrompt = 'Test prompt';
+        comp.userPrompt.set('Test prompt');
         comp.generateProblemStatement();
 
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.generationError');
@@ -156,7 +156,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         mockHyperionApiService.generateProblemStatement.mockReturnValue(of({ draftProblemStatement: '' }));
 
-        comp.userPrompt = 'Test prompt';
+        comp.userPrompt.set('Test prompt');
         comp.generateProblemStatement();
 
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.generationError');
@@ -174,7 +174,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         mockHyperionApiService.refineProblemStatementGlobally.mockReturnValue(of(mockResponse));
 
-        comp.userPrompt = 'Improve clarity';
+        comp.userPrompt.set('Improve clarity');
         comp.refineProblemStatement();
 
         expect(comp.showDiff()).toBeTrue();
@@ -188,7 +188,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         mockHyperionApiService.refineProblemStatementGlobally.mockReturnValue(throwError(() => new Error('API error')));
 
-        comp.userPrompt = 'Improve';
+        comp.userPrompt.set('Improve');
         comp.refineProblemStatement();
 
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementError');
@@ -250,7 +250,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         const emitSpy = jest.spyOn(comp.programmingExerciseChange, 'emit');
 
-        comp.onCompetencyLinksChange([{ id: 1 }]);
+        comp.onCompetencyLinksChange([{ id: 1 }] as any);
 
         expect(programmingExercise.competencyLinks).toEqual([{ id: 1 }]);
         expect(emitSpy).toHaveBeenCalled();
@@ -264,7 +264,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         const generateSpy = jest.spyOn(comp, 'generateProblemStatement');
 
-        comp.userPrompt = 'Test';
+        comp.userPrompt.set('Test');
         comp.handleProblemStatementAction();
 
         expect(generateSpy).toHaveBeenCalled();
@@ -277,9 +277,13 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
         fixture.detectChanges(); // Trigger ngOnInit to set currentProblemStatement signal
 
+        // Set templateLoaded so shouldShowGenerateButton returns false for non-template content
+        comp['templateLoaded'].set(true);
+        comp['templateProblemStatement'].set('Different template');
+
         const refineSpy = jest.spyOn(comp, 'refineProblemStatement');
 
-        comp.userPrompt = 'Improve this';
+        comp.userPrompt.set('Improve this');
         comp.handleProblemStatementAction();
 
         expect(refineSpy).toHaveBeenCalled();
@@ -314,7 +318,11 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.componentRef.setInput('programmingExercise', exercise);
         fixture.detectChanges();
 
-        // shouldShowGenerateButton should be false for existing content
+        // Set templateLoaded so shouldShowGenerateButton compares against template
+        comp['templateLoaded'].set(true);
+        comp['templateProblemStatement'].set('Different template');
+
+        // shouldShowGenerateButton should be false for existing content that differs from template
         expect(comp.shouldShowGenerateButton()).toBeFalse();
     });
 
@@ -458,7 +466,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         mockHyperionApiService.refineProblemStatementGlobally.mockReturnValue(of(mockResponse));
 
-        comp.userPrompt = 'Improve clarity';
+        comp.userPrompt.set('Improve clarity');
         comp.refineProblemStatement();
 
         expect(mockAlertService.warning).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementFailed');
@@ -474,7 +482,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         mockHyperionApiService.refineProblemStatementGlobally.mockReturnValue(of(mockResponse));
 
-        comp.userPrompt = 'Improve clarity';
+        comp.userPrompt.set('Improve clarity');
         comp.refineProblemStatement();
 
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementError');
@@ -486,7 +494,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         programmingExercise.problemStatement = 'Original';
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
-        comp.userPrompt = '';
+        comp.userPrompt.set('');
         comp.refineProblemStatement();
 
         expect(mockHyperionApiService.refineProblemStatementGlobally).not.toHaveBeenCalled();
@@ -497,7 +505,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         programmingExercise.problemStatement = 'Original';
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
-        comp.userPrompt = 'Improve';
+        comp.userPrompt.set('Improve');
         comp.refineProblemStatement();
 
         expect(mockHyperionApiService.refineProblemStatementGlobally).not.toHaveBeenCalled();
@@ -522,7 +530,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         mockHyperionApiService.generateProblemStatement.mockReturnValue(of(mockResponse));
 
-        comp.userPrompt = 'Create exercise';
+        comp.userPrompt.set('Create exercise');
         comp.generateProblemStatement();
 
         expect(mockHyperionApiService.generateProblemStatement).toHaveBeenCalledWith(99, expect.any(Object));
