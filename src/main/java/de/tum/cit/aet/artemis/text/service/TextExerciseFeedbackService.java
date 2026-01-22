@@ -112,12 +112,7 @@ public class TextExerciseFeedbackService {
         automaticResult.setExerciseId(textExercise.getId());
         automaticResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         automaticResult.setRated(true);
-        if (textSubmission.getResults().getFirst().getScore() != null) {
-            automaticResult.setScore(textSubmission.getResults().getFirst().getScore());
-        }
-        else {
-            automaticResult.setScore(0.0);
-        }
+        automaticResult.setScore(0.0);
         automaticResult.setSuccessful(null);
         automaticResult.setSubmission(textSubmission);
         try {
@@ -158,9 +153,13 @@ public class TextExerciseFeedbackService {
                 feedbacks.add(feedback);
             });
 
+            double totalFeedbacksScore = 0.0;
+            for (Feedback feedback : feedbacks) {
+                totalFeedbacksScore += feedback.getCredits();
+            }
+            totalFeedbacksScore = totalFeedbacksScore / textExercise.getMaxPoints() * 100;
             automaticResult.setCompletionDate(ZonedDateTime.now());
-            // Non-graded feedback should not affect the score - keep it at 0.0
-            automaticResult.setScore(0.0);
+            automaticResult.setScore(Math.clamp(totalFeedbacksScore, 0, 100));
 
             // For Athena automatic results successful = true will mean that the generation was successful
             // undefined in progress and false it failed
