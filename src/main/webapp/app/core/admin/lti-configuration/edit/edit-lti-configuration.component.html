@@ -6,7 +6,13 @@
         } @else {
             <div class="alert alert-info mt-3">
                 <span jhiTranslate="artemisApp.lti.edit.documentationLink"></span>
-                <a href="https://docs.artemis.tum.de/admin/lti" target="_blank" rel="external noopener noreferrer" jhiTranslate="artemisApp.lti.edit.documentationLinkText"></a>.
+                <a
+                    href="https://docs.artemis.tum.de/instructor/lti-configuration/"
+                    target="_blank"
+                    rel="external noopener noreferrer"
+                    jhiTranslate="artemisApp.lti.edit.documentationLinkText"
+                ></a
+                >.
             </div>
             <form class="ms-4" [formGroup]="platformConfigurationForm" (ngSubmit)="save()" #editForm="ngForm">
                 <div>

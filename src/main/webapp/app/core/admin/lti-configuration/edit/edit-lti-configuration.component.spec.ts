@@ -7,6 +7,7 @@ import { of, throwError } from 'rxjs';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { TranslateService } from '@ngx-translate/core';
+import { HttpResponse } from '@angular/common/http';
 
 import { EditLtiConfigurationComponent } from './edit-lti-configuration.component';
 import { LtiConfigurationService } from 'app/core/admin/lti-configuration/lti-configuration.service';
@@ -178,7 +179,7 @@ describe('EditLtiConfigurationComponent', () => {
 
         describe('Save in create mode', () => {
             it('should call addLtiConfiguration when creating new platform', () => {
-                vi.spyOn(ltiConfigurationService, 'addLtiPlatformConfiguration').mockReturnValue(of(mockPlatform));
+                vi.spyOn(ltiConfigurationService, 'addLtiPlatformConfiguration').mockReturnValue(of(new HttpResponse({ body: mockPlatform })));
                 const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
                 fixture.detectChanges();
@@ -238,7 +239,7 @@ describe('EditLtiConfigurationComponent', () => {
                         provide: LtiConfigurationService,
                         useValue: {
                             getLtiPlatformById: vi.fn().mockReturnValue(of(mockPlatform)),
-                            updateLtiPlatformConfiguration: vi.fn().mockReturnValue(of(mockPlatform)),
+                            updateLtiPlatformConfiguration: vi.fn().mockReturnValue(of(new HttpResponse({ body: mockPlatform }))),
                         },
                     },
                     MockProvider(AlertService),
