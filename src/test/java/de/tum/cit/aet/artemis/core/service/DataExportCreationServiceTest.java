@@ -30,6 +30,7 @@ import org.apache.commons.csv.CSVParser;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -618,7 +619,19 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.FAILED);
-        verify(mailService).sendDataExportFailedEmailToAdmin(any(User.class), eq(dataExportFromDb), eq(exception));
+
+        // Verify email is sent with correct parameters
+        ArgumentCaptor<User> adminRecipientCaptor = ArgumentCaptor.forClass(User.class);
+        ArgumentCaptor<DataExport> dataExportCaptor = ArgumentCaptor.forClass(DataExport.class);
+        verify(mailService).sendDataExportFailedEmailToAdmin(adminRecipientCaptor.capture(), dataExportCaptor.capture(), eq(exception));
+
+        // Verify the email is sent to the configured admin email (info.contact=test@localhost)
+        User adminRecipient = adminRecipientCaptor.getValue();
+        assertThat(adminRecipient.getEmail()).isEqualTo("test@localhost");
+
+        // Verify the data export contains the affected user (student1), not the admin
+        DataExport capturedDataExport = dataExportCaptor.getValue();
+        assertThat(capturedDataExport.getUser().getLogin()).isEqualTo(TEST_PREFIX + "student1");
     }
 
     @Test
