@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, model, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { filter } from 'rxjs/operators';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
@@ -22,6 +22,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
+import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 
 @Component({
     selector: 'jhi-file-upload-exercise',
@@ -113,6 +114,10 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
         const sorted = this.sortService.sortByProperty([...this.fileUploadExercises()], this.predicate, this.reverse);
         this.fileUploadExercises.set(sorted);
         this.applyFilter();
+    }
+
+    fetchExerciseDeletionSummary(exerciseId: number): Observable<EntitySummary> {
+        return this.fileUploadExerciseService.getDeletionSummary(exerciseId);
     }
 
     /**

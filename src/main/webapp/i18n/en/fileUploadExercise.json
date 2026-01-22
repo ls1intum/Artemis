@@ -12,7 +12,15 @@
             "deleted": "Deleted File Upload Exercise with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete File Upload Exercise {{ title }}?",
-                "typeNameToConfirm": "Please type in the name of the exercise to confirm."
+                "typeNameToConfirm": "Please type in the name of the exercise to confirm.",
+                "summary": {
+                    "title": "File Upload Exercise Summary",
+                    "numberOfStudentParticipations": "Number of Student Participations",
+                    "numberOfSubmissions": "Number of Submissions",
+                    "numberOfAssessments": "Number of Assessments",
+                    "numberOfCommunicationPosts": "Number of Communication Posts",
+                    "numberOfAnswerPosts": "Number of Answer Posts"
+                }
             },
             "detail": {
                 "title": "File Upload Exercise"

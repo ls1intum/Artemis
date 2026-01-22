@@ -7,6 +7,8 @@ import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-e
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseServicable, ExerciseService } from 'app/exercise/services/exercise.service';
 import { toUpdateFileUploadExerciseDTO } from 'app/fileupload/shared/entities/update-file-upload-exercise-dto';
+import { FileUploadExerciseDeletionSummaryDTO } from 'app/fileupload/shared/entities/file-upload-exercise-deletion-summary.model';
+import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 
 export type EntityResponseType = HttpResponse<FileUploadExercise>;
 export type EntityArrayResponseType = HttpResponse<FileUploadExercise[]>;
@@ -123,5 +125,30 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
         return this.http
             .post<FileUploadExercise>(`${this.resourceUrl}/import/${adaptedSourceFileUploadExercise.id}`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
+    }
+
+    /**
+     * Retrieves the deletion summary for a file upload exercise.
+     *
+     * @param exerciseId the id of the file upload exercise
+     * @returns an observable of the deletion summary as EntitySummary
+     */
+    getDeletionSummary(exerciseId: number): Observable<EntitySummary> {
+        return this.http.get<FileUploadExerciseDeletionSummaryDTO>(`${this.resourceUrl}/${exerciseId}/deletion-summary`, { observe: 'response' }).pipe(
+            map((response) => {
+                const summary = response.body;
+                return summary ? this.createFileUploadExerciseEntitySummary(summary) : {};
+            }),
+        );
+    }
+
+    private createFileUploadExerciseEntitySummary(dto: FileUploadExerciseDeletionSummaryDTO): EntitySummary {
+        return {
+            'artemisApp.fileUploadExercise.delete.summary.numberOfStudentParticipations': dto.numberOfStudentParticipations,
+            'artemisApp.fileUploadExercise.delete.summary.numberOfSubmissions': dto.numberOfSubmissions,
+            'artemisApp.fileUploadExercise.delete.summary.numberOfAssessments': dto.numberOfAssessments,
+            'artemisApp.fileUploadExercise.delete.summary.numberOfCommunicationPosts': dto.numberOfCommunicationPosts,
+            'artemisApp.fileUploadExercise.delete.summary.numberOfAnswerPosts': dto.numberOfAnswerPosts,
+        };
     }
 }

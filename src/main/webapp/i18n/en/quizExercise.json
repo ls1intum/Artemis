@@ -27,7 +27,14 @@
             "deleted": "Deleted Quiz Exercise with identifier {{ param }}",
             "resetSuccessful": "The reset of the quiz exercise <strong>{{ title }}</strong> was successful",
             "delete": {
-                "question": "Are you sure you want to permanently delete the quiz <strong>{{ title }}</strong>? This action can NOT be undone!"
+                "question": "Are you sure you want to permanently delete the quiz <strong>{{ title }}</strong>? This action can NOT be undone!",
+                "summary": {
+                    "title": "Quiz Exercise Summary",
+                    "numberOfStudentParticipations": "Number of Student Participations",
+                    "numberOfSubmissions": "Number of Submissions",
+                    "numberOfCommunicationPosts": "Number of Communication Posts",
+                    "numberOfAnswerPosts": "Number of Answer Posts"
+                }
             },
             "reset": {
                 "question": "Are you sure you want to reset the quiz <strong>{{ title }}</strong>? This action can NOT be undone! <br> This means that all participation, results, and statistics will be deleted, but the quiz questions will remain. Then you can start the quiz again."
