@@ -575,6 +575,79 @@ describe('ExamUpdateComponent', () => {
             fixture.changeDetectorRef.detectChanges();
             expect(component.exam.numberOfExercisesInExam).toBe(40);
             expect(component.isValidNumberOfExercises).toBeTrue();
+
+            // Test max limit of 100
+            examWithoutExercises.numberOfExercisesInExam = 100;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.numberOfExercisesInExam).toBe(100);
+            expect(component.isValidNumberOfExercises).toBeTrue();
+
+            examWithoutExercises.numberOfExercisesInExam = 101;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.numberOfExercisesInExam).toBe(101);
+            expect(component.isValidNumberOfExercises).toBeFalse();
+        });
+
+        it('should correctly validate max points with upper limit of 9999', () => {
+            fixture.detectChanges();
+
+            examWithoutExercises.examMaxPoints = 100;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.examMaxPoints).toBe(100);
+            expect(component.isValidMaxPoints).toBeTrue();
+
+            examWithoutExercises.examMaxPoints = 9999;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.examMaxPoints).toBe(9999);
+            expect(component.isValidMaxPoints).toBeTrue();
+
+            examWithoutExercises.examMaxPoints = 10000;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.examMaxPoints).toBe(10000);
+            expect(component.isValidMaxPoints).toBeFalse();
+        });
+
+        it('should correctly validate grace period with upper limit of 3600 seconds', () => {
+            fixture.detectChanges();
+
+            examWithoutExercises.gracePeriod = 180;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.gracePeriod).toBe(180);
+            expect(component.isValidGracePeriod).toBeTrue();
+
+            examWithoutExercises.gracePeriod = 3600;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.gracePeriod).toBe(3600);
+            expect(component.isValidGracePeriod).toBeTrue();
+
+            examWithoutExercises.gracePeriod = 3601;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.gracePeriod).toBe(3601);
+            expect(component.isValidGracePeriod).toBeFalse();
+        });
+
+        it('should correctly validate working time with upper limit of 30 days (2592000 seconds)', () => {
+            fixture.detectChanges();
+
+            // Set up exam as a test exam with a long exam window
+            examWithoutExercises.testExam = true;
+            examWithoutExercises.startDate = dayjs().add(0, 'hours');
+            examWithoutExercises.endDate = dayjs().add(35, 'days'); // Long exam window
+
+            // Valid working time
+            examWithoutExercises.workingTime = 86400; // 1 day
+            expect(component.exam.workingTime).toBe(86400);
+            expect(component.validateWorkingTime).toBeTrue();
+
+            // Working time at limit (30 days = 2592000 seconds)
+            examWithoutExercises.workingTime = 2592000;
+            expect(component.exam.workingTime).toBe(2592000);
+            expect(component.validateWorkingTime).toBeTrue();
+
+            // Working time exceeds limit
+            examWithoutExercises.workingTime = 2592001;
+            expect(component.exam.workingTime).toBe(2592001);
+            expect(component.validateWorkingTime).toBeFalse();
         });
 
         it('should bind correct title into jhi-button and compute correct save title text', () => {
