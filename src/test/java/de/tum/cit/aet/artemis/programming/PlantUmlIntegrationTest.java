@@ -36,9 +36,11 @@ class PlantUmlIntegrationTest extends AbstractProgrammingIntegrationIndependentT
     /**
      * A simple but valid PlantUML class diagram for testing actual rendering.
      * This diagram must be renderable by PlantUML without errors.
+     * Uses Smetana layout engine to avoid dependency on external Graphviz installation.
      */
     private static final String VALID_PLANTUML_DIAGRAM = """
             @startuml
+            !pragma layout smetana
             class Student {
                 +name: String
                 +getId(): int

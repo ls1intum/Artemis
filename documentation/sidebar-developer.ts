@@ -45,6 +45,7 @@ const sidebars: SidebarsConfig = {
         'docker-debugging',
         'local-database-tests',
         'local-moodle-setup-for-lti',
+        'weaviate-setup',
     ],
 };
 
