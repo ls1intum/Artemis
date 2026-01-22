@@ -6,9 +6,10 @@ import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 
 export type ContextType = 'course' | 'lecture' | 'exercise';
 type ViewState = 'main' | 'lecture-selection' | 'exercise-selection';
@@ -51,6 +52,7 @@ const DEFAULT_OPTIONS: ContextOption[] = [
 export class ContextSelectionComponent {
     private readonly courseManagementService = inject(CourseManagementService);
     private readonly courseStorageService = inject(CourseStorageService);
+    private readonly chatService = inject(IrisChatService);
 
     // Icons
     protected readonly faArrowLeft = faArrowLeft;
@@ -59,7 +61,7 @@ export class ContextSelectionComponent {
 
     // Inputs
     readonly courseId = input<number>();
-    readonly options = input<ContextOption[]>(DEFAULT_OPTIONS);
+    readonly options = input<ContextOption[]>(DEFAULT_OPTIONS); //?
 
     // Two-way bindings
     readonly selected = model<ContextType>('course');
@@ -102,36 +104,41 @@ export class ContextSelectionComponent {
 
     onOptionClick(type: ContextType): void {
         if (type === 'course') {
-            this.selectContext('course');
+            this.selected.set(type);
+            this.selectedLecture.set(undefined);
+            this.selectedExercise.set(undefined);
+            const courseId = this.courseId();
+            if (courseId !== undefined) {
+                this.chatService.switchTo(ChatServiceMode.COURSE, courseId);
+            }
         } else if (type === 'lecture') {
+            this.selected.set(type);
             this.currentView.set('lecture-selection');
             this.searchQuery.set('');
         } else if (type === 'exercise') {
+            this.selected.set(type);
             this.currentView.set('exercise-selection');
             this.searchQuery.set('');
-        }
-    }
-
-    selectContext(type: ContextType): void {
-        this.selected.set(type);
-        if (type === 'course') {
-            this.selectedLecture.set(undefined);
-            this.selectedExercise.set(undefined);
         }
     }
 
     selectLecture(lecture: Lecture): void {
         this.selectedLecture.set(lecture);
         this.selectedExercise.set(undefined); // Reset exercise selection
-        this.selected.set('lecture');
         this.currentView.set('main');
+        if (lecture.id !== undefined) {
+            this.chatService.switchTo(ChatServiceMode.LECTURE, lecture.id);
+        }
     }
 
     selectExercise(exercise: Exercise): void {
         this.selectedExercise.set(exercise);
         this.selectedLecture.set(undefined); // Reset lecture selection
-        this.selected.set('exercise');
         this.currentView.set('main');
+        if (exercise.id !== undefined) {
+            const mode = exercise.type === ExerciseType.TEXT ? ChatServiceMode.TEXT_EXERCISE : ChatServiceMode.PROGRAMMING_EXERCISE;
+            this.chatService.switchTo(mode, exercise.id);
+        }
     }
 
     goBack(): void {

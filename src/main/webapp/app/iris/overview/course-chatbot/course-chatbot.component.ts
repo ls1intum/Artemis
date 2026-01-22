@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
-import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisBaseChatbotComponent } from '../base-chatbot/iris-base-chatbot.component';
 import { ContextType } from 'app/iris/shared/context-selection/context-selection.component';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -25,7 +25,6 @@ export class CourseChatbotComponent {
             const courseId = this.courseId();
             if (courseId !== undefined) {
                 this.chatService.setCourseId(courseId);
-                this.chatService.switchTo(ChatServiceMode.COURSE, courseId);
             }
         });
     }
