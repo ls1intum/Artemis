@@ -555,6 +555,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         // Set the template to match the problem statement
         comp['templateProblemStatement'].set('Template content');
+        comp['templateLoaded'].set(true);
         comp['currentProblemStatement'].set('Template content');
 
         expect(comp.shouldShowGenerateButton()).toBeTrue();
@@ -567,8 +568,21 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.detectChanges();
 
         comp['templateProblemStatement'].set('Template content');
+        comp['templateLoaded'].set(true);
         comp['currentProblemStatement'].set('Custom content');
 
         expect(comp.shouldShowGenerateButton()).toBeFalse();
+    }));
+
+    it('should show generate button when template loading fails', fakeAsync(() => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.problemStatement = 'Existing content';
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+        fixture.detectChanges();
+
+        comp['templateLoaded'].set(false);
+        comp['currentProblemStatement'].set('Existing content');
+
+        expect(comp.shouldShowGenerateButton()).toBeTrue();
     }));
 });

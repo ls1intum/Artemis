@@ -22,7 +22,7 @@
                     <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.refinementAssistance"></span>
                 }
             </button>
-            <button type="button" id="cancel-generation" class="btn btn-sm btn-secondary" (click)="cancelGeneration()">
+            <button type="button" id="cancel-generation" class="btn btn-sm btn-secondary" (click)="cancelGeneration()" [disabled]="!(isGenerating() || isRefining())">
                 <fa-icon [fixedWidth]="true" [icon]="faBan" class="sm" />
                 <span class="d-none d-sm-inline" jhiTranslate="entity.action.cancel"></span>
             </button>

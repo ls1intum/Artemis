@@ -123,6 +123,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     removedLineCount = signal(0);
 
     private templateProblemStatement = signal<string>('');
+    private templateLoaded = signal<boolean>(false);
     private currentProblemStatement = signal<string>('');
 
     private fileService = inject(FileService);
@@ -149,9 +150,11 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             this.fileService.getTemplateFile(exercise.programmingLanguage, exercise.projectType).subscribe({
                 next: (template) => {
                     this.templateProblemStatement.set(template);
+                    this.templateLoaded.set(true);
                 },
                 error: () => {
                     this.templateProblemStatement.set('');
+                    this.templateLoaded.set(false);
                 },
             });
         }
@@ -191,6 +194,10 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         const template = this.templateProblemStatement();
 
         if (!problemStatement || problemStatement.trim() === '') {
+            return true;
+        }
+
+        if (!this.templateLoaded()) {
             return true;
         }
 
