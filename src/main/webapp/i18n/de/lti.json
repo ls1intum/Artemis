@@ -98,6 +98,12 @@
             "editLtiPlatform": "LTI-Plattformkonfiguration bearbeiten",
             "editConfiguration": {
                 "loadError": "Die LTI-Plattformkonfiguration konnte nicht geladen werden. Änderungen können nicht gespeichert werden."
+            },
+            "validation": {
+                "clientIdRequired": "Client-ID ist erforderlich.",
+                "authorizationUriRequired": "Autorisierungs-URI ist erforderlich.",
+                "tokenUriRequired": "Token-URI ist erforderlich.",
+                "jwkSetUriRequired": "JWK-Set-URI ist erforderlich."
             }
         },
         "lti13": {

@@ -22,25 +22,55 @@
                     </div>
                     <div class="form-group">
                         <label class="form-control-label" jhiTranslate="artemisApp.lti.clientId" for="field_clientId"></label>
+                        <span class="text-danger">*</span>
                         <jhi-help-icon text="artemisApp.lti.edit.clientIdTooltip" />
-                        <input type="text" class="form-control" name="clientId" id="field_clientId" formControlName="clientId" />
+                        <input type="text" class="form-control" name="clientId" id="field_clientId" formControlName="clientId" [class.is-invalid]="isFieldInvalid('clientId')" />
+                        @if (isFieldInvalid('clientId')) {
+                            <div class="invalid-feedback" jhiTranslate="artemisApp.lti.validation.clientIdRequired"></div>
+                        }
                     </div>
                     <div class="form-group">
                         <label class="form-control-label" jhiTranslate="artemisApp.lti.authorizationUri" for="field_authorizationUri"></label>
-                        <input type="text" class="form-control" name="authorizationUri" id="field_authorizationUri" formControlName="authorizationUri" />
+                        <span class="text-danger">*</span>
+                        <input
+                            type="text"
+                            class="form-control"
+                            name="authorizationUri"
+                            id="field_authorizationUri"
+                            formControlName="authorizationUri"
+                            [class.is-invalid]="isFieldInvalid('authorizationUri')"
+                        />
+                        @if (isFieldInvalid('authorizationUri')) {
+                            <div class="invalid-feedback" jhiTranslate="artemisApp.lti.validation.authorizationUriRequired"></div>
+                        }
                     </div>
                     <div class="form-group">
                         <label class="form-control-label" jhiTranslate="artemisApp.lti.tokenUri" for="field_tokenUri"></label>
-                        <input type="text" class="form-control" name="tokenUri" id="field_tokenUri" formControlName="tokenUri" />
+                        <span class="text-danger">*</span>
+                        <input type="text" class="form-control" name="tokenUri" id="field_tokenUri" formControlName="tokenUri" [class.is-invalid]="isFieldInvalid('tokenUri')" />
+                        @if (isFieldInvalid('tokenUri')) {
+                            <div class="invalid-feedback" jhiTranslate="artemisApp.lti.validation.tokenUriRequired"></div>
+                        }
                     </div>
                     <div class="form-group">
                         <label class="form-control-label" jhiTranslate="artemisApp.lti.jwkSetUri" for="field_jwkSetUri"></label>
-                        <input type="text" class="form-control" name="jwkSetUri" id="field_jwkSetUri" formControlName="jwkSetUri" />
+                        <span class="text-danger">*</span>
+                        <input
+                            type="text"
+                            class="form-control"
+                            name="jwkSetUri"
+                            id="field_jwkSetUri"
+                            formControlName="jwkSetUri"
+                            [class.is-invalid]="isFieldInvalid('jwkSetUri')"
+                        />
+                        @if (isFieldInvalid('jwkSetUri')) {
+                            <div class="invalid-feedback" jhiTranslate="artemisApp.lti.validation.jwkSetUriRequired"></div>
+                        }
                     </div>
                 </div>
 
                 <div class="mt-3 d-flex">
-                    <button type="submit" id="save-entity" [disabled]="isSaving()" class="btn btn-primary ms-2">
+                    <button type="submit" id="save-entity" [disabled]="isSaving() || platformConfigurationForm.invalid" class="btn btn-primary ms-2">
                         <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
                     </button>
                     <button type="button" id="cancel-save" class="btn btn-secondary ms-2" (click)="navigateToLtiConfigurationPage()">

@@ -98,6 +98,12 @@
             "editLtiPlatform": "Edit LTI Platform Configuration",
             "editConfiguration": {
                 "loadError": "Failed to load the LTI platform configuration. Cannot save changes."
+            },
+            "validation": {
+                "clientIdRequired": "Client ID is required.",
+                "authorizationUriRequired": "Authorization URI is required.",
+                "tokenUriRequired": "Token URI is required.",
+                "jwkSetUriRequired": "JWK Set URI is required."
             }
         },
         "lti13": {

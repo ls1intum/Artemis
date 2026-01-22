@@ -2,7 +2,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { faBan, faPlus, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
 import { LtiConfigurationService } from 'app/core/admin/lti-configuration/lti-configuration.service';
@@ -135,11 +135,19 @@ export class EditLtiConfigurationComponent implements OnInit {
             registrationId: new FormControl({ value: '', disabled: true }),
             originalUrl: new FormControl(''),
             customName: new FormControl(''),
-            clientId: new FormControl(''),
-            authorizationUri: new FormControl(''),
-            tokenUri: new FormControl(''),
-            jwkSetUri: new FormControl(''),
+            clientId: new FormControl('', [Validators.required]),
+            authorizationUri: new FormControl('', [Validators.required]),
+            tokenUri: new FormControl('', [Validators.required]),
+            jwkSetUri: new FormControl('', [Validators.required]),
         });
+    }
+
+    /**
+     * Check if a form field is invalid and has been touched
+     */
+    isFieldInvalid(fieldName: string): boolean {
+        const field = this.platformConfigurationForm.get(fieldName);
+        return !!(field && field.invalid && (field.dirty || field.touched));
     }
 
     private patchFormValues() {
