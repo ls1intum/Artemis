@@ -1,4 +1,5 @@
 import { Component, ViewContainerRef, ViewEncapsulation, input, output } from '@angular/core';
+import { Observable } from 'rxjs';
 import { PostingCreateEditModalDirective } from 'app/communication/posting-create-edit-modal/posting-create-edit-modal.directive';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -17,6 +18,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
     createEditAnswerPostContainerRef = input<ViewContainerRef>();
     postingUpdated = output<Posting>();
     isInputOpen = false;
+    createOverride = input<((answerPost: AnswerPost) => Observable<AnswerPost>) | undefined>(undefined);
 
     /**
      * renders the ng-template to edit or create an answerPost
@@ -53,12 +55,16 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
      */
     createPosting(): void {
         this.posting.content = this.formGroup.get('content')?.value;
-        this.metisService.createAnswerPost(this.posting).subscribe({
+        const override = this.createOverride();
+        const create$ = override ? override(this.posting) : this.metisService.createAnswerPost(this.posting);
+
+        create$.subscribe({
             next: (answerPost: AnswerPost) => {
                 this.resetFormGroup();
                 this.isLoading = false;
                 this.onCreate.emit(answerPost);
                 this.createEditAnswerPostContainerRef()?.clear();
+                this.isInputOpen = false;
             },
             error: () => {
                 this.isLoading = false;

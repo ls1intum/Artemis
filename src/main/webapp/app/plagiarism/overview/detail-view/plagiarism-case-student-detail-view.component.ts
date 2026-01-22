@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, inject, viewChild } from '@angular/core';
+import { Observable } from 'rxjs';
 import { PlagiarismCaseReviewComponent } from 'app/plagiarism/shared/review/plagiarism-case-review.component';
 import { PlagiarismCaseVerdictComponent } from 'app/plagiarism/shared/verdict/plagiarism-case-verdict.component';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
@@ -19,6 +20,9 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PostComponent } from 'app/communication/post/post.component';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { toPlagiarismAnswerPostCreationDTO } from 'app/plagiarism/shared/entities/PlagiarismAnswerPostCreationDTO';
+import { PlagiarismAnswerPostService } from 'app/plagiarism/shared/services/plagiarism-answer-post.service';
 
 @Component({
     selector: 'jhi-plagiarism-case-student-detail-view',
@@ -31,6 +35,7 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
     private metisService = inject(MetisService);
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private activatedRoute = inject(ActivatedRoute);
+    private plagiarismAnswerPostService = inject(PlagiarismAnswerPostService);
 
     readonly postComponent = viewChild.required<PostComponent>('post');
     readonly ButtonType = ButtonType;
@@ -98,4 +103,9 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
         this.paramSubscription?.unsubscribe();
         this.postsSubscription?.unsubscribe();
     }
+
+    createPlagiarismAnswerPost = (answerPost: AnswerPost): Observable<AnswerPost> => {
+        const dto = toPlagiarismAnswerPostCreationDTO(answerPost);
+        return this.plagiarismAnswerPostService.createAnswerPost(this.courseId, dto);
+    };
 }

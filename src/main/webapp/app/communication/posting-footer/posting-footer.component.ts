@@ -10,6 +10,7 @@ import { Posting } from 'app/communication/shared/entities/posting.model';
 import { AnswerPostComponent } from '../answer-post/answer-post.component';
 import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 import { NgClass } from '@angular/common';
+import { Observable } from 'rxjs';
 
 interface PostGroup {
     author: User | undefined;
@@ -46,6 +47,7 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
     isAtLeastTutorInCourse = false;
     courseId!: number;
     groupedAnswerPosts: PostGroup[] = [];
+    createAnswerOverride = input<((answerPost: AnswerPost) => Observable<AnswerPost>) | undefined>(undefined);
 
     private metisService = inject(MetisService);
     private changeDetector = inject(ChangeDetectorRef);
