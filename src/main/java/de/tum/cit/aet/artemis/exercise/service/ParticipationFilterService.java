@@ -74,10 +74,13 @@ public class ParticipationFilterService {
      */
     public void filterParticipationForCourseDashboard(StudentParticipation participation, boolean isStudent) {
         Optional<Submission> optionalSubmission = submissionFilterService.getLatestSubmissionWithResult(participation.getSubmissions(), true);
-        if (optionalSubmission.isPresent()) {
+        if (optionalSubmission.isPresent() && !ExerciseDateService.isAfterAssessmentDueDate(participation.getExercise())) {
             for (Result result : optionalSubmission.get().getResults()) {
-                if (result != null)
+                if (result != null) {
                     result.setScore(0.0);
+                    result.setAssessor(null);
+                    result.setRated(true);
+                }
             }
         }
 
