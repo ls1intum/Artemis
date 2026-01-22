@@ -128,6 +128,8 @@
             [entityTitle]="exercise.title || ''"
             deleteQuestion="artemisApp.exercise.delete.question"
             deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+            [entitySummaryTitle]="getEntitySummaryTitle(exercise.type!)"
+            [fetchEntitySummary]="fetchExerciseDeletionSummary(exercise.id!, exercise.type!)"
             (delete)="deleteExercise()"
             [dialogError]="dialogError$"
         >

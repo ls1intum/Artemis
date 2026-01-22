@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -20,6 +21,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
+import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 
 @Component({
     selector: 'jhi-modeling-exercise',
@@ -106,6 +108,14 @@ export class ModelingExerciseComponent extends ExerciseComponent {
     sortRows() {
         this.sortService.sortByProperty(this.modelingExercises, this.predicate, this.reverse);
         this.applyFilter();
+    }
+
+    /**
+     * Fetches the deletion summary for a modeling exercise.
+     * @param exerciseId the id of the exercise
+     */
+    fetchExerciseDeletionSummary(exerciseId: number): Observable<EntitySummary> {
+        return this.modelingExerciseService.getDeletionSummary(exerciseId);
     }
 
     /**

@@ -15,6 +15,8 @@ import { toQuizExerciseUpdateDTO } from 'app/quiz/shared/entities/quiz-exercise-
 import { convertQuizExerciseToCreationDTO } from 'app/quiz/shared/entities/quiz-exercise-creation/quiz-exercise-creation-dto.model';
 import { QuizExerciseDates } from 'app/quiz/shared/entities/quiz-exercise-dates.model';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
+import { QuizExerciseDeletionSummaryDTO } from 'app/quiz/shared/entities/quiz-exercise-deletion-summary.model';
+import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
 export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
@@ -340,5 +342,23 @@ export class QuizExerciseService {
             res.body.dueDate = convertDateFromServer(res.body.dueDate);
         }
         return res;
+    }
+
+    getDeletionSummary(exerciseId: number): Observable<EntitySummary> {
+        return this.http.get<QuizExerciseDeletionSummaryDTO>(`${this.resourceUrl}/${exerciseId}/deletion-summary`, { observe: 'response' }).pipe(
+            map((response) => {
+                const summary = response.body;
+                return summary ? this.createQuizExerciseEntitySummary(summary) : {};
+            }),
+        );
+    }
+
+    private createQuizExerciseEntitySummary(summary: QuizExerciseDeletionSummaryDTO): EntitySummary {
+        return {
+            'artemisApp.quizExercise.delete.summary.numberOfStudentParticipations': summary.numberOfStudentParticipations,
+            'artemisApp.quizExercise.delete.summary.numberOfSubmissions': summary.numberOfSubmissions,
+            'artemisApp.quizExercise.delete.summary.numberOfCommunicationPosts': summary.numberOfCommunicationPosts,
+            'artemisApp.quizExercise.delete.summary.numberOfAnswerPosts': summary.numberOfAnswerPosts,
+        };
     }
 }

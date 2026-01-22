@@ -1381,15 +1381,12 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @return the summary of the deletion of the quiz exercise
      */
     public QuizExerciseDeletionSummaryDTO getDeletionSummary(long exerciseId) {
-        final var quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
-
         final long numberOfStudentParticipations = participationRepository.countByExerciseId(exerciseId);
         final long numberOfSubmissions = submissionRepository.countByExerciseId(exerciseId);
-        final long numberOfQuizQuestions = quizExercise.getQuizQuestions() != null ? quizExercise.getQuizQuestions().size() : 0;
 
         ExerciseCommunicationDeletionSummaryDTO communicationDeletionSummaryDTO = channelService.getExerciseCommunicationDeletionSummary(exerciseId);
 
-        return new QuizExerciseDeletionSummaryDTO(numberOfStudentParticipations, numberOfSubmissions, numberOfQuizQuestions,
-                communicationDeletionSummaryDTO.numberOfCommunicationPosts(), communicationDeletionSummaryDTO.numberOfAnswerPosts());
+        return new QuizExerciseDeletionSummaryDTO(numberOfStudentParticipations, numberOfSubmissions, communicationDeletionSummaryDTO.numberOfCommunicationPosts(),
+                communicationDeletionSummaryDTO.numberOfAnswerPosts());
     }
 }

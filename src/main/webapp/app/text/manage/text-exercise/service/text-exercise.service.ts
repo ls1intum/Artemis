@@ -9,6 +9,8 @@ import { ExerciseServicable, ExerciseService } from 'app/exercise/services/exerc
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
 import { PlagiarismResultDTO } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';
+import { TextExerciseDeletionSummaryDTO } from 'app/text/shared/entities/text-exercise-deletion-summary.model';
+import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 
 export type EntityResponseType = HttpResponse<TextExercise>;
 export type EntityArrayResponseType = HttpResponse<TextExercise[]>;
@@ -149,5 +151,30 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
         return this.http
             .get<TutorEffort[]>(`api/assessment/courses/${courseId}/exercises/${exerciseId}/tutor-effort`, { observe: 'response' })
             .pipe(map((res: HttpResponse<TutorEffort[]>) => res.body!));
+    }
+
+    /**
+     * Retrieves the deletion summary for a text exercise.
+     *
+     * @param exerciseId the id of the text exercise
+     * @returns an observable of the deletion summary as EntitySummary
+     */
+    getDeletionSummary(exerciseId: number): Observable<EntitySummary> {
+        return this.http.get<TextExerciseDeletionSummaryDTO>(`${this.resourceUrl}/${exerciseId}/deletion-summary`, { observe: 'response' }).pipe(
+            map((response) => {
+                const summary = response.body;
+                return summary ? this.createTextExerciseEntitySummary(summary) : {};
+            }),
+        );
+    }
+
+    private createTextExerciseEntitySummary(dto: TextExerciseDeletionSummaryDTO): EntitySummary {
+        return {
+            'artemisApp.textExercise.delete.summary.numberOfStudentParticipations': dto.numberOfStudentParticipations,
+            'artemisApp.textExercise.delete.summary.numberOfSubmissions': dto.numberOfSubmissions,
+            'artemisApp.textExercise.delete.summary.numberOfAssessments': dto.numberOfAssessments,
+            'artemisApp.textExercise.delete.summary.numberOfCommunicationPosts': dto.numberOfCommunicationPosts,
+            'artemisApp.textExercise.delete.summary.numberOfAnswerPosts': dto.numberOfAnswerPosts,
+        };
     }
 }
