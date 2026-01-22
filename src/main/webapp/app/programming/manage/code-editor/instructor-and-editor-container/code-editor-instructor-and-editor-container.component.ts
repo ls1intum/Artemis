@@ -102,7 +102,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     readonly consistencyIssues = signal<ConsistencyIssue[]>([]);
     readonly sortedIssues = computed(() => [...this.consistencyIssues()].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]));
 
-    // Diff view state
     readonly allowSplitView = signal<boolean>(true);
     readonly addedLineCount = signal<number>(0);
     readonly removedLineCount = signal<number>(0);
@@ -121,7 +120,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     selectedIssue: ConsistencyIssue | undefined = undefined;
     locationIndex: number = 0;
 
-    // Icons
     faPlus = faPlus;
     faTimes = faTimes;
     faCircleNotch = faCircleNotch;
@@ -274,14 +272,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }, 1_200_000);
     }
 
-    // Inline refinement state (selection-based refinement)
     protected isInlineRefining = signal(false);
     private currentRefinementSubscription: Subscription | undefined;
 
-    // Diff mode properties
     showDiff = signal(false);
 
-    // Full problem statement refinement prompt state
     showRefinementPrompt = signal(false);
     refinementPrompt = model('');
     protected readonly faPaperPlane = faPaperPlane;
@@ -350,8 +345,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             },
         });
     }
-
-    // Diff Editor Methods
 
     /**
      * Accepts the refined problem statement and applies the changes.
@@ -464,7 +457,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.isInlineRefining.set(true);
         this.showRefinementPrompt.set(false);
 
-        // For global refinement, we do NOT send inlineComments
         const request: ProblemStatementGlobalRefinementRequest = {
             problemStatementText: this.exercise.problemStatement,
             userPrompt: prompt,

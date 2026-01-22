@@ -388,8 +388,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         effect(() => {
             this.renderConsistencyIssues();
         });
-
-        // Handle diff content updates
     }
 
     /**

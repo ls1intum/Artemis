@@ -178,8 +178,6 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.refineProblemStatement();
 
         expect(comp.showDiff()).toBeTrue();
-        expect(comp.refinedProblemStatement()).toBe('Refined problem statement');
-        expect(comp.originalProblemStatement()).toBe('Original problem statement');
     }));
 
     it('should handle refinement error', fakeAsync(() => {
@@ -204,24 +202,23 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
         comp.showDiff.set(true);
-        comp.refinedProblemStatement.set('Refined');
 
-        comp.acceptRefinement();
+        comp.closeDiffView();
 
-        expect(programmingExercise.problemStatement).toBe('Refined');
         expect(comp.showDiff()).toBeFalse();
     });
 
-    it('should reject refinement and close diff', () => {
+    it('should revert refinement and close diff', () => {
         comp.showDiff.set(true);
-        comp.originalProblemStatement.set('Original');
-        comp.refinedProblemStatement.set('Refined');
+        // Mock editableInstructions
+        (comp as any).editableInstructions = () => ({
+            revertAll: jest.fn(),
+            getCurrentContent: jest.fn().mockReturnValue('Reverted content'),
+        });
 
-        comp.rejectRefinement();
+        comp.revertAllChanges();
 
         expect(comp.showDiff()).toBeFalse();
-        expect(comp.originalProblemStatement()).toBe('');
-        expect(comp.refinedProblemStatement()).toBe('');
     });
 
     it('should cancel generation and reset states', () => {
@@ -304,26 +301,10 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.componentRef.setInput('programmingExercise', exercise);
 
         comp.showDiff.set(true);
-        comp.refinedProblemStatement.set('New refined statement');
-        comp.originalProblemStatement.set('Original');
 
-        comp.acceptRefinement();
+        comp.closeDiffView();
 
-        expect(exercise.problemStatement).toBe('New refined statement');
         expect(comp.showDiff()).toBeFalse();
-    });
-
-    it('should not accept refinement with empty content', () => {
-        const exercise = new ProgrammingExercise(undefined, undefined);
-        exercise.problemStatement = 'Original statement';
-        fixture.componentRef.setInput('programmingExercise', exercise);
-
-        comp.refinedProblemStatement.set('');
-
-        comp.acceptRefinement();
-
-        // Statement should not change
-        expect(exercise.problemStatement).toBe('Original statement');
     });
 
     it('should handle generate with existing non-empty problem statement', () => {
@@ -382,7 +363,6 @@ describe('ProgrammingExerciseProblemComponent', () => {
         );
 
         expect(comp.showDiff()).toBeTrue();
-        expect(comp.refinedProblemStatement()).toBe('Refined problem statement');
         expect(mockAlertService.success).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.success');
     }));
 
@@ -525,14 +505,10 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
     it('should close diff view properly', () => {
         comp.showDiff.set(true);
-        comp.originalProblemStatement.set('Original');
-        comp.refinedProblemStatement.set('Refined');
 
-        comp.closeDiff();
+        comp.closeDiffView();
 
         expect(comp.showDiff()).toBeFalse();
-        expect(comp.originalProblemStatement()).toBe('');
-        expect(comp.refinedProblemStatement()).toBe('');
     });
 
     it('should use exerciseGroup course id when course is not set', fakeAsync(() => {

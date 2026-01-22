@@ -68,14 +68,13 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     programmingExercise = input<ProgrammingExercise>();
     problemStatementChange = output<string>();
     programmingExerciseChange = output<ProgrammingExercise>();
-    // Problem statement generation properties
+
     userPrompt = '';
     isGenerating = signal(false);
     private currentGenerationSubscription: Subscription | undefined = undefined;
     private profileService = inject(ProfileService);
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
-    // icons
     facArtemisIntelligence = facArtemisIntelligence;
     faSpinner = faSpinner;
 
@@ -87,7 +86,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     readonly ButtonType = ButtonType;
     readonly TooltipPlacement = TooltipPlacement;
 
-    // Injected services
     private hyperionApiService = inject(HyperionProblemStatementApiService);
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
@@ -119,8 +117,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
 
     isRefining = signal(false);
 
-    // Diff mode properties
-
     showDiff = signal(false);
     allowSplitView = signal(true);
     addedLineCount = signal(0);
@@ -129,15 +125,12 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     private templateProblemStatement = signal<string>('');
     private currentProblemStatement = signal<string>('');
 
-    // Injected services
     private fileService = inject(FileService);
 
-    // Template references
     readonly editableInstructions = viewChild<ProgrammingExerciseEditableInstructionComponent>('editableInstructions');
 
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
 
-    // Inline comment state
     /** True if any AI operation is in progress (refinement or generation) */
     protected isAnyApplying = computed(() => this.isRefining() || this.isGenerating() || this.artemisIntelligenceService.isLoading());
 
@@ -148,19 +141,16 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         const exercise = this.programmingExercise();
 
-        // Initialize current problem statement
         if (exercise?.problemStatement) {
             this.currentProblemStatement.set(exercise.problemStatement);
         }
 
-        // Load the template problem statement for comparison
         if (exercise?.programmingLanguage) {
             this.fileService.getTemplateFile(exercise.programmingLanguage, exercise.projectType).subscribe({
                 next: (template) => {
                     this.templateProblemStatement.set(template);
                 },
                 error: () => {
-                    // Clear template on error so shouldShowGenerateButton falls back to checking empty content
                     this.templateProblemStatement.set('');
                 },
             });
@@ -178,7 +168,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             this.currentGenerationSubscription = undefined;
         }
 
-        // Reset global generation/refinement flags
         this.isGenerating.set(false);
         this.isRefining.set(false);
     }
@@ -201,16 +190,13 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         const problemStatement = this.currentProblemStatement();
         const template = this.templateProblemStatement();
 
-        // Show generate button if problem statement is empty or only whitespace
         if (!problemStatement || problemStatement.trim() === '') {
             return true;
         }
 
-        // Normalize both strings for comparison to handle whitespace/line ending differences
         const normalizedProblemStatement = this.normalizeString(problemStatement);
         const normalizedTemplate = this.normalizeString(template);
 
-        // Compare against the loaded template problem statement
         return !!(normalizedTemplate && normalizedProblemStatement === normalizedTemplate);
     });
 
@@ -240,7 +226,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             )
             .subscribe({
                 next: (response) => {
-                    // Check if the response contains an empty or invalid problem statement
                     if (!response.draftProblemStatement || response.draftProblemStatement.trim() === '') {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
                         return;
@@ -253,8 +238,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                         this.problemStatementChange.emit(response.draftProblemStatement);
                         this.programmingExerciseChange.emit(exercise);
 
-                        // Directly update the editor content since Angular won't detect the change
-                        // on the nested input binding when the object reference stays the same
                         this.editableInstructions()?.markdownEditorMonaco?.monacoEditor?.setText(response.draftProblemStatement);
                     }
                     this.userPrompt = '';
@@ -276,7 +259,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     refineProblemStatement(): void {
         const exercise = this.programmingExercise();
         const courseId = exercise?.course?.id ?? exercise?.exerciseGroup?.exam?.course?.id;
-        // Get the current content from the editor (which may be in diff mode with intermediate edits)
         const currentContent = this.editableInstructions()?.getCurrentContent() ?? exercise?.problemStatement;
 
         if (!this.userPrompt?.trim() || !courseId || !currentContent) {
@@ -300,13 +282,8 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             )
             .subscribe({
                 next: (response) => {
-                    // Check if refinement was successful
                     if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
-                        // Open diff view FIRST to capture the snapshot of current state
                         this.showDiff.set(true);
-
-                        // Apply refined content directly to the editor (syncs immediately)
-                        // Capture in const to preserve type narrowing inside setTimeout
                         const refinedContent = response.refinedProblemStatement;
                         setTimeout(() => {
                             this.editableInstructions()?.applyRefinedContent(refinedContent);
@@ -353,15 +330,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
      * Restores the content to the state before refinement was applied.
      */
     revertAllChanges(): void {
-        // Restore original content using Monaco's snapshot
         this.editableInstructions()?.revertAll();
-
-        // We still need to sync the reverted content back to the exercise model
-        // revertAll updates the editor model, which should trigger change events?
-        // But we called closeDiffView immediately.
-        // It's safer to get the content *after* revertAll to ensure sync?
-        // editableInstructions.revertAll() is synchronous for Monaco (setValue).
-
         this.closeDiffView();
     }
 
@@ -430,11 +399,8 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: (response) => {
                     if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
-                        // Open diff view FIRST to capture the snapshot of current state
                         this.showDiff.set(true);
 
-                        // Apply refined content directly to the editor (syncs immediately)
-                        // Capture in const to preserve type narrowing inside setTimeout
                         const refinedContent = response.refinedProblemStatement;
                         setTimeout(() => {
                             this.editableInstructions()?.applyRefinedContent(refinedContent);

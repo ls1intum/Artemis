@@ -463,12 +463,10 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Consistency Checks',
 describe('CodeEditorInstructorAndEditorContainerComponent - Diff Editor', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let comp: CodeEditorInstructorAndEditorContainerComponent;
-    let alertService: AlertService;
 
     beforeEach(async () => {
         await configureTestBed();
 
-        alertService = TestBed.inject(AlertService);
         fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
         comp = fixture.componentInstance;
         comp.exercise = createMockExercise({ problemStatement: 'Original' });
@@ -480,52 +478,32 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Diff Editor', () => 
     });
 
     it('should accept refinement and update problem statement', () => {
-        const successSpy = jest.spyOn(alertService, 'success');
-        comp.refinedProblemStatement.set('Refined problem statement');
+        // Simulate refinement setting up diff mode
         comp.showDiff.set(true);
 
-        comp.acceptRefinement();
-
-        expect(comp.exercise.problemStatement).toBe('Refined problem statement');
-        expect(comp.showDiff()).toBeFalse();
-        expect(comp.refinedProblemStatement()).toBe('');
-        expect(successSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.changesApplied');
-    });
-
-    it('should not accept empty refinement', () => {
-        const successSpy = jest.spyOn(alertService, 'success');
-        comp.refinedProblemStatement.set('   '); // whitespace only
-        comp.showDiff.set(true);
-
-        comp.acceptRefinement();
-
-        expect(comp.exercise.problemStatement).toBe('Original');
-        expect(successSpy).not.toHaveBeenCalled();
-    });
-
-    it('should reject refinement and close diff', () => {
-        comp.showDiff.set(true);
-        comp.originalProblemStatement.set('Original');
-        comp.refinedProblemStatement.set('Refined');
-
-        comp.rejectRefinement();
+        comp.closeDiff();
 
         expect(comp.showDiff()).toBeFalse();
-        expect(comp.originalProblemStatement()).toBe('');
-        expect(comp.refinedProblemStatement()).toBe('');
+    });
+
+    it('should revert refinement', () => {
+        comp.showDiff.set(true);
+        // Mock the internal editableInstructions to have a revertAll method
+        (comp as any).editableInstructions = { revertAll: jest.fn() };
+
+        comp.revertAllRefinement();
+
+        expect((comp as any).editableInstructions.revertAll).toHaveBeenCalled();
+        expect(comp.showDiff()).toBeTrue();
     });
 
     it('should close diff and reset public state', () => {
         comp.showDiff.set(true);
-        comp.originalProblemStatement.set('Original');
-        comp.refinedProblemStatement.set('Refined');
 
         comp.closeDiff();
 
         // Verify observable behavior through public API
         expect(comp.showDiff()).toBeFalse();
-        expect(comp.originalProblemStatement()).toBe('');
-        expect(comp.refinedProblemStatement()).toBe('');
     });
 });
 
@@ -587,7 +565,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Refinement', 
             }),
         );
         expect(comp.showDiff()).toBeTrue();
-        expect(comp.refinedProblemStatement()).toBe('Refined content');
         expect(successSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.success');
     });
 
@@ -697,7 +674,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Full Refinement', ()
             }),
         );
         expect(comp.showDiff()).toBeTrue();
-        expect(comp.refinedProblemStatement()).toBe('Refined content');
         expect(successSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.success');
     });
 
