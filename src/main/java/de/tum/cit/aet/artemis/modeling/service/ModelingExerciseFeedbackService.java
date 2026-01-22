@@ -116,11 +116,15 @@ public class ModelingExerciseFeedbackService {
 
             List<Feedback> feedbacks = getAthenaFeedback(modelingExercise, modelingSubmission);
 
-            double totalFeedbackScore = calculateTotalFeedbackScore(feedbacks, modelingExercise);
-
             automaticResult.setCompletionDate(ZonedDateTime.now());
-            automaticResult.setScore(Math.max(0, Math.min(totalFeedbackScore, 100)));
             automaticResult.setSuccessful(true);
+            automaticResult.setRated(true);
+            if (modelingSubmission.getResults().getFirst().getScore() != null) {
+                automaticResult.setScore(modelingSubmission.getResults().getFirst().getScore());
+            }
+            else {
+                automaticResult.setScore(0.0);
+            }
 
             automaticResult = this.resultRepository.save(automaticResult);
             resultService.storeFeedbackInResult(automaticResult, feedbacks, true);
@@ -148,7 +152,7 @@ public class ModelingExerciseFeedbackService {
             result.setExerciseId(submission.getParticipation().getExercise().getId());
         }
         result.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
-        result.setRated(true);
+        result.setRated(false);
         result.setScore(0.0);
         result.setSuccessful(null);
         result.setSubmission(submission);
@@ -184,23 +188,5 @@ public class ModelingExerciseFeedbackService {
         feedback.setCredits(feedbackItem.credits());
         feedback.setReference(feedbackItem.reference());
         return feedback;
-    }
-
-    /**
-     * Calculates the total feedback score based on the list of feedbacks and the exercise's max points.
-     *
-     * @param feedbacks        the list of feedbacks
-     * @param modelingExercise the modeling exercise
-     * @return the total feedback score
-     */
-    private double calculateTotalFeedbackScore(List<Feedback> feedbacks, ModelingExercise modelingExercise) {
-        double totalCredits = feedbacks.stream().mapToDouble(Feedback::getCredits).sum();
-        Double maxPoints = modelingExercise.getMaxPoints();
-
-        if (maxPoints == null || maxPoints == 0) {
-            throw new IllegalArgumentException("Maximum points must be greater than zero.");
-        }
-
-        return (totalCredits / maxPoints) * 100;
     }
 }
