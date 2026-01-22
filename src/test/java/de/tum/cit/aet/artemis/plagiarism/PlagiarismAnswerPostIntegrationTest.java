@@ -71,7 +71,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         answerPostToSave.setContent(userMention);
 
         if (!isUserMentionValid) {
-            request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", PlagiarismAnswerPostCreationDTO.of(answerPostToSave),
+            request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts", PlagiarismAnswerPostCreationDTO.of(answerPostToSave),
                     PlagiarismAnswerPostCreationResponseDTO.class, HttpStatus.BAD_REQUEST);
             return;
         }
