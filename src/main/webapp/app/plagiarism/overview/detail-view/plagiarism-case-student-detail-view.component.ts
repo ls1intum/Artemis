@@ -21,7 +21,7 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PostComponent } from 'app/communication/post/post.component';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
-import { toPlagiarismAnswerPostCreationDTO } from 'app/plagiarism/shared/entities/PlagiarismAnswerPostCreationDTO';
+import { PlagiarismAnswerPostCreationDTO } from 'app/plagiarism/shared/entities/PlagiarismAnswerPostCreationDTO';
 import { PlagiarismAnswerPostService } from 'app/plagiarism/shared/services/plagiarism-answer-post.service';
 
 @Component({
@@ -105,7 +105,7 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
     }
 
     createPlagiarismAnswerPost = (answerPost: AnswerPost): Observable<AnswerPost> => {
-        const dto = toPlagiarismAnswerPostCreationDTO(answerPost);
+        const dto = PlagiarismAnswerPostCreationDTO.of(answerPost);
         return this.plagiarismAnswerPostService.createAnswerPost(this.courseId, dto);
     };
 }
