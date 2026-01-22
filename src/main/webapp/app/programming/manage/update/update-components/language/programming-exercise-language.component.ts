@@ -61,7 +61,7 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
         ghcrLink: 'https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry',
         dockerhubLink: 'https://hub.docker.com/',
     };
-    readonly DOCUMENTATION_LINK = 'https://ls1intum.github.io/Artemis/instructor/exercises/programming-exercise';
+    readonly DOCUMENTATION_LINK = 'https://docs.artemis.tum.de/instructor/exercises/programming-exercise';
 
     protected readonly APP_NAME_PATTERN_FOR_SWIFT = APP_NAME_PATTERN_FOR_SWIFT;
 
