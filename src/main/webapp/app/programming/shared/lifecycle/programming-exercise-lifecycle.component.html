@@ -103,14 +103,18 @@
                 <div>
                     <jhi-programming-exercise-test-schedule-date-picker
                         [(ngModel)]="exercise.exampleSolutionPublicationDate"
-                        [readOnly]="readOnly"
+                        [readOnly]="readOnly || isImport"
                         [startAt]="exercise.dueDate ?? exercise.startDate ?? exercise.releaseDate"
                         [min]="
                             (exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED ? exercise.dueDate : undefined) ?? exercise.startDate ?? exercise.releaseDate
                         "
                         class="test-schedule-date px-1"
                         label="artemisApp.exercise.exampleSolutionPublicationDate"
-                        tooltipText="artemisApp.programmingExercise.timeline.exampleSolutionPublicationDateTooltip"
+                        [tooltipText]="
+                            isImport
+                                ? 'artemisApp.programmingExercise.timeline.exampleSolutionPublicationDateTooltipOnImport'
+                                : 'artemisApp.programmingExercise.timeline.exampleSolutionPublicationDateTooltip'
+                        "
                     />
                 </div>
             }

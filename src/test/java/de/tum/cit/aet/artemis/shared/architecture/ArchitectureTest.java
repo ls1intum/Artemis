@@ -114,7 +114,11 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNoGoogleImport() {
-        ArchRule noGoogleDependencies = noClasses().should().dependOnClassesThat().resideInAnyPackage("com.google");
+        ArchRule noGoogleDependencies = noClasses().should().dependOnClassesThat().resideInAnyPackage("com.google..")
+                .because("Google libraries (Guava, Gson) are forbidden to reduce incompatibilities, to reduce dependencies and security risks. " + "Alternatives: "
+                        + "Guava Cache -> Spring CacheManager (see CacheConfiguration), " + "Guava Collections -> Java Collections API (List.of(), Set.of(), Map.of()), "
+                        + "Guava Strings -> Apache Commons Lang3 StringUtils or Spring StringUtils, " + "Guava Preconditions -> Objects.requireNonNull() or Spring Assert, "
+                        + "Guava Optional -> java.util.Optional, " + "Gson -> Jackson ObjectMapper");
         noGoogleDependencies.check(allClasses);
     }
 
@@ -240,13 +244,28 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testJavaxActivationExclusion() {
+        var javaxActivationUsageRule = noClasses().should().dependOnClassesThat().resideInAnyPackage("javax.activation..")
+                .because("javax.activation is an outdated library, please use an alternative.");
+        var result = javaxActivationUsageRule.evaluate(allClasses);
+        assertThat(result.getFailureReport().getDetails()).hasSize(0);
+    }
+
+    @Test
     void testGsonExclusion() {
-        // TODO: Replace all uses of gson with Jackson and check that gson is not used any more
         var gsonUsageRule = noClasses().should().accessClassesThat().resideInAnyPackage("com.google.gson..").because("we use an alternative JSON parsing library.");
         var result = gsonUsageRule.evaluate(allClasses);
-        log.info("Current number of Gson usages: {}", result.getFailureReport().getDetails().size());
-        // TODO: reduce the following number to 0
-        assertThat(result.getFailureReport().getDetails()).hasSizeLessThanOrEqualTo(664);
+        log.debug("Current number of Gson usages: {}", result.getFailureReport().getDetails().size());
+        assertThat(result.getFailureReport().getDetails()).hasSize(0);
+    }
+
+    @Test
+    void testGuavaExclusion() {
+        var guavaUsageRule = noClasses().should().accessClassesThat().resideInAnyPackage("com.google.common..")
+                .because("Guava is not allowed. Use standard Java or Spring alternatives instead.");
+        var result = guavaUsageRule.evaluate(allClasses);
+        log.debug("Current number of Guava usages: {}", result.getFailureReport().getDetails().size());
+        assertThat(result.getFailureReport().getDetails()).hasSize(0);
     }
 
     /**
