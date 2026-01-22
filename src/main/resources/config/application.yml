@@ -140,7 +140,10 @@ artemis:
         url: # Set this in production environment (e.g., https://nebula.example.com)
         secret-token: # Set this in production environment
 
+    # Iris / Pyris configuration for AI-powered features
     iris:
+        url: # Set this in production environment (e.g., https://pyris.example.com)
+        secret-token: # Set this in production environment
         ratelimit:
             # Use -1 for both values to indicate unlimited (no rate limiting)
             # Otherwise: default-limit >= 0 (0 = no requests allowed), default-timeframe-hours >= 1

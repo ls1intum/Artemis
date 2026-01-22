@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { PROFILE_IRIS, addPublicFilePrefix } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS, addPublicFilePrefix } from 'app/app.constants';
 import { downloadStream } from 'app/shared/util/download.util';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -97,7 +97,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     informationBoxData: InformationBox[] = [];
 
     ngOnInit(): void {
-        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+        this.irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
 
         // As defined in courses.route.ts, the courseId is in the grand parent route of the lectureId route.
         const grandParentRoute = this.activatedRoute.parent?.parent;

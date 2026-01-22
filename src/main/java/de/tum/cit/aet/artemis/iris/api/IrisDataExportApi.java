@@ -1,13 +1,12 @@
 package de.tum.cit.aet.artemis.iris.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.util.List;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 
@@ -16,7 +15,7 @@ import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
  * Provides access to all chat sessions and messages for a user.
  */
 @Controller
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 @Lazy
 public class IrisDataExportApi extends AbstractIrisApi {
 

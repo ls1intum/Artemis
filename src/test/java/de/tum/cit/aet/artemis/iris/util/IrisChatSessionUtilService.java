@@ -1,15 +1,13 @@
 package de.tum.cit.aet.artemis.iris.util;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
@@ -17,11 +15,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
  * Utility service for creating Iris chat session test data.
- * Only available when both test and iris profiles are active.
+ * Only available when both test profile is active and Iris is enabled.
  */
 @Lazy
 @Service
-@Profile(SPRING_PROFILE_TEST + " & " + PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 public class IrisChatSessionUtilService {
 
     @Autowired
