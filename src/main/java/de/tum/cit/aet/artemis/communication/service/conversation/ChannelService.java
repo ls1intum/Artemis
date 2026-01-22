@@ -22,8 +22,11 @@ import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.DefaultChannelType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
+import de.tum.cit.aet.artemis.communication.dto.ExerciseCommunicationDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
+import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.errors.ChannelNameDuplicateException;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -54,13 +57,20 @@ public class ChannelService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final PostRepository postRepository;
+
+    private final AnswerPostRepository answerPostRepository;
+
     public ChannelService(ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository, ConversationService conversationService,
-            UserRepository userRepository, StudentParticipationRepository studentParticipationRepository) {
+            UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, PostRepository postRepository,
+            AnswerPostRepository answerPostRepository) {
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.channelRepository = channelRepository;
         this.conversationService = conversationService;
         this.userRepository = userRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.postRepository = postRepository;
+        this.answerPostRepository = answerPostRepository;
     }
 
     /**
@@ -499,6 +509,26 @@ public class ChannelService {
         }
 
         return createdChannel;
+    }
+
+    /**
+     * Get a summary of the communication deletion for an exercise.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the summary of the communication deletion for the exercise
+     */
+    public ExerciseCommunicationDeletionSummaryDTO getExerciseCommunicationDeletionSummary(Long exerciseId) {
+        long numberOfCommunicationPosts = 0;
+        long numberOfAnswerPosts = 0;
+
+        final Channel channel = channelRepository.findChannelByExerciseId(exerciseId);
+        if (channel != null) {
+            long conversationId = channel.getId();
+            numberOfCommunicationPosts = postRepository.countByConversationId(conversationId);
+            numberOfAnswerPosts = answerPostRepository.countByConversationId(conversationId);
+        }
+
+        return new ExerciseCommunicationDeletionSummaryDTO(numberOfCommunicationPosts, numberOfAnswerPosts);
     }
 
     public void deleteChannelForExerciseId(long exerciseId) {
