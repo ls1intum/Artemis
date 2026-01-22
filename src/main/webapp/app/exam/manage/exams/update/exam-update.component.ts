@@ -3,9 +3,9 @@ import dayjs from 'dayjs/esm';
 import { omit } from 'lodash-es';
 import { combineLatest, takeWhile } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, inject, viewChild, viewChildren } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -30,6 +30,7 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -49,6 +50,7 @@ import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/b
         MarkdownEditorMonacoComponent,
         ArtemisTranslatePipe,
         ButtonComponent,
+        ConfirmEntityNameComponent,
     ],
 })
 export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -79,7 +81,12 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
 
     private originalEndDate?: dayjs.Dayjs;
 
+    private activeModalRef: NgbModalRef | null = null;
+
     private componentActive = true;
+
+    confirmEntityNameValue = signal('');
+
     // Link to the component enabling the selection of exercise groups and exercises for import
     examExerciseImportComponent = viewChild.required(ExamExerciseImportComponent);
 
@@ -257,13 +264,31 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
         const datesChanged = !(this.exam.startDate?.isSame(this.originalStartDate) && this.exam.endDate?.isSame(this.originalEndDate));
 
         if (datesChanged && this.isOngoingExam) {
+            this.confirmEntityNameValue.set('');
             const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
+            this.activeModalRef = modalRef;
             modalRef.componentInstance.title = 'artemisApp.examManagement.dateChange.title';
             modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.examManagement.dateChange.message');
             modalRef.componentInstance.contentRef = this.workingTimeConfirmationContent();
+            modalRef.componentInstance.confirmDisabled = true;
             modalRef.result.then(this.save.bind(this));
         } else {
             this.save();
+        }
+    }
+
+    /**
+     * Updates the confirmation state of the date change modal.
+     * The confirm action is only enabled when:
+     * - an entered value exists
+     * - the exam title is defined
+     * - the entered value exactly matches the exam title
+     */
+    onConfirmNameChange(value: string) {
+        this.confirmEntityNameValue.set(value);
+        if (this.activeModalRef) {
+            const confirmDisabled = !value || !this.exam.title || value !== this.exam.title;
+            this.activeModalRef.componentInstance.confirmDisabled = confirmDisabled;
         }
     }
 
