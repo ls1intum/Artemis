@@ -238,7 +238,8 @@ def extract_balanced(s: str, open_idx: int, open_ch: str = '(', close_ch: str = 
         if in_block_comment:
             if ch == '*' and nxt == '/':
                 in_block_comment = False
-                out.append(ch); out.append(nxt)
+                out.append(ch);
+                out.append(nxt)
                 i += 2
                 continue
             out.append(ch)
@@ -248,12 +249,14 @@ def extract_balanced(s: str, open_idx: int, open_ch: str = '(', close_ch: str = 
         # start comments (only if not in string)
         if not in_str and ch == '/' and nxt == '/':
             in_line_comment = True
-            out.append(ch); out.append(nxt)
+            out.append(ch);
+            out.append(nxt)
             i += 2
             continue
         if not in_str and ch == '/' and nxt == '*':
             in_block_comment = True
-            out.append(ch); out.append(nxt)
+            out.append(ch);
+            out.append(nxt)
             i += 2
             continue
 
