@@ -12,10 +12,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
-import de.tum.cit.aet.artemis.communication.repository.PostRepository;
-import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.communication.dto.ExerciseCommunicationDeletionSummaryDTO;
+import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
@@ -50,17 +48,12 @@ public class ProgrammingExerciseDeletionService {
 
     private final BuildJobRepository buildJobRepository;
 
-    private final ChannelRepository channelRepository;
-
-    private final PostRepository postRepository;
-
-    private final AnswerPostRepository answerPostRepository;
+    private final ChannelService channelService;
 
     public ProgrammingExerciseDeletionService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseRepository programmingExerciseRepository, ParticipationDeletionService participationDeletionService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, InstanceMessageSendService instanceMessageSendService,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, BuildJobRepository buildJobRepository, ChannelRepository channelRepository,
-            PostRepository postRepository, AnswerPostRepository answerPostRepository) {
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, BuildJobRepository buildJobRepository, ChannelService channelService) {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationDeletionService = participationDeletionService;
@@ -68,9 +61,7 @@ public class ProgrammingExerciseDeletionService {
         this.instanceMessageSendService = instanceMessageSendService;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.buildJobRepository = buildJobRepository;
-        this.channelRepository = channelRepository;
-        this.postRepository = postRepository;
-        this.answerPostRepository = answerPostRepository;
+        this.channelService = channelService;
     }
 
     /**
@@ -141,7 +132,7 @@ public class ProgrammingExerciseDeletionService {
     }
 
     /**
-     * Get a summary of the deletion of a programming exercise.
+     * Get a summary for the deletion of a programming exercise.
      *
      * @param exerciseId the id of the programming exercise
      * @return the summary of the deletion of the programming exercise
@@ -150,16 +141,9 @@ public class ProgrammingExerciseDeletionService {
         final long numberOfStudentParticipations = programmingExerciseRepository.countStudentParticipationsByExerciseId(exerciseId);
         final long numberOfBuilds = buildJobRepository.countBuildJobsByExerciseIds(Set.of(exerciseId));
 
-        long numberOfCommunicationPosts = 0;
-        long numberOfAnswerPosts = 0;
+        final ExerciseCommunicationDeletionSummaryDTO exerciseCommunicationDeletionSummary = channelService.getExerciseCommunicationDeletionSummary(exerciseId);
 
-        final Channel channel = channelRepository.findChannelByExerciseId(exerciseId);
-        if (channel != null) {
-            long conversationId = channel.getId();
-            numberOfCommunicationPosts = postRepository.countByConversationId(conversationId);
-            numberOfAnswerPosts = answerPostRepository.countByConversationId(conversationId);
-        }
-
-        return new ProgrammingExerciseDeletionSummaryDTO(numberOfStudentParticipations, numberOfBuilds, numberOfCommunicationPosts, numberOfAnswerPosts);
+        return new ProgrammingExerciseDeletionSummaryDTO(numberOfStudentParticipations, numberOfBuilds, exerciseCommunicationDeletionSummary.numberOfCommunicationPosts(),
+                exerciseCommunicationDeletionSummary.numberOfAnswerPosts());
     }
 }

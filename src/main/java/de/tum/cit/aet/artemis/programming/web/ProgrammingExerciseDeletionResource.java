@@ -163,7 +163,7 @@ public class ProgrammingExerciseDeletionResource {
     }
 
     /**
-     * GET /programming-exercises/:exerciseId/deletion-summary : Get a summary of the deletion of a programming exercise.
+     * GET /programming-exercises/:exerciseId/deletion-summary : Get a summary for the deletion of a programming exercise.
      *
      * @param exerciseId the id of the programming exercise
      * @return the {@link ResponseEntity} with status {@code 200} and with body a summary of the deletion of the programming exercise

@@ -70,6 +70,7 @@ import de.tum.cit.aet.artemis.exercise.service.SubmissionExportService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.dto.ModelingExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.modeling.dto.UpdateModelingExerciseDTO;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseImportService;
@@ -388,6 +389,19 @@ public class ModelingExerciseResource {
         exerciseService.logDeletion(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseDeletionService.delete(exerciseId, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, modelingExercise.getTitle())).build();
+    }
+
+    /**
+     * GET /modeling-exercises/:exerciseId/deletion-summary : Get a summary for the deletion of a modeling exercise.
+     *
+     * @param exerciseId the id of the modeling exercise
+     * @return the {@link ResponseEntity} with status {@code 200} and with body a summary of the deletion of the modeling exercise
+     */
+    @GetMapping("modeling-exercises/{exerciseId}/deletion-summary")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<ModelingExerciseDeletionSummaryDTO> getDeletionSummary(@PathVariable long exerciseId) {
+        log.debug("REST request to get deletion summary for modeling exercise : {}", exerciseId);
+        return ResponseEntity.ok(modelingExerciseService.getDeletionSummary(exerciseId));
     }
 
     /**
