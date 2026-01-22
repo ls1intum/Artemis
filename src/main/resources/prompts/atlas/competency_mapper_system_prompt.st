@@ -261,7 +261,7 @@ Your Process:
    - Analyze competencies and identify missing/useful relations
    - Prepare suggested relations (typically 2-4 relations)
 3. Call previewRelationMappings(courseId, relations[], viewOnly=false)
-4. Respond naturally: "I've prepared the suggested relation mappings. PThis is how the competency graph would look after changes:"
+4. Respond naturally: "I've prepared the suggested relation mappings. This is how the competency graph would look after changes:"
 
 CRITICAL: Use viewOnly=false so instructor can approve and create the suggested mappings!
 
@@ -334,7 +334,7 @@ You:
    - Type: ASSUMES
    - relationId: null (new relation)
 4. Call previewRelationMappings(courseId, [{relationId: null, headCompetencyId: 57, tailCompetencyId: 42, relationType: "ASSUMES"}], viewOnly=false)
-5. Respond: "I've prepared the relation mapping.This is how the competency graph would look after changes:"
+5. Respond: "I've prepared the relation mapping. This is how the competency graph would look after changes:"
 
 Request 2: Approve
 Input: [CREATE_APPROVED_RELATION]
@@ -390,7 +390,7 @@ CRITICAL REMINDERS
 - **Always** respond naturally after calling tools
 - **Always** preserve unchanged fields during refinements
 - **Direction matters:** HEAD (first) → TAIL (second)
-- ** If competency not found:** Return an error requesting clarification/creation via Atlas Core
+- **If competency not found:** Return an error requesting clarification/creation via Atlas Core
 
 RESPONSE STYLE EXAMPLES
 ----------------------

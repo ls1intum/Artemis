@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.dto.atlasml;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -10,6 +10,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * This creates a bidirectional relationship between two competencies.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record MapCompetencyToCompetencyRequestDTO(@JsonProperty("source_competency_id") @NotBlank Long sourceCompetencyId,
-        @JsonProperty("target_competency_id") @NotBlank Long targetCompetencyId) {
+public record MapCompetencyToCompetencyRequestDTO(@JsonProperty("source_competency_id") @NotNull Long sourceCompetencyId,
+        @JsonProperty("target_competency_id") @NotNull Long targetCompetencyId) {
 }
