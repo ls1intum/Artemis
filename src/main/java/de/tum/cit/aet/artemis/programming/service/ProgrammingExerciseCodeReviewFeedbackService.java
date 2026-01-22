@@ -126,8 +126,8 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         var automaticResult = this.submissionService.saveNewEmptyResult(submission);
         automaticResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         automaticResult.setRated(true);
-        if (submission.getFirstResult().getScore() != null) {
-            automaticResult.setScore(submission.getFirstResult().getScore());
+        if (submission.getLatestResult().getScore() != null) {
+            automaticResult.setScore(submission.getLatestResult().getScore());
         }
         else {
             automaticResult.setScore(0.0);
