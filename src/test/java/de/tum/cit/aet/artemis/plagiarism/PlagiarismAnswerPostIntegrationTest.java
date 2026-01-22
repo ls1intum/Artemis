@@ -82,8 +82,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         String raw = createdAnswerPost.toString();
         assertThat(raw).doesNotContain("email");
         assertThat(raw).doesNotContain("registrationNumber");
-        assertThat(raw).doesNotContain("\"login\"");
-        // should not be automatically post resolving
+        assertThat(raw).doesNotContain("login");
         assertThat(createdAnswerPost.resolvesPost()).isFalse();
         AnswerPost persistedAnswerPost = answerPostRepository.findAnswerPostByIdElseThrow(createdAnswerPost.id());
         checkCreatedAnswerPost(answerPostToSave, persistedAnswerPost);
