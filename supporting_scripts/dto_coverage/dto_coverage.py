@@ -75,8 +75,12 @@ def collect_import_map(text: str) -> Dict[str,str]:
 
 def resolve_full_names(simple: List[str], imports: Dict[str, str], current_pkg: Optional[str]) -> List[str]:
     out = []
+    java_lang = {
+            "String","Object","Integer","Long","Short","Byte","Boolean",
+            "Character","Double","Float","Void","Class","Enum","Record"
+    }
     for name in simple:
-        if name in JAVA_FRAMEWORK:
+        if name in JAVA_FRAMEWORK or name in java_lang:
             out.append(name)
             continue
 
@@ -135,9 +139,10 @@ def iter_endpoints(text: str) -> List[Tuple[str, str, str, str]]:
         if open_paren_idx < 0 or text[open_paren_idx] != '(':
             # Safety fallback
             continue
-
-        params, close_paren_idx = extract_balanced(text, open_paren_idx)
-
+        try:
+            params, close_paren_idx = extract_balanced(text, open_paren_idx)
+        except ValueError:
+            continue
         # method_sig: just keep a short signature text for debugging
         sig_start = mh.start()
         sig_end = min(close_paren_idx + 1, len(text))
@@ -322,7 +327,7 @@ def main():
 
         module = find_module_name(jfile, root, args.module_strategy, args.base_package)
 
-        for mapping_anno, sig, ret_type, params_str in endpoints:
+        for mapping_anno, _sig, ret_type, params_str in endpoints:
             ret_full = resolve_full_names(split_generic_parts(ret_type), imports, current_pkg)
 
             body_params_types: List[str] = []
@@ -331,7 +336,8 @@ def main():
                     continue  # only body payloads contribute to classification
                 p_full_all = resolve_full_names(split_generic_parts(ptype), imports, current_pkg)
                 rep = next((t for t in reversed(p_full_all) if t not in JAVA_FRAMEWORK), p_full_all[-1] if p_full_all else '')
-                if rep: body_params_types.append(rep)
+                if rep:
+                    body_params_types.append(rep)
 
             classification = classify_endpoint(ret_full, body_params_types, dto_hints, entity_hints)
 
