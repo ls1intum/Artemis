@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
  * Utility service for creating Iris chat session test data.
- * Only available when both test profile is active and Iris is enabled.
+ * Only available when Iris is enabled via the artemis.iris.enabled property.
  */
 @Lazy
 @Service

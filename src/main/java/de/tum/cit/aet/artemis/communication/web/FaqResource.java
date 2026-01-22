@@ -14,7 +14,6 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -45,7 +44,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 
 /**
  * REST controller for managing Faqs.
@@ -245,7 +243,6 @@ public class FaqResource {
      * @param faqId    If this id is present then only ingest this one faq of the respective course
      * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
      */
-    @Conditional(IrisEnabled.class)
     @PostMapping("courses/{courseId}/faqs/ingest")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> ingestFaqInIris(@PathVariable long courseId, @RequestParam(required = false) Optional<Long> faqId) {
