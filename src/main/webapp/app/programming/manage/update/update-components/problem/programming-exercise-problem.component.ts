@@ -205,7 +205,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         const normalizedProblemStatement = this.normalizeString(problemStatement);
         const normalizedTemplate = this.normalizeString(template);
 
-        return !!(normalizedTemplate && normalizedProblemStatement === normalizedTemplate);
+        return normalizedTemplate !== '' && normalizedProblemStatement === normalizedTemplate;
     });
 
     /**
@@ -242,9 +242,18 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                     if (response.draftProblemStatement && exercise) {
                         const draftContent = response.draftProblemStatement;
                         const editorComponent = this.editableInstructions();
+                        const monacoEditor = editorComponent?.markdownEditorMonaco?.monacoEditor;
 
-                        // Try to update the editor first
-                        const editorUpdated = editorComponent?.markdownEditorMonaco?.monacoEditor?.setText(draftContent);
+                        // Try to update the editor first with explicit success detection
+                        let editorUpdated = false;
+                        if (monacoEditor) {
+                            try {
+                                monacoEditor.setText(draftContent);
+                                editorUpdated = true;
+                            } catch {
+                                editorUpdated = false;
+                            }
+                        }
 
                         // Always update the model/state
                         exercise.problemStatement = draftContent;
