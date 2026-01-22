@@ -314,15 +314,11 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
      * Closes the diff view. In live-synced mode, changes are already applied.
      * The user can use Monaco's inline revert buttons to undo specific hunks.
      */
-    /**
-     * Closes the diff view. In live-synced mode, changes are already applied.
-     * The user can use Monaco's inline revert buttons to undo specific hunks.
-     */
     closeDiffView(): void {
         const exercise = this.programmingExercise();
         // Get the current content from the editor (already synced)
         const currentContent = this.editableInstructions()?.getCurrentContent();
-        if (exercise && currentContent) {
+        if (exercise && currentContent != null) {
             exercise.problemStatement = currentContent;
             this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
             this.problemStatementChange.emit(currentContent);
