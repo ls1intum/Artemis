@@ -747,7 +747,7 @@
             "announcementCreate": {
                 "button": "Create Announcement",
                 "title": "Make Live Exam Announcement",
-                "task": "Enter your announcement below. You can use Markdown text formatting.",
+                "task": "Enter your announcement below.",
                 "preview": "Preview",
                 "sendButton": "Send Announcement",
                 "sending": "Sending announcement...",
