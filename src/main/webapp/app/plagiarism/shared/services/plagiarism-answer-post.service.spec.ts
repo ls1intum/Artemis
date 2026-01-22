@@ -59,7 +59,6 @@ describe('Plagiarism Answer Post Service', () => {
 
         const dto: PlagiarismAnswerPostCreationDTO = {
             postId: 5,
-            // intentionally omit optional fields
         };
 
         const returnedFromService = {

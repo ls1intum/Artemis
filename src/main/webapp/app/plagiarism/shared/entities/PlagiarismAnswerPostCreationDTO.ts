@@ -2,7 +2,7 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 
 export type PlagiarismAnswerPostCreationDTO = {
     id?: number;
-    content: string;
+    content?: string;
     postId: number;
     resolvesPost?: boolean;
     hasForwardedMessages?: boolean;
