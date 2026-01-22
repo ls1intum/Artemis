@@ -337,11 +337,6 @@ public final class Constants {
     public static final String PROFILE_LDAP = "ldap";
 
     /**
-     * The name of the Spring profile used for activating LTI in Artemis, see {@link de.tum.cit.aet.artemis.lti.web.LtiResource}.
-     */
-    public static final String PROFILE_LTI = "lti";
-
-    /**
      * The name of the Spring profile used for activating SAML2 in Artemis, see {@link de.tum.cit.aet.artemis.core.service.connectors.SAML2Service}.
      */
     public static final String PROFILE_SAML2 = "saml2";
@@ -362,11 +357,6 @@ public final class Constants {
      * NOTE: secondary nodes should only use PROFILE_CORE
      */
     public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
-
-    /**
-     * Profile combination for one primary node, where LTI AND scheduling is active
-     */
-    public static final String PROFILE_LTI_AND_SCHEDULING = PROFILE_LTI + " & " + PROFILE_SCHEDULING;
 
     /**
      * The name of the Spring profile used for Theia as an external online IDE.

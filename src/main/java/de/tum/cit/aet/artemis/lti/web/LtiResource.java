@@ -212,6 +212,10 @@ public class LtiResource {
     @GetMapping("courses/for-lti-dashboard")
     @EnforceAtLeastInstructor
     public ResponseEntity<Set<OnlineCourseDTO>> findAllOnlineCoursesForLtiDashboard(@RequestParam("clientId") String clientId) {
+        if (clientId == null || clientId.isBlank()) {
+            throw new BadRequestAlertException("clientId must not be blank", "LTI", "clientIdBlank");
+        }
+        clientId = clientId.trim();
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all online courses the user {} has access to", user.getLogin());
 
