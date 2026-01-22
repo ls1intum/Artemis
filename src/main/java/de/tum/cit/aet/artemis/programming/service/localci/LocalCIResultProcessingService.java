@@ -257,7 +257,7 @@ public class LocalCIResultProcessingService {
             else {
                 log.warn("Participation with id {} has been deleted. Cancelling the processing of the build result.", buildJob.participationId());
                 // Still save the build job even if participation is missing
-                BuildStatus status = determineBuildStatus(buildException);
+                BuildStatus status = determineBuildStatus(buildResult, buildException);
                 addResultToBuildJob(buildJob, status, null);
             }
         }
@@ -271,8 +271,8 @@ public class LocalCIResultProcessingService {
             }
 
             // Build job is already saved in getOrCreateResultForSubmission or in the else block above
-            // Just update build duration statistics for successful builds
-            if (buildException == null && programmingExerciseParticipation != null) {
+            // Just update build duration statistics for successful builds (only if build actually succeeded)
+            if (buildException == null && buildResult != null && buildResult.isBuildSuccessful() && programmingExerciseParticipation != null) {
                 updateExerciseBuildDurationAsync(programmingExerciseParticipation.getProgrammingExercise().getId());
             }
 
@@ -441,12 +441,13 @@ public class LocalCIResultProcessingService {
     }
 
     /**
-     * Determines the build status based on the exception.
+     * Determines the build status based on the build result and exception.
      *
+     * @param buildResult    the build result
      * @param buildException the exception that occurred during the build
      * @return the build status
      */
-    private BuildStatus determineBuildStatus(Throwable buildException) {
+    private BuildStatus determineBuildStatus(BuildResult buildResult, Throwable buildException) {
         if (buildException != null) {
             if (buildException.getCause() instanceof CancellationException && buildException.getMessage().contains("was cancelled")) {
                 return BuildStatus.CANCELLED;
@@ -457,6 +458,10 @@ public class LocalCIResultProcessingService {
             else {
                 return BuildStatus.FAILED;
             }
+        }
+        // Check if the build itself was successful (Gradle/Maven succeeded)
+        if (buildResult != null && !buildResult.isBuildSuccessful()) {
+            return BuildStatus.FAILED;
         }
         return BuildStatus.SUCCESSFUL;
     }
