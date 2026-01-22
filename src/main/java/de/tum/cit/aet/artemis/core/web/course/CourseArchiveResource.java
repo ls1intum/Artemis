@@ -167,7 +167,7 @@ public class CourseArchiveResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all inactive courses from previous semesters user {} has access to", user.getLogin());
         Set<CourseForArchiveDTO> courses = courseArchiveService.getAllCoursesForCourseArchive();
-        log.debug("courseService.getAllCoursesForCourseArchive done");
+        log.debug("courseService.getCoursesForArchive done");
 
         log.info("GET /courses/for-archive took {} for {} courses for user {}", TimeLogUtil.formatDurationFrom(start), courses.size(), user.getLogin());
         return ResponseEntity.ok(courses);

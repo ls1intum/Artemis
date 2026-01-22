@@ -12,10 +12,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.cit.aet.artemis.programming.service.PlantUmlService;
 import net.sourceforge.plantuml.SourceStringReader;
 import net.sourceforge.plantuml.core.DiagramDescription;
 
@@ -30,6 +32,28 @@ class PlantUmlIntegrationTest extends AbstractProgrammingIntegrationIndependentT
     private static final DiagramDescription description = new DiagramDescription(UML_SVG);
 
     private final byte[] UML_PNG = new byte[] { 3, 4, 2, 1 };
+
+    /**
+     * A simple but valid PlantUML class diagram for testing actual rendering.
+     * This diagram must be renderable by PlantUML without errors.
+     * Uses Smetana layout engine to avoid dependency on external Graphviz installation.
+     */
+    private static final String VALID_PLANTUML_DIAGRAM = """
+            @startuml
+            !pragma layout smetana
+            class Student {
+                +name: String
+                +getId(): int
+            }
+            class Course {
+                +title: String
+            }
+            Student --> Course
+            @enduml
+            """;
+
+    @Autowired
+    private PlantUmlService plantUmlService;
 
     @BeforeEach
     void setUp() {
@@ -80,5 +104,56 @@ class PlantUmlIntegrationTest extends AbstractProgrammingIntegrationIndependentT
         var veryLongString = new String(new char[10001]).replace('\0', 'a');
         paramMap.setAll(Map.of("plantuml", veryLongString));
         request.get("/api/programming/plantuml/svg", HttpStatus.INTERNAL_SERVER_ERROR, String.class, paramMap);
+    }
+
+    /**
+     * Tests that PlantUML can actually render a diagram with the light theme applied.
+     * This test does NOT mock the PlantUML rendering and will fail if:
+     * - The theme files cannot be loaded
+     * - PlantUML cannot process the theme (e.g., security profile issues)
+     * - The theme syntax is invalid
+     */
+    @Test
+    void generateSvg_withLightTheme_actualRendering() throws Exception {
+        String svg = plantUmlService.generateSvg(VALID_PLANTUML_DIAGRAM, false);
+
+        assertThat(svg).as("SVG output should not be empty").isNotEmpty();
+        assertThat(svg).as("Output should be valid SVG").contains("<svg");
+        assertThat(svg).as("SVG should contain the class name from diagram").contains("Student");
+        assertThat(svg).as("Output should not contain PlantUML error markers").doesNotContain("Syntax Error");
+    }
+
+    /**
+     * Tests that PlantUML can actually render a diagram with the dark theme applied.
+     * This test does NOT mock the PlantUML rendering and will fail if:
+     * - The theme files cannot be loaded
+     * - PlantUML cannot process the theme (e.g., security profile issues)
+     * - The theme syntax is invalid
+     */
+    @Test
+    void generateSvg_withDarkTheme_actualRendering() throws Exception {
+        String svg = plantUmlService.generateSvg(VALID_PLANTUML_DIAGRAM, true);
+
+        assertThat(svg).as("SVG output should not be empty").isNotEmpty();
+        assertThat(svg).as("Output should be valid SVG").contains("<svg");
+        assertThat(svg).as("SVG should contain the class name from diagram").contains("Student");
+        assertThat(svg).as("Output should not contain PlantUML error markers").doesNotContain("Syntax Error");
+    }
+
+    /**
+     * Tests that PlantUML can actually render a PNG with theme applied.
+     * This test does NOT mock the PlantUML rendering and validates that
+     * the output is a valid PNG file (starts with PNG magic bytes).
+     */
+    @Test
+    void generatePng_withTheme_actualRendering() throws Exception {
+        byte[] png = plantUmlService.generatePng(VALID_PLANTUML_DIAGRAM, false);
+
+        assertThat(png).as("PNG output should not be empty").isNotEmpty();
+        // PNG files start with magic bytes: 0x89 0x50 0x4E 0x47 (‰PNG)
+        assertThat(png[0]).as("PNG should start with correct magic byte").isEqualTo((byte) 0x89);
+        assertThat(png[1]).as("PNG should have 'P' as second byte").isEqualTo((byte) 0x50);
+        assertThat(png[2]).as("PNG should have 'N' as third byte").isEqualTo((byte) 0x4E);
+        assertThat(png[3]).as("PNG should have 'G' as fourth byte").isEqualTo((byte) 0x47);
     }
 }
