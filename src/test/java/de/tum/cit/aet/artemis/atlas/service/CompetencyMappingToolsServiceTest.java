@@ -88,10 +88,6 @@ class CompetencyMappingToolsServiceTest {
         CompetencyMappingToolsService.clearCurrentSessionId();
     }
 
-    // -------------------------------------------------------------------------
-    // getCourseCompetencies
-    // -------------------------------------------------------------------------
-
     @Test
     void getCourseCompetencies_returnsCompetencies() throws Exception {
         when(courseTestRepository.findById(123L)).thenReturn(Optional.of(course));
@@ -111,10 +107,6 @@ class CompetencyMappingToolsServiceTest {
 
         assertThat(json.get("error").asText()).contains("Course not found");
     }
-
-    // -------------------------------------------------------------------------
-    // previewRelationMappings
-    // -------------------------------------------------------------------------
 
     @Test
     void preview_singleRelation_createsSinglePreview() {
@@ -142,10 +134,6 @@ class CompetencyMappingToolsServiceTest {
         verify(atlasAgentService, never()).cacheRelationOperations(123L + "", List.of(new CompetencyRelationDTO(null, 1L, 2L, RelationType.ASSUMES)));
     }
 
-    // -------------------------------------------------------------------------
-    // saveRelationMappings
-    // -------------------------------------------------------------------------
-
     @Test
     void saveRelationMappings_createsRelation() throws Exception {
         when(courseTestRepository.findById(123L)).thenReturn(Optional.of(course));
@@ -171,10 +159,6 @@ class CompetencyMappingToolsServiceTest {
         assertThat(json.get("success").asBoolean()).isFalse();
         assertThat(json.get("failed").asInt()).isEqualTo(1);
     }
-
-    // -------------------------------------------------------------------------
-    // suggestRelationMappingsUsingML
-    // -------------------------------------------------------------------------
 
     @Test
     void suggestRelations_happyPath() throws Exception {
