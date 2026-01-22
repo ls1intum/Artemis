@@ -45,7 +45,7 @@ import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exe
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { Detail, ProgrammingDiffReportDetail } from 'app/shared/detail-overview-list/detail.model';
@@ -766,6 +766,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         if (exercise.buildConfig && getDefaultContainerConfig(exercise.buildConfig).buildPlanConfiguration && !getDefaultContainerConfig(exercise.buildConfig).windfile) {
             getDefaultContainerConfig(exercise.buildConfig!).windfile = this.aeolusService.parseWindFile(getDefaultContainerConfig(exercise.buildConfig).buildPlanConfiguration!);
         }
+    }
+
+    fetchExerciseDeletionSummary(): Observable<EntitySummary> {
+        return this.programmingExerciseService.getDeletionSummary(this.programmingExercise.id!);
     }
 
     /**

@@ -160,8 +160,8 @@
                 },
                 "TutorSuggestions": {
                     "name": "AI Tutor Suggestions",
-                    "description": "Uses the Athena service to suggest feedback and grading for tutors during manual assessment of text and programming exercises.",
-                    "disableWarning": "Tutors will not receive AI-assisted suggestions from Athena during assessment."
+                    "description": "Uses Iris to suggest answers for tutors when responding to student questions in the communication module.",
+                    "disableWarning": "Tutors will not receive AI-assisted answer suggestions from Iris in the communication module."
                 },
                 "AtlasML": {
                     "name": "Atlas Machine Learning",
@@ -182,6 +182,11 @@
                     "name": "Lecture Video Processing",
                     "description": "Uses Nebula to automatically generate transcriptions from lecture videos and sends them to Pyris/Iris, enabling AI assistants to answer questions about lecture content and provide more accurate, content-aware responses.",
                     "disableWarning": "Lecture videos will not be transcribed by Nebula and Iris will not be able to reference lecture content in its responses."
+                },
+                "RateLimit": {
+                    "name": "API Rate Limiting",
+                    "description": "Protects the application from abuse and overload by limiting the number of specific API requests per user within a given time period.",
+                    "disableWarning": "Specific API endpoints are not protected by rate limiting, which can lead to potential abuse or overload."
                 }
             }
         }

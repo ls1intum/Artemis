@@ -18,6 +18,8 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
+import de.tum.cit.aet.artemis.core.dto.ComponentVulnerabilitiesDTO;
 
 /**
  * Service for preparing and sending emails.
@@ -44,6 +46,12 @@ public class MailService {
     private static final String BUILD_AGENT_NAME = "buildAgentName";
 
     private static final String CONSECUTIVE_BUILD_FAILURES = "consecutiveBuildFailures";
+
+    private static final String VULNERABILITIES = "vulnerabilities";
+
+    private static final String VERSION_INFO = "versionInfo";
+
+    private static final String SHOULD_RECOMMEND_UPGRADE = "shouldRecommendUpgrade";
 
     @Value("${server.url}")
     private URL artemisServerUrl;
@@ -155,5 +163,23 @@ public class MailService {
         context.setVariable(BUILD_AGENT_NAME, buildAgentName);
         context.setVariable(CONSECUTIVE_BUILD_FAILURES, consecutiveBuildFailures);
         prepareTemplateAndSendEmail(admin, "mail/buildAgentSelfPausedEmail", "email.buildAgent.SelfPaused.title", context);
+    }
+
+    /**
+     * Sends an email to admin users with the results of the weekly vulnerability scan.
+     *
+     * @param admin                  the admin user to notify
+     * @param vulnerabilities        the vulnerability scan results
+     * @param versionInfo            the Artemis version information
+     * @param shouldRecommendUpgrade whether to recommend upgrading due to high/critical vulnerabilities and available update
+     */
+    public void sendVulnerabilityScanResultEmail(User admin, ComponentVulnerabilitiesDTO vulnerabilities, ArtemisVersionDTO versionInfo, boolean shouldRecommendUpgrade) {
+        log.debug("Sending vulnerability scan result email to admin email address '{}'", admin.getEmail());
+        Locale locale = Locale.forLanguageTag(admin.getLangKey());
+        Context context = createBaseContext(admin, locale);
+        context.setVariable(VULNERABILITIES, vulnerabilities);
+        context.setVariable(VERSION_INFO, versionInfo);
+        context.setVariable(SHOULD_RECOMMEND_UPGRADE, shouldRecommendUpgrade);
+        prepareTemplateAndSendEmail(admin, "mail/vulnerabilityScanResultEmail", "email.vulnerabilityScan.title", context);
     }
 }

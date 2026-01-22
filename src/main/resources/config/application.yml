@@ -73,7 +73,7 @@ artemis:
                 java:
                     # possible overrides: maven, gradle
                     default: "ls1tum/artemis-maven-template:java17-25"
-                    maven_blackbox: "ghcr.io/uni-passau-artemis/artemis-dejagnu:22"
+                    maven_blackbox: "ghcr.io/uni-passau-artemis/artemis-dejagnu:25"
                 kotlin:
                     # possible overrides: maven, gradle
                     default: "ls1tum/artemis-maven-template:java17-25"
@@ -382,7 +382,9 @@ jhipster:
         password: AN-ADMIN-PASSWORD-THAT-MUST-BE-CHANGED (FROM REGISTRY CONFIG)
     http:
         cache: # Used by the CachingHttpHeadersFilter
-            timeToLiveInDays: 1461
+            # 7 days balances caching benefits with allowing bug fixes to propagate within a reasonable timeframe.
+            # Longer durations (e.g., years) make it difficult to push fixes to users who have cached broken responses.
+            timeToLiveInDays: 7
     cache: # Cache configuration
         hazelcast: # Hazelcast distributed cache
             time-to-live-seconds: 3600

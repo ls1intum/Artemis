@@ -318,6 +318,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should create sidebar item for student course analytics dashboard if the feature is active', () => {
+        component.lectureEnabled = true;
         component.course.set({ id: 123, lectures: [], exams: [], studentCourseAnalyticsDashboardEnabled: true });
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.length).toBeGreaterThan(0);
@@ -327,6 +328,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should create sidebar items with default items', () => {
+        component.lectureEnabled = true;
         component.course.set({ id: 123, lectures: [], exams: [] });
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.length).toBeGreaterThan(0);
@@ -335,6 +337,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should create sidebar items for student if questions are available for practice', () => {
+        component.lectureEnabled = true;
         component.course.set({ id: 123, lectures: [], exams: [], trainingEnabled: true });
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.length).toBeGreaterThan(0);
@@ -443,7 +446,8 @@ describe('CourseOverviewComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(router.navigate).not.toHaveBeenCalled();
+        // When user can register, component should redirect to registration page
+        expect(router.navigate).toHaveBeenCalledWith(['courses', course1.id, 'register']);
     }));
 
     it('should call load Course methods on init', async () => {
@@ -693,7 +697,8 @@ describe('CourseOverviewComponent', () => {
         findAllForDropdownSpy.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
 
         await component.ngOnInit();
-        expect(component.courses()?.length).toBe(1);
+        // When findAllForDropdown fails, courses should not be initialized
+        expect(component.courses()).toBeUndefined();
     });
 
     it('should not display current course in dropdown', async () => {

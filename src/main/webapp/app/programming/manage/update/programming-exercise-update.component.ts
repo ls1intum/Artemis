@@ -993,7 +993,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     isEventInsideTextArea(event: Event): boolean {
         if (event.target instanceof Element) {
-            return event.target.tagName === 'TEXTAREA';
+            return event.target.tagName === 'TEXTAREA' || event.target.className === 'native-edit-context';
         }
         return false;
     }
