@@ -8,7 +8,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.Optional;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -19,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
@@ -44,6 +44,9 @@ public class DataExportCreationService {
     private static final String ZIP_FILE_EXTENSION = ".zip";
 
     private static final Logger log = LoggerFactory.getLogger(DataExportCreationService.class);
+
+    @Value("${info.contact:}")
+    private String adminEmail;
 
     private final Path dataExportsPath;
 
@@ -175,12 +178,20 @@ public class DataExportCreationService {
     private void handleCreationFailure(DataExport dataExport, Exception exception) {
         dataExport.setDataExportState(DataExportState.FAILED);
         dataExport = dataExportRepository.save(dataExport);
-        Optional<User> admin = userService.findInternalAdminUser();
-        if (admin.isEmpty()) {
-            log.warn("No internal admin user found. Cannot send email to admin about data export failure.");
+
+        if (!StringUtils.hasText(adminEmail)) {
+            log.warn("Admin email (info.contact) is not configured. Cannot send email to admin about data export failure.");
             return;
         }
-        mailService.sendDataExportFailedEmailToAdmin(admin.get(), dataExport, exception);
+
+        // Create a recipient user object with the configured admin email
+        User adminRecipient = new User();
+        adminRecipient.setEmail(adminEmail);
+        adminRecipient.setLangKey("en");
+        adminRecipient.setLogin("data-export-admin-recipient");
+        adminRecipient.setFirstName("Administrator");
+
+        mailService.sendDataExportFailedEmailToAdmin(adminRecipient, dataExport, exception);
     }
 
     /**
