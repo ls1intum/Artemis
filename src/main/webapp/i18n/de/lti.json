@@ -80,10 +80,16 @@
             "requestUserEmailTooltip": "Die E-Mail des Benutzers muss gesendet werden, da sie von Artemis benötigt wird, um den Benutzer zu erstellen oder zu finden",
             "edit": {
                 "configurationForCourse": "LTI Konfiguration der Kurs {{ title }} bearbeiten",
+                "documentationLink": "Detaillierte Anweisungen zur Konfiguration von LTI-Plattformen findest du in der",
+                "documentationLinkText": "LTI-Konfigurationsdokumentation",
                 "userPrefixTooltip": "Präfix für die neuen Benutzer, die für diesen Kurs erstellt werden. Es wird empfohlen, einen Wert zu verwenden, der die Benutzer eindeutig als Teil dieses Kurses identifiziert.",
                 "requireExistingUserTooltip": "Wenn ausgewählt, erfordert das Starten der Übung einen bestehenden Benutzer in Artemis. Wenn abgewählt, kann ein Benutzer beim ersten Start erstellt werden, wenn er noch nicht existiert",
                 "registrationIdTooltip": "ID, die zur Identifizierung der Registrierung der Lernplattform verwendet wird. Diese muss für alle Kurse eindeutig sein.",
-                "clientIdTooltip": "Es ist möglich, dieses Feld und die folgenden URI-Felder manuell zu konfigurieren, aber es wird dringend empfohlen, den Dynamic Registration Service zur automatischen Konfiguration zu verwenden.",
+                "clientIdTooltip": "Die Client-ID, die von der LTI-Plattform (z.B. Moodle, Canvas) bei der Registrierung von Artemis als externes Tool bereitgestellt wird. Diese identifiziert Artemis eindeutig gegenüber der Plattform.",
+                "originalUrlTooltip": "Die Basis-URL der LTI-Plattform (z.B. https://moodle.example.com). Dies hilft bei der Identifizierung und Organisation mehrerer Plattformkonfigurationen.",
+                "authorizationUriTooltip": "Der OAuth 2.0-Autorisierungsendpunkt der LTI-Plattform. Diese URL wird während des LTI-Starts zur Benutzerauthentifizierung verwendet. Normalerweise in der LTI-Konfiguration der Plattform zu finden.",
+                "tokenUriTooltip": "Der OAuth 2.0-Token-Endpunkt der LTI-Plattform. Diese URL wird verwendet, um Autorisierungscodes gegen Zugriffstoken auszutauschen. Normalerweise in der LTI-Konfiguration der Plattform zu finden.",
+                "jwkSetUriTooltip": "Der JSON Web Key Set (JWKS)-Endpunkt der LTI-Plattform. Diese URL stellt die öffentlichen Schlüssel zur Verfügung, die zur Verifizierung von JWT-Tokens der Plattform verwendet werden.",
                 "form": {
                     "userPrefix": {
                         "forbidden": "Nutzer-Präfix darf keine Sonderzeichen beinhalten."

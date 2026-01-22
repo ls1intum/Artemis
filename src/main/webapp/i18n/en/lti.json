@@ -80,10 +80,16 @@
             "requestUserEmailTooltip": "The user's email must be sent as it is required by Artemis to create or find the user",
             "edit": {
                 "configurationForCourse": "Edit LTI Configuration for course {{ title }}",
+                "documentationLink": "For detailed instructions on configuring LTI platforms, see the",
+                "documentationLinkText": "LTI Configuration Documentation",
                 "userPrefixTooltip": "Prefix used for the new users created for this course. It is recommended to use a value that clearly identifies users as part of this course.",
                 "requireExistingUserTooltip": "If selected, launching the exercise requires an existing user on Artemis. If deselected, a user will be created on first launch if it does not yet exist",
                 "registrationIdTooltip": "ID used to identify the registration of the learning platform. This must be unique across all courses.",
-                "clientIdTooltip": "It is possible to configure this field and the URI fields below manually, but it is highly recommended to use the Dynamic Registration Service to configure them automatically.",
+                "clientIdTooltip": "The Client ID provided by the LTI platform (e.g., Moodle, Canvas) when registering Artemis as an external tool. This uniquely identifies Artemis to the platform.",
+                "originalUrlTooltip": "The base URL of the LTI platform (e.g., https://moodle.example.com). This helps identify and organize multiple platform configurations.",
+                "authorizationUriTooltip": "The OAuth 2.0 authorization endpoint of the LTI platform. This URL is used during the LTI launch to authenticate users. Usually found in the platform's LTI configuration.",
+                "tokenUriTooltip": "The OAuth 2.0 token endpoint of the LTI platform. This URL is used to exchange authorization codes for access tokens. Usually found in the platform's LTI configuration.",
+                "jwkSetUriTooltip": "The JSON Web Key Set (JWKS) endpoint of the LTI platform. This URL provides the public keys used to verify JWT tokens from the platform.",
                 "form": {
                     "userPrefix": {
                         "forbidden": "User prefix cannot contain special characters."
