@@ -160,6 +160,7 @@ public class CacheConfiguration {
             testConfig.getMapConfigs().put("default", initializeDefaultMapConfig(jHipsterProperties));
             testConfig.getMapConfigs().put("files", initializeFilesMapConfig(jHipsterProperties));
             testConfig.getMapConfigs().put("de.tum.cit.aet.artemis.*.domain.*", initializeDomainMapConfig(jHipsterProperties));
+            testConfig.getMapConfigs().put("rate-limit-buckets", initializeRateLimitBucketsMapConfig(jHipsterProperties));
             testConfig.getMapConfigs().put("atlas-session-pending-operations", initializeAtlasSessionMapConfig(jHipsterProperties));
 
             testConfig.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
@@ -254,6 +255,7 @@ public class CacheConfiguration {
         config.getMapConfigs().put("default", initializeDefaultMapConfig(jHipsterProperties));
         config.getMapConfigs().put("files", initializeFilesMapConfig(jHipsterProperties));
         config.getMapConfigs().put("de.tum.cit.aet.artemis.*.domain.*", initializeDomainMapConfig(jHipsterProperties));
+        config.getMapConfigs().put("rate-limit-buckets", initializeRateLimitBucketsMapConfig(jHipsterProperties));
 
         // Atlas Agent session cache for pending competency operations with 2-hour TTL
         config.getMapConfigs().put("atlas-session-pending-operations", initializeAtlasSessionMapConfig(jHipsterProperties));
@@ -367,6 +369,11 @@ public class CacheConfiguration {
     // config for all domain object, i.e. entities such as Course, Exercise, etc.
     private MapConfig initializeDomainMapConfig(JHipsterProperties jHipsterProperties) {
         return new MapConfig().setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
+    }
+
+    private MapConfig initializeRateLimitBucketsMapConfig(JHipsterProperties jHipsterProperties) {
+        return new MapConfig().setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount())
+                .setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
     }
 
     // config for Atlas Agent session caches with 2-hour TTL

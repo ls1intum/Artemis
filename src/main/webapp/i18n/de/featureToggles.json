@@ -186,6 +186,11 @@
                     "name": "Videotranskription",
                     "description": "Nutzt Nebula, um automatisch Transkriptionen aus Vorlesungsvideos zu generieren und diese an Pyris/Iris zu senden, sodass KI-Assistenten Fragen zu Vorlesungsinhalten beantworten und genauere, inhaltsbezogene Antworten geben können.",
                     "disableWarning": "Vorlesungsvideos werden nicht von Nebula transkribiert und Iris kann in seinen Antworten nicht auf Vorlesungsinhalte Bezug nehmen."
+                },
+                "RateLimit": {
+                    "name": "API-Rate-Limiting",
+                    "description": "Schützt die Anwendung vor Missbrauch und Überlastung durch Begrenzung der Anzahl spezifischer API-Anfragen pro Nutzer:in in einem bestimmten Zeitraum.",
+                    "disableWarning": "Spezifische API-Endpunkte sind nicht durch Rate-Limiting geschützt, was zu potenziellem Missbrauch oder Überlastung führen kann."
                 }
             }
         }
