@@ -24,6 +24,12 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 public record OnlineCourseDTO(Long id, String title, String shortName, String registrationId, ZonedDateTime startDate, ZonedDateTime endDate, String description,
         Long numberOfStudents) {
 
+    /**
+     * Creates an OnlineCourseDTO from a Course entity.
+     *
+     * @param course the course entity to convert
+     * @return an OnlineCourseDTO containing the course data
+     */
     public static OnlineCourseDTO from(Course course) {
         var onlineCourseConfig = course.getOnlineCourseConfiguration();
         String registrationId = null;
