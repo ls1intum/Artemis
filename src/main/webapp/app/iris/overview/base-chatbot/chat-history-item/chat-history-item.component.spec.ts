@@ -104,7 +104,7 @@ describe('ChatHistoryItemComponent', () => {
     function testSessionRendering(session: IrisSessionDTO, expectedIcon: IconProp, expectedTooltipKey: string, expectedEntityName: string) {
         fixture.componentRef.setInput('session', session);
         fixture.detectChanges();
-        const iconDebugEl = fixture.debugElement.query(By.directive(FaIconComponent));
+        const iconDebugEl = fixture.debugElement.query(By.css('.related-entity-info fa-icon'));
         const iconInstance = iconDebugEl.componentInstance as FaIconComponent;
         const entityNameEl = fixture.debugElement.query(By.css('.related-entity-name')).nativeElement;
         expect(iconInstance.icon()).toBe(expectedIcon);
@@ -139,7 +139,7 @@ describe('ChatHistoryItemComponent', () => {
     it('should not render an icon and entity name for course session', async () => {
         const session: IrisSessionDTO = {
             id: 3,
-            title: 'New chat',
+            title: 'Course chat',
             creationDate: new Date(),
             chatMode: ChatServiceMode.COURSE,
             entityId: 123,
@@ -149,7 +149,7 @@ describe('ChatHistoryItemComponent', () => {
         fixture.componentRef.setInput('session', session);
         await fixture.whenStable();
 
-        const iconDebugEl = fixture.debugElement.query(By.directive(FaIconComponent));
+        const iconDebugEl = fixture.debugElement.query(By.css('.related-entity-info fa-icon'));
 
         expect(iconDebugEl).toBeNull();
         expect(fixture.debugElement.query(By.css('.related-entity-name'))).toBeFalsy();

@@ -38,6 +38,7 @@ import { CourseNotificationSettingService } from 'app/communication/course-notif
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { CourseNotificationPresetPickerComponent } from 'app/communication/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { CourseIrisComponent } from 'app/iris/overview/course-iris/course-iris.component';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -89,7 +90,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     canUnenroll = signal<boolean>(false);
     showRefreshButton = signal<boolean>(false);
     activatedComponentReference = signal<
-        CourseExercisesComponent | CourseLecturesComponent | CourseExamsComponent | CourseTutorialGroupsComponent | CourseConversationsComponent | undefined
+        CourseExercisesComponent | CourseLecturesComponent | CourseExamsComponent | CourseTutorialGroupsComponent | CourseConversationsComponent | CourseIrisComponent | undefined
     >(undefined);
 
     // Icons
@@ -267,7 +268,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             componentRef instanceof CourseLecturesComponent ||
             componentRef instanceof CourseTutorialGroupsComponent ||
             componentRef instanceof CourseExamsComponent ||
-            componentRef instanceof CourseConversationsComponent
+            componentRef instanceof CourseConversationsComponent ||
+            componentRef instanceof CourseIrisComponent
         ) {
             this.activatedComponentReference.set(componentRef);
         }
@@ -298,6 +300,12 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             currentCourse?.studentCourseAnalyticsDashboardEnabled || currentCourse?.irisEnabledInCourse,
             currentCourse?.trainingEnabled,
         );
+        if (currentCourse?.irisEnabledInCourse) {
+            const irisItem = this.sidebarItemService.getIrisItem();
+            const dashboardIndex = defaultItems.findIndex((item) => item.routerLink === 'dashboard');
+            const insertIndex = dashboardIndex >= 0 ? dashboardIndex + 1 : 0;
+            defaultItems.splice(insertIndex, 0, irisItem);
+        }
         sidebarItems.push(...defaultItems);
 
         if (this.lectureEnabled && currentCourse?.lectures) {

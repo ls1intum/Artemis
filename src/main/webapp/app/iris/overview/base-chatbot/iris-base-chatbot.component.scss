@@ -7,17 +7,17 @@
 }
 
 .header-start {
-    text-align: start;
+    // text-align: start;
     flex: 1;
-    font-size: 20px;
+    // font-size: 20px;
     display: flex;
     gap: 4px;
     min-width: 0;
 
-    .word-iris,
-    a {
-        align-self: center;
-    }
+    // .word-iris,
+    // a {
+    //     align-self: center;
+    // }
 }
 
 .button-container {
@@ -150,7 +150,7 @@
 
 .toolbox {
     background: var(--iris-tool-background);
-    border: 1px solid var(--border-color);
+    // border: 1px solid var(--border-color);
     border-radius: var(--bs-border-radius-lg);
     display: flex;
 
@@ -171,11 +171,11 @@
     font-weight: bold;
     padding: 5px;
     width: 100%;
-    height: 36px;
+    height: 40px;
     flex: 0;
     z-index: 10;
-    background-color: var(--iris-chat-widget-background);
-    border-radius: var(--bs-border-radius-lg) var(--bs-border-radius-lg) 0 0;
+    background-color: var(--iris-chat-background);
+    // border-radius: 4px 4px 0 0;
     box-shadow: 0 15px 15px -15px rgba(0, 0, 0, 0.3);
     border-bottom: 1px solid var(--bs-border-color);
 
@@ -209,19 +209,26 @@
     display: flex;
     flex-direction: column;
     flex: 1;
+    align-items: center; // added to center the error message vertically
+    gap: 8px;
+    margin: 0 16px;
 
     &.not-accepted {
         height: 100%;
     }
 
+    .messages-inner,
+    .chat-input,
+    .client-chat-error,
+    .empty-chat-message {
+        width: min(800px, 100%);
+        margin-inline: auto;
+    }
+
     .messages {
-        padding: 0 10px 10px;
-        display: flex;
-        flex-direction: column-reverse;
-        gap: 5px;
         flex: 1;
         overflow-y: auto;
-        scrollbar-width: thin;
+        scrollbar-width: auto;
         scrollbar-color: var(--bs-border-color) transparent;
 
         &::-webkit-scrollbar {
@@ -238,7 +245,14 @@
         }
 
         > div:first-child {
-            margin-top: 5px;
+            margin-top: 16px;
+        }
+
+        .messages-inner {
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 40px;
+            margin-inline: auto;
         }
     }
 }
@@ -256,18 +270,13 @@
 :host {
     .bubble-left,
     .bubble-right {
-        --r: 13px; /* the radius */
-        --t: 10px; /* the size of the tail */
-
-        max-width: 100%;
-        margin-bottom: 10px;
+        margin-bottom: 16px;
         color: var(--bs-body-color);
-        padding: 10px;
 
         // prettier-ignore
         -webkit-mask: radial-gradient(var(--t) at var(--_d) 0, #0000 98%, #000 102%) var(--_d) 100% / calc(100% - var(--r)) var(--t) no-repeat,
-        conic-gradient(at var(--r) var(--r), #000 75%, #0000 0) calc(var(--r) / -2) calc(var(--r) / -2) padding-box,
-        radial-gradient(50% 50%, #000 98%, #0000 101%) 0 0 / var(--r) var(--r) space padding-box;
+            conic-gradient(at var(--r) var(--r), #000 75%, #0000 0) calc(var(--r) / -2) calc(var(--r) / -2) padding-box,
+            radial-gradient(50% 50%, #000 98%, #0000 101%) 0 0 / var(--r) var(--r) space padding-box;
         overflow-wrap: break-word;
 
         ::ng-deep {
@@ -309,21 +318,27 @@
 
 .bubble-left {
     --_d: 0%;
-
     border-left: var(--t) solid #0000;
-    background-color: var(--iris-client-chat-background);
-    margin-right: var(--t);
-    place-self: start;
+    //background-color: var(--iris-client-chat-background);
+    // margin-right: var(--t);
+    place-self: center;
+    max-width: 100%;
 }
 
 .bubble-right {
     --_d: 100%;
-
-    border-right: var(--t) solid #0000;
-    margin-left: var(--t);
+    // border-right: var(--t) solid #0000;
+    // margin-left: var(--t);
     place-self: end;
     float: right;
     background-color: var(--iris-my-chat-background);
+    border-radius: 8px;
+    padding: 12px;
+    max-width: min(60vw, 550px);
+    // --r: 13px;
+    /* the radius */
+    // --t: 8px;
+    /* the size of the tail */
 }
 
 .client-chat-error {
@@ -334,6 +349,7 @@
     display: flex;
     align-content: center;
     justify-content: center;
+    align-items: center;
 }
 
 pre {
@@ -348,42 +364,67 @@ pre {
 
 .chat-input {
     display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    background-color: var(--iris-client-chat-input);
-    padding: 5px;
+    flex-direction: column;
     flex: 0 1 auto;
+
+    textarea {
+        flex: 1 0 auto;
+        padding: 16px;
+        resize: none;
+        border-radius: 8px;
+        min-height: 72px;
+
+        &:focus {
+            outline: none;
+            box-shadow: none;
+            border-color: var(--primary);
+        }
+    }
 }
 
-.disclaimer-message {
-    font-size: 60%;
-    color: var(--gray-600);
-    text-align: center;
-    width: 100%;
-    padding-top: 5px;
+.chat-input-inner {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.chat-container,
+.chat-layout {
+    display: flex;
+    flex: 1;
+    min-height: 0;
 }
 
 .chat-container {
-    flex: 1;
+    flex-direction: column;
     overflow-y: hidden;
-    display: flex;
 }
 
 .chat-history {
     background-color: var(--iris-chat-history-background);
     width: 0;
+    flex-shrink: 0;
     overflow-x: hidden;
     transition:
         width 0.3s ease,
         height 0.3s ease,
         background-color 0.3s ease;
 
+    .chat-history-container {
+        margin: 40px 0;
+    }
+
     .chat-history-label p {
         color: var(--iris-chat-history-label-color);
         font-size: 0.8rem;
         margin: 0.5rem 0 0.2rem;
         padding-left: 1rem;
+    }
+
+    .chat-history-divider {
+        height: 1px;
+        background-color: var(--bs-border-color);
+        margin: 0.5rem 1rem 1rem;
     }
 
     .double-arrow-icon {
@@ -425,19 +466,6 @@ pre {
     height: 100%;
 }
 
-.chat-input textarea {
-    flex: 1;
-    padding: 5px 13px;
-    margin-right: 5px;
-    resize: none;
-
-    &:focus {
-        outline: none;
-        box-shadow: none;
-        border-color: var(--primary);
-    }
-}
-
 .p-chat {
     background-color: var(--iris-client-chat-background);
     color: var(--bs-body-color);
@@ -453,6 +481,13 @@ pre {
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
     border-bottom: 1px solid var(--iris-client-chat-background);
+}
+
+.disclaimer-message {
+    font-size: 80%;
+    color: var(--gray-600);
+    text-align: center;
+    padding: 8px;
 }
 
 .scroll-to-bottom {
@@ -474,13 +509,14 @@ pre {
 .rate-message-buttons {
     display: flex;
     justify-content: flex-end;
-    position: absolute;
-    left: 20px;
-    bottom: -0.5lh;
-    padding: 3px;
-    height: 1lh;
-    gap: 5px;
-    background: var(--iris-rate-background);
+    width: fit-content;
+    padding: 8px;
+    gap: 8px;
+    // padding-bottom: 1.25rem; // space for the buttons
+    // left: 20px;
+    // bottom: -0.5lh;
+    // height: 1lh;
+    // background: var(--iris-rate-background);
 
     button.btn {
         padding: 0;
@@ -505,6 +541,29 @@ pre {
 
 #irisSendButton {
     margin-bottom: auto;
+    position: relative;
+    right: 52px;
+    top: 50%;
+    transform: translateY(-50%);
+
+    ::ng-deep button {
+        border-radius: 8px;
+        padding: 6px 8px;
+        background-color: var(--primary);
+        border-color: var(--primary);
+        color: var(--white);
+        transition:
+            background-color 0.3s ease,
+            border-color 0.3s ease;
+
+        &:hover .svg-inline--fa {
+            transform: rotate(45deg);
+        }
+    }
+
+    ::ng-deep .svg-inline--fa {
+        transition: transform 0.3s ease;
+    }
 }
 
 ::ng-deep ngb-modal-backdrop {

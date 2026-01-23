@@ -66,6 +66,7 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisBaseChatbotComponent implements AfterViewInit {
+    private static readonly NEW_CHAT_TITLES = new Set(['new chat', 'neuer chat']);
     protected accountService = inject(AccountService);
     protected translateService = inject(TranslateService);
     protected statusService = inject(IrisStatusService);
@@ -456,6 +457,20 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
     }
 
+    getNewChatSessions(): IrisSessionDTO[] {
+        const newChatSessions = this.getFilteredSessions().filter((session) => this.isNewChatSession(session));
+        if (newChatSessions.length === 0) {
+            return [];
+        }
+        const newestNewChat = newChatSessions.reduce((latest, current) => (new Date(current.creationDate).getTime() > new Date(latest.creationDate).getTime() ? current : latest));
+        return [newestNewChat];
+    }
+
+    private isNewChatSession(session: IrisSessionDTO): boolean {
+        const title = session.title?.trim().toLowerCase();
+        return title !== undefined && IrisBaseChatbotComponent.NEW_CHAT_TITLES.has(title);
+    }
+
     /**
      * Retrieves chat sessions that occurred between a specified range of days ago.
      * @param daysAgoNewer The newer boundary of the range, in days ago (e.g., 0 for today, 1 for yesterday).
@@ -469,7 +484,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             return [];
         }
 
-        const source = this.getFilteredSessions();
+        const source = this.getFilteredSessions().filter((session) => !this.isNewChatSession(session));
 
         const today = new Date();
         const rangeEndDate = new Date(today);

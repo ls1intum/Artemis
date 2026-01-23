@@ -232,6 +232,18 @@ describe('CourseSidebarItemService', () => {
             expect(item.featureToggle).toBe(FeatureToggle.StudentCourseAnalyticsDashboard);
         });
 
+        it('getIrisItem should return correct item', () => {
+            const item = service.getIrisItem();
+
+            expect(item).toEqual({
+                routerLink: 'iris',
+                icon: faRobot,
+                title: 'Iris',
+                translation: 'artemisApp.courseOverview.menu.iris',
+                hidden: false,
+            });
+        });
+
         it('getFaqManagementItem should return correct item', () => {
             const item = service.getFaqManagementItem(courseId);
 
