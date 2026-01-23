@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.config.LlmModelCostConfiguration;
+import de.tum.cit.aet.artemis.core.config.LLMModelCostConfiguration;
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.LLMTokenUsageRequest;
@@ -38,7 +38,7 @@ public class LLMTokenUsageService {
     private final Map<String, ModelCost> costs;
 
     public LLMTokenUsageService(LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, LLMTokenUsageRequestRepository llmTokenUsageRequestRepository,
-            LlmModelCostConfiguration costConfiguration) {
+            LLMModelCostConfiguration costConfiguration) {
         this.llmTokenUsageTraceRepository = llmTokenUsageTraceRepository;
         this.llmTokenUsageRequestRepository = llmTokenUsageRequestRepository;
         this.costs = costConfiguration.getModelCosts().entrySet().stream()

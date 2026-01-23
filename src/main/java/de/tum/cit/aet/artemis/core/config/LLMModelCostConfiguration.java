@@ -18,7 +18,7 @@ import org.springframework.context.annotation.Profile;
 @Configuration
 @Lazy
 @ConfigurationProperties(prefix = "artemis.llm")
-public class LlmModelCostConfiguration {
+public class LLMModelCostConfiguration {
 
     private Map<String, ModelCostProperties> modelCosts = new HashMap<>();
 

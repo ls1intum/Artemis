@@ -19,7 +19,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
-import de.tum.cit.aet.artemis.core.config.LlmModelCostConfiguration;
+import de.tum.cit.aet.artemis.core.config.LLMModelCostConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
@@ -69,15 +69,15 @@ class HyperionProblemStatementRewriteServiceTest {
         assertThat(resp.rewrittenText()).isEqualTo(rewritten);
     }
 
-    private static LlmModelCostConfiguration createTestConfiguration() {
-        var config = new LlmModelCostConfiguration();
+    private static LLMModelCostConfiguration createTestConfiguration() {
+        var config = new LLMModelCostConfiguration();
         var modelCosts = Map.of("gpt-5-mini", createModelCostProperties(0.23f, 1.84f));
         config.setModelCosts(new HashMap<>(modelCosts));
         return config;
     }
 
-    private static LlmModelCostConfiguration.ModelCostProperties createModelCostProperties(float inputEur, float outputEur) {
-        var props = new LlmModelCostConfiguration.ModelCostProperties();
+    private static LLMModelCostConfiguration.ModelCostProperties createModelCostProperties(float inputEur, float outputEur) {
+        var props = new LLMModelCostConfiguration.ModelCostProperties();
         props.setInputCostPerMillionEur(inputEur);
         props.setOutputCostPerMillionEur(outputEur);
         return props;
