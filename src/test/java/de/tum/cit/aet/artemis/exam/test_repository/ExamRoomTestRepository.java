@@ -16,54 +16,37 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
 public interface ExamRoomTestRepository extends ExamRoomRepository {
 
     @Query("""
-            WITH latestRooms AS (
-                SELECT
-                    roomNumber AS roomNumber,
-                    MAX(createdDate) AS maxCreatedDate
-                FROM ExamRoom
-                GROUP BY roomNumber
-            )
             SELECT DISTINCT examRoom
             FROM ExamRoom examRoom
-            JOIN latestRooms latestRoom
-                ON examRoom.roomNumber = latestRoom.roomNumber
-                AND examRoom.createdDate = latestRoom.maxCreatedDate
             LEFT JOIN FETCH examRoom.layoutStrategies
+            WHERE examRoom.createdDate = (
+                SELECT MAX(er2.createdDate)
+                FROM ExamRoom er2
+                WHERE er2.roomNumber = examRoom.roomNumber
+            )
             """)
     Set<ExamRoom> findAllNewestExamRoomVersionsWithEagerLayoutStrategies();
 
     @Query("""
-            WITH latestRooms AS (
-                SELECT
-                    roomNumber AS roomNumber,
-                    MAX(createdDate) AS maxCreatedDate
-                FROM ExamRoom
-                GROUP BY roomNumber
-            )
-            SELECT DISTINCT examRoom
+            SELECT examRoom
             FROM ExamRoom examRoom
-            JOIN latestRooms latestRoom
-                ON examRoom.roomNumber = latestRoom.roomNumber
-                AND examRoom.name = latestRoom.name
-                AND examRoom.createdDate = latestRoom.maxCreatedDate
+            WHERE examRoom.createdDate = (
+                SELECT MAX(er2.createdDate)
+                FROM ExamRoom er2
+                WHERE er2.roomNumber = examRoom.roomNumber
+            )
             """)
     Set<ExamRoom> findAllNewestExamRoomVersions();
 
     @Query("""
-            WITH latestRooms AS (
-                SELECT
-                    roomNumber AS roomNumber,
-                    name AS name,
-                    MAX(createdDate) AS maxCreatedDate
-                FROM ExamRoom
-                GROUP BY roomNumber, name
-            )
             SELECT examRoom.id
             FROM ExamRoom examRoom
-            JOIN latestRooms latestRoom
-                ON examRoom.roomNumber = latestRoom.roomNumber
-                AND examRoom.createdDate = latestRoom.maxCreatedDate
             WHERE examRoom.roomNumber IN :roomNumbers
+                AND examRoom.createdDate = (
+                    SELECT MAX(er2.createdDate)
+                    FROM ExamRoom er2
+                    WHERE er2.roomNumber = examRoom.roomNumber
+                )
             """)
     Set<Long> findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set<String> roomNumbers);
 }
