@@ -9,7 +9,7 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -83,7 +83,7 @@ describe('LearningPathInstructorPageComponent', () => {
 
     it('should show error on load course', async () => {
         const alertServiceErrorSpy = vi.spyOn(alertService, 'addAlert');
-        getCourseSpy.mockRejectedValue(new HttpErrorResponse({ error: 'Error' }));
+        getCourseSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'Error' })));
 
         fixture.detectChanges();
         await fixture.whenStable();

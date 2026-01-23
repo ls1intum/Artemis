@@ -1,6 +1,6 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { MockProvider } from 'ng-mocks';
 import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
@@ -54,18 +54,17 @@ describe('CourseCompetencyService', () => {
         httpTestingController.verify();
     });
 
-    it('should find all competencies', fakeAsync(() => {
+    it('should find all competencies', () => {
         const returnedFromService = [...defaultCompetencies];
         courseCompetencyService.getAllForCourse(1).subscribe((resp) => (expectedResultCompetency = resp));
 
         const req = httpTestingController.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
 
         expect(expectedResultCompetency.body).toEqual(defaultCompetencies);
-    }));
+    });
 
-    it('should find a competency', fakeAsync(() => {
+    it('should find a competency', () => {
         const returnedFromService = [...defaultCompetencies];
         courseCompetencyService
             .findById(1, 1)
@@ -74,12 +73,11 @@ describe('CourseCompetencyService', () => {
 
         const req = httpTestingController.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
 
         expect(expectedResultCompetency.body).toEqual(defaultCompetencies);
-    }));
+    });
 
-    it('should import all competencies of a course', fakeAsync(() => {
+    it('should import all competencies of a course', () => {
         const competencyDTO = new CompetencyWithTailRelationDTO();
         competencyDTO.competency = { ...defaultCompetencies.first(), id: 1 };
         competencyDTO.tailRelations = [];
@@ -93,8 +91,7 @@ describe('CourseCompetencyService', () => {
 
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        tick();
 
         expect(resultImportAll.body).toEqual(expected);
-    }));
+    });
 });

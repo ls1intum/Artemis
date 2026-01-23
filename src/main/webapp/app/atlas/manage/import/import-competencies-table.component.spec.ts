@@ -7,6 +7,8 @@ import { SortingOrder } from 'app/shared/table/pageable-table';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ImportCompetenciesTableComponent', () => {
@@ -16,9 +18,8 @@ describe('ImportCompetenciesTableComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule],
-            declarations: [ImportCompetenciesTableComponent, MockDirective(SortDirective), MockDirective(TranslateDirective), MockComponent(NgbPagination)],
-            providers: [],
+            imports: [ReactiveFormsModule, ImportCompetenciesTableComponent, MockDirective(SortDirective), MockDirective(TranslateDirective), MockComponent(NgbPagination)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         componentFixture = TestBed.createComponent(ImportCompetenciesTableComponent);

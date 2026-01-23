@@ -17,7 +17,7 @@ describe('CompetencySearchComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [CompetencySearchComponent, MockPipe(ArtemisTranslatePipe), ButtonComponent],
+            imports: [CompetencySearchComponent, MockPipe(ArtemisTranslatePipe), ButtonComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()

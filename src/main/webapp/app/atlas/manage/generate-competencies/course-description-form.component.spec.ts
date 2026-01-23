@@ -8,6 +8,8 @@ import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisLogoButtonComponent } from 'app/iris/overview/iris-logo-button/iris-logo-button.component';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CourseDescriptionFormComponent', () => {
@@ -17,8 +19,8 @@ describe('CourseDescriptionFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule],
-            declarations: [
+            imports: [
+                ReactiveFormsModule,
                 CourseDescriptionFormComponent,
                 MockPipe(ArtemisTranslatePipe),
                 IrisLogoButtonComponent,
@@ -26,6 +28,7 @@ describe('CourseDescriptionFormComponent', () => {
                 MockDirective(FeatureToggleDirective),
                 MockDirective(TranslateDirective),
             ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
@@ -47,11 +50,10 @@ describe('CourseDescriptionFormComponent', () => {
         courseDescriptionComponentFixture.detectChanges();
         const description = 'I'.repeat(courseDescriptionComponent['DESCRIPTION_MIN'] + 1);
         const formSubmittedEmitSpy = vi.spyOn(courseDescriptionComponent.formSubmitted, 'emit');
-        const generateButton = courseDescriptionComponentFixture.debugElement.nativeElement.querySelector('#generateButton > .jhi-btn');
 
         courseDescriptionComponent.courseDescriptionControl.setValue(description);
         expect(courseDescriptionComponent.isSubmitPossible).toBeTruthy();
-        generateButton.click();
+        courseDescriptionComponent.submitForm();
 
         expect(courseDescriptionComponent.hasBeenSubmitted).toBeTruthy();
         expect(formSubmittedEmitSpy).toHaveBeenCalledOnce();

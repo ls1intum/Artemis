@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -65,15 +65,12 @@ describe('CompetencyPopoverComponent', () => {
     it.each([
         ['courseCompetencies', ['/courses', '1', 'competencies']],
         ['competencyManagement', ['/course-management', '1', 'competency-management']],
-    ])(
-        'should navigate',
-        fakeAsync((navigateTo: 'competencyManagement' | 'courseCompetencies', expectedNavigation: string[]) => {
-            const competencyLinks: CompetencyLectureUnitLink[] = [{ competency: { id: 1, title: 'competency' }, weight: 1 }];
-            competencyPopoverComponentFixture.componentRef.setInput('navigateTo', navigateTo);
-            competencyPopoverComponentFixture.componentRef.setInput('competencyLinks', competencyLinks);
-            competencyPopoverComponentFixture.componentRef.setInput('courseId', 1);
-            competencyPopoverComponentFixture.detectChanges();
-            expect(competencyPopoverComponent.navigationArray).toEqual(expectedNavigation);
-        }),
-    );
+    ])('should navigate', (navigateTo: 'competencyManagement' | 'courseCompetencies', expectedNavigation: string[]) => {
+        const competencyLinks: CompetencyLectureUnitLink[] = [{ competency: { id: 1, title: 'competency' }, weight: 1 }];
+        competencyPopoverComponentFixture.componentRef.setInput('navigateTo', navigateTo);
+        competencyPopoverComponentFixture.componentRef.setInput('competencyLinks', competencyLinks);
+        competencyPopoverComponentFixture.componentRef.setInput('courseId', 1);
+        competencyPopoverComponentFixture.detectChanges();
+        expect(competencyPopoverComponent.navigationArray).toEqual(expectedNavigation);
+    });
 });

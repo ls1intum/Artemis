@@ -6,7 +6,6 @@
  */
 import '@angular/compiler';
 import '@angular/localize/init';
-import '@analogjs/vitest-angular/setup-zone';
 import '@analogjs/vitest-angular/setup-snapshots';
 import { vi } from 'vitest';
 

@@ -16,13 +16,16 @@ import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/le
 import { of } from 'rxjs';
 import { CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
-import { MockComponent, MockInstance } from 'ng-mocks';
+import { MockComponent, MockDirective, MockInstance } from 'ng-mocks';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { ElementRef, signal } from '@angular/core';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('LearningPathLectureUnitComponent', () => {
@@ -72,11 +75,15 @@ describe('LearningPathLectureUnitComponent', () => {
                     provide: AlertService,
                     useClass: MockAlertService,
                 },
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
         })
             .overrideComponent(LearningPathLectureUnitComponent, {
                 remove: {
-                    imports: [TextUnitComponent, AttachmentVideoUnitComponent, ExerciseUnitComponent, OnlineUnitComponent],
+                    imports: [TextUnitComponent, AttachmentVideoUnitComponent, ExerciseUnitComponent, OnlineUnitComponent, DiscussionSectionComponent, TranslateDirective],
+                },
+                add: {
+                    imports: [MockComponent(DiscussionSectionComponent), MockDirective(TranslateDirective)],
                 },
             })
             .compileComponents();

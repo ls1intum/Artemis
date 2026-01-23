@@ -5,6 +5,8 @@ import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, Course
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideNoopAnimationsForTests } from 'test/helpers/animations';
+import { MockModule } from 'ng-mocks';
+import { NgxGraphModule } from '@swimlane/ngx-graph';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 interface CourseCompetencyStyle {
@@ -65,7 +67,12 @@ describe('CourseCompetenciesRelationGraphComponent', () => {
                 },
                 provideNoopAnimationsForTests(),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(CourseCompetenciesRelationGraphComponent, {
+                remove: { imports: [NgxGraphModule] },
+                add: { imports: [MockModule(NgxGraphModule)] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(CourseCompetenciesRelationGraphComponent);
         component = fixture.componentInstance;
@@ -113,9 +120,6 @@ describe('CourseCompetenciesRelationGraphComponent', () => {
                         id: cc.id,
                         type: cc.type,
                     },
-                    dimension: cc.dimension,
-                    meta: cc.meta,
-                    position: cc.position,
                 };
             }),
         );

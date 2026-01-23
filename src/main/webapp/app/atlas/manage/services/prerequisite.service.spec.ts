@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
@@ -79,7 +79,7 @@ describe('PrerequisiteService', () => {
         httpTestingController.verify();
     });
 
-    it('should find a competency', fakeAsync(() => {
+    it('should find a competency', () => {
         const returnedFromService = [...defaultPrerequisites];
         prerequisiteService
             .findById(1, 1)
@@ -88,23 +88,21 @@ describe('PrerequisiteService', () => {
 
         const req = httpTestingController.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
 
         expect(expectedResultCompetency.body).toEqual(defaultPrerequisites);
-    }));
+    });
 
-    it('should find all competencies', fakeAsync(() => {
+    it('should find all competencies', () => {
         const returnedFromService = [...defaultPrerequisites];
         prerequisiteService.getAllForCourse(1).subscribe((resp) => (expectedResultCompetency = resp));
 
         const req = httpTestingController.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
 
         expect(expectedResultCompetency.body).toEqual(defaultPrerequisites);
-    }));
+    });
 
-    it('should get individual progress for a competency', fakeAsync(() => {
+    it('should get individual progress for a competency', () => {
         const returnedFromService = { ...defaultCompetencyProgress };
         prerequisiteService
             .getProgress(1, 1)
@@ -113,12 +111,11 @@ describe('PrerequisiteService', () => {
 
         const req = httpTestingController.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
 
         expect(expectedResultCompetencyProgress.body).toEqual(defaultCompetencyProgress);
-    }));
+    });
 
-    it('should get course progress for a competency', fakeAsync(() => {
+    it('should get course progress for a competency', () => {
         const returnedFromService = { ...defaultCompetencyCourseProgress };
         prerequisiteService
             .getCourseProgress(1, 1)
@@ -127,12 +124,11 @@ describe('PrerequisiteService', () => {
 
         const req = httpTestingController.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
 
         expect(expectedResultCompetencyCourseProgress.body).toEqual(defaultCompetencyCourseProgress);
-    }));
+    });
 
-    it('should create a Competency', fakeAsync(() => {
+    it('should create a Competency', () => {
         const returnedFromService = { ...defaultPrerequisites.first(), id: 0 };
         const expected = { ...returnedFromService };
         prerequisiteService
@@ -142,12 +138,11 @@ describe('PrerequisiteService', () => {
 
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        tick();
 
         expect(expectedResultCompetency.body).toEqual(expected);
-    }));
+    });
 
-    it('should update a Competency', fakeAsync(() => {
+    it('should update a Competency', () => {
         const returnedFromService = { ...defaultPrerequisites.first(), title: 'Test' };
         const expected = { ...returnedFromService };
         prerequisiteService
@@ -157,22 +152,20 @@ describe('PrerequisiteService', () => {
 
         const req = httpTestingController.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
-        tick();
 
         expect(expectedResultCompetency.body).toEqual(expected);
-    }));
+    });
 
-    it('should delete a Competency', fakeAsync(() => {
+    it('should delete a Competency', () => {
         let result: any;
         prerequisiteService.delete(1, 1).subscribe((resp) => (result = resp.ok));
         const req = httpTestingController.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });
-        tick();
 
         expect(result).toBeTruthy();
-    }));
+    });
 
-    it('should add a Competency relation', fakeAsync(() => {
+    it('should add a Competency relation', () => {
         const returnedFromService: CompetencyRelation = { tailCompetency: { id: 1 }, headCompetency: { id: 2 }, type: CompetencyRelationType.ASSUMES };
         const expected: CompetencyRelation = { ...returnedFromService };
         let result: any;
@@ -183,22 +176,20 @@ describe('PrerequisiteService', () => {
 
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        tick();
 
         expect(result.body).toEqual(expected);
-    }));
+    });
 
-    it('should remove a Competency relation', fakeAsync(() => {
+    it('should remove a Competency relation', () => {
         let result: any;
         prerequisiteService.removeCompetencyRelation(1, 1).subscribe((resp) => (result = resp.ok));
         const req = httpTestingController.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });
-        tick();
 
         expect(result).toBeTruthy();
-    }));
+    });
 
-    it('should parse a list of competencies from a course description', fakeAsync(() => {
+    it('should parse a list of competencies from a course description', () => {
         const description = 'Lorem ipsum dolor sit amet';
         const returnedFromService = defaultPrerequisites;
         const expected = defaultPrerequisites;
@@ -207,12 +198,11 @@ describe('PrerequisiteService', () => {
         prerequisiteService.generateCompetenciesFromCourseDescription(1, description, []).subscribe((resp) => (response = resp));
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        tick();
 
         expect(response.body).toEqual(expected);
-    }));
+    });
 
-    it('should bulk create competencies', fakeAsync(() => {
+    it('should bulk create competencies', () => {
         const returnedFromService = defaultPrerequisites;
         const expected = defaultPrerequisites;
         let response: any;
@@ -220,12 +210,11 @@ describe('PrerequisiteService', () => {
         prerequisiteService.createBulk(defaultPrerequisites, 1).subscribe((resp) => (response = resp));
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        tick();
 
         expect(response.body).toEqual(expected);
-    }));
+    });
 
-    it('should import all competencies of a course', fakeAsync(() => {
+    it('should import all competencies of a course', () => {
         const competencyDTO = new CompetencyWithTailRelationDTO();
         competencyDTO.competency = { ...defaultPrerequisites.first(), id: 1 };
         competencyDTO.tailRelations = [];
@@ -239,12 +228,11 @@ describe('PrerequisiteService', () => {
 
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        tick();
 
         expect(resultImportAll.body).toEqual(expected);
-    }));
+    });
 
-    it('should bulk import competencies', fakeAsync(() => {
+    it('should bulk import competencies', () => {
         const competencyDTO = new CompetencyWithTailRelationDTO();
         competencyDTO.competency = { ...defaultPrerequisites.first(), id: 1 };
         competencyDTO.tailRelations = [];
@@ -258,12 +246,11 @@ describe('PrerequisiteService', () => {
 
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        tick();
 
         expect(resultImportBulk.body).toEqual(expected);
-    }));
+    });
 
-    it('should import standardized competencies', fakeAsync(() => {
+    it('should import standardized competencies', () => {
         const returnedFromService: CompetencyImportResponseDTO[] = [
             { id: 1, title: 'standardizedCompetency1' },
             { id: 2, title: 'standardizedCompetency2' },
@@ -277,12 +264,11 @@ describe('PrerequisiteService', () => {
 
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        tick();
 
         expect(resultImportStandardized.body).toEqual(expected);
-    }));
+    });
 
-    it('should import competency', fakeAsync(() => {
+    it('should import competency', () => {
         const returnedFromService = defaultPrerequisites[0];
         const expected = { ...returnedFromService };
 
@@ -293,12 +279,11 @@ describe('PrerequisiteService', () => {
 
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        tick();
 
         expect(resultImport.body).toEqual(expected);
-    }));
+    });
 
-    it('should get competency relations', fakeAsync(() => {
+    it('should get competency relations', () => {
         const relation: CompetencyRelation = {
             id: 1,
             type: CompetencyRelationType.ASSUMES,
@@ -313,12 +298,11 @@ describe('PrerequisiteService', () => {
 
         const req = httpTestingController.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
 
         expect(resultGetRelations.body).toEqual(expected);
-    }));
+    });
 
-    it('should get competencies for import', fakeAsync(() => {
+    it('should get competencies for import', () => {
         const returnedFromService: SearchResult<Competency> = {
             resultsOnPage: defaultPrerequisites,
             numberOfPages: 1,
@@ -342,12 +326,11 @@ describe('PrerequisiteService', () => {
 
         const req = httpTestingController.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
 
         expect(resultGetForImport).toEqual(expected);
-    }));
+    });
 
-    it('should get courseCompetency titles', fakeAsync(() => {
+    it('should get courseCompetency titles', () => {
         let result: HttpResponse<string[]> = new HttpResponse();
         const returnedFromService = ['title1', 'title2'];
         const expected = [...returnedFromService];
@@ -359,10 +342,9 @@ describe('PrerequisiteService', () => {
 
         const req = httpTestingController.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
 
         expect(result.body).toEqual(expected);
-    }));
+    });
 
     it('should convert response from server', () => {
         const lectureUnitService = TestBed.inject(LectureUnitService);

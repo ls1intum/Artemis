@@ -12,6 +12,8 @@ import { MockNgbActiveModalService } from 'test/helpers/mocks/service/mock-ngb-a
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideNoopAnimationsForTests } from 'test/helpers/animations';
+import { CourseCompetenciesRelationGraphComponent } from 'app/atlas/manage/course-competencies-relation-graph/course-competencies-relation-graph.component';
+import { MockComponent } from 'ng-mocks';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CourseCompetenciesRelationModalComponent', () => {
@@ -61,7 +63,12 @@ describe('CourseCompetenciesRelationModalComponent', () => {
                 },
                 provideNoopAnimationsForTests(),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(CourseCompetenciesRelationModalComponent, {
+                remove: { imports: [CourseCompetenciesRelationGraphComponent] },
+                add: { imports: [MockComponent(CourseCompetenciesRelationGraphComponent)] },
+            })
+            .compileComponents();
 
         courseCompetencyApiService = TestBed.inject(CourseCompetencyApiService);
         alertService = TestBed.inject(AlertService);

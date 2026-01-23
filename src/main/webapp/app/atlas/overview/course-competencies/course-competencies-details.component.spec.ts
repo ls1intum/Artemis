@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseCompetenciesDetailsComponent } from 'app/atlas/overview/course-competencies/course-competencies-details.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -57,8 +57,9 @@ describe('CourseCompetenciesDetails', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule), FaIconComponent],
-            declarations: [
+            imports: [
+                MockModule(NgbTooltipModule),
+                FaIconComponent,
                 CourseCompetenciesDetailsComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(MockHasAnyAuthorityDirective),
@@ -90,6 +91,10 @@ describe('CourseCompetenciesDetails', () => {
                 MockProvider(ScienceService),
             ],
         })
+            .overrideComponent(CourseCompetenciesDetailsComponent, {
+                remove: { imports: [ArtemisTimeAgoPipe] },
+                add: { imports: [MockPipe(ArtemisTimeAgoPipe)] },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CourseCompetenciesDetailsComponent);
@@ -148,7 +153,7 @@ describe('CourseCompetenciesDetails', () => {
         expect(exerciseUnit).not.toBeNull();
     });
 
-    it('should show fireworks when competency was mastered', fakeAsync(() => {
+    it('should show fireworks when competency was mastered', () => {
         const competency = {
             id: 1,
             userProgress: [
@@ -164,14 +169,19 @@ describe('CourseCompetenciesDetails', () => {
         expect(findByIdSpy).toHaveBeenCalledOnce();
         expect(component.isMastered).toBeTruthy();
 
-        component.showFireworksIfMastered();
+        vi.useFakeTimers();
+        try {
+            component.showFireworksIfMastered();
 
-        tick(1000);
-        expect(component.showFireworks).toBeTruthy();
+            vi.advanceTimersByTime(1000);
+            expect(component.showFireworks).toBeTruthy();
 
-        tick(5000);
-        expect(component.showFireworks).toBeFalsy();
-    }));
+            vi.advanceTimersByTime(5000);
+            expect(component.showFireworks).toBeFalsy();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
 
     it('should detect if due date is passed', () => {
         component.competency = { softDueDate: dayjs().add(1, 'days') } as Competency;

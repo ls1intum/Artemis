@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import type { Mocked } from 'vitest';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -126,26 +126,31 @@ describe('AgentChatService', () => {
             const courseId = 123;
             const message = 'Test message';
 
-            it('should handle timeout after 30 seconds', fakeAsync(() => {
+            it('should handle timeout after 30 seconds', () => {
                 const expectedUrl = `api/atlas/agent/courses/${courseId}/chat`;
                 let result: any;
 
-                service.sendMessage(message, courseId).subscribe({
-                    next: (response) => {
-                        result = response;
-                    },
-                });
+                vi.useFakeTimers();
+                try {
+                    service.sendMessage(message, courseId).subscribe({
+                        next: (response) => {
+                            result = response;
+                        },
+                    });
 
-                httpMock.expectOne(expectedUrl);
+                    httpMock.expectOne(expectedUrl);
 
-                // Simulate timeout by advancing time past 30 seconds
-                tick(30001);
+                    // Simulate timeout by advancing time past 30 seconds
+                    vi.advanceTimersByTime(30001);
+                } finally {
+                    vi.useRealTimers();
+                }
 
                 // Assert - timeout should trigger catchError which returns fallback response
                 expect(result).toBeDefined();
                 expect(result.competenciesModified).toBeFalsy();
                 expect(translateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error');
-            }));
+            });
         });
 
         describe('HTTP request details', () => {

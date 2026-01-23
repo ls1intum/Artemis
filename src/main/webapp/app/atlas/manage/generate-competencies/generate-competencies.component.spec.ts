@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { CompetencyFormControlsWithViewed, GenerateCompetenciesComponent } from 'app/atlas/manage/generate-competencies/generate-competencies.component';
@@ -27,7 +27,6 @@ import { CourseCompetencyService } from 'app/atlas/shared/services/course-compet
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { CourseDescriptionFormStubComponent } from 'test/helpers/stubs/atlas/course-description-form-stub.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
@@ -42,9 +41,8 @@ describe('GenerateCompetenciesComponent', () => {
         mockWebSocketSubject = new Subject<any>();
 
         TestBed.configureTestingModule({
-            imports: [GenerateCompetenciesComponent],
-            declarations: [
-                CourseDescriptionFormStubComponent,
+            imports: [
+                GenerateCompetenciesComponent,
                 CompetencyRecommendationDetailComponent,
                 DocumentationButtonComponent,
                 CourseDescriptionFormComponent,
@@ -64,7 +62,6 @@ describe('GenerateCompetenciesComponent', () => {
                         subscribe: vi.fn(() => mockWebSocketSubject.asObservable()),
                     },
                 },
-                CourseDescriptionFormComponent,
                 MockProvider(CourseManagementService),
                 MockProvider(CourseCompetencyService),
                 MockProvider(CompetencyService),
@@ -100,7 +97,7 @@ describe('GenerateCompetenciesComponent', () => {
         expect(getCompetencyRecommendationsSpy).toHaveBeenCalledOnce();
     });
 
-    it('should initialize the form with the course description', fakeAsync(() => {
+    it('should initialize the form with the course description', async () => {
         fixture.detectChanges();
         const courseDescription = 'Course Description';
 
@@ -113,11 +110,12 @@ describe('GenerateCompetenciesComponent', () => {
         const getCourseSpy = vi.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
 
         comp.ngOnInit();
-        tick();
+        await Promise.resolve();
+        await Promise.resolve();
 
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(setCourseDescriptionSpy).toHaveBeenCalledWith(courseDescription);
-    }));
+    });
 
     it('should add competency recommendations', () => {
         fixture.detectChanges();

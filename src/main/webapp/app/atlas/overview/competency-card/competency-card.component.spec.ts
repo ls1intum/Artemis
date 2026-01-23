@@ -1,9 +1,10 @@
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
 import { Competency, CompetencyProgress } from 'app/atlas/shared/entities/competency.model';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -20,8 +21,8 @@ describe('CompetencyCardComponent', () => {
     let competencyCardComponent: CompetencyCardComponent;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [FaIconComponent],
-            declarations: [
+            imports: [
+                FaIconComponent,
                 CompetencyCardComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(HtmlForMarkdownPipe),
@@ -29,8 +30,20 @@ describe('CompetencyCardComponent', () => {
                 MockPipe(ArtemisTimeAgoPipe),
                 MockDirective(TranslateDirective),
             ],
-            providers: [MockProvider(TranslateService)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
+            .overrideComponent(CompetencyCardComponent, {
+                remove: { imports: [ArtemisTranslatePipe, HtmlForMarkdownPipe, CompetencyRingsComponent, ArtemisTimeAgoPipe, TranslateDirective] },
+                add: {
+                    imports: [
+                        MockPipe(ArtemisTranslatePipe),
+                        MockPipe(HtmlForMarkdownPipe),
+                        MockComponent(CompetencyRingsComponent),
+                        MockPipe(ArtemisTimeAgoPipe),
+                        MockDirective(TranslateDirective),
+                    ],
+                },
+            })
             .compileComponents()
             .then(() => {
                 competencyCardComponentFixture = TestBed.createComponent(CompetencyCardComponent);

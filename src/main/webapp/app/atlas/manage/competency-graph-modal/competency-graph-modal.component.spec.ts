@@ -13,6 +13,8 @@ import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service'
 import { CompetencyGraphDTO, CompetencyGraphEdgeDTO, CompetencyGraphNodeDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { By } from '@angular/platform-browser';
 import { ScienceService } from 'app/shared/science/science.service';
+import { CompetencyGraphComponent } from 'app/atlas/manage/competency-graph/competency-graph.component';
+import { MockComponent } from 'ng-mocks';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyGraphModalComponent', () => {
@@ -61,7 +63,12 @@ describe('CompetencyGraphModalComponent', () => {
                 MockProvider(NgbActiveModal),
                 MockProvider(ScienceService),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(CompetencyGraphModalComponent, {
+                remove: { imports: [CompetencyGraphComponent] },
+                add: { imports: [MockComponent(CompetencyGraphComponent)] },
+            })
+            .compileComponents();
 
         learningPathApiService = TestBed.inject(LearningPathApiService);
         alertService = TestBed.inject(AlertService);

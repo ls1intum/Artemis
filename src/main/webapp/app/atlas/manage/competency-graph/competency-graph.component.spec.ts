@@ -6,6 +6,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { CompetencyGraphDTO, CompetencyGraphEdgeDTO, CompetencyGraphNodeDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { SizeUpdate } from 'app/atlas/manage/competency-node/competency-node.component';
 import { provideNoopAnimationsForTests } from 'test/helpers/animations';
+import { MockModule } from 'ng-mocks';
+import { NgxGraphModule } from '@swimlane/ngx-graph';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyGraphComponent', () => {
@@ -42,7 +44,12 @@ describe('CompetencyGraphComponent', () => {
                 },
                 provideNoopAnimationsForTests(),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(CompetencyGraphComponent, {
+                remove: { imports: [NgxGraphModule] },
+                add: { imports: [MockModule(NgxGraphModule)] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(CompetencyGraphComponent);
         component = fixture.componentInstance;

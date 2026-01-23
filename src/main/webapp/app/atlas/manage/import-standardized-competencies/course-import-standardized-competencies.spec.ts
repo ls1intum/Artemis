@@ -19,10 +19,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { Source } from 'app/atlas/shared/entities/standardized-competency.model';
 import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { StandardizedCompetencyFilterComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-filter.component';
 import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
-import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
-import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
@@ -39,15 +36,10 @@ describe('CourseImportStandardizedCompetenciesComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 CourseImportStandardizedCompetenciesComponent,
-                StandardizedCompetencyFilterComponent,
-                StandardizedCompetencyDetailComponent,
-                KnowledgeAreaTreeComponent,
-                FaIconComponent,
-            ],
-            declarations: [
                 StandardizedCompetencyFilterStubComponent,
                 StandardizedCompetencyDetailStubComponent,
                 KnowledgeAreaTreeStubComponent,
+                FaIconComponent,
                 MockComponent(ButtonComponent),
                 MockDirective(SortDirective),
                 MockPipe(HtmlForMarkdownPipe),

@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { JudgementOfLearningRatingComponent } from 'app/atlas/overview/judgement-of-learning-rating/judgement-of-learning-rating.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
@@ -76,7 +76,7 @@ describe('JudgementOfLearningRatingComponent', () => {
         expect(component.rating()).toBe(3);
     });
 
-    it('should emit new rating when onRate is called with valid data', fakeAsync(() => {
+    it('should emit new rating when onRate is called with valid data', () => {
         fixture.componentRef.setInput('rating', undefined);
         fixture.componentRef.setInput('courseId', 1);
 
@@ -85,9 +85,9 @@ describe('JudgementOfLearningRatingComponent', () => {
         vi.spyOn(courseCompetencyService, 'setJudgementOfLearning').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
         component.onRate(event);
         expect(component.rating()).toBe(newRating);
-    }));
+    });
 
-    it('should show error message when setting judgement of learning fails', fakeAsync(() => {
+    it('should show error message when setting judgement of learning fails', () => {
         fixture.componentRef.setInput('rating', undefined);
         fixture.componentRef.setInput('courseId', 1);
 
@@ -100,5 +100,5 @@ describe('JudgementOfLearningRatingComponent', () => {
 
         expect(component.rating()).toBeUndefined();
         expect(errorSpy).toHaveBeenCalled();
-    }));
+    });
 });
