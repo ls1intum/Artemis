@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.CheckReturnValue;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -27,11 +28,12 @@ public class EnrollmentService {
 
     private final CourseRepository courseRepository;
 
-    @Value("${artemis.user-management.course-enrollment.allowed-username-pattern:#{null}}")
-    private Pattern allowedCourseEnrollmentUsernamePattern;
+    private final Pattern allowedCourseEnrollmentUsernamePattern;
 
-    public EnrollmentService(CourseRepository courseRepository) {
+    public EnrollmentService(CourseRepository courseRepository,
+            @Nullable @Value("${artemis.user-management.course-enrollment.allowed-username-pattern:#{null}}") Pattern allowedCourseEnrollmentUsernamePattern) {
         this.courseRepository = courseRepository;
+        this.allowedCourseEnrollmentUsernamePattern = allowedCourseEnrollmentUsernamePattern;
     }
 
     /**
