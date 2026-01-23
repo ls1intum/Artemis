@@ -720,6 +720,12 @@ public class AuthorizationCheckService {
         return SecurityUtils.isCurrentUserInRole(Role.ADMIN.getAuthority()) || SecurityUtils.isCurrentUserInRole(Role.SUPER_ADMIN.getAuthority());
     }
 
+    /**
+     * Checks if the given authority names contain admin or super admin authority
+     *
+     * @param authorities set of authority names to check
+     * @return true if authorities contain admin or super admin authority, otherwise false
+     */
     public static boolean isAdminByAuthorityName(Set<String> authorities) {
         if (authorities == null) {
             return false;
@@ -728,6 +734,12 @@ public class AuthorizationCheckService {
         return authorities.contains(Authority.ADMIN_AUTHORITY.getName()) || authorities.contains(Authority.SUPER_ADMIN_AUTHORITY.getName());
     }
 
+    /**
+     * Checks if the given authorities contain admin or super admin authority
+     *
+     * @param authorities set of authorities to check
+     * @return true if authorities contain admin or super admin authority, otherwise false
+     */
     public static boolean isAdmin(Set<Authority> authorities) {
         if (authorities == null) {
             return false;
