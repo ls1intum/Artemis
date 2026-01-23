@@ -114,4 +114,13 @@ public class ModuleFeatureService {
     public boolean isLtiEnabled() {
         return artemisConfigHelper.isLtiEnabled(environment);
     }
+
+    /**
+     * Check if the Theia module is enabled.
+     *
+     * @return true if the Theia module is enabled, false otherwise
+     */
+    public boolean isTheiaEnabled() {
+        return artemisConfigHelper.isTheiaEnabled(environment);
+    }
 }
