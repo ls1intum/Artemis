@@ -429,6 +429,80 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
     }
 
     @Nested
+    class StaticIsAdminMethodsTest {
+
+        @Test
+        void testIsAdminByAuthorityName_withAdminAuthority_shouldReturnTrue() {
+            Set<String> authorities = Set.of(Role.ADMIN.getAuthority());
+            boolean isAdmin = AuthorizationCheckService.isAdminByAuthorityName(authorities);
+            assertThat(isAdmin).isTrue();
+        }
+
+        @Test
+        void testIsAdminByAuthorityName_withSuperAdminAuthority_shouldReturnTrue() {
+            Set<String> authorities = Set.of(Role.SUPER_ADMIN.getAuthority());
+            boolean isAdmin = AuthorizationCheckService.isAdminByAuthorityName(authorities);
+            assertThat(isAdmin).isTrue();
+        }
+
+        @Test
+        void testIsAdminByAuthorityName_withBothAdminAuthorities_shouldReturnTrue() {
+            Set<String> authorities = Set.of(Role.ADMIN.getAuthority(), Role.SUPER_ADMIN.getAuthority());
+            boolean isAdmin = AuthorizationCheckService.isAdminByAuthorityName(authorities);
+            assertThat(isAdmin).isTrue();
+        }
+
+        @Test
+        void testIsAdminByAuthorityName_withUserAuthority_shouldReturnFalse() {
+            Set<String> authorities = Set.of(Role.STUDENT.getAuthority());
+            boolean isAdmin = AuthorizationCheckService.isAdminByAuthorityName(authorities);
+            assertThat(isAdmin).isFalse();
+        }
+
+        @Test
+        void testIsAdminByAuthorityName_withEmptySet_shouldReturnFalse() {
+            Set<String> authorities = Set.of();
+            boolean isAdmin = AuthorizationCheckService.isAdminByAuthorityName(authorities);
+            assertThat(isAdmin).isFalse();
+        }
+
+        @Test
+        void testIsAdmin_withAdminAuthority_shouldReturnTrue() {
+            Set<Authority> authorities = Set.of(Authority.ADMIN_AUTHORITY);
+            boolean isAdmin = AuthorizationCheckService.isAdmin(authorities);
+            assertThat(isAdmin).isTrue();
+        }
+
+        @Test
+        void testIsAdmin_withSuperAdminAuthority_shouldReturnTrue() {
+            Set<Authority> authorities = Set.of(Authority.SUPER_ADMIN_AUTHORITY);
+            boolean isAdmin = AuthorizationCheckService.isAdmin(authorities);
+            assertThat(isAdmin).isTrue();
+        }
+
+        @Test
+        void testIsAdmin_withBothAdminAuthorities_shouldReturnTrue() {
+            Set<Authority> authorities = Set.of(Authority.ADMIN_AUTHORITY, Authority.SUPER_ADMIN_AUTHORITY);
+            boolean isAdmin = AuthorizationCheckService.isAdmin(authorities);
+            assertThat(isAdmin).isTrue();
+        }
+
+        @Test
+        void testIsAdmin_withUserAuthority_shouldReturnFalse() {
+            Set<Authority> authorities = Set.of(Authority.USER_AUTHORITY);
+            boolean isAdmin = AuthorizationCheckService.isAdmin(authorities);
+            assertThat(isAdmin).isFalse();
+        }
+
+        @Test
+        void testIsAdmin_withEmptySet_shouldReturnFalse() {
+            Set<Authority> authorities = Set.of();
+            boolean isAdmin = AuthorizationCheckService.isAdmin(authorities);
+            assertThat(isAdmin).isFalse();
+        }
+    }
+
+    @Nested
     class IsAtLeastRoleInCourseWithSuperAdminTest {
 
         private Course course;
