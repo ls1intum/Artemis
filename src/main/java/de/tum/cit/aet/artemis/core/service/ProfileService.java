@@ -98,15 +98,6 @@ public class ProfileService {
     }
 
     /**
-     * Checks if the lti profile is active
-     *
-     * @return true if the lti profile is active, false otherwise
-     */
-    public boolean isLtiActive() {
-        return isProfileActive(Constants.PROFILE_LTI);
-    }
-
-    /**
      * Checks if the production profile is active
      *
      * @return true if the production profile is active, false otherwise

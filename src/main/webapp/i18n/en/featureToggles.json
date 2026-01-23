@@ -35,10 +35,6 @@
                     "name": "Athena (AI Assessment)",
                     "description": "Enables Athena ML-based automated feedback suggestions for text and programming exercises."
                 },
-                "lti": {
-                    "name": "LTI Integration",
-                    "description": "Enables Learning Tools Interoperability (LTI) for integration with external learning management systems."
-                },
                 "apollon": {
                     "name": "Apollon (Modeling)",
                     "description": "Enables the Apollon UML modeling editor for creating and editing diagrams in modeling exercises."
@@ -117,6 +113,10 @@
                     "name": "Exercise Sharing",
                     "description": "Enables sharing and importing of programming exercises between courses and institutions."
                 },
+                "lti": {
+                    "name": "LTI Integration",
+                    "description": "Enables Learning Tools Interoperability (LTI) for integration with external learning management systems."
+                },
                 "passkey": {
                     "name": "Passkey Authentication",
                     "description": "Enables passwordless authentication using FIDO2/WebAuthn passkeys for enhanced security."
@@ -182,6 +182,11 @@
                     "name": "Lecture Video Processing",
                     "description": "Uses Nebula to automatically generate transcriptions from lecture videos and sends them to Pyris/Iris, enabling AI assistants to answer questions about lecture content and provide more accurate, content-aware responses.",
                     "disableWarning": "Lecture videos will not be transcribed by Nebula and Iris will not be able to reference lecture content in its responses."
+                },
+                "RateLimit": {
+                    "name": "API Rate Limiting",
+                    "description": "Protects the application from abuse and overload by limiting the number of specific API requests per user within a given time period.",
+                    "disableWarning": "Specific API endpoints are not protected by rate limiting, which can lead to potential abuse or overload."
                 }
             }
         }
