@@ -17,16 +17,6 @@
             "created": "Textaufgabe mit ID {{ param }} erstellt",
             "updated": "Textaufgabe mit ID {{ param }} aktualisiert",
             "deleted": "Textaufgabe mit ID {{ param }} gelöscht",
-            "delete": {
-                "summary": {
-                    "title": "Zusammenfassung Textaufgabe",
-                    "numberOfStudentParticipations": "Anzahl der Studierenden-Teilnahmen",
-                    "numberOfSubmissions": "Anzahl der Abgaben",
-                    "numberOfAssessments": "Anzahl der Bewertungen",
-                    "numberOfCommunicationPosts": "Anzahl der Kommunikationsbeiträge",
-                    "numberOfAnswerPosts": "Anzahl der Antwortbeiträge"
-                }
-            },
             "detail": {
                 "title": "Textaufgabe"
             },

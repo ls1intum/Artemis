@@ -16,7 +16,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,7 +34,6 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.quiz.dto.QuizExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 
@@ -111,19 +109,6 @@ public class QuizExerciseDeletionResource {
         FileUtil.deleteFiles(imagesToDelete);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, quizExercise.getTitle())).build();
-    }
-
-    /**
-     * GET /quiz-exercises/:exerciseId/deletion-summary : Get a summary for the deletion of a quiz exercise.
-     *
-     * @param exerciseId the id of the quiz exercise
-     * @return the {@link ResponseEntity} with status {@code 200} and with body a summary of the deletion of the quiz exercise
-     */
-    @GetMapping("quiz-exercises/{exerciseId}/deletion-summary")
-    @EnforceAtLeastInstructorInExercise
-    public ResponseEntity<QuizExerciseDeletionSummaryDTO> getDeletionSummary(@PathVariable long exerciseId) {
-        log.debug("REST request to get deletion summary for quiz exercise : {}", exerciseId);
-        return ResponseEntity.ok(quizExerciseService.getDeletionSummary(exerciseId));
     }
 
     private Path convertToActualPath(String pathString, FilePathType filePathType) {

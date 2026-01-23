@@ -314,8 +314,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
                     return;
                 }
                 JavaEnumConstant value = (JavaEnumConstant) valueProperty.get();
-                if (!value.name().equals("NON_EMPTY")) {
-                    events.add(violated(item, item + " should be annotated with @JsonInclude(JsonInclude.Include.NON_EMPTY)"));
+                if (!value.name().equals("NON_EMPTY") && !value.name().equals("NON_NULL")) {
+                    events.add(violated(item, item + " should be annotated with @JsonInclude(JsonInclude.Include.NON_EMPTY)" + "or @JsonInclude(JsonInclude.Include.NON_EMPTY)"));
                 }
             }
         };

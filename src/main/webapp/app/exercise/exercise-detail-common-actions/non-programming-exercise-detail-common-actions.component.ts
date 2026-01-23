@@ -19,7 +19,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
-import { ExerciseDeletionService } from 'app/exercise/services/exercise-deletion.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 
 @Component({
     selector: 'jhi-non-programming-exercise-detail-common-actions',
@@ -30,7 +30,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     private textExerciseService = inject(TextExerciseService);
     private fileUploadExerciseService = inject(FileUploadExerciseService);
     private modelingExerciseService = inject(ModelingExerciseService);
-    private exerciseDeletionService = inject(ExerciseDeletionService);
+    private exerciseService = inject(ExerciseService);
     private profileService = inject(ProfileService);
     private eventManager = inject(EventManager);
     private router = inject(Router);
@@ -153,11 +153,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
         }
     }
 
-    fetchExerciseDeletionSummary(exerciseId: number, exerciseType: ExerciseType): Observable<EntitySummary> {
-        return this.exerciseDeletionService.fetchExerciseDeletionSummary(exerciseId, exerciseType);
-    }
-
-    getEntitySummaryTitle(exerciseType: ExerciseType): string {
-        return this.exerciseDeletionService.getEntitySummaryTitle(exerciseType);
+    fetchExerciseDeletionSummary(exerciseId: number): Observable<EntitySummary> {
+        return this.exerciseService.getDeletionSummary(exerciseId);
     }
 }

@@ -10,16 +10,6 @@
             "created": "Created new Modeling Exercise with identifier {{ param }}",
             "updated": "Updated Modeling Exercise with identifier {{ param }}",
             "deleted": "Deleted Modeling Exercise with identifier {{ param }}",
-            "delete": {
-                "summary": {
-                    "title": "Modeling Exercise Summary",
-                    "numberOfStudentParticipations": "Number of Student Participations",
-                    "numberOfSubmissions": "Number of Submissions",
-                    "numberOfAssessments": "Number of Assessments",
-                    "numberOfCommunicationPosts": "Number of Communication Posts",
-                    "numberOfAnswerPosts": "Number of Answer Posts"
-                }
-            },
             "detail": {
                 "title": "Modeling Exercise"
             },

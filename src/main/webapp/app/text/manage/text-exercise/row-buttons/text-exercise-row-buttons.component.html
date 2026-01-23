@@ -42,7 +42,7 @@
             [entityTitle]="exercise().title || ''"
             deleteQuestion="artemisApp.exercise.delete.question"
             deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-            entitySummaryTitle="artemisApp.textExercise.delete.summary.title"
+            entitySummaryTitle="artemisApp.exercise.delete.summary.title"
             [fetchEntitySummary]="fetchExerciseDeletionSummary(exercise().id!)"
             (delete)="deleteExercise()"
             [dialogError]="dialogError$"

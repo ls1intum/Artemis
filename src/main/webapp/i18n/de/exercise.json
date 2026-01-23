@@ -23,7 +23,16 @@
             "deleted": "Übung gelöscht mit ID {{ param }}",
             "delete": {
                 "question": "Soll die Übung <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
-                "typeNameToConfirm": "Bitte gib den Namen der Übung zur Bestätigung ein."
+                "typeNameToConfirm": "Bitte gib den Namen der Übung zur Bestätigung ein.",
+                "summary": {
+                    "title": "Aufaben-Zusammenfassung",
+                    "numberOfStudentParticipations": "Anzahl der Studierendenteilnahmen",
+                    "numberOfSubmissions": "Anzahl der Abgaben",
+                    "numberOfAssessments": "Anzahl der Bewertungen",
+                    "numberOfCommunicationPosts": "Anzahl der Kommunikationsbeiträge",
+                    "numberOfAnswerPosts": "Anzahl der Antworten",
+                    "numberOfBuilds": "Anzahl der Builds"
+                }
             },
             "reset": {
                 "question": "Soll die Übung <strong>{{ title }}</strong> wirklich zurückgesetzt werden? Diese Aktion kann NICHT rückgängig gemacht werden!"

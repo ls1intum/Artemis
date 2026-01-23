@@ -15,12 +15,12 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.fileupload.config.FileUploadEnabled;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.fileupload.dto.FileUploadExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 
 @Conditional(FileUploadEnabled.class)
@@ -79,14 +79,14 @@ public class FileUploadExerciseService {
      * @param exerciseId the id of the file upload exercise
      * @return the summary of the deletion of the file upload exercise
      */
-    public FileUploadExerciseDeletionSummaryDTO getDeletionSummary(long exerciseId) {
+    public ExerciseDeletionSummaryDTO getDeletionSummary(long exerciseId) {
         final long numberOfStudentParticipations = participationRepository.countByExerciseId(exerciseId);
         final long numberOfSubmissions = submissionRepository.countByExerciseId(exerciseId);
         final long numberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId);
 
         final ExerciseCommunicationDeletionSummaryDTO exerciseCommunicationDeletionSummaryDTO = channelService.getExerciseCommunicationDeletionSummary(exerciseId);
 
-        return new FileUploadExerciseDeletionSummaryDTO(numberOfStudentParticipations, numberOfSubmissions, numberOfAssessments,
+        return new ExerciseDeletionSummaryDTO(numberOfStudentParticipations, null, numberOfSubmissions, numberOfAssessments,
                 exerciseCommunicationDeletionSummaryDTO.numberOfCommunicationPosts(), exerciseCommunicationDeletionSummaryDTO.numberOfAnswerPosts());
     }
 }

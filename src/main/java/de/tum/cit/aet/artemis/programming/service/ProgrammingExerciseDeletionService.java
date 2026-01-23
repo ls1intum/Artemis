@@ -16,12 +16,13 @@ import de.tum.cit.aet.artemis.communication.dto.ExerciseCommunicationDeletionSum
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
@@ -50,10 +51,13 @@ public class ProgrammingExerciseDeletionService {
 
     private final ChannelService channelService;
 
+    private final SubmissionRepository submissionRepository;
+
     public ProgrammingExerciseDeletionService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseRepository programmingExerciseRepository, ParticipationDeletionService participationDeletionService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, InstanceMessageSendService instanceMessageSendService,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, BuildJobRepository buildJobRepository, ChannelService channelService) {
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, BuildJobRepository buildJobRepository, ChannelService channelService,
+            SubmissionRepository submissionRepository) {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationDeletionService = participationDeletionService;
@@ -62,6 +66,7 @@ public class ProgrammingExerciseDeletionService {
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.buildJobRepository = buildJobRepository;
         this.channelService = channelService;
+        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -137,13 +142,14 @@ public class ProgrammingExerciseDeletionService {
      * @param exerciseId the id of the programming exercise
      * @return the summary of the deletion of the programming exercise
      */
-    public ProgrammingExerciseDeletionSummaryDTO getProgrammingExerciseDeletionSummary(long exerciseId) {
+    public ExerciseDeletionSummaryDTO getDeletionSummary(long exerciseId) {
         final long numberOfStudentParticipations = programmingExerciseRepository.countStudentParticipationsByExerciseId(exerciseId);
         final long numberOfBuilds = buildJobRepository.countBuildJobsByExerciseIds(Set.of(exerciseId));
+        final long numberOfSubmissions = submissionRepository.countByExerciseId(exerciseId);
 
         final ExerciseCommunicationDeletionSummaryDTO exerciseCommunicationDeletionSummary = channelService.getExerciseCommunicationDeletionSummary(exerciseId);
 
-        return new ProgrammingExerciseDeletionSummaryDTO(numberOfStudentParticipations, numberOfBuilds, exerciseCommunicationDeletionSummary.numberOfCommunicationPosts(),
-                exerciseCommunicationDeletionSummary.numberOfAnswerPosts());
+        return new ExerciseDeletionSummaryDTO(numberOfStudentParticipations, numberOfBuilds, numberOfSubmissions, null,
+                exerciseCommunicationDeletionSummary.numberOfCommunicationPosts(), exerciseCommunicationDeletionSummary.numberOfAnswerPosts());
     }
 }

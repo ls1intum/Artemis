@@ -24,8 +24,13 @@ import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseService;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseService;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismResultApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -34,6 +39,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.text.api.TextApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.service.TextExerciseService;
 
 /**
  * Service Implementation for managing Exercise.
@@ -69,11 +75,18 @@ public class ExerciseDeletionService {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
+    private final ModelingExerciseService modelingExerciseService;
+
+    private final TextExerciseService textExerciseService;
+
+    private final FileUploadExerciseService fileUploadExerciseService;
+
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ParticipationDeletionService participationDeletionService,
             ProgrammingExerciseDeletionService programmingExerciseDeletionService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, Optional<StudentExamApi> studentExamApi,
             Optional<LectureUnitApi> lectureUnitApi, Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelService channelService,
-            Optional<CompetencyProgressApi> competencyProgressApi) {
+            Optional<CompetencyProgressApi> competencyProgressApi, ModelingExerciseService modelingExerciseService, TextExerciseService textExerciseService,
+            FileUploadExerciseService fileUploadExerciseService) {
         this.exerciseRepository = exerciseRepository;
         this.participationDeletionService = participationDeletionService;
         this.programmingExerciseDeletionService = programmingExerciseDeletionService;
@@ -86,6 +99,28 @@ public class ExerciseDeletionService {
         this.textApi = textApi;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
+        this.modelingExerciseService = modelingExerciseService;
+        this.textExerciseService = textExerciseService;
+        this.fileUploadExerciseService = fileUploadExerciseService;
+    }
+
+    /**
+     * Get a summary for the deletion of an exercise.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the summary of the deletion of the exercise
+     */
+    public ExerciseDeletionSummaryDTO getDeletionSummary(long exerciseId) {
+        final Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+
+        return switch (exercise) {
+            case ProgrammingExercise _ -> programmingExerciseDeletionService.getDeletionSummary(exerciseId);
+            case QuizExercise _ -> quizExerciseService.getDeletionSummary(exerciseId);
+            case ModelingExercise _ -> modelingExerciseService.getDeletionSummary(exerciseId);
+            case TextExercise _ -> textExerciseService.getDeletionSummary(exerciseId);
+            case FileUploadExercise _ -> fileUploadExerciseService.getDeletionSummary(exerciseId);
+            default -> throw new IllegalArgumentException("Unsupported exercise type: " + exercise.getClass().getName());
+        };
     }
 
     /**

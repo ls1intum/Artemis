@@ -60,7 +60,6 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
-import de.tum.cit.aet.artemis.text.dto.TextExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.service.TextExerciseService;
 
@@ -223,19 +222,6 @@ public class TextExerciseResource {
         exerciseService.logDeletion(textExercise, textExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseDeletionService.delete(exerciseId, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, textExercise.getTitle())).build();
-    }
-
-    /**
-     * GET /text-exercises/:exerciseId/deletion-summary : Get a summary for the deletion of a text exercise.
-     *
-     * @param exerciseId the id of the text exercise
-     * @return the {@link ResponseEntity} with status {@code 200} and with body a summary of the deletion of the text exercise
-     */
-    @GetMapping("text-exercises/{exerciseId}/deletion-summary")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<TextExerciseDeletionSummaryDTO> getDeletionSummary(@PathVariable long exerciseId) {
-        log.debug("REST request to get deletion summary for text exercise : {}", exerciseId);
-        return ResponseEntity.ok(textExerciseService.getDeletionSummary(exerciseId));
     }
 
     /**
