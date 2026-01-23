@@ -34,6 +34,8 @@ artemis:
     # Apollon PDF export service - only affects PDF export button, not the modeling editor itself
     apollon:
         enabled: false
+    athena:
+        enabled: false
     user-management:
         passkey:
             enabled: false # used by Constants.PASSKEY_ENABLED_PROPERTY_NAME

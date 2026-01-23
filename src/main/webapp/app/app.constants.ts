@@ -63,6 +63,8 @@ export const MODULE_FEATURE_SHARING = 'sharing';
 
 export const MODULE_FEATURE_LTI = 'lti';
 
+export const MODULE_FEATURE_ATHENA = 'athena';
+
 export const MODULE_FEATURE_APOLLON = 'apollon';
 
 export type ModuleFeature =
@@ -81,6 +83,7 @@ export type ModuleFeature =
     | typeof MODULE_FEATURE_NEBULA
     | typeof MODULE_FEATURE_SHARING
     | typeof MODULE_FEATURE_LTI
+    | typeof MODULE_FEATURE_ATHENA
     | typeof MODULE_FEATURE_APOLLON;
 
 export const PROFILE_LOCALCI = 'localci';

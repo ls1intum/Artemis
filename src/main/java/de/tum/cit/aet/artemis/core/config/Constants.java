@@ -450,6 +450,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_APOLLON = "apollon";
 
     /**
+     * The name of the module feature used for Athena functionality.
+     */
+    public static final String MODULE_FEATURE_ATHENA = "athena";
+
+    /**
      * The name of the property used to enable or disable Atlas functionality.
      */
     public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
@@ -529,6 +534,11 @@ public final class Constants {
      * This only controls PDF export; the modeling editor is controlled by {@link #MODELING_ENABLED_PROPERTY_NAME}.
      */
     public static final String APOLLON_ENABLED_PROPERTY_NAME = "artemis.apollon.enabled";
+
+    /**
+     * The name of the property used to enable or disable Athena functionality.
+     */
+    public static final String ATHENA_ENABLED_PROPERTY_NAME = "artemis.athena.enabled";
 
     /**
      * The name of the property used to define the directories for file uploads.
