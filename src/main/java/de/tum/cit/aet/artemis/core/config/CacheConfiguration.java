@@ -325,7 +325,6 @@ public class CacheConfiguration {
      * @param jHipsterProperties the JHipster properties used to extract cache-related parameters such as backup count
      */
     private void configureQueueCluster(Config config, JHipsterProperties jHipsterProperties) {
-        // TODO: Check how we can migrate this to DistributedDataAccessService in the future
         // Queue specific configurations
         log.debug("Configure Build Job Queue synchronization in Hazelcast for Local CI");
         QueueConfig queueConfig = new QueueConfig("buildJobQueue");
@@ -373,6 +372,7 @@ public class CacheConfiguration {
     }
 
     private MapConfig initializeRateLimitBucketsMapConfig(JHipsterProperties jHipsterProperties) {
+        // TODO: Discuss a potential migration to Redis for rate limiting in the future
         return new MapConfig().setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount())
                 .setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
     }

@@ -61,7 +61,7 @@ public class FeatureToggleService {
      * @return The map of features
      */
     private Map<Feature, Boolean> getFeatauresMap() {
-        if (distributedDataAccessService.getFeatures() == null) {
+        if (distributedDataAccessService.getFeatures() == null || distributedDataAccessService.getFeatures().isEmpty()) {
             initFeatures();
         }
         return distributedDataAccessService.getFeatures();
@@ -77,7 +77,7 @@ public class FeatureToggleService {
         // This ensures that all features (except the Science API, TutorSuggestions, AtlasML, Memiris and AtlasAgent) are enabled once the system starts up
         for (Feature feature : Feature.values()) {
             if (!features.containsKey(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions && feature != Feature.AtlasML && feature != Feature.Memiris
-                    && feature != Feature.AtlasAgent) {
+                    && feature != Feature.AtlasAgent && feature != Feature.RateLimit) {
                 features.put(feature, true);
             }
         }
