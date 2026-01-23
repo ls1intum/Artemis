@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UpdateCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UpdateThreadResolvedStateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -44,7 +44,7 @@ class ExerciseReviewCommentResourceIntegrationTest extends AbstractSpringIntegra
     private ExerciseVersionService exerciseVersionService;
 
     @Autowired
-    private ExerciseVersionRepository exerciseVersionRepository;
+    private ExerciseVersionTestRepository exerciseVersionRepository;
 
     @Autowired
     private CommentThreadRepository commentThreadRepository;

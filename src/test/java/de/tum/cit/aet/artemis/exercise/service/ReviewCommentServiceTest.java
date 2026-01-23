@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +26,7 @@ import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadLocationType;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
 import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
 import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewCommentService;
@@ -34,9 +35,9 @@ import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCIL
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
-import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
@@ -51,7 +52,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
     private ExerciseVersionService exerciseVersionService;
 
     @Autowired
-    private ExerciseVersionRepository exerciseVersionRepository;
+    private ExerciseVersionTestRepository exerciseVersionRepository;
 
     @Autowired
     private CommentThreadRepository commentThreadRepository;
@@ -63,7 +64,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     @Autowired
-    private TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+    private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationRepository;
 
     private ProgrammingExercise programmingExercise;
 
@@ -327,13 +328,13 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         Files.createDirectories(filePath.getParent());
 
         String oldText = String.join("\n", "alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta", "iota", "kappa", "");
-        Files.writeString(filePath, oldText, StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(filePath.toFile(), oldText, StandardCharsets.UTF_8);
         repository.workingCopyGitRepo.add().addFilepattern(".").call();
         RevCommit oldCommit = GitService.commit(repository.workingCopyGitRepo).setMessage("Add file").call();
         repository.workingCopyGitRepo.push().setRemote("origin").call();
 
         String newText = String.join("\n", "alpha", "inserted", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta-updated", "iota", "kappa", "");
-        Files.writeString(filePath, newText, StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(filePath.toFile(), newText, StandardCharsets.UTF_8);
         repository.workingCopyGitRepo.add().addFilepattern(".").call();
         RevCommit newCommit = GitService.commit(repository.workingCopyGitRepo).setMessage("Update file").call();
         repository.workingCopyGitRepo.push().setRemote("origin").call();
