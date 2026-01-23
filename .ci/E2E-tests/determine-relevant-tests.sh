@@ -26,23 +26,6 @@ write_output() {
     echo "OUTPUT: $key=$value"
 }
 
-# All e2e test directories/files (top-level)
-ALL_TEST_PATHS=(
-    "e2e/atlas/"
-    "e2e/course/"
-    "e2e/exam/"
-    "e2e/exercise/"
-    "e2e/lecture/"
-    "e2e/Login.spec.ts"
-    "e2e/Logout.spec.ts"
-    "e2e/SystemHealth.spec.ts"
-)
-
-echo "=== Determining relevant e2e tests ==="
-echo "Base branch: $BASE_BRANCH"
-echo "Mapping file: $MAPPING_FILE"
-echo ""
-
 # Verify mapping file exists
 if [ ! -f "$MAPPING_FILE" ]; then
     echo "ERROR: Mapping file not found: $MAPPING_FILE"
@@ -54,6 +37,38 @@ if [ ! -f "$MAPPING_FILE" ]; then
     write_output "REMAINING_COUNT" "0"
     exit 0
 fi
+
+# All e2e test directories/files (top-level)
+# Source of truth: .ci/E2E-tests/e2e-test-mapping.json (allTestPaths)
+# Safety net: auto-discover top-level e2e paths so new folders still run in remaining tests.
+declare -A ALL_TEST_PATH_SET
+
+ALL_TEST_PATHS_FROM_MAPPING=$(jq -r '.allTestPaths[]' "$MAPPING_FILE" 2>/dev/null || echo "")
+for test_path in $ALL_TEST_PATHS_FROM_MAPPING; do
+    if [ -n "$test_path" ] && [ "$test_path" != "null" ]; then
+        ALL_TEST_PATH_SET["$test_path"]=1
+    fi
+done
+
+while IFS= read -r path; do
+    if [ -n "$path" ]; then
+        if [ -d "$REPO_ROOT/src/test/playwright/$path" ]; then
+            ALL_TEST_PATH_SET["$path/"]=1
+        else
+            ALL_TEST_PATH_SET["$path"]=1
+        fi
+    fi
+done < <(cd "$REPO_ROOT/src/test/playwright" && find e2e -maxdepth 1 -mindepth 1 \( -type d -o -name '*.spec.ts' \) -print)
+
+ALL_TEST_PATHS=()
+for test_path in "${!ALL_TEST_PATH_SET[@]}"; do
+    ALL_TEST_PATHS+=("$test_path")
+done
+
+echo "=== Determining relevant e2e tests ==="
+echo "Base branch: $BASE_BRANCH"
+echo "Mapping file: $MAPPING_FILE"
+echo ""
 
 # Get list of changed files
 cd "$REPO_ROOT"
@@ -78,6 +93,12 @@ if [ "$TOTAL_CHANGED" -gt 20 ]; then
 fi
 echo ""
 
+# Execution precedence (highest to lowest):
+# 1) RUN_ALL_TESTS=true (no changes detected, mapping file missing, runAllTestsPatterns match,
+#    or Playwright infrastructure change) => run the full suite.
+# 2) Only Playwright spec changes (no infrastructure change) => run only RELEVANT_TESTS (skip REMAINING_TESTS).
+# 3) All other changes run RELEVANT_TESTS first, then REMAINING_TESTS (excluding covered paths).
+#
 # Check if we should run all tests (config changes, playwright changes, etc.)
 # Patterns are treated as literal path prefixes (not regex).
 RUN_ALL_TESTS=false
