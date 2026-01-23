@@ -125,7 +125,7 @@ describe('UnreferencedFeedbackComponent', () => {
     });
 
     it('should only replace feedback on drop, not add another one', () => {
-        vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation();
+        vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation(() => undefined);
         const dragEvent = { dataTransfer: { getData: vi.fn().mockReturnValue('{}') }, preventDefault: vi.fn() } as unknown as DragEvent;
         comp.createAssessmentOnDrop(dragEvent);
         fixture.changeDetectorRef.detectChanges();

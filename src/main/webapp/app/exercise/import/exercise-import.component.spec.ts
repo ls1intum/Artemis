@@ -279,13 +279,15 @@ describe('ExerciseImportComponent', () => {
         expect(searchStub).toHaveBeenCalledWith(expectedSearchObject, { isCourseFilter: false, isExamFilter: false });
     });
 
-    it.each([
+    const pagingServiceCases: Array<[ExerciseType, typeof PagingService]> = [
         [ExerciseType.PROGRAMMING, ProgrammingExercisePagingService],
         [ExerciseType.TEXT, TextExercisePagingService],
         [ExerciseType.MODELING, ModelingExercisePagingService],
         [ExerciseType.QUIZ, QuizExercisePagingService],
         [ExerciseType.FILE_UPLOAD, FileUploadExercisePagingService],
-    ])('uses the correct paging service', (exerciseType: ExerciseType, expectedPagingService: typeof PagingService) => {
+    ];
+
+    it.each(pagingServiceCases)('uses the correct paging service', (exerciseType: ExerciseType, expectedPagingService: typeof PagingService) => {
         const getSpy = vi.spyOn(injector, 'get');
         // This is needed for `.toHaveBeenCalledWith` to work properly:
         getSpy.mockImplementation(() => undefined);

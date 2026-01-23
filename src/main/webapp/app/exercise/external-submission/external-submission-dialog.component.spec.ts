@@ -73,7 +73,7 @@ describe('External Submission Dialog', () => {
         const createMock = vi.spyOn(externalSubmissionService, 'create').mockReturnValue(subject.asObservable());
 
         const eventManager = TestBed.inject(EventManager);
-        const eventManagerSpy = vi.spyOn(eventManager, 'broadcast').mockImplementation();
+        const eventManagerSpy = vi.spyOn(eventManager, 'broadcast').mockImplementation(() => undefined);
 
         component.feedbacks = [new Feedback(), new Feedback()];
 
@@ -84,7 +84,7 @@ describe('External Submission Dialog', () => {
 
         expect(component.isSaving).toBe(true);
         expect(result.feedbacks).toBe(component.feedbacks);
-        expect(result.feedbacks).toSatisfy((feedbacks) => feedbacks.every((feedback) => feedback.type === FeedbackType.MANUAL));
+        expect(result.feedbacks).toSatisfy((feedbacks: Feedback[]) => feedbacks.every((feedback: Feedback) => feedback.type === FeedbackType.MANUAL));
         expect(createMock).toHaveBeenCalledOnce();
         expect(createMock).toHaveBeenCalledWith(component.exercise, component.student, result);
         expect(activeModal.close).not.toHaveBeenCalled();

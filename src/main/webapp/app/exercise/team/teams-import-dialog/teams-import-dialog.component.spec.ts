@@ -122,8 +122,8 @@ describe('TeamsImportDialogComponent', () => {
 
         beforeEach(() => {
             resetComponent();
-            loadSourceStub = vi.spyOn(comp, 'loadSourceTeams').mockImplementation();
-            initImportStrategyStub = vi.spyOn(comp, 'initImportStrategy').mockImplementation();
+            loadSourceStub = vi.spyOn(comp, 'loadSourceTeams').mockImplementation(() => undefined);
+            initImportStrategyStub = vi.spyOn(comp, 'initImportStrategy').mockImplementation(() => undefined);
             vi.spyOn(teamService, 'findAllByExerciseId').mockReturnValue(of(new HttpResponse<Team[]>({ body: mockSourceTeams })));
         });
 
@@ -523,8 +523,8 @@ describe('TeamsImportDialogComponent', () => {
             importFromSourceExerciseStub = vi.spyOn(teamService, 'importTeamsFromSourceExercise').mockReturnValue(of(fromExerciseResponse));
             fromFileResponse = new HttpResponse<Team[]>({ body: [...mockSourceTeams, mockTeam] });
             importTeamsStub = vi.spyOn(teamService, 'importTeams').mockReturnValue(of(fromFileResponse));
-            onSuccessStub = vi.spyOn(comp, 'onSaveSuccess').mockImplementation();
-            onErrorStub = vi.spyOn(comp, 'onSaveError').mockImplementation();
+            onSuccessStub = vi.spyOn(comp, 'onSaveSuccess').mockImplementation(() => undefined);
+            onErrorStub = vi.spyOn(comp, 'onSaveError').mockImplementation(() => undefined);
             comp.sourceExercise = mockSourceExercise;
             comp.sourceTeams = mockSourceTeams;
             comp.importStrategy = TeamImportStrategyType.PURGE_EXISTING;
@@ -621,7 +621,7 @@ describe('TeamsImportDialogComponent', () => {
         beforeEach(() => {
             resetComponent();
             response = new HttpResponse<Team[]>({ body: mockSourceTeams });
-            modalStub = vi.spyOn(ngbActiveModal, 'close').mockImplementation();
+            modalStub = vi.spyOn(ngbActiveModal, 'close').mockImplementation(() => undefined);
             alertServiceStub = vi.spyOn(alertService, 'success');
         });
 
