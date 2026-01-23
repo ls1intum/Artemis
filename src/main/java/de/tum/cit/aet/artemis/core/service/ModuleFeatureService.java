@@ -123,4 +123,13 @@ public class ModuleFeatureService {
     public boolean isLtiEnabled() {
         return artemisConfigHelper.isLtiEnabled(environment);
     }
+
+    /**
+     * Check if the Apollon module is enabled.
+     *
+     * @return true if the Apollon module is enabled, false otherwise
+     */
+    public boolean isApollonEnabled() {
+        return artemisConfigHelper.isApollonEnabled(environment);
+    }
 }

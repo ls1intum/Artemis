@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
@@ -24,6 +23,7 @@ import org.springframework.web.client.RestTemplate;
 import de.tum.cit.aet.artemis.athena.config.AthenaAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.config.PyrisAuthorizationInterceptor;
+import de.tum.cit.aet.artemis.modeling.config.ApollonEnabled;
 import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingEnabled;
@@ -58,7 +58,7 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @Profile(PROFILE_APOLLON)
+    @Conditional(ApollonEnabled.class)
     public RestTemplate apollonRestTemplate() {
         return createRestTemplate();
     }
@@ -109,7 +109,7 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @Profile(PROFILE_APOLLON)
+    @Conditional(ApollonEnabled.class)
     public RestTemplate shortTimeoutApollonRestTemplate() {
         return createShortTimeoutRestTemplate();
     }

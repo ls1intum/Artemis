@@ -449,6 +449,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_LTI = "lti";
 
     /**
+     * The name of the module feature used for Apollon functionality.
+     */
+    public static final String MODULE_FEATURE_APOLLON = "apollon";
+
+    /**
      * The name of the property used to enable or disable Atlas functionality.
      */
     public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
@@ -522,6 +527,11 @@ public final class Constants {
      * The name of the property used to enable or disable LTI functionality.
      */
     public static final String LTI_ENABLED_PROPERTY_NAME = "artemis.lti.enabled";
+
+    /**
+     * The name of the property used to enable or disable Apollon functionality.
+     */
+    public static final String APOLLON_ENABLED_PROPERTY_NAME = "artemis.apollon.enabled";
 
     /**
      * The name of the property used to define the directories for file uploads.

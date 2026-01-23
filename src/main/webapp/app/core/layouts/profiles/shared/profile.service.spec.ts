@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { PROFILE_APOLLON, PROFILE_ATHENA, PROFILE_DEV, PROFILE_JENKINS, PROFILE_PROD } from 'app/app.constants';
+import { MODULE_FEATURE_APOLLON, PROFILE_ATHENA, PROFILE_DEV, PROFILE_JENKINS, PROFILE_PROD } from 'app/app.constants';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -89,8 +89,8 @@ const buildInformation = {
 
 // eslint-disable-next-line jest/no-export
 export const expectedProfileInfo: ProfileInfo = {
-    activeModuleFeatures: [],
-    activeProfiles: [PROFILE_PROD, PROFILE_JENKINS, PROFILE_ATHENA, PROFILE_APOLLON],
+    activeModuleFeatures: [MODULE_FEATURE_APOLLON],
+    activeProfiles: [PROFILE_PROD, PROFILE_JENKINS, PROFILE_ATHENA],
     allowedEmailPattern: '([a-zA-Z0-9_\\-\\.\\+]+)@((tum\\.de)|(in\\.tum\\.de)|(mytum\\.de))',
     allowedEmailPatternReadable: '@tum.de, @in.tum.de, @mytum.de',
     build: buildInformation,

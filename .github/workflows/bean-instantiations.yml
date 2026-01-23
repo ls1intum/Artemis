@@ -110,6 +110,7 @@ jobs:
           nohup java -jar "$JAR" \
             --spring.profiles.active="$PROFILES" \
             --artemis.lti.enabled=true \
+            --artemis.apollon.enabled=true \
             --artemis.user-management.passkey.enabled=true \
             --artemis.user-management.use-external=false \
             --artemis.iris.enabled=true \
