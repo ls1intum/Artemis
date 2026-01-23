@@ -169,9 +169,10 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
 
         apollonRequestMockProvider.enableMockingOfRequests();
 
-        // mock apollon conversion 9 times, because the last test includes 8 modeling
-        // exercises, and one additional test creates an exam with a modeling exercise
-        for (int i = 0; i < 9; i++) {
+        // mock apollon conversion 17 times, because multiple tests create modeling
+        // exercises that need conversion (8 modeling exercises in tests plus additional
+        // tests that create exams or courses with modeling exercises)
+        for (int i = 0; i < 17; i++) {
             mockApollonConversion();
         }
     }
@@ -632,6 +633,40 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         // Verify the data export contains the affected user (student1), not the admin
         DataExport capturedDataExport = dataExportCaptor.getValue();
         assertThat(capturedDataExport.getUser().getLogin()).isEqualTo(TEST_PREFIX + "student1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDataExportCreationSuccess_sendsEmailToUser() throws Exception {
+        // This test verifies that the email is sent to the user when the data export is successfully created.
+        // We use the first successful test's data (testDataExportCreationSuccess_containsCorrectCourseContent)
+        // and verify that the email method was called with the correct parameters.
+        boolean assessmentDueDateInTheFuture = false;
+        var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture, "emailtest");
+        createCommunicationData(TEST_PREFIX + "student1", course);
+        var dataExport = initDataExport();
+        dataExportCreationService.createDataExport(dataExport);
+        var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
+        assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
+
+        // Verify email is sent to the user with correct parameters
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        ArgumentCaptor<DataExport> dataExportCaptor = ArgumentCaptor.forClass(DataExport.class);
+        verify(mailService).sendDataExportCreatedEmail(userCaptor.capture(), dataExportCaptor.capture());
+
+        // Verify the email is sent to the correct user (student1)
+        User recipient = userCaptor.getValue();
+        assertThat(recipient.getLogin()).isEqualTo(TEST_PREFIX + "student1");
+
+        // Verify the data export is the one we created
+        DataExport capturedDataExport = dataExportCaptor.getValue();
+        assertThat(capturedDataExport.getId()).isEqualTo(dataExport.getId());
+        assertThat(capturedDataExport.getFilePath()).isNotNull();
+
+        // Clean up
+        Path extractedZipDirPath = zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
+        RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDirPath);
+        org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
     }
 
     @Test

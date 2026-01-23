@@ -196,6 +196,7 @@ public class DataExportCreationService {
 
     /**
      * Finishes the creation of the data export by setting the file path to the zip file, the state to EMAIL_SENT and the creation finished date.
+     * Also sends an email to the user informing them that their data export is ready for download.
      *
      * @param dataExport     the data export whose creation is finished
      * @param dataExportPath the path to the zip file containing the data export
@@ -205,6 +206,7 @@ public class DataExportCreationService {
         dataExport.setFilePath(dataExportPath.toString());
         dataExport.setCreationFinishedDate(ZonedDateTime.now());
         dataExport = dataExportRepository.save(dataExport);
+        mailService.sendDataExportCreatedEmail(dataExport.getUser(), dataExport);
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
         return dataExportRepository.save(dataExport);
     }

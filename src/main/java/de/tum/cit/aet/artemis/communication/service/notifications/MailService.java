@@ -144,6 +144,20 @@ public class MailService {
         sendDataExportFailedEmailForAdmin(admin, "mail/dataExportFailedAdminEmail", "email.dataExportFailedAdmin.title", dataExport, reason);
     }
 
+    /**
+     * Sends an email to a user informing them that their data export has been successfully created.
+     *
+     * @param user       the user to send the email to
+     * @param dataExport the data export that was created
+     */
+    public void sendDataExportCreatedEmail(User user, DataExport dataExport) {
+        log.debug("Sending data export created email to '{}'", user.getEmail());
+        Locale locale = Locale.forLanguageTag(user.getLangKey());
+        Context context = createBaseContext(user, locale);
+        context.setVariable(DATA_EXPORT, dataExport);
+        prepareTemplateAndSendEmail(user, "mail/dataExportCreatedEmail", "email.dataExportCreated.title", context);
+    }
+
     public void sendSuccessfulDataExportsEmailToAdmin(User admin, Set<DataExport> dataExports) {
         log.debug("Sending successful creation of data exports email to admin email address '{}'", admin.getEmail());
         sendSuccessfulDataExportsEmailToAdmin(admin, "mail/successfulDataExportsAdminEmail", "email.successfulDataExportCreationsAdmin.title", dataExports);
