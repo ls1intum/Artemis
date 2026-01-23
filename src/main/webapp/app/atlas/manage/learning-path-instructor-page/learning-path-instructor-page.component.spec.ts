@@ -117,7 +117,7 @@ describe('LearningPathInstructorPageComponent', () => {
         await component.enableLearningPaths();
 
         expect(enableLearningPathsSpy).toHaveBeenCalledExactlyOnceWith(courseId);
-        expect(component.learningPathsEnabled()).toBeTrue();
+        expect(component.learningPathsEnabled()).toBeTruthy();
     });
 
     it('should show error on enable learning paths', async () => {

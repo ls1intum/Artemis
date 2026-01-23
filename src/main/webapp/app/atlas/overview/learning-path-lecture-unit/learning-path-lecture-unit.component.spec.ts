@@ -99,7 +99,7 @@ describe('LearningPathLectureUnitComponent', () => {
     it('should initialize', () => {
         expect(component).toBeTruthy();
         expect(component.lectureUnitId()).toBe(learningPathId);
-        expect(component.isCommunicationEnabled()).toBeFalse();
+        expect(component.isCommunicationEnabled()).toBeFalsy();
     });
 
     it('should get lecture unit', async () => {

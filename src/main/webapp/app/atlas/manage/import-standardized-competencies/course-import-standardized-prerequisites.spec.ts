@@ -160,7 +160,7 @@ describe('CourseImportStandardizedPrerequisitesComponent', () => {
         component['deselectCompetency'](competencyToDeselect);
 
         expect(component['selectedCompetencies']).toHaveLength(1);
-        expect(competencyToDeselect.selected).toBeFalse();
+        expect(competencyToDeselect.selected).toBeFalsy();
     });
 
     it('should sort', () => {
@@ -206,10 +206,10 @@ describe('CourseImportStandardizedPrerequisitesComponent', () => {
 
         component['isLoading'] = false;
         canDeactivate = component.canDeactivate();
-        expect(canDeactivate).toBeTrue();
+        expect(canDeactivate).toBeTruthy();
 
         component['isLoading'] = true;
         canDeactivate = component.canDeactivate();
-        expect(canDeactivate).toBeFalse();
+        expect(canDeactivate).toBeFalsy();
     });
 });

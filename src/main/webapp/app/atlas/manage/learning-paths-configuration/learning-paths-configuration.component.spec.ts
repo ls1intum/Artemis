@@ -87,15 +87,15 @@ describe('LearningPathsConfigurationComponent', () => {
         fixture.detectChanges();
 
         const includeAllExercisesCheckBox = fixture.nativeElement.querySelector('#include-all-graded-exercises-checkbox');
-        expect(includeAllExercisesCheckBox.disabled).toBeTrue();
+        expect(includeAllExercisesCheckBox.disabled).toBeTruthy();
 
         await enableEditMode();
 
-        expect(includeAllExercisesCheckBox.disabled).toBeFalse();
+        expect(includeAllExercisesCheckBox.disabled).toBeFalsy();
 
         const saveButton = fixture.nativeElement.querySelector('#save-learning-paths-configuration-button');
         expect(saveButton).not.toBeNull();
-        expect(component.isEditMode()).toBeTrue();
+        expect(component.isEditMode()).toBeTruthy();
     });
 
     it('should toggle include all graded exercises', async () => {
@@ -137,7 +137,7 @@ describe('LearningPathsConfigurationComponent', () => {
             includeAllGradedExercises: !learningPathsConfiguration.includeAllGradedExercises,
         });
         expect(alertServiceSuccessSpy).toHaveBeenCalledOnce();
-        expect(component.isEditMode()).toBeFalse();
+        expect(component.isEditMode()).toBeFalsy();
     });
 
     async function enableEditMode(): Promise<void> {

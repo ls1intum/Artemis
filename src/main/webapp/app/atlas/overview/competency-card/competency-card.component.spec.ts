@@ -59,7 +59,7 @@ describe('CompetencyCardComponent', () => {
 
         expect(competencyCardComponent.progress).toBe(45);
         expect(competencyCardComponent.mastery).toBe(Math.round(45 * 1.1));
-        expect(competencyCardComponent.isMastered).toBeFalse();
+        expect(competencyCardComponent.isMastered).toBeFalsy();
     });
 
     it('should display competency as mastered', () => {
@@ -79,7 +79,7 @@ describe('CompetencyCardComponent', () => {
 
         expect(competencyCardComponent.progress).toBe(100);
         expect(competencyCardComponent.mastery).toBe(100);
-        expect(competencyCardComponent.isMastered).toBeTrue();
+        expect(competencyCardComponent.isMastered).toBeTruthy();
     });
 
     it('should display optional badge for optional competency', () => {
@@ -112,12 +112,12 @@ describe('CompetencyCardComponent', () => {
         const competencyFuture = { softDueDate: dayjs().add(1, 'days') } as Competency;
         competencyCardComponentFixture.componentRef.setInput('competency', competencyFuture);
         competencyCardComponentFixture.detectChanges();
-        expect(competencyCardComponent.softDueDatePassed).toBeFalse();
+        expect(competencyCardComponent.softDueDatePassed).toBeFalsy();
 
         const competencyPast = { softDueDate: dayjs().subtract(1, 'days') } as Competency;
         competencyCardComponentFixture.componentRef.setInput('competency', competencyPast);
         competencyCardComponentFixture.detectChanges();
-        expect(competencyCardComponent.softDueDatePassed).toBeTrue();
+        expect(competencyCardComponent.softDueDatePassed).toBeTruthy();
     });
 
     it.each([

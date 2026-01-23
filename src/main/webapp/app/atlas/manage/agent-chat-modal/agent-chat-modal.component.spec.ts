@@ -125,7 +125,7 @@ describe('AgentChatModalComponent', () => {
             expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.welcome');
             const messages = component.messages();
             expect(messages.length).toBeGreaterThanOrEqual(1);
-            expect(messages[0].isUser).toBeFalse();
+            expect(messages[0].isUser).toBeFalsy();
         });
 
         it('should load conversation history when available', () => {
@@ -140,11 +140,11 @@ describe('AgentChatModalComponent', () => {
             const messages = component.messages();
             expect(messages).toHaveLength(4);
             expect(messages[1].content).toBe('Previous user message');
-            expect(messages[1].isUser).toBeTrue();
+            expect(messages[1].isUser).toBeTruthy();
             expect(messages[2].content).toBe('Previous agent response');
-            expect(messages[2].isUser).toBeFalse();
+            expect(messages[2].isUser).toBeFalsy();
             expect(messages[3].content).toBe('Another user message');
-            expect(messages[3].isUser).toBeTrue();
+            expect(messages[3].isUser).toBeTruthy();
         });
 
         it('should show welcome message on history fetch error', () => {
@@ -159,7 +159,7 @@ describe('AgentChatModalComponent', () => {
             const messages = component.messages();
             expect(component.messages().length).toBeGreaterThanOrEqual(2);
             expect(messages[1].content).toBe(welcomeMessage);
-            expect(messages[1].isUser).toBeFalse();
+            expect(messages[1].isUser).toBeFalsy();
         });
 
         it('should generate unique message IDs for history messages', () => {
@@ -352,40 +352,40 @@ describe('AgentChatModalComponent', () => {
         it('should return false for empty input', () => {
             component.currentMessage.set('');
 
-            expect(component.canSendMessage()).toBeFalse();
+            expect(component.canSendMessage()).toBeFalsy();
         });
 
         it('should return false for whitespace only input', () => {
             component.currentMessage.set('   \n\t  ');
 
-            expect(component.canSendMessage()).toBeFalse();
+            expect(component.canSendMessage()).toBeFalsy();
         });
 
         it('should return false for too long input', () => {
             component.currentMessage.set('a'.repeat(component.MAX_MESSAGE_LENGTH + 1));
 
-            expect(component.canSendMessage()).toBeFalse();
+            expect(component.canSendMessage()).toBeFalsy();
         });
 
         it('should return false when agent is typing', () => {
             component.currentMessage.set('Valid message');
             component.isAgentTyping.set(true);
 
-            expect(component.canSendMessage()).toBeFalse();
+            expect(component.canSendMessage()).toBeFalsy();
         });
 
         it('should return true for valid input', () => {
             component.currentMessage.set('Valid message');
             component.isAgentTyping.set(false);
 
-            expect(component.canSendMessage()).toBeTrue();
+            expect(component.canSendMessage()).toBeTruthy();
         });
 
         it('should return true for input at max length limit', () => {
             component.currentMessage.set('a'.repeat(component.MAX_MESSAGE_LENGTH));
             component.isAgentTyping.set(false);
 
-            expect(component.canSendMessage()).toBeTrue();
+            expect(component.canSendMessage()).toBeTruthy();
         });
     });
 
@@ -434,11 +434,11 @@ describe('AgentChatModalComponent', () => {
             sendButton.click();
             tick();
             const messages = component.messages();
-            expect(component.isAgentTyping()).toBeFalse();
+            expect(component.isAgentTyping()).toBeFalsy();
             expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error');
             expect(messages).toHaveLength(3); // Welcome + user message + error message
             expect(messages[2].content).toBe(errorMessage);
-            expect(messages[2].isUser).toBeFalse();
+            expect(messages[2].isUser).toBeFalsy();
         }));
 
         it('should not send message if canSendMessage is false', () => {
@@ -466,7 +466,7 @@ describe('AgentChatModalComponent', () => {
             component.ngAfterViewChecked();
 
             expect(mockMessagesContainer.nativeElement.scrollTop).toBe(500); // scrollHeight value
-            expect(component.shouldScrollToBottom()).toBeFalse();
+            expect(component.shouldScrollToBottom()).toBeFalsy();
         });
 
         it('should not scroll when shouldScrollToBottom is false', () => {
@@ -510,8 +510,8 @@ describe('AgentChatModalComponent', () => {
             const userMessageElement = messageElements[0];
             const agentMessageElement = messageElements[1];
 
-            expect(userMessageElement.classList.contains('user-message')).toBeTrue();
-            expect(agentMessageElement.classList.contains('agent-message')).toBeTrue();
+            expect(userMessageElement.classList.contains('user-message')).toBeTruthy();
+            expect(agentMessageElement.classList.contains('agent-message')).toBeTruthy();
         });
 
         it('should show typing indicator when isAgentTyping is true', () => {
@@ -536,8 +536,8 @@ describe('AgentChatModalComponent', () => {
             component.currentMessage.set('Valid message');
             component.isAgentTyping.set(true);
 
-            expect(component.canSendMessage()).toBeFalse();
-            expect(component.isAgentTyping()).toBeTrue();
+            expect(component.canSendMessage()).toBeFalsy();
+            expect(component.isAgentTyping()).toBeTruthy();
         });
 
         it('should disable send button when canSendMessage is false', () => {
@@ -546,7 +546,7 @@ describe('AgentChatModalComponent', () => {
             fixture.changeDetectorRef.detectChanges();
 
             const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
-            expect(sendButton.disabled).toBeTrue();
+            expect(sendButton.disabled).toBeTruthy();
         });
 
         it('should enable send button when canSendMessage is true', () => {
@@ -556,7 +556,7 @@ describe('AgentChatModalComponent', () => {
             fixture.changeDetectorRef.detectChanges();
 
             const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
-            expect(sendButton.disabled).toBeFalse();
+            expect(sendButton.disabled).toBeFalsy();
         });
 
         it('should show character count in template', () => {
@@ -695,19 +695,19 @@ describe('AgentChatModalComponent', () => {
         it('should correctly identify message as too long', () => {
             component.currentMessage.set('a'.repeat(component.MAX_MESSAGE_LENGTH + 1));
 
-            expect(component.isMessageTooLong()).toBeTrue();
+            expect(component.isMessageTooLong()).toBeTruthy();
         });
 
         it('should correctly identify message as not too long', () => {
             component.currentMessage.set('a'.repeat(component.MAX_MESSAGE_LENGTH));
 
-            expect(component.isMessageTooLong()).toBeFalse();
+            expect(component.isMessageTooLong()).toBeFalsy();
         });
 
         it('should correctly identify empty message as not too long', () => {
             component.currentMessage.set('');
 
-            expect(component.isMessageTooLong()).toBeFalse();
+            expect(component.isMessageTooLong()).toBeFalsy();
         });
     });
 
@@ -757,7 +757,7 @@ describe('AgentChatModalComponent', () => {
             const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
             sendButton.click();
 
-            expect(component.isAgentTyping()).toBeFalse(); // After response completes
+            expect(component.isAgentTyping()).toBeFalsy(); // After response completes
         });
 
         it('should add user message to messages array', () => {
@@ -965,7 +965,7 @@ describe('AgentChatModalComponent', () => {
 
                 const agentMessage = component.messages().find((msg) => !msg.isUser && msg.competencyPreviews && msg.competencyPreviews.length > 0);
                 expect(agentMessage).toBeDefined();
-                expect(agentMessage?.competencyPreviews?.[0].viewOnly).toBeTrue();
+                expect(agentMessage?.competencyPreviews?.[0].viewOnly).toBeTruthy();
             });
 
             it('should not extract preview when no preview is sent', () => {
@@ -1140,7 +1140,7 @@ describe('AgentChatModalComponent', () => {
 
                     const agentMessage = component.messages().find((msg) => !msg.isUser && msg.planPending);
                     expect(agentMessage).toBeDefined();
-                    expect(agentMessage?.planPending).toBeTrue();
+                    expect(agentMessage?.planPending).toBeTruthy();
                     expect(agentMessage?.content).not.toContain('[PLAN_PENDING]');
                 });
 
@@ -1173,8 +1173,8 @@ describe('AgentChatModalComponent', () => {
 
                     // Find the updated message in the messages array
                     const updatedMessage = component.messages().find((msg) => msg.id === '1');
-                    expect(updatedMessage?.planApproved).toBeTrue();
-                    expect(updatedMessage?.planPending).toBeFalse();
+                    expect(updatedMessage?.planApproved).toBeTruthy();
+                    expect(updatedMessage?.planPending).toBeFalsy();
                 }));
 
                 it('should emit competencyChanged when approval modifies competencies', fakeAsync(() => {
@@ -1233,7 +1233,7 @@ describe('AgentChatModalComponent', () => {
                     component['onApprovePlan'](message);
                     tick();
 
-                    expect(component.isAgentTyping()).toBeFalse();
+                    expect(component.isAgentTyping()).toBeFalsy();
                     expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error');
                 }));
             });
@@ -1275,7 +1275,7 @@ describe('AgentChatModalComponent', () => {
 
                     expect(mockCompetencyService.create).toHaveBeenCalledOnce();
                     expect(mockCompetencyService.create).toHaveBeenCalledWith(expect.objectContaining({ title: 'New Competency' }), 123);
-                    expect(component.isAgentTyping()).toBeFalse();
+                    expect(component.isAgentTyping()).toBeFalsy();
                     expect(emitSpy).toHaveBeenCalled();
                 }));
 
@@ -1311,7 +1311,7 @@ describe('AgentChatModalComponent', () => {
                         123,
                     );
                     const updatedMessage = component.messages().find((msg) => msg.id === '1');
-                    expect(updatedMessage?.competencyCreated).toBeTrue();
+                    expect(updatedMessage?.competencyCreated).toBeTruthy();
                     expect(emitSpy).toHaveBeenCalledOnce();
                 }));
 
@@ -1346,7 +1346,7 @@ describe('AgentChatModalComponent', () => {
                     component.onCreateCompetencies(message);
                     tick();
 
-                    expect(component.isAgentTyping()).toBeFalse();
+                    expect(component.isAgentTyping()).toBeFalsy();
                     expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.competencyProcessFailure');
                     const errorMessage = component.messages().find((msg) => !msg.isUser && msg.content === createFailedText);
                     expect(errorMessage).toBeDefined();
@@ -1376,7 +1376,7 @@ describe('AgentChatModalComponent', () => {
                     component.onCreateCompetencies(message);
                     tick();
 
-                    expect(component.isAgentTyping()).toBeFalse();
+                    expect(component.isAgentTyping()).toBeFalsy();
                     expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.competencyProcessFailure');
                     const errorMessage = component.messages().find((msg) => !msg.isUser && msg.content === updateFailedText);
                     expect(errorMessage).toBeDefined();
@@ -1422,8 +1422,8 @@ describe('AgentChatModalComponent', () => {
                     const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
                     sendButton.click();
                     const messages = component.messages();
-                    expect(messages[0].planPending).toBeFalse();
-                    expect(messages[1].planApproved).toBeTrue(); // Already approved plans should not be affected
+                    expect(messages[0].planPending).toBeFalsy();
+                    expect(messages[1].planApproved).toBeTruthy(); // Already approved plans should not be affected
                 });
             });
 
@@ -1473,10 +1473,10 @@ describe('AgentChatModalComponent', () => {
                     tick();
 
                     expect(mockCompetencyService.create).toHaveBeenCalledTimes(3);
-                    expect(component.isAgentTyping()).toBeFalse();
+                    expect(component.isAgentTyping()).toBeFalsy();
 
                     const updatedMessage = component.messages().find((msg) => msg.id === '1');
-                    expect(updatedMessage?.competencyCreated).toBeTrue();
+                    expect(updatedMessage?.competencyCreated).toBeTruthy();
                     expect(emitSpy).toHaveBeenCalledOnce();
                 }));
 
@@ -1672,7 +1672,7 @@ describe('AgentChatModalComponent', () => {
                     component.onCreateCompetencies(message);
                     tick();
 
-                    expect(component.isAgentTyping()).toBeFalse();
+                    expect(component.isAgentTyping()).toBeFalsy();
                     expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.welcome');
                     expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.competencyProcessFailure');
                 }));

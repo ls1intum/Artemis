@@ -117,7 +117,7 @@ describe('AgentChatService', () => {
             req.error(new ProgressEvent('Network error'));
 
             // Verify catchError worked - no error thrown, fallback response returned
-            expect(errorOccurred).toBeFalse();
+            expect(errorOccurred).toBeFalsy();
             expect(result.message).toBe(fallbackMessage);
             expect(translateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error');
         });
@@ -143,7 +143,7 @@ describe('AgentChatService', () => {
 
                 // Assert - timeout should trigger catchError which returns fallback response
                 expect(result).toBeDefined();
-                expect(result.competenciesModified).toBeFalse();
+                expect(result.competenciesModified).toBeFalsy();
                 expect(translateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error');
             }));
         });
@@ -206,7 +206,7 @@ describe('AgentChatService', () => {
 
                 expect(result).toBeDefined();
                 expect(result.message).toBe('Translated error message');
-                expect(result.competenciesModified).toBeFalse();
+                expect(result.competenciesModified).toBeFalsy();
                 expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error');
             });
 
@@ -315,7 +315,7 @@ describe('AgentChatService', () => {
                 req.flush(mockResponse);
 
                 expect(result).toEqual(mockResponse);
-                expect(result.competenciesModified).toBeTrue();
+                expect(result.competenciesModified).toBeTruthy();
             });
         });
 
@@ -405,7 +405,7 @@ describe('AgentChatService', () => {
             req.error(new ProgressEvent('Network error'));
 
             // Verify catchError worked - no error thrown, empty array returned
-            expect(errorOccurred).toBeFalse();
+            expect(errorOccurred).toBeFalsy();
             expect(result).toEqual([]);
         });
 
@@ -462,11 +462,11 @@ describe('AgentChatService', () => {
 
             expect(result).toHaveLength(2);
             expect(result[0].content).toBe('Create a competency for OOP');
-            expect(result[0].isUser).toBeTrue();
+            expect(result[0].isUser).toBeTruthy();
             expect(result[0].competencyPreviews).toBeUndefined();
 
             expect(result[1].content).toBe("Here's your competency preview");
-            expect(result[1].isUser).toBeFalse();
+            expect(result[1].isUser).toBeFalsy();
             expect(result[1].competencyPreviews).toBeDefined();
             expect(result[1].competencyPreviews).toHaveLength(1);
             expect(result[1].competencyPreviews[0].competency.title).toBe('Object-Oriented Programming');
@@ -559,7 +559,7 @@ describe('AgentChatService', () => {
             req.flush(mockMixedHistory);
 
             expect(result).toHaveLength(6);
-            expect(result[0].isUser).toBeTrue();
+            expect(result[0].isUser).toBeTruthy();
             expect(result[1].competencyPreviews).toBeDefined();
             expect(result[3].competencyPreviews).toBeUndefined();
             expect(result[5].competencyPreviews).toBeDefined();
@@ -625,7 +625,7 @@ describe('AgentChatService', () => {
             const req = httpMock.expectOne(expectedUrl);
             req.flush(mockHistoryWithViewOnly);
 
-            expect(result[1].competencyPreviews[0].viewOnly).toBeTrue();
+            expect(result[1].competencyPreviews[0].viewOnly).toBeTruthy();
         });
 
         it('should handle history with multiple competencies with viewOnly flag', () => {
@@ -665,7 +665,7 @@ describe('AgentChatService', () => {
             const req = httpMock.expectOne(expectedUrl);
             req.flush(mockHistoryWithBatchViewOnly);
 
-            expect(result[1].competencyPreviews[0].viewOnly).toBeTrue();
+            expect(result[1].competencyPreviews[0].viewOnly).toBeTruthy();
             expect(result[1].competencyPreviews).toHaveLength(2);
         });
 

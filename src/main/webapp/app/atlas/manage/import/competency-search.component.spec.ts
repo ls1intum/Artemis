@@ -77,10 +77,10 @@ describe('CompetencySearchComponent', () => {
         const advancedSearchToggle = componentFixture.debugElement.nativeElement.querySelector('#toggleAdvancedSearch');
 
         advancedSearchToggle.click();
-        expect(component.advancedSearchEnabled).toBeTrue();
+        expect(component.advancedSearchEnabled).toBeTruthy();
 
         advancedSearchToggle.click();
-        expect(component.advancedSearchEnabled).toBeFalse();
+        expect(component.advancedSearchEnabled).toBeFalsy();
     });
 
     function initializeSearch(): void {

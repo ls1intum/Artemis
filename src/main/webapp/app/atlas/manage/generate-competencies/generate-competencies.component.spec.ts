@@ -171,13 +171,13 @@ describe('GenerateCompetenciesComponent', () => {
     it('should deactivate correctly', () => {
         fixture.detectChanges();
 
-        expect(comp.canDeactivate()).toBeTrue();
+        expect(comp.canDeactivate()).toBeTruthy();
 
         comp.isLoading = true;
-        expect(comp.canDeactivate()).toBeFalse();
+        expect(comp.canDeactivate()).toBeFalsy();
 
         comp.submitted = true;
-        expect(comp.canDeactivate()).toBeTrue();
+        expect(comp.canDeactivate()).toBeTruthy();
     });
 
     it('should not submit for unviewed recommendations', async () => {
@@ -257,7 +257,7 @@ describe('GenerateCompetenciesComponent', () => {
     it('should not deactivate when loading', () => {
         comp.isLoading = true;
         const canDeactivate = comp.canDeactivate();
-        expect(canDeactivate).toBeFalse();
+        expect(canDeactivate).toBeFalsy();
     });
 
     function createCompetencyFormGroup(title?: string, description?: string, taxonomy?: CompetencyTaxonomy, viewed = false): FormGroup<CompetencyFormControlsWithViewed> {

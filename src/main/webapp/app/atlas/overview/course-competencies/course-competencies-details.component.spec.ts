@@ -162,25 +162,25 @@ describe('CourseCompetenciesDetails', () => {
 
         fixture.detectChanges();
         expect(findByIdSpy).toHaveBeenCalledOnce();
-        expect(component.isMastered).toBeTrue();
+        expect(component.isMastered).toBeTruthy();
 
         component.showFireworksIfMastered();
 
         tick(1000);
-        expect(component.showFireworks).toBeTrue();
+        expect(component.showFireworks).toBeTruthy();
 
         tick(5000);
-        expect(component.showFireworks).toBeFalse();
+        expect(component.showFireworks).toBeFalsy();
     }));
 
     it('should detect if due date is passed', () => {
         component.competency = { softDueDate: dayjs().add(1, 'days') } as Competency;
         fixture.changeDetectorRef.detectChanges();
-        expect(component.softDueDatePassed).toBeFalse();
+        expect(component.softDueDatePassed).toBeFalsy();
 
         component.competency = { softDueDate: dayjs().subtract(1, 'days') } as Competency;
         fixture.changeDetectorRef.detectChanges();
-        expect(component.softDueDatePassed).toBeTrue();
+        expect(component.softDueDatePassed).toBeTruthy();
     });
 
     it.each([

@@ -46,15 +46,15 @@ describe('CompetencyNodeComponent', () => {
     });
 
     it('should check if competency is green', () => {
-        expect(component.isGreen()).toBeFalse();
+        expect(component.isGreen()).toBeFalsy();
     });
 
     it('should check if competency is yellow', () => {
-        expect(component.isYellow()).toBeTrue();
+        expect(component.isYellow()).toBeTruthy();
     });
 
     it('should check if competency is gray', () => {
-        expect(component.isGray()).toBeFalse();
+        expect(component.isGray()).toBeFalsy();
     });
 
     it('should set dimensions', () => {

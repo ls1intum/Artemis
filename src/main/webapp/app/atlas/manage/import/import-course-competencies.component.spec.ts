@@ -89,7 +89,7 @@ describe('ImportCourseCompetenciesComponent', () => {
         componentFixture.detectChanges();
 
         expect(component.disabledIds).toHaveLength(6);
-        expect(component.disabledIds).toIncludeAllMembers([1, 2, 3, 4, 11, 12]);
+        expect(component.disabledIds).toEqual(expect.arrayContaining([1, 2, 3, 4, 11, 12]));
         expect(component.searchedCourseCompetencies.resultsOnPage).toHaveLength(3);
     });
 
@@ -105,13 +105,13 @@ describe('ImportCourseCompetenciesComponent', () => {
 
     it('should deactivate correctly', () => {
         component.isLoading = false;
-        expect(component.canDeactivate()).toBeTrue();
+        expect(component.canDeactivate()).toBeTruthy();
 
         component.isLoading = true;
-        expect(component.canDeactivate()).toBeFalse();
+        expect(component.canDeactivate()).toBeFalsy();
 
         component.isSubmitted = true;
-        expect(component.canDeactivate()).toBeTrue();
+        expect(component.canDeactivate()).toBeTruthy();
     });
 
     it('should perform search on search change', () => {
@@ -185,10 +185,10 @@ describe('ImportCourseCompetenciesComponent', () => {
         component['isSubmitted'] = true;
         component.selectedCourseCompetencies = { resultsOnPage: [{ id: 1 }], numberOfPages: 0 };
         canDeactivate = component.canDeactivate();
-        expect(canDeactivate).toBeTrue();
+        expect(canDeactivate).toBeTruthy();
 
         component['isSubmitted'] = false;
         canDeactivate = component.canDeactivate();
-        expect(canDeactivate).toBeFalse();
+        expect(canDeactivate).toBeFalsy();
     });
 });

@@ -79,9 +79,9 @@ describe('StandardizedCompetencyFilterPageComponent', () => {
         const validIds = [1, 11, 111];
         for (const knowledgeArea of component['knowledgeAreaMap'].values()) {
             if (validIds.includes(knowledgeArea.id!)) {
-                expect(knowledgeArea.isVisible).toBeTrue();
+                expect(knowledgeArea.isVisible).toBeTruthy();
             } else {
-                expect(knowledgeArea.isVisible).toBeFalse();
+                expect(knowledgeArea.isVisible).toBeFalsy();
             }
         }
 
@@ -89,7 +89,7 @@ describe('StandardizedCompetencyFilterPageComponent', () => {
         component['filterByKnowledgeArea'](undefined);
 
         for (const knowledgeArea of component['knowledgeAreaMap'].values()) {
-            expect(knowledgeArea.isVisible).toBeTrue();
+            expect(knowledgeArea.isVisible).toBeTruthy();
         }
     });
 
@@ -126,9 +126,9 @@ describe('StandardizedCompetencyFilterPageComponent', () => {
         const knowledgeArea = component['knowledgeAreaMap'].get(1)!;
         for (const competency of knowledgeArea.competencies!) {
             if (validIds.includes(competency.id!)) {
-                expect(competency.isVisible).toBeTrue();
+                expect(competency.isVisible).toBeTruthy();
             } else {
-                expect(competency.isVisible).toBeFalse();
+                expect(competency.isVisible).toBeFalsy();
             }
         }
 
@@ -136,7 +136,7 @@ describe('StandardizedCompetencyFilterPageComponent', () => {
         component['filterByCompetencyTitle']('   ');
 
         for (const competency of knowledgeArea.competencies!) {
-            expect(competency.isVisible).toBeTrue();
+            expect(competency.isVisible).toBeTruthy();
         }
     });
 

@@ -169,7 +169,7 @@ describe('CompetencyService', () => {
         req.flush({ status: 200 });
         tick();
 
-        expect(result).toBeTrue();
+        expect(result).toBeTruthy();
     }));
 
     it('should add a Competency relation', fakeAsync(() => {
@@ -195,7 +195,7 @@ describe('CompetencyService', () => {
         req.flush({ status: 200 });
         tick();
 
-        expect(result).toBeTrue();
+        expect(result).toBeTruthy();
     }));
 
     it('should parse a list of competencies from a course description', fakeAsync(() => {

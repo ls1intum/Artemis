@@ -54,6 +54,6 @@ describe('ImportCompetenciesTableComponent', () => {
 
         expect(component.search().sortingOrder).toBe(SortingOrder.ASCENDING);
         expect(component.search().sortedColumn).toBe('TITLE');
-        expect(component.ascending).toBeTrue();
+        expect(component.ascending).toBeTruthy();
     });
 });

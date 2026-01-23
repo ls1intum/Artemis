@@ -105,7 +105,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.relationAlreadyExists()).toBeTrue();
+        expect(component.relationAlreadyExists()).toBeTruthy();
     });
 
     it('should set exactRelationAlreadyExists correctly', () => {
@@ -115,7 +115,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.exactRelationAlreadyExists()).toBeTrue();
+        expect(component.exactRelationAlreadyExists()).toBeTruthy();
     });
 
     it('should select relation if selectedRelationId is set', () => {
@@ -294,7 +294,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
         component.relationType.set(CompetencyRelationType.EXTENDS);
 
         expect(component['selectableTailCourseCompetencyIds']()).not.toContain(1);
-        expect(component.showCircularDependencyError()).toBeTrue();
+        expect(component.showCircularDependencyError()).toBeTruthy();
     });
 
     it('should delete relation', async () => {
@@ -353,7 +353,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
             // Find the button with the correct tooltip
             const btn = allButtons.find((de) => de.componentInstance?.tooltip === 'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
             expect(btn).toBeTruthy();
-            expect(btn?.componentInstance?.disabled).toBeFalse();
+            expect(btn?.componentInstance?.disabled).toBeFalsy();
         });
 
         it('should disable lightbulb button when loading suggestions', async () => {
@@ -365,8 +365,8 @@ describe('CourseCompetencyRelationFormComponent', () => {
             const btn = fixture.debugElement
                 .queryAll(By.css('jhi-button'))
                 .find((de) => de.componentInstance?.tooltip === 'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
-            expect(btn?.componentInstance?.disabled).toBeTrue();
-            expect(component.isLoadingSuggestions()).toBeTrue();
+            expect(btn?.componentInstance?.disabled).toBeTruthy();
+            expect(component.isLoadingSuggestions()).toBeTruthy();
         });
 
         it('should call API and load suggestions when lightbulb button is clicked', async () => {
@@ -376,7 +376,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
             expect(getSuggestedCompetencyRelationsSpy).toHaveBeenCalledWith(courseId);
             expect(component.suggestedRelations()).toEqual(mockSuggestionResponse.relations);
-            expect(component.isLoadingSuggestions()).toBeFalse();
+            expect(component.isLoadingSuggestions()).toBeFalsy();
         });
 
         it('should auto-select only non-existing suggestions when fetched', async () => {
@@ -385,12 +385,12 @@ describe('CourseCompetencyRelationFormComponent', () => {
             await component.fetchSuggestions();
 
             // Existing relations (1->2 EXTENDS) should NOT be auto-selected
-            expect(component['doesSuggestionAlreadyExist'](mockSuggestionResponse.relations[0])).toBeTrue();
-            expect(component.selectedSuggestions().has(0)).toBeFalse();
+            expect(component['doesSuggestionAlreadyExist'](mockSuggestionResponse.relations[0])).toBeTruthy();
+            expect(component.selectedSuggestions().has(0)).toBeFalsy();
 
             // Non-existing suggestions should be selected
-            expect(component.selectedSuggestions().has(1)).toBeTrue();
-            expect(component.selectedSuggestions().has(2)).toBeTrue();
+            expect(component.selectedSuggestions().has(1)).toBeTruthy();
+            expect(component.selectedSuggestions().has(2)).toBeTruthy();
             expect(component.selectedSuggestions().size).toBe(2);
             expect(component.selectedSuggestionsCount()).toBe(2);
         });
@@ -417,17 +417,17 @@ describe('CourseCompetencyRelationFormComponent', () => {
             await component.fetchSuggestions();
 
             // Initially: index 1 and 2 are selected (non-existing); index 0 is not (existing)
-            expect(component['isSuggestionSelected'](1)).toBeTrue();
+            expect(component['isSuggestionSelected'](1)).toBeTruthy();
             expect(component.selectedSuggestionsCount()).toBe(2);
 
             // Toggle index 1 OFF
             component['toggleSuggestionSelection'](1);
-            expect(component['isSuggestionSelected'](1)).toBeFalse();
+            expect(component['isSuggestionSelected'](1)).toBeFalsy();
             expect(component.selectedSuggestionsCount()).toBe(1);
 
             // Toggle index 1 back ON
             component['toggleSuggestionSelection'](1);
-            expect(component['isSuggestionSelected'](1)).toBeTrue();
+            expect(component['isSuggestionSelected'](1)).toBeTruthy();
             expect(component.selectedSuggestionsCount()).toBe(2);
         });
 
@@ -443,12 +443,12 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
             await component.fetchSuggestions();
 
-            expect(component['doesSuggestionAlreadyExist'](responseWithExisting.relations[0])).toBeTrue();
-            expect(component['doesSuggestionAlreadyExist'](responseWithExisting.relations[1])).toBeFalse();
+            expect(component['doesSuggestionAlreadyExist'](responseWithExisting.relations[0])).toBeTruthy();
+            expect(component['doesSuggestionAlreadyExist'](responseWithExisting.relations[1])).toBeFalsy();
 
             // Should only auto-select non-existing relations
-            expect(component.selectedSuggestions().has(0)).toBeFalse();
-            expect(component.selectedSuggestions().has(1)).toBeTrue();
+            expect(component.selectedSuggestions().has(0)).toBeFalsy();
+            expect(component.selectedSuggestions().has(1)).toBeTruthy();
         });
 
         it('should apply suggestion to form when clicked', async () => {
@@ -535,7 +535,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
             await component.fetchSuggestions();
 
-            expect(component.isLoadingSuggestions()).toBeFalse();
+            expect(component.isLoadingSuggestions()).toBeFalsy();
             expect(component.suggestedRelations()).toEqual([]);
             expect(alertServiceWarningSpy).toHaveBeenCalledWith('Failed to load suggested relations');
         });

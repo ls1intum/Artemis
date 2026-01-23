@@ -50,10 +50,10 @@ describe('CourseDescriptionFormComponent', () => {
         const generateButton = courseDescriptionComponentFixture.debugElement.nativeElement.querySelector('#generateButton > .jhi-btn');
 
         courseDescriptionComponent.courseDescriptionControl.setValue(description);
-        expect(courseDescriptionComponent.isSubmitPossible).toBeTrue();
+        expect(courseDescriptionComponent.isSubmitPossible).toBeTruthy();
         generateButton.click();
 
-        expect(courseDescriptionComponent.hasBeenSubmitted).toBeTrue();
+        expect(courseDescriptionComponent.hasBeenSubmitted).toBeTruthy();
         expect(formSubmittedEmitSpy).toHaveBeenCalledOnce();
     });
 
@@ -63,13 +63,13 @@ describe('CourseDescriptionFormComponent', () => {
         const descriptionTooLong = 'I'.repeat(courseDescriptionComponent['DESCRIPTION_MAX'] + 1);
 
         //submit should be disabled at the start due to empty description
-        expect(courseDescriptionComponent.isSubmitPossible).toBeFalse();
+        expect(courseDescriptionComponent.isSubmitPossible).toBeFalsy();
 
         courseDescriptionComponent.courseDescriptionControl.setValue(descriptionTooShort);
-        expect(courseDescriptionComponent.isSubmitPossible).toBeFalse();
+        expect(courseDescriptionComponent.isSubmitPossible).toBeFalsy();
 
         courseDescriptionComponent.courseDescriptionControl.setValue(descriptionTooLong);
-        expect(courseDescriptionComponent.isSubmitPossible).toBeFalse();
+        expect(courseDescriptionComponent.isSubmitPossible).toBeFalsy();
     });
 
     it('should update the description', () => {

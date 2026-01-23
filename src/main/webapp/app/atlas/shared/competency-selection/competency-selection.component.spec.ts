@@ -85,8 +85,8 @@ describe('CompetencySelection', () => {
         expect(component.selectedCompetencyLinks).toBeUndefined();
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).not.toHaveBeenCalled();
-        expect(component.isLoading).toBeFalse();
-        expect(component.competencyLinks).toBeArrayOfSize(2);
+        expect(component.isLoading).toBeFalsy();
+        expect(component.competencyLinks).toHaveLength(2);
         expect(selector).not.toBeNull();
     });
 
@@ -100,8 +100,8 @@ describe('CompetencySelection', () => {
 
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
-        expect(component.isLoading).toBeFalse();
-        expect(component.competencyLinks).toBeArrayOfSize(2);
+        expect(component.isLoading).toBeFalsy();
+        expect(component.competencyLinks).toHaveLength(2);
         expect(component.competencyLinks?.first()?.competency?.course).toBeUndefined();
         expect(component.competencyLinks?.first()?.competency?.userProgress).toBeUndefined();
     });
@@ -114,8 +114,8 @@ describe('CompetencySelection', () => {
 
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
-        expect(component.isLoading).toBeFalse();
-        expect(component.disabled).toBeTrue();
+        expect(component.isLoading).toBeFalsy();
+        expect(component.disabled).toBeTruthy();
     });
 
     it('should be hidden when no competencies', () => {
@@ -127,8 +127,8 @@ describe('CompetencySelection', () => {
         const select = fixture.debugElement.query(By.css('select'));
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
-        expect(component.isLoading).toBeFalse();
-        expect(component.competencyLinks).toBeEmpty();
+        expect(component.isLoading).toBeFalsy();
+        expect(component.competencyLinks).toHaveLength(0);
         expect(select).toBeNull();
     });
 
@@ -138,7 +138,7 @@ describe('CompetencySelection', () => {
         fixture.detectChanges();
 
         component.writeValue([new CompetencyLearningObjectLink({ id: 1, title: 'other' } as Competency, 1)]);
-        expect(component.selectedCompetencyLinks).toBeArrayOfSize(1);
+        expect(component.selectedCompetencyLinks).toHaveLength(1);
         expect(component.selectedCompetencyLinks?.first()?.competency?.title).toBe('test');
     });
 
@@ -153,7 +153,7 @@ describe('CompetencySelection', () => {
             new CompetencyLearningObjectLink({ id: 1, title: 'other' } as Competency, 0.5),
             new CompetencyLearningObjectLink({ id: 3, title: 'otherMore' } as Competency, 1),
         ]);
-        expect(component.selectedCompetencyLinks).toBeArrayOfSize(2);
+        expect(component.selectedCompetencyLinks).toHaveLength(2);
         expect(component.selectedCompetencyLinks?.first()?.weight).toBe(0.5);
         expect(component.selectedCompetencyLinks?.last()?.weight).toBe(1);
     });
@@ -206,7 +206,7 @@ describe('CompetencySelection', () => {
     it('should set disabled state', () => {
         component.disabled = true;
         component.setDisabledState?.(false);
-        expect(component.disabled).toBeFalse();
+        expect(component.disabled).toBeFalsy();
     });
 
     describe('AtlasML Competency Suggestions', () => {
@@ -226,7 +226,7 @@ describe('CompetencySelection', () => {
             expect(btnDe).not.toBeNull();
             // Disabled state is controlled by input binding
             const cmp = btnDe.componentInstance;
-            expect(cmp.disabled).toBeFalse();
+            expect(cmp.disabled).toBeFalsy();
         });
 
         it('should disable lightbulb button when no exercise description', () => {
@@ -235,7 +235,7 @@ describe('CompetencySelection', () => {
 
             const btnDe = fixture.debugElement.query(By.css('jhi-button'));
             const cmp = btnDe.componentInstance;
-            expect(cmp.disabled).toBeTrue();
+            expect(cmp.disabled).toBeTruthy();
         });
 
         it('should call API and show suggestions when lightbulb button is clicked', () => {
@@ -254,10 +254,10 @@ describe('CompetencySelection', () => {
                 description: 'Create a Java program that implements a sorting algorithm',
                 course_id: '1',
             });
-            expect(component.suggestedCompetencyIds.has(1)).toBeTrue();
-            expect(component.suggestedCompetencyIds.has(3)).toBeTrue();
-            expect(component.suggestedCompetencyIds.has(2)).toBeFalse();
-            expect(component.isSuggesting).toBeFalse();
+            expect(component.suggestedCompetencyIds.has(1)).toBeTruthy();
+            expect(component.suggestedCompetencyIds.has(3)).toBeTruthy();
+            expect(component.suggestedCompetencyIds.has(2)).toBeFalsy();
+            expect(component.isSuggesting).toBeFalsy();
         });
 
         it('should show spinner while suggesting competencies', () => {
@@ -282,8 +282,8 @@ describe('CompetencySelection', () => {
             component.suggestCompetencies();
             fixture.changeDetectorRef.detectChanges();
 
-            expect(component.isSuggested(1)).toBeTrue();
-            expect(component.isSuggested(2)).toBeFalse();
+            expect(component.isSuggested(1)).toBeTruthy();
+            expect(component.isSuggested(2)).toBeFalsy();
 
             // Check for lightbulb icons with warning color next to competencies
             const suggestedLightbulbs = fixture.debugElement.queryAll(By.css('fa-icon.text-warning.ms-2'));
@@ -301,7 +301,7 @@ describe('CompetencySelection', () => {
 
             const firstCompetency = component.competencyLinks?.[0];
             expect(firstCompetency?.competency?.id).toBe(3);
-            expect(component.isSuggested(3)).toBeTrue();
+            expect(component.isSuggested(3)).toBeTruthy();
         });
 
         it('should handle API error gracefully', () => {
@@ -309,7 +309,7 @@ describe('CompetencySelection', () => {
 
             component.suggestCompetencies();
 
-            expect(component.isSuggesting).toBeFalse();
+            expect(component.isSuggesting).toBeFalsy();
             expect(component.suggestedCompetencyIds.size).toBe(0);
         });
 
@@ -335,9 +335,9 @@ describe('CompetencySelection', () => {
 
             component.suggestCompetencies();
 
-            expect(component.suggestedCompetencyIds.has(1)).toBeFalse();
-            expect(component.suggestedCompetencyIds.has(2)).toBeFalse();
-            expect(component.suggestedCompetencyIds.has(3)).toBeTrue();
+            expect(component.suggestedCompetencyIds.has(1)).toBeFalsy();
+            expect(component.suggestedCompetencyIds.has(2)).toBeFalsy();
+            expect(component.suggestedCompetencyIds.has(3)).toBeTruthy();
         });
 
         it('should handle empty response from API', () => {
@@ -347,7 +347,7 @@ describe('CompetencySelection', () => {
             component.suggestCompetencies();
 
             expect(component.suggestedCompetencyIds.size).toBe(0);
-            expect(component.isSuggesting).toBeFalse();
+            expect(component.isSuggesting).toBeFalsy();
         });
 
         it('should disable lightbulb button while suggesting', () => {
@@ -356,7 +356,7 @@ describe('CompetencySelection', () => {
 
             const btnDe = fixture.debugElement.query(By.css('jhi-button'));
             const cmp = btnDe.componentInstance;
-            expect(cmp.disabled).toBeTrue();
+            expect(cmp.disabled).toBeTruthy();
         });
 
         it('should show lightbulb tooltip', () => {
@@ -394,8 +394,8 @@ describe('CompetencySelection', () => {
 
             component.suggestCompetencies();
 
-            expect(component.suggestedCompetencyIds.has(1)).toBeTrue(); // Should match by ID
-            expect(component.suggestedCompetencyIds.has(999)).toBeFalse(); // Should not match non-existent ID
+            expect(component.suggestedCompetencyIds.has(1)).toBeTruthy(); // Should match by ID
+            expect(component.suggestedCompetencyIds.has(999)).toBeFalsy(); // Should not match non-existent ID
         });
     });
 

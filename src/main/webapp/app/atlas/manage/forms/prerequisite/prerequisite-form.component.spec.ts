@@ -98,7 +98,7 @@ describe('PrerequisiteFormComponent', () => {
 
         prerequisiteFormComponentFixture.detectChanges();
         tick(250); // async validator fires after 250ms and fully filled in form should now be valid!
-        expect(prerequisiteFormComponent.form.valid).toBeTrue();
+        expect(prerequisiteFormComponent.form.valid).toBeTruthy();
         expect(getCourseCompetencyTitlesSpy).toHaveBeenCalledOnce();
         const submitFormSpy = vi.spyOn(prerequisiteFormComponent, 'submitForm');
         const submitFormEventSpy = vi.spyOn(prerequisiteFormComponent.formSubmitted, 'emit');

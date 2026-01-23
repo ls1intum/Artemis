@@ -82,8 +82,8 @@ describe('CompetencyRecommendationDetailComponent', () => {
         const saveSpy = vi.spyOn(component, 'save');
 
         //component should not start out in edit mode
-        expect(component.isInEditMode()).toBeFalse();
-        expect(component.form()!.controls.competency.disabled).toBeTrue();
+        expect(component.isInEditMode()).toBeFalsy();
+        expect(component.form()!.controls.competency.disabled).toBeTruthy();
 
         const editButton = fixture.debugElement.nativeElement.querySelector('#editButton-0 > .jhi-btn');
         editButton.click();

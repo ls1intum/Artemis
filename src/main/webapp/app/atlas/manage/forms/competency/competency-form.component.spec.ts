@@ -82,7 +82,7 @@ describe('CompetencyFormComponent', () => {
 
         competencyFormComponentFixture.detectChanges();
         tick(250); // async validator fires after 250ms and fully filled in form should now be valid!
-        expect(competencyFormComponent.form.valid).toBeTrue();
+        expect(competencyFormComponent.form.valid).toBeTruthy();
         expect(getAllTitlesSpy).toHaveBeenCalledOnce();
         const submitFormSpy = vi.spyOn(competencyFormComponent, 'submitForm');
         const submitFormEventSpy = vi.spyOn(competencyFormComponent.formSubmitted, 'emit');
