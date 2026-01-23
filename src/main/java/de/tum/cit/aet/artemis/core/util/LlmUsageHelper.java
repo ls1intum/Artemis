@@ -27,6 +27,14 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 /**
  * Helper encapsulating model pricing, normalization and token usage persistence for LLM calls.
  * Shared by all Spring AI-based services (Hyperion, Atlas, etc.).
+ *
+ * ARCHITECTURAL NOTE: This component uses config-based cost lookup because Spring AI's
+ * ChatResponse.getMetadata().getUsage() provides token counts but NOT cost information.
+ * This differs from Iris/Athena integrations where external services (Pyris/Athena)
+ * calculate costs server-side and return them in the LLMRequest payload.
+ * For Spring AI-based services, we must maintain cost-per-model configuration locally.
+ *
+ * @see de.tum.cit.aet.artemis.core.config.LlmModelCostConfiguration
  */
 @Component
 @Lazy

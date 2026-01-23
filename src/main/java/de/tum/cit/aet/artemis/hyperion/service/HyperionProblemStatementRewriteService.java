@@ -36,7 +36,7 @@ public class HyperionProblemStatementRewriteService {
 
     private final HyperionPromptTemplateService templateService;
 
-    private final LlmUsageHelper llmUsageService;
+    private final LlmUsageHelper llmUsageHelper;
 
     private final ObservationRegistry observationRegistry;
 
@@ -47,11 +47,11 @@ public class HyperionProblemStatementRewriteService {
      * @param templateService prompt template service
      */
     public HyperionProblemStatementRewriteService(ChatClient chatClient, HyperionPromptTemplateService templateService, ObservationRegistry observationRegistry,
-            LlmUsageHelper llmUsageService) {
+            LlmUsageHelper llmUsageHelper) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.observationRegistry = observationRegistry;
-        this.llmUsageService = llmUsageService;
+        this.llmUsageHelper = llmUsageHelper;
     }
 
     /**
@@ -85,8 +85,8 @@ public class HyperionProblemStatementRewriteService {
 
             ChatResponse chatResponse = promptResponse.chatResponse();
             String responseContent = chatResponse.getResult().getOutput().getText();
-            LLMRequest llmRequest = llmUsageService.buildLlmRequest(chatResponse, "rewrite", REWRITE_PIPELINE_ID);
-            llmUsageService.storeTokenUsage(LLMServiceType.HYPERION, course, llmRequest);
+            LLMRequest llmRequest = llmUsageHelper.buildLlmRequest(chatResponse, "rewrite", REWRITE_PIPELINE_ID);
+            llmUsageHelper.storeTokenUsage(LLMServiceType.HYPERION, course, llmRequest);
             // @formatter:on
             String result = responseContent.trim();
             boolean improved = !result.equals(problemStatementText.trim());
