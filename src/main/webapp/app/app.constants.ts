@@ -59,6 +59,8 @@ export const MODULE_FEATURE_NEBULA = 'nebula';
 
 export const MODULE_FEATURE_SHARING = 'sharing';
 
+export const MODULE_FEATURE_LTI = 'lti';
+
 export const MODULE_FEATURE_THEIA = 'theia';
 
 export type ModuleFeature =
@@ -75,6 +77,7 @@ export type ModuleFeature =
     | typeof MODULE_FEATURE_TUTORIALGROUP
     | typeof MODULE_FEATURE_NEBULA
     | typeof MODULE_FEATURE_SHARING
+    | typeof MODULE_FEATURE_LTI
     | typeof MODULE_FEATURE_THEIA;
 
 export const PROFILE_LOCALCI = 'localci';

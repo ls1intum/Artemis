@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.config;
 import static de.tum.cit.aet.artemis.core.config.Constants.ATLAS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.NEBULA_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHARING_ENABLED_PROPERTY_NAME;
@@ -152,13 +153,13 @@ public class ArtemisConfigHelper {
     }
 
     /**
-     * Check if the Theia module is enabled.
+     * Check if the LTI module is enabled.
      *
      * @param environment the Spring environment
-     * @return true if the Theia module is enabled, false otherwise
+     * @return true if the LTI module is enabled, false otherwise
      */
-    public boolean isTheiaEnabled(Environment environment) {
-        return getPropertyOrExitArtemis(THEIA_ENABLED_PROPERTY_NAME, environment);
+    public boolean isLtiEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(LTI_ENABLED_PROPERTY_NAME, environment);
     }
 
     /**
@@ -209,8 +210,8 @@ public class ArtemisConfigHelper {
         if (isSharingEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_SHARING);
         }
-        if (isTheiaEnabled(environment)) {
-            enabledFeatures.add(Constants.MODULE_FEATURE_THEIA);
+        if (isLtiEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_LTI);
         }
 
         return enabledFeatures;
