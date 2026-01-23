@@ -25,10 +25,16 @@ describe('CreateCompetency', () => {
     let createCompetencyComponentFixture: ComponentFixture<CreateCompetencyComponent>;
     let createCompetencyComponent: CreateCompetencyComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [CreateCompetencyComponent, CompetencyFormComponent],
-            declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(DocumentationButtonComponent), MockComponent(CompetencyFormComponent), MockDirective(TranslateDirective)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
+                CreateCompetencyComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(DocumentationButtonComponent),
+                MockComponent(CompetencyFormComponent),
+                MockDirective(TranslateDirective),
+            ],
+            declarations: [],
             providers: [
                 MockProvider(CompetencyService),
                 MockProvider(LectureService),
@@ -47,11 +53,16 @@ describe('CreateCompetency', () => {
                 },
             ],
         })
-            .compileComponents()
-            .then(() => {
-                createCompetencyComponentFixture = TestBed.createComponent(CreateCompetencyComponent);
-                createCompetencyComponent = createCompetencyComponentFixture.componentInstance;
-            });
+            .overrideComponent(CreateCompetencyComponent, {
+                remove: { imports: [CompetencyFormComponent, DocumentationButtonComponent, TranslateDirective] },
+                add: {
+                    imports: [MockComponent(CompetencyFormComponent), MockComponent(DocumentationButtonComponent), MockDirective(TranslateDirective)],
+                },
+            })
+            .compileComponents();
+
+        createCompetencyComponentFixture = TestBed.createComponent(CreateCompetencyComponent);
+        createCompetencyComponent = createCompetencyComponentFixture.componentInstance;
     });
 
     afterEach(() => {

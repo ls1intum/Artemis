@@ -15,6 +15,8 @@ import { User } from 'app/core/user/user.model';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CompetencyCardStubComponent } from 'test/helpers/stubs/atlas/competency-card-stub.component';
+import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
@@ -51,16 +53,17 @@ describe('CourseCompetencies', () => {
         subscribeToCourseUpdates: () => of(),
     };
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [CourseCompetenciesComponent, CompetencyCardStubComponent, MockPipe(ArtemisTranslatePipe)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [CourseCompetenciesComponent, MockPipe(ArtemisTranslatePipe), CompetencyCardStubComponent],
+            declarations: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(AlertService),
                 { provide: CourseStorageService, useValue: mockCourseStorageService },
                 MockProvider(CompetencyService),
-                MockProvider(AccountService),
+                { provide: AccountService, useClass: MockAccountService },
                 {
                     provide: ActivatedRoute,
                     useValue: mockActivatedRoute,
@@ -75,17 +78,20 @@ describe('CourseCompetencies', () => {
                 MockProvider(ScienceService),
             ],
         })
-            .compileComponents()
-            .then(() => {
-                courseCompetenciesComponentFixture = TestBed.createComponent(CourseCompetenciesComponent);
-                courseCompetenciesComponent = courseCompetenciesComponentFixture.componentInstance;
-                courseCompetenciesComponentFixture.componentRef.setInput('courseId', 1);
-                courseCompetencyService = TestBed.inject(CourseCompetencyService);
-                const accountService = TestBed.inject(AccountService);
-                const user = new User();
-                user.login = 'testUser';
-                accountService.userIdentity.set(user);
-            });
+            .overrideComponent(CourseCompetenciesComponent, {
+                remove: { imports: [CompetencyCardComponent] },
+                add: { imports: [CompetencyCardStubComponent] },
+            })
+            .compileComponents();
+
+        courseCompetenciesComponentFixture = TestBed.createComponent(CourseCompetenciesComponent);
+        courseCompetenciesComponent = courseCompetenciesComponentFixture.componentInstance;
+        courseCompetenciesComponentFixture.componentRef.setInput('courseId', 1);
+        courseCompetencyService = TestBed.inject(CourseCompetencyService);
+        const accountService = TestBed.inject(AccountService);
+        const user = new User();
+        user.login = 'testUser';
+        accountService.userIdentity.set(user);
     });
 
     afterEach(() => {

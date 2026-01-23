@@ -24,15 +24,16 @@ describe('CreatePrerequisite', () => {
     let createPrerequisiteComponentFixture: ComponentFixture<CreatePrerequisiteComponent>;
     let createPrerequisiteComponent: CreatePrerequisiteComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [CreatePrerequisiteComponent, PrerequisiteFormComponent],
-            declarations: [
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
+                CreatePrerequisiteComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(DocumentationButtonComponent),
                 MockComponent(PrerequisiteFormComponent),
                 MockDirective(TranslateDirective),
             ],
+            declarations: [],
             providers: [
                 MockProvider(PrerequisiteService),
                 MockProvider(LectureService),
@@ -51,11 +52,16 @@ describe('CreatePrerequisite', () => {
                 },
             ],
         })
-            .compileComponents()
-            .then(() => {
-                createPrerequisiteComponentFixture = TestBed.createComponent(CreatePrerequisiteComponent);
-                createPrerequisiteComponent = createPrerequisiteComponentFixture.componentInstance;
-            });
+            .overrideComponent(CreatePrerequisiteComponent, {
+                remove: { imports: [PrerequisiteFormComponent, DocumentationButtonComponent, TranslateDirective] },
+                add: {
+                    imports: [MockComponent(PrerequisiteFormComponent), MockComponent(DocumentationButtonComponent), MockDirective(TranslateDirective)],
+                },
+            })
+            .compileComponents();
+
+        createPrerequisiteComponentFixture = TestBed.createComponent(CreatePrerequisiteComponent);
+        createPrerequisiteComponent = createPrerequisiteComponentFixture.componentInstance;
     });
 
     afterEach(() => {

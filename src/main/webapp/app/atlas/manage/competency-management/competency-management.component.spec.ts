@@ -37,6 +37,7 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
+import { DialogService } from 'primeng/dynamicdialog';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyManagementComponent', () => {
@@ -57,10 +58,9 @@ describe('CompetencyManagementComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [NgbProgressbar],
-            declarations: [
+            imports: [
+                NgbProgressbar,
                 CompetencyManagementComponent,
-                MockHasAnyAuthorityDirective,
                 MockComponent(DocumentationButtonComponent),
                 MockComponent(ImportAllCompetenciesComponent),
                 MockComponent(CompetencyManagementTableComponent),
@@ -68,7 +68,9 @@ describe('CompetencyManagementComponent', () => {
                 MockPipe(HtmlForMarkdownPipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(DeleteButtonDirective),
+                MockDirective(MockHasAnyAuthorityDirective),
             ],
+            declarations: [],
             providers: [
                 provideRouter([]),
                 MockProvider(AccountService),
@@ -94,6 +96,7 @@ describe('CompetencyManagementComponent', () => {
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+                MockProvider(DialogService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

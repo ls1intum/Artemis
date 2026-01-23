@@ -12,24 +12,26 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { Competency, CourseCompetencyProgress } from 'app/atlas/shared/entities/competency.model';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { CompetencyFormComponent } from 'app/atlas/manage/forms/competency/competency-form.component';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
-import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { ProfileService } from '../../../core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('EditCompetencyComponent', () => {
     setupTestBed({ zoneless: true });
     let editCompetencyComponentFixture: ComponentFixture<EditCompetencyComponent>;
     let editCompetencyComponent: EditCompetencyComponent;
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [EditCompetencyComponent, MockModule(OwlNativeDateTimeModule), MockComponent(CompetencyFormComponent), MockDirective(TranslateDirective)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [EditCompetencyComponent, MockComponent(CompetencyFormComponent), MockDirective(TranslateDirective)],
             providers: [
                 MockProvider(LectureService),
                 MockProvider(CompetencyService),
                 MockProvider(AlertService),
+                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
                 {
@@ -46,11 +48,14 @@ describe('EditCompetencyComponent', () => {
                     },
                 },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(EditCompetencyComponent, {
+                remove: { imports: [CompetencyFormComponent, TranslateDirective] },
+                add: { imports: [MockComponent(CompetencyFormComponent), MockDirective(TranslateDirective)] },
+            })
+            .compileComponents();
 
-        global.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
-            return new MockResizeObserver(callback);
-        });
+        global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
 
         editCompetencyComponentFixture = TestBed.createComponent(EditCompetencyComponent);
         editCompetencyComponent = editCompetencyComponentFixture.componentInstance;

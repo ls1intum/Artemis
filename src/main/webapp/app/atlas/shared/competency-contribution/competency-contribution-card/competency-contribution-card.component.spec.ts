@@ -8,6 +8,8 @@ import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { NgbProgressbar, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyContributionCardComponent', () => {
@@ -27,7 +29,7 @@ describe('CompetencyContributionCardComponent', () => {
                 MockModule(NgbTooltipModule),
                 MockRouterLinkDirective,
             ],
-            providers: [provideRouter([])],
+            providers: [provideRouter([]), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CompetencyContributionCardComponent);
