@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Lazy;
 /**
  * Configuration properties for LLM model costs.
  * Shared by all Spring AI-based services (Hyperion, Atlas, etc.).
- * <p>
  * Configured via application.yml under {@code artemis.llm.model-costs}.
  */
 @Configuration

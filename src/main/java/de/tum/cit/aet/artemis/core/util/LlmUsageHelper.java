@@ -140,12 +140,7 @@ public class LlmUsageHelper {
 
     /**
      * Normalize provider model names by removing date/version suffixes.
-     * <p>
-     * Examples:
-     * <ul>
-     * <li>"gpt-5-mini-2024-07-18" -> "gpt-5-mini"</li>
-     * <li>"gpt-5-mini" -> "gpt-5-mini"</li>
-     * </ul>
+     * Example: "gpt-5-mini-2024-07-18" becomes "gpt-5-mini".
      *
      * @param rawModel raw model identifier from the provider
      * @return normalized model name or empty string when undefined
@@ -157,15 +152,6 @@ public class LlmUsageHelper {
         return DATE_SUFFIX_PATTERN.matcher(rawModel).replaceAll("");
     }
 
-    /**
-     * Return the configured EUR cost map.
-     *
-     * @return model cost mapping in EUR per million tokens
-     */
-    public Map<String, ModelCost> getCosts() {
-        return costs;
-    }
-
-    public record ModelCost(float costPerMillionInput, float costPerMillionOutput) {
+    private record ModelCost(float costPerMillionInput, float costPerMillionOutput) {
     }
 }
