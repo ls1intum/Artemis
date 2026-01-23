@@ -109,7 +109,7 @@ export class ContextSelectionComponent {
             this.selectedExercise.set(undefined);
             const courseId = this.courseId();
             if (courseId !== undefined) {
-                this.chatService.switchTo(ChatServiceMode.COURSE, courseId);
+                this.chatService.switchToNewChat(ChatServiceMode.COURSE, courseId);
             }
         } else if (type === 'lecture') {
             this.selected.set(type);
@@ -127,7 +127,7 @@ export class ContextSelectionComponent {
         this.selectedExercise.set(undefined); // Reset exercise selection
         this.currentView.set('main');
         if (lecture.id !== undefined) {
-            this.chatService.switchTo(ChatServiceMode.LECTURE, lecture.id);
+            this.chatService.switchToNewChat(ChatServiceMode.LECTURE, lecture.id);
         }
     }
 
@@ -137,7 +137,7 @@ export class ContextSelectionComponent {
         this.currentView.set('main');
         if (exercise.id !== undefined) {
             const mode = exercise.type === ExerciseType.TEXT ? ChatServiceMode.TEXT_EXERCISE : ChatServiceMode.PROGRAMMING_EXERCISE;
-            this.chatService.switchTo(mode, exercise.id);
+            this.chatService.switchToNewChat(mode, exercise.id);
         }
     }
 

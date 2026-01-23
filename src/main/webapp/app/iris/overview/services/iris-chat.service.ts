@@ -527,6 +527,23 @@ export class IrisChatService implements OnDestroy {
         }
     }
 
+    /**
+     * Switches to a new chat mode and creates a new session (instead of reusing an existing one).
+     * Use this when the user explicitly wants to start a new conversation in a different context.
+     */
+    switchToNewChat(mode: ChatServiceMode, id?: number): void {
+        const modeUrl = chatModeToUrlComponent(mode);
+        const newIdentifier = modeUrl && id ? modeUrl + '/' + id : undefined;
+        this.sessionCreationIdentifier = newIdentifier;
+        if (newIdentifier) {
+            this.close();
+            this.createNewSession().subscribe({
+                ...this.handleNewSession(),
+                complete: () => this.loadChatSessions(),
+            });
+        }
+    }
+
     switchToSession(session: IrisSessionDTO): void {
         if (this.sessionId === session.id) {
             return;
