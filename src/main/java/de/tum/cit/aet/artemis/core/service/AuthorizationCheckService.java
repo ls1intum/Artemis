@@ -721,10 +721,18 @@ public class AuthorizationCheckService {
     }
 
     public static boolean isAdminByAuthorityName(Set<String> authorities) {
+        if (authorities == null) {
+            return false;
+        }
+
         return authorities.contains(Authority.ADMIN_AUTHORITY.getName()) || authorities.contains(Authority.SUPER_ADMIN_AUTHORITY.getName());
     }
 
     public static boolean isAdmin(Set<Authority> authorities) {
+        if (authorities == null) {
+            return false;
+        }
+
         return authorities.contains(Authority.ADMIN_AUTHORITY) || authorities.contains(Authority.SUPER_ADMIN_AUTHORITY);
     }
 

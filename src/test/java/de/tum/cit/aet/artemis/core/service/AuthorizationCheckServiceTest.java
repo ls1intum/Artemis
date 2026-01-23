@@ -467,6 +467,11 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
         }
 
         @Test
+        void testIsAdminByAuthorityName_withNullSet_shouldReturnFalse() {
+            assertThat(AuthorizationCheckService.isAdminByAuthorityName(null)).isFalse();
+        }
+
+        @Test
         void testIsAdmin_withAdminAuthority_shouldReturnTrue() {
             Set<Authority> authorities = Set.of(Authority.ADMIN_AUTHORITY);
             boolean isAdmin = AuthorizationCheckService.isAdmin(authorities);
@@ -499,6 +504,11 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
             Set<Authority> authorities = Set.of();
             boolean isAdmin = AuthorizationCheckService.isAdmin(authorities);
             assertThat(isAdmin).isFalse();
+        }
+
+        @Test
+        void testIsAdmin_withNullSet_shouldReturnFalse() {
+            assertThat(AuthorizationCheckService.isAdmin((Set<Authority>) null)).isFalse();
         }
     }
 
