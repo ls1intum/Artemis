@@ -2085,7 +2085,7 @@ public class CourseTestService {
         var quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(2), QuizMode.INDIVIDUAL);
         quizExercise = exerciseRepo.save(quizExercise);
         participationUtilService.createAndSaveParticipationForExercise(quizExercise, userPrefix + "student2");
-        var archivePath = courseExamExportService.exportCourse(course, courseArchivesDirPath, Collections.synchronizedList(new ArrayList<>()));
+        var archivePath = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, Collections.synchronizedList(new ArrayList<>()), Collections.emptyMap());
         assertThat(archivePath).isNotEmpty();
         extractAndAssertContent(archivePath.orElseThrow(), quizSubmission);
     }
@@ -2094,7 +2094,7 @@ public class CourseTestService {
     public void testArchiveCourseWithQuizExerciseCannotExportExerciseDetails() throws IOException {
         var course = courseUtilService.createCourse();
         var quizSubmission = quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, userPrefix + "student1", false);
-        var archivePath = courseExamExportService.exportCourse(course, courseArchivesDirPath, Collections.synchronizedList(new ArrayList<>()));
+        var archivePath = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, Collections.synchronizedList(new ArrayList<>()), Collections.emptyMap());
         assertThat(archivePath).isNotEmpty();
         Predicate<Path> missingPathPredicate = path -> "Exercise-Details-quiz.json".equals(path.getFileName().toString());
         extractAndAssertMissingContent(archivePath.orElseThrow(), quizSubmission, missingPathPredicate);
@@ -2107,7 +2107,7 @@ public class CourseTestService {
         var quizSubmission = quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, userPrefix + "student1", false);
         try (MockedStatic<ImageIO> mockedImageIO = mockStatic(ImageIO.class)) {
             mockedImageIO.when(() -> ImageIO.read(any(File.class))).thenThrow(new IOException());
-            var archivePath = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
+            var archivePath = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, exportErrors, Collections.emptyMap());
             assertThat(archivePath).isNotEmpty();
             Predicate<Path> missingPathPredicate = path -> path.getFileName().toString().contains("dragAndDropQuestion") && path.getFileName().toString().endsWith(".pdf");
             extractAndAssertMissingContent(archivePath.orElseThrow(), quizSubmission, missingPathPredicate);
@@ -2121,7 +2121,7 @@ public class CourseTestService {
         quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, userPrefix + "student1", false);
         try (MockedStatic<DataExportUtil> mockedFiles = mockStatic(DataExportUtil.class)) {
             mockedFiles.when(() -> DataExportUtil.createDirectoryIfNotExistent(any())).thenThrow(new IOException());
-            var archivePath = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
+            var archivePath = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, exportErrors, Collections.emptyMap());
             assertThat(archivePath).isNotEmpty();
         }
 
@@ -2135,7 +2135,7 @@ public class CourseTestService {
         try (MockedStatic<org.apache.commons.io.FileUtils> mockedFiles = mockStatic(org.apache.commons.io.FileUtils.class)) {
             mockedFiles.when(() -> org.apache.commons.io.FileUtils.writeLines(argThat(file -> file.toString().contains(fileName)), anyString(), anyList()))
                     .thenThrow(new IOException());
-            var archivePath = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
+            var archivePath = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, exportErrors, Collections.emptyMap());
             assertThat(archivePath).isNotEmpty();
             Predicate<Path> missingPathPredicate = path -> path.getFileName().toString().contains(fileName) && path.getFileName().toString().endsWith(".txt");
             extractAndAssertMissingContent(archivePath.orElseThrow(), quizSubmission, missingPathPredicate);
@@ -2408,7 +2408,7 @@ public class CourseTestService {
 
     private List<Path> archiveCourseAndExtractFiles(Course course) throws IOException {
         List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
-        Optional<Path> exportedCourse = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
+        Optional<Path> exportedCourse = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, exportErrors, Collections.emptyMap());
         assertThat(exportedCourse).isNotEmpty();
 
         // Extract the archive
@@ -2430,7 +2430,7 @@ public class CourseTestService {
 
         MockedStatic<Files> mockedFiles = mockStatic(Files.class);
         mockedFiles.when(() -> Files.createDirectories(argThat(path -> path.toString().contains("exports")))).thenThrow(IOException.class);
-        Optional<Path> exportedCourse = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
+        Optional<Path> exportedCourse = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, exportErrors, Collections.emptyMap());
         mockedFiles.close();
 
         assertThat(exportedCourse).isEmpty();
@@ -2442,7 +2442,7 @@ public class CourseTestService {
 
         MockedStatic<Files> mockedFiles = mockStatic(Files.class);
         mockedFiles.when(() -> Files.createDirectory(argThat(path -> path.toString().contains("course-exercises")))).thenThrow(IOException.class);
-        Optional<Path> exportedCourse = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
+        Optional<Path> exportedCourse = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, exportErrors, Collections.emptyMap());
         mockedFiles.close();
 
         assertThat(exportedCourse).isEmpty();
@@ -2471,7 +2471,7 @@ public class CourseTestService {
 
         MockedStatic<Files> mockedFiles = mockStatic(Files.class);
         mockedFiles.when(() -> Files.createDirectory(argThat(path -> path.toString().contains("exams")))).thenThrow(IOException.class);
-        Optional<Path> exportedCourse = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
+        Optional<Path> exportedCourse = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, exportErrors, Collections.emptyMap());
         mockedFiles.close();
 
         assertThat(exportedCourse).isEmpty();
@@ -3310,7 +3310,7 @@ public class CourseTestService {
         OnlineCourseConfiguration ocConfiguration = course.getOnlineCourseConfiguration();
         String clientId = ocConfiguration.getLtiPlatformConfiguration().getRegistrationId();
 
-        String jsonResponse = request.get("/api/core/courses/for-lti-dashboard?clientId=" + clientId, HttpStatus.OK, String.class);
+        String jsonResponse = request.get("/api/lti/courses/for-lti-dashboard?clientId=" + clientId, HttpStatus.OK, String.class);
         List<OnlineCourseDTO> receivedCourseForDashboard = objectMapper.readValue(jsonResponse, new TypeReference<>() {
             // This empty block is necessary to provide type information for JSON deserialization
         });
