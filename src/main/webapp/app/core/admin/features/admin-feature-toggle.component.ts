@@ -16,6 +16,7 @@ import {
     MODULE_FEATURE_FILEUPLOAD,
     MODULE_FEATURE_HYPERION,
     MODULE_FEATURE_LECTURE,
+    MODULE_FEATURE_LTI,
     MODULE_FEATURE_MODELING,
     MODULE_FEATURE_NEBULA,
     MODULE_FEATURE_PASSKEY,
@@ -32,7 +33,6 @@ import {
     PROFILE_JENKINS,
     PROFILE_LDAP,
     PROFILE_LOCALCI,
-    PROFILE_LTI,
     PROFILE_SAML2,
     PROFILE_THEIA,
     ProfileFeature,
@@ -90,7 +90,6 @@ export class AdminFeatureToggleComponent implements OnInit {
     private readonly displayedProfiles: ProfileFeature[] = [
         PROFILE_IRIS,
         PROFILE_ATHENA,
-        PROFILE_LTI,
         PROFILE_APOLLON,
         PROFILE_THEIA,
         PROFILE_LDAP,
@@ -114,6 +113,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         MODULE_FEATURE_TUTORIALGROUP,
         MODULE_FEATURE_NEBULA,
         MODULE_FEATURE_SHARING,
+        MODULE_FEATURE_LTI,
         MODULE_FEATURE_PASSKEY,
     ];
 
@@ -137,7 +137,6 @@ export class AdminFeatureToggleComponent implements OnInit {
     private readonly profileDocumentationLinks: Partial<Record<ProfileFeature, string>> = {
         [PROFILE_IRIS]: 'https://docs.artemis.tum.de/admin/extensions-setup#iris--pyris-setup-guide',
         [PROFILE_ATHENA]: 'https://docs.artemis.tum.de/admin/extensions-setup#athena-service',
-        [PROFILE_LTI]: 'https://docs.artemis.tum.de/instructor/lti-configuration',
         [PROFILE_APOLLON]: 'https://docs.artemis.tum.de/instructor/exercises/modeling-exercise',
         [PROFILE_THEIA]: 'https://docs.artemis.tum.de/developer/setup#run-the-server-via-a-run-configuration-in-intellij',
         [PROFILE_LDAP]: 'https://docs.artemis.tum.de/admin/production-setup/security#ldap-authentication',
@@ -161,6 +160,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         [MODULE_FEATURE_TUTORIALGROUP]: 'https://docs.artemis.tum.de/instructor/tutorial-groups',
         [MODULE_FEATURE_NEBULA]: 'https://docs.artemis.tum.de/admin/extensions-setup#nebula-setup-guide',
         [MODULE_FEATURE_SHARING]: 'https://docs.artemis.tum.de/admin/extensions-setup#setup-guide-for-exchange-with-the-sharing-platform',
+        [MODULE_FEATURE_LTI]: 'https://docs.artemis.tum.de/instructor/lti-configuration',
         [MODULE_FEATURE_PASSKEY]: 'https://docs.artemis.tum.de/admin/production-setup/security#passkey-authentication',
     };
 

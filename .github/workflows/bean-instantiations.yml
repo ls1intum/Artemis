@@ -105,10 +105,11 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          PROFILES=dev,localci,lti,aeolus,theia,iris,localvc,artemis,scheduling,buildagent,core,ldap
+          PROFILES=dev,localci,aeolus,theia,iris,localvc,artemis,scheduling,buildagent,core,ldap
           JAR=$(ls build/libs/Artemis*.jar | head -n1)
           nohup java -jar "$JAR" \
             --spring.profiles.active="$PROFILES" \
+            --artemis.lti.enabled=true \
             --artemis.user-management.passkey.enabled=true \
             --artemis.user-management.use-external=false \
             --artemis.iris.url=http://iris.fake \
