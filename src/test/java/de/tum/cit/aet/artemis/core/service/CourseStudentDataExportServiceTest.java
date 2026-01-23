@@ -19,8 +19,8 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.service.export.CourseStudentDataExportService;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -45,7 +45,7 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
     private GradingScaleRepository gradingScaleRepository;
 
     @Autowired
-    private CourseRepository courseRepository;
+    private CourseTestRepository courseTestRepository;
 
     @Autowired
     private TempFileUtilService tempFileUtilService;
@@ -258,7 +258,7 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
 
         // Update course accuracy to 2 decimal places
         course.setAccuracyOfScores(2);
-        courseRepository.save(course);
+        courseTestRepository.save(course);
 
         List<String> errors = new ArrayList<>();
         courseStudentDataExportService.exportAllStudentData(course.getId(), tempDir, errors);
@@ -293,7 +293,7 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
 
         // Update course accuracy to 0 decimal places (whole numbers only)
         course.setAccuracyOfScores(0);
-        courseRepository.save(course);
+        courseTestRepository.save(course);
 
         List<String> errors = new ArrayList<>();
         courseStudentDataExportService.exportAllStudentData(course.getId(), tempDir, errors);
