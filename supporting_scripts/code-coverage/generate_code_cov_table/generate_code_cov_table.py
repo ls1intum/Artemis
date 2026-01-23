@@ -136,15 +136,18 @@ def get_artifacts_of_the_last_completed_run(headers, branch, run_id):
 def get_coverage_artifact_for_key(artifacts, key):
     matching_artifacts = [artifact for artifact in artifacts if artifact["name"] == key]
 
-    if len(matching_artifacts) == 1:
-        return matching_artifacts[0]["archive_download_url"]
-    else:
-        logging.error(
-            "Expected exactly one artifact, found {} for key: {}".format(
+    if len(matching_artifacts) == 0:
+        logging.error("Could not find an artifact for key: {}".format(key))
+        return None
+    elif len(matching_artifacts) > 1:
+        logging.info(
+            "Found {} artifacts for key: {}\nProceeding with most recent artifact...".format(
                 len(matching_artifacts), key
             )
         )
-        return None
+
+    most_recent_artifact = max(matching_artifacts, key=lambda artifact: artifact["created_at"])
+    return most_recent_artifact["archive_download_url"]
 
 
 def get_branch_name(repo_path: str) -> str:
