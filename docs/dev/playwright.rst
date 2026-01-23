@@ -29,11 +29,28 @@ This setup should be used for debugging, and creating new tests for your code, b
 following :ref:`the server setup guide<dev_setup>`.
 
 
-For a quick test setup with only three steps, you can use the scripts provided in `supportingScripts/playwright`.
+For a quick test setup with only three steps, you can use the scripts provided in `supporting_scripts/playwright`.
 The README explains what you need to do.
 It sets up Artemis inside a dockerized environment, creates users and directly starts playwright. The main drawback with this setup is, that you cannot
 easily change the version of Artemis itself.
 
+Supporting scripts overview
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The following helper scripts live in `supporting_scripts/playwright` and can be combined as needed:
+
+- `runArtemisInDocker_macOS.sh` / `runArtemisInDocker_linux.sh`: start the Artemis server/client plus database in Docker.
+- `setupUsers.sh`: create the Playwright test users.
+- `startPlaywright.sh`: run the full Playwright suite headless in the terminal.
+- `startPlaywrightUI.sh`: launch Playwright in UI mode for debugging.
+- `prepareVSCodeForE2ETests.sh`: install dependencies and patch the Playwright config so VS Code can discover and run the E2E tests directly from the Testing view.
+- `checkFlakiness.sh`: repeatedly run tests to investigate flaky behavior.
+
+The three steps for setting up Playwright with these supporting scripts are:
+
+1. Start Artemis by running `runArtemisInDocker_macOS.sh` or `runArtemisInDocker_linux.sh` (depending on your OS). This starts the database, server, and client; keep the client running and use a separate shell for the remaining steps.
+2. Create test users by running `setupUsers.sh` (skip if users already exist).
+3. Run tests either headless with `startPlaywright.sh`, in UI mode with `startPlaywrightUI.sh`, or via VS Code after running `prepareVSCodeForE2ETests.sh`.
 
 If you want to manually install playwright, you can follow these steps:
 
@@ -79,8 +96,8 @@ If you want to manually install playwright, you can follow these steps:
 3. Configure test users
 
      Playwright tests require users with different roles to simulate concurrent user interactions. If you already
-     have generated test users, you can skip this step. Generate users with the help of the user creation scripts under the
-     `supportingScripts/playwright` folder:
+    have generated test users, you can skip this step. Generate users with the help of the user creation scripts under the
+    `supporting_scripts/playwright` folder:
 
     .. code-block:: bash
 
