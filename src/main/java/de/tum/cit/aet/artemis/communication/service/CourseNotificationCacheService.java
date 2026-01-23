@@ -13,11 +13,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-import com.hazelcast.spring.cache.HazelcastCacheManager;
-
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
 
 /**
  * Service for managing course notification caches.
@@ -42,8 +40,11 @@ public class CourseNotificationCacheService {
 
     private final CacheManager cacheManager;
 
-    public CourseNotificationCacheService(CacheManager cacheManager) {
+    private final DistributedDataAccessService distributedDataAccessService;
+
+    public CourseNotificationCacheService(CacheManager cacheManager, DistributedDataAccessService distributedDataAccessService) {
         this.cacheManager = cacheManager;
+        this.distributedDataAccessService = distributedDataAccessService;
     }
 
     /**
@@ -97,13 +98,12 @@ public class CourseNotificationCacheService {
      * @param key   The key prefix to match against cache entries
      */
     private void invalidateCacheForKeyStartingWith(String cache, String key) {
-        HazelcastInstance hazelcastInstance = ((HazelcastCacheManager) cacheManager).getHazelcastInstance();
-        IMap<Object, Object> cacheMap = hazelcastInstance.getMap(cache);
+        DistributedMap<Object, Object> cacheMap = distributedDataAccessService.getDistributedMap(cache);
 
         Set<Object> keys = cacheMap.keySet();
         keys.stream().filter(k -> k.toString().startsWith(key)).forEach(k -> {
             try {
-                cacheMap.delete(k);
+                cacheMap.remove(k);
             }
             catch (ClassCastException | NullPointerException e) {
                 log.error("Failed to delete cache entry with key: {}", k, e);
@@ -118,10 +118,10 @@ public class CourseNotificationCacheService {
      * @param key   The key to delete
      */
     private void invalidateCacheForKey(String cache, String key) {
-        HazelcastInstance hazelcastInstance = ((HazelcastCacheManager) cacheManager).getHazelcastInstance();
-        IMap<Object, Object> cacheMap = hazelcastInstance.getMap(cache);
+        DistributedMap<Object, Object> cacheMap = distributedDataAccessService.getDistributedMap(cache);
+
         try {
-            cacheMap.delete(key);
+            cacheMap.remove(key);
         }
         catch (ClassCastException | NullPointerException e) {
             // Nothing needs to be done

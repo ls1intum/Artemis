@@ -2,23 +2,19 @@ package de.tum.cit.aet.artemis.core.repository.passkey;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialRequestOptions;
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository;
 import org.springframework.stereotype.Repository;
 
-import com.hazelcast.config.MapConfig;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
 /**
  * A distributed implementation of {@link PublicKeyCredentialRequestOptionsRepository} using Hazelcast
@@ -42,12 +38,9 @@ import com.hazelcast.map.IMap;
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-public class HazelcastPublicKeyCredentialRequestOptionsRepository implements PublicKeyCredentialRequestOptionsRepository {
+public class DistributedPublicKeyCredentialRequestOptionsRepository implements PublicKeyCredentialRequestOptionsRepository {
 
-    private static final Logger log = LoggerFactory.getLogger(HazelcastPublicKeyCredentialRequestOptionsRepository.class);
-
-    /** Hazelcast map name for storing credential request options */
-    private static final String MAP_NAME = "public-key-credentials-request-options-map";
+    private static final Logger log = LoggerFactory.getLogger(DistributedPublicKeyCredentialRequestOptionsRepository.class);
 
     /** Default session attribute name used to store options in the local session */
     static final String DEFAULT_ATTR_NAME = PublicKeyCredentialRequestOptionsRepository.class.getName().concat(".ATTR_NAME");
@@ -55,37 +48,15 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
     /** Session attribute name used internally */
     private final String attrName = DEFAULT_ATTR_NAME;
 
-    /** Hazelcast instance injected via constructor */
-    private final HazelcastInstance hazelcastInstance;
-
-    /** Reference to the Hazelcast distributed map */
-    private IMap<String, PublicKeyCredentialRequestOptions> authOptionsMap;
+    private final DistributedDataAccessService distributedDataAccessService;
 
     /**
-     * Constructs the repository using the injected Hazelcast instance.
+     * Constructs the repository using the injected DistributedDataAccessService.
      *
-     * @param hazelcastInstance the shared Hazelcast cluster instance
+     * @param distributedDataAccessService the shared distributed data access service
      */
-    public HazelcastPublicKeyCredentialRequestOptionsRepository(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
-        this.hazelcastInstance = hazelcastInstance;
-    }
-
-    /**
-     * Initializes the Hazelcast map configuration after dependency injection.
-     * EventListener cannot be used here, as the bean is lazy
-     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
-     *
-     * <p>
-     * Sets the time-to-live for WebAuthn request options to 2 minutes.
-     * </p>
-     */
-    @PostConstruct
-    public void init() {
-        int AUTH_OPTIONS_TIME_TO_LIVE_IN_SECONDS = 120; // 2 minutes
-
-        MapConfig mapConfig = hazelcastInstance.getConfig().getMapConfig(MAP_NAME);
-        mapConfig.setTimeToLiveSeconds(AUTH_OPTIONS_TIME_TO_LIVE_IN_SECONDS);
-        authOptionsMap = hazelcastInstance.getMap(MAP_NAME);
+    public DistributedPublicKeyCredentialRequestOptionsRepository(DistributedDataAccessService distributedDataAccessService) {
+        this.distributedDataAccessService = distributedDataAccessService;
     }
 
     /**
@@ -106,10 +77,10 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
         session.setAttribute(this.attrName, options);
 
         if (options != null) {
-            authOptionsMap.put(session.getId(), options);
+            distributedDataAccessService.getDistributedPasskeyAuthOptionsMap().put(session.getId(), options, 2, java.util.concurrent.TimeUnit.MINUTES);
         }
         else {
-            authOptionsMap.remove(session.getId());
+            distributedDataAccessService.getDistributedPasskeyAuthOptionsMap().remove(session.getId());
         }
     }
 
@@ -128,6 +99,6 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
             return null;
         }
 
-        return authOptionsMap.get(sessionId);
+        return distributedDataAccessService.getPasskeyAuthOptionsMap().get(sessionId);
     }
 }

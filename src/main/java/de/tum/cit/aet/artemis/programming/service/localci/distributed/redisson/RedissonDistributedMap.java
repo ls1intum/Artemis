@@ -6,8 +6,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import org.redisson.api.RMap;
+import org.redisson.api.RMapCache;
 import org.redisson.api.RTopic;
 import org.redisson.client.RedisConnectionException;
 import org.slf4j.Logger;
@@ -66,12 +69,44 @@ public class RedissonDistributedMap<K, V> implements DistributedMap<K, V> {
     }
 
     @Override
+    public void put(K key, V value, long ttl, TimeUnit timeUnit) {
+        V oldValue;
+        if (map instanceof RMapCache<K, V> mapCache) {
+            oldValue = mapCache.put(key, value, ttl, timeUnit);
+        }
+        else {
+            oldValue = map.put(key, value);
+        }
+        if (oldValue != null) {
+            publishSafely(MapItemEvent.updated(key, value, oldValue));
+        }
+        else {
+            publishSafely(MapItemEvent.added(key, value));
+        }
+    }
+
+    @Override
+    public void putAll(Map<K, V> keyValueMap) {
+        map.putAll(keyValueMap);
+    }
+
+    @Override
     public V remove(K key) {
         V oldValue = map.remove(key);
         if (oldValue != null) {
             publishSafely(MapItemEvent.removed(key, oldValue));
         }
         return oldValue;
+    }
+
+    @Override
+    public boolean containsKey(K key) {
+        return map.containsKey(key);
+    }
+
+    @Override
+    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
+        return map.computeIfAbsent(key, mappingFunction);
     }
 
     @Override

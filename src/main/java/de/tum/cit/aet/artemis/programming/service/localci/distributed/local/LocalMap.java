@@ -8,7 +8,11 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
 
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
@@ -37,12 +41,18 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
 
     private final ExecutorService notificationExecutor;
 
+    private final ScheduledExecutorService expiryExecutor;
+
+    private final ConcurrentHashMap<K, ScheduledFuture<?>> expiryTasks = new ConcurrentHashMap<>();
+
     public LocalMap() {
-        this(Executors.newCachedThreadPool(BasicThreadFactory.builder().namingPattern("local-map-listener-%d").daemon().build()));
+        this(Executors.newCachedThreadPool(BasicThreadFactory.builder().namingPattern("local-map-listener-%d").daemon().build()),
+                Executors.newSingleThreadScheduledExecutor(BasicThreadFactory.builder().namingPattern("local-map-expiry-%d").daemon().build()));
     }
 
-    public LocalMap(ExecutorService notificationExecutor) {
+    public LocalMap(ExecutorService notificationExecutor, ScheduledExecutorService expiryExecutor) {
         this.notificationExecutor = notificationExecutor;
+        this.expiryExecutor = expiryExecutor;
         this.map = new ConcurrentHashMap<>();
     }
 
@@ -73,6 +83,7 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public void put(K key, V value) {
+        cancelExpiry(key);
         ReentrantLock lock = getLock(key);
         V oldValue;
         boolean isUpdate;
@@ -95,7 +106,22 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
     }
 
     @Override
+    public void put(K key, V value, long ttl, TimeUnit timeUnit) {
+        put(key, value);
+        scheduleExpiry(key, ttl, timeUnit);
+    }
+
+    @Override
+    public void putAll(Map<K, V> keyValueMap) {
+        // Use put instead of putAll to ensure notifications are sent and locks are used
+        for (K key : keyValueMap.keySet()) {
+            put(key, keyValueMap.get(key));
+        }
+    }
+
+    @Override
     public V remove(K key) {
+        cancelExpiry(key);
         ReentrantLock lock = getLock(key);
         V oldValue;
 
@@ -112,6 +138,24 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
         }
 
         return oldValue;
+    }
+
+    @Override
+    public boolean containsKey(K key) {
+        return map.containsKey(key);
+    }
+
+    @Override
+    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
+        // Reimplement computeIfAbsent with locking and notifications using put
+        if (containsKey(key)) {
+            return get(key);
+        }
+        else {
+            V newValue = mappingFunction.apply(key);
+            put(key, newValue);
+            return newValue;
+        }
     }
 
     @Override
@@ -194,6 +238,22 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
     public void removeListener(UUID registrationId) {
         entryListeners.remove(registrationId);
         mapListeners.remove(registrationId);
+    }
+
+    private void scheduleExpiry(K key, long ttl, TimeUnit timeUnit) {
+        if (ttl <= 0) {
+            return;
+        }
+        cancelExpiry(key);
+        ScheduledFuture<?> future = expiryExecutor.schedule(() -> remove(key), ttl, timeUnit);
+        expiryTasks.put(key, future);
+    }
+
+    private void cancelExpiry(K key) {
+        ScheduledFuture<?> future = expiryTasks.remove(key);
+        if (future != null) {
+            future.cancel(false);
+        }
     }
 
     private void notifyEntryAdded(K key, V value) {

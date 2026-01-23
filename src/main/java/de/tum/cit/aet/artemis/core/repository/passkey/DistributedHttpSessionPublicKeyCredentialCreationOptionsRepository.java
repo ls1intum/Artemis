@@ -2,7 +2,8 @@ package de.tum.cit.aet.artemis.core.repository.passkey;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import jakarta.annotation.PostConstruct;
+import java.util.concurrent.TimeUnit;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -10,18 +11,16 @@ import jakarta.servlet.http.HttpSession;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialCreationOptions;
 import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsRepository;
 import org.springframework.stereotype.Repository;
 
-import com.hazelcast.config.MapConfig;
-import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.core.dto.passkey.PublicKeyCredentialCreationOptionsDTO;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
 /**
  * A distributed implementation of {@link PublicKeyCredentialCreationOptionsRepository} using Hazelcast
@@ -44,55 +43,30 @@ import de.tum.cit.aet.artemis.core.dto.passkey.PublicKeyCredentialCreationOption
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository implements PublicKeyCredentialCreationOptionsRepository {
+public class DistributedHttpSessionPublicKeyCredentialCreationOptionsRepository implements PublicKeyCredentialCreationOptionsRepository {
 
-    private static final Logger log = LoggerFactory.getLogger(HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository.class);
+    private static final Logger log = LoggerFactory.getLogger(DistributedHttpSessionPublicKeyCredentialCreationOptionsRepository.class);
 
     /** Default attribute name for storing creation options in session (not used for loading) */
-    static final String DEFAULT_ATTR_NAME = HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository.class.getName().concat("ATTR_NAME");
+    static final String DEFAULT_ATTR_NAME = DistributedHttpSessionPublicKeyCredentialCreationOptionsRepository.class.getName().concat("ATTR_NAME");
 
     private final String attrName = DEFAULT_ATTR_NAME;
 
-    private final HazelcastInstance hazelcastInstance;
-
-    /** Name of the Hazelcast map used for credential creation options */
-    private static final String MAP_NAME = "http-session-public-key-credential-creation-options-map";
+    private final DistributedDataAccessService distributedDataAccessService;
 
     @Nullable
     private IMap<String, PublicKeyCredentialCreationOptionsDTO> creationOptionsMap;
 
     /**
-     * Constructs the repository using the injected Hazelcast instance.
+     * Constructs the repository using the injected distributed data access service.
      *
-     * @param hazelcastInstance the Hazelcast cluster instance
+     * @param distributedDataAccessService the distributed data access service providing Hazelcast instance
      */
-    public HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
-        this.hazelcastInstance = hazelcastInstance;
+    public DistributedHttpSessionPublicKeyCredentialCreationOptionsRepository(DistributedDataAccessService distributedDataAccessService) {
+        this.distributedDataAccessService = distributedDataAccessService;
     }
 
-    /**
-     * Initializes the Hazelcast map with a TTL of 5 minutes for credential creation options.
-     */
-    @PostConstruct
-    public void init() {
-        int registrationOptionsTimeToLive = 60 * 5; // 5 minutes
-
-        MapConfig mapConfig = hazelcastInstance.getConfig().getMapConfig(MAP_NAME);
-        mapConfig.setTimeToLiveSeconds(registrationOptionsTimeToLive);
-    }
-
-    /**
-     * Lazy init: Retrieves the Hazelcast map that stores the public key credential creation options.
-     * If the map is not initialized, it initializes it.
-     *
-     * @return The map of public key credential creation options.
-     */
-    private IMap<String, PublicKeyCredentialCreationOptionsDTO> getCreationOptionsMap() {
-        if (this.creationOptionsMap == null) {
-            this.creationOptionsMap = hazelcastInstance.getMap(MAP_NAME);
-        }
-        return this.creationOptionsMap;
-    }
+    private static final int REGISTRATION_OPTIONS_TIME_TO_LIVE_SECONDS = 60 * 5; // 5 minutes
 
     /**
      * Saves the {@link PublicKeyCredentialCreationOptions} both in the HTTP session and the distributed Hazelcast map.
@@ -121,10 +95,11 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
         }
 
         if (options != null) {
-            getCreationOptionsMap().put(userId, PublicKeyCredentialCreationOptionsDTO.publicKeyCredentialCreationOptionsToDTO(options));
+            distributedDataAccessService.getDistributedPasskeyCreationOptionsMap().put(userId,
+                    PublicKeyCredentialCreationOptionsDTO.publicKeyCredentialCreationOptionsToDTO(options), REGISTRATION_OPTIONS_TIME_TO_LIVE_SECONDS, TimeUnit.SECONDS);
         }
         else {
-            getCreationOptionsMap().remove(session.getId());
+            distributedDataAccessService.getDistributedPasskeyCreationOptionsMap().remove(userId);
         }
     }
 
@@ -142,7 +117,7 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
             return null;
         }
 
-        PublicKeyCredentialCreationOptionsDTO creationOptions = getCreationOptionsMap().get(userId);
+        PublicKeyCredentialCreationOptionsDTO creationOptions = distributedDataAccessService.getPasskeyCreationOptionsMap().get(userId);
         if (creationOptions == null) {
             log.warn("No cached PublicKeyCredentialCreationOptions found for user '{}'", userId);
             return null;
