@@ -31,9 +31,9 @@
                     "name": "Athena (AI Assessment)",
                     "description": "Enables Athena ML-based automated feedback suggestions for text and programming exercises."
                 },
-                "apollon": {
-                    "name": "Apollon (Modeling)",
-                    "description": "Enables the Apollon UML modeling editor for creating and editing diagrams in modeling exercises."
+                "theia": {
+                    "name": "Theia (Online IDE)",
+                    "description": "Enables the Theia cloud-based IDE for programming exercises, allowing students to code in the browser."
                 },
                 "ldap": {
                     "name": "LDAP Authentication",
@@ -116,6 +116,10 @@
                 "lti": {
                     "name": "LTI Integration",
                     "description": "Enables Learning Tools Interoperability (LTI) for integration with external learning management systems."
+                },
+                "apollon": {
+                    "name": "Apollon (Modeling)",
+                    "description": "Enables the Apollon UML modeling editor for creating and editing diagrams in modeling exercises."
                 },
                 "passkey": {
                     "name": "Passkey Authentication",

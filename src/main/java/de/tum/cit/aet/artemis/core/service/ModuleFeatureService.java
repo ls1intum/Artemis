@@ -125,6 +125,15 @@ public class ModuleFeatureService {
     }
 
     /**
+     * Check if Apollon PDF export is enabled.
+     *
+     * @return true if Apollon PDF export is enabled, false otherwise
+     */
+    public boolean isApollonEnabled() {
+        return artemisConfigHelper.isApollonEnabled(environment);
+    }
+
+    /**
      * Check if the Theia module is enabled.
      *
      * @return true if the Theia module is enabled, false otherwise

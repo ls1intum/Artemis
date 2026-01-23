@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.APOLLON_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.ATLAS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_ENABLED_PROPERTY_NAME;
@@ -175,6 +176,16 @@ public class ArtemisConfigHelper {
     }
 
     /**
+     * Check if Apollon PDF export is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if Apollon PDF export is enabled, false otherwise
+     */
+    public boolean isApollonEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(APOLLON_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
      * Check if the Theia module is enabled.
      *
      * @param environment the Spring environment
@@ -249,6 +260,9 @@ public class ArtemisConfigHelper {
         }
         if (isLtiEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_LTI);
+        }
+        if (isApollonEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_APOLLON);
         }
         if (isTheiaEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_THEIA);

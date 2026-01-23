@@ -31,9 +31,9 @@
                     "name": "Athena (KI-Bewertung)",
                     "description": "Aktiviert Athena ML-basierte automatisierte Feedback-Vorschläge für Text- und Programmieraufgaben."
                 },
-                "apollon": {
-                    "name": "Apollon (Modellierung)",
-                    "description": "Aktiviert den Apollon-UML-Modellierungseditor zum Erstellen und Bearbeiten von Diagrammen in Modellierungsaufgaben."
+                "theia": {
+                    "name": "Theia (Online-IDE)",
+                    "description": "Aktiviert die Theia-Cloud-basierte IDE für Programmieraufgaben, die es Studierenden ermöglicht, im Browser zu programmieren."
                 },
                 "ldap": {
                     "name": "LDAP-Authentifizierung",
@@ -116,6 +116,10 @@
                 "lti": {
                     "name": "LTI-Integration",
                     "description": "Aktiviert Learning Tools Interoperability (LTI) für die Integration mit externen Lernmanagementsystemen."
+                },
+                "apollon": {
+                    "name": "Apollon (Modellierung)",
+                    "description": "Aktiviert den Apollon-UML-Modellierungseditor zum Erstellen und Bearbeiten von Diagrammen in Modellierungsaufgaben."
                 },
                 "passkey": {
                     "name": "Passkey-Authentifizierung",

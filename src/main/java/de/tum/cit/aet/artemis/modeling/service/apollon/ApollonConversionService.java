@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.modeling.service.apollon;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
-
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -9,8 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -19,11 +17,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import de.tum.cit.aet.artemis.modeling.config.ApollonEnabled;
 import de.tum.cit.aet.artemis.modeling.dto.ApollonModelDTO;
 
 @Lazy
 @Service
-@Profile(PROFILE_APOLLON)
+@Conditional(ApollonEnabled.class)
 public class ApollonConversionService {
 
     private static final Logger log = LoggerFactory.getLogger(ApollonConversionService.class);
