@@ -33,7 +33,7 @@ services:
           chmod +x ./run-tests.sh &&
           npm ci &&
           npm run playwright:setup &&
-                    NODE_OPTIONS="--max-old-space-size=8192" npm run playwright:test:filtered &&
+                npm run playwright:test:filtered &&
                     if [ -f ./test-reports/results-parallel.xml ] || [ -f ./test-reports/results-sequential.xml ]; then
                             rm ./test-reports/results-parallel.xml ./test-reports/results-sequential.xml
                     fi

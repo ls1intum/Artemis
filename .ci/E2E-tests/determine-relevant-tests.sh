@@ -26,6 +26,55 @@ write_output() {
     echo "OUTPUT: $key=$value"
 }
 
+get_modules() {
+    jq -r '.mappings | keys[]' "$MAPPING_FILE" 2>/dev/null || echo ""
+}
+
+get_source_paths() {
+    local module="$1"
+    jq -r ".mappings[\"$module\"].sourcePaths[]" "$MAPPING_FILE" 2>/dev/null || echo ""
+}
+
+get_test_paths() {
+    local module="$1"
+    jq -r ".mappings[\"$module\"].testPaths[]" "$MAPPING_FILE" 2>/dev/null || echo ""
+}
+
+module_matches_changes() {
+    local module="$1"
+    local source_paths
+    local source_path
+    local file
+
+    source_paths=$(get_source_paths "$module")
+
+    # Determine if any changed file has a literal prefix match to a module source path.
+    for source_path in $source_paths; do
+        if [ -n "$source_path" ]; then
+            while IFS= read -r file; do
+                if [[ "$file" == "$source_path"* ]]; then
+                    return 0
+                fi
+            done <<< "$CHANGED_FILES"
+        fi
+    done
+
+    return 1
+}
+
+add_test_paths_for_module() {
+    local module="$1"
+    local test_paths
+    local test_path
+
+    test_paths=$(get_test_paths "$module")
+    for test_path in $test_paths; do
+        if [ -n "$test_path" ] && [ "$test_path" != "null" ]; then
+            RELEVANT_TEST_SET["$test_path"]=1
+        fi
+    done
+}
+
 # Verify mapping file exists
 if [ ! -f "$MAPPING_FILE" ]; then
     echo "ERROR: Mapping file not found: $MAPPING_FILE"
@@ -151,35 +200,13 @@ for test in $ALWAYS_RUN_TESTS; do
     fi
 done
 
-# Get all module mappings
-MODULES=$(jq -r '.mappings | keys[]' "$MAPPING_FILE" 2>/dev/null || echo "")
+# Determine which tests to run by mapping changed files to module source paths.
+MODULES=$(get_modules)
 
 for module in $MODULES; do
-    # Get source paths for this module
-    SOURCE_PATHS=$(jq -r ".mappings[\"$module\"].sourcePaths[]" "$MAPPING_FILE" 2>/dev/null || echo "")
-    
-    # Check if any changed file matches a source path (using literal prefix matching)
-    MATCHED=false
-    for source_path in $SOURCE_PATHS; do
-        if [ -n "$source_path" ]; then
-            while IFS= read -r file; do
-                if [[ "$file" == "$source_path"* ]]; then
-                    MATCHED=true
-                    break 2
-                fi
-            done <<< "$CHANGED_FILES"
-        fi
-    done
-    
-    if [ "$MATCHED" = "true" ]; then
+    if module_matches_changes "$module"; then
         echo "Module '$module' has changes"
-        # Get test paths for this module
-        TEST_PATHS=$(jq -r ".mappings[\"$module\"].testPaths[]" "$MAPPING_FILE" 2>/dev/null || echo "")
-        for test_path in $TEST_PATHS; do
-            if [ -n "$test_path" ] && [ "$test_path" != "null" ]; then
-                RELEVANT_TEST_SET["$test_path"]=1
-            fi
-        done
+        add_test_paths_for_module "$module"
     fi
 done
 

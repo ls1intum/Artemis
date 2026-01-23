@@ -91,77 +91,27 @@ jobs:
             "${{ env.STATUSES_REQUEST_URL }}" \
             -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"Phase 1: Running relevant tests (${{ needs.determine-tests.outputs.relevant_count }} test paths)...","target_url":"${{ env.TARGET_URL }}"}'
 
-      - name: Save triggering workflow info
-        run: |
-          echo "TRIGGERING_WORKFLOW_RUN_ID=${{ github.event.workflow_run.id }}" > workflow-context.txt
-          echo "TRIGGERING_WORKFLOW_HEAD_BRANCH=${{ github.event.workflow_run.head_branch }}" >> workflow-context.txt
-          echo "TRIGGERING_WORKFLOW_HEAD_SHA=${{ github.event.workflow_run.head_sha }}" >> workflow-context.txt
-          cat workflow-context.txt
-
-      - name: Upload workflow context
-        uses: actions/upload-artifact@v5
+      - name: E2E Setup
+        uses: ./.github/actions/e2e-setup
         with:
-          name: workflow-context-phase1
-          path: workflow-context.txt
-
-      - name: Add link to triggering workflow
-        run: |
-          echo "::notice title=Triggered by workflow run::This E2E test was triggered by workflow run #${{ github.event.workflow_run.id }} - View it at https://github.com/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}"
-          echo "::notice title=Test Selection::Running Phase 1 with relevant tests: ${{ needs.determine-tests.outputs.relevant_tests }}"
-
-      - name: Git Checkout
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.workflow_run.head_branch }}
-
-      - name: Download Docker tag
-        uses: actions/download-artifact@v6
-        with:
-          name: docker-tag
+          workflow-run-id: ${{ github.event.workflow_run.id }}
+          workflow-head-branch: ${{ github.event.workflow_run.head_branch }}
+          workflow-head-sha: ${{ github.event.workflow_run.head_sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
-
-      - name: Set Docker Tag Environment Variable
-        run: |
-          if [ -f "docker-tag.txt" ]; then
-            ARTEMIS_DOCKER_TAG=$(cat docker-tag.txt)
-            echo "ARTEMIS_DOCKER_TAG=${ARTEMIS_DOCKER_TAG}" >> $GITHUB_ENV
-            echo "Using Docker tag: ${ARTEMIS_DOCKER_TAG}"
-          else
-            echo "::error::No docker-tag.txt found in the previous build workflow! Artifact is needed to run E2E tests."
-            exit 1
-          fi
-
-      - name: Make scripts executable
-        run: |
-          chmod +x .ci/E2E-tests/cleanup.sh
-          chmod +x .ci/E2E-tests/execute.sh
-
-      - name: Run cleanup script (before E2E)
-        run: .ci/E2E-tests/cleanup.sh
+          artifact-name-suffix: phase1
+          test-notice: "Running Phase 1 with relevant tests: ${{ needs.determine-tests.outputs.relevant_tests }}"
 
       - name: Run E2E Playwright tests (Phase 1 - Relevant Tests)
         run: .ci/E2E-tests/execute.sh mysql-localci playwright "${{ needs.determine-tests.outputs.relevant_tests }}"
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
 
-      - name: Upload JUnit Test Results (Phase 1)
+      - name: E2E Teardown
         if: success() || failure()
-        uses: actions/upload-artifact@v5
+        uses: ./.github/actions/e2e-teardown
         with:
-          name: JUnit Test Results Phase 1
-          if-no-files-found: warn
-          path: src/test/playwright/test-reports/*.xml
-
-      - name: Upload Client Test Coverage Report (Phase 1)
-        if: success() || failure()
-        uses: actions/upload-artifact@v5
-        with:
-          name: E2E Client Coverage Report Phase 1
-          path: src/test/playwright/test-reports/client-coverage
-
-      - name: Run cleanup script (after E2E)
-        run: .ci/E2E-tests/cleanup.sh
+          artifact-name-suffix: Phase 1
+          require-tests: warn
 
   # Phase 2: Run remaining tests only if Phase 1 succeeds
   run-e2e-remaining:
@@ -195,63 +145,27 @@ jobs:
             "${{ env.STATUSES_REQUEST_URL }}" \
             -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"Phase 2: Running remaining tests (${{ needs.determine-tests.outputs.remaining_count }} test paths)...","target_url":"${{ env.TARGET_URL }}"}'
 
-      - name: Add notice for Phase 2
-        run: |
-          echo "::notice title=Test Selection::Running Phase 2 with remaining tests: ${{ needs.determine-tests.outputs.remaining_tests }}"
-
-      - name: Git Checkout
-        uses: actions/checkout@v6
+      - name: E2E Setup
+        uses: ./.github/actions/e2e-setup
         with:
-          ref: ${{ github.event.workflow_run.head_branch }}
-
-      - name: Download Docker tag
-        uses: actions/download-artifact@v6
-        with:
-          name: docker-tag
+          workflow-run-id: ${{ github.event.workflow_run.id }}
+          workflow-head-branch: ${{ github.event.workflow_run.head_branch }}
+          workflow-head-sha: ${{ github.event.workflow_run.head_sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
-
-      - name: Set Docker Tag Environment Variable
-        run: |
-          if [ -f "docker-tag.txt" ]; then
-            ARTEMIS_DOCKER_TAG=$(cat docker-tag.txt)
-            echo "ARTEMIS_DOCKER_TAG=${ARTEMIS_DOCKER_TAG}" >> $GITHUB_ENV
-            echo "Using Docker tag: ${ARTEMIS_DOCKER_TAG}"
-          else
-            echo "::error::No docker-tag.txt found in the previous build workflow! Artifact is needed to run E2E tests."
-            exit 1
-          fi
-
-      - name: Make scripts executable
-        run: |
-          chmod +x .ci/E2E-tests/cleanup.sh
-          chmod +x .ci/E2E-tests/execute.sh
-
-      - name: Run cleanup script (before E2E)
-        run: .ci/E2E-tests/cleanup.sh
+          artifact-name-suffix: phase2
+          test-notice: "Running Phase 2 with remaining tests: ${{ needs.determine-tests.outputs.remaining_tests }}"
 
       - name: Run E2E Playwright tests (Phase 2 - Remaining Tests)
         run: .ci/E2E-tests/execute.sh mysql-localci playwright "${{ needs.determine-tests.outputs.remaining_tests }}" "${{ needs.determine-tests.outputs.ignore_tests }}"
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
 
-      - name: Upload JUnit Test Results (Phase 2)
+      - name: E2E Teardown
         if: success() || failure()
-        uses: actions/upload-artifact@v5
+        uses: ./.github/actions/e2e-teardown
         with:
-          name: JUnit Test Results Phase 2
-          if-no-files-found: warn
-          path: src/test/playwright/test-reports/*.xml
-
-      - name: Upload Client Test Coverage Report (Phase 2)
-        if: success() || failure()
-        uses: actions/upload-artifact@v5
-        with:
-          name: E2E Client Coverage Report Phase 2
-          path: src/test/playwright/test-reports/client-coverage
-
-      - name: Run cleanup script (after E2E)
-        run: .ci/E2E-tests/cleanup.sh
+          artifact-name-suffix: Phase 2
+          require-tests: warn
 
   # Run all tests for PR when run_all_tests is triggered, or when no specific tests detected
   run-e2e-all-pr:
@@ -283,78 +197,25 @@ jobs:
             "${{ env.STATUSES_REQUEST_URL }}" \
             -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"E2E tests are running (all tests - infrastructure changes detected)...","target_url":"${{ env.TARGET_URL }}"}'
 
-      - name: Save triggering workflow info
-        run: |
-          echo "TRIGGERING_WORKFLOW_RUN_ID=${{ github.event.workflow_run.id }}" > workflow-context.txt
-          echo "TRIGGERING_WORKFLOW_HEAD_BRANCH=${{ github.event.workflow_run.head_branch }}" >> workflow-context.txt
-          echo "TRIGGERING_WORKFLOW_HEAD_SHA=${{ github.event.workflow_run.head_sha }}" >> workflow-context.txt
-          cat workflow-context.txt
-
-      - name: Upload workflow context
-        uses: actions/upload-artifact@v5
+      - name: E2E Setup
+        uses: ./.github/actions/e2e-setup
         with:
-          name: workflow-context
-          path: workflow-context.txt
-
-      # Add a notice to help navigate back to the triggering build workflow
-      - name: Add link to triggering workflow
-        run: |
-          echo "::notice title=Triggered by workflow run::This E2E test was triggered by workflow run #${{ github.event.workflow_run.id }} - View it at https://github.com/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}"
-          echo "::notice title=Test Selection::Running all tests (infrastructure/config changes detected)"
-
-      - name: Git Checkout
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.workflow_run.head_branch }}
-
-      - name: Download Docker tag
-        uses: actions/download-artifact@v6
-        with:
-          name: docker-tag
+          workflow-run-id: ${{ github.event.workflow_run.id }}
+          workflow-head-branch: ${{ github.event.workflow_run.head_branch }}
+          workflow-head-sha: ${{ github.event.workflow_run.head_sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
-
-      - name: Set Docker Tag Environment Variable
-        run: |
-          if [ -f "docker-tag.txt" ]; then
-            ARTEMIS_DOCKER_TAG=$(cat docker-tag.txt)
-            echo "ARTEMIS_DOCKER_TAG=${ARTEMIS_DOCKER_TAG}" >> $GITHUB_ENV
-            echo "Using Docker tag: ${ARTEMIS_DOCKER_TAG}"
-          else
-            echo "::error::No docker-tag.txt found in the previous build workflow! Artifact is needed to run E2E tests."
-            exit 1
-          fi
-
-      - name: Make scripts executable
-        run: |
-          chmod +x .ci/E2E-tests/cleanup.sh
-          chmod +x .ci/E2E-tests/execute.sh
-
-      - name: Run cleanup script (before E2E)
-        run: .ci/E2E-tests/cleanup.sh
+          test-notice: "Running all tests (infrastructure/config changes detected)"
 
       - name: Run E2E Playwright tests (MySQL, Local)
         run: .ci/E2E-tests/execute.sh mysql-localci playwright
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
 
-      - name: Upload JUnit Test Results
+      - name: E2E Teardown
         if: success() || failure()
-        uses: actions/upload-artifact@v5
+        uses: ./.github/actions/e2e-teardown
         with:
-          name: JUnit Test Results
-          if-no-files-found: error
-          path: src/test/playwright/test-reports/*.xml
-
-      - name: Upload Client Test Coverage Report
-        if: success() || failure()
-        uses: actions/upload-artifact@v5
-        with:
-          name: E2E Client Coverage Report
-          path: src/test/playwright/test-reports/client-coverage
-
-      - name: Run cleanup script (after E2E)
-        run: .ci/E2E-tests/cleanup.sh
+          require-tests: error
 
   # Run all tests for non-PR events (push to develop, main, release branches)
   run-e2e-all-non-pr:
@@ -382,76 +243,24 @@ jobs:
             "${{ env.STATUSES_REQUEST_URL }}" \
             -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"E2E tests are running (all tests - multi-node)...","target_url":"${{ env.TARGET_URL }}"}'
 
-      - name: Save triggering workflow info
-        run: |
-          echo "TRIGGERING_WORKFLOW_RUN_ID=${{ github.event.workflow_run.id }}" > workflow-context.txt
-          echo "TRIGGERING_WORKFLOW_HEAD_BRANCH=${{ github.event.workflow_run.head_branch }}" >> workflow-context.txt
-          echo "TRIGGERING_WORKFLOW_HEAD_SHA=${{ github.event.workflow_run.head_sha }}" >> workflow-context.txt
-          cat workflow-context.txt
-
-      - name: Upload workflow context
-        uses: actions/upload-artifact@v5
+      - name: E2E Setup
+        uses: ./.github/actions/e2e-setup
         with:
-          name: workflow-context
-          path: workflow-context.txt
-
-      - name: Add link to triggering workflow
-        run: |
-          echo "::notice title=Triggered by workflow run::This E2E test was triggered by workflow run #${{ github.event.workflow_run.id }} - View it at https://github.com/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}"
-
-      - name: Git Checkout
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.workflow_run.head_branch }}
-
-      - name: Download Docker tag
-        uses: actions/download-artifact@v6
-        with:
-          name: docker-tag
+          workflow-run-id: ${{ github.event.workflow_run.id }}
+          workflow-head-branch: ${{ github.event.workflow_run.head_branch }}
+          workflow-head-sha: ${{ github.event.workflow_run.head_sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
-
-      - name: Set Docker Tag Environment Variable
-        run: |
-          if [ -f "docker-tag.txt" ]; then
-            ARTEMIS_DOCKER_TAG=$(cat docker-tag.txt)
-            echo "ARTEMIS_DOCKER_TAG=${ARTEMIS_DOCKER_TAG}" >> $GITHUB_ENV
-            echo "Using Docker tag: ${ARTEMIS_DOCKER_TAG}"
-          else
-            echo "::error::No docker-tag.txt found in the previous build workflow! Artifact is needed to run E2E tests."
-            exit 1
-          fi
-
-      - name: Make scripts executable
-        run: |
-          chmod +x .ci/E2E-tests/cleanup.sh
-          chmod +x .ci/E2E-tests/execute.sh
-
-      - name: Run cleanup script (before E2E)
-        run: .ci/E2E-tests/cleanup.sh
 
       - name: Run E2E Playwright tests (MySQL, Local, Multi-Node)
         run: .ci/E2E-tests/execute.sh multi-node playwright
         env:
           FAST_TEST_TIMEOUT_SECONDS: 75
 
-      - name: Upload JUnit Test Results
+      - name: E2E Teardown
         if: success() || failure()
-        uses: actions/upload-artifact@v5
+        uses: ./.github/actions/e2e-teardown
         with:
-          name: JUnit Test Results
-          if-no-files-found: error
-          path: src/test/playwright/test-reports/*.xml
-
-      - name: Upload Client Test Coverage Report
-        if: success() || failure()
-        uses: actions/upload-artifact@v5
-        with:
-          name: E2E Client Coverage Report
-          path: src/test/playwright/test-reports/client-coverage
-
-      - name: Run cleanup script (after E2E)
-        run: .ci/E2E-tests/cleanup.sh
+          require-tests: error
 
   # Aggregate results and report
   report-results:
