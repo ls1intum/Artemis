@@ -1,4 +1,6 @@
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
@@ -21,18 +23,20 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 
 describe('TeamComponent', () => {
+    setupTestBed({ zoneless: true });
     let comp: TeamComponent;
     let fixture: ComponentFixture<TeamComponent>;
     let router: Router;
     const user = new User(99, 'newUser', 'UserFirstName', 'UserLastName');
     let accountService: AccountService;
-    let identityStub: jest.SpyInstance;
+    let identityStub: ReturnType<typeof vi.spyOn>;
     let exerciseService: ExerciseService;
     let teamService: TeamService;
     let alertService: AlertService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [TeamComponent],
             providers: [
                 MockProvider(SessionStorageService),
                 MockProvider(LocalStorageService),
@@ -49,7 +53,7 @@ describe('TeamComponent', () => {
             .compileComponents()
             .then(() => {
                 accountService = TestBed.inject(AccountService);
-                identityStub = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
+                identityStub = vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
                 fixture = TestBed.createComponent(TeamComponent);
                 comp = fixture.componentInstance;
                 alertService = TestBed.inject(AlertService);
@@ -60,45 +64,45 @@ describe('TeamComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('ngOnInit', () => {
-        let alertServiceStub: jest.SpyInstance;
+        let alertServiceStub: ReturnType<typeof vi.spyOn>;
 
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('should set team and exercise from services and call find on exerciseService to retreive exercise', () => {
-            jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse<Exercise>({ body: mockExercise })));
-            jest.spyOn(teamService, 'find').mockReturnValue(of(new HttpResponse<Team>({ body: mockTeam })));
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse<Exercise>({ body: mockExercise })));
+            vi.spyOn(teamService, 'find').mockReturnValue(of(new HttpResponse<Team>({ body: mockTeam })));
             comp.ngOnInit();
             expect(comp.exercise).toEqual(mockExercise);
             expect(comp.team).toEqual(mockTeam);
-            expect(comp.isTeamOwner).toBeFalse();
+            expect(comp.isTeamOwner).toBe(false);
             expect(exerciseService['find']).toHaveBeenCalledOnce();
         });
 
         it('should call alert service error when exercise service fails', () => {
-            const exerciseStub = jest.spyOn(exerciseService, 'find').mockReturnValue(throwError(() => ({ status: 404 })));
-            alertServiceStub = jest.spyOn(alertService, 'error');
+            const exerciseStub = vi.spyOn(exerciseService, 'find').mockReturnValue(throwError(() => ({ status: 404 })));
+            alertServiceStub = vi.spyOn(alertService, 'error');
             waitForAsync(() => {
                 comp.ngOnInit();
                 expect(exerciseStub).toHaveBeenCalledOnce();
                 expect(alertServiceStub).toHaveBeenCalledOnce();
-                expect(comp.isLoading).toBeFalse();
+                expect(comp.isLoading).toBe(false);
             });
         });
 
         it('should call alert service error when team service fails', () => {
-            const teamStub = jest.spyOn(teamService, 'find').mockReturnValue(throwError(() => ({ status: 404 })));
-            alertServiceStub = jest.spyOn(alertService, 'error');
+            const teamStub = vi.spyOn(teamService, 'find').mockReturnValue(throwError(() => ({ status: 404 })));
+            alertServiceStub = vi.spyOn(alertService, 'error');
             waitForAsync(() => {
                 comp.ngOnInit();
                 expect(teamStub).toHaveBeenCalledOnce();
                 expect(alertServiceStub).toHaveBeenCalledOnce();
-                expect(comp.isLoading).toBeFalse();
+                expect(comp.isLoading).toBe(false);
             });
         });
     });
@@ -110,7 +114,7 @@ describe('TeamComponent', () => {
                 fixture = TestBed.createComponent(TeamComponent);
                 comp = fixture.componentInstance;
                 comp.ngOnInit();
-                expect(comp.isTeamOwner).toBeTrue();
+                expect(comp.isTeamOwner).toBe(true);
             });
         });
     });
@@ -124,10 +128,10 @@ describe('TeamComponent', () => {
 
     describe('onTeamDelete', () => {
         it('should go to teams overview on delete', () => {
-            jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse<Exercise>({ body: mockExercise })));
-            jest.spyOn(teamService, 'find').mockReturnValue(of(new HttpResponse<Team>({ body: mockTeam })));
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse<Exercise>({ body: mockExercise })));
+            vi.spyOn(teamService, 'find').mockReturnValue(of(new HttpResponse<Team>({ body: mockTeam })));
             comp.ngOnInit();
-            jest.spyOn(router, 'navigate');
+            vi.spyOn(router, 'navigate');
             comp.onTeamDelete();
             expect(router['navigate']).toHaveBeenCalledOnce();
             expect(router['navigate']).toHaveBeenCalledWith(['/course-management', mockExercise.course?.id, 'exercises', mockExercise.id, 'teams']);

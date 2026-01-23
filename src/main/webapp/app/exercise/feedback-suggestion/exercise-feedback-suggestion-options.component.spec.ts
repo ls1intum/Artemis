@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { Mock, expect, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -10,10 +12,11 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { SimpleChange } from '@angular/core';
 
 describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ExerciseFeedbackSuggestionOptionsComponent>;
     let component: ExerciseFeedbackSuggestionOptionsComponent;
-    let athenaService: { getAvailableModules: jest.Mock };
-    let profileService: { isProfileActive: jest.Mock };
+    let athenaService: { getAvailableModules: Mock };
+    let profileService: { isProfileActive: Mock };
 
     const courseId = 42;
 
@@ -26,8 +29,8 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     });
 
     beforeEach(async () => {
-        athenaService = { getAvailableModules: jest.fn() };
-        profileService = { isProfileActive: jest.fn() };
+        athenaService = { getAvailableModules: vi.fn() };
+        profileService = { isProfileActive: vi.fn() };
 
         await TestBed.configureTestingModule({
             imports: [ExerciseFeedbackSuggestionOptionsComponent],
@@ -61,34 +64,30 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         } as Exercise;
     });
 
-    it('should initialize available modules and athena state in ngOnInit', fakeAsync(() => {
+    it('should initialize available modules and athena state in ngOnInit', () => {
         const modules = ['moduleA', 'moduleB'];
         athenaService.getAvailableModules.mockReturnValue(of(modules));
         profileService.isProfileActive.mockReturnValue(true);
 
         component.ngOnInit();
-        tick();
-
         expect(athenaService.getAvailableModules).toHaveBeenCalledWith(courseId, component.exercise);
         expect(component.availableAthenaModules).toEqual(modules);
-        expect(component.modulesAvailable).toBeTrue();
-        expect(component.isAthenaEnabled).toBeTrue();
+        expect(component.modulesAvailable).toBe(true);
+        expect(component.isAthenaEnabled).toBe(true);
         expect(component.initialAthenaModule).toBe('initial-module');
-    }));
+    });
 
-    it('should mark modules unavailable and athena disabled when no modules are returned', fakeAsync(() => {
+    it('should mark modules unavailable and athena disabled when no modules are returned', () => {
         component.exercise.feedbackSuggestionModule = undefined;
         athenaService.getAvailableModules.mockReturnValue(of([]));
         profileService.isProfileActive.mockReturnValue(false);
 
         component.ngOnInit();
-        tick();
-
         expect(component.availableAthenaModules).toEqual([]);
-        expect(component.modulesAvailable).toBeFalse();
-        expect(component.isAthenaEnabled).toBeFalse();
+        expect(component.modulesAvailable).toBe(false);
+        expect(component.isAthenaEnabled).toBe(false);
         expect(component.initialAthenaModule).toBeUndefined();
-    }));
+    });
 
     it('should restore the initial module when the due date change disables the inputs', () => {
         component.initialAthenaModule = 'initial-module';
@@ -132,21 +131,21 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
             secondCorrectionEnabled: false,
         } as Exercise;
 
-        expect(component.inputControlsDisabled()).toBeTrue();
+        expect(component.inputControlsDisabled()).toBe(true);
 
         component.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
         component.readOnly = true;
-        expect(component.inputControlsDisabled()).toBeTrue();
+        expect(component.inputControlsDisabled()).toBe(true);
 
         component.readOnly = false;
         component.exercise.dueDate = undefined;
-        expect(component.inputControlsDisabled()).toBeTrue();
+        expect(component.inputControlsDisabled()).toBe(true);
 
         component.exercise.dueDate = dayjs().add(2, 'day');
-        expect(component.inputControlsDisabled()).toBeFalse();
+        expect(component.inputControlsDisabled()).toBe(false);
 
         component.exercise.dueDate = dayjs().subtract(1, 'day');
-        expect(component.inputControlsDisabled()).toBeTrue();
+        expect(component.inputControlsDisabled()).toBe(true);
     });
 
     it('should evaluate disabled state for non-programming exercises based on due date', () => {
@@ -160,14 +159,14 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
             secondCorrectionEnabled: false,
         } as Exercise;
 
-        expect(component.inputControlsDisabled()).toBeFalse();
+        expect(component.inputControlsDisabled()).toBe(false);
 
         component.exercise.dueDate = dayjs().subtract(1, 'day');
-        expect(component.inputControlsDisabled()).toBeTrue();
+        expect(component.inputControlsDisabled()).toBe(true);
     });
 
     it('should return grey label style when inputs are disabled', () => {
-        const disabledSpy = jest.spyOn(component, 'inputControlsDisabled');
+        const disabledSpy = vi.spyOn(component, 'inputControlsDisabled');
         disabledSpy.mockReturnValue(true);
         expect(component.getCheckboxLabelStyle()).toEqual({ color: 'grey' });
 
@@ -189,7 +188,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
 
         component.toggleFeedbackSuggestions({ target: { checked: false } });
         expect(component.exercise.feedbackSuggestionModule).toBeUndefined();
-        expect(component.exercise.allowFeedbackRequests).toBeFalse();
+        expect(component.exercise.allowFeedbackRequests).toBe(false);
     });
 
     it('should toggle feedback requests and set module when enabling', () => {
@@ -202,25 +201,23 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         component.exercise.allowFeedbackRequests = false;
 
         component.toggleFeedbackRequests({ target: { checked: true } });
-        expect(component.exercise.allowFeedbackRequests).toBeTrue();
+        expect(component.exercise.allowFeedbackRequests).toBe(true);
         expect(component.exercise.feedbackSuggestionModule).toBe('moduleA');
 
         component.toggleFeedbackRequests({ target: { checked: false } });
-        expect(component.exercise.allowFeedbackRequests).toBeFalse();
+        expect(component.exercise.allowFeedbackRequests).toBe(false);
         expect(component.exercise.feedbackSuggestionModule).toBe('moduleA');
     });
 
-    it('should honor the initial module when athena remains enabled', fakeAsync(() => {
+    it('should honor the initial module when athena remains enabled', () => {
         component.exercise.feedbackSuggestionModule = 'initial-module';
         component.initialAthenaModule = 'initial-module';
         athenaService.getAvailableModules.mockReturnValue(of(['moduleA']));
         profileService.isProfileActive.mockReturnValue(true);
 
         component.ngOnInit();
-        tick();
-
         expect(component.exercise.feedbackSuggestionModule).toBe('initial-module');
-        expect(component.modulesAvailable).toBeTrue();
-        expect(component.isAthenaEnabled).toBeTrue();
-    }));
+        expect(component.modulesAvailable).toBe(true);
+        expect(component.isAthenaEnabled).toBe(true);
+    });
 });

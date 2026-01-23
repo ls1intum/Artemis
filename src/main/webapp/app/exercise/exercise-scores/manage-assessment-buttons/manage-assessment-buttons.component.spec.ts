@@ -1,4 +1,6 @@
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ManageAssessmentButtonsComponent } from 'app/exercise/exercise-scores/manage-assessment-buttons/manage-assessment-buttons.component';
 import { MockProvider } from 'ng-mocks';
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
@@ -18,6 +20,7 @@ import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 
 describe('ManageAssessmentButtonsComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ManageAssessmentButtonsComponent>;
     let comp: ManageAssessmentButtonsComponent;
     let programmingAssessmentService: ProgrammingAssessmentManualResultService;
@@ -65,7 +68,7 @@ describe('ManageAssessmentButtonsComponent', () => {
 
             comp.ngOnInit();
 
-            expect(comp.examMode).toBeFalse();
+            expect(comp.examMode).toBe(false);
             expect(comp.correctionRoundIndices).toEqual([0]);
         });
 
@@ -80,7 +83,7 @@ describe('ManageAssessmentButtonsComponent', () => {
 
             comp.ngOnInit();
 
-            expect(comp.examMode).toBeTrue();
+            expect(comp.examMode).toBe(true);
             expect(comp.correctionRoundIndices).toEqual([0, 1]);
         });
 
@@ -101,7 +104,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             comp.ngOnInit();
 
             // Practice mode (testRun) should disable manual results for non-exam mode
-            expect(comp.newManualResultAllowed).toBeFalse();
+            expect(comp.newManualResultAllowed).toBe(false);
         });
     });
 
@@ -174,16 +177,16 @@ describe('ManageAssessmentButtonsComponent', () => {
 
     describe('cancelAssessment', () => {
         beforeEach(() => {
-            jest.spyOn(window, 'confirm').mockReturnValue(true);
+            vi.spyOn(window, 'confirm').mockReturnValue(true);
         });
 
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('should cancel programming assessment', () => {
-            const cancelSpy = jest.spyOn(programmingAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
-            const refreshSpy = jest.spyOn(comp.refresh, 'emit');
+            const cancelSpy = vi.spyOn(programmingAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
+            const refreshSpy = vi.spyOn(comp.refresh, 'emit');
             comp.exercise = { ...exercise, type: ExerciseType.PROGRAMMING } as Exercise;
             const result = { id: 1, submission: { id: 1 } } as Result;
 
@@ -194,8 +197,8 @@ describe('ManageAssessmentButtonsComponent', () => {
         });
 
         it('should cancel modeling assessment', () => {
-            const cancelSpy = jest.spyOn(modelingAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
-            const refreshSpy = jest.spyOn(comp.refresh, 'emit');
+            const cancelSpy = vi.spyOn(modelingAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
+            const refreshSpy = vi.spyOn(comp.refresh, 'emit');
             comp.exercise = { ...exercise, type: ExerciseType.MODELING } as Exercise;
             const result = { id: 1, submission: { id: 1 } } as Result;
 
@@ -206,8 +209,8 @@ describe('ManageAssessmentButtonsComponent', () => {
         });
 
         it('should cancel text assessment', () => {
-            const cancelSpy = jest.spyOn(textAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
-            const refreshSpy = jest.spyOn(comp.refresh, 'emit');
+            const cancelSpy = vi.spyOn(textAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
+            const refreshSpy = vi.spyOn(comp.refresh, 'emit');
             comp.exercise = { ...exercise, type: ExerciseType.TEXT } as Exercise;
             const result = { id: 1, submission: { id: 1 } } as Result;
 
@@ -218,8 +221,8 @@ describe('ManageAssessmentButtonsComponent', () => {
         });
 
         it('should cancel file upload assessment', () => {
-            const cancelSpy = jest.spyOn(fileUploadAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
-            const refreshSpy = jest.spyOn(comp.refresh, 'emit');
+            const cancelSpy = vi.spyOn(fileUploadAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
+            const refreshSpy = vi.spyOn(comp.refresh, 'emit');
             comp.exercise = { ...exercise, type: ExerciseType.FILE_UPLOAD } as Exercise;
             const result = { id: 1, submission: { id: 1 } } as Result;
 
@@ -230,8 +233,8 @@ describe('ManageAssessmentButtonsComponent', () => {
         });
 
         it('should not cancel when user declines confirmation', () => {
-            jest.spyOn(window, 'confirm').mockReturnValue(false);
-            const cancelSpy = jest.spyOn(programmingAssessmentService, 'cancelAssessment');
+            vi.spyOn(window, 'confirm').mockReturnValue(false);
+            const cancelSpy = vi.spyOn(programmingAssessmentService, 'cancelAssessment');
             const result = { id: 1, submission: { id: 1 } } as Result;
 
             comp.cancelAssessment(result, comp.participation);
@@ -240,7 +243,7 @@ describe('ManageAssessmentButtonsComponent', () => {
         });
 
         it('should not cancel when submission id is missing', () => {
-            const cancelSpy = jest.spyOn(programmingAssessmentService, 'cancelAssessment');
+            const cancelSpy = vi.spyOn(programmingAssessmentService, 'cancelAssessment');
             const result = { id: 1, submission: undefined } as Result;
 
             comp.cancelAssessment(result, comp.participation);

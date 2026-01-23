@@ -1,5 +1,7 @@
+import { expect, vi } from 'vitest';
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
@@ -10,7 +12,10 @@ import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle
 import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { mockExercise, mockSourceTeams, mockTeams } from 'test/helpers/mocks/service/mock-team.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 describe('TeamsImportButtonComponent', () => {
+    setupTestBed({ zoneless: true });
     let comp: TeamsImportButtonComponent;
     let fixture: ComponentFixture<TeamsImportButtonComponent>;
     let debugElement: DebugElement;
@@ -21,13 +26,12 @@ describe('TeamsImportButtonComponent', () => {
         comp.exercise = mockExercise;
     }
 
-    beforeEach(waitForAsync(() => {
-        TestBed.configureTestingModule({
-            imports: [MockModule(NgbModule), MockDirective(FeatureToggleDirective)],
-            declarations: [TeamsImportButtonComponent, ButtonComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
-            providers: [MockProvider(TeamService), MockProvider(NgbModal)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ButtonComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), MockModule(NgbModule), MockDirective(FeatureToggleDirective)],
+            providers: [MockProvider(TeamService), MockProvider(NgbModal), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
-    }));
+    });
     beforeEach(() => {
         fixture = TestBed.createComponent(TeamsImportButtonComponent);
         comp = fixture.componentInstance;
@@ -36,7 +40,7 @@ describe('TeamsImportButtonComponent', () => {
     });
 
     describe('openTeamsImportDialog', () => {
-        let modalServiceStub: jest.SpyInstance;
+        let modalServiceStub: ReturnType<typeof vi.spyOn>;
         let componentInstance: any;
 
         let teams: Team[] = [];
@@ -48,19 +52,19 @@ describe('TeamsImportButtonComponent', () => {
             });
             componentInstance = { teams: [], exercise: undefined };
             const result = new Promise((resolve) => resolve(mockSourceTeams));
-            modalServiceStub = jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance, result });
+            modalServiceStub = vi.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance, result });
         });
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
-        it('should open teams import dialog when called', fakeAsync(() => {
+        it('should open teams import dialog when called', async () => {
             const button = debugElement.nativeElement.querySelector('button');
             button.click();
             expect(modalServiceStub).toHaveBeenCalledOnce();
             expect(componentInstance.exercise).toEqual(mockExercise);
             expect(componentInstance.teams).toEqual(mockTeams);
-            tick(100);
+            await Promise.resolve();
             expect(teams).toEqual(mockSourceTeams);
-        }));
+        });
     });
 });

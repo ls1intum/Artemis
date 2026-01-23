@@ -1,3 +1,4 @@
+import { expect } from 'vitest';
 import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -29,7 +30,7 @@ describe('Exercise Filter Test', () => {
 
     it('should be empty on create', () => {
         const filter = new ExerciseFilter();
-        expect(filter.isEmpty()).toBeTrue();
+        expect(filter.isEmpty()).toBe(true);
     });
 
     it('should filter by name', () => {

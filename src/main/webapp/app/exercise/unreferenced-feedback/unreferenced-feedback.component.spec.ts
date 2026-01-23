@@ -1,4 +1,6 @@
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
@@ -13,13 +15,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('UnreferencedFeedbackComponent', () => {
+    setupTestBed({ zoneless: true });
     let comp: UnreferencedFeedbackComponent;
     let fixture: ComponentFixture<UnreferencedFeedbackComponent>;
     let sgiService: StructuredGradingCriterionService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [UnreferencedFeedbackComponent, UnreferencedFeedbackDetailStubComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [UnreferencedFeedbackDetailStubComponent, MockPipe(ArtemisTranslatePipe), UnreferencedFeedbackComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: DialogService, useClass: MockDialogService }, provideHttpClient()],
         })
             .compileComponents()
@@ -32,7 +35,7 @@ describe('UnreferencedFeedbackComponent', () => {
 
     it('should validate feedback', () => {
         comp.validateFeedback();
-        expect(comp.assessmentsAreValid).toBeFalse();
+        expect(comp.assessmentsAreValid).toBe(false);
 
         const feedback = new Feedback();
         feedback.credits = undefined;
@@ -40,13 +43,13 @@ describe('UnreferencedFeedbackComponent', () => {
 
         fixture.changeDetectorRef.detectChanges();
         comp.validateFeedback();
-        expect(comp.assessmentsAreValid).toBeFalse();
+        expect(comp.assessmentsAreValid).toBe(false);
 
         feedback.credits = 1;
         fixture.changeDetectorRef.detectChanges();
 
         comp.validateFeedback();
-        expect(comp.assessmentsAreValid).toBeTrue();
+        expect(comp.assessmentsAreValid).toBe(true);
     });
 
     it('should add unreferenced feedback', () => {
@@ -94,13 +97,14 @@ describe('UnreferencedFeedbackComponent', () => {
     it('should add unreferenced feedback on dropping assessment instruction', () => {
         const instruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
         comp.unreferencedFeedback = [];
-        jest.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation((feedback) => {
+        vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation((feedback) => {
             feedback.gradingInstruction = instruction;
             feedback.credits = instruction.credits;
         });
 
         // Call spy function with empty event
-        comp.createAssessmentOnDrop(new Event(''));
+        const dropEvent = { dataTransfer: { getData: vi.fn().mockReturnValue('{}') }, preventDefault: vi.fn() } as unknown as DragEvent;
+        comp.createAssessmentOnDrop(dropEvent);
         expect(comp.unreferencedFeedback).toHaveLength(1);
         expect(comp.unreferencedFeedback[0].gradingInstruction).toBe(instruction);
         expect(comp.unreferencedFeedback[0].credits).toBe(instruction.credits);
@@ -110,7 +114,7 @@ describe('UnreferencedFeedbackComponent', () => {
         const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', type: FeedbackType.AUTOMATIC };
         comp.feedbackSuggestions = [suggestion];
         comp.acceptSuggestion(suggestion);
-        expect(comp.feedbackSuggestions).toBeEmpty();
+        expect(comp.feedbackSuggestions).toHaveLength(0);
         expect(comp.unreferencedFeedback).toEqual([
             {
                 text: 'FeedbackSuggestion:accepted:',
@@ -121,17 +125,21 @@ describe('UnreferencedFeedbackComponent', () => {
     });
 
     it('should only replace feedback on drop, not add another one', () => {
-        jest.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation();
-        comp.createAssessmentOnDrop(new Event(''));
+        vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation();
+        const dragEvent = { dataTransfer: { getData: vi.fn().mockReturnValue('{}') }, preventDefault: vi.fn() } as unknown as DragEvent;
+        comp.createAssessmentOnDrop(dragEvent);
         fixture.changeDetectorRef.detectChanges();
 
         const unreferencedFeedbackDetailDebugElement = fixture.debugElement.query(By.css('jhi-unreferenced-feedback-detail'));
         const unreferencedFeedbackDetailComp: UnreferencedFeedbackDetailStubComponent = unreferencedFeedbackDetailDebugElement.componentInstance;
 
-        const createAssessmentOnDropStub: jest.SpyInstance = jest.spyOn(comp, 'createAssessmentOnDrop');
-        const updateFeedbackOnDropStub: jest.SpyInstance = jest.spyOn(unreferencedFeedbackDetailComp, 'updateFeedbackOnDrop');
+        const createAssessmentOnDropStub = vi.spyOn(comp, 'createAssessmentOnDrop');
+        const updateFeedbackOnDropStub = vi.spyOn(unreferencedFeedbackDetailComp, 'updateFeedbackOnDrop');
 
         const dropEvent = new Event('drop', { bubbles: true, cancelable: true });
+        Object.defineProperty(dropEvent, 'dataTransfer', {
+            value: { getData: vi.fn().mockReturnValue('{}') },
+        });
         unreferencedFeedbackDetailDebugElement.nativeElement.querySelector('div').dispatchEvent(dropEvent);
         fixture.changeDetectorRef.detectChanges();
 
@@ -144,6 +152,6 @@ describe('UnreferencedFeedbackComponent', () => {
         const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', type: FeedbackType.AUTOMATIC };
         comp.feedbackSuggestions = [suggestion];
         comp.discardSuggestion(suggestion);
-        expect(comp.feedbackSuggestions).toBeEmpty();
+        expect(comp.feedbackSuggestions).toHaveLength(0);
     });
 });

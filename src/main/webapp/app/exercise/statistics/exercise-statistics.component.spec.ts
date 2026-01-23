@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { expect, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { SpanType } from 'app/exercise/shared/entities/statistics.model';
 import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -17,13 +19,14 @@ import { ActivatedRoute } from '@angular/router';
 import { provideNoopAnimationsForTests } from 'test/helpers/animations';
 
 describe('ExerciseStatisticsComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ExerciseStatisticsComponent>;
     let component: ExerciseStatisticsComponent;
     let service: StatisticsService;
     let exerciseService: ExerciseService;
 
-    let statisticsSpy: jest.SpyInstance;
-    let exerciseSpy: jest.SpyInstance;
+    let statisticsSpy: ReturnType<typeof vi.spyOn>;
+    let exerciseSpy: ReturnType<typeof vi.spyOn>;
 
     const exercise = {
         id: 1,
@@ -46,8 +49,9 @@ describe('ExerciseStatisticsComponent', () => {
         resolvedPostsInPercent: 50,
     } as ExerciseManagementStatisticsDto;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ExerciseStatisticsComponent],
             providers: [
                 LocalStorageService,
                 SessionStorageService,
@@ -57,20 +61,18 @@ describe('ExerciseStatisticsComponent', () => {
                 provideHttpClientTesting(),
                 provideNoopAnimationsForTests(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExerciseStatisticsComponent);
-                component = fixture.componentInstance;
-                service = TestBed.inject(StatisticsService);
-                exerciseService = TestBed.inject(ExerciseService);
-                statisticsSpy = jest.spyOn(service, 'getExerciseStatistics').mockReturnValue(of(exerciseStatistics));
-                exerciseSpy = jest.spyOn(exerciseService, 'find').mockReturnValue(of({ body: exercise } as HttpResponse<Exercise>));
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(ExerciseStatisticsComponent);
+        component = fixture.componentInstance;
+        service = TestBed.inject(StatisticsService);
+        exerciseService = TestBed.inject(ExerciseService);
+        statisticsSpy = vi.spyOn(service, 'getExerciseStatistics').mockReturnValue(of(exerciseStatistics));
+        exerciseSpy = vi.spyOn(exerciseService, 'find').mockReturnValue(of({ body: exercise } as HttpResponse<Exercise>));
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -83,14 +85,13 @@ describe('ExerciseStatisticsComponent', () => {
         expect(component.exerciseStatistics.absoluteAveragePoints).toBe(5);
     });
 
-    it('should trigger when tab changed', fakeAsync(() => {
-        const tabSpy = jest.spyOn(component, 'onTabChanged');
+    it('should trigger when tab changed', () => {
+        const tabSpy = vi.spyOn(component, 'onTabChanged');
         fixture.detectChanges();
 
         const button = fixture.debugElement.nativeElement.querySelector('#option3');
         button.click();
 
-        tick();
         expect(tabSpy).toHaveBeenCalledOnce();
         expect(component.currentSpan).toEqual(SpanType.MONTH);
         expect(statisticsSpy).toHaveBeenCalledOnce();
@@ -98,5 +99,5 @@ describe('ExerciseStatisticsComponent', () => {
         expect(component.exerciseStatistics.participationsInPercent).toBe(100);
         expect(component.exerciseStatistics.resolvedPostsInPercent).toBe(50);
         expect(component.exerciseStatistics.absoluteAveragePoints).toBe(5);
-    }));
+    });
 });

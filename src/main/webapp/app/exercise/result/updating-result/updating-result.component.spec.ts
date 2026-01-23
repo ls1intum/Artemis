@@ -1,4 +1,6 @@
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -24,18 +26,21 @@ import { MockComponent } from 'ng-mocks';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { MissingResultInformation } from 'app/exercise/result/result.utils';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('UpdatingResultComponent', () => {
+    setupTestBed({ zoneless: true });
     let comp: UpdatingResultComponent;
     let fixture: ComponentFixture<UpdatingResultComponent>;
     let participationWebsocketService: ParticipationWebsocketService;
     let programmingSubmissionService: ProgrammingSubmissionService;
 
-    let subscribeForLatestResultOfParticipationStub: jest.SpyInstance;
+    let subscribeForLatestResultOfParticipationStub: ReturnType<typeof vi.spyOn>;
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | undefined>;
 
-    let getLatestPendingSubmissionStub: jest.SpyInstance;
-    let fetchQueueReleaseDateEstimationByParticipationIdStub: jest.SpyInstance;
+    let getLatestPendingSubmissionStub: ReturnType<typeof vi.spyOn>;
+    let fetchQueueReleaseDateEstimationByParticipationIdStub: ReturnType<typeof vi.spyOn>;
 
     let profileService: ProfileService;
 
@@ -58,11 +63,12 @@ describe('UpdatingResultComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [UpdatingResultComponent, MockComponent(ResultComponent)],
+            imports: [MockComponent(ResultComponent), UpdatingResultComponent],
             providers: [
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()
@@ -76,22 +82,22 @@ describe('UpdatingResultComponent', () => {
                 profileService = TestBed.inject(ProfileService);
 
                 subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
-                subscribeForLatestResultOfParticipationStub = jest
+                subscribeForLatestResultOfParticipationStub = vi
                     .spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation')
                     .mockReturnValue(subscribeForLatestResultOfParticipationSubject);
 
                 const programmingSubmissionStateObj = { participationId: 1, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION };
-                getLatestPendingSubmissionStub = jest
+                getLatestPendingSubmissionStub = vi
                     .spyOn(programmingSubmissionService, 'getLatestPendingSubmissionByParticipationId')
                     .mockReturnValue(of(programmingSubmissionStateObj));
-                fetchQueueReleaseDateEstimationByParticipationIdStub = jest
+                fetchQueueReleaseDateEstimationByParticipationIdStub = vi
                     .spyOn(programmingSubmissionService, 'fetchQueueReleaseDateEstimationByParticipationId')
                     .mockReturnValue(of(undefined));
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     const cleanInitializeGraded = (participation = initialParticipation) => {
@@ -150,7 +156,7 @@ describe('UpdatingResultComponent', () => {
 
     it('should update result and establish new websocket connection on participation change', () => {
         cleanInitializeGraded();
-        const unsubscribeSpy = jest.spyOn(comp.resultSubscription, 'unsubscribe');
+        const unsubscribeSpy = vi.spyOn(comp.resultSubscription, 'unsubscribe');
         const newParticipation = { id: 80, exercise, student, submissions: [{ results: [{ id: 1, rated: true }] }] } as Participation;
         cleanInitializeGraded(newParticipation);
         expect(unsubscribeSpy).toHaveBeenNthCalledWith(1);
@@ -168,12 +174,12 @@ describe('UpdatingResultComponent', () => {
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).toHaveBeenCalledOnce();
         expect(getLatestPendingSubmissionStub).toHaveBeenCalledWith(comp.participation.id, comp.exercise.id, true);
-        expect(comp.isBuilding).toBeFalse();
+        expect(comp.isBuilding).toBe(false);
     });
 
     it('should set the isBuilding attribute to true if exerciseType is PROGRAMMING and there is a latest pending submission', () => {
         // LocalCI is disabled
-        jest.spyOn(profileService, 'isProfileActive').mockImplementation(() => false);
+        vi.spyOn(profileService, 'isProfileActive').mockImplementation(() => false);
         comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING } as Exercise;
         getLatestPendingSubmissionStub.mockReturnValue(
             of({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: 3, buildTimingInfo }),
@@ -181,7 +187,7 @@ describe('UpdatingResultComponent', () => {
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).toHaveBeenCalledOnce();
         expect(getLatestPendingSubmissionStub).toHaveBeenCalledWith(comp.participation.id, comp.exercise.id, true);
-        expect(comp.isBuilding).toBeTrue();
+        expect(comp.isBuilding).toBe(true);
         expect(comp.missingResultInfo).toBe(MissingResultInformation.NONE);
         // LocalCI is not enabled, so the buildStartDate and estimatedCompletionDate should not be set
         expect(comp.buildStartDate).toBeUndefined();
@@ -195,7 +201,7 @@ describe('UpdatingResultComponent', () => {
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).toHaveBeenCalledOnce();
         expect(getLatestPendingSubmissionStub).toHaveBeenCalledWith(comp.participation.id, comp.exercise.id, true);
-        expect(comp.isBuilding).toBeFalse();
+        expect(comp.isBuilding).toBe(false);
         expect(comp.missingResultInfo).toBe(MissingResultInformation.NONE);
     });
 
@@ -206,7 +212,7 @@ describe('UpdatingResultComponent', () => {
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).toHaveBeenCalledOnce();
         expect(getLatestPendingSubmissionStub).toHaveBeenCalledWith(comp.participation.id, comp.exercise.id, true);
-        expect(comp.isBuilding).toBeFalse();
+        expect(comp.isBuilding).toBe(false);
         expect(comp.missingResultInfo).toBe(MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE);
     });
 
@@ -232,7 +238,7 @@ describe('UpdatingResultComponent', () => {
         comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING, dueDate: submission.submissionDate.add(1, 'hour') } as Exercise;
         getLatestPendingSubmissionStub.mockReturnValue(of({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: 3 }));
         cleanInitializeGraded();
-        expect(comp.isBuilding).toBeTrue();
+        expect(comp.isBuilding).toBe(true);
         expect(comp.missingResultInfo).toBe(MissingResultInformation.NONE);
     });
 
@@ -247,7 +253,7 @@ describe('UpdatingResultComponent', () => {
 
     it('should set the isQueue and isBuilding attribute to true with correct timing', () => {
         // LocalCI is enabled
-        jest.spyOn(profileService, 'isProfileActive').mockImplementation((profile) => profile === PROFILE_LOCALCI);
+        vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile) => profile === PROFILE_LOCALCI);
         comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING } as Exercise;
         const pendingSubmissionSubject = new BehaviorSubject({
             submissionState: ProgrammingSubmissionState.IS_QUEUED,

@@ -1,4 +1,6 @@
+import { expect } from 'vitest';
 import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
@@ -6,12 +8,14 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('DifficultyBadge', () => {
+    setupTestBed({ zoneless: true });
     let component: DifficultyBadgeComponent;
 
     const exercise = new ProgrammingExercise(undefined, undefined);
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [DifficultyBadgeComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()

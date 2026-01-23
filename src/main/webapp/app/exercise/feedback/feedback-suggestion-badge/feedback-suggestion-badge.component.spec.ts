@@ -1,4 +1,6 @@
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { Feedback, FeedbackSuggestionType } from 'app/assessment/shared/entities/feedback.model';
@@ -8,14 +10,14 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('FeedbackSuggestionBadgeComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: FeedbackSuggestionBadgeComponent;
     let fixture: ComponentFixture<FeedbackSuggestionBadgeComponent>;
     let translateService: TranslateService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule)],
-            declarations: [FeedbackSuggestionBadgeComponent, MockDirective(TranslateDirective)],
+            imports: [MockDirective(TranslateDirective), MockModule(NgbTooltipModule)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
@@ -34,8 +36,8 @@ describe('FeedbackSuggestionBadgeComponent', () => {
 
     it('should have the correct text and tooltip for a SUGGESTED feedback', () => {
         component.feedback = new Feedback();
-        jest.spyOn(Feedback, 'getFeedbackSuggestionType').mockReturnValue(FeedbackSuggestionType.SUGGESTED);
-        jest.spyOn(translateService, 'instant').mockReturnValue('Mocked Tooltip');
+        vi.spyOn(Feedback, 'getFeedbackSuggestionType').mockReturnValue(FeedbackSuggestionType.SUGGESTED);
+        vi.spyOn(translateService, 'instant').mockReturnValue('Mocked Tooltip');
 
         expect(component.text).toBe('artemisApp.assessment.suggestion.suggested');
         expect(component.tooltip).toBe('Mocked Tooltip');
@@ -43,8 +45,8 @@ describe('FeedbackSuggestionBadgeComponent', () => {
 
     it('should have the correct text and tooltip for an ACCEPTED feedback', () => {
         component.feedback = new Feedback();
-        jest.spyOn(Feedback, 'getFeedbackSuggestionType').mockReturnValue(FeedbackSuggestionType.ACCEPTED);
-        jest.spyOn(translateService, 'instant').mockReturnValue('Mocked Tooltip');
+        vi.spyOn(Feedback, 'getFeedbackSuggestionType').mockReturnValue(FeedbackSuggestionType.ACCEPTED);
+        vi.spyOn(translateService, 'instant').mockReturnValue('Mocked Tooltip');
 
         expect(component.text).toBe('artemisApp.assessment.suggestion.accepted');
         expect(component.tooltip).toBe('Mocked Tooltip');
@@ -52,8 +54,8 @@ describe('FeedbackSuggestionBadgeComponent', () => {
 
     it('should have the correct text and tooltip for an ADAPTED feedback', () => {
         component.feedback = new Feedback();
-        jest.spyOn(Feedback, 'getFeedbackSuggestionType').mockReturnValue(FeedbackSuggestionType.ADAPTED);
-        jest.spyOn(translateService, 'instant').mockReturnValue('Mocked Tooltip');
+        vi.spyOn(Feedback, 'getFeedbackSuggestionType').mockReturnValue(FeedbackSuggestionType.ADAPTED);
+        vi.spyOn(translateService, 'instant').mockReturnValue('Mocked Tooltip');
 
         expect(component.text).toBe('artemisApp.assessment.suggestion.adapted');
         expect(component.tooltip).toBe('Mocked Tooltip');
@@ -61,7 +63,7 @@ describe('FeedbackSuggestionBadgeComponent', () => {
 
     it('should have empty text and tooltip for undefined feedback type', () => {
         component.feedback = new Feedback();
-        jest.spyOn(Feedback, 'getFeedbackSuggestionType').mockReturnValue(undefined as any as FeedbackSuggestionType);
+        vi.spyOn(Feedback, 'getFeedbackSuggestionType').mockReturnValue(undefined as any as FeedbackSuggestionType);
 
         expect(component.text).toBe('');
         expect(component.tooltip).toBe('');
@@ -77,8 +79,8 @@ describe('FeedbackSuggestionBadgeComponent', () => {
     it('should ignore the useDefaultText setting for ADAPTED feedback', () => {
         component.useDefaultText = true;
         component.feedback = new Feedback();
-        jest.spyOn(Feedback, 'getFeedbackSuggestionType').mockReturnValue(FeedbackSuggestionType.ADAPTED);
-        jest.spyOn(translateService, 'instant').mockReturnValue('Mocked Tooltip');
+        vi.spyOn(Feedback, 'getFeedbackSuggestionType').mockReturnValue(FeedbackSuggestionType.ADAPTED);
+        vi.spyOn(translateService, 'instant').mockReturnValue('Mocked Tooltip');
 
         expect(component.text).toBe('artemisApp.assessment.suggestion.adapted');
         expect(component.tooltip).toBe('Mocked Tooltip');

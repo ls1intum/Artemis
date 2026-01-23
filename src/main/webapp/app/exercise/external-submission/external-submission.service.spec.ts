@@ -1,6 +1,8 @@
+import { expect, vi } from 'vitest';
 import { ExternalSubmissionService } from 'app/exercise/external-submission/external-submission.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { User } from 'app/core/user/user.model';
@@ -12,6 +14,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('External Submission Service', () => {
+    setupTestBed({ zoneless: true });
     let httpMock: HttpTestingController;
     let service: ExternalSubmissionService;
 
@@ -29,7 +32,7 @@ describe('External Submission Service', () => {
 
     it('submits a new result to the server correctly', () => {
         const resultService = TestBed.inject(ResultService);
-        const convertDateFromServerSpy = jest.spyOn(resultService, 'convertResultResponseDatesFromServer').mockImplementation((param) => param);
+        const convertDateFromServerSpy = vi.spyOn(resultService, 'convertResultResponseDatesFromServer').mockImplementation((param) => param);
 
         const exercise: ProgrammingExercise = {
             id: 1,
@@ -58,8 +61,8 @@ describe('External Submission Service', () => {
         expect(result.completionDate).toBeDefined();
         // a maximum delay of 1s between creation and assertion is unlikely but accurate enough for an assertion of ‘approximately now’ here
         expect(dayjs().diff(result.completionDate, 'ms')).toBeLessThan(1000);
-        expect(result.successful).toBeTrue();
+        expect(result.successful).toBe(true);
         expect(result.score).toBe(100);
-        expect(result.rated).toBeTrue();
+        expect(result.rated).toBe(true);
     });
 });

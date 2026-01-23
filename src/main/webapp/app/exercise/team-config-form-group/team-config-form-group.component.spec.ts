@@ -1,4 +1,6 @@
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Exercise, ExerciseMode } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -10,6 +12,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('Team Config Form Group Component', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<TeamConfigFormGroupComponent>;
     let component: TeamConfigFormGroupComponent;
     let exercise: Exercise;
@@ -17,6 +20,7 @@ describe('Team Config Form Group Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [TeamConfigFormGroupComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
@@ -48,20 +52,20 @@ describe('Team Config Form Group Component', () => {
     });
 
     it('should emit valid changes correctly', () => {
-        const calculateValidSpy = jest.spyOn(component, 'calculateFormValid');
-        const formValidChangesSpy = jest.spyOn(component, 'calculateFormValid');
+        const calculateValidSpy = vi.spyOn(component, 'calculateFormValid');
+        const formValidChangesSpy = vi.spyOn(component.formValidChanges, 'next');
         component.minTeamSizeField = { valueChanges: new Subject() } as any as NgModel;
         component.maxTeamsizeField = { valueChanges: new Subject() } as any as NgModel;
         component.exercise.mode = ExerciseMode.TEAM;
         component.ngAfterViewChecked();
-        expect(component.inputFieldSubscriptions).not.toBeEmpty();
+        expect(component.inputFieldSubscriptions).not.toHaveLength(0);
         expect(component.inputFieldSubscriptions).toHaveLength(2);
         (component.minTeamSizeField.valueChanges as Subject<boolean>).next(false);
         expect(calculateValidSpy).toHaveBeenCalledOnce();
         expect(formValidChangesSpy).toHaveBeenCalledOnce();
         component.ngOnDestroy();
         for (const subscription of component.inputFieldSubscriptions) {
-            expect(subscription?.closed).toBeTrue();
+            expect(subscription?.closed).toBe(true);
         }
     });
 
@@ -121,17 +125,17 @@ describe('Team Config Form Group Component', () => {
 
     it('exercise mode should be editable for existing non-exam exercise', () => {
         component.isImport = false;
-        expect(component.changeExerciseModeDisabled).toBeTrue();
+        expect(component.changeExerciseModeDisabled).toBe(true);
     });
 
     it('exercise mode should be editable for existing exam exercise', () => {
         component.isImport = false;
         component.exercise.exerciseGroup = new ExerciseGroup();
-        expect(component.changeExerciseModeDisabled).toBeTrue();
+        expect(component.changeExerciseModeDisabled).toBe(true);
     });
 
     it('exercise mode should be non-editable for non-exam and imported exercise', () => {
         component.isImport = true;
-        expect(component.changeExerciseModeDisabled).toBeFalse();
+        expect(component.changeExerciseModeDisabled).toBe(false);
     });
 });

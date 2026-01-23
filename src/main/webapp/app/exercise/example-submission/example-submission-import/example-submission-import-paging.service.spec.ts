@@ -1,5 +1,7 @@
+import { expect } from 'vitest';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
@@ -12,6 +14,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Example Submission Import Paging Service', () => {
+    setupTestBed({ zoneless: true });
     let service: ExampleSubmissionImportPagingService;
     let httpMock: HttpTestingController;
 
@@ -27,7 +30,7 @@ describe('Example Submission Import Paging Service', () => {
         httpMock.verify();
     });
 
-    it('should find submission', fakeAsync(() => {
+    it('should find submission', () => {
         const exercise = {
             id: 1,
         } as Exercise;
@@ -45,6 +48,5 @@ describe('Example Submission Import Paging Service', () => {
         expect(req.request.params.get('sortedColumn')).toBe('testSortedColumn');
 
         req.flush(searchResult);
-        tick();
-    }));
+    });
 });

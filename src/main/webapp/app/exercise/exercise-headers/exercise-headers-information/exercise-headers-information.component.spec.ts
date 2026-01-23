@@ -1,4 +1,6 @@
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 
@@ -22,10 +24,11 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { ActivatedRoute } from '@angular/router';
 
 describe('ExerciseHeadersInformationComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: ExerciseHeadersInformationComponent;
     let fixture: ComponentFixture<ExerciseHeadersInformationComponent>;
     let exerciseService: ExerciseService;
-    let getExerciseDetailsMock: jest.SpyInstance;
+    let getExerciseDetailsMock: ReturnType<typeof vi.spyOn>;
 
     const exercise = {
         id: 42,
@@ -52,7 +55,7 @@ describe('ExerciseHeadersInformationComponent', () => {
                 fixture = TestBed.createComponent(ExerciseHeadersInformationComponent);
                 component = fixture.componentInstance;
                 exerciseService = TestBed.inject(ExerciseService);
-                getExerciseDetailsMock = jest.spyOn(exerciseService, 'getExerciseDetails');
+                getExerciseDetailsMock = vi.spyOn(exerciseService, 'getExerciseDetails');
                 getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: exercise } }));
                 component.exercise = { ...exercise };
                 fixture.detectChanges();
@@ -117,7 +120,7 @@ describe('ExerciseHeadersInformationComponent', () => {
         component.studentParticipation = studentParticipation;
 
         const expectedDueDate = dayjs().add(7, 'days');
-        jest.spyOn(ComplaintService, 'getIndividualComplaintDueDate').mockReturnValue(expectedDueDate);
+        vi.spyOn(ComplaintService, 'getIndividualComplaintDueDate').mockReturnValue(expectedDueDate);
 
         if (component.course?.maxComplaintTimeDays) {
             component.individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(
@@ -135,7 +138,7 @@ describe('ExerciseHeadersInformationComponent', () => {
         const pointsContent: StringNumberContent = { type: 'string', value: maxPoints };
         const pointsItem: InformationBox = { title: 'Points', content: pointsContent };
 
-        jest.spyOn(component, 'getPointsItem').mockReturnValue(pointsItem);
+        vi.spyOn(component, 'getPointsItem').mockReturnValue(pointsItem);
 
         component.informationBoxItems = [];
         component.informationBoxItems.push(component.getPointsItem('points', maxPoints, achievedPoints));
@@ -150,7 +153,7 @@ describe('ExerciseHeadersInformationComponent', () => {
         const pointsContent: StringNumberContent = { type: 'string', value: bonusPoints };
         const pointsItem: InformationBox = { title: 'Bonus Points', content: pointsContent };
 
-        jest.spyOn(component, 'getPointsItem').mockReturnValue(pointsItem);
+        vi.spyOn(component, 'getPointsItem').mockReturnValue(pointsItem);
 
         component.informationBoxItems = [];
         component.informationBoxItems.push(component.getPointsItem('bonus', bonusPoints, achievedBonusPoints));
@@ -251,14 +254,14 @@ describe('ExerciseHeadersInformationComponent', () => {
 
     it('should update submission policy item in informationBoxItems', () => {
         // Mock the countSubmissions method
-        jest.spyOn(component, 'countSubmissions').mockImplementation(() => {});
+        vi.spyOn(component, 'countSubmissions').mockImplementation(() => {});
 
         // Mock the getSubmissionPolicyItem method
         const mockSubmissionPolicyItem: InformationBox = {
             title: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle',
             content: { type: 'string', value: 'Updated Item' } as StringNumberContent,
         };
-        jest.spyOn(component, 'getSubmissionPolicyItem').mockReturnValue(mockSubmissionPolicyItem);
+        vi.spyOn(component, 'getSubmissionPolicyItem').mockReturnValue(mockSubmissionPolicyItem);
 
         // Initialize informationBoxItems with a mock item
         component.informationBoxItems = [
@@ -301,7 +304,7 @@ describe('ExerciseHeadersInformationComponent', () => {
         component.submissionPolicy.active = true;
         component.submissionPolicy.submissionLimit = 5;
 
-        const updateSubmissionPolicyItemSpy = jest.spyOn(component, 'updateSubmissionPolicyItem');
+        const updateSubmissionPolicyItemSpy = vi.spyOn(component, 'updateSubmissionPolicyItem');
 
         component.ngOnChanges();
 
