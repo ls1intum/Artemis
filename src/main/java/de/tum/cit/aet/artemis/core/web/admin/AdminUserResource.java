@@ -34,7 +34,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
@@ -342,8 +341,7 @@ public class AdminUserResource {
         }
 
         User userToBeDeleted = userRepository.findOneWithGroupsAndAuthoritiesByLogin(login).orElseThrow(() -> new EntityNotFoundException("User", login));
-        boolean isNonSuperAdminUserTryingToDeleteAdmin = (userToBeDeleted.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY)
-                || userToBeDeleted.getAuthorities().contains(Authority.ADMIN_AUTHORITY)) && !this.authorizationCheckService.isSuperAdmin();
+        boolean isNonSuperAdminUserTryingToDeleteAdmin = AuthorizationCheckService.isAdmin(userToBeDeleted.getAuthorities()) && !this.authorizationCheckService.isSuperAdmin();
         if (isNonSuperAdminUserTryingToDeleteAdmin) {
             throw new AccessForbiddenAlertException("Only super administrators are allowed to delete administrators.", "userManagement",
                     "userManagement.onlySuperAdminCanManageAdmins");
