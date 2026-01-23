@@ -31,9 +31,13 @@
             <column name="initial_version_id" type="bigint"/>
             <column name="initial_commit_sha" type="varchar(255)"/>
             <column name="file_path" type="varchar(500)"/>
-            <column name="initial_file_path" type="varchar(500)"/>
+            <column name="initial_file_path" type="varchar(500)">
+                <constraints nullable="false"/>
+            </column>
             <column name="line_number" type="int"/>
-            <column name="initial_line_number" type="int"/>
+            <column name="initial_line_number" type="int">
+                <constraints nullable="false"/>
+            </column>
             <column name="outdated" type="boolean" defaultValueBoolean="false">
                 <constraints nullable="false"/>
             </column>
@@ -92,9 +96,13 @@
             <column name="initial_version_id" type="bigint"/>
             <column name="initial_commit_sha" type="varchar(255)"/>
             <column name="file_path" type="varchar(500)"/>
-            <column name="initial_file_path" type="varchar(500)"/>
+            <column name="initial_file_path" type="varchar(500)">
+                <constraints nullable="false"/>
+            </column>
             <column name="line_number" type="int"/>
-            <column name="initial_line_number" type="int"/>
+            <column name="initial_line_number" type="int">
+                <constraints nullable="false"/>
+            </column>
             <column name="outdated" type="boolean" defaultValueBoolean="false">
                 <constraints nullable="false"/>
             </column>
@@ -152,7 +160,9 @@
             <column name="type" type="enum('USER','CONSISTENCY_CHECK')">
                 <constraints nullable="false"/>
             </column>
-            <column name="content" type="json"/>
+            <column name="content" type="json">
+                <constraints nullable="false"/>
+            </column>
             <column name="initial_version_id" type="bigint"/>
             <column name="initial_commit_sha" type="varchar(255)"/>
             <column name="created_date" type="datetime(3)">
@@ -211,7 +221,9 @@
             <column name="type" type="text">
                 <constraints nullable="false"/>
             </column>
-            <column name="content" type="json"/>
+            <column name="content" type="json">
+                <constraints nullable="false"/>
+            </column>
             <column name="initial_version_id" type="bigint"/>
             <column name="initial_commit_sha" type="varchar(255)"/>
             <column name="created_date" type="datetime(3)">

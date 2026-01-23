@@ -81,7 +81,7 @@ public class CourseArchiveService {
 
     /**
      * Retrieves all inactive courses from non-null semesters that the current user is enrolled in
-     * for the course archive.
+     * for the course archive. This refers to old courses that are not shown in the course overview anymore.
      *
      * @return A list of courses for the course archive.
      */
