@@ -1,0 +1,19 @@
+:host {
+    min-height: 100%;
+    max-height: 100%;
+    width: 100%;
+    display: flex;
+    gap: 10px;
+    min-height: 0;
+
+    .course-iris {
+        background-color: var(--iris-chat-client-background);
+        border-radius: 4px;
+        flex: 1;
+        min-height: 0;
+        height: calc(100dvh - var(--sidebar-header-footer-combined-height) - var(--header-height));
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+}
