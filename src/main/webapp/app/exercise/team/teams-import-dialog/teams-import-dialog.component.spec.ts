@@ -523,8 +523,12 @@ describe('TeamsImportDialogComponent', () => {
             importFromSourceExerciseStub = vi.spyOn(teamService, 'importTeamsFromSourceExercise').mockReturnValue(of(fromExerciseResponse));
             fromFileResponse = new HttpResponse<Team[]>({ body: [...mockSourceTeams, mockTeam] });
             importTeamsStub = vi.spyOn(teamService, 'importTeams').mockReturnValue(of(fromFileResponse));
-            onSuccessStub = vi.spyOn(comp, 'onSaveSuccess').mockImplementation(() => undefined);
-            onErrorStub = vi.spyOn(comp, 'onSaveError').mockImplementation(() => undefined);
+            onSuccessStub = vi.spyOn(comp, 'onSaveSuccess').mockImplementation(() => {
+                comp.isImporting = false;
+            });
+            onErrorStub = vi.spyOn(comp, 'onSaveError').mockImplementation(() => {
+                comp.isImporting = false;
+            });
             comp.sourceExercise = mockSourceExercise;
             comp.sourceTeams = mockSourceTeams;
             comp.importStrategy = TeamImportStrategyType.PURGE_EXISTING;

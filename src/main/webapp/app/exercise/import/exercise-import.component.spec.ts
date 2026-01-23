@@ -14,7 +14,6 @@ import { CodeAnalysisPagingService } from 'app/programming/manage/services/code-
 import { ProgrammingExercisePagingService } from 'app/programming/manage/services/programming-exercise-paging.service';
 import { QuizExercisePagingService } from 'app/quiz/manage/service/quiz-exercise-paging.service';
 import { ExerciseImportComponent } from 'app/exercise/import/exercise-import.component';
-import { PagingService } from 'app/exercise/services/paging.service';
 import { TextExercisePagingService } from 'app/text/manage/text-exercise/service/text-exercise-paging.service';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -279,7 +278,14 @@ describe('ExerciseImportComponent', () => {
         expect(searchStub).toHaveBeenCalledWith(expectedSearchObject, { isCourseFilter: false, isExamFilter: false });
     });
 
-    const pagingServiceCases: Array<[ExerciseType, typeof PagingService]> = [
+    type ExercisePagingService =
+        | typeof ProgrammingExercisePagingService
+        | typeof TextExercisePagingService
+        | typeof ModelingExercisePagingService
+        | typeof QuizExercisePagingService
+        | typeof FileUploadExercisePagingService;
+
+    const pagingServiceCases: Array<[ExerciseType, ExercisePagingService]> = [
         [ExerciseType.PROGRAMMING, ProgrammingExercisePagingService],
         [ExerciseType.TEXT, TextExercisePagingService],
         [ExerciseType.MODELING, ModelingExercisePagingService],
@@ -287,7 +293,7 @@ describe('ExerciseImportComponent', () => {
         [ExerciseType.FILE_UPLOAD, FileUploadExercisePagingService],
     ];
 
-    it.each(pagingServiceCases)('uses the correct paging service', (exerciseType: ExerciseType, expectedPagingService: typeof PagingService) => {
+    it.each(pagingServiceCases)('uses the correct paging service', (exerciseType: ExerciseType, expectedPagingService: ExercisePagingService) => {
         const getSpy = vi.spyOn(injector, 'get');
         // This is needed for `.toHaveBeenCalledWith` to work properly:
         getSpy.mockImplementation(() => undefined);
