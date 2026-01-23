@@ -33,7 +33,8 @@ import org.springframework.test.context.TestPropertySource;
         "artemis.continuous-integration.artemis-authentication-token-value=ThisIsAReallyLongTopSecretTestingToken",
         // Use separate paths for parallel bucket execution
         "artemis.repo-clone-path=./local/server-integration-test-template/repos",
-        "artemis.version-control.local-vcs-repo-path=./local/server-integration-test-template/local-vcs-repos", "artemis.lti.enabled=true", "artemis.apollon.enabled=true" })
+        "artemis.version-control.local-vcs-repo-path=./local/server-integration-test-template/local-vcs-repos", "artemis.lti.enabled=true", "artemis.apollon.enabled=true",
+        "artemis.athena.enabled=true" })
 public abstract class AbstractSpringIntegrationJenkinsLocalVCTemplateTest extends AbstractSpringIntegrationJenkinsLocalVCTestBase {
 
     private static final int serverPort;

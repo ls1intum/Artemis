@@ -12,6 +12,7 @@ import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import {
     MODULE_FEATURE_APOLLON,
+    MODULE_FEATURE_ATHENA,
     MODULE_FEATURE_ATLAS,
     MODULE_FEATURE_EXAM,
     MODULE_FEATURE_FILEUPLOAD,
@@ -115,6 +116,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         MODULE_FEATURE_LTI,
         MODULE_FEATURE_APOLLON,
         MODULE_FEATURE_PASSKEY,
+        MODULE_FEATURE_ATHENA,
     ];
 
     /** Documentation links for runtime feature toggles */
@@ -162,6 +164,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         [MODULE_FEATURE_LTI]: 'https://docs.artemis.tum.de/instructor/lti-configuration',
         [MODULE_FEATURE_APOLLON]: 'https://docs.artemis.tum.de/instructor/exercises/modeling-exercise',
         [MODULE_FEATURE_PASSKEY]: 'https://docs.artemis.tum.de/admin/production-setup/security#passkey-authentication',
+        [MODULE_FEATURE_ATHENA]: 'https://docs.artemis.tum.de/admin/extensions-setup#athena-service',
     };
 
     ngOnInit(): void {

@@ -120,6 +120,10 @@
                 "passkey": {
                     "name": "Passkey-Authentifizierung",
                     "description": "Aktiviert passwortlose Authentifizierung mit FIDO2/WebAuthn-Passkeys für erhöhte Sicherheit."
+                },
+                "athena": {
+                    "name": "Athena (KI-Bewertung)",
+                    "description": "Aktiviert Athena ML-basierte automatisierte Feedback-Vorschläge für Text- und Programmieraufgaben."
                 }
             },
             "toggles": {

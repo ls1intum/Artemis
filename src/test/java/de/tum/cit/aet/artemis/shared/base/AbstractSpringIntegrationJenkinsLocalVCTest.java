@@ -27,7 +27,8 @@ import org.springframework.test.context.TestPropertySource;
 @TestPropertySource(properties = { "artemis.user-management.use-external=false",
         "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!enrollmentservicestudent2).*$",
         "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_jenkins_localvc", "info.contact=test@localhost",
-        "artemis.continuous-integration.artemis-authentication-token-value=ThisIsAReallyLongTopSecretTestingToken", "artemis.lti.enabled=true", "artemis.apollon.enabled=true" })
+        "artemis.continuous-integration.artemis-authentication-token-value=ThisIsAReallyLongTopSecretTestingToken", "artemis.lti.enabled=true", "artemis.apollon.enabled=true",
+        "artemis.athena.enabled=true" })
 public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrationJenkinsLocalVCTestBase {
 
     private static final int serverPort;
