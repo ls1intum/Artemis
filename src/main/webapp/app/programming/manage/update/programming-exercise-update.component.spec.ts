@@ -28,7 +28,7 @@ import * as Utils from 'app/exercise/course-exercises/course-utils';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_THEIA } from 'app/app.constants';
+import { MODULE_FEATURE_THEIA } from 'app/app.constants';
 import { APP_NAME_PATTERN_FOR_SWIFT, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from 'app/shared/constants/input.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -1095,7 +1095,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             [
                 'find validation errors for invalid ide selection',
                 {
-                    activeProfiles: [PROFILE_THEIA],
+                    activeModuleFeatures: [MODULE_FEATURE_THEIA],
                 },
                 {
                     translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alert',
@@ -1103,9 +1103,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 },
             ],
             [
-                'find validation errors for invalid ide selection without theia profile',
+                'find validation errors for invalid ide selection without theia module feature',
                 {
-                    activeProfiles: [],
+                    activeModuleFeatures: [],
                 },
                 {
                     translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alertNoTheia',

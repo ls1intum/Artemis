@@ -1,17 +1,17 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_THEIA;
-
 import java.net.URL;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.boot.actuate.info.InfoContributor;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-@Profile(PROFILE_THEIA)
+import de.tum.cit.aet.artemis.programming.theia.TheiaEnabled;
+
+@Conditional(TheiaEnabled.class)
 @Component
 @Lazy
 public class TheiaInfoContributor implements InfoContributor {

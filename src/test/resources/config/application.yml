@@ -112,6 +112,20 @@ artemis:
         enabled: true
         url: http://localhost:8080  # dummy URL for tests
         secret-token: test-secret         # dummy secret for tests
+
+    # Theia configuration for tests
+    theia:
+        enabled: true
+
+theia:
+    portal-url: https://your-theia-instance.com
+    images:
+        java:
+            Java-17: "ghcr.io/ls1intum/theia/java-17:latest"
+            Java-Non-Existent: "this-is-not-a-valid-image"
+        c:
+            C: "ghcr.io/ls1intum/theia/c:latest"
+
     tum-live:
         api-base-url: https://mocke.tum.live/api/v2
 
