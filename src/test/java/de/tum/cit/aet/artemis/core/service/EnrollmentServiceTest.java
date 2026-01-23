@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.TestPropertySource;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 
+@TestPropertySource(properties = { "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!enrollmentservicestudent2).*$" })
 class EnrollmentServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "enrollmentservice";
@@ -129,10 +131,11 @@ class EnrollmentServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest 
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsUserAllowedToEnrollInOnlineCourse() {
             Course course = getCourseForEnrollmentAllowedTest();
-            course.setEnrollmentEnabled(false);
+            course.setEnrollmentEnabled(true);
             course.setOnlineCourse(true);
             courseRepository.save(course);
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> enrollmentService.checkUserAllowedToEnrollInCourseElseThrow(this.student1, course));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> enrollmentService.checkUserAllowedToEnrollInCourseElseThrow(this.student1, course))
+                    .withMessage("Online courses cannot be enrolled in.");
         }
     }
 
