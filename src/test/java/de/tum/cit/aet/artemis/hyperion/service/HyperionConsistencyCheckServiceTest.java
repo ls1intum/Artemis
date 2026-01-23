@@ -23,8 +23,9 @@ import org.springframework.ai.chat.prompt.Prompt;
 
 import de.tum.cit.aet.artemis.core.config.LlmModelCostConfiguration;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.core.util.LlmUsageHelper;
 import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -48,7 +49,10 @@ class HyperionConsistencyCheckServiceTest {
     private ChatModel chatModel;
 
     @Mock
-    private LLMTokenUsageService llmTokenUsageService;
+    private LLMTokenUsageTraceTestRepository llmTokenUsageTraceRepository;
+
+    @Mock
+    private LLMTokenUsageRequestTestRepository llmTokenUsageRequestRepository;
 
     @Mock
     private UserTestRepository userRepository;
@@ -66,10 +70,10 @@ class HyperionConsistencyCheckServiceTest {
 
         // Create configuration with test model costs
         var costConfiguration = createTestConfiguration();
-        var llmUsageHelper = new LlmUsageHelper(llmTokenUsageService, userRepository, costConfiguration);
+        var llmTokenUsageService = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, costConfiguration);
         var observationRegistry = ObservationRegistry.create();
         this.hyperionConsistencyCheckService = new HyperionConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer,
-                observationRegistry, llmUsageHelper);
+                observationRegistry, llmTokenUsageService, userRepository);
     }
 
     @Test
@@ -127,18 +131,6 @@ class HyperionConsistencyCheckServiceTest {
         assertThat(resp.costs()).isNotNull();
         // Costs should be calculated based on configured rates (EUR)
         assertThat(resp.costs().totalEur()).isGreaterThan(0);
-    }
-
-    @Test
-    void normalizeModelName_removesDateSuffix() {
-        var costConfiguration = createTestConfiguration();
-        var llmUsageHelper = new LlmUsageHelper(llmTokenUsageService, userRepository, costConfiguration);
-
-        assertThat(llmUsageHelper.normalizeModelName("gpt-5-mini-2024-07-18")).isEqualTo("gpt-5-mini");
-        assertThat(llmUsageHelper.normalizeModelName("gpt-5-mini-2025-01-15")).isEqualTo("gpt-5-mini");
-        assertThat(llmUsageHelper.normalizeModelName("gpt-5-mini")).isEqualTo("gpt-5-mini");
-        assertThat(llmUsageHelper.normalizeModelName("claude-3-opus")).isEqualTo("claude-3-opus");
-        assertThat(llmUsageHelper.normalizeModelName(null)).isEqualTo("");
     }
 
     private static LlmModelCostConfiguration createTestConfiguration() {

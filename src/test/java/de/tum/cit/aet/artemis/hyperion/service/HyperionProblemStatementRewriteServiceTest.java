@@ -22,8 +22,9 @@ import org.springframework.ai.chat.prompt.Prompt;
 import de.tum.cit.aet.artemis.core.config.LlmModelCostConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.core.util.LlmUsageHelper;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
 import io.micrometer.observation.ObservationRegistry;
 
@@ -33,7 +34,10 @@ class HyperionProblemStatementRewriteServiceTest {
     private ChatModel chatModel;
 
     @Mock
-    private LLMTokenUsageService llmTokenUsageService;
+    private LLMTokenUsageTraceTestRepository llmTokenUsageTraceRepository;
+
+    @Mock
+    private LLMTokenUsageRequestTestRepository llmTokenUsageRequestRepository;
 
     @Mock
     private UserTestRepository userRepository;
@@ -46,9 +50,10 @@ class HyperionProblemStatementRewriteServiceTest {
         ChatClient chatClient = ChatClient.create(chatModel);
         var templateService = new HyperionPromptTemplateService();
         var costConfiguration = createTestConfiguration();
-        var llmUsageHelper = new LlmUsageHelper(llmTokenUsageService, userRepository, costConfiguration);
+        var llmTokenUsageService = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, costConfiguration);
         var observationRegistry = ObservationRegistry.create();
-        this.hyperionProblemStatementRewriteService = new HyperionProblemStatementRewriteService(chatClient, templateService, observationRegistry, llmUsageHelper);
+        this.hyperionProblemStatementRewriteService = new HyperionProblemStatementRewriteService(chatClient, templateService, observationRegistry, llmTokenUsageService,
+                userRepository);
     }
 
     @Test

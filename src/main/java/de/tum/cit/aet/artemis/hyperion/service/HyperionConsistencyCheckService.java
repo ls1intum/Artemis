@@ -12,13 +12,16 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
-import de.tum.cit.aet.artemis.core.util.LlmUsageHelper;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.domain.ArtifactType;
 import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
@@ -71,18 +74,31 @@ public class HyperionConsistencyCheckService {
 
     private final HyperionProgrammingExerciseContextRendererService exerciseContextRenderer;
 
-    private final LlmUsageHelper llmUsageHelper;
+    private final LLMTokenUsageService llmTokenUsageService;
+
+    private final UserRepository userRepository;
 
     private final ObservationRegistry observationRegistry;
 
     public HyperionConsistencyCheckService(ProgrammingExerciseRepository programmingExerciseRepository, ChatClient chatClient, HyperionPromptTemplateService templates,
-            HyperionProgrammingExerciseContextRendererService exerciseContextRenderer, ObservationRegistry observationRegistry, LlmUsageHelper llmUsageHelper) {
+            HyperionProgrammingExerciseContextRendererService exerciseContextRenderer, ObservationRegistry observationRegistry, LLMTokenUsageService llmTokenUsageService,
+            UserRepository userRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.chatClient = chatClient;
         this.templates = templates;
         this.exerciseContextRenderer = exerciseContextRenderer;
-        this.llmUsageHelper = llmUsageHelper;
+        this.llmTokenUsageService = llmTokenUsageService;
+        this.userRepository = userRepository;
         this.observationRegistry = observationRegistry;
+    }
+
+    private LLMRequest buildRequestFromResponse(ChatResponse response, String pipelineId) {
+        if (response == null || response.getMetadata() == null || response.getMetadata().getUsage() == null) {
+            return null;
+        }
+        var usage = response.getMetadata().getUsage();
+        return llmTokenUsageService.buildLLMRequest(response.getMetadata().getModel(), usage.getPromptTokens() != null ? usage.getPromptTokens() : 0,
+                usage.getCompletionTokens() != null ? usage.getCompletionTokens() : 0, pipelineId);
     }
 
     /**
@@ -117,7 +133,14 @@ public class HyperionConsistencyCheckService {
 
         List<ConsistencyIssue> combinedIssues = Stream.concat(structuralIssues.stream(), semanticIssues.stream()).toList();
         List<LLMRequest> validRequests = usageCollector.stream().filter(Objects::nonNull).toList();
-        llmUsageHelper.storeTokenUsage(LLMServiceType.HYPERION, exerciseWithParticipations, validRequests.toArray(LLMRequest[]::new));
+        if (!validRequests.isEmpty()) {
+            Long courseId = exerciseWithParticipations.getCourseViaExerciseGroupOrCourseMember() != null
+                    ? exerciseWithParticipations.getCourseViaExerciseGroupOrCourseMember().getId()
+                    : null;
+            Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
+            llmTokenUsageService.saveLLMTokenUsage(validRequests, LLMServiceType.HYPERION,
+                    builder -> builder.withCourse(courseId).withExercise(exerciseWithParticipations.getId()).withUser(userId));
+        }
 
         List<ConsistencyIssueDTO> issueDTOs = combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList();
 
@@ -170,7 +193,7 @@ public class HyperionConsistencyCheckService {
                 .call()
                 .responseEntity(StructuredOutputSchema.StructuralConsistencyIssues.class);
             // @formatter:on
-            usageCollector.add(llmUsageHelper.buildLlmRequest(structuralIssuesResponse.getResponse(), "structural", CONSISTENCY_PIPELINE_ID));
+            usageCollector.add(buildRequestFromResponse(structuralIssuesResponse.getResponse(), CONSISTENCY_PIPELINE_ID));
             return toGenericConsistencyIssue(structuralIssuesResponse.entity());
         }
         catch (RuntimeException e) {
@@ -206,7 +229,7 @@ public class HyperionConsistencyCheckService {
                 .call()
                 .responseEntity(StructuredOutputSchema.SemanticConsistencyIssues.class);
             // @formatter:on
-            usageCollector.add(llmUsageHelper.buildLlmRequest(semanticIssuesResponse.getResponse(), "semantic", CONSISTENCY_PIPELINE_ID));
+            usageCollector.add(buildRequestFromResponse(semanticIssuesResponse.getResponse(), CONSISTENCY_PIPELINE_ID));
             return toGenericConsistencyIssue(semanticIssuesResponse.entity());
         }
         catch (RuntimeException e) {

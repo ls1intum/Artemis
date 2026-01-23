@@ -1,21 +1,22 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 
 /**
- * Configuration properties for LLM model costs.
- * Shared by all Spring AI-based services (Hyperion, Atlas, etc.).
+ * Configuration properties for LLM model costs used for usage tracking.
  * Configured via application.yml under {@code artemis.llm.model-costs}.
  */
+@Profile(PROFILE_CORE)
 @Configuration
 @Lazy
-@Conditional(SpringAIConfiguration.SpringAIEnabled.class)
 @ConfigurationProperties(prefix = "artemis.llm")
 public class LlmModelCostConfiguration {
 

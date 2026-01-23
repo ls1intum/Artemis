@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -14,7 +15,9 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
-import de.tum.cit.aet.artemis.core.util.LlmUsageHelper;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
 import io.micrometer.observation.ObservationRegistry;
@@ -36,22 +39,19 @@ public class HyperionProblemStatementRewriteService {
 
     private final HyperionPromptTemplateService templateService;
 
-    private final LlmUsageHelper llmUsageHelper;
+    private final LLMTokenUsageService llmTokenUsageService;
+
+    private final UserRepository userRepository;
 
     private final ObservationRegistry observationRegistry;
 
-    /**
-     * Creates a new ProblemStatementRewriteService.
-     *
-     * @param chatClient      the AI chat client (optional)
-     * @param templateService prompt template service
-     */
     public HyperionProblemStatementRewriteService(ChatClient chatClient, HyperionPromptTemplateService templateService, ObservationRegistry observationRegistry,
-            LlmUsageHelper llmUsageHelper) {
+            LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.observationRegistry = observationRegistry;
-        this.llmUsageHelper = llmUsageHelper;
+        this.llmTokenUsageService = llmTokenUsageService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -85,8 +85,15 @@ public class HyperionProblemStatementRewriteService {
 
             ChatResponse chatResponse = promptResponse.chatResponse();
             String responseContent = chatResponse.getResult().getOutput().getText();
-            LLMRequest llmRequest = llmUsageHelper.buildLlmRequest(chatResponse, "rewrite", REWRITE_PIPELINE_ID);
-            llmUsageHelper.storeTokenUsage(LLMServiceType.HYPERION, course, llmRequest);
+
+            // Store token usage
+            if (chatResponse.getMetadata() != null && chatResponse.getMetadata().getUsage() != null) {
+                var usage = chatResponse.getMetadata().getUsage();
+                LLMRequest llmRequest = llmTokenUsageService.buildLLMRequest(chatResponse.getMetadata().getModel(),
+                        usage.getPromptTokens() != null ? usage.getPromptTokens() : 0, usage.getCompletionTokens() != null ? usage.getCompletionTokens() : 0, REWRITE_PIPELINE_ID);
+                Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
+                llmTokenUsageService.saveLLMTokenUsage(List.of(llmRequest), LLMServiceType.HYPERION, builder -> builder.withCourse(course.getId()).withUser(userId));
+            }
             // @formatter:on
             String result = responseContent.trim();
             boolean improved = !result.equals(problemStatementText.trim());
