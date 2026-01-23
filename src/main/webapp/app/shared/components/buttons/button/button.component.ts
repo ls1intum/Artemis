@@ -64,15 +64,15 @@ export class ButtonComponent {
     /** You might need to set d-flex as well when using the button */
     fullWidth = input<boolean>(false);
     // Fa-icon name.
-    readonly icon = input<IconProp>(undefined!);
+    readonly icon = input<IconProp | null>(null);
     // Translation placeholders, will be translated in the component.
-    readonly title = input<string>(undefined!);
-    readonly tooltip = input<string>(undefined!);
+    readonly title = input<string>('');
+    readonly tooltip = input<string>('');
     readonly tooltipPlacement = input<TooltipPlacement>(TooltipPlacement.TOP);
 
     readonly disabled = input(false);
     readonly isLoading = input(false);
-    readonly featureToggle = input<FeatureToggle | FeatureToggle[]>(undefined!); // Disable by feature toggle.
+    readonly featureToggle = input<FeatureToggle | FeatureToggle[]>([]); // Disable by feature toggle.
 
     readonly shouldSubmit = input(true);
     readonly shouldToggle = input(false);
