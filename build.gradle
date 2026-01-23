@@ -196,7 +196,7 @@ dependencies {
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
 
     implementation "jakarta.ws.rs:jakarta.ws.rs-api:4.0.0"
-    implementation "org.glassfish.jersey.core:jersey-common:4.0.0"
+    implementation "org.glassfish.jersey.core:jersey-common:4.0.1"
 
     implementation "de.jplag:jplag:${jplag_version}"
 
@@ -516,7 +516,7 @@ apply from: "gradle/openapi.gradle"
 
 dependencyManagement {
     imports {
-        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:17.7.0"
+        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:18.1.0"
     }
 }
 
