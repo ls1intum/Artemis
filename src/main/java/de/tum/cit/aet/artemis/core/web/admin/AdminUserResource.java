@@ -115,35 +115,34 @@ public class AdminUserResource {
      * <p>
      * Creates a new user if the login and email are not already used, and sends an email with an activation link. The user needs to be activated on creation.
      *
-     * @param managedUserVM the user to create. If the password is null, a random one will be generated
+     * @param userToBeCreated the user to create. If the password is null, a random one will be generated
      * @return the ResponseEntity with status 201 (Created) and with body the new user, or with status 400 (Bad Request) if the login or email is already in use
      * @throws URISyntaxException       if the Location URI syntax is incorrect
      * @throws BadRequestAlertException 400 (Bad Request) if the login or email is already in use
      */
     @PostMapping("users")
-    public ResponseEntity<User> createUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException, AccessForbiddenAlertException {
-        this.userService.checkUsernameAndPasswordValidityElseThrow(managedUserVM.getLogin(), managedUserVM.getPassword());
+    public ResponseEntity<User> createUser(@Valid @RequestBody ManagedUserVM userToBeCreated) throws URISyntaxException, AccessForbiddenAlertException {
+        this.userService.checkUsernameAndPasswordValidityElseThrow(userToBeCreated.getLogin(), userToBeCreated.getPassword());
 
-        log.debug("REST request to save User : {}", managedUserVM);
+        log.debug("REST request to save User : {}", userToBeCreated);
 
-        if ((managedUserVM.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY.getName()) || managedUserVM.getAuthorities().contains(Authority.ADMIN_AUTHORITY.getName()))
-                && !this.authorizationCheckService.isSuperAdmin()) {
+        if (AuthorizationCheckService.isAdminByAuthorityName(userToBeCreated.getAuthorities()) && !this.authorizationCheckService.isSuperAdmin()) {
             throw new AccessForbiddenAlertException("Only super administrators are allowed to create administrators.", "userManagement",
                     "userManagement.onlySuperAdminCanManageAdmins");
         }
 
-        if (managedUserVM.getId() != null) {
+        if (userToBeCreated.getId() != null) {
             throw new BadRequestAlertException("A new user cannot already have an ID", "userManagement", "idExists");
             // Lowercase the user login before comparing with database
         }
-        else if (userRepository.findOneByLogin(managedUserVM.getLogin().toLowerCase()).isPresent()) {
+        else if (userRepository.findOneByLogin(userToBeCreated.getLogin().toLowerCase()).isPresent()) {
             throw new LoginAlreadyUsedException();
         }
-        else if (userRepository.findOneByEmailIgnoreCase(managedUserVM.getEmail()).isPresent()) {
+        else if (userRepository.findOneByEmailIgnoreCase(userToBeCreated.getEmail()).isPresent()) {
             throw new EmailAlreadyUsedException();
         }
         else {
-            User newUser = userCreationService.createUser(managedUserVM);
+            User newUser = userCreationService.createUser(userToBeCreated);
 
             // NOTE: Mail service is NOT active at the moment
             // mailService.sendCreationEmail(newUser);
@@ -230,16 +229,15 @@ public class AdminUserResource {
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.updated", managedUserVM.getLogin())).body(new UserDTO(updatedUser));
     }
 
-    private boolean isNonSuperAdminUserTryingToManageAdmin(ManagedUserVM managedUserVM, User existingUser) {
-        boolean isUpdatedUserAdmin = existingUser.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY) || existingUser.getAuthorities().contains(Authority.ADMIN_AUTHORITY);
+    private boolean isNonSuperAdminUserTryingToManageAdmin(ManagedUserVM updatedUser, User existingUser) {
+        boolean isUpdatedUserAdmin = AuthorizationCheckService.isAdmin(existingUser.getAuthorities());
         boolean isNonSuperAdminUserTryingToUpdateAdmin = isUpdatedUserAdmin && !this.authorizationCheckService.isSuperAdmin();
         if (isNonSuperAdminUserTryingToUpdateAdmin) {
             throw new AccessForbiddenAlertException("Only super administrators are allowed to manage administrators.", "userManagement",
                     "userManagement.onlySuperAdminCanManageAdmins");
         }
 
-        boolean isTryingToEscalatePrivilegesToAdmin = managedUserVM.getAuthorities() != null && (managedUserVM.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY.getName())
-                || managedUserVM.getAuthorities().contains(Authority.ADMIN_AUTHORITY.getName()));
+        boolean isTryingToEscalatePrivilegesToAdmin = updatedUser.getAuthorities() != null && AuthorizationCheckService.isAdminByAuthorityName(updatedUser.getAuthorities());
         // noinspection UnnecessaryLocalVariable: not inlined because the variable name improves readability
         boolean isNonSuperAdminUserTryingToCreateAdmin = isTryingToEscalatePrivilegesToAdmin && !this.authorizationCheckService.isSuperAdmin();
         return isNonSuperAdminUserTryingToCreateAdmin;

@@ -720,6 +720,14 @@ public class AuthorizationCheckService {
         return SecurityUtils.isCurrentUserInRole(Role.ADMIN.getAuthority()) || SecurityUtils.isCurrentUserInRole(Role.SUPER_ADMIN.getAuthority());
     }
 
+    public static boolean isAdminByAuthorityName(Set<String> authorities) {
+        return authorities.contains(Authority.ADMIN_AUTHORITY.getName()) || authorities.contains(Authority.SUPER_ADMIN_AUTHORITY.getName());
+    }
+
+    public static boolean isAdmin(Set<Authority> authorities) {
+        return authorities.contains(Authority.ADMIN_AUTHORITY) || authorities.contains(Authority.SUPER_ADMIN_AUTHORITY);
+    }
+
     /**
      * Checks if the passed user is an admin user
      *
