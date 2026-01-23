@@ -10,16 +10,9 @@ export class MockStudentsRoomDistributionService {
         combinedMaximumCapacity: 0,
     } as ExamDistributionCapacityDTO);
 
-    loadRoomData = jest.fn(() => {
-        this.availableRooms.set([]);
-    });
+    loadRoomData = jest.fn(() => {});
 
-    updateCapacityData = jest.fn((roomIds: number[], reserveFactor: number) => {
-        this.capacityData.set({
-            combinedDefaultCapacity: 0,
-            combinedMaximumCapacity: 0,
-        } as ExamDistributionCapacityDTO);
-    });
+    updateCapacityData = jest.fn((roomIds: number[], reserveFactor: number) => {});
 
     distributeStudentsAcrossRooms = jest.fn((courseId: number, examId: number, roomIds: number[], reserveFactor: number, useOnlyDefaultLayouts: boolean) => {
         return of(this.convertBodyToHttpResponse());
