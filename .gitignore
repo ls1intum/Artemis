@@ -190,6 +190,8 @@ data-exports/
 !/docker/.docker-data/artemis-mysql-data/.gitkeep
 /docker/.docker-data/artemis-postgres-data/*
 !/docker/.docker-data/artemis-postgres-data/.gitkeep
+/docker/.docker-data/weaviate-data/*
+!/docker/.docker-data/weaviate-data/.gitkeep
 
 ######################
 # Playwright
@@ -203,6 +205,12 @@ data-exports/
 #################################
 /src/main/webapp/app/core/environments/environment.*.ts
 /src/main/webapp/i18n/*.json
+
+######################
+# TypeScript output (should go to build/, but gitignore as safeguard)
+######################
+/src/main/webapp/**/*.js
+/src/main/webapp/**/*.js.map
 
 ######################
 # Artemis resources
@@ -235,3 +243,4 @@ deferredEagerBeanInstantiationViolations.dot
 CLAUDE.md
 .claude
 /src/test/playwright/monocart-report
+/venv/

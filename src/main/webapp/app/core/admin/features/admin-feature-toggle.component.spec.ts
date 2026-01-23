@@ -51,7 +51,7 @@ describe('AdminFeatureToggleComponentTest', () => {
         it('ngOnInit should load all feature toggles', () => {
             expect(comp.featureToggles()).toHaveLength(0);
             comp.ngOnInit();
-            expect(comp.featureToggles()).toHaveLength(12);
+            expect(comp.featureToggles()).toHaveLength(13);
         });
 
         it('ngOnInit should set isActive based on active toggles', () => {
@@ -89,7 +89,7 @@ describe('AdminFeatureToggleComponentTest', () => {
 
             const programmingExercise = toggles.find((t) => t.feature === FeatureToggle.ProgrammingExercises);
             expect(programmingExercise?.documentationLink).toBeDefined();
-            expect(programmingExercise?.documentationLink).toContain('docs.artemis.cit.tum.de');
+            expect(programmingExercise?.documentationLink).toContain('docs.artemis.tum.de');
 
             const plagiarismChecks = toggles.find((t) => t.feature === FeatureToggle.PlagiarismChecks);
             expect(plagiarismChecks?.documentationLink).toBeDefined();
@@ -133,7 +133,7 @@ describe('AdminFeatureToggleComponentTest', () => {
 
             const iris = profiles.find((p) => p.profile === PROFILE_IRIS);
             expect(iris?.documentationLink).toBeDefined();
-            expect(iris?.documentationLink).toContain('docs.artemis.cit.tum.de');
+            expect(iris?.documentationLink).toContain('docs.artemis.tum.de');
         });
     });
 
@@ -166,7 +166,7 @@ describe('AdminFeatureToggleComponentTest', () => {
 
             const atlas = modules.find((m) => m.feature === MODULE_FEATURE_ATLAS);
             expect(atlas?.documentationLink).toBeDefined();
-            expect(atlas?.documentationLink).toContain('docs.artemis.cit.tum.de');
+            expect(atlas?.documentationLink).toContain('docs.artemis.tum.de');
         });
     });
 

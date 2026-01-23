@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.core.repository.passkey.DistributedHttpSessionPubl
 import de.tum.cit.aet.artemis.core.repository.passkey.DistributedPublicKeyCredentialRequestOptionsRepository;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
+import de.tum.cit.aet.artemis.core.service.RateLimitService;
 
 /**
  * <p>
@@ -92,13 +93,15 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
 
     private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
 
+    private final RateLimitService rateLimitService;
+
     private final PasskeyCredentialsRepository passkeyCredentialsRepository;
 
     public ArtemisWebAuthnConfigurer(AuditEventRepository auditEventRepository, HttpMessageConverter<Object> converter, JWTCookieService jwtCookieService,
             UserRepository userRepository, PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, UserCredentialRepository userCredentialRepository,
             PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository,
             PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository, MailSendingService mailSendingService,
-            ArtemisSuccessfulLoginService artemisSuccessfulLoginService, GlobalNotificationSettingRepository globalNotificationSettingRepository,
+            ArtemisSuccessfulLoginService artemisSuccessfulLoginService, GlobalNotificationSettingRepository globalNotificationSettingRepository, RateLimitService rateLimitService,
             de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository passkeyCredentialsRepository) {
         this.auditEventRepository = auditEventRepository;
         this.converter = converter;
@@ -111,6 +114,7 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
         this.mailSendingService = mailSendingService;
         this.artemisSuccessfulLoginService = artemisSuccessfulLoginService;
         this.globalNotificationSettingRepository = globalNotificationSettingRepository;
+        this.rateLimitService = rateLimitService;
         this.passkeyCredentialsRepository = passkeyCredentialsRepository;
     }
 
@@ -179,7 +183,8 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
         var authOptionsFilter = new PublicKeyCredentialRequestOptionsFilter(rpOperations);
         authOptionsFilter.setRequestOptionsRepository(publicKeyCredentialRequestOptionsRepository);
 
-        webAuthnAuthnFilter.setAuthenticationManager(new ProviderManager(new ArtemisWebAuthnAuthenticationProvider(rpOperations, userRepository, passkeyCredentialsRepository)));
+        webAuthnAuthnFilter.setAuthenticationManager(
+                new ProviderManager(new ArtemisWebAuthnAuthenticationProvider(rpOperations, userRepository, rateLimitService, passkeyCredentialsRepository)));
         http.addFilterBefore(webAuthnAuthnFilter, BasicAuthenticationFilter.class);
         http.addFilterAfter(webAuthnRegistrationFilter, AuthorizationFilter.class);
         http.addFilterBefore(createCredentialOptionsFilter, AuthorizationFilter.class);

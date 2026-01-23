@@ -10,6 +10,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_INDEPENDENT;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
@@ -42,6 +43,7 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.PasskeyAuthenticationService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
@@ -111,11 +113,19 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @MockitoBean(name = "nebulaRestTemplate")
     protected RestTemplate nebulaRestTemplate;
 
+    // Mock PasskeyAuthenticationService to allow super admin operations in tests
+    // The @EnforceSuperAdmin annotation requires passkey authentication to be mocked
+    @MockitoSpyBean
+    protected PasskeyAuthenticationService passkeyAuthenticationService;
+
     @BeforeEach
     protected void setupSpringAIMocks() {
         if (chatModel != null) {
             when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Mocked AI response for testing")))));
         }
+        // Mock passkey authentication to always return true for super admin operations in tests
+        // Use doReturn instead of when().thenReturn() because the method throws an exception
+        doReturn(true).when(passkeyAuthenticationService).isAuthenticatedWithSuperAdminApprovedPasskey();
     }
 
     @AfterEach
