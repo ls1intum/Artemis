@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.core.connector.apollon;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withException;
@@ -12,8 +11,8 @@ import java.net.SocketTimeoutException;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
@@ -22,8 +21,10 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.ResponseActions;
 import org.springframework.web.client.RestTemplate;
 
+import de.tum.cit.aet.artemis.modeling.config.ApollonEnabled;
+
 @Component
-@Profile(PROFILE_APOLLON)
+@Conditional(ApollonEnabled.class)
 @Lazy
 public class ApollonRequestMockProvider {
 
