@@ -316,6 +316,12 @@ public class ExerciseReviewCommentService {
         }
     }
 
+    /**
+     * Validates that the comment content matches the given comment type.
+     *
+     * @param type    the comment type to validate against
+     * @param content the content payload to validate
+     */
     private void validateContentMatchesType(CommentType type, CommentContentDTO content) {
         if (content == null) {
             throw new BadRequestAlertException("Comment content must be set", COMMENT_ENTITY_NAME, "contentMissing");
@@ -331,10 +337,24 @@ public class ExerciseReviewCommentService {
         }
     }
 
+    /**
+     * Finds a comment thread by id or throws an {@link EntityNotFoundException}.
+     *
+     * @param threadId the thread id
+     * @return the found thread
+     */
     private CommentThread findThreadByIdElseThrow(long threadId) {
         return commentThreadRepository.findById(threadId).orElseThrow(() -> new EntityNotFoundException("CommentThread", threadId));
     }
 
+    /**
+     * Resolves repository diff information for a thread target based on exercise snapshots.
+     *
+     * @param previous the previous programming exercise snapshot
+     * @param current  the current programming exercise snapshot
+     * @param thread   the thread whose target determines the repository mapping
+     * @return the diff info if applicable, otherwise empty
+     */
     private Optional<RepoDiffInfo> resolveRepoDiffInfo(ProgrammingExerciseSnapshotDTO previous, ProgrammingExerciseSnapshotDTO current, CommentThread thread) {
         return switch (thread.getTargetType()) {
             case TEMPLATE_REPO -> mapParticipationRepo(previous.templateParticipation(), current.templateParticipation());
@@ -345,6 +365,13 @@ public class ExerciseReviewCommentService {
         };
     }
 
+    /**
+     * Maps a participation-based repository to diff info if both snapshots contain commit and URI data.
+     *
+     * @param previous the previous participation snapshot
+     * @param current  the current participation snapshot
+     * @return the diff info if available, otherwise empty
+     */
     private Optional<RepoDiffInfo> mapParticipationRepo(ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO previous,
             ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO current) {
         if (previous == null || current == null) {
@@ -439,6 +466,13 @@ public class ExerciseReviewCommentService {
         return mapLineWithEdits(oldLine, edits);
     }
 
+    /**
+     * Applies diff edits to map a line number and determine outdated status.
+     *
+     * @param oldLine the 1-based line number in the original content
+     * @param edits   the diff edits between old and new content
+     * @return the mapping result
+     */
     private LineMappingResult mapLineWithEdits(int oldLine, EditList edits) {
         int zeroBasedLine = oldLine - 1;
         int mappedLine = zeroBasedLine;
@@ -461,9 +495,22 @@ public class ExerciseReviewCommentService {
         return new LineMappingResult(mappedLine + 1, false);
     }
 
+    /**
+     * Result of a line mapping operation.
+     *
+     * @param newLine  the mapped 1-based line number, or {@code null} if the line can no longer be mapped
+     * @param outdated whether the original line was modified by the change
+     */
     public record LineMappingResult(@Nullable Integer newLine, boolean outdated) {
     }
 
+    /**
+     * Maps the test repository between snapshots to diff info when commit data exists.
+     *
+     * @param previous the previous programming exercise snapshot
+     * @param current  the current programming exercise snapshot
+     * @return the diff info if available, otherwise empty
+     */
     private Optional<RepoDiffInfo> mapTestRepo(ProgrammingExerciseSnapshotDTO previous, ProgrammingExerciseSnapshotDTO current) {
         if (previous.testsCommitId() == null || current.testsCommitId() == null || current.testRepositoryUri() == null) {
             return Optional.empty();
@@ -471,6 +518,14 @@ public class ExerciseReviewCommentService {
         return Optional.of(new RepoDiffInfo(new LocalVCRepositoryUri(current.testRepositoryUri()), previous.testsCommitId(), current.testsCommitId()));
     }
 
+    /**
+     * Maps an auxiliary repository between snapshots to diff info when commit data exists.
+     *
+     * @param previous              the previous programming exercise snapshot
+     * @param current               the current programming exercise snapshot
+     * @param auxiliaryRepositoryId the auxiliary repository id to resolve
+     * @return the diff info if available, otherwise empty
+     */
     private Optional<RepoDiffInfo> mapAuxRepo(ProgrammingExerciseSnapshotDTO previous, ProgrammingExerciseSnapshotDTO current, Long auxiliaryRepositoryId) {
         if (auxiliaryRepositoryId == null || previous.auxiliaryRepositories() == null || current.auxiliaryRepositories() == null) {
             return Optional.empty();
@@ -483,6 +538,12 @@ public class ExerciseReviewCommentService {
         return Optional.of(new RepoDiffInfo(new LocalVCRepositoryUri(currentRepo.repositoryUri()), previousRepo.commitId(), currentRepo.commitId()));
     }
 
+    /**
+     * Resolves the latest exercise version for problem-statement threads.
+     *
+     * @param thread the comment thread
+     * @return the latest version for problem-statement threads, otherwise {@code null}
+     */
     private ExerciseVersion resolveLatestVersion(CommentThread thread) {
         if (thread.getTargetType() != CommentThreadLocationType.PROBLEM_STATEMENT) {
             return null;
@@ -490,6 +551,14 @@ public class ExerciseReviewCommentService {
         return exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(thread.getExercise().getId()).orElse(null);
     }
 
+    /**
+     * Resolves the latest commit SHA for the repository associated with a review thread target.
+     *
+     * @param targetType            the thread target type (repository-based only)
+     * @param auxiliaryRepositoryId the auxiliary repository id when {@code targetType} is {@code AUXILIARY_REPO}
+     * @param exerciseId            the exercise id
+     * @return the latest commit SHA, or {@code null} for problem-statement threads or missing repository URIs
+     */
     public String resolveLatestCommitSha(CommentThreadLocationType targetType, Long auxiliaryRepositoryId, long exerciseId) {
         if (targetType == CommentThreadLocationType.PROBLEM_STATEMENT) {
             return null;
@@ -516,6 +585,13 @@ public class ExerciseReviewCommentService {
         return gitService.getLastCommitHash(repositoryUri);
     }
 
+    /**
+     * Resolves the LocalVC repository URI for the given auxiliary repository id and exercise.
+     *
+     * @param auxiliaryRepositoryId the auxiliary repository id
+     * @param exerciseId            the exercise id
+     * @return the resolved repository URI
+     */
     private LocalVCRepositoryUri getAuxiliaryRepositoryUri(Long auxiliaryRepositoryId, long exerciseId) {
         if (auxiliaryRepositoryId == null) {
             throw new BadRequestAlertException("Auxiliary repository id is required", THREAD_ENTITY_NAME, "auxiliaryRepositoryMissing");
@@ -530,6 +606,13 @@ public class ExerciseReviewCommentService {
         return auxiliaryRepository.getVcsRepositoryUri();
     }
 
+    /**
+     * Lightweight container for diff inputs used for line mapping.
+     *
+     * @param repositoryUri the repository to diff
+     * @param oldCommit     the old commit hash
+     * @param newCommit     the new commit hash
+     */
     private record RepoDiffInfo(LocalVCRepositoryUri repositoryUri, String oldCommit, String newCommit) {
     }
 }
