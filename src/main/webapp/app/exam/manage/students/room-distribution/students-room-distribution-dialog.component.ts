@@ -2,6 +2,7 @@ import {
     Component,
     InputSignal,
     ModelSignal,
+    OnInit,
     OutputEmitterRef,
     Signal,
     ViewEncapsulation,
@@ -35,7 +36,7 @@ import { ButtonModule } from 'primeng/button';
     encapsulation: ViewEncapsulation.None,
     imports: [FormsModule, TranslateDirective, FaIconComponent, NgbTypeaheadModule, ArtemisTranslatePipe, HelpIconComponent, DialogModule, ButtonModule],
 })
-export class StudentsRoomDistributionDialogComponent {
+export class StudentsRoomDistributionDialogComponent implements OnInit {
     readonly RESERVE_FACTOR_DEFAULT_PERCENTAGE: number = 10;
 
     // Icons
@@ -68,13 +69,17 @@ export class StudentsRoomDistributionDialogComponent {
         });
     }
 
+    ngOnInit(): void {
+        this.studentsRoomDistributionService.loadRoomData();
+    }
+
     private computeSeatInfo(): CapacityDisplayDTO {
         const totalStudents: number = this.exam().numberOfExamUsers ?? this.exam().examUsers?.length ?? 0;
         let usableCapacity: number = this.allowNarrowLayouts() ? this.selectedRoomsCapacity().combinedMaximumCapacity : this.selectedRoomsCapacity().combinedDefaultCapacity;
         if (usableCapacity > totalStudents) {
             usableCapacity = totalStudents;
         }
-        const percentage: number = totalStudents > 0 ? Math.min(100, Math.round((usableCapacity / totalStudents) * 100)) : 0;
+        const percentage: number = totalStudents > 0 ? Math.min(100, Math.floor((usableCapacity / totalStudents) * 100)) : 0;
 
         return {
             totalStudents,
@@ -84,10 +89,16 @@ export class StudentsRoomDistributionDialogComponent {
     }
 
     openDialog(): void {
-        this.selectedRooms.set([]);
         this.dialogVisible.set(true);
 
-        this.studentsRoomDistributionService.loadRoomData();
+        this.studentsRoomDistributionService.loadRoomsUsedInExam(this.courseId(), this.exam().id).subscribe({
+            next: (usedRooms: RoomForDistributionDTO[]) => {
+                this.selectedRooms.set(usedRooms.toSorted((room1, room2) => room1.name.toLowerCase().localeCompare(room2.name.toLowerCase())));
+            },
+            error: (_error) => {
+                this.selectedRooms.set([]);
+            },
+        });
     }
 
     closeDialog(): void {
@@ -96,6 +107,7 @@ export class StudentsRoomDistributionDialogComponent {
 
     attemptDistributeAndCloseDialog(): void {
         const selectedRoomIds = this.selectedRooms().map((room) => room.id);
+
         this.studentsRoomDistributionService
             .distributeStudentsAcrossRooms(this.courseId(), this.exam().id!, selectedRoomIds, this.reserveFactor(), !this.allowNarrowLayouts())
             .subscribe({

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.localvc;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
+import static de.tum.cit.aet.artemis.core.util.HttpRequestUtils.getIpStringFromRequest;
 import static de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonalAccessTokenManagementService.TOKEN_PREFIX;
 import static de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonalAccessTokenManagementService.VCS_ACCESS_TOKEN_LENGTH;
 
@@ -44,12 +45,15 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCAuthException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.RateLimitService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -74,6 +78,8 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshConstants;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
+import inet.ipaddr.IPAddress;
+import inet.ipaddr.IPAddressString;
 
 /**
  * This service is responsible for authenticating and authorizing git requests as well as for retrieving the requested Git repositories from disk.
@@ -112,6 +118,8 @@ public class LocalVCServletService {
 
     private final ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
+    private final RateLimitService rateLimitService;
+
     private final ExerciseVersionService exerciseVersionService;
 
     @Value("${artemis.version-control.url}")
@@ -132,8 +140,8 @@ public class LocalVCServletService {
             RepositoryAccessService repositoryAccessService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
             ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
-            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, Optional<VcsAccessLogService> vcsAccessLogService,
-            @Lazy ExerciseVersionService exerciseVersionService) {
+            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, Optional<VcsAccessLogService> vcsAccessLogService, RateLimitService rateLimitService,
+            ExerciseVersionService exerciseVersionService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -146,6 +154,7 @@ public class LocalVCServletService {
         this.programmingExerciseTestCaseChangedService = programmingExerciseTestCaseChangedService;
         this.participationVCSAccessTokenRepository = participationVCSAccessTokenRepository;
         this.vcsAccessLogService = vcsAccessLogService;
+        this.rateLimitService = rateLimitService;
         this.exerciseVersionService = exerciseVersionService;
     }
 
@@ -226,6 +235,10 @@ public class LocalVCServletService {
         if (!request.getRequestURI().endsWith("/info/refs")) {
             return;
         }
+
+        String ipString = getIpStringFromRequest(request);
+        final IPAddress ipAddress = new IPAddressString(ipString).getAddress();
+        rateLimitService.enforcePerMinute(ipAddress, RateLimitType.AUTHENTICATION);
 
         LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
         log.debug("Parsed repository URI from request: {}", localVCRepositoryUri);
@@ -755,15 +768,20 @@ public class LocalVCServletService {
      * @return The HTTP status code.
      */
     public int getHttpStatusForException(Exception exception, String repositoryUri) {
-        if (exception instanceof LocalVCAuthException) {
-            return HttpStatus.UNAUTHORIZED.value();
-        }
-        else if (exception instanceof LocalVCForbiddenException) {
-            return HttpStatus.FORBIDDEN.value();
-        }
-        else {
-            log.error("Internal server error while trying to access repository {}: {}", repositoryUri, exception.getMessage(), exception);
-            return HttpStatus.INTERNAL_SERVER_ERROR.value();
+        switch (exception) {
+            case LocalVCAuthException _ -> {
+                return HttpStatus.UNAUTHORIZED.value();
+            }
+            case LocalVCForbiddenException _ -> {
+                return HttpStatus.FORBIDDEN.value();
+            }
+            case RateLimitExceededException _ -> {
+                return HttpStatus.TOO_MANY_REQUESTS.value();
+            }
+            default -> {
+                log.error("Internal server error while trying to access repository {}: {}", repositoryUri, exception.getMessage(), exception);
+                return HttpStatus.INTERNAL_SERVER_ERROR.value();
+            }
         }
     }
 
