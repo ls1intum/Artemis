@@ -181,7 +181,7 @@ public class CourseExamExportService {
             if (examScoresData != null && !examScoresData.isEmpty()) {
                 Path studentDataDir = tmpCourseDir.resolve("student-data");
                 for (ExamScoresDTO examScores : examScoresData.values()) {
-                    List<Path> examScoreFiles = courseStudentDataExportService.exportExamScoresFromData(examScores, studentDataDir, exportErrors);
+                    List<Path> examScoreFiles = courseStudentDataExportService.exportExamScoresFromData(examScores, studentDataDir, exportErrors, course);
                     exportedFiles.addAll(examScoreFiles);
                 }
             }
