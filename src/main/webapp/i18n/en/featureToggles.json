@@ -35,10 +35,6 @@
                     "name": "Athena (AI Assessment)",
                     "description": "Enables Athena ML-based automated feedback suggestions for text and programming exercises."
                 },
-                "lti": {
-                    "name": "LTI Integration",
-                    "description": "Enables Learning Tools Interoperability (LTI) for integration with external learning management systems."
-                },
                 "apollon": {
                     "name": "Apollon (Modeling)",
                     "description": "Enables the Apollon UML modeling editor for creating and editing diagrams in modeling exercises."
@@ -116,6 +112,10 @@
                 "sharing": {
                     "name": "Exercise Sharing",
                     "description": "Enables sharing and importing of programming exercises between courses and institutions."
+                },
+                "lti": {
+                    "name": "LTI Integration",
+                    "description": "Enables Learning Tools Interoperability (LTI) for integration with external learning management systems."
                 },
                 "passkey": {
                     "name": "Passkey Authentication",
