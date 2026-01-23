@@ -16,13 +16,6 @@
             "updated": "Programmieraufgabe aktualisiert mit Titel {{ param }}",
             "deleted": "Programmieraufgabe gelöscht mit Titel {{ param }}",
             "delete": {
-                "summary": {
-                    "title": "Programmieraufgaben-Zusammenfassung",
-                    "numberOfStudentParticipations": "Anzahl der Studierendenteilnahmen",
-                    "numberOfBuilds": "Anzahl der Builds",
-                    "numberOfCommunicationPosts": "Anzahl der Kommunikationsbeiträge",
-                    "numberOfAnswerPosts": "Anzahl der Antworten"
-                },
                 "question": "Soll die Programmieraufgabe <strong>{{ title }}</strong> des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?",
                 "questionLocalVC": {
                     "single": "Soll die Programmieraufgabe <strong>{{ title }}</strong> des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?<br>Alle Studierenden-, Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern!",

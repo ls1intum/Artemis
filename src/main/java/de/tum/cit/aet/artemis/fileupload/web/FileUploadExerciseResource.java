@@ -72,7 +72,6 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.fileupload.config.FileUploadEnabled;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.fileupload.dto.FileUploadExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.fileupload.dto.UpdateFileUploadExerciseDTO;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseImportService;
@@ -567,19 +566,6 @@ public class FileUploadExerciseResource {
         exerciseService.logDeletion(exercise, exercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseDeletionService.delete(exerciseId, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exercise.getTitle())).build();
-    }
-
-    /**
-     * GET /file-upload-exercises/:exerciseId/deletion-summary : Get a summary for the deletion of a file upload exercise.
-     *
-     * @param exerciseId the id of the file upload exercise
-     * @return the {@link ResponseEntity} with status {@code 200} and with body a summary of the deletion of the file upload exercise
-     */
-    @GetMapping("file-upload-exercises/{exerciseId}/deletion-summary")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<FileUploadExerciseDeletionSummaryDTO> getDeletionSummary(@PathVariable long exerciseId) {
-        log.debug("REST request to get deletion summary for file upload exercise : {}", exerciseId);
-        return ResponseEntity.ok(fileUploadExerciseService.getDeletionSummary(exerciseId));
     }
 
     /**

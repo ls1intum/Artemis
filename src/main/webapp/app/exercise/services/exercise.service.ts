@@ -20,6 +20,8 @@ import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { SafeHtml } from '@angular/platform-browser';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+import { ExerciseDeletionSummaryDTO } from 'app/exercise/shared/entities/exercise-deletion-summary.model';
+import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -194,6 +196,34 @@ export class ExerciseService {
      */
     reset(exerciseId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/reset`, { observe: 'response' });
+    }
+
+    /**
+     * Retrieves the deletion summary for an exercise.
+     *
+     * @param exerciseId the id of the exercise
+     * @returns an observable of the deletion summary as EntitySummary
+     */
+    getDeletionSummary(exerciseId: number): Observable<EntitySummary> {
+        return this.http.get<ExerciseDeletionSummaryDTO>(`${this.resourceUrl}/${exerciseId}/deletion-summary`, { observe: 'response' }).pipe(
+            map((response) => {
+                const summary = response.body;
+                return summary ? this.createExerciseEntitySummary(summary) : {};
+            }),
+        );
+    }
+
+    private createExerciseEntitySummary(dto: ExerciseDeletionSummaryDTO): EntitySummary {
+        return Object.fromEntries(
+            Object.entries({
+                'artemisApp.exercise.delete.summary.numberOfStudentParticipations': dto.numberOfStudentParticipations,
+                'artemisApp.exercise.delete.summary.numberOfSubmissions': dto.numberOfSubmissions,
+                'artemisApp.exercise.delete.summary.numberOfAssessments': dto.numberOfAssessments,
+                'artemisApp.exercise.delete.summary.numberOfBuilds': dto.numberOfBuilds,
+                'artemisApp.exercise.delete.summary.numberOfCommunicationPosts': dto.numberOfCommunicationPosts,
+                'artemisApp.exercise.delete.summary.numberOfAnswerPosts': dto.numberOfAnswerPosts,
+            }).filter(([, value]) => value !== undefined),
+        ) as EntitySummary;
     }
 
     /**

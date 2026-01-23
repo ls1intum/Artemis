@@ -128,8 +128,8 @@
             [entityTitle]="exercise.title || ''"
             deleteQuestion="artemisApp.exercise.delete.question"
             deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-            [entitySummaryTitle]="getEntitySummaryTitle(exercise.type!)"
-            [fetchEntitySummary]="fetchExerciseDeletionSummary(exercise.id!, exercise.type!)"
+            entitySummaryTitle="artemisApp.exercise.delete.summary.title"
+            [fetchEntitySummary]="fetchExerciseDeletionSummary(exercise.id!)"
             (delete)="deleteExercise()"
             [dialogError]="dialogError$"
         >
@@ -140,8 +140,8 @@
         <button
             jhiDeleteButton
             [entityTitle]="exercise.title || ''"
-            entitySummaryTitle="artemisApp.programmingExercise.delete.summary.title"
-            [fetchEntitySummary]="fetchProgrammingExerciseDeletionSummary(exercise.id!)"
+            entitySummaryTitle="artemisApp.exercise.delete.summary.title"
+            [fetchEntitySummary]="fetchExerciseDeletionSummary(exercise.id!)"
             deleteQuestion="artemisApp.programmingExercise.delete.question"
             [translateValues]="{
                 courseTitle: course.title,

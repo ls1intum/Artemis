@@ -23,7 +23,16 @@
             "deleted": "Deleted Exercise with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to permanently delete the exercise <strong>{{ title }}</strong>? This action can NOT be undone!",
-                "typeNameToConfirm": "Please type in the name of the exercise to confirm."
+                "typeNameToConfirm": "Please type in the name of the exercise to confirm.",
+                "summary": {
+                    "title": "Exercise Summary",
+                    "numberOfStudentParticipations": "Number of Student Participations",
+                    "numberOfSubmissions": "Number of Submissions",
+                    "numberOfAssessments": "Number of Assessments",
+                    "numberOfCommunicationPosts": "Number of Communication Posts",
+                    "numberOfAnswerPosts": "Number of Answer Posts",
+                    "numberOfBuilds": "Number of Builds"
+                }
             },
             "reset": {
                 "question": "Are you sure you want to reset the exercise <strong>{{ title }}</strong>? This action can NOT be undone!"

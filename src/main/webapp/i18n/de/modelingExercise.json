@@ -10,16 +10,6 @@
             "created": "Modellierungsaufgabe erstellt mit ID {{ param }}",
             "updated": "Modellierungsaufgabe aktualisiert mit ID {{ param }}",
             "deleted": "Modellierungsaufgabe gelöscht mit ID {{ param }}",
-            "delete": {
-                "summary": {
-                    "title": "Zusammenfassung Modellierungsaufgabe",
-                    "numberOfStudentParticipations": "Anzahl der Studierenden-Teilnahmen",
-                    "numberOfSubmissions": "Anzahl der Abgaben",
-                    "numberOfAssessments": "Anzahl der Bewertungen",
-                    "numberOfCommunicationPosts": "Anzahl der Kommunikationsbeiträge",
-                    "numberOfAnswerPosts": "Anzahl der Antwortbeiträge"
-                }
-            },
             "detail": {
                 "title": "Modellierungsaufgabe"
             },

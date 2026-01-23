@@ -11,6 +11,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 
 @Component({
     selector: 'jhi-text-exercise-row-buttons',
@@ -20,6 +21,7 @@ import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 export class TextExerciseRowButtonsComponent {
     private eventManager = inject(EventManager);
     private textExerciseService = inject(TextExerciseService);
+    private exerciseService = inject(ExerciseService);
 
     courseId = input.required<number>();
     exercise = input.required<TextExercise>();
@@ -48,6 +50,6 @@ export class TextExerciseRowButtonsComponent {
     }
 
     fetchExerciseDeletionSummary(exerciseId: number): Observable<EntitySummary> {
-        return this.textExerciseService.getDeletionSummary(exerciseId);
+        return this.exerciseService.getDeletionSummary(exerciseId);
     }
 }

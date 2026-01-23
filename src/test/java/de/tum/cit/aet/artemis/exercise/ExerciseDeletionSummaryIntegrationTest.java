@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.web;
+package de.tum.cit.aet.artemis.exercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,18 +17,18 @@ import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
-import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.programming.test_repository.BuildJobTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class ProgrammingExerciseDeletionResourceTest extends AbstractSpringIntegrationIndependentTest {
+class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
-    private static final String TEST_PREFIX = "progexdelresource";
+    private static final String TEST_PREFIX = "exdelsuminteg";
 
     @Autowired
     private RequestUtilService request;
@@ -120,8 +120,7 @@ class ProgrammingExerciseDeletionResourceTest extends AbstractSpringIntegrationI
         answerPost.setAuthor(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
         answerPostRepository.save(answerPost);
 
-        var summary = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/deletion-summary", HttpStatus.OK,
-                ProgrammingExerciseDeletionSummaryDTO.class);
+        var summary = request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/deletion-summary", HttpStatus.OK, ExerciseDeletionSummaryDTO.class);
 
         assertThat(summary.numberOfStudentParticipations()).isEqualTo(2);
         assertThat(summary.numberOfBuilds()).isEqualTo(2);
@@ -133,8 +132,7 @@ class ProgrammingExerciseDeletionResourceTest extends AbstractSpringIntegrationI
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetDeletionSummary_noChannel() throws Exception {
         // No student participations, no builds, no channel
-        var summary = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/deletion-summary", HttpStatus.OK,
-                ProgrammingExerciseDeletionSummaryDTO.class);
+        var summary = request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/deletion-summary", HttpStatus.OK, ExerciseDeletionSummaryDTO.class);
 
         assertThat(summary.numberOfStudentParticipations()).isEqualTo(0);
         assertThat(summary.numberOfBuilds()).isEqualTo(0);
@@ -145,14 +143,12 @@ class ProgrammingExerciseDeletionResourceTest extends AbstractSpringIntegrationI
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetDeletionSummary_editorForbidden() throws Exception {
-        request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/deletion-summary", HttpStatus.FORBIDDEN,
-                ProgrammingExerciseDeletionSummaryDTO.class);
+        request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/deletion-summary", HttpStatus.FORBIDDEN, ExerciseDeletionSummaryDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testGetDeletionSummary_instructorNotInCourseForbidden() throws Exception {
-        request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/deletion-summary", HttpStatus.FORBIDDEN,
-                ProgrammingExerciseDeletionSummaryDTO.class);
+        request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/deletion-summary", HttpStatus.FORBIDDEN, ExerciseDeletionSummaryDTO.class);
     }
 }

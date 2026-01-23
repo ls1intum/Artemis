@@ -15,12 +15,12 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.modeling.dto.ModelingExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 
 @Conditional(ModelingEnabled.class)
@@ -79,14 +79,14 @@ public class ModelingExerciseService {
      * @param exerciseId the id of the modeling exercise
      * @return the summary of the deletion of the modeling exercise
      */
-    public ModelingExerciseDeletionSummaryDTO getDeletionSummary(long exerciseId) {
+    public ExerciseDeletionSummaryDTO getDeletionSummary(long exerciseId) {
         final long numberOfStudentParticipations = participationRepository.countByExerciseId(exerciseId);
         final long numberOfSubmissions = submissionRepository.countByExerciseId(exerciseId);
         final long numberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId);
 
         ExerciseCommunicationDeletionSummaryDTO communicationDeletionSummaryDTO = channelService.getExerciseCommunicationDeletionSummary(exerciseId);
 
-        return new ModelingExerciseDeletionSummaryDTO(numberOfStudentParticipations, numberOfSubmissions, numberOfAssessments,
+        return new ExerciseDeletionSummaryDTO(numberOfStudentParticipations, null, numberOfSubmissions, numberOfAssessments,
                 communicationDeletionSummaryDTO.numberOfCommunicationPosts(), communicationDeletionSummaryDTO.numberOfAnswerPosts());
     }
 }

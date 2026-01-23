@@ -7,7 +7,6 @@ import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseServicable, ExerciseService } from 'app/exercise/services/exercise.service';
 import { downloadStream } from 'app/shared/util/download.util';
 import { toUpdateModelingExerciseDTO } from 'app/modeling/shared/entities/modeling-exercise-update-dto.model';
-import { ModelingExerciseDeletionSummaryDTO } from 'app/modeling/shared/entities/modeling-exercise-deletion-summary.model';
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 
 export type EntityResponseType = HttpResponse<ModelingExercise>;
@@ -91,21 +90,6 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
      * @returns an observable of the deletion summary as EntitySummary
      */
     getDeletionSummary(exerciseId: number): Observable<EntitySummary> {
-        return this.http.get<ModelingExerciseDeletionSummaryDTO>(`${this.resourceUrl}/${exerciseId}/deletion-summary`, { observe: 'response' }).pipe(
-            map((response) => {
-                const summary = response.body;
-                return summary ? this.createModelingExerciseEntitySummary(summary) : {};
-            }),
-        );
-    }
-
-    private createModelingExerciseEntitySummary(dto: ModelingExerciseDeletionSummaryDTO): EntitySummary {
-        return {
-            'artemisApp.modelingExercise.delete.summary.numberOfStudentParticipations': dto.numberOfStudentParticipations,
-            'artemisApp.modelingExercise.delete.summary.numberOfSubmissions': dto.numberOfSubmissions,
-            'artemisApp.modelingExercise.delete.summary.numberOfAssessments': dto.numberOfAssessments,
-            'artemisApp.modelingExercise.delete.summary.numberOfCommunicationPosts': dto.numberOfCommunicationPosts,
-            'artemisApp.modelingExercise.delete.summary.numberOfAnswerPosts': dto.numberOfAnswerPosts,
-        };
+        return this.exerciseService.getDeletionSummary(exerciseId);
     }
 }

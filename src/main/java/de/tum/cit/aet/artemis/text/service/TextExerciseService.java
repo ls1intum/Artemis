@@ -17,12 +17,12 @@ import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.text.dto.TextExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
 @Conditional(TextEnabled.class)
@@ -92,14 +92,14 @@ public class TextExerciseService {
      * @param exerciseId the id of the text exercise
      * @return the summary of the deletion of the text exercise
      */
-    public TextExerciseDeletionSummaryDTO getDeletionSummary(long exerciseId) {
+    public ExerciseDeletionSummaryDTO getDeletionSummary(long exerciseId) {
         final long numberOfStudentParticipations = participationRepository.countByExerciseId(exerciseId);
         final long numberOfSubmissions = submissionRepository.countByExerciseId(exerciseId);
         final long numberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId);
 
         ExerciseCommunicationDeletionSummaryDTO communicationDeletionSummaryDTO = channelService.getExerciseCommunicationDeletionSummary(exerciseId);
 
-        return new TextExerciseDeletionSummaryDTO(numberOfStudentParticipations, numberOfSubmissions, numberOfAssessments,
+        return new ExerciseDeletionSummaryDTO(numberOfStudentParticipations, null, numberOfSubmissions, numberOfAssessments,
                 communicationDeletionSummaryDTO.numberOfCommunicationPosts(), communicationDeletionSummaryDTO.numberOfAnswerPosts());
     }
 }

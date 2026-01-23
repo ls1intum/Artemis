@@ -64,6 +64,7 @@ import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -87,7 +88,6 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.CompetencyExerciseLinkFromEditorDTO;
-import de.tum.cit.aet.artemis.quiz.dto.QuizExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithQuestionsDTO;
@@ -1380,13 +1380,13 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param exerciseId the id of the quiz exercise
      * @return the summary of the deletion of the quiz exercise
      */
-    public QuizExerciseDeletionSummaryDTO getDeletionSummary(long exerciseId) {
+    public ExerciseDeletionSummaryDTO getDeletionSummary(long exerciseId) {
         final long numberOfStudentParticipations = participationRepository.countByExerciseId(exerciseId);
         final long numberOfSubmissions = submissionRepository.countByExerciseId(exerciseId);
 
         ExerciseCommunicationDeletionSummaryDTO communicationDeletionSummaryDTO = channelService.getExerciseCommunicationDeletionSummary(exerciseId);
 
-        return new QuizExerciseDeletionSummaryDTO(numberOfStudentParticipations, numberOfSubmissions, communicationDeletionSummaryDTO.numberOfCommunicationPosts(),
+        return new ExerciseDeletionSummaryDTO(numberOfStudentParticipations, null, numberOfSubmissions, null, communicationDeletionSummaryDTO.numberOfCommunicationPosts(),
                 communicationDeletionSummaryDTO.numberOfAnswerPosts());
     }
 }
