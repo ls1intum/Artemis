@@ -14,8 +14,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
-import { IrisCitationDTO } from 'app/iris/shared/entities/iris-citation-dto.model';
-import { formatMarkdownWithCitations } from 'app/iris/shared/util/iris-citation.util';
 
 @Component({
     selector: 'jhi-exercise-chatbot-button',
@@ -59,7 +57,7 @@ export class IrisExerciseChatbotButtonComponent {
             filter((msg) => !!msg),
             switchMap((msg) => {
                 if (msg!.content && msg!.content.length > 0 && isTextContent(msg!.content[0])) {
-                    return of({ text: msg!.content[0].textContent, citations: msg!.citations });
+                    return of({ text: msg!.content[0].textContent });
                 }
                 return EMPTY;
             }),
@@ -197,12 +195,10 @@ export class IrisExerciseChatbotButtonComponent {
         if (!message?.text) {
             return '';
         }
-        const withCitations = formatMarkdownWithCitations(message.text, message.citations);
-        return htmlForMarkdown(withCitations);
+        return htmlForMarkdown(message.text);
     }
 }
 
 type ChatBubbleMessage = {
     text: string;
-    citations?: IrisCitationDTO[];
 };

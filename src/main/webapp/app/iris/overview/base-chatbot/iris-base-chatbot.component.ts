@@ -42,7 +42,6 @@ import { NgClass } from '@angular/common';
 import { facSidebar } from 'app/shared/icons/icons';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
-import { formatMarkdownWithCitations } from 'app/iris/shared/util/iris-citation.util';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -340,9 +339,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return processed;
     }
 
-    renderMessageContent(content: IrisTextMessageContent, message: IrisMessage): string {
-        const withCitations = formatMarkdownWithCitations(content.textContent, message.citations);
-        return htmlForMarkdown(withCitations);
+    renderMessageContent(content: IrisTextMessageContent): string {
+        return htmlForMarkdown(content.textContent);
     }
 
     private updateCitationGroupSummary(citationGroup: HTMLElement, nextIndex: number) {
