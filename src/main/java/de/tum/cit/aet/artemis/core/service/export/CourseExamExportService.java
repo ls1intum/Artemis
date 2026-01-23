@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.fileupload.api.FileSubmissionExportApi;
@@ -112,15 +113,16 @@ public class CourseExamExportService {
     private static final int TOTAL_ARCHIVE_STEPS = 4;
 
     /**
-     * Exports the entire course into a single zip file that is saved in the directory specified
-     * by outputDir.
+     * Exports the entire course into a single zip file that is saved in the directory specified by outputDir.
+     * This is used to export all exercises and exams of a course along with student submissions for the course archive
      *
-     * @param course       The course to export
-     * @param outputDir    The directory where the exported course is saved
-     * @param exportErrors List of failures that occurred during the export
+     * @param course         The course to export
+     * @param outputDir      The directory where the exported course is saved
+     * @param exportErrors   List of failures that occurred during the export
+     * @param examScoresData Map of exam ID to ExamScoresDTO containing comprehensive exam score data
      * @return Path to the zip file
      */
-    public Optional<Path> exportCourse(Course course, Path outputDir, List<String> exportErrors) {
+    public Optional<Path> exportCourseForArchive(Course course, Path outputDir, List<String> exportErrors, Map<Long, ExamScoresDTO> examScoresData) {
         ZonedDateTime startedAt = ZonedDateTime.now();
         int stepsCompleted = 0;
 
@@ -174,6 +176,15 @@ public class CourseExamExportService {
             notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Exporting student data..."), null);
             List<Path> studentDataFiles = courseStudentDataExportService.exportAllStudentData(course.getId(), tmpCourseDir, exportErrors);
             exportedFiles.addAll(studentDataFiles);
+
+            // Export exam scores from the pre-fetched data (passed in to avoid circular dependencies)
+            if (examScoresData != null && !examScoresData.isEmpty()) {
+                Path studentDataDir = tmpCourseDir.resolve("student-data");
+                for (ExamScoresDTO examScores : examScoresData.values()) {
+                    List<Path> examScoreFiles = courseStudentDataExportService.exportExamScoresFromData(examScores, studentDataDir, exportErrors);
+                    exportedFiles.addAll(examScoreFiles);
+                }
+            }
             stepsCompleted++;
 
             // Step 3: Write report and error file

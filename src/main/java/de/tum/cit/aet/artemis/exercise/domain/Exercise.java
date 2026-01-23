@@ -859,8 +859,8 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             throw new BadRequestAlertException("The max points needs to be greater than 0", "Exercise", "maxScoreInvalid");
         }
 
-        if (getBonusPoints() == null) {
-            // make sure the default value is set properly
+        if (getBonusPoints() == null || getBonusPoints() < 0) {
+            // Correct invalid bonusPoints to default value (prevents invalid state)
             setBonusPoints(0.0);
         }
 

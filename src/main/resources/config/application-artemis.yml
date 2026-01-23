@@ -77,6 +77,10 @@ artemis:
   git:
     name: Artemis
     email: artemis@xcit.tum.de
+  rate-limiting:
+    enabled: false
+    account-management-requests-per-minute: 5
+    authentication-requests-per-minute: 30
   athena:
     url: http://localhost:5100
     secret: abcdef12345
