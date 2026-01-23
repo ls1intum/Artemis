@@ -92,7 +92,7 @@ public class ExamRoomService {
             ZipEntry entry;
 
             while ((entry = zis.getNextEntry()) != null) {
-                String entryName = FileUtil.sanitizeFilename(entry.getName());
+                String entryName = entry.getName();
 
                 // validate file type
                 if (entry.isDirectory() || !entryName.endsWith(".json")) {
@@ -103,7 +103,7 @@ public class ExamRoomService {
                 // Math.max(0, entryName.lastIndexOf('/') + 1); === entryName.lastIndexOf('/') + 1;
                 int roomNumberStartIndex = entryName.lastIndexOf('/') + 1;
                 int roomNumberEndIndex = entryName.lastIndexOf(".json");
-                String roomNumber = entryName.substring(roomNumberStartIndex, roomNumberEndIndex);
+                String roomNumber = FileUtil.sanitizeFilename(entryName.substring(roomNumberStartIndex, roomNumberEndIndex));
                 if (roomNumber.isBlank()) {
                     throw new BadRequestAlertException("Invalid room file name: missing room number", ENTITY_NAME, "room.missingRoomNumber");
                 }
