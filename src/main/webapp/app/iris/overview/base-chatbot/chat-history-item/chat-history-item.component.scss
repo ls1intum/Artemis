@@ -3,8 +3,8 @@
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
-    padding: 0.4rem 1rem;
-    font-size: 1rem;
+    padding: 6px 16px;
+    font-size: 14px;
     min-width: 17rem;
 
     .chat-history-text {
@@ -14,16 +14,14 @@
     }
 
     .related-entity-info {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
+        max-width: 6rem;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        box-sizing: border-box;
+        font-size: 10px;
 
         .related-entity-name {
-            border: 1px solid var(--border-color);
-            border-radius: 0.25rem;
-            padding: 0.25rem;
-            font-size: 0.5rem;
-            max-width: 5rem;
+            padding: 4px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -31,24 +29,16 @@
     }
 
     &:hover {
-        color: var(--primary);
-        background-color: var(--iris-client-chat-background);
-
-        .chat-history-text {
-            text-decoration: underline;
-        }
-
-        .related-entity-info .related-entity-name {
-            border: 1px solid var(--primary);
-        }
+        background-color: var(--iris-rate-background);
+        border-radius: 6px;
     }
 
     &.chat-history-item-selected {
         background-color: var(--iris-client-chat-background);
-        color: var(--primary);
+        border-radius: 6px;
 
-        .related-entity-info .related-entity-name {
-            border: 1px solid var(--primary);
+        .related-entity-info {
+            border: 1px solid var(--gray-500);
         }
     }
 }

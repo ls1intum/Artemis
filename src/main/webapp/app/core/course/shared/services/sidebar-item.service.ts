@@ -201,6 +201,16 @@ export class CourseSidebarItemService {
         };
     }
 
+    getIrisItem(): SidebarItem {
+        return {
+            routerLink: 'iris',
+            icon: faRobot,
+            title: 'Iris',
+            translation: 'artemisApp.courseOverview.menu.iris',
+            hidden: false,
+        };
+    }
+
     getFaqManagementItem(courseId: number): SidebarItem {
         return {
             routerLink: `${courseId}/faqs`,
