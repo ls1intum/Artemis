@@ -3,7 +3,6 @@ import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { of } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
-import { triggerChanges } from 'test/helpers/utils/general-test.utils';
 import { CodeEditorBuildOutputComponent } from 'app/programming/manage/code-editor/build-output/code-editor-build-output.component';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { BuildLogEntryArray } from 'app/buildagent/shared/entities/build-log.model';
@@ -119,9 +118,8 @@ describe('CodeEditorBuildOutputComponent', () => {
         getFeedbackDetailsForResultStub.mockReturnValue(of({ body: [] }));
         getBuildLogsStub.mockReturnValue(of(buildLogs));
 
-        comp.participation = participation;
-        triggerChanges(comp, { property: 'participation', currentValue: participation });
-        fixture.changeDetectorRef.detectChanges();
+        fixture.componentRef.setInput('participation', participation);
+        fixture.detectChanges();
 
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id, result);
@@ -141,10 +139,9 @@ describe('CodeEditorBuildOutputComponent', () => {
 
     it('should not retrieve build logs after participation change, if no result is available', () => {
         const participation = { id: 1 } as Participation;
-        comp.participation = participation;
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of(null));
-        triggerChanges(comp, { property: 'participation', currentValue: participation });
-        fixture.changeDetectorRef.detectChanges();
+        fixture.componentRef.setInput('participation', participation);
+        fixture.detectChanges();
         expect(getBuildLogsStub).not.toHaveBeenCalled();
         expect(comp.rawBuildLogs).toStrictEqual(new BuildLogEntryArray());
 
@@ -161,11 +158,10 @@ describe('CodeEditorBuildOutputComponent', () => {
         const submission = { id: 1, buildFailed: false, results: [result] } as ProgrammingSubmission;
         result.submission = submission;
         const participation = { id: 1, submissions: [submission] } as Participation;
-        comp.participation = participation;
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of(null));
         getFeedbackDetailsForResultStub.mockReturnValue(of({ ...result, feedbacks: [] }));
-        triggerChanges(comp, { property: 'participation', currentValue: participation });
-        fixture.changeDetectorRef.detectChanges();
+        fixture.componentRef.setInput('participation', participation);
+        fixture.detectChanges();
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, result);
         expect(getBuildLogsStub).not.toHaveBeenCalled();
@@ -186,9 +182,8 @@ describe('CodeEditorBuildOutputComponent', () => {
         getBuildLogsStub.mockReturnValue(of(buildLogs));
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of(result));
 
-        comp.participation = participation;
-        triggerChanges(comp, { property: 'participation', currentValue: participation });
-        fixture.changeDetectorRef.detectChanges();
+        fixture.componentRef.setInput('participation', participation);
+        fixture.detectChanges();
 
         expect(getBuildLogsStub).toHaveBeenCalledOnce();
         expect(getBuildLogsStub).toHaveBeenCalledWith();
@@ -213,9 +208,8 @@ describe('CodeEditorBuildOutputComponent', () => {
         getBuildLogsStub.mockReturnValue(of(buildLogs));
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of(result));
 
-        comp.participation = participation;
-        triggerChanges(comp, { property: 'participation', currentValue: participation });
-        fixture.changeDetectorRef.detectChanges();
+        fixture.componentRef.setInput('participation', participation);
+        fixture.detectChanges();
 
         expect(getBuildLogsStub).toHaveBeenCalledOnce();
         expect(getBuildLogsStub).toHaveBeenCalledWith();
@@ -238,7 +232,6 @@ describe('CodeEditorBuildOutputComponent', () => {
         const participation = { id: 1, submissions: [submission] } as Participation;
         submission.participation = participation;
         submission.results = [result];
-        comp.participation = participation;
         const feedback = {
             id: 1,
             type: FeedbackType.AUTOMATIC,
@@ -251,7 +244,8 @@ describe('CodeEditorBuildOutputComponent', () => {
         comp.onAnnotations.subscribe((emitted: any) => {
             emittedAnnotations = emitted;
         });
-        triggerChanges(comp, { property: 'participation', currentValue: participation });
+        fixture.componentRef.setInput('participation', participation);
+        fixture.detectChanges();
 
         expect(emittedAnnotations).toHaveLength(1);
         const annotation = emittedAnnotations[0];
