@@ -1,8 +1,9 @@
 import { Component, ElementRef, OnDestroy, ViewChild, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
-import { faArrowLeft, faCheck, faExclamationTriangle, faFile, faQuestionCircle, faTimes, faVideo } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faCheck, faExclamationTriangle, faFile, faLink, faQuestionCircle, faTimes, faVideo } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { MAX_FILE_SIZE, MAX_VIDEO_FILE_SIZE } from 'app/shared/constants/input.constants';
@@ -96,7 +97,17 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
     selector: 'jhi-attachment-video-unit-form',
     templateUrl: './attachment-video-unit-form.component.html',
     styleUrl: './attachment-video-unit-form.component.scss',
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, FormDateTimePickerComponent, CompetencySelectionComponent, ArtemisTranslatePipe],
+    imports: [
+        NgTemplateOutlet,
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        FaIconComponent,
+        NgbTooltip,
+        FormDateTimePickerComponent,
+        CompetencySelectionComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class AttachmentVideoUnitFormComponent implements OnDestroy {
     protected readonly faQuestionCircle = faQuestionCircle;
@@ -105,6 +116,7 @@ export class AttachmentVideoUnitFormComponent implements OnDestroy {
     protected readonly faCheck = faCheck;
     protected readonly faFile = faFile;
     protected readonly faVideo = faVideo;
+    protected readonly faLink = faLink;
     protected readonly faExclamationTriangle = faExclamationTriangle;
 
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
@@ -140,6 +152,9 @@ export class AttachmentVideoUnitFormComponent implements OnDestroy {
 
     videoFileName = signal<string | undefined>(undefined);
     isVideoFileTooBig = signal<boolean>(false);
+
+    // Video source type: 'upload' for video file upload, 'url' for embeddable link
+    videoSourceType = signal<'upload' | 'url'>('url');
 
     videoSourceUrlValidator = videoSourceUrlValidator;
     videoSourceTransformUrlValidator = videoSourceTransformUrlValidator;
@@ -233,6 +248,26 @@ export class AttachmentVideoUnitFormComponent implements OnDestroy {
             this.form.patchValue({
                 name: this.videoFile.name.replace(/\.[^/.]+$/, ''),
             });
+        }
+    }
+
+    onVideoSourceTypeChange(type: 'upload' | 'url'): void {
+        this.videoSourceType.set(type);
+
+        // Clear the other option when switching modes (mutually exclusive)
+        if (type === 'upload') {
+            // Clear embeddable URL fields
+            this.videoSourceControl?.setValue(undefined);
+            this.urlHelperControl?.setValue(undefined);
+        } else {
+            // Clear video file upload
+            this.videoFile = undefined!;
+            this.videoFileName.set(undefined);
+            this.videoFileInputTouched = false;
+            this.isVideoFileTooBig.set(false);
+            if (this.videoFileInput) {
+                this.videoFileInput.nativeElement.value = '';
+            }
         }
     }
 
