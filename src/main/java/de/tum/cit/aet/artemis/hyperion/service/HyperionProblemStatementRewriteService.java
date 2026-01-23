@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
+import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.util.LlmUsageHelper;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
@@ -85,7 +86,7 @@ public class HyperionProblemStatementRewriteService {
             ChatResponse chatResponse = promptResponse.chatResponse();
             String responseContent = chatResponse.getResult().getOutput().getText();
             LLMRequest llmRequest = llmUsageService.buildLlmRequest(chatResponse, "rewrite", REWRITE_PIPELINE_ID);
-            llmUsageService.storeTokenUsage(course, llmRequest);
+            llmUsageService.storeTokenUsage(LLMServiceType.HYPERION, course, llmRequest);
             // @formatter:on
             String result = responseContent.trim();
             boolean improved = !result.equals(problemStatementText.trim());

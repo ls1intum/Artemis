@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +19,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
+import de.tum.cit.aet.artemis.core.config.LlmModelCostConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
@@ -42,7 +45,8 @@ class HyperionProblemStatementRewriteServiceTest {
         MockitoAnnotations.openMocks(this);
         ChatClient chatClient = ChatClient.create(chatModel);
         var templateService = new HyperionPromptTemplateService();
-        var llmUsageHelper = new LlmUsageHelper(llmTokenUsageService, userRepository);
+        var costConfiguration = createTestConfiguration();
+        var llmUsageHelper = new LlmUsageHelper(llmTokenUsageService, userRepository, costConfiguration);
         var observationRegistry = ObservationRegistry.create();
         this.hyperionProblemStatementRewriteService = new HyperionProblemStatementRewriteService(chatClient, templateService, observationRegistry, llmUsageHelper);
     }
@@ -58,5 +62,19 @@ class HyperionProblemStatementRewriteServiceTest {
         assertThat(resp).isNotNull();
         assertThat(resp.improved()).isTrue();
         assertThat(resp.rewrittenText()).isEqualTo(rewritten);
+    }
+
+    private static LlmModelCostConfiguration createTestConfiguration() {
+        var config = new LlmModelCostConfiguration();
+        var modelCosts = Map.of("gpt-5-mini", createModelCostProperties(0.23f, 1.84f));
+        config.setModelCosts(new HashMap<>(modelCosts));
+        return config;
+    }
+
+    private static LlmModelCostConfiguration.ModelCostProperties createModelCostProperties(float inputEur, float outputEur) {
+        var props = new LlmModelCostConfiguration.ModelCostProperties();
+        props.setInputCostPerMillionEur(inputEur);
+        props.setOutputCostPerMillionEur(outputEur);
+        return props;
     }
 }

@@ -14,11 +14,14 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.metadata.ChatResponseMetadata;
+import org.springframework.ai.chat.metadata.DefaultUsage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
+import de.tum.cit.aet.artemis.core.config.LlmModelCostConfiguration;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.util.LlmUsageHelper;
@@ -60,7 +63,10 @@ class HyperionConsistencyCheckServiceTest {
         // Wire minimal renderer with mocked dependencies
         HyperionProgrammingExerciseContextRendererService exerciseContextRenderer = new HyperionProgrammingExerciseContextRendererService(repositoryService,
                 new HyperionProgrammingLanguageContextFilterService());
-        var llmUsageHelper = new LlmUsageHelper(llmTokenUsageService, userRepository);
+
+        // Create configuration with test model costs
+        var costConfiguration = createTestConfiguration();
+        var llmUsageHelper = new LlmUsageHelper(llmTokenUsageService, userRepository, costConfiguration);
         var observationRegistry = ObservationRegistry.create();
         this.hyperionConsistencyCheckService = new HyperionConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer,
                 observationRegistry, llmUsageHelper);
@@ -86,6 +92,67 @@ class HyperionConsistencyCheckServiceTest {
         assertThat(resp).isNotNull();
         assertThat(resp.issues()).isNotEmpty();
         assertThat(resp.issues().getFirst().category()).isEqualTo(ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH);
+    }
+
+    @Test
+    void checkConsistency_tracksTokenUsageAndCosts() throws Exception {
+        final var exercise = getProgrammingExercise();
+
+        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
+        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class)))
+                .thenReturn(Map.of("src/main/java/App.java", "class App { int sum(int a,int b){return a+b;} }"));
+
+        String json = "{ \"issues\": [] }";
+
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> {
+            AssistantMessage msg = new AssistantMessage(json);
+            var usage = new DefaultUsage(100, 50, 150);
+            var metadata = ChatResponseMetadata.builder().model("gpt-5-mini-2024-07-18").usage(usage).build();
+            return new ChatResponse(List.of(new Generation(msg)), metadata);
+        });
+
+        ConsistencyCheckResponseDTO resp = hyperionConsistencyCheckService.checkConsistency(exercise);
+
+        assertThat(resp).isNotNull();
+        assertThat(resp.timestamp()).isNotNull();
+        assertThat(resp.timing()).isNotNull();
+        assertThat(resp.timing().durationS()).isGreaterThanOrEqualTo(0);
+
+        // Two parallel checks, each with 100 prompt and 50 completion tokens
+        assertThat(resp.tokens()).isNotNull();
+        assertThat(resp.tokens().prompt()).isEqualTo(200L);
+        assertThat(resp.tokens().completion()).isEqualTo(100L);
+        assertThat(resp.tokens().total()).isEqualTo(300L);
+
+        assertThat(resp.costs()).isNotNull();
+        // Costs should be calculated based on configured rates (EUR)
+        assertThat(resp.costs().totalEur()).isGreaterThan(0);
+    }
+
+    @Test
+    void normalizeModelName_removesDateSuffix() {
+        var costConfiguration = createTestConfiguration();
+        var llmUsageHelper = new LlmUsageHelper(llmTokenUsageService, userRepository, costConfiguration);
+
+        assertThat(llmUsageHelper.normalizeModelName("gpt-5-mini-2024-07-18")).isEqualTo("gpt-5-mini");
+        assertThat(llmUsageHelper.normalizeModelName("gpt-5-mini-2025-01-15")).isEqualTo("gpt-5-mini");
+        assertThat(llmUsageHelper.normalizeModelName("gpt-5-mini")).isEqualTo("gpt-5-mini");
+        assertThat(llmUsageHelper.normalizeModelName("claude-3-opus")).isEqualTo("claude-3-opus");
+        assertThat(llmUsageHelper.normalizeModelName(null)).isEqualTo("");
+    }
+
+    private static LlmModelCostConfiguration createTestConfiguration() {
+        var config = new LlmModelCostConfiguration();
+        var modelCosts = Map.of("gpt-5-mini", createModelCostProperties(0.23f, 1.84f));
+        config.setModelCosts(new java.util.HashMap<>(modelCosts));
+        return config;
+    }
+
+    private static LlmModelCostConfiguration.ModelCostProperties createModelCostProperties(float inputEur, float outputEur) {
+        var props = new LlmModelCostConfiguration.ModelCostProperties();
+        props.setInputCostPerMillionEur(inputEur);
+        props.setOutputCostPerMillionEur(outputEur);
+        return props;
     }
 
     private static @NonNull ProgrammingExercise getProgrammingExercise() {

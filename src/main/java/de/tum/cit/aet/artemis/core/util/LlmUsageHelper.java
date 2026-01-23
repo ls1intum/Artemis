@@ -4,17 +4,19 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.config.LlmModelCostConfiguration;
+import de.tum.cit.aet.artemis.core.config.SpringAIConfiguration;
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -24,19 +26,19 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
  * Helper encapsulating model pricing, normalization and token usage persistence for LLM calls.
+ * Shared by all Spring AI-based services (Hyperion, Atlas, etc.).
  */
 @Component
 @Lazy
-@ConditionalOnProperty(name = Constants.HYPERION_ENABLED_PROPERTY_NAME, havingValue = "true", matchIfMissing = false)
+@Conditional(SpringAIConfiguration.SpringAIEnabled.class)
 public class LlmUsageHelper {
 
     private static final Logger log = LoggerFactory.getLogger(LlmUsageHelper.class);
 
-    private static final String DEFAULT_MODEL = "gpt-5-mini";
-
-    private static final Map<String, ModelCost> DEFAULT_COSTS = Map.of(DEFAULT_MODEL, new ModelCost(0.23f, 1.84f));
-
-    private static final Map<String, ModelCostUsd> DEFAULT_COSTS_USD = Map.of(DEFAULT_MODEL, new ModelCostUsd(0.25f, 2.00f));
+    /**
+     * Pattern to match date suffixes like "-2024-01-15" or "-2025-08-07" at the end of model names.
+     */
+    private static final Pattern DATE_SUFFIX_PATTERN = Pattern.compile("-\\d{4}-\\d{2}-\\d{2}$");
 
     private static final ModelCost ZERO_COST = new ModelCost(0f, 0f);
 
@@ -46,13 +48,13 @@ public class LlmUsageHelper {
 
     private final Map<String, ModelCost> costs;
 
-    private final Map<String, ModelCostUsd> costsUsd;
-
-    public LlmUsageHelper(LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
+    public LlmUsageHelper(LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, LlmModelCostConfiguration costConfiguration) {
         this.llmTokenUsageService = llmTokenUsageService;
         this.userRepository = userRepository;
-        this.costs = DEFAULT_COSTS;
-        this.costsUsd = DEFAULT_COSTS_USD;
+
+        var modelCosts = costConfiguration.getModelCosts();
+        this.costs = modelCosts.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> new ModelCost(e.getValue().getInputCostPerMillionEur(), e.getValue().getOutputCostPerMillionEur())));
     }
 
     /**
@@ -79,7 +81,7 @@ public class LlmUsageHelper {
         ModelCost modelCost = costs.getOrDefault(normalizedModel, ZERO_COST);
 
         double estimatedCost = (promptTokens * modelCost.costPerMillionInput() / 1_000_000.0) + (completionTokens * modelCost.costPerMillionOutput() / 1_000_000.0);
-        log.info("LLM {} estimated cost for model {}: {} € (input {} @ {}/M, output {} @ {}/M)", checkType, normalizedModel, String.format("%.4f", estimatedCost), promptTokens,
+        log.info("LLM {} estimated cost for model {}: {} EUR (input {} @ {}/M, output {} @ {}/M)", checkType, normalizedModel, String.format("%.4f", estimatedCost), promptTokens,
                 modelCost.costPerMillionInput(), completionTokens, modelCost.costPerMillionOutput());
 
         return new LLMRequest(model, promptTokens, modelCost.costPerMillionInput(), completionTokens, modelCost.costPerMillionOutput(), pipelineId);
@@ -88,30 +90,36 @@ public class LlmUsageHelper {
     /**
      * Persist token usage using exercise context.
      *
+     * @param serviceType the LLM service type (HYPERION, ATLAS, etc.)
      * @param exercise    the exercise context
      * @param llmRequests one or more optional LLM requests to store
      */
-    public void storeTokenUsage(ProgrammingExercise exercise, LLMRequest... llmRequests) {
-        if (llmRequests == null) {
-            return;
-        }
-        List<LLMRequest> requests = Arrays.stream(llmRequests).filter(Objects::nonNull).toList();
-        if (requests.isEmpty()) {
-            return;
-        }
+    public void storeTokenUsage(LLMServiceType serviceType, ProgrammingExercise exercise, LLMRequest... llmRequests) {
         Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
-        Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
-
-        llmTokenUsageService.saveLLMTokenUsage(requests, LLMServiceType.HYPERION, builder -> builder.withCourse(courseId).withExercise(exercise.getId()).withUser(userId));
+        storeTokenUsageInternal(serviceType, courseId, exercise.getId(), llmRequests);
     }
 
     /**
      * Persist token usage using course context (when no exercise is available).
      *
+     * @param serviceType the LLM service type (HYPERION, ATLAS, etc.)
      * @param course      the course context
      * @param llmRequests one or more optional LLM requests to store
      */
-    public void storeTokenUsage(Course course, LLMRequest... llmRequests) {
+    public void storeTokenUsage(LLMServiceType serviceType, de.tum.cit.aet.artemis.core.domain.Course course, LLMRequest... llmRequests) {
+        Long courseId = course != null ? course.getId() : null;
+        storeTokenUsageInternal(serviceType, courseId, null, llmRequests);
+    }
+
+    /**
+     * Internal method to persist token usage with optional exercise context.
+     *
+     * @param serviceType the LLM service type
+     * @param courseId    the course ID (nullable)
+     * @param exerciseId  the exercise ID (nullable)
+     * @param llmRequests one or more optional LLM requests to store
+     */
+    private void storeTokenUsageInternal(LLMServiceType serviceType, Long courseId, Long exerciseId, LLMRequest... llmRequests) {
         if (llmRequests == null) {
             return;
         }
@@ -119,14 +127,25 @@ public class LlmUsageHelper {
         if (requests.isEmpty()) {
             return;
         }
-        Long courseId = course != null ? course.getId() : null;
         Long userId = SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findIdByLogin).orElse(null);
 
-        llmTokenUsageService.saveLLMTokenUsage(requests, LLMServiceType.HYPERION, builder -> builder.withCourse(courseId).withUser(userId));
+        llmTokenUsageService.saveLLMTokenUsage(requests, serviceType, builder -> {
+            builder.withCourse(courseId).withUser(userId);
+            if (exerciseId != null) {
+                builder.withExercise(exerciseId);
+            }
+            return builder;
+        });
     }
 
     /**
      * Normalize provider model names by removing date/version suffixes.
+     * <p>
+     * Examples:
+     * <ul>
+     * <li>"gpt-5-mini-2024-07-18" -> "gpt-5-mini"</li>
+     * <li>"gpt-5-mini" -> "gpt-5-mini"</li>
+     * </ul>
      *
      * @param rawModel raw model identifier from the provider
      * @return normalized model name or empty string when undefined
@@ -135,9 +154,7 @@ public class LlmUsageHelper {
         if (rawModel == null) {
             return "";
         }
-        // Strip trailing date or version suffix like "-2025-08-07"
-        int dateIndex = rawModel.indexOf("-20");
-        return dateIndex > 0 ? rawModel.substring(0, dateIndex) : rawModel;
+        return DATE_SUFFIX_PATTERN.matcher(rawModel).replaceAll("");
     }
 
     /**
@@ -149,18 +166,6 @@ public class LlmUsageHelper {
         return costs;
     }
 
-    /**
-     * Return the configured USD cost map.
-     *
-     * @return model cost mapping in USD per million tokens
-     */
-    public Map<String, ModelCostUsd> getCostsUsd() {
-        return costsUsd;
-    }
-
     public record ModelCost(float costPerMillionInput, float costPerMillionOutput) {
-    }
-
-    public record ModelCostUsd(float costPerMillionInputUsd, float costPerMillionOutputUsd) {
     }
 }
