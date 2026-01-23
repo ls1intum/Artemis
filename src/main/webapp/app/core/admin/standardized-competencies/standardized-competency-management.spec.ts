@@ -45,7 +45,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
     let getSourcesSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(async () => {
-        await TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             providers: [
                 MockProvider(NgbModal),
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -55,15 +55,13 @@ describe('StandardizedCompetencyManagementComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                componentFixture = TestBed.createComponent(StandardizedCompetencyManagementComponent);
-                component = componentFixture.componentInstance;
-                competencyService = TestBed.inject(StandardizedCompetencyService);
-                getForTreeViewSpy = vi.spyOn(competencyService, 'getAllForTreeView').mockReturnValue(of(new HttpResponse({ body: [{ id: 1 }] })));
-                getSourcesSpy = vi.spyOn(competencyService, 'getSources').mockReturnValue(of(new HttpResponse({ body: [{ id: 1 }] })));
-            });
+        });
+        await TestBed.compileComponents();
+        componentFixture = TestBed.createComponent(StandardizedCompetencyManagementComponent);
+        component = componentFixture.componentInstance;
+        competencyService = TestBed.inject(StandardizedCompetencyService);
+        getForTreeViewSpy = vi.spyOn(competencyService, 'getAllForTreeView').mockReturnValue(of(new HttpResponse({ body: [{ id: 1 }] })));
+        getSourcesSpy = vi.spyOn(competencyService, 'getSources').mockReturnValue(of(new HttpResponse({ body: [{ id: 1 }] })));
     });
 
     afterEach(() => {

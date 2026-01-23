@@ -92,8 +92,8 @@ export class CourseManagementCardComponent {
     readonly exerciseType = ExerciseType;
     readonly exerciseRowType = ExerciseRowType;
 
-    private statisticsSorted = false;
-    private exercisesSorted = false;
+    private readonly statisticsSorted = signal(false);
+    private readonly exercisesSorted = signal(false);
 
     // Icons
     readonly faTable = faTable;
@@ -124,8 +124,8 @@ export class CourseManagementCardComponent {
         // Effect to process courseStatistics changes
         effect(() => {
             const courseStatistics = this.courseStatistics();
-            if (!this.statisticsSorted && courseStatistics && courseStatistics.exerciseDTOS?.length > 0) {
-                this.statisticsSorted = true;
+            if (!this.statisticsSorted() && courseStatistics && courseStatistics.exerciseDTOS?.length > 0) {
+                this.statisticsSorted.set(true);
                 const newMap = new Map<number, CourseManagementOverviewExerciseStatisticsDTO>();
                 courseStatistics.exerciseDTOS.forEach((dto) => {
                     if (dto.exerciseId !== undefined) {
@@ -139,7 +139,7 @@ export class CourseManagementCardComponent {
         // Effect to process courseWithExercises changes
         effect(() => {
             const courseWithExercises = this.courseWithExercises();
-            if (this.exercisesSorted || !courseWithExercises || !courseWithExercises.exercises) {
+            if (this.exercisesSorted() || !courseWithExercises || !courseWithExercises.exercises) {
                 return;
             }
 
@@ -165,7 +165,7 @@ export class CourseManagementCardComponent {
      * @param exercises the exercises to sort into future, current, in assessment and past exercise categories
      */
     private sortExercises(exercises: Exercise[]): void {
-        this.exercisesSorted = true;
+        this.exercisesSorted.set(true);
 
         const inSevenDays = dayjs().add(7, 'days').endOf('day');
 

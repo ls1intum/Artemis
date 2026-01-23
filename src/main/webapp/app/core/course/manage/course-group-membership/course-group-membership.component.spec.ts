@@ -52,7 +52,7 @@ describe('Course Group Membership Component', () => {
     const route = { parent: parentRoute, params: of({ courseGroup }) } as any as ActivatedRoute;
     const courseGroupUser = new User(1, 'user');
 
-    beforeEach(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
             imports: [CourseGroupMembershipComponent],
             providers: [
@@ -61,18 +61,15 @@ describe('Course Group Membership Component', () => {
                 MockProvider(UserService),
                 { provide: AccountService, useClass: MockAccountService },
             ],
-        })
-            .overrideComponent(CourseGroupMembershipComponent, {
-                set: {
-                    imports: [MockCourseGroupComponent, MockDirective(TranslateDirective)],
-                },
-            })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CourseGroupMembershipComponent);
-                comp = fixture.componentInstance;
-                courseService = TestBed.inject(CourseManagementService);
-            });
+        }).overrideComponent(CourseGroupMembershipComponent, {
+            set: {
+                imports: [MockCourseGroupComponent, MockDirective(TranslateDirective)],
+            },
+        });
+        await TestBed.compileComponents();
+        fixture = TestBed.createComponent(CourseGroupMembershipComponent);
+        comp = fixture.componentInstance;
+        courseService = TestBed.inject(CourseManagementService);
     });
 
     afterEach(() => {

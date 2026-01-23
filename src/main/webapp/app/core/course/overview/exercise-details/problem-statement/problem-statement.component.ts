@@ -1,6 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { NgClass } from '@angular/common';
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -21,8 +21,15 @@ export class ProblemStatementComponent implements OnInit {
     private exerciseService = inject(ExerciseService);
     private participationService = inject(ParticipationService);
 
-    @Input() public exercise?: Exercise;
-    @Input() participation?: StudentParticipation;
+    public readonly exerciseInput = input<Exercise>();
+    readonly participationInput = input<StudentParticipation>();
+
+    private readonly fetchedExercise = signal<Exercise | undefined>(undefined);
+    private readonly fetchedParticipation = signal<StudentParticipation | undefined>(undefined);
+
+    readonly exercise = computed(() => this.exerciseInput() ?? this.fetchedExercise());
+    readonly participation = computed(() => this.participationInput() ?? this.fetchedParticipation());
+
     isStandalone: boolean = false;
 
     ngOnInit() {
@@ -33,14 +40,14 @@ export class ProblemStatementComponent implements OnInit {
                 participationId = parseInt(params['participationId'], 10);
             }
 
-            if (!this.exercise) {
+            if (!this.exercise()) {
                 this.exerciseService.getExerciseDetails(exerciseId).subscribe((exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
-                    this.exercise = exerciseResponse.body!.exercise;
+                    this.fetchedExercise.set(exerciseResponse.body!.exercise);
                 });
             }
-            if (!this.participation && participationId) {
+            if (!this.participation() && participationId) {
                 this.participationService.find(participationId).subscribe((participationResponse) => {
-                    this.participation = participationResponse.body!;
+                    this.fetchedParticipation.set(participationResponse.body!);
                 });
             }
         });
@@ -54,6 +61,6 @@ export class ProblemStatementComponent implements OnInit {
     }
 
     get isProgrammingExercise(): boolean {
-        return this.exercise?.type === ExerciseType.PROGRAMMING;
+        return this.exercise()?.type === ExerciseType.PROGRAMMING;
     }
 }

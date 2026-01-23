@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { User } from 'app/core/user/user.model';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -5,6 +7,8 @@ import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('User Service', () => {
+    setupTestBed({ zoneless: true });
+
     let adminService: AdminUserService;
     let httpMock: HttpTestingController;
 
@@ -19,6 +23,7 @@ describe('User Service', () => {
 
     afterEach(() => {
         httpMock.verify();
+        vi.restoreAllMocks();
     });
 
     describe('Service methods', () => {

@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component, TemplateRef, viewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseTitleBarActionsDirective } from './course-title-bar-actions.directive';
@@ -13,17 +15,19 @@ class TestHostComponent {
 }
 
 describe('CourseTitleBarActionsDirective', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<TestHostComponent>;
     let host: TestHostComponent;
     let mockService: {
-        setActionsTemplate: jest.Mock<void, [TemplateRef<any>?]>;
-        actionsTemplate: jest.Mock<TemplateRef<any> | undefined, []>;
+        setActionsTemplate: ReturnType<typeof vi.fn>;
+        actionsTemplate: ReturnType<typeof vi.fn>;
     };
 
     beforeEach(() => {
         mockService = {
-            setActionsTemplate: jest.fn(),
-            actionsTemplate: jest.fn(),
+            setActionsTemplate: vi.fn(),
+            actionsTemplate: vi.fn(),
         };
 
         TestBed.configureTestingModule({
@@ -33,6 +37,10 @@ describe('CourseTitleBarActionsDirective', () => {
 
         fixture = TestBed.createComponent(TestHostComponent);
         host = fixture.componentInstance;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('registers its template with the service on init', () => {

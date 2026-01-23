@@ -1,13 +1,13 @@
-@if (isProgrammingExercise && exercise) {
+@if (isProgrammingExercise && exercise()) {
     <div class="row mb-4">
-        <jhi-programming-exercise-instructions [exercise]="exercise" [participation]="participation!" [personalParticipation]="true" />
+        <jhi-programming-exercise-instructions [exercise]="$any(exercise())" [participation]="participation()!" [personalParticipation]="true" />
     </div>
 } @else {
-    @if (exercise?.problemStatement) {
+    @if (exercise()?.problemStatement) {
         <div [ngClass]="isStandalone ? 'p-3' : 'mb-2'" class="row align-items-baseline" id="problem-statement">
             <div class="col-12 col-md-12 markdown-preview problem-statement">
                 <h3 jhiTranslate="artemisApp.courseOverview.exerciseDetails.problemStatement"></h3>
-                <p [innerHTML]="exercise!.problemStatement! | htmlForMarkdown"></p>
+                <p [innerHTML]="exercise()!.problemStatement! | htmlForMarkdown"></p>
             </div>
         </div>
     }

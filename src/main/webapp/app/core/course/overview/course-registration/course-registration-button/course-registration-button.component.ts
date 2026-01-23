@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -19,20 +19,23 @@ export class CourseRegistrationButtonComponent implements OnInit {
     private profileService = inject(ProfileService);
     private alertService = inject(AlertService);
 
-    @Input() course: Course;
-    @Output() onRegistration = new EventEmitter<void>();
+    readonly course = input<Course>(undefined!);
+    readonly onRegistration = output<void>();
 
-    userIsAllowedToRegister = false;
-    loading = false;
+    private readonly _userIsAllowedToRegister = signal(false);
+    private readonly _loading = signal(false);
+
+    readonly userIsAllowedToRegister = computed(() => this._userIsAllowedToRegister());
+    readonly loading = computed(() => this._loading());
 
     loadUserIsAllowedToRegister() {
-        this.loading = true;
+        this._loading.set(true);
         this.accountService.identity().then((user) => {
             const profileInfo = this.profileService.getProfileInfo();
             if (user?.login) {
-                this.userIsAllowedToRegister = matchesRegexFully(user.login, profileInfo.allowedCourseRegistrationUsernamePattern);
+                this._userIsAllowedToRegister.set(matchesRegexFully(user.login, profileInfo.allowedCourseRegistrationUsernamePattern));
             }
-            this.loading = false;
+            this._loading.set(false);
         });
     }
 
@@ -48,6 +51,7 @@ export class CourseRegistrationButtonComponent implements OnInit {
         this.courseService.registerForCourse(courseId).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.studentDashboard.enroll.enrollSuccessful');
+                // TODO: The 'emit' function requires a mandatory void argument
                 this.onRegistration.emit();
             },
             error: (error: string) => {

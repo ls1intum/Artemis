@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, inject } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
@@ -16,39 +16,44 @@ import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle
     templateUrl: './open-code-editor-button.component.html',
     imports: [ExerciseActionButtonComponent, FeatureToggleDirective, RouterLink, NgbPopover, TranslateDirective, ArtemisTranslatePipe],
 })
-export class OpenCodeEditorButtonComponent implements OnChanges {
+export class OpenCodeEditorButtonComponent {
     private participationService = inject(ParticipationService);
 
     readonly FeatureToggle = FeatureToggle;
 
-    @Input()
-    loading = false;
-    @Input()
-    smallButtons: boolean;
-    @Input()
-    participations: ProgrammingExerciseStudentParticipation[];
-    @Input()
-    courseAndExerciseNavigationUrlSegment: any[];
-    @Input()
-    exercise: Exercise;
-    @Input()
-    hideLabelMobile = false;
+    readonly loading = input(false);
+    readonly smallButtons = input<boolean>(undefined!);
+    readonly participations = input<ProgrammingExerciseStudentParticipation[]>(undefined!);
+    readonly courseAndExerciseNavigationUrlSegment = input<any[]>(undefined!);
+    readonly exercise = input<Exercise>(undefined!);
+    readonly hideLabelMobile = input(false);
 
-    courseAndExerciseNavigationUrl: string;
-    activeParticipation: ProgrammingExerciseStudentParticipation;
-    isPracticeMode = true;
+    private readonly _courseAndExerciseNavigationUrl = signal<string>('');
+    private readonly _activeParticipation = signal<ProgrammingExerciseStudentParticipation | undefined>(undefined);
+    private readonly _isPracticeMode = signal(true);
+
+    readonly courseAndExerciseNavigationUrl = computed(() => this._courseAndExerciseNavigationUrl());
+    readonly activeParticipation = computed(() => this._activeParticipation());
+    readonly isPracticeMode = computed(() => this._isPracticeMode());
 
     // Icons
     faFolderOpen = faFolderOpen;
 
-    ngOnChanges() {
-        this.courseAndExerciseNavigationUrl = this.courseAndExerciseNavigationUrlSegment.reduce((acc, segment) => `${acc}/${segment}`);
-        const shouldPreferPractice = this.participationService.shouldPreferPractice(this.exercise);
-        this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations, shouldPreferPractice) ?? this.participations[0];
+    constructor() {
+        effect(() => {
+            const courseAndExerciseNavigationUrlSegment = this.courseAndExerciseNavigationUrlSegment();
+            const exercise = this.exercise();
+            const participations = this.participations();
+            untracked(() => {
+                this._courseAndExerciseNavigationUrl.set(courseAndExerciseNavigationUrlSegment.reduce((acc, segment) => `${acc}/${segment}`));
+                const shouldPreferPractice = this.participationService.shouldPreferPractice(exercise);
+                this._activeParticipation.set(this.participationService.getSpecificStudentParticipation(participations, shouldPreferPractice) ?? participations[0]);
+            });
+        });
     }
 
     switchPracticeMode() {
-        this.isPracticeMode = !this.isPracticeMode;
-        this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations!, this.isPracticeMode)!;
+        this._isPracticeMode.update((value) => !value);
+        this._activeParticipation.set(this.participationService.getSpecificStudentParticipation(this.participations()!, this._isPracticeMode())!);
     }
 }

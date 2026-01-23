@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseRegistrationComponent } from 'app/core/course/overview/course-registration/course-registration.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -15,10 +17,12 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { ActivatedRoute } from '@angular/router';
 
 describe('CourseRegistrationComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CourseRegistrationComponent>;
     let component: CourseRegistrationComponent;
     let courseService: CourseManagementService;
-    let findAllForRegistrationStub: jest.SpyInstance;
+    let findAllForRegistrationStub: ReturnType<typeof vi.spyOn>;
 
     const course1 = {
         id: 1,
@@ -35,9 +39,9 @@ describe('CourseRegistrationComponent', () => {
         id: 3,
     };
 
-    beforeEach(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
-            declarations: [
+            imports: [
                 CourseRegistrationComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(CoursePrerequisitesButtonComponent),
@@ -49,19 +53,17 @@ describe('CourseRegistrationComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CourseRegistrationComponent);
-                component = fixture.componentInstance;
-                courseService = TestBed.inject(CourseManagementService);
+        });
+        await TestBed.compileComponents();
+        fixture = TestBed.createComponent(CourseRegistrationComponent);
+        component = fixture.componentInstance;
+        courseService = TestBed.inject(CourseManagementService);
 
-                findAllForRegistrationStub = jest.spyOn(courseService, 'findAllForRegistration').mockReturnValue(of(new HttpResponse({ body: [course1] })));
-            });
+        findAllForRegistrationStub = vi.spyOn(courseService, 'findAllForRegistration').mockReturnValue(of(new HttpResponse({ body: [course1] })));
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should show registrable courses', () => {

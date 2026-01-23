@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { of } from 'rxjs';
@@ -22,6 +24,8 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 describe('ProblemStatementComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ProblemStatementComponent;
     let fixture: ComponentFixture<ProblemStatementComponent>;
     let mockActivatedRoute: any;
@@ -29,14 +33,14 @@ describe('ProblemStatementComponent', () => {
     let exerciseService: ExerciseService;
     let participationService: ParticipationService;
 
-    let getExerciseDetailsMock: jest.SpyInstance;
-    let getParticipationDetailMock: jest.SpyInstance;
+    let getExerciseDetailsMock: ReturnType<typeof vi.spyOn>;
+    let getParticipationDetailMock: ReturnType<typeof vi.spyOn>;
 
     const course = { id: 1 } as unknown as Course;
     const exercise = new ProgrammingExercise(course, undefined);
     const participation = { id: 2 } as unknown as StudentParticipation;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         mockActivatedRoute = {
             params: of({ exerciseId: '1', participationId: '2' }),
         };
@@ -53,31 +57,34 @@ describe('ProblemStatementComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ProblemStatementComponent);
-                component = fixture.componentInstance;
+        });
+        await TestBed.compileComponents();
+        fixture = TestBed.createComponent(ProblemStatementComponent);
+        component = fixture.componentInstance;
 
-                // mock exerciseService
-                exerciseService = TestBed.inject(ExerciseService);
-                getExerciseDetailsMock = jest.spyOn(exerciseService, 'getExerciseDetails');
-                exercise.problemStatement = 'Test problem statement';
-                course.exercises = [exercise];
-                getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: exercise } }));
+        // mock exerciseService
+        exerciseService = TestBed.inject(ExerciseService);
+        getExerciseDetailsMock = vi.spyOn(exerciseService, 'getExerciseDetails');
+        exercise.problemStatement = 'Test problem statement';
+        course.exercises = [exercise];
+        getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: exercise } }));
 
-                // mock participationService
-                participationService = TestBed.inject(ParticipationService);
-                getParticipationDetailMock = jest.spyOn(participationService, 'find');
-                getParticipationDetailMock.mockReturnValue(of(new HttpResponse({ body: participation })));
-            });
+        // mock participationService
+        participationService = TestBed.inject(ParticipationService);
+        getParticipationDetailMock = vi.spyOn(participationService, 'find');
+        getParticipationDetailMock.mockReturnValue(of(new HttpResponse({ body: participation })));
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
     });
 
     it('should render problem statement when exercise is available', () => {
-        const exercise = new TextExercise(course, undefined);
-        exercise.problemStatement = 'Test problem statement';
+        const textExercise = new TextExercise(course, undefined);
+        textExercise.problemStatement = 'Test problem statement';
 
-        component.exercise = exercise;
+        fixture.componentRef.setInput('exerciseInput', textExercise);
         fixture.detectChanges();
 
         const compiled = fixture.debugElement.nativeElement;
@@ -85,48 +92,49 @@ describe('ProblemStatementComponent', () => {
         expect(compiled.querySelector('#problem-statement p').innerHTML).toContain('Test problem statement');
     });
 
-    it('should render problem statement when exercise is available by getting from services', fakeAsync(() => {
+    it('should render problem statement when exercise is available by getting from services', async () => {
+        // Trigger ngOnInit which subscribes to route params and fetches data
         fixture.detectChanges();
-        tick(500);
+        await fixture.whenStable();
 
         expect(getParticipationDetailMock).toHaveBeenCalledOnce();
         expect(getExerciseDetailsMock).toHaveBeenCalledOnce();
 
-        expect(component.exercise).toEqual(exercise);
-        expect(component.participation).toEqual(participation);
-    }));
+        expect(component.exercise()).toEqual(exercise);
+        expect(component.participation()).toEqual(participation);
+    });
 
     describe('isProgrammingExercise', () => {
         it('should return true if exercise type is PROGRAMMING', () => {
-            component.exercise = { id: 1, type: ExerciseType.PROGRAMMING } as Exercise;
-            expect(component.isProgrammingExercise).toBeTrue();
+            fixture.componentRef.setInput('exerciseInput', { id: 1, type: ExerciseType.PROGRAMMING } as Exercise);
+            expect(component.isProgrammingExercise).toBe(true);
         });
 
         it('should return false if exercise type is not PROGRAMMING', () => {
-            component.exercise = { id: 1, type: ExerciseType.QUIZ } as Exercise;
-            expect(component.isProgrammingExercise).toBeFalse();
+            fixture.componentRef.setInput('exerciseInput', { id: 1, type: ExerciseType.QUIZ } as Exercise);
+            expect(component.isProgrammingExercise).toBe(false);
         });
 
         it('should return false if exercise is not defined', () => {
-            component.exercise = undefined;
-            expect(component.isProgrammingExercise).toBeFalse();
+            fixture.componentRef.setInput('exerciseInput', undefined);
+            expect(component.isProgrammingExercise).toBe(false);
         });
     });
 
     it('should render programming exercise instructions when exercise is a programming exercise and participation and exercise are available', () => {
-        component.exercise = exercise;
-        component.participation = participation;
+        fixture.componentRef.setInput('exerciseInput', exercise);
+        fixture.componentRef.setInput('participationInput', participation);
         fixture.detectChanges();
         const compiled = fixture.debugElement.nativeElement;
         expect(compiled.querySelector('jhi-programming-exercise-instructions')).toBeTruthy();
     });
 
     it('should not render programming exercise instructions when exercise is not a programming exercise', () => {
-        const exercise = new TextExercise(course, undefined);
-        exercise.problemStatement = 'Test problem statement';
+        const textExercise = new TextExercise(course, undefined);
+        textExercise.problemStatement = 'Test problem statement';
 
-        component.exercise = exercise;
-        component.participation = participation;
+        fixture.componentRef.setInput('exerciseInput', textExercise);
+        fixture.componentRef.setInput('participationInput', participation);
         fixture.detectChanges();
         const compiled = fixture.debugElement.nativeElement;
         expect(compiled.querySelector('jhi-programming-exercise-instructions')).toBeFalsy();

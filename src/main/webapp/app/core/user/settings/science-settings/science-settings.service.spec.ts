@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
@@ -23,35 +25,35 @@ const scienceSetting: ScienceSetting = {
 const scienceSettingsForTesting: ScienceSetting[] = [scienceSetting];
 
 describe('ScienceSettingsService', () => {
+    setupTestBed({ zoneless: true });
+
     let scienceSettingsService: ScienceSettingsService;
     let userSettingsService: UserSettingsService;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: ProfileService, useClass: MockProfileService }],
-        })
-            .compileComponents()
-            .then(() => {
-                scienceSettingsService = TestBed.inject(ScienceSettingsService);
-                userSettingsService = TestBed.inject(UserSettingsService);
+        });
+        await TestBed.compileComponents();
+        scienceSettingsService = TestBed.inject(ScienceSettingsService);
+        userSettingsService = TestBed.inject(UserSettingsService);
 
-                const profileService = TestBed.inject(ProfileService);
-                const profileInfo = new ProfileInfo();
-                profileInfo.activeModuleFeatures = [MODULE_FEATURE_ATLAS];
-                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
-            });
+        const profileService = TestBed.inject(ProfileService);
+        const profileInfo = new ProfileInfo();
+        profileInfo.activeModuleFeatures = [MODULE_FEATURE_ATLAS];
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should refresh settings after user settings changed', () => {
         const changes$ = new Subject<string>();
-        // Point the service’s observable to our controllable subject
+        // Point the service's observable to our controllable subject
         userSettingsService.userSettingsChangeEvent = changes$.asObservable();
 
-        const spy = jest.spyOn(userSettingsService, 'loadSettings').mockReturnValue(of(new HttpResponse<Setting[]>({ body: scienceSettingsForTesting })));
+        const spy = vi.spyOn(userSettingsService, 'loadSettings').mockReturnValue(of(new HttpResponse<Setting[]>({ body: scienceSettingsForTesting })));
 
         scienceSettingsService['listenForScienceSettingsChanges']();
 
@@ -65,11 +67,11 @@ describe('ScienceSettingsService', () => {
     });
 
     it('should provide getters for science settings and updates to it', () => {
-        jest.spyOn(userSettingsService, 'loadSettings').mockReturnValue(of(new HttpResponse<Setting[]>({ body: scienceSettingsForTesting })));
+        vi.spyOn(userSettingsService, 'loadSettings').mockReturnValue(of(new HttpResponse<Setting[]>({ body: scienceSettingsForTesting })));
         scienceSettingsService.refreshScienceSettings();
 
         const settings = scienceSettingsService.getScienceSettings();
-        expect(settings).not.toBeEmpty();
+        expect(settings.length).toBeGreaterThan(0);
         expect(settings).toEqual(scienceSettingsForTesting);
 
         // Subscribing to the updates

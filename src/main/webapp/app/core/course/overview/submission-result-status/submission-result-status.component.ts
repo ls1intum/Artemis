@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
@@ -16,7 +16,7 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
     templateUrl: './submission-result-status.component.html',
     imports: [UpdatingResultComponent, TranslateDirective, ProgrammingExerciseStudentTriggerBuildButtonComponent],
 })
-export class SubmissionResultStatusComponent implements OnChanges {
+export class SubmissionResultStatusComponent {
     private readonly initializationStatesToShowProgrammingResult = [InitializationState.INITIALIZED, InitializationState.INACTIVE, InitializationState.FINISHED];
     readonly ExerciseType = ExerciseType;
     readonly InitializationState = InitializationState;
@@ -30,53 +30,80 @@ export class SubmissionResultStatusComponent implements OnChanges {
      * @property showUngradedResults Flag whether ungraded results should also be shown
      * @property short Flag whether the short version of the result text should be used
      */
-    @Input() exercise: Exercise;
-    @Input() studentParticipation?: StudentParticipation;
-    @Input() updatingResultClass: string;
-    @Input() showBadge = false;
-    @Input() showUngradedResults = false;
-    @Input() showIcon = true;
-    @Input() isInSidebarCard = false;
-    @Input() showCompletion = true;
-    @Input() short = true;
-    @Input() triggerLastGraded = true;
-    @Input() showProgressBar = false;
+    readonly exercise = input<Exercise>(undefined!);
+    readonly studentParticipation = input<StudentParticipation>();
+    readonly updatingResultClass = input<string>(undefined!);
+    readonly showBadge = input(false);
+    readonly showUngradedResults = input(false);
+    readonly showIcon = input(true);
+    readonly isInSidebarCard = input(false);
+    readonly showCompletion = input(true);
+    readonly short = input(true);
+    readonly triggerLastGraded = input(true);
+    readonly showProgressBar = input(false);
 
-    quizNotStarted: boolean;
-    exerciseMissedDueDate: boolean;
-    uninitialized: boolean;
-    notSubmitted: boolean;
-    shouldShowResult: boolean;
-    submitted: boolean;
+    // Computed signal for whether due date has passed
+    private readonly afterDueDate = computed(() => {
+        const exercise = this.exercise();
+        return !!exercise?.dueDate && exercise.dueDate.isBefore(dayjs());
+    });
 
-    ngOnChanges() {
-        // It's enough to look at the normal due date as students with time extension cannot start after the regular due date
-        const afterDueDate = !!this.exercise.dueDate && this.exercise.dueDate.isBefore(dayjs());
-        this.exerciseMissedDueDate = afterDueDate && !this.studentParticipation;
-
-        if (this.exercise.type === ExerciseType.QUIZ) {
-            const quizExercise = this.exercise as QuizExercise;
-            this.uninitialized = ArtemisQuizService.isUninitialized(quizExercise);
-            this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
-            this.submitted = this.studentParticipation?.submissions?.some((submission) => submission.submitted) ?? false;
-        } else {
-            this.uninitialized = !afterDueDate && !this.studentParticipation;
-            this.notSubmitted = afterDueDate && !!this.studentParticipation && !this.studentParticipation.submissions?.length;
+    readonly quizNotStarted = computed(() => {
+        const exercise = this.exercise();
+        if (exercise?.type !== ExerciseType.QUIZ) {
+            return false;
         }
+        return ArtemisQuizService.notStarted(exercise as QuizExercise);
+    });
 
-        this.setShouldShowResult(afterDueDate);
-    }
+    readonly exerciseMissedDueDate = computed(() => {
+        return this.afterDueDate() && !this.studentParticipation();
+    });
 
-    private setShouldShowResult(afterDueDate: boolean) {
-        if (this.exercise.type === ExerciseType.QUIZ) {
-            this.shouldShowResult = !!getAllResultsOfAllSubmissions(this.studentParticipation?.submissions).length;
-        } else if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            this.shouldShowResult =
-                (!!getAllResultsOfAllSubmissions(this.studentParticipation?.submissions).length || !afterDueDate) &&
-                !!this.studentParticipation?.initializationState &&
-                this.initializationStatesToShowProgrammingResult.includes(this.studentParticipation.initializationState);
-        } else {
-            this.shouldShowResult = this.studentParticipation?.initializationState === InitializationState.FINISHED;
+    readonly uninitialized = computed(() => {
+        const exercise = this.exercise();
+        const studentParticipation = this.studentParticipation();
+
+        if (exercise?.type === ExerciseType.QUIZ) {
+            return ArtemisQuizService.isUninitialized(exercise as QuizExercise);
         }
-    }
+        return !this.afterDueDate() && !studentParticipation;
+    });
+
+    readonly notSubmitted = computed(() => {
+        const exercise = this.exercise();
+        const studentParticipation = this.studentParticipation();
+
+        if (exercise?.type === ExerciseType.QUIZ) {
+            return false;
+        }
+        return this.afterDueDate() && !!studentParticipation && !studentParticipation.submissions?.length;
+    });
+
+    readonly submitted = computed(() => {
+        const exercise = this.exercise();
+        const studentParticipation = this.studentParticipation();
+
+        if (exercise?.type !== ExerciseType.QUIZ) {
+            return false;
+        }
+        return studentParticipation?.submissions?.some((submission) => submission.submitted) ?? false;
+    });
+
+    readonly shouldShowResult = computed(() => {
+        const exercise = this.exercise();
+        const studentParticipation = this.studentParticipation();
+
+        if (exercise?.type === ExerciseType.QUIZ) {
+            return !!getAllResultsOfAllSubmissions(studentParticipation?.submissions).length;
+        } else if (exercise?.type === ExerciseType.PROGRAMMING) {
+            return (
+                (!!getAllResultsOfAllSubmissions(studentParticipation?.submissions).length || !this.afterDueDate()) &&
+                !!studentParticipation?.initializationState &&
+                this.initializationStatesToShowProgrammingResult.includes(studentParticipation.initializationState)
+            );
+        } else {
+            return studentParticipation?.initializationState === InitializationState.FINISHED;
+        }
+    });
 }

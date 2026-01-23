@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { PROFILE_APOLLON, PROFILE_ATHENA, PROFILE_DEV, PROFILE_JENKINS, PROFILE_PROD } from 'app/app.constants';
@@ -87,7 +89,6 @@ const buildInformation = {
     group: 'de.tum.cit.aet.artemis',
 };
 
-// eslint-disable-next-line jest/no-export
 export const expectedProfileInfo: ProfileInfo = {
     activeModuleFeatures: [],
     activeProfiles: [PROFILE_PROD, PROFILE_JENKINS, PROFILE_ATHENA, PROFILE_APOLLON],
@@ -128,6 +129,8 @@ export const expectedProfileInfo: ProfileInfo = {
 };
 
 describe('ProfileService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ProfileService;
     let httpMock: HttpTestingController;
 
@@ -139,7 +142,7 @@ describe('ProfileService', () => {
                 LocalStorageService,
                 SessionStorageService,
                 { provide: Router, useClass: MockRouter },
-                { provide: BrowserFingerprintService, useValue: { initialize: jest.fn() } },
+                { provide: BrowserFingerprintService, useValue: { initialize: vi.fn() } },
             ],
         });
         service = TestBed.inject(ProfileService);
@@ -148,6 +151,7 @@ describe('ProfileService', () => {
 
     afterEach(() => {
         httpMock.verify();
+        vi.restoreAllMocks();
     });
 
     describe('Service methods', () => {
@@ -160,8 +164,8 @@ describe('ProfileService', () => {
         });
 
         it('should get the profile info', async () => {
-            const featureSpy = jest.spyOn(service['featureToggleService'], 'initializeFeatureToggles');
-            const fingerprintSpy = jest.spyOn(service['browserFingerprintService'], 'initialize');
+            const featureSpy = vi.spyOn(service['featureToggleService'], 'initializeFeatureToggles');
+            const fingerprintSpy = vi.spyOn(service['browserFingerprintService'], 'initialize');
 
             const promise = service.loadProfileInfo();
             const req = httpMock.expectOne('management/info');
@@ -179,20 +183,20 @@ describe('ProfileService', () => {
         it('should return true if the profile is active', () => {
             // @ts-ignore
             service.profileInfo = { activeProfiles: [PROFILE_DEV, PROFILE_PROD] };
-            expect(service.isProfileActive(PROFILE_DEV)).toBeTrue();
-            expect(service.isProfileActive(PROFILE_PROD)).toBeTrue();
+            expect(service.isProfileActive(PROFILE_DEV)).toBe(true);
+            expect(service.isProfileActive(PROFILE_PROD)).toBe(true);
         });
 
         it('should return false if the profile is not active', () => {
             // @ts-ignore
             service.profileInfo = { activeProfiles: [PROFILE_PROD] };
-            expect(service.isProfileActive(PROFILE_DEV)).toBeFalse();
+            expect(service.isProfileActive(PROFILE_DEV)).toBe(false);
         });
 
         it('should return false if activeProfiles is undefined', () => {
             // @ts-ignore
             service.profileInfo = {};
-            expect(service.isProfileActive(PROFILE_DEV)).toBeFalse();
+            expect(service.isProfileActive(PROFILE_DEV)).toBe(false);
         });
     });
 });

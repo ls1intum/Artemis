@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -12,19 +14,21 @@ import { Router } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
 
 describe('LoginService', () => {
+    setupTestBed({ zoneless: true });
+
     let accountService: AccountService;
     let authServerProvider: AuthServerProvider;
     let router: Router;
     let alertService: AlertService;
     let loginService: LoginService;
 
-    let authenticateStub: jest.SpyInstance;
-    let authServerProviderLogoutStub: jest.SpyInstance;
-    let authServerProviderClearStub: jest.SpyInstance;
-    let alertServiceClearStub: jest.SpyInstance;
-    let navigateByUrlStub: jest.SpyInstance;
+    let authenticateStub: ReturnType<typeof vi.spyOn>;
+    let authServerProviderLogoutStub: ReturnType<typeof vi.spyOn>;
+    let authServerProviderClearStub: ReturnType<typeof vi.spyOn>;
+    let alertServiceClearStub: ReturnType<typeof vi.spyOn>;
+    let navigateByUrlStub: ReturnType<typeof vi.spyOn>;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
@@ -33,25 +37,24 @@ describe('LoginService', () => {
                 { provide: Router, useClass: MockRouter },
                 MockProvider(AlertService),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                accountService = TestBed.inject(AccountService);
-                authServerProvider = TestBed.inject(AuthServerProvider);
-                router = TestBed.inject(Router);
-                alertService = TestBed.inject(AlertService);
-                loginService = TestBed.inject(LoginService);
+        });
+        await TestBed.compileComponents();
 
-                authenticateStub = jest.spyOn(accountService, 'authenticate');
-                authServerProviderLogoutStub = jest.spyOn(authServerProvider, 'logout');
-                authServerProviderClearStub = jest.spyOn(authServerProvider, 'clearCaches');
-                alertServiceClearStub = jest.spyOn(alertService, 'closeAll');
-                navigateByUrlStub = jest.spyOn(router, 'navigateByUrl');
-            });
+        accountService = TestBed.inject(AccountService);
+        authServerProvider = TestBed.inject(AuthServerProvider);
+        router = TestBed.inject(Router);
+        alertService = TestBed.inject(AlertService);
+        loginService = TestBed.inject(LoginService);
+
+        authenticateStub = vi.spyOn(accountService, 'authenticate');
+        authServerProviderLogoutStub = vi.spyOn(authServerProvider, 'logout');
+        authServerProviderClearStub = vi.spyOn(authServerProvider, 'clearCaches');
+        alertServiceClearStub = vi.spyOn(alertService, 'closeAll');
+        navigateByUrlStub = vi.spyOn(router, 'navigateByUrl');
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should properly log out when every action is successful', () => {

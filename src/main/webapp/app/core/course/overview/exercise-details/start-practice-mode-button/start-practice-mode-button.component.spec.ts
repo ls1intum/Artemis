@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -20,19 +22,26 @@ import { provideHttpClient } from '@angular/common/http';
 import { StartPracticeModeButtonComponent } from 'app/core/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
 
 describe('JhiStartPracticeModeButtonComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: StartPracticeModeButtonComponent;
     let fixture: ComponentFixture<StartPracticeModeButtonComponent>;
 
     let courseExerciseService: CourseExerciseService;
-    let startPracticeStub: jest.SpyInstance;
+    let startPracticeStub: ReturnType<typeof vi.spyOn>;
     let alertService: AlertService;
-    let alertServiceSuccessStub: jest.SpyInstance;
-    let alertServiceErrorStub: jest.SpyInstance;
+    let alertServiceSuccessStub: ReturnType<typeof vi.spyOn>;
+    let alertServiceErrorStub: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockDirective(NgbPopover)],
-            declarations: [StartPracticeModeButtonComponent, MockComponent(ExerciseActionButtonComponent), MockPipe(ArtemisTranslatePipe), MockDirective(FeatureToggleDirective)],
+            imports: [
+                StartPracticeModeButtonComponent,
+                MockDirective(NgbPopover),
+                MockComponent(ExerciseActionButtonComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(FeatureToggleDirective),
+            ],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: AccountService, useClass: MockAccountService }, provideHttpClient()],
         }).compileComponents();
 
@@ -41,16 +50,16 @@ describe('JhiStartPracticeModeButtonComponent', () => {
         courseExerciseService = TestBed.inject(CourseExerciseService);
         alertService = TestBed.inject(AlertService);
 
-        startPracticeStub = jest.spyOn(courseExerciseService, 'startPractice');
-        alertServiceSuccessStub = jest.spyOn(alertService, 'success');
-        alertServiceErrorStub = jest.spyOn(alertService, 'error');
+        startPracticeStub = vi.spyOn(courseExerciseService, 'startPractice');
+        alertServiceSuccessStub = vi.spyOn(alertService, 'success');
+        alertServiceErrorStub = vi.spyOn(alertService, 'error');
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should reflect the correct participation state for practice mode with no graded participation', fakeAsync(() => {
+    it('should reflect the correct participation state for practice mode with no graded participation', async () => {
         const exercise = {
             id: 43,
             type: ExerciseType.PROGRAMMING,
@@ -61,36 +70,35 @@ describe('JhiStartPracticeModeButtonComponent', () => {
         const initPart = { id: 2, initializationState: InitializationState.INITIALIZED, testRun: true } as StudentParticipation;
         const participationSubject = new Subject<StudentParticipation>();
 
-        comp.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
 
         fixture.changeDetectorRef.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         startPracticeStub.mockReturnValue(participationSubject);
         comp.startPractice(false);
         participationSubject.next(inactivePart);
 
         fixture.changeDetectorRef.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         expect(alertServiceErrorStub).toHaveBeenCalledOnce();
         expect(alertServiceErrorStub).toHaveBeenCalledWith('artemisApp.exercise.startError');
         expect(startPracticeStub).toHaveBeenCalledOnce();
 
-        comp.exercise.studentParticipations = [];
+        fixture.componentRef.setInput('exercise', { ...exercise, studentParticipations: [] });
         participationSubject.next(initPart);
 
         fixture.changeDetectorRef.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         expect(alertServiceSuccessStub).toHaveBeenCalledOnce();
         expect(alertServiceSuccessStub).toHaveBeenCalledWith('artemisApp.exercise.personalRepositoryOnline');
 
         fixture.destroy();
-        flush();
-    }));
+    });
 
-    it('should reflect the correct participation state for practice mode with graded participation', fakeAsync(() => {
+    it('should reflect the correct participation state for practice mode with graded participation', async () => {
         const exercise = {
             id: 43,
             type: ExerciseType.PROGRAMMING,
@@ -103,18 +111,17 @@ describe('JhiStartPracticeModeButtonComponent', () => {
         const initPart = { id: 2, initializationState: InitializationState.INITIALIZED, testRun: true } as StudentParticipation;
         const participationSubject = new Subject<StudentParticipation>();
 
-        comp.exercise = exercise;
-        comp.exercise.studentParticipations = [gradedPart];
+        fixture.componentRef.setInput('exercise', { ...exercise, studentParticipations: [gradedPart] });
 
         fixture.changeDetectorRef.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         startPracticeStub.mockReturnValue(participationSubject);
         comp.startPractice(false);
         participationSubject.next(inactivePart);
 
         fixture.changeDetectorRef.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         expect(alertServiceErrorStub).toHaveBeenCalledOnce();
         expect(alertServiceErrorStub).toHaveBeenCalledWith('artemisApp.exercise.startError');
@@ -123,12 +130,11 @@ describe('JhiStartPracticeModeButtonComponent', () => {
         participationSubject.next(initPart);
 
         fixture.changeDetectorRef.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         expect(alertServiceSuccessStub).toHaveBeenCalledOnce();
         expect(alertServiceSuccessStub).toHaveBeenCalledWith('artemisApp.exercise.personalRepositoryClone');
 
         fixture.destroy();
-        flush();
-    }));
+    });
 });

@@ -1,5 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClient } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { expectedProfileInfo } from 'app/core/layouts/profiles/shared/profile.service.spec';
@@ -13,6 +15,14 @@ import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { Component } from '@angular/core';
+
+// Create stub components that don't have dependencies
+@Component({ selector: 'jhi-connection-warning', template: '' })
+class StubConnectionWarningComponent {}
+
+@Component({ selector: 'jhi-loading-notification', template: '' })
+class StubLoadingNotificationComponent {}
 import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
@@ -34,6 +44,10 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
 import { ActiveMenuDirective } from 'app/core/navbar/active-menu.directive';
 import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
 import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
+import { WebsocketService } from 'app/shared/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { LoadingNotificationService } from 'app/core/loading-notification/loading-notification.service';
+import { BehaviorSubject } from 'rxjs';
 
 class MockBreadcrumb {
     label: string;
@@ -42,9 +56,11 @@ class MockBreadcrumb {
 }
 
 describe('NavbarComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<NavbarComponent>;
     let component: NavbarComponent;
-    let entityTitleServiceStub: jest.SpyInstance;
+    let entityTitleServiceStub: ReturnType<typeof vi.spyOn>;
     let entityTitleService: EntityTitleService;
     let examParticipationService: ExamParticipationService;
 
@@ -74,7 +90,7 @@ describe('NavbarComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [
+            imports: [
                 NavbarComponent,
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(ActiveMenuDirective),
@@ -83,8 +99,6 @@ describe('NavbarComponent', () => {
                 MockRouterLinkActiveOptionsDirective,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(FindLanguageFromKeyPipe),
-                MockComponent(LoadingNotificationComponent),
-                MockComponent(JhiConnectionWarningComponent),
                 MockComponent(SystemNotificationComponent),
                 FaIconComponent,
                 MockComponent(ThemeSwitchComponent),
@@ -100,11 +114,16 @@ describe('NavbarComponent', () => {
                 { provide: Router, useValue: router },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: LoadingNotificationService, useValue: { loadingStatus: new BehaviorSubject(false) } },
             ],
         })
             .overrideComponent(NavbarComponent, {
                 remove: {
-                    imports: [ThemeSwitchComponent],
+                    imports: [ThemeSwitchComponent, JhiConnectionWarningComponent, LoadingNotificationComponent],
+                },
+                add: {
+                    imports: [StubConnectionWarningComponent, StubLoadingNotificationComponent],
                 },
             })
             .compileComponents();
@@ -112,13 +131,13 @@ describe('NavbarComponent', () => {
         component = fixture.componentInstance;
         examParticipationService = TestBed.inject(ExamParticipationService);
         entityTitleService = TestBed.inject(EntityTitleService);
-        entityTitleServiceStub = jest.spyOn(entityTitleService, 'getTitle').mockImplementation((type) => of('Test ' + type.substring(0, 1) + type.substring(1).toLowerCase()));
+        entityTitleServiceStub = vi.spyOn(entityTitleService, 'getTitle').mockImplementation((type) => of('Test ' + type.substring(0, 1) + type.substring(1).toLowerCase()));
         const profileService = TestBed.inject(ProfileService);
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(expectedProfileInfo);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(expectedProfileInfo);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize component', () => {
@@ -128,9 +147,9 @@ describe('NavbarComponent', () => {
 
     it('should make api call when logged in user changes language', () => {
         const languageService = TestBed.inject(TranslateService);
-        const useSpy = jest.spyOn(languageService, 'use');
+        const useSpy = vi.spyOn(languageService, 'use');
         const accountService = TestBed.inject(AccountService);
-        const languageChangeSpy = jest.spyOn(accountService, 'updateLanguage');
+        const languageChangeSpy = vi.spyOn(accountService, 'updateLanguage');
 
         fixture.detectChanges();
         component.changeLanguage('elvish');
@@ -141,9 +160,9 @@ describe('NavbarComponent', () => {
 
     it('should not make api call when anonymous user changes language', () => {
         const languageService = TestBed.inject(TranslateService);
-        const useSpy = jest.spyOn(languageService, 'use');
+        const useSpy = vi.spyOn(languageService, 'use');
         const accountService = TestBed.inject(AccountService);
-        const languageChangeSpy = jest.spyOn(accountService, 'updateLanguage');
+        const languageChangeSpy = vi.spyOn(accountService, 'updateLanguage');
 
         fixture.detectChanges();
         component.currAccount = undefined;
@@ -301,9 +320,9 @@ describe('NavbarComponent', () => {
         expect(fixture.nativeElement.querySelector('.breadcrumb')).not.toBeNull();
     });
 
-    it('should have correct git info', fakeAsync(() => {
+    it('should have correct git info', () => {
         const profileService = TestBed.inject(ProfileService);
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(expectedProfileInfo);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(expectedProfileInfo);
 
         fixture.detectChanges();
 
@@ -311,9 +330,10 @@ describe('NavbarComponent', () => {
         expect(component.gitBranchName).toBe('code-button');
         expect(component.gitTimestamp).toBe('Sun, 20 Nov 2022 20:35:01 GMT');
         expect(component.gitUsername).toBe('Max Musterman');
-    }));
+    });
 
-    it('should set the exam active state correctly', fakeAsync(() => {
+    it('should set the exam active state correctly', async () => {
+        vi.useFakeTimers();
         const now = dayjs();
         const examParticipationService = TestBed.inject(ExamParticipationService);
         const activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
@@ -333,14 +353,15 @@ describe('NavbarComponent', () => {
         } as StudentExam);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(component.isExamActive).toBeFalse();
-        tick(61000);
-        expect(component.isExamActive).toBeTrue();
-        tick(61000);
-        expect(component.isExamActive).toBeTrue();
-        tick(180000);
-        expect(component.isExamActive).toBeFalse();
-    }));
+        expect(component.isExamActive).toBe(false);
+        await vi.advanceTimersByTimeAsync(61000);
+        expect(component.isExamActive).toBe(true);
+        await vi.advanceTimersByTimeAsync(61000);
+        expect(component.isExamActive).toBe(true);
+        await vi.advanceTimersByTimeAsync(180000);
+        expect(component.isExamActive).toBe(false);
+        vi.useRealTimers();
+    });
 
     describe('Special Cases for Breadcrumbs', () => {
         it('programming exercise import', () => {
@@ -838,7 +859,7 @@ describe('NavbarComponent', () => {
         },
     ])('should calculate correct breakpoints', ({ width, account, roles, expected }) => {
         const accountService = TestBed.inject(AccountService);
-        jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockImplementation((authArray) => authArray.some((auth) => (roles as Authority[]).includes(auth)));
+        vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockImplementation((authArray) => authArray.some((auth) => (roles as Authority[]).includes(auth)));
 
         component.currAccount = account as User;
         window['innerWidth'] = width;

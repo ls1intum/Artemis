@@ -1,4 +1,5 @@
-import { Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
+import { Component, DestroyRef, ElementRef, computed, inject, signal, viewChildren } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -40,58 +41,66 @@ import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/f
         FeatureOverlayComponent,
     ],
 })
-export class CourseDashboardComponent implements OnInit, OnDestroy {
+export class CourseDashboardComponent {
     private courseStorageService = inject(CourseStorageService);
     private alertService = inject(AlertService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private courseDashboardService = inject(CourseDashboardService);
     private profileService = inject(ProfileService);
+    private destroyRef = inject(DestroyRef);
 
-    courseId: number;
-    exerciseId: number;
-    points: number = 0;
-    maxPoints: number = 0;
-    progress: number = 0;
-    isLoading = false;
-    hasExercises = false;
-    hasCompetencies = false;
-    exerciseLateness?: ExerciseLateness[];
-    exercisePerformance?: ExercisePerformance[];
-    atlasEnabled = false;
-    studentMetrics?: StudentMetrics;
+    private readonly _courseId = signal<number>(0);
+    private readonly _points = signal(0);
+    private readonly _maxPoints = signal(0);
+    private readonly _progress = signal(0);
+    private readonly _isLoading = signal(false);
+    private readonly _hasExercises = signal(false);
+    private readonly _hasCompetencies = signal(false);
+    private readonly _exerciseLateness = signal<ExerciseLateness[] | undefined>(undefined);
+    private readonly _exercisePerformance = signal<ExercisePerformance[] | undefined>(undefined);
+    private readonly _atlasEnabled = signal(false);
+    private readonly _studentMetrics = signal<StudentMetrics | undefined>(undefined);
+    private readonly _competencies = signal<CompetencyInformation[]>([]);
+    private readonly _openedAccordionIndex = signal<number | undefined>(undefined);
+    private readonly _course = signal<Course | undefined>(undefined);
 
-    private paramSubscription?: Subscription;
-    private courseUpdatesSubscription?: Subscription;
+    readonly courseId = computed(() => this._courseId());
+    readonly points = computed(() => this._points());
+    readonly maxPoints = computed(() => this._maxPoints());
+    readonly progress = computed(() => this._progress());
+    readonly isLoading = computed(() => this._isLoading());
+    readonly hasExercises = computed(() => this._hasExercises());
+    readonly hasCompetencies = computed(() => this._hasCompetencies());
+    readonly exerciseLateness = computed(() => this._exerciseLateness());
+    readonly exercisePerformance = computed(() => this._exercisePerformance());
+    readonly atlasEnabled = computed(() => this._atlasEnabled());
+    readonly studentMetrics = computed(() => this._studentMetrics());
+    readonly competencies = computed(() => this._competencies());
+    readonly openedAccordionIndex = computed(() => this._openedAccordionIndex());
+    readonly course = computed(() => this._course());
+
     private metricsSubscription?: Subscription;
-
-    public competencies: CompetencyInformation[] = [];
-    public openedAccordionIndex?: number;
-
-    public course?: Course;
 
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly round = round;
 
-    @ViewChildren('competencyAccordionElement', { read: ElementRef }) competencyAccordions: QueryList<ElementRef>;
+    readonly competencyAccordions = viewChildren('competencyAccordionElement', { read: ElementRef });
 
-    ngOnInit(): void {
-        this.paramSubscription = this.route?.parent?.params.subscribe((params) => {
-            this.courseId = parseInt(params['courseId'], 10);
+    constructor() {
+        this.route?.parent?.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+            this._courseId.set(parseInt(params['courseId'], 10));
+            this.setCourse(this.courseStorageService.getCourse(this._courseId()));
+
+            this.courseStorageService
+                .subscribeToCourseUpdates(this._courseId())
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe((course: Course) => {
+                    this.setCourse(course);
+                });
         });
-        this.setCourse(this.courseStorageService.getCourse(this.courseId));
 
-        this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
-            this.setCourse(course);
-        });
-
-        this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
-    }
-
-    ngOnDestroy(): void {
-        this.paramSubscription?.unsubscribe();
-        this.courseUpdatesSubscription?.unsubscribe();
-        this.metricsSubscription?.unsubscribe();
+        this._atlasEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS));
     }
 
     /**
@@ -102,11 +111,11 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
             this.metricsSubscription.unsubscribe();
         }
 
-        this.isLoading = true;
-        this.metricsSubscription = this.courseDashboardService.getCourseMetricsForUser(this.courseId).subscribe({
+        this._isLoading.set(true);
+        this.metricsSubscription = this.courseDashboardService.getCourseMetricsForUser(this._courseId()).subscribe({
             next: (response) => {
                 if (response.body) {
-                    this.studentMetrics = response.body;
+                    this._studentMetrics.set(response.body);
                     const lectureUnitMetrics = response.body.lectureUnitStudentMetricsDTO ?? {};
 
                     // Exercise metrics
@@ -120,14 +129,14 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                     // Limit the number of exercises to the last 10
                     sortedExerciseIds = sortedExerciseIds.slice(-10);
 
-                    this.hasExercises = sortedExerciseIds.length > 0;
+                    this._hasExercises.set(sortedExerciseIds.length > 0);
                     this.setOverallPerformance(sortedExerciseIds, exerciseMetrics);
                     this.setExercisePerformance(sortedExerciseIds, exerciseMetrics);
                     this.setExerciseLateness(sortedExerciseIds, exerciseMetrics);
 
                     // Competency metrics
                     const competencyMetrics = response.body.competencyMetrics ?? {};
-                    this.competencies = Object.values(competencyMetrics.competencyInformation ?? {})
+                    const filteredCompetencies = Object.values(competencyMetrics.competencyInformation ?? {})
                         .filter((competency) => {
                             // Has at least one exercise that has started
                             const exerciseIds = competencyMetrics.exercises?.[competency.id] ?? [];
@@ -151,13 +160,14 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                             return a.id < b.id ? -1 : 1;
                         });
 
-                    this.hasCompetencies = this.competencies.length > 0;
+                    this._competencies.set(filteredCompetencies);
+                    this._hasCompetencies.set(filteredCompetencies.length > 0);
                 }
-                this.isLoading = false;
+                this._isLoading.set(false);
             },
             error: (errorResponse: HttpErrorResponse) => {
                 onError(this.alertService, errorResponse);
-                this.isLoading = false;
+                this._isLoading.set(false);
             },
         });
     }
@@ -171,11 +181,11 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     private setOverallPerformance(exerciseIds: number[], exerciseMetrics: ExerciseMetrics) {
         const relevantExercises = Object.values(exerciseMetrics?.exerciseInformation ?? {}).filter((exercise) => exerciseIds.includes(exercise.id));
         const points = relevantExercises.reduce((sum, exercise) => sum + ((exerciseMetrics.score?.[exercise.id] || 0) / 100) * exercise.maxPoints, 0);
-        this.points = round(points, 1);
+        this._points.set(round(points, 1));
 
         const maxPoints = relevantExercises.reduce((sum, exercise) => sum + exercise.maxPoints, 0);
-        this.maxPoints = round(maxPoints, 1);
-        this.progress = round((points / maxPoints) * 100, 1);
+        this._maxPoints.set(round(maxPoints, 1));
+        this._progress.set(round((points / maxPoints) * 100, 1));
     }
 
     /**
@@ -185,20 +195,22 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
      * @param exerciseMetrics - An object containing metrics related to exercises.
      */
     private setExercisePerformance(sortedExerciseIds: number[], exerciseMetrics: ExerciseMetrics) {
-        this.exercisePerformance = sortedExerciseIds.flatMap((exerciseId) => {
-            const exerciseInformation = exerciseMetrics?.exerciseInformation?.[exerciseId];
-            return exerciseInformation
-                ? [
-                      {
-                          exerciseId: exerciseId,
-                          title: exerciseInformation.title,
-                          shortName: exerciseInformation.shortName,
-                          score: exerciseMetrics.score?.[exerciseId],
-                          averageScore: exerciseMetrics.averageScore?.[exerciseId],
-                      },
-                  ]
-                : [];
-        });
+        this._exercisePerformance.set(
+            sortedExerciseIds.flatMap((exerciseId) => {
+                const exerciseInformation = exerciseMetrics?.exerciseInformation?.[exerciseId];
+                return exerciseInformation
+                    ? [
+                          {
+                              exerciseId: exerciseId,
+                              title: exerciseInformation.title,
+                              shortName: exerciseInformation.shortName,
+                              score: exerciseMetrics.score?.[exerciseId],
+                              averageScore: exerciseMetrics.averageScore?.[exerciseId],
+                          },
+                      ]
+                    : [];
+            }),
+        );
     }
 
     /**
@@ -208,35 +220,37 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
      * @param exerciseMetrics - An object containing metrics related to exercises.
      */
     private setExerciseLateness(sortedExerciseIds: number[], exerciseMetrics: ExerciseMetrics) {
-        this.exerciseLateness = sortedExerciseIds.flatMap((exerciseId) => {
-            const exerciseInformation = exerciseMetrics?.exerciseInformation?.[exerciseId];
-            return exerciseInformation
-                ? [
-                      {
-                          exerciseId: exerciseId,
-                          title: exerciseInformation.title,
-                          shortName: exerciseInformation.shortName,
-                          relativeLatestSubmission: exerciseMetrics.latestSubmission?.[exerciseId],
-                          relativeAverageLatestSubmission: exerciseMetrics.averageLatestSubmission?.[exerciseId],
-                      },
-                  ]
-                : [];
-        });
+        this._exerciseLateness.set(
+            sortedExerciseIds.flatMap((exerciseId) => {
+                const exerciseInformation = exerciseMetrics?.exerciseInformation?.[exerciseId];
+                return exerciseInformation
+                    ? [
+                          {
+                              exerciseId: exerciseId,
+                              title: exerciseInformation.title,
+                              shortName: exerciseInformation.shortName,
+                              relativeLatestSubmission: exerciseMetrics.latestSubmission?.[exerciseId],
+                              relativeAverageLatestSubmission: exerciseMetrics.averageLatestSubmission?.[exerciseId],
+                          },
+                      ]
+                    : [];
+            }),
+        );
     }
 
     private setCourse(course?: Course) {
-        const shouldLoadMetrics = this.course?.id !== course?.id && course?.studentCourseAnalyticsDashboardEnabled;
-        this.course = course;
-        if (this.course && shouldLoadMetrics) {
+        const shouldLoadMetrics = this._course()?.id !== course?.id && course?.studentCourseAnalyticsDashboardEnabled;
+        this._course.set(course);
+        if (course && shouldLoadMetrics) {
             this.loadMetrics();
         }
     }
 
     handleToggle(event: CompetencyAccordionToggleEvent) {
-        this.openedAccordionIndex = event.opened ? event.index : undefined;
+        this._openedAccordionIndex.set(event.opened ? event.index : undefined);
     }
 
     navigateToLearningPaths() {
-        this.router.navigate(['courses', this.courseId, 'learning-path']);
+        this.router.navigate(['courses', this._courseId(), 'learning-path']);
     }
 }

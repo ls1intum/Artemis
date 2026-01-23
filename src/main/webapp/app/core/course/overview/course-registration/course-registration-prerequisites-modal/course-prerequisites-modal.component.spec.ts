@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -13,6 +15,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CoursePrerequisitesModal', () => {
+    setupTestBed({ zoneless: true });
+
     let coursePrerequisitesModalComponentFixture: ComponentFixture<CoursePrerequisitesModalComponent>;
     let coursePrerequisitesModalComponent: CoursePrerequisitesModalComponent;
     let prerequisiteService: PrerequisiteService;
@@ -22,9 +26,9 @@ describe('CoursePrerequisitesModal', () => {
         dismiss: () => {},
     };
 
-    beforeEach(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
-            declarations: [CoursePrerequisitesModalComponent, MockPipe(ArtemisTranslatePipe), MockComponent(CompetencyCardComponent)],
+            imports: [CoursePrerequisitesModalComponent, MockPipe(ArtemisTranslatePipe), MockComponent(CompetencyCardComponent)],
             providers: [
                 MockProvider(AlertService),
                 MockProvider(PrerequisiteService),
@@ -34,22 +38,20 @@ describe('CoursePrerequisitesModal', () => {
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                coursePrerequisitesModalComponentFixture = TestBed.createComponent(CoursePrerequisitesModalComponent);
-                coursePrerequisitesModalComponent = coursePrerequisitesModalComponentFixture.componentInstance;
-                coursePrerequisitesModalComponentFixture.componentInstance.courseId = 1;
-                prerequisiteService = TestBed.inject(PrerequisiteService);
-            });
+        });
+        await TestBed.compileComponents();
+        coursePrerequisitesModalComponentFixture = TestBed.createComponent(CoursePrerequisitesModalComponent);
+        coursePrerequisitesModalComponent = coursePrerequisitesModalComponentFixture.componentInstance;
+        coursePrerequisitesModalComponentFixture.componentRef.setInput('courseId', 1);
+        prerequisiteService = TestBed.inject(PrerequisiteService);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should load prerequisites and display a card for each of them', () => {
-        const getAllPrerequisitesForCourseSpy = jest
+        const getAllPrerequisitesForCourseSpy = vi
             .spyOn(prerequisiteService, 'getAllForCourse')
             .mockReturnValue(of(new HttpResponse({ body: [{ id: 1 }, { id: 2 }], status: 200 })));
 
@@ -62,7 +64,7 @@ describe('CoursePrerequisitesModal', () => {
     });
 
     it('should close modal when cleared', () => {
-        const dismissActiveModal = jest.spyOn(activeModalStub, 'dismiss');
+        const dismissActiveModal = vi.spyOn(activeModalStub, 'dismiss');
         coursePrerequisitesModalComponent.clear();
         expect(dismissActiveModal).toHaveBeenCalledOnce();
     });

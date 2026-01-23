@@ -117,6 +117,7 @@ export class ManageAssessmentButtonsComponent implements OnInit {
                     break;
             }
             cancelSubscription?.subscribe(() => {
+                // TODO: The 'emit' function requires a mandatory void argument
                 this.refresh.emit();
             });
         }

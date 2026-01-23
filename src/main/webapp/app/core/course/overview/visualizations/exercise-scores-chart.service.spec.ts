@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
@@ -8,6 +10,7 @@ import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/core/course/o
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Exercise Scores Chart Service', () => {
+    setupTestBed({ zoneless: true });
     let service: ExerciseScoresChartService;
     let httpMock: HttpTestingController;
     let elemDefault: ExerciseScoresDTO;
@@ -24,6 +27,7 @@ describe('Exercise Scores Chart Service', () => {
 
     afterEach(() => {
         httpMock.verify();
+        vi.restoreAllMocks();
     });
 
     it('should find all by course id', () => {

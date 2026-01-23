@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnChanges, inject } from '@angular/core';
+import { AfterViewInit, Component, effect, inject, input, untracked } from '@angular/core';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/core/course/overview/visualizations/exercise-scores-chart.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -41,7 +41,7 @@ type SeriesDatapoint = {
     styleUrls: ['./exercise-scores-chart.component.scss'],
     imports: [TranslateDirective, NgbDropdown, NgbDropdownToggle, FaIconComponent, NgbDropdownMenu, LineChartModule, ArtemisTranslatePipe],
 })
-export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
+export class ExerciseScoresChartComponent implements AfterViewInit {
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private activatedRoute = inject(ActivatedRoute);
     private alertService = inject(AlertService);
@@ -49,7 +49,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
     exerciseTypeFilter = inject(ChartExerciseTypeFilter);
     private translateService = inject(TranslateService);
 
-    @Input() filteredExerciseIDs: number[];
+    readonly filteredExerciseIDs = input<number[]>(undefined!);
 
     courseId: number;
     isLoading = false;
@@ -85,6 +85,13 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
         this.translateService.onLangChange.subscribe(() => {
             this.setTranslations();
         });
+
+        effect(() => {
+            this.filteredExerciseIDs(); // Read signal to track it
+            untracked(() => {
+                this.initializeChart();
+            });
+        });
     }
 
     ngAfterViewInit() {
@@ -94,10 +101,6 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
                 this.loadDataAndInitializeChart();
             }
         });
-    }
-
-    ngOnChanges() {
-        this.initializeChart();
     }
 
     private loadDataAndInitializeChart(): void {
@@ -121,8 +124,8 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
     private initializeChart(): void {
         this.setTranslations();
         this.exerciseScores = this.exerciseScores.concat(this.excludedExerciseScores);
-        this.excludedExerciseScores = this.exerciseScores.filter((score) => this.filteredExerciseIDs.includes(score.exerciseId!));
-        this.exerciseScores = this.exerciseScores.filter((score) => !this.filteredExerciseIDs.includes(score.exerciseId!));
+        this.excludedExerciseScores = this.exerciseScores.filter((score) => this.filteredExerciseIDs().includes(score.exerciseId!));
+        this.exerciseScores = this.exerciseScores.filter((score) => !this.filteredExerciseIDs().includes(score.exerciseId!));
         this.visibleExerciseScores = Array.of(...this.exerciseScores);
         // we show all the exercises ordered by their release data
         const sortedExerciseScores = sortBy(this.exerciseScores, (exerciseScore) => exerciseScore.releaseDate);

@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { CalendarMobileOverviewComponent } from './calendar-mobile-overview.component';
@@ -19,6 +21,8 @@ import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calenda
 import * as calendarUtils from 'app/shared/util/global.utils';
 
 describe('CalendarMobileOverviewComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CalendarMobileOverviewComponent>;
     let component: CalendarMobileOverviewComponent;
 
@@ -26,10 +30,14 @@ describe('CalendarMobileOverviewComponent', () => {
     let firstDayOfCurrentMonth: Dayjs;
     let today: Dayjs;
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     beforeEach(async () => {
         const calendarServiceMock = {
             eventMap: signal(new Map<string, CalendarEvent[]>()),
-            loadEventsForCurrentMonth: jest.fn().mockReturnValue(of([])),
+            loadEventsForCurrentMonth: vi.fn().mockReturnValue(of([])),
             subscriptionToken: signal('testToken'),
             includedEventFilterOptions: signal([
                 CalendarEventFilterOption.LectureEvents,
@@ -40,8 +48,13 @@ describe('CalendarMobileOverviewComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            imports: [CalendarMobileOverviewComponent, CalendarMobileDayPresentationComponent],
-            declarations: [FaIconComponent, MockComponent(CalendarMobileMonthPresentationComponent), MockDirective(TranslateDirective)],
+            imports: [
+                CalendarMobileOverviewComponent,
+                CalendarMobileDayPresentationComponent,
+                FaIconComponent,
+                MockComponent(CalendarMobileMonthPresentationComponent),
+                MockDirective(TranslateDirective),
+            ],
             providers: [
                 {
                     provide: CalendarService,
@@ -61,7 +74,7 @@ describe('CalendarMobileOverviewComponent', () => {
             ],
         }).compileComponents();
 
-        jest.spyOn(calendarUtils, 'getCurrentLocaleSignal').mockReturnValue(signal('en'));
+        vi.spyOn(calendarUtils, 'getCurrentLocaleSignal').mockReturnValue(signal('en'));
 
         fixture = TestBed.createComponent(CalendarMobileOverviewComponent);
         component = fixture.componentInstance;
@@ -109,7 +122,7 @@ describe('CalendarMobileOverviewComponent', () => {
         previousButton.nativeElement.click();
         fixture.detectChanges();
 
-        expect(component.firstDateOfCurrentMonth().isSame(firstDayOfCurrentMonth.subtract(1, 'month'), 'day')).toBeTrue();
+        expect(component.firstDateOfCurrentMonth().isSame(firstDayOfCurrentMonth.subtract(1, 'month'), 'day')).toBe(true);
     });
 
     it('goToPrevious should update selectedDay and month if new day falls into other month', () => {
@@ -120,8 +133,8 @@ describe('CalendarMobileOverviewComponent', () => {
         previousButton.nativeElement.click();
         fixture.detectChanges();
 
-        expect(component.selectedDate()?.isSame(firstDayOfCurrentMonth.subtract(1, 'day'), 'day')).toBeTrue();
-        expect(component.firstDateOfCurrentMonth().isSame(firstDayOfCurrentMonth.subtract(1, 'month'), 'day')).toBeTrue();
+        expect(component.selectedDate()?.isSame(firstDayOfCurrentMonth.subtract(1, 'day'), 'day')).toBe(true);
+        expect(component.firstDateOfCurrentMonth().isSame(firstDayOfCurrentMonth.subtract(1, 'month'), 'day')).toBe(true);
     });
 
     it('goToPrevious should update selectedDay if new day falls into same month', () => {
@@ -132,8 +145,8 @@ describe('CalendarMobileOverviewComponent', () => {
         previousButton.nativeElement.click();
         fixture.detectChanges();
 
-        expect(component.selectedDate()?.isSame(dayToSelect.subtract(1, 'day'), 'day')).toBeTrue();
-        expect(component.firstDateOfCurrentMonth().isSame(firstDayOfCurrentMonth, 'day')).toBeTrue();
+        expect(component.selectedDate()?.isSame(dayToSelect.subtract(1, 'day'), 'day')).toBe(true);
+        expect(component.firstDateOfCurrentMonth().isSame(firstDayOfCurrentMonth, 'day')).toBe(true);
     });
 
     it('goToNext should update month when no day selected', () => {
@@ -144,7 +157,7 @@ describe('CalendarMobileOverviewComponent', () => {
         nextButton.nativeElement.click();
         fixture.detectChanges();
 
-        expect(component.firstDateOfCurrentMonth().isSame(firstDayOfCurrentMonth.add(1, 'month'), 'day')).toBeTrue();
+        expect(component.firstDateOfCurrentMonth().isSame(firstDayOfCurrentMonth.add(1, 'month'), 'day')).toBe(true);
     });
 
     it('goToNext should update selectedDay and month if new day falls into other month', () => {
@@ -155,8 +168,8 @@ describe('CalendarMobileOverviewComponent', () => {
         nextButton.nativeElement.click();
         fixture.detectChanges();
 
-        expect(component.selectedDate()?.isSame(firstDayOfCurrentMonth.add(1, 'month'), 'day')).toBeTrue();
-        expect(component.firstDateOfCurrentMonth().isSame(firstDayOfCurrentMonth.add(1, 'month'), 'day')).toBeTrue();
+        expect(component.selectedDate()?.isSame(firstDayOfCurrentMonth.add(1, 'month'), 'day')).toBe(true);
+        expect(component.firstDateOfCurrentMonth().isSame(firstDayOfCurrentMonth.add(1, 'month'), 'day')).toBe(true);
     });
 
     it('goToNext should update selectedDay if new day falls into same month', () => {
@@ -167,8 +180,8 @@ describe('CalendarMobileOverviewComponent', () => {
         nextButton.nativeElement.click();
         fixture.detectChanges();
 
-        expect(component.selectedDate()?.isSame(dayToSelect.add(1, 'day'), 'day')).toBeTrue();
-        expect(component.firstDateOfCurrentMonth().isSame(firstDayOfCurrentMonth, 'day')).toBeTrue();
+        expect(component.selectedDate()?.isSame(dayToSelect.add(1, 'day'), 'day')).toBe(true);
+        expect(component.firstDateOfCurrentMonth().isSame(firstDayOfCurrentMonth, 'day')).toBe(true);
     });
 
     it('goToToday should set selectedDay and month if a day was selected', () => {
@@ -179,8 +192,8 @@ describe('CalendarMobileOverviewComponent', () => {
         todayButton.nativeElement.click();
         fixture.detectChanges();
 
-        expect(component.selectedDate()?.isSame(today, 'day')).toBeTrue();
-        expect(component.firstDateOfCurrentMonth().isSame(today.startOf('month'), 'day')).toBeTrue();
+        expect(component.selectedDate()?.isSame(today, 'day')).toBe(true);
+        expect(component.firstDateOfCurrentMonth().isSame(today.startOf('month'), 'day')).toBe(true);
     });
 
     it('goToToday should only update month when no day selected', () => {
@@ -191,7 +204,7 @@ describe('CalendarMobileOverviewComponent', () => {
         todayButton.nativeElement.click();
         fixture.detectChanges();
 
-        expect(component.firstDateOfCurrentMonth().isSame(today.startOf('month'), 'day')).toBeTrue();
+        expect(component.firstDateOfCurrentMonth().isSame(today.startOf('month'), 'day')).toBe(true);
         expect(component.selectedDate()).toBeUndefined();
     });
 
@@ -200,7 +213,7 @@ describe('CalendarMobileOverviewComponent', () => {
         expect(popoverDebugElement).toBeTruthy();
 
         const popover = popoverDebugElement.componentInstance as CalendarSubscriptionPopoverComponent;
-        const openSpy = jest.spyOn(popover, 'open');
+        const openSpy = vi.spyOn(popover, 'open');
 
         const subscribeButton = fixture.debugElement.query(By.css('[data-testid="subscribe-button"]')).nativeElement;
         expect(subscribeButton).toBeTruthy();

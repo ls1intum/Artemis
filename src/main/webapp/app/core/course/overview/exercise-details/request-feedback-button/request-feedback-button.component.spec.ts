@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement, TemplateRef } from '@angular/core';
 import { PROFILE_ATHENA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -22,6 +24,8 @@ import { ParticipationWebsocketService } from 'app/core/course/shared/services/p
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 
 describe('RequestFeedbackButtonComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: RequestFeedbackButtonComponent;
     let fixture: ComponentFixture<RequestFeedbackButtonComponent>;
     let debugElement: DebugElement;
@@ -30,8 +34,8 @@ describe('RequestFeedbackButtonComponent', () => {
     let courseExerciseService: CourseExerciseService;
     let exerciseService: ExerciseService;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        TestBed.configureTestingModule({
             imports: [RequestFeedbackButtonComponent, NgbTooltipModule],
             providers: [
                 { provide: ProfileService, useClass: MockProfileService },
@@ -40,30 +44,33 @@ describe('RequestFeedbackButtonComponent', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 provideHttpClient(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(RequestFeedbackButtonComponent);
-                component = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-                courseExerciseService = TestBed.inject(CourseExerciseService);
-                exerciseService = TestBed.inject(ExerciseService);
-                profileService = TestBed.inject(ProfileService);
-                alertService = TestBed.inject(AlertService);
-            });
+        });
+        await TestBed.compileComponents();
+        fixture = TestBed.createComponent(RequestFeedbackButtonComponent);
+        component = fixture.componentInstance;
+        debugElement = fixture.debugElement;
+        courseExerciseService = TestBed.inject(CourseExerciseService);
+        exerciseService = TestBed.inject(ExerciseService);
+        profileService = TestBed.inject(ProfileService);
+        alertService = TestBed.inject(AlertService);
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
     });
 
     function setAthenaEnabled(enabled: boolean) {
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: enabled ? [PROFILE_ATHENA] : [] } as ProfileInfo);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: enabled ? [PROFILE_ATHENA] : [] } as ProfileInfo);
     }
 
     function mockExerciseDetails(exercise: Exercise) {
-        jest.spyOn(exerciseService, 'getExerciseDetails').mockReturnValue(of(new HttpResponse({ body: { exercise: exercise } })));
+        vi.spyOn(exerciseService, 'getExerciseDetails').mockReturnValue(of(new HttpResponse({ body: { exercise: exercise } })));
     }
 
-    function initAndTick() {
+    async function initAndTick() {
         component.ngOnInit();
-        tick();
+        await vi.advanceTimersByTimeAsync(0);
         fixture.detectChanges();
     }
 
@@ -96,141 +103,151 @@ describe('RequestFeedbackButtonComponent', () => {
         mockExerciseDetails(exercise);
     }
 
-    it('should handle errors when requestAIFeedback fails', fakeAsync(() => {
+    it('should handle errors when requestAIFeedback fails', async () => {
+        vi.useFakeTimers();
         setAthenaEnabled(true);
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.TEXT, true, participation);
         setupComponentInputs(exercise);
         component.hasUserAcceptedExternalLLMUsage = true;
 
-        jest.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(
+        vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(
             new Observable<StudentParticipation>((subscriber) => {
                 subscriber.error({ error: { errorKey: 'someError' } });
             }),
         );
-        jest.spyOn(alertService, 'error');
+        vi.spyOn(alertService, 'error');
 
         const mockTemplateRef = {} as TemplateRef<any>;
         component.requestAIFeedback(mockTemplateRef);
-        tick();
+        await vi.advanceTimersByTimeAsync(0);
 
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.someError');
-    }));
+    });
 
-    it('should display the button when Athena is enabled and it is not an exam exercise', fakeAsync(() => {
+    it('should display the button when Athena is enabled and it is not an exam exercise', async () => {
+        vi.useFakeTimers();
         setAthenaEnabled(true);
         const exercise = createBaseExercise(ExerciseType.TEXT, false);
         setupComponentInputs(exercise);
 
-        initAndTick();
+        await initAndTick();
 
         const button = debugElement.query(By.css('button'));
         expect(button).not.toBeNull();
-        expect(button.nativeElement.disabled).toBeTrue();
-    }));
+        expect(button.nativeElement.disabled).toBe(true);
+    });
 
-    it('should not display the button when it is an exam exercise', fakeAsync(() => {
+    it('should not display the button when it is an exam exercise', async () => {
+        vi.useFakeTimers();
         setAthenaEnabled(true);
         const exercise = createBaseExercise(ExerciseType.TEXT, true);
         setupComponentInputs(exercise);
 
-        initAndTick();
+        await initAndTick();
 
         const button = debugElement.query(By.css('button'));
         const link = debugElement.query(By.css('a'));
         expect(button).toBeNull();
         expect(link).toBeNull();
-    }));
+    });
 
-    it('should disable the button when participation is missing', fakeAsync(() => {
+    it('should disable the button when participation is missing', async () => {
+        vi.useFakeTimers();
         setAthenaEnabled(true);
         const exercise = createBaseExercise(ExerciseType.TEXT, false);
         setupComponentInputs(exercise);
 
-        initAndTick();
+        await initAndTick();
 
         const button = debugElement.query(By.css('button'));
         expect(button).not.toBeNull();
-        expect(button.nativeElement.disabled).toBeTrue();
-    }));
+        expect(button.nativeElement.disabled).toBe(true);
+    });
 
-    it('should display the correct button label and style when Athena is enabled', fakeAsync(() => {
+    it('should display the correct button label and style when Athena is enabled', async () => {
+        vi.useFakeTimers();
         setAthenaEnabled(true);
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
         setupComponentInputs(exercise);
         component.isExamExercise = false;
 
-        initAndTick();
+        await initAndTick();
 
         const button = debugElement.query(By.css('button'));
         expect(button).not.toBeNull();
 
         const span = button.query(By.css('span'));
         expect(span.nativeElement.textContent).toContain('artemisApp.exerciseActions.requestAutomaticFeedback');
-    }));
+    });
 
-    it('should call requestAIFeedback() when button is clicked', fakeAsync(() => {
+    it('should call requestAIFeedback() when button is clicked', async () => {
+        vi.useFakeTimers();
         setAthenaEnabled(true);
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
         setupComponentInputs(exercise);
         component.hasUserAcceptedExternalLLMUsage = true;
 
-        initAndTick();
+        await initAndTick();
 
-        jest.spyOn(component, 'requestAIFeedback');
-        jest.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
+        vi.spyOn(component, 'requestAIFeedback');
+        vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
 
         const button = debugElement.query(By.css('button'));
         expect(button).not.toBeNull();
         button.nativeElement.click();
-        tick();
+        await vi.advanceTimersByTimeAsync(0);
 
         expect(component.requestAIFeedback).toHaveBeenCalled();
-    }));
+    });
 
-    it('should show an alert when requestAIFeedback() is called and conditions are not satisfied', fakeAsync(() => {
+    it('should show an alert when requestAIFeedback() is called and conditions are not satisfied', async () => {
+        vi.useFakeTimers();
         setAthenaEnabled(true);
         const exercise = createBaseExercise(ExerciseType.TEXT, false);
         setupComponentInputs(exercise);
         component.hasUserAcceptedExternalLLMUsage = true;
 
-        jest.spyOn(component, 'hasAthenaResultForLatestSubmission').mockReturnValue(true);
-        jest.spyOn(alertService, 'warning');
+        vi.spyOn(component, 'hasAthenaResultForLatestSubmission').mockReturnValue(true);
+        vi.spyOn(alertService, 'warning');
 
         component.requestAIFeedback({} as any);
 
         expect(alertService.warning).toHaveBeenCalled();
-    }));
+    });
 
-    it('should disable the button if latest submission is not submitted or feedback is generating', fakeAsync(() => {
+    it('should disable the button if latest submission is not submitted or feedback is generating', async () => {
+        vi.useFakeTimers();
         setAthenaEnabled(true);
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
         setupComponentInputs(exercise, false, false);
 
-        initAndTick();
+        await initAndTick();
 
         const button = debugElement.query(By.css('button'));
         expect(button).not.toBeNull();
-        expect(button.nativeElement.disabled).toBeTrue();
-    }));
+        expect(button.nativeElement.disabled).toBe(true);
+    });
 
-    it('should enable the button if latest submission is submitted and feedback is not generating', fakeAsync(() => {
+    it('should enable the button if latest submission is submitted and feedback is not generating', async () => {
+        vi.useFakeTimers();
         setAthenaEnabled(true);
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
         setupComponentInputs(exercise, true, false);
 
-        initAndTick();
+        await initAndTick();
 
         const button = debugElement.query(By.css('button'));
         expect(button).not.toBeNull();
-        expect(button.nativeElement.disabled).toBeFalse();
-    }));
+        expect(button.nativeElement.disabled).toBe(false);
+    });
 
-    it('should open modal when hasUserAcceptedExternalLLMUsage is false and requestAIFeedback is clicked', fakeAsync(() => {
+    it('should open modal when hasUserAcceptedExternalLLMUsage is false and requestAIFeedback is clicked', async () => {
+        vi.useFakeTimers();
         setAthenaEnabled(true);
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
@@ -238,19 +255,20 @@ describe('RequestFeedbackButtonComponent', () => {
         component.hasUserAcceptedExternalLLMUsage = false;
 
         const modalService = TestBed.inject(NgbModal);
-        const modalSpy = jest.spyOn(modalService, 'open').mockReturnValue({} as any);
+        const modalSpy = vi.spyOn(modalService, 'open').mockReturnValue({} as any);
 
-        initAndTick();
+        await initAndTick();
 
         const button = debugElement.query(By.css('button'));
         expect(button).not.toBeNull();
         button.nativeElement.click();
-        tick();
+        await vi.advanceTimersByTimeAsync(0);
 
         expect(modalSpy).toHaveBeenCalled();
-    }));
+    });
 
-    it('should not open modal when hasUserAcceptedExternalLLMUsage is true and requestAIFeedback is clicked', fakeAsync(() => {
+    it('should not open modal when hasUserAcceptedExternalLLMUsage is true and requestAIFeedback is clicked', async () => {
+        vi.useFakeTimers();
         setAthenaEnabled(true);
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
@@ -258,14 +276,14 @@ describe('RequestFeedbackButtonComponent', () => {
         component.hasUserAcceptedExternalLLMUsage = true;
 
         const modalService = TestBed.inject(NgbModal);
-        const modalSpy = jest.spyOn(modalService, 'open');
-        const processFeedbackSpy = jest.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
+        const modalSpy = vi.spyOn(modalService, 'open');
+        const processFeedbackSpy = vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
 
         const mockTemplateRef = {} as TemplateRef<any>;
         component.requestAIFeedback(mockTemplateRef);
-        tick();
+        await vi.advanceTimersByTimeAsync(0);
 
         expect(modalSpy).not.toHaveBeenCalled();
         expect(processFeedbackSpy).toHaveBeenCalledWith(exercise.id);
-    }));
+    });
 });

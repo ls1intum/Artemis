@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { of } from 'rxjs';
@@ -16,6 +18,8 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { AlertService } from 'app/shared/service/alert.service';
 
 describe('CourseOverviewGuard', () => {
+    setupTestBed({ zoneless: true });
+
     let guard: CourseOverviewGuard;
     let courseStorageService: CourseStorageService;
     let courseManagementService: CourseManagementService;
@@ -44,6 +48,10 @@ describe('CourseOverviewGuard', () => {
         router = TestBed.inject(Router);
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     describe('canActivate', () => {
         it('should return false if courseId is not present', () => {
             const route = { parent: { paramMap: { get: () => undefined } }, routeConfig: { path: CourseOverviewRoutePath.EXERCISES } } as unknown as ActivatedRouteSnapshot;
@@ -51,18 +59,18 @@ describe('CourseOverviewGuard', () => {
             guard.canActivate(route).subscribe((result) => {
                 resultValue = result;
             });
-            expect(resultValue).toBeFalse();
+            expect(resultValue).toBe(false);
         });
 
         it('should return true if course is fetched from server', () => {
             const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.EXERCISES } } as unknown as ActivatedRouteSnapshot;
             let resultValue = false;
-            jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(undefined);
-            jest.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(responseFakeCourse));
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(undefined);
+            vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(responseFakeCourse));
             guard.canActivate(route).subscribe((result) => {
                 resultValue = result;
             });
-            expect(resultValue).toBeTrue();
+            expect(resultValue).toBe(true);
         });
     });
 
@@ -74,7 +82,7 @@ describe('CourseOverviewGuard', () => {
                 resultValue = value;
             });
 
-            expect(resultValue).toBeTrue();
+            expect(resultValue).toBe(true);
         });
 
         it('should return true if type is exams and course has visible exams', () => {
@@ -83,7 +91,7 @@ describe('CourseOverviewGuard', () => {
             result.subscribe((value) => {
                 resultValue = value;
             });
-            expect(resultValue).toBeTrue();
+            expect(resultValue).toBe(true);
         });
 
         it('should return false if type is exams and course has no visible exams', () => {
@@ -93,7 +101,7 @@ describe('CourseOverviewGuard', () => {
             result.subscribe((value) => {
                 resultValue = value;
             });
-            expect(resultValue).toBeFalse();
+            expect(resultValue).toBe(false);
         });
 
         it('should return true if type is competencies and course has competencies', () => {
@@ -103,7 +111,7 @@ describe('CourseOverviewGuard', () => {
             result.subscribe((value) => {
                 resultValue = value;
             });
-            expect(resultValue).toBeTrue();
+            expect(resultValue).toBe(true);
         });
 
         it('should return true if type is competencies and course has prerequisits', () => {
@@ -113,7 +121,7 @@ describe('CourseOverviewGuard', () => {
             result.subscribe((value) => {
                 resultValue = value;
             });
-            expect(resultValue).toBeTrue();
+            expect(resultValue).toBe(true);
         });
 
         it('should return true if type is tutorial-groups and course has tutorial groups', () => {
@@ -123,7 +131,7 @@ describe('CourseOverviewGuard', () => {
             result.subscribe((value) => {
                 resultValue = value;
             });
-            expect(resultValue).toBeTrue();
+            expect(resultValue).toBe(true);
         });
 
         it('should return true if type is dashboard and course has studentCourseAnalyticsDashboardEnabled', () => {
@@ -133,7 +141,7 @@ describe('CourseOverviewGuard', () => {
             result.subscribe((value) => {
                 resultValue = value;
             });
-            expect(resultValue).toBeTrue();
+            expect(resultValue).toBe(true);
         });
 
         it('should return true if type is faq and course has faqEnabled', () => {
@@ -142,7 +150,7 @@ describe('CourseOverviewGuard', () => {
             result.subscribe((value) => {
                 resultValue = value;
             });
-            expect(resultValue).toBeTrue();
+            expect(resultValue).toBe(true);
         });
 
         it('should return true if type is learning-path and course has learningPathsEnabled', () => {
@@ -152,7 +160,7 @@ describe('CourseOverviewGuard', () => {
             result.subscribe((value) => {
                 resultValue = value;
             });
-            expect(resultValue).toBeTrue();
+            expect(resultValue).toBe(true);
         });
 
         it('should return false if type is unknown', () => {
@@ -161,11 +169,11 @@ describe('CourseOverviewGuard', () => {
             result.subscribe((value) => {
                 resultValue = value;
             });
-            expect(resultValue).toBeFalse();
+            expect(resultValue).toBe(false);
         });
 
         it('should navigate to exercises if type is unknown', () => {
-            const navigateSpy = jest.spyOn(router, 'navigate');
+            const navigateSpy = vi.spyOn(router, 'navigate');
             guard.handleReturn(mockCourse, 'unknown');
             expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/exercises']);
         });

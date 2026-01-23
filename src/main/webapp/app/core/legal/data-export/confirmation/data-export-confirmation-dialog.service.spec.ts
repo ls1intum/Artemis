@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { OutputEmitterRef, signal } from '@angular/core';
@@ -11,8 +13,8 @@ import { DataExportConfirmationDialogComponent } from 'app/core/legal/data-expor
 // Helper to create a mock OutputEmitterRef
 function createMockOutputEmitterRef<T>(): OutputEmitterRef<T> {
     return {
-        emit: jest.fn(),
-        subscribe: jest.fn(),
+        emit: vi.fn(),
+        subscribe: vi.fn(),
         destroyed: false,
         listeners: new Set(),
         errorHandler: undefined,
@@ -20,6 +22,8 @@ function createMockOutputEmitterRef<T>(): OutputEmitterRef<T> {
 }
 
 describe('DataExportConfirmationDialogService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: DataExportConfirmationDialogService;
     let modalService: NgbModal;
 
@@ -32,7 +36,7 @@ describe('DataExportConfirmationDialogService', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should open confirmation dialog', () => {
@@ -54,7 +58,7 @@ describe('DataExportConfirmationDialogService', () => {
             dialogError: undefined as unknown,
         };
         const result = new Promise((resolve) => resolve({}));
-        const openModalStub = jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{
+        const openModalStub = vi.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{
             componentInstance,
             result,
         });

@@ -1,9 +1,10 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createCredentialOptions } from './credential-option.util';
 import { decodeBase64url } from 'app/shared/util/base64.util';
 import { User } from 'app/core/user/user.model';
 
-jest.mock('app/shared/util/base64.util', () => ({
-    decodeBase64url: jest.fn(),
+vi.mock('app/shared/util/base64.util', () => ({
+    decodeBase64url: vi.fn(),
 }));
 
 describe('Credential Option Util', () => {
@@ -20,7 +21,7 @@ describe('Credential Option Util', () => {
     } as unknown as PublicKeyCredentialCreationOptions;
 
     beforeEach(() => {
-        (decodeBase64url as jest.Mock).mockImplementation((input) => `decoded-${input}`);
+        (decodeBase64url as ReturnType<typeof vi.fn>).mockImplementation((input) => `decoded-${input}`);
     });
 
     it('should create valid credential options', () => {

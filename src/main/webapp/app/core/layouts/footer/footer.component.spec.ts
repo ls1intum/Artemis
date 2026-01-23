@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { expectedProfileInfo } from 'app/core/layouts/profiles/shared/profile.service.spec';
@@ -10,27 +12,31 @@ import { FooterComponent } from 'app/core/layouts/footer/footer.component';
 import dayJs from 'dayjs/esm';
 
 describe('FooterComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: FooterComponent;
     let fixture: ComponentFixture<FooterComponent>;
     let profileService: ProfileService;
 
     beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            declarations: [FooterComponent, MockPipe(ArtemisTranslatePipe)],
-            imports: [TranslateModule.forRoot(), RouterModule.forRoot([])],
+        TestBed.configureTestingModule({
+            imports: [FooterComponent, MockPipe(ArtemisTranslatePipe), TranslateModule.forRoot(), RouterModule.forRoot([])],
             providers: [{ provide: ProfileService, useClass: MockProfileService }],
-        })
-            .compileComponents()
-            .then(() => {
-                profileService = TestBed.inject(ProfileService);
-                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(expectedProfileInfo);
-            });
+        });
+        await TestBed.compileComponents();
+
+        profileService = TestBed.inject(ProfileService);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(expectedProfileInfo);
     });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(FooterComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {

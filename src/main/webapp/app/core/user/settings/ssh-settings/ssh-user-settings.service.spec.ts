@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -6,6 +8,8 @@ import dayjs from 'dayjs/esm';
 import { SshUserSettingsService } from 'app/core/user/settings/ssh-settings/ssh-user-settings.service';
 
 describe('SshUserSettingsService', () => {
+    setupTestBed({ zoneless: true });
+
     let sshUserSettingsService: SshUserSettingsService;
     let httpMock: HttpTestingController;
 
@@ -19,7 +23,7 @@ describe('SshUserSettingsService', () => {
 
     afterEach(() => {
         httpMock.verify();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should handle user SSH public key correctly', () => {

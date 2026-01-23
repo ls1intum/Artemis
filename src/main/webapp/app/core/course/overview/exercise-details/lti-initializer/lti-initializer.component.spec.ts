@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LtiInitializerComponent } from 'app/core/course/overview/exercise-details/lti-initializer/lti-initializer.component';
 import { UserService } from 'app/core/user/shared/user.service';
@@ -14,6 +16,8 @@ import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.s
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('LtiInitializerComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: LtiInitializerComponent;
     let fixture: ComponentFixture<LtiInitializerComponent>;
     let userService: UserService;
@@ -21,12 +25,12 @@ describe('LtiInitializerComponent', () => {
     let alertService: AlertService;
     let router: Router;
 
-    let initializeLTIUserStub: jest.SpyInstance;
-    let infoSpy: jest.SpyInstance;
-    let navigateSpy: jest.SpyInstance;
+    let initializeLTIUserStub: ReturnType<typeof vi.spyOn>;
+    let infoSpy: ReturnType<typeof vi.spyOn>;
+    let navigateSpy: ReturnType<typeof vi.spyOn>;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        TestBed.configureTestingModule({
             providers: [
                 MockProvider(AlertService),
                 { provide: UserService, useClass: MockUserService },
@@ -35,24 +39,22 @@ describe('LtiInitializerComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: NgbModal, useClass: MockNgbModalService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(LtiInitializerComponent);
-                comp = fixture.componentInstance;
-                userService = TestBed.inject(UserService);
-                activatedRoute = TestBed.inject(ActivatedRoute);
-                alertService = TestBed.inject(AlertService);
-                router = TestBed.inject(Router);
+        });
+        await TestBed.compileComponents();
+        fixture = TestBed.createComponent(LtiInitializerComponent);
+        comp = fixture.componentInstance;
+        userService = TestBed.inject(UserService);
+        activatedRoute = TestBed.inject(ActivatedRoute);
+        alertService = TestBed.inject(AlertService);
+        router = TestBed.inject(Router);
 
-                initializeLTIUserStub = jest.spyOn(userService, 'initializeLTIUser');
-                infoSpy = jest.spyOn(alertService, 'info');
-                navigateSpy = jest.spyOn(router, 'navigate');
-            });
+        initializeLTIUserStub = vi.spyOn(userService, 'initializeLTIUser');
+        infoSpy = vi.spyOn(alertService, 'info');
+        navigateSpy = vi.spyOn(router, 'navigate');
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should not initialize without flag', () => {

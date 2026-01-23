@@ -1,46 +1,46 @@
-@if (course?.irisEnabledInCourse) {
+@if (course()?.irisEnabledInCourse) {
     <div class="chat-container">
-        <jhi-course-chatbot [courseId]="courseId" />
+        <jhi-course-chatbot [courseId]="courseId()" />
     </div>
 }
-@if (course?.studentCourseAnalyticsDashboardEnabled) {
+@if (course()?.studentCourseAnalyticsDashboardEnabled) {
     <div class="stats-container">
-        @if (isLoading) {
+        @if (isLoading()) {
             <div class="d-flex justify-content-center">
                 <div class="spinner-border" role="status">
                     <span class="visually-hidden" jhiTranslate="loading"></span>
                 </div>
             </div>
         } @else {
-            @if (hasExercises) {
-                @if (points > 0 || maxPoints > 0) {
+            @if (hasExercises()) {
+                @if (points() > 0 || maxPoints() > 0) {
                     <div class="d-sm-flex gap-3 align-items-baseline">
                         <h4 jhiTranslate="artemisApp.courseStudentDashboard.overallPerformance.title"></h4>
                         <div class="flex-grow-1">
-                            <ngb-progressbar type="success overflow-visible" [value]="points" [max]="maxPoints" height="1.75rem">
-                                <span class="fs-5 mx-2">{{ points }} / {{ maxPoints }} ({{ progress }}%)</span>
+                            <ngb-progressbar type="success overflow-visible" [value]="points()" [max]="maxPoints()" height="1.75rem">
+                                <span class="fs-5 mx-2">{{ points() }} / {{ maxPoints() }} ({{ progress() }}%)</span>
                             </ngb-progressbar>
                         </div>
                     </div>
                 }
-                <jhi-course-exercise-performance [exercisePerformance]="exercisePerformance || []" />
-                <jhi-course-exercise-lateness [exerciseLateness]="exerciseLateness || []" />
+                <jhi-course-exercise-performance [exercisePerformance]="exercisePerformance() || []" />
+                <jhi-course-exercise-lateness [exerciseLateness]="exerciseLateness() || []" />
             } @else {
                 <div jhiTranslate="artemisApp.courseStudentDashboard.noMetrics"></div>
             }
-            @if (hasCompetencies) {
+            @if (hasCompetencies()) {
                 <div class="competency-accordion-container justify-content-center align-items-center w-100">
                     <h3 jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.title"></h3>
                     <div class="competencies d-flex flex-column gap-2">
-                        @if (studentMetrics) {
-                            @for (competency of competencies; track competency.id; let i = $index) {
+                        @if (studentMetrics()) {
+                            @for (competency of competencies(); track competency.id; let i = $index) {
                                 <jhi-competency-accordion
                                     #competencyAccordionElement
-                                    [course]="course"
+                                    [course]="course()"
                                     [competency]="competency"
-                                    [metrics]="studentMetrics"
+                                    [metrics]="studentMetrics()!"
                                     [index]="i"
-                                    [openedIndex]="openedAccordionIndex"
+                                    [openedIndex]="openedAccordionIndex()"
                                     (accordionToggle)="handleToggle($event)"
                                 />
                             }
@@ -50,8 +50,8 @@
             } @else {
                 <div jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.noData"></div>
             }
-            @if (this.course?.learningPathsEnabled || false) {
-                <jhi-feature-overlay [enabled]="atlasEnabled">
+            @if (course()?.learningPathsEnabled || false) {
+                <jhi-feature-overlay [enabled]="atlasEnabled()">
                     <div class="competency-accordion-container justify-content-center w-100" [jhiFeatureToggleHide]="FeatureToggle.LearningPaths">
                         <button
                             class="btn btn-primary mt-2"

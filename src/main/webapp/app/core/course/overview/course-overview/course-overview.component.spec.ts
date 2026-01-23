@@ -1,6 +1,8 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -133,6 +135,8 @@ class ControlsTestingComponent implements BarControlConfigurationProvider, After
 }
 
 describe('CourseOverviewComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CourseOverviewComponent;
     let fixture: ComponentFixture<CourseOverviewComponent>;
     let courseService: CourseManagementService;
@@ -144,11 +148,11 @@ describe('CourseOverviewComponent', () => {
     let jhiWebsocketService: WebsocketService;
     let courseAccessStorageService: CourseAccessStorageService;
     let router: MockRouter;
-    let jhiWebsocketServiceSubscribeSpy: jest.SpyInstance;
-    let findOneForDashboardStub: jest.SpyInstance;
+    let jhiWebsocketServiceSubscribeSpy: ReturnType<typeof vi.spyOn>;
+    let findOneForDashboardStub: ReturnType<typeof vi.spyOn>;
     let route: ActivatedRoute;
-    let findOneForRegistrationStub: jest.SpyInstance;
-    let findAllForDropdownSpy: jest.SpyInstance;
+    let findOneForRegistrationStub: ReturnType<typeof vi.spyOn>;
+    let findAllForDropdownSpy: ReturnType<typeof vi.spyOn>;
     let courseSidebarService: CourseSidebarService;
     let profileService: ProfileService;
     let modalService: NgbModal;
@@ -180,7 +184,7 @@ describe('CourseOverviewComponent', () => {
         notificationTypes: {},
     };
 
-    beforeEach(fakeAsync(() => {
+    beforeEach(async () => {
         route = {
             params: of({ courseId: course1.id }) as Params,
             snapshot: { firstChild: { routeConfig: { path: `courses/${course1.id}/exercises` } } },
@@ -188,8 +192,11 @@ describe('CourseOverviewComponent', () => {
         router = new MockRouter();
 
         TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([]), MockModule(MatSidenavModule), MockModule(NgbTooltipModule), FaIconComponent],
-            declarations: [
+            imports: [
+                RouterModule.forRoot([]),
+                MockModule(MatSidenavModule),
+                MockModule(NgbTooltipModule),
+                FaIconComponent,
                 CourseOverviewComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
                 MockDirective(TranslateDirective),
@@ -230,71 +237,65 @@ describe('CourseOverviewComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CourseOverviewComponent);
-                component = fixture.componentInstance;
+        });
+        await TestBed.compileComponents();
+        fixture = TestBed.createComponent(CourseOverviewComponent);
+        component = fixture.componentInstance;
 
-                component.isShownViaLti.set(false);
-                courseSidebarService = TestBed.inject(CourseSidebarService);
-                courseService = TestBed.inject(CourseManagementService);
-                courseStorageService = TestBed.inject(CourseStorageService);
-                examParticipationService = TestBed.inject(ExamParticipationService);
-                teamService = TestBed.inject(TeamService);
-                profileService = TestBed.inject(ProfileService);
-                modalService = TestBed.inject(NgbModal);
-                tutorialGroupsService = TestBed.inject(TutorialGroupsService);
-                tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
-                jhiWebsocketService = TestBed.inject(WebsocketService);
-                courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
-                metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
-                jhiWebsocketServiceSubscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
-                jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockResolvedValue(of(new TeamAssignmentPayload()));
-                courseNotificationSettingService = TestBed.inject(CourseNotificationSettingService);
-                courseNotificationService = TestBed.inject(CourseNotificationService);
-                // default for findOneForDashboardStub is to return the course
-                findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(
-                    of(
-                        new HttpResponse({
-                            body: course1,
-                            headers: new HttpHeaders(),
-                        }),
-                    ),
-                );
-                // default for findOneForRegistrationStub is to return the course as well
-                findOneForRegistrationStub = jest
-                    .spyOn(courseService, 'findOneForRegistration')
-                    .mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
-                jest.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
-                findAllForDropdownSpy = jest
-                    .spyOn(courseService, 'findAllForDropdown')
-                    .mockReturnValue(of(new HttpResponse({ body: coursesDropdown, headers: new HttpHeaders() })));
-                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({
-                    activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI],
-                    activeProfiles: [PROFILE_IRIS, PROFILE_PROD],
-                    testServer: false,
-                } as unknown as ProfileInfo);
-                jest.spyOn(courseNotificationSettingService, 'getSettingInfo').mockReturnValue(of(mockSettingInfo));
-                jest.spyOn(courseNotificationService, 'getInfo').mockReturnValue(of(new HttpResponse({ body: mockNotificationInfo })));
-                jest.spyOn(courseNotificationSettingService, 'setSettingPreset').mockImplementation();
-            });
-    }));
+        component.isShownViaLti.set(false);
+        courseSidebarService = TestBed.inject(CourseSidebarService);
+        courseService = TestBed.inject(CourseManagementService);
+        courseStorageService = TestBed.inject(CourseStorageService);
+        examParticipationService = TestBed.inject(ExamParticipationService);
+        teamService = TestBed.inject(TeamService);
+        profileService = TestBed.inject(ProfileService);
+        modalService = TestBed.inject(NgbModal);
+        tutorialGroupsService = TestBed.inject(TutorialGroupsService);
+        tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
+        jhiWebsocketService = TestBed.inject(WebsocketService);
+        courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
+        metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
+        jhiWebsocketServiceSubscribeSpy = vi.spyOn(jhiWebsocketService, 'subscribe');
+        vi.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockResolvedValue(of(new TeamAssignmentPayload()));
+        courseNotificationSettingService = TestBed.inject(CourseNotificationSettingService);
+        courseNotificationService = TestBed.inject(CourseNotificationService);
+        // default for findOneForDashboardStub is to return the course
+        findOneForDashboardStub = vi.spyOn(courseService, 'findOneForDashboard').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: course1,
+                    headers: new HttpHeaders(),
+                }),
+            ),
+        );
+        // default for findOneForRegistrationStub is to return the course as well
+        findOneForRegistrationStub = vi.spyOn(courseService, 'findOneForRegistration').mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
+        vi.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
+        findAllForDropdownSpy = vi.spyOn(courseService, 'findAllForDropdown').mockReturnValue(of(new HttpResponse({ body: coursesDropdown, headers: new HttpHeaders() })));
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
+            activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI],
+            activeProfiles: [PROFILE_IRIS, PROFILE_PROD],
+            testServer: false,
+        } as unknown as ProfileInfo);
+        vi.spyOn(courseNotificationSettingService, 'getSettingInfo').mockReturnValue(of(mockSettingInfo));
+        vi.spyOn(courseNotificationService, 'getInfo').mockReturnValue(of(new HttpResponse({ body: mockNotificationInfo })));
+        vi.spyOn(courseNotificationSettingService, 'setSettingPreset').mockImplementation(() => {});
+    });
 
     afterEach(() => {
         component.ngOnDestroy();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
         TestBed.inject(LocalStorageService).clear();
         TestBed.inject(SessionStorageService).clear();
     });
 
     it('should call all methods on init', async () => {
-        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
-        const subscribeToTeamAssignmentUpdatesStub = jest.spyOn(component, 'subscribeToTeamAssignmentUpdates');
-        const subscribeForQuizChangesStub = jest.spyOn(component, 'subscribeForQuizChanges');
-        const notifyAboutCourseAccessStub = jest.spyOn(courseAccessStorageService, 'onCourseAccessed');
-        const getSidebarItems = jest.spyOn(component, 'getSidebarItems');
-        const getCourseActionItems = jest.spyOn(component, 'getCourseActionItems');
+        const getCourseStub = vi.spyOn(courseStorageService, 'getCourse');
+        const subscribeToTeamAssignmentUpdatesStub = vi.spyOn(component, 'subscribeToTeamAssignmentUpdates');
+        const subscribeForQuizChangesStub = vi.spyOn(component, 'subscribeForQuizChanges');
+        const notifyAboutCourseAccessStub = vi.spyOn(courseAccessStorageService, 'onCourseAccessed');
+        const getSidebarItems = vi.spyOn(component, 'getSidebarItems');
+        const getCourseActionItems = vi.spyOn(component, 'getCourseActionItems');
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         getCourseStub.mockReturnValue(course1);
 
@@ -361,8 +362,8 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('loads conversations when switching to message tab once', async () => {
-        const metisConversationServiceStub = jest.spyOn(metisConversationService, 'setUpConversationService').mockReturnValue(EMPTY);
-        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
+        const metisConversationServiceStub = vi.spyOn(metisConversationService, 'setUpConversationService').mockReturnValue(EMPTY);
+        const getCourseStub = vi.spyOn(courseStorageService, 'getCourse');
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         getCourseStub.mockReturnValue(course1);
 
@@ -374,7 +375,7 @@ describe('CourseOverviewComponent', () => {
         const baseUrl = '/' + 'courses/' + course1.id;
         const tabs = ['communication', 'exercises', 'communication'];
         tabs.forEach((tab) => {
-            jest.spyOn(router, 'url', 'get').mockReturnValue(baseUrl + '/' + tab);
+            vi.spyOn(router, 'url', 'get').mockReturnValue(baseUrl + '/' + tab);
             component.onSubRouteActivate({ controlConfiguration: undefined });
             fixture.changeDetectorRef.detectChanges();
         });
@@ -382,10 +383,10 @@ describe('CourseOverviewComponent', () => {
     });
 
     it.each([true, false])('should determine once if there are unread messages', async (hasNewMessages: boolean) => {
-        const spy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
+        const spy = vi.spyOn(metisConversationService, 'checkForUnreadMessages');
         metisConversationService._hasUnreadMessages$.next(hasNewMessages);
-        jest.spyOn(metisConversationService, 'setUpConversationService').mockReturnValue(of());
-        jest.spyOn(router, 'url', 'get').mockReturnValue('/courses/1/communication');
+        vi.spyOn(metisConversationService, 'setUpConversationService').mockReturnValue(of());
+        vi.spyOn(router, 'url', 'get').mockReturnValue('/courses/1/communication');
 
         await component.ngOnInit();
 
@@ -405,8 +406,8 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should not try to load message related data when not activated for course', () => {
-        const unreadMessagesSpy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
-        const setUpConversationServiceSpy = jest.spyOn(metisConversationService, 'setUpConversationService');
+        const unreadMessagesSpy = vi.spyOn(metisConversationService, 'checkForUnreadMessages');
+        const setUpConversationServiceSpy = vi.spyOn(metisConversationService, 'setUpConversationService');
 
         component.course.set({ courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED });
 
@@ -420,7 +421,7 @@ describe('CourseOverviewComponent', () => {
         expect(setUpConversationServiceSpy).not.toHaveBeenCalled();
     });
 
-    it('should redirect to the registration page if the API endpoint returned a 403, but the user can register', fakeAsync(() => {
+    it('should redirect to the registration page if the API endpoint returned a 403, but the user can register', async () => {
         // mock error response
         findOneForDashboardStub.mockReturnValue(
             throwError(
@@ -432,7 +433,7 @@ describe('CourseOverviewComponent', () => {
                     }),
             ),
         );
-        const findOneForRegistrationStub = jest.spyOn(courseService, 'findOneForRegistration');
+        const findOneForRegistrationStub = vi.spyOn(courseService, 'findOneForRegistration');
         findOneForRegistrationStub.mockReturnValue(
             of(
                 new HttpResponse({
@@ -444,16 +445,16 @@ describe('CourseOverviewComponent', () => {
         );
 
         fixture.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         // When user can register, component should redirect to registration page
         expect(router.navigate).toHaveBeenCalledWith(['courses', course1.id, 'register']);
-    }));
+    });
 
     it('should call load Course methods on init', async () => {
-        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
-        const subscribeToTeamAssignmentUpdatesStub = jest.spyOn(component, 'subscribeToTeamAssignmentUpdates');
-        const subscribeForQuizChangesStub = jest.spyOn(component, 'subscribeForQuizChanges');
+        const getCourseStub = vi.spyOn(courseStorageService, 'getCourse');
+        const subscribeToTeamAssignmentUpdatesStub = vi.spyOn(component, 'subscribeToTeamAssignmentUpdates');
+        const subscribeForQuizChangesStub = vi.spyOn(component, 'subscribeForQuizChanges');
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
 
         await component.ngOnInit();
@@ -466,7 +467,7 @@ describe('CourseOverviewComponent', () => {
     it('should show an alert when loading the course fails', async () => {
         findOneForDashboardStub.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
         const alertService = TestBed.inject(AlertService);
-        const alertServiceSpy = jest.spyOn(alertService, 'addAlert');
+        const alertServiceSpy = vi.spyOn(alertService, 'addAlert');
 
         component.loadCourse().subscribe({
             next: () => {
@@ -480,32 +481,33 @@ describe('CourseOverviewComponent', () => {
         expect(alertServiceSpy).toHaveBeenCalled();
     });
 
-    it('should return false for canRegisterForCourse if the server returns 403', fakeAsync(() => {
+    it('should return false for canRegisterForCourse if the server returns 403', async () => {
         findOneForRegistrationStub.mockReturnValue(throwError(() => new HttpResponse({ status: 403 })));
 
         // test that canRegisterForCourse subscribe gives false
-        component.canRegisterForCourse().subscribe((canRegister) => {
-            expect(canRegister).toBeFalse();
+        return new Promise<void>((resolve) => {
+            component.canRegisterForCourse().subscribe((canRegister) => {
+                expect(canRegister).toBe(false);
+                resolve();
+            });
         });
+    });
 
-        // wait for the observable to complete
-        tick();
-    }));
-
-    it('should throw for unexpected registration responses from the server', fakeAsync(() => {
+    it('should throw for unexpected registration responses from the server', async () => {
         findOneForRegistrationStub.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
 
-        component.canRegisterForCourse().subscribe({
-            next: () => {
-                throw new Error('should not be called');
-            },
-            error: (error) => {
-                expect(error).toEqual(new HttpResponse({ status: 404 }));
-            },
+        return new Promise<void>((resolve) => {
+            component.canRegisterForCourse().subscribe({
+                next: () => {
+                    throw new Error('should not be called');
+                },
+                error: (error) => {
+                    expect(error).toEqual(new HttpResponse({ status: 404 }));
+                    resolve();
+                },
+            });
         });
-
-        tick();
-    }));
+    });
 
     it('should load the course, even when just calling loadCourse by itself (for refreshing)', () => {
         // check that loadCourse already subscribes to the course itself
@@ -515,12 +517,12 @@ describe('CourseOverviewComponent', () => {
             subscriber.next(course1);
             subscriber.complete();
         });
-        const subscribeStub = jest.spyOn(findOneForDashboardResponse, 'subscribe');
+        const subscribeStub = vi.spyOn(findOneForDashboardResponse, 'subscribe');
         findOneForDashboardStub.mockReturnValue(findOneForDashboardResponse);
 
         // check that calendar events are refreshed
         const calendarService = TestBed.inject(CalendarService);
-        const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
+        const refreshSpy = vi.spyOn(calendarService, 'reloadEvents');
 
         component.loadCourse(true);
 
@@ -529,7 +531,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should have visible exams', () => {
-        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
+        const getCourseStub = vi.spyOn(courseStorageService, 'getCourse');
         getCourseStub.mockReturnValue(course1);
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
 
@@ -537,11 +539,11 @@ describe('CourseOverviewComponent', () => {
 
         const bool = component.hasVisibleExams();
 
-        expect(bool).toBeTrue();
+        expect(bool).toBe(true);
     });
 
     it('should not have visible exams', () => {
-        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
+        const getCourseStub = vi.spyOn(courseStorageService, 'getCourse');
         getCourseStub.mockReturnValue(course2);
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
 
@@ -549,7 +551,7 @@ describe('CourseOverviewComponent', () => {
 
         const bool = component.hasVisibleExams();
 
-        expect(bool).toBeFalse();
+        expect(bool).toBe(false);
     });
 
     it('should contain unenrollment as course action when allowed', () => {
@@ -561,13 +563,13 @@ describe('CourseOverviewComponent', () => {
 
     it('should open modal on triggering unenrollment option', () => {
         const mockModalRef = { componentInstance: {} } as NgbModalRef;
-        const modalServiceSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+        const modalServiceSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
         component.courseActionItemClick(component.getUnenrollItem());
         expect(modalServiceSpy).toHaveBeenCalledOnce();
     });
 
     it('should have competencies and tutorial groups', () => {
-        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
+        const getCourseStub = vi.spyOn(courseStorageService, 'getCourse');
 
         const tutorialGroupsResponse: HttpResponse<TutorialGroup[]> = new HttpResponse({
             body: [new TutorialGroup()],
@@ -578,24 +580,24 @@ describe('CourseOverviewComponent', () => {
             status: 200,
         });
 
-        jest.spyOn(tutorialGroupsService, 'getAllForCourse').mockReturnValue(of(tutorialGroupsResponse));
-        jest.spyOn(tutorialGroupsConfigurationService, 'getOneOfCourse').mockReturnValue(of(configurationResponse));
+        vi.spyOn(tutorialGroupsService, 'getAllForCourse').mockReturnValue(of(tutorialGroupsResponse));
+        vi.spyOn(tutorialGroupsConfigurationService, 'getOneOfCourse').mockReturnValue(of(configurationResponse));
 
         getCourseStub.mockReturnValue(course2);
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
 
         component.ngOnInit();
 
-        expect(component.hasCompetencies()).toBeTrue();
-        expect(component.hasTutorialGroups()).toBeTrue();
-        expect(component.course()?.competencies).not.toBeEmpty();
-        expect(component.course()?.prerequisites).not.toBeEmpty();
-        expect(component.course()?.tutorialGroups).not.toBeEmpty();
+        expect(component.hasCompetencies()).toBe(true);
+        expect(component.hasTutorialGroups()).toBe(true);
+        expect(component.course()?.competencies).toHaveLength(1);
+        expect(component.course()?.prerequisites).toHaveLength(1);
+        expect(component.course()?.tutorialGroups).toHaveLength(1);
     });
 
     it('should subscribeToTeamAssignmentUpdates', () => {
-        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
-        const teamAssignmentUpdatesStub = jest.spyOn(teamService, 'teamAssignmentUpdates', 'get');
+        const getCourseStub = vi.spyOn(courseStorageService, 'getCourse');
+        const teamAssignmentUpdatesStub = vi.spyOn(teamService, 'teamAssignmentUpdates', 'get');
         getCourseStub.mockReturnValue(course2);
         teamAssignmentUpdatesStub.mockReturnValue(
             Promise.resolve(
@@ -614,7 +616,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should subscribeForQuizChanges', () => {
-        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
+        const getCourseStub = vi.spyOn(courseStorageService, 'getCourse');
         getCourseStub.mockReturnValue(course2);
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
 
@@ -628,7 +630,7 @@ describe('CourseOverviewComponent', () => {
         component.ngOnInit();
         component.subscribeForQuizChanges(); // to have quizExercisesSubscription set
         // @ts-ignore
-        const quizUnsubscribeSpy = jest.spyOn(component.quizExercisesSubscription!, 'unsubscribe');
+        const quizUnsubscribeSpy = vi.spyOn(component.quizExercisesSubscription!, 'unsubscribe');
 
         component.ngOnDestroy();
 
@@ -636,7 +638,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should render controls if child has configuration', () => {
-        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
+        const getCourseStub = vi.spyOn(courseStorageService, 'getCourse');
         getCourseStub.mockReturnValue(course2);
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
 
@@ -662,10 +664,10 @@ describe('CourseOverviewComponent', () => {
 
     it('should toggle isNavbarCollapsed when toggleCollapseState is called', () => {
         component.toggleCollapseState();
-        expect(component.isNavbarCollapsed()).toBeTrue();
+        expect(component.isNavbarCollapsed()).toBe(true);
 
         component.toggleCollapseState();
-        expect(component.isNavbarCollapsed()).toBeFalse();
+        expect(component.isNavbarCollapsed()).toBe(false);
     });
 
     it('should apply exam-wrapper and exam-is-active if exam is started', () => {
@@ -683,7 +685,7 @@ describe('CourseOverviewComponent', () => {
     it('should examStarted value to true when exam is started', async () => {
         (examParticipationService as any).examIsStarted$ = of(true);
         await component.ngOnInit();
-        expect(component.isExamStarted()).toBeTrue();
+        expect(component.isExamStarted()).toBe(true);
     });
 
     it('should initialize courses attribute when page is loaded', async () => {
@@ -714,25 +716,25 @@ describe('CourseOverviewComponent', () => {
         component.ngOnDestroy();
 
         expect(courseService.findAllForDropdown).toHaveBeenCalled();
-        expect(component.dashboardSubscription.closed).toBeTrue();
+        expect(component.dashboardSubscription.closed).toBe(true);
     });
 
     it('should toggle isCollapsed when service emits corresponding event', () => {
         fixture.detectChanges();
         courseSidebarService.openSidebar();
-        expect(component.isSidebarCollapsed()).toBeTrue();
+        expect(component.isSidebarCollapsed()).toBe(true);
 
         courseSidebarService.closeSidebar();
-        expect(component.isSidebarCollapsed()).toBeFalse();
+        expect(component.isSidebarCollapsed()).toBe(false);
 
         courseSidebarService.toggleSidebar();
-        expect(component.isSidebarCollapsed()).toBeTrue();
+        expect(component.isSidebarCollapsed()).toBe(true);
     });
 
     it('should switch course and navigate to the correct URL', async () => {
-        const navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl').mockReturnValue(Promise.resolve(true));
-        const navigateSpy = jest.spyOn(router, 'navigate');
-        jest.spyOn(router, 'url', 'get').mockReturnValue('/courses/1/dashboard');
+        const navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl').mockReturnValue(Promise.resolve(true));
+        const navigateSpy = vi.spyOn(router, 'navigate');
+        vi.spyOn(router, 'url', 'get').mockReturnValue('/courses/1/dashboard');
 
         component.switchCourse(course2);
         await Promise.resolve();
@@ -747,81 +749,81 @@ describe('CourseOverviewComponent', () => {
         });
 
         it('should set exams link when URL includes "exams"', () => {
-            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/exams/1/edit');
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/exams/1/edit');
             component.course.set({ isAtLeastTutor: true });
             component.determineManageViewLink();
             expect(component.manageViewLink()).toEqual(['/course-management', '123', 'exams']);
         });
 
         it('should set exercises link when URL includes "exercises"', () => {
-            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/exercises/new');
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/exercises/new');
             component.determineManageViewLink();
             expect(component.manageViewLink()).toEqual(['/course-management', '123', 'exercises']);
         });
 
         it('should set lectures link when URL includes "lectures"', () => {
             component.course.set({ isAtLeastEditor: true });
-            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/lectures/1/details');
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/lectures/1/details');
             component.determineManageViewLink();
             expect(component.manageViewLink()).toEqual(['/course-management', '123', 'lectures']);
         });
 
         it('should set communication link when URL includes "communication"', () => {
-            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/communication?conversationId=123');
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/communication?conversationId=123');
             component.determineManageViewLink();
             expect(component.manageViewLink()).toEqual(['/course-management', '123', 'communication']);
         });
 
         it('should set learning-paths-management link when URL includes "learning-path + instructor"', () => {
             component.course.set({ isAtLeastInstructor: true });
-            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/learning-path');
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/learning-path');
             component.determineManageViewLink();
             expect(component.manageViewLink()).toEqual(['/course-management', '123', 'learning-paths-management']);
         });
 
         it('should set competency-management link when URL includes "competencies + instructor"', () => {
             component.course.set({ isAtLeastInstructor: true });
-            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/competencies');
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/competencies');
             component.determineManageViewLink();
             expect(component.manageViewLink()).toEqual(['/course-management', '123', 'competency-management']);
         });
 
         it('should set faqs link when URL includes "faq"', () => {
-            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/faq');
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/faq');
             component.determineManageViewLink();
             expect(component.manageViewLink()).toEqual(['/course-management', '123', 'faqs']);
         });
 
         it('should set tutorial-groups-checklist link when URL includes "tutorial-groups + instructor"', () => {
             component.course.set({ isAtLeastInstructor: true });
-            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/tutorial-groups');
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/tutorial-groups');
             component.determineManageViewLink();
             expect(component.manageViewLink()).toEqual(['/course-management', '123', 'tutorial-groups-checklist']);
         });
         it('should set tutorial-groups-checklist link when URL includes "tutorial-groups + tutorial groups config' + ' exists + not instructor"', () => {
             component.course.set({ isAtLeastTutor: true, tutorialGroupsConfiguration: {} });
-            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/tutorial-groups');
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/tutorial-groups');
             component.determineManageViewLink();
             expect(component.manageViewLink()).toEqual(['/course-management', '123', 'tutorial-groups-checklist']);
         });
 
         it('should default to course management base link when URL does not match any condition', () => {
-            jest.spyOn(router, 'url', 'get').mockReturnValue('/courses/123/settings');
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/courses/123/settings');
             component.determineManageViewLink();
             expect(component.manageViewLink()).toEqual(['/course-management', '123']);
         });
 
         it('should set course statistics link when URL includes course statistics', () => {
-            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/statistics');
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/statistics');
             component.determineManageViewLink();
             expect(component.manageViewLink()).toEqual(['/course-management', '123', 'course-statistics']);
         });
     });
 
-    it('should initialize course notification values when both settingInfo and info are available', fakeAsync(() => {
+    it('should initialize course notification values when both settingInfo and info are available', async () => {
         component.courseId.set(mockCourseId);
-        component.ngOnInit();
-        tick();
+        await component.ngOnInit();
+        fixture.detectChanges();
 
         const selectableSettingPresets = (component as any).selectableSettingPresets;
         const selectedSettingPreset = (component as any).selectedSettingPreset;
@@ -830,13 +832,13 @@ describe('CourseOverviewComponent', () => {
         expect(selectableSettingPresets).toEqual(mockNotificationSettingPresets);
         expect(selectedSettingPreset).toBeDefined();
         expect(selectedSettingPreset).toEqual(mockNotificationSettingPresets[0]);
-    }));
+    });
 
-    it('should select a new notification preset when presetSelected is called', fakeAsync(() => {
-        const setSettingPresetSpy = jest.spyOn(courseNotificationSettingService, 'setSettingPreset');
+    it('should select a new notification preset when presetSelected is called', async () => {
+        const setSettingPresetSpy = vi.spyOn(courseNotificationSettingService, 'setSettingPreset');
 
-        component.ngOnInit();
-        tick();
+        await component.ngOnInit();
+        fixture.detectChanges();
 
         component.presetSelected(2);
 
@@ -845,11 +847,11 @@ describe('CourseOverviewComponent', () => {
         expect(selectedSettingPreset).toBeDefined();
         expect(selectedSettingPreset).toEqual(mockNotificationSettingPresets[1]);
         expect(setSettingPresetSpy).toHaveBeenCalledWith(1, 2, mockNotificationSettingPresets[0]);
-    }));
+    });
 
-    it('should set selectedSettingPreset to undefined when custom settings are selected', fakeAsync(() => {
-        component.ngOnInit();
-        tick();
+    it('should set selectedSettingPreset to undefined when custom settings are selected', async () => {
+        await component.ngOnInit();
+        fixture.detectChanges();
 
         component.presetSelected(0);
 
@@ -857,16 +859,16 @@ describe('CourseOverviewComponent', () => {
 
         expect(selectedSettingPreset).toBeUndefined();
         expect(courseNotificationSettingService.setSettingPreset).toHaveBeenCalledWith(1, 0, mockNotificationSettingPresets[0]);
-    }));
+    });
 
-    it('should update notification settings when both services return data', fakeAsync(() => {
+    it('should update notification settings when both services return data', async () => {
         component.courseId.set(mockCourseId);
-        const getSettingInfoSpy = jest.spyOn(courseNotificationSettingService, 'getSettingInfo').mockImplementation(() => {
+        const getSettingInfoSpy = vi.spyOn(courseNotificationSettingService, 'getSettingInfo').mockImplementation(() => {
             return of(undefined);
         });
 
-        component.ngOnInit();
-        tick();
+        await component.ngOnInit();
+        fixture.detectChanges();
 
         getSettingInfoSpy.mockReturnValue(of(mockSettingInfo));
 
@@ -875,5 +877,5 @@ describe('CourseOverviewComponent', () => {
 
         expect((component as any).selectableSettingPresets).toBeDefined();
         expect((component as any).selectedSettingPreset).toBeDefined();
-    }));
+    });
 });

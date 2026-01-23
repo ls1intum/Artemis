@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faBackward } from '@fortawesome/free-solid-svg-icons';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -24,7 +24,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     styleUrls: ['./reset-repo-button.component.scss'],
     imports: [ExerciseActionButtonComponent, FeatureToggleDirective, NgbPopover, FormsModule, TranslateDirective, ConfirmEntityNameComponent, ArtemisTranslatePipe],
 })
-export class ResetRepoButtonComponent implements OnInit {
+export class ResetRepoButtonComponent {
     private participationService = inject(ParticipationService);
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private alertService = inject(AlertService);
@@ -32,36 +32,46 @@ export class ResetRepoButtonComponent implements OnInit {
     readonly FeatureToggle = FeatureToggle;
     readonly INITIALIZED = InitializationState.INITIALIZED;
 
-    @Input() exercise: ProgrammingExercise;
-    @Input() participations: StudentParticipation[];
-    @Input() smallButtons: boolean;
+    readonly exercise = input<ProgrammingExercise>(undefined!);
+    readonly participations = input<StudentParticipation[]>(undefined!);
+    readonly smallButtons = input<boolean>(undefined!);
 
-    @ViewChild('popover') popover: NgbPopover;
+    readonly popover = viewChild.required<NgbPopover>('popover');
 
-    gradedParticipation?: StudentParticipation;
-    practiceParticipation?: StudentParticipation;
+    private readonly _gradedParticipation = signal<StudentParticipation | undefined>(undefined);
+    private readonly _practiceParticipation = signal<StudentParticipation | undefined>(undefined);
+    private readonly _beforeIndividualDueDate = signal(true);
 
-    beforeIndividualDueDate: boolean;
+    readonly gradedParticipation = computed(() => this._gradedParticipation());
+    readonly practiceParticipation = computed(() => this._practiceParticipation());
+    readonly beforeIndividualDueDate = computed(() => this._beforeIndividualDueDate());
 
     readonly faBackward = faBackward;
 
-    ngOnInit() {
-        this.gradedParticipation = this.participationService.getSpecificStudentParticipation(this.participations, false);
-        this.practiceParticipation = this.participationService.getSpecificStudentParticipation(this.participations, true);
-        const individualDueDate = getExerciseDueDate(this.exercise, this.gradedParticipation);
-        this.beforeIndividualDueDate = !individualDueDate || dayjs().isBefore(individualDueDate);
+    constructor() {
+        effect(() => {
+            const participations = this.participations();
+            const exercise = this.exercise();
+            untracked(() => {
+                const gradedParticipation = this.participationService.getSpecificStudentParticipation(participations, false);
+                this._gradedParticipation.set(gradedParticipation);
+                this._practiceParticipation.set(this.participationService.getSpecificStudentParticipation(participations, true));
+                const individualDueDate = getExerciseDueDate(exercise, gradedParticipation);
+                this._beforeIndividualDueDate.set(!individualDueDate || dayjs().isBefore(individualDueDate));
+            });
+        });
     }
 
     resetRepository(gradedParticipationId?: number) {
-        this.exercise.loading = true;
+        this.exercise().loading = true;
         // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-        const participationId = this.practiceParticipation?.id ?? this.gradedParticipation?.id!;
+        const participationId = this._practiceParticipation()?.id ?? this._gradedParticipation()?.id!;
         this.programmingExerciseParticipationService
             .resetRepository(participationId, gradedParticipationId)
             .pipe(
                 finalize(() => {
-                    this.exercise.loading = false;
-                    this.popover.close();
+                    this.exercise().loading = false;
+                    this.popover().close();
                 }),
             )
             .subscribe({

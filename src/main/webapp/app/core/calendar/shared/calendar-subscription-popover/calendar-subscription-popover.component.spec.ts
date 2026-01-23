@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
@@ -6,8 +8,14 @@ const getParametersOf = (urlStr: string) => new URL(urlStr, 'http://dummy.invali
 const splitFilterParameters = (parameters: URLSearchParams) => (parameters.get('filterOptions') ?? '').split(',').filter(Boolean).sort();
 
 describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CalendarSubscriptionPopoverComponent>;
     let component: CalendarSubscriptionPopoverComponent;
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -59,9 +67,9 @@ describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
         component.includeExerciseEvents.set(true);
         fixture.detectChanges();
 
-        expect(component.exercisesIsLastSelectedEventType()).toBeTrue();
-        expect(component.lecturesIsLastSelectedEventType()).toBeFalse();
-        expect(component.tutorialsIsLastSelectedEventType()).toBeFalse();
-        expect(component.examsIsLastSelectedEventType()).toBeFalse();
+        expect(component.exercisesIsLastSelectedEventType()).toBe(true);
+        expect(component.lecturesIsLastSelectedEventType()).toBe(false);
+        expect(component.tutorialsIsLastSelectedEventType()).toBe(false);
+        expect(component.examsIsLastSelectedEventType()).toBe(false);
     });
 });

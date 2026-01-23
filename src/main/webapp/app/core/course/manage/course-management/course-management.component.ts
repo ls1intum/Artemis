@@ -43,7 +43,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy {
     readonly semesterCollapsed = signal<{ [key: string]: boolean }>({});
     readonly coursesBySemester = signal<{ [key: string]: Course[] }>({});
 
-    private eventSubscriber: Subscription;
+    private eventSubscriber?: Subscription;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -69,8 +69,8 @@ export class CourseManagementComponent implements OnInit, OnDestroy {
      * unsubscribe on component destruction
      */
     ngOnDestroy() {
-        this.eventManager.destroy(this.eventSubscriber);
-        this.dialogErrorSource.unsubscribe();
+        this.eventSubscriber?.unsubscribe();
+        this.dialogErrorSource.complete();
     }
 
     /**
