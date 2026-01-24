@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.core.exception.ConflictingPasskeyConfigurationException;
 import de.tum.cit.aet.artemis.core.exception.InvalidAdminConfigurationException;
@@ -90,7 +91,26 @@ public class ConfigurationValidator {
      * Throws a {@link InvalidAdminConfigurationException} if the configuration is invalid.
      */
     private void validateAdminConfiguration() {
-        if (internalAdminUsername != null && internalAdminPassword != null) {
+        boolean hasUsername = StringUtils.hasText(internalAdminUsername);
+        boolean hasPassword = StringUtils.hasText(internalAdminPassword);
+
+        // Check for partial configuration - both must be provided or neither
+        if (hasUsername && !hasPassword) {
+            String errorMessage = "Internal admin username is provided but password is missing. Both username and password must be configured together.";
+            log.error(errorMessage);
+            throw new InvalidAdminConfigurationException(errorMessage, "password", "artemis.user-management.internal-admin.password", "***missing***",
+                    "Must be provided when username is configured");
+        }
+
+        if (!hasUsername && hasPassword) {
+            String errorMessage = "Internal admin password is provided but username is missing. Both username and password must be configured together.";
+            log.error(errorMessage);
+            throw new InvalidAdminConfigurationException(errorMessage, "username", "artemis.user-management.internal-admin.username", "***missing***",
+                    "Must be provided when password is configured");
+        }
+
+        // If both are provided, validate their constraints
+        if (hasUsername && hasPassword) {
             // Validate username length
             if (internalAdminUsername.length() < USERNAME_MIN_LENGTH) {
                 String errorMessage = String.format("Internal admin username is too short. Minimum length is %d characters, but provided username has %d characters.",
