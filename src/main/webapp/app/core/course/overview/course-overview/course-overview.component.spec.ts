@@ -32,7 +32,7 @@ import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date
 import { CourseExercisesComponent } from 'app/core/course/overview/course-exercises/course-exercises.component';
 import { CourseRegistrationComponent } from 'app/core/course/overview/course-registration/course-registration.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_LECTURE, PROFILE_IRIS, PROFILE_LTI, PROFILE_PROD } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI, PROFILE_IRIS, PROFILE_PROD } from 'app/app.constants';
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { CourseOverviewComponent } from 'app/core/course/overview/course-overview/course-overview.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
@@ -271,8 +271,8 @@ describe('CourseOverviewComponent', () => {
                     .spyOn(courseService, 'findAllForDropdown')
                     .mockReturnValue(of(new HttpResponse({ body: coursesDropdown, headers: new HttpHeaders() })));
                 jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({
-                    activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_LECTURE],
-                    activeProfiles: [PROFILE_IRIS, PROFILE_LTI, PROFILE_PROD],
+                    activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI],
+                    activeProfiles: [PROFILE_IRIS, PROFILE_PROD],
                     testServer: false,
                 } as unknown as ProfileInfo);
                 jest.spyOn(courseNotificationSettingService, 'getSettingInfo').mockReturnValue(of(mockSettingInfo));

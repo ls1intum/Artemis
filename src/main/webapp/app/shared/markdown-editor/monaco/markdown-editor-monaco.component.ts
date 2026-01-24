@@ -159,6 +159,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @ViewChild('fullElement', { static: true }) fullElement: ElementRef<HTMLDivElement>;
     @ViewChild('wrapper', { static: true }) wrapper: ElementRef<HTMLDivElement>;
     @ViewChild('fileUploadFooter', { static: false }) fileUploadFooter?: ElementRef<HTMLDivElement>;
+    @ViewChild('fileUploadInput', { static: false }) fileUploadInput?: ElementRef<HTMLInputElement>;
     @ViewChild('resizePlaceholder', { static: false }) resizePlaceholder?: ElementRef<HTMLDivElement>;
     @ViewChild('actionPalette', { static: false }) actionPalette?: ElementRef<HTMLElement>;
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
@@ -261,6 +262,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     isButtonLoading = input<boolean>(false);
     isFormGroupValid = input<boolean>(false);
     isInCommunication = input<boolean>(false);
+    showMarkdownInfoText = input<boolean>(true);
     editType = input<PostingEditType>();
     course = input<Course>();
 
@@ -449,6 +451,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                     action.element = this.isHeightManagedExternally() ? this.fullElement.nativeElement : this.wrapper.nativeElement;
                 } else if (this.enableFileUpload && action instanceof AttachmentAction) {
                     action.setUploadCallback(this.embedFiles.bind(this));
+                    action.setOpenFileDialogCallback(this.openFilePicker.bind(this));
                 }
                 this.monacoEditor.registerAction(action);
             });
@@ -592,6 +595,13 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (event.target.files.length >= 1) {
             this.embedFiles(Array.from(event.target.files), event.target);
         }
+    }
+
+    /**
+     * Opens the file picker dialog to allow the user to select files for upload.
+     */
+    openFilePicker(): void {
+        this.fileUploadInput?.nativeElement.click();
     }
 
     /**
