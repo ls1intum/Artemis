@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.Set;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -624,6 +625,27 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
         // The default admin username is configured in application-artemis.yml as "artemis_admin"
         private static final String DEFAULT_ADMIN_USERNAME = "artemis_admin";
+
+        @BeforeEach
+        void ensureDefaultAdminExists() {
+            // Ensure the default admin user exists with super admin authority for parallel test execution
+            User existingAdmin = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(DEFAULT_ADMIN_USERNAME).orElse(null);
+            if (existingAdmin == null) {
+                // Create the default admin if it doesn't exist
+                User defaultAdmin = userUtilService.createAndSaveUser(DEFAULT_ADMIN_USERNAME);
+                defaultAdmin.setActivated(true);
+                defaultAdmin.setFirstName("Administrator");
+                defaultAdmin.setLastName("Administrator");
+                defaultAdmin.setEmail("admin@localhost");
+                defaultAdmin.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY, new Authority(Role.STUDENT.getAuthority())));
+                userTestRepository.save(defaultAdmin);
+            }
+            else if (!existingAdmin.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY)) {
+                // Ensure the existing admin has super admin authority (might be modified by other tests)
+                existingAdmin.getAuthorities().add(Authority.SUPER_ADMIN_AUTHORITY);
+                userTestRepository.save(existingAdmin);
+            }
+        }
 
         @Test
         @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
