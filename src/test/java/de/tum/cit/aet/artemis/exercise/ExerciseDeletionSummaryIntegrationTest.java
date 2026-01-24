@@ -157,7 +157,7 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
 
         assertThat(summary.numberOfStudentParticipations()).isEqualTo(2);
         assertThat(summary.numberOfBuilds()).isEqualTo(2);
-        assertThat(summary.numberOfAssessments()).isEqualTo(0);
+        assertThat(summary.numberOfAssessments()).isNull();
         assertThat(summary.numberOfCommunicationPosts()).isEqualTo(2);
         assertThat(summary.numberOfAnswerPosts()).isEqualTo(1);
     }
