@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -34,6 +35,9 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private UserService userService;
 
     @Nested
     class AdminTryingToEscalatePrivilegesUpdateUser {
@@ -628,23 +632,8 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
         @BeforeEach
         void ensureDefaultAdminExists() {
-            // Ensure the default admin user exists with super admin authority for parallel test execution
-            User existingAdmin = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(DEFAULT_ADMIN_USERNAME).orElse(null);
-            if (existingAdmin == null) {
-                // Create the default admin if it doesn't exist
-                User defaultAdmin = userUtilService.createAndSaveUser(DEFAULT_ADMIN_USERNAME);
-                defaultAdmin.setActivated(true);
-                defaultAdmin.setFirstName("Administrator");
-                defaultAdmin.setLastName("Administrator");
-                defaultAdmin.setEmail("admin@localhost");
-                defaultAdmin.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY, new Authority(Role.STUDENT.getAuthority())));
-                userTestRepository.save(defaultAdmin);
-            }
-            else if (!existingAdmin.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY)) {
-                // Ensure the existing admin has super admin authority (might be modified by other tests)
-                existingAdmin.getAuthorities().add(Authority.SUPER_ADMIN_AUTHORITY);
-                userTestRepository.save(existingAdmin);
-            }
+            // This uses the same logic as the server startup to maintain consistency
+            userService.ensureInternalAdminExists(DEFAULT_ADMIN_USERNAME, DEFAULT_ADMIN_USERNAME);
         }
 
         @Test

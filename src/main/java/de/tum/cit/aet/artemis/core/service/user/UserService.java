@@ -152,28 +152,39 @@ public class UserService {
      */
     @PostConstruct
     public void applicationReady() {
-
         try {
             if (artemisInternalAdminUsername.isPresent() && artemisInternalAdminPassword.isPresent()) {
                 // authenticate so that db queries are possible
                 SecurityUtils.setAuthorizationObject();
-                Optional<User> existingInternalAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(artemisInternalAdminUsername.get());
-                if (existingInternalAdmin.isPresent()) {
-                    log.info("Update internal admin user {}", artemisInternalAdminUsername.get());
-                    existingInternalAdmin.get().setPassword(passwordService.hashPassword(artemisInternalAdminPassword.get()));
-                    // needs to be mutable --> new HashSet<>(Set.of(...))
-                    existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
-                    saveUser(existingInternalAdmin.get());
-                }
-                else {
-                    log.info("Create internal admin user {}", artemisInternalAdminUsername.get());
-                    final var managedUserVM = createManagedUserVm(artemisInternalAdminUsername.get(), artemisInternalAdminPassword.get());
-                    userCreationService.createUser(managedUserVM);
-                }
+                ensureInternalAdminExists(artemisInternalAdminUsername.get(), artemisInternalAdminPassword.get());
             }
         }
         catch (Exception ex) {
             log.error("An error occurred after application startup when creating or updating the admin user or in the LDAP search", ex);
+        }
+    }
+
+    /**
+     * Ensures that an internal admin user exists with the specified credentials.
+     * Creates the user if it doesn't exist, or updates its password and authorities if it does.
+     * This method can be called from tests to ensure proper admin setup.
+     *
+     * @param internalAdminUsername the username for the admin user
+     * @param internalAdminPassword the password for the admin user
+     */
+    public void ensureInternalAdminExists(String internalAdminUsername, String internalAdminPassword) {
+        Optional<User> existingInternalAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(internalAdminUsername);
+        if (existingInternalAdmin.isPresent()) {
+            log.info("Update internal admin user {}", internalAdminUsername);
+            existingInternalAdmin.get().setPassword(passwordService.hashPassword(internalAdminPassword));
+            // needs to be mutable --> new HashSet<>(Set.of(...))
+            existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
+            saveUser(existingInternalAdmin.get());
+        }
+        else {
+            log.info("Create internal admin user {}", internalAdminUsername);
+            final var managedUserVM = createManagedUserVm(internalAdminUsername, internalAdminPassword);
+            userCreationService.createUser(managedUserVM);
         }
     }
 
