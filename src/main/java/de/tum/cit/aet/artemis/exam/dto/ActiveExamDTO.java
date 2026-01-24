@@ -14,7 +14,7 @@ public record ActiveExamDTO(long id, @NotNull String title, @NotNull ZonedDateTi
     public record CourseForActiveExamDTO(long id, @NotNull String title) {
     }
 
-    public ActiveExamDTO(long id, String title, ZonedDateTime startDate, ZonedDateTime endDate, boolean testExam, Long courseId, String courseTitle) {
+    public ActiveExamDTO(long id, String title, ZonedDateTime startDate, ZonedDateTime endDate, boolean testExam, long courseId, String courseTitle) {
         this(id, title, startDate, endDate, testExam, new CourseForActiveExamDTO(courseId, courseTitle));
     }
 }
