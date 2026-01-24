@@ -30,7 +30,6 @@ describe('CourseDashboardComponent', () => {
     let component: CourseDashboardComponent;
     let fixture: ComponentFixture<CourseDashboardComponent>;
     let debugElement: DebugElement;
-    let _courseStorageService: CourseStorageService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -67,7 +66,6 @@ describe('CourseDashboardComponent', () => {
         fixture = TestBed.createComponent(CourseDashboardComponent);
         component = fixture.componentInstance;
         debugElement = fixture.debugElement;
-        _courseStorageService = TestBed.inject(CourseStorageService);
         fixture.detectChanges();
         // isLoading is already false by default, no need to set it
     });

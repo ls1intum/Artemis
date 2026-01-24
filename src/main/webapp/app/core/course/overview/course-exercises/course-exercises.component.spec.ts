@@ -48,7 +48,6 @@ describe('CourseExercisesComponent', () => {
 
     let course: Course;
     let exercise: Exercise;
-    let _courseStorageStub: ReturnType<typeof vi.spyOn>;
     let exerciseServiceStub: ReturnType<typeof vi.spyOn>;
 
     const parentRoute = { params: of({ courseId: 123 }) } as any as ActivatedRoute;
@@ -105,7 +104,7 @@ describe('CourseExercisesComponent', () => {
         exercise.releaseDate = dayjs('2021-01-13T16:11:00+01:00').subtract(1, 'days');
         course.exercises = [exercise];
         vi.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of(course));
-        _courseStorageStub = vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
         exerciseServiceStub = vi.spyOn(exerciseService, 'find').mockReturnValue(
             of(
                 new HttpResponse({
