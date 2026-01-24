@@ -52,7 +52,6 @@ import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.AccountRegistrationBlockedException;
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
-import de.tum.cit.aet.artemis.core.exception.InvalidAdminConfigurationException;
 import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsException;
 import de.tum.cit.aet.artemis.core.exception.UsernameAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
@@ -163,37 +162,13 @@ public class UserService {
     /**
      * Ensures that an internal admin user exists with the specified credentials.
      * Creates the user if it doesn't exist, or updates its password and authorities if it does.
-     * This method can be called from tests to ensure proper admin setup.
+     * This method assumes credentials have already been validated by ConfigurationValidator.
      *
      * @param internalAdminUsername the username for the admin user
      * @param internalAdminPassword the password for the admin user
-     * @throws InvalidAdminConfigurationException if credentials are invalid
      */
     public void ensureInternalAdminExists(String internalAdminUsername, String internalAdminPassword) {
-        if (internalAdminUsername == null || internalAdminUsername.isBlank()) {
-            throw new InvalidAdminConfigurationException("Internal admin username must not be null or blank", "username", "artemis.user-management.internal-admin.username",
-                    internalAdminUsername == null ? "null" : "blank", "must not be null or blank");
-        }
-
-        if (internalAdminUsername.length() < USERNAME_MIN_LENGTH) {
-            throw new InvalidAdminConfigurationException("Internal admin username is too short", "username", "artemis.user-management.internal-admin.username",
-                    internalAdminUsername, "must be at least " + USERNAME_MIN_LENGTH + " characters long");
-        }
-
-        if (internalAdminUsername.length() > USERNAME_MAX_LENGTH) {
-            throw new InvalidAdminConfigurationException("Internal admin username is too long", "username", "artemis.user-management.internal-admin.username",
-                    internalAdminUsername, "must be at most " + USERNAME_MAX_LENGTH + " characters long");
-        }
-
-        if (internalAdminPassword == null || internalAdminPassword.isBlank()) {
-            throw new InvalidAdminConfigurationException("Internal admin password must not be null or blank", "password", "artemis.user-management.internal-admin.password",
-                    internalAdminPassword == null ? "null" : "blank", "must not be null or blank");
-        }
-
-        if (internalAdminPassword.length() < PASSWORD_MIN_LENGTH) {
-            throw new InvalidAdminConfigurationException("Internal admin password is too short", "password", "artemis.user-management.internal-admin.password", "***hidden***",
-                    "must be at least " + PASSWORD_MIN_LENGTH + " characters long");
-        }
+        log.debug("Ensuring internal admin user exists: {}", internalAdminUsername);
 
         Optional<User> existingInternalAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(internalAdminUsername);
         if (existingInternalAdmin.isPresent()) {
