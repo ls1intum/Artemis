@@ -1,0 +1,33 @@
+# Validates that the documentation builds successfully.
+# Keep the build steps in sync with deploy-documentation.yml
+name: Build Documentation
+
+on:
+  pull_request:
+    paths:
+      - 'documentation/**'
+      - '.github/workflows/build-documentation.yml'
+  push:
+    branches:
+      - develop
+    paths:
+      - 'documentation/**'
+      - '.github/workflows/build-documentation.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        working-directory: documentation
+        run: npm ci
+
+      - name: Build Docusaurus site
+        working-directory: documentation
+        run: npm run build
