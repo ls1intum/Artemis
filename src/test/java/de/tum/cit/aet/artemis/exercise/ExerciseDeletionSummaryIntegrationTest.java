@@ -21,6 +21,8 @@ import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -155,7 +157,6 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
 
         assertThat(summary.numberOfStudentParticipations()).isEqualTo(2);
         assertThat(summary.numberOfBuilds()).isEqualTo(2);
-        assertThat(summary.numberOfSubmissions()).isEqualTo(0);
         assertThat(summary.numberOfAssessments()).isEqualTo(0);
         assertThat(summary.numberOfCommunicationPosts()).isEqualTo(2);
         assertThat(summary.numberOfAnswerPosts()).isEqualTo(1);
@@ -186,7 +187,6 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
 
         assertThat(summary.numberOfStudentParticipations()).isEqualTo(2);
         assertThat(summary.numberOfBuilds()).isNull();
-        assertThat(summary.numberOfSubmissions()).isEqualTo(2);
         assertThat(summary.numberOfAssessments()).isEqualTo(1);
         assertThat(summary.numberOfCommunicationPosts()).isEqualTo(0);
         assertThat(summary.numberOfAnswerPosts()).isEqualTo(0);
@@ -214,7 +214,6 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
         var summary = request.get("/api/exercise/exercises/" + modelingExercise.getId() + "/deletion-summary", HttpStatus.OK, ExerciseDeletionSummaryDTO.class);
 
         assertThat(summary.numberOfStudentParticipations()).isEqualTo(2);
-        assertThat(summary.numberOfSubmissions()).isEqualTo(2);
         assertThat(summary.numberOfAssessments()).isEqualTo(1);
         assertThat(summary.numberOfBuilds()).isNull();
     }
@@ -243,7 +242,6 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
         var summary = request.get("/api/exercise/exercises/" + fileUploadExercise.getId() + "/deletion-summary", HttpStatus.OK, ExerciseDeletionSummaryDTO.class);
 
         assertThat(summary.numberOfStudentParticipations()).isEqualTo(2);
-        assertThat(summary.numberOfSubmissions()).isEqualTo(2);
         assertThat(summary.numberOfAssessments()).isEqualTo(1);
         assertThat(summary.numberOfBuilds()).isNull();
     }
@@ -254,12 +252,14 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
         Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
         QuizExercise quizExercise = ExerciseUtilService.getFirstExerciseWithType(course, QuizExercise.class);
 
-        quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, TEST_PREFIX + "student1", false);
+        Submission submission = quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, TEST_PREFIX + "student1", false);
+        Exercise quizExercise2 = submission.getParticipation().getExercise();
 
         var summary = request.get("/api/exercise/exercises/" + quizExercise.getId() + "/deletion-summary", HttpStatus.OK, ExerciseDeletionSummaryDTO.class);
+        assertThat(summary.numberOfStudentParticipations()).isEqualTo(0);
 
+        summary = request.get("/api/exercise/exercises/" + quizExercise2.getId() + "/deletion-summary", HttpStatus.OK, ExerciseDeletionSummaryDTO.class);
         assertThat(summary.numberOfStudentParticipations()).isEqualTo(1);
-        assertThat(summary.numberOfSubmissions()).isEqualTo(1);
         assertThat(summary.numberOfAssessments()).isNull();
         assertThat(summary.numberOfBuilds()).isNull();
     }

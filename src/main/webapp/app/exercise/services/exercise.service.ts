@@ -217,9 +217,8 @@ export class ExerciseService {
         return Object.fromEntries(
             Object.entries({
                 'artemisApp.exercise.delete.summary.numberOfStudentParticipations': dto.numberOfStudentParticipations,
-                'artemisApp.exercise.delete.summary.numberOfSubmissions': dto.numberOfSubmissions,
-                'artemisApp.exercise.delete.summary.numberOfAssessments': dto.numberOfAssessments,
                 'artemisApp.exercise.delete.summary.numberOfBuilds': dto.numberOfBuilds,
+                'artemisApp.exercise.delete.summary.numberOfAssessments': dto.numberOfAssessments,
                 'artemisApp.exercise.delete.summary.numberOfCommunicationPosts': dto.numberOfCommunicationPosts,
                 'artemisApp.exercise.delete.summary.numberOfAnswerPosts': dto.numberOfAnswerPosts,
             }).filter(([, value]) => value !== undefined),
