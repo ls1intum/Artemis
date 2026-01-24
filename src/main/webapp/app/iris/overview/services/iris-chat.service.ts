@@ -164,15 +164,22 @@ export class IrisChatService implements OnDestroy {
         this.chatSessionByIdSubscription?.unsubscribe();
     }
 
-    protected start() {
+    protected start(forceNew = false) {
         const requiresAcceptance = this.sessionCreationIdentifier
             ? this.modeRequiresLLMAcceptance.get(Object.values(ChatServiceMode).find((mode) => this.sessionCreationIdentifier?.includes(mode)) as ChatServiceMode)
             : true;
         if (requiresAcceptance === false || this.accountService.userIdentity()?.externalLLMUsageAccepted || this.hasJustAcceptedExternalLLMUsage) {
-            this.getCurrentSessionOrCreate().subscribe({
-                ...this.handleNewSession(),
-                complete: () => this.loadChatSessions(),
-            });
+            if (forceNew) {
+                this.createNewSession().subscribe({
+                    ...this.handleNewSession(),
+                    complete: () => this.loadChatSessions(),
+                });
+            } else {
+                this.getCurrentSessionOrCreate().subscribe({
+                    ...this.handleNewSession(),
+                    complete: () => this.loadChatSessions(),
+                });
+            }
         }
     }
 
@@ -517,30 +524,20 @@ export class IrisChatService implements OnDestroy {
         );
     }
 
-    switchTo(mode: ChatServiceMode, id?: number): void {
+    /**
+     * Switches to a chat mode for the given entity.
+     * @param mode The chat mode to switch to
+     * @param id The entity ID (course, lecture, or exercise)
+     * @param forceNew If true, always creates a new session instead of reusing an existing one
+     */
+    switchTo(mode: ChatServiceMode, id?: number, forceNew = false): void {
         const modeUrl = chatModeToUrlComponent(mode);
         const newIdentifier = modeUrl && id ? modeUrl + '/' + id : undefined;
         const isDifferent = this.sessionCreationIdentifier !== newIdentifier;
         this.sessionCreationIdentifier = newIdentifier;
         if (isDifferent) {
-            this.closeAndStart();
-        }
-    }
-
-    /**
-     * Switches to a new chat mode and creates a new session (instead of reusing an existing one).
-     * Use this when the user explicitly wants to start a new conversation in a different context.
-     */
-    switchToNewChat(mode: ChatServiceMode, id?: number): void {
-        const modeUrl = chatModeToUrlComponent(mode);
-        const newIdentifier = modeUrl && id ? modeUrl + '/' + id : undefined;
-        this.sessionCreationIdentifier = newIdentifier;
-        if (newIdentifier) {
             this.close();
-            this.createNewSession().subscribe({
-                ...this.handleNewSession(),
-                complete: () => this.loadChatSessions(),
-            });
+            this.start(forceNew);
         }
     }
 
