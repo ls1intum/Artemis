@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.service.weaviate;
 
+import java.io.IOException;
 import java.util.Map;
 
 import jakarta.annotation.PostConstruct;
@@ -13,10 +14,10 @@ import de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviateCollectionSche
 import de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviatePropertyDefinition;
 import de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviateReferenceDefinition;
 import de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviateSchemas;
-import io.weaviate.client6.WeaviateClient;
-import io.weaviate.client6.config.collection.Property;
-import io.weaviate.client6.config.collection.ReferenceProperty;
-import io.weaviate.client6.v1.collections.Collection;
+import io.weaviate.client6.v1.api.WeaviateClient;
+import io.weaviate.client6.v1.api.collections.CollectionHandle;
+import io.weaviate.client6.v1.api.collections.Property;
+import io.weaviate.client6.v1.api.collections.ReferenceProperty;
 
 /**
  * Service for interacting with Weaviate vector database.
@@ -57,15 +58,15 @@ public class WeaviateService {
     private void ensureCollectionExists(WeaviateCollectionSchema schema) {
         String collectionName = schema.collectionName();
 
-        if (client.collections().exists(collectionName)) {
-            log.debug("Collection '{}' already exists", collectionName);
-            return;
-        }
-
-        log.info("Creating collection '{}'...", collectionName);
-
         try {
-            client.collections().create(collectionName, col -> {
+            if (client.collections.exists(collectionName)) {
+                log.debug("Collection '{}' already exists", collectionName);
+                return;
+            }
+
+            log.info("Creating collection '{}'...", collectionName);
+
+            client.collections.create(collectionName, col -> {
                 // Add properties
                 for (WeaviatePropertyDefinition prop : schema.properties()) {
                     col.properties(createProperty(prop));
@@ -81,7 +82,7 @@ public class WeaviateService {
 
             log.info("Successfully created collection '{}'", collectionName);
         }
-        catch (Exception e) {
+        catch (IOException e) {
             log.error("Failed to create collection '{}': {}", collectionName, e.getMessage(), e);
             throw new WeaviateException("Failed to create collection: " + collectionName, e);
         }
@@ -93,7 +94,7 @@ public class WeaviateService {
      * @param definition the property definition
      * @return the Weaviate property
      */
-    private Property<?> createProperty(WeaviatePropertyDefinition definition) {
+    private Property createProperty(WeaviatePropertyDefinition definition) {
         return switch (definition.dataType()) {
             case INT -> Property.integer(definition.name(), p -> p.indexSearchable(definition.indexSearchable()).indexFilterable(definition.indexFilterable()));
             case TEXT -> Property.text(definition.name(), p -> p.indexSearchable(definition.indexSearchable()).indexFilterable(definition.indexFilterable()));
@@ -111,8 +112,8 @@ public class WeaviateService {
      * @param collectionName the collection name
      * @return the collection handle
      */
-    public Collection<Map<String, Object>> getCollection(String collectionName) {
-        return client.collections().use(collectionName);
+    public CollectionHandle<Map<String, Object>> getCollection(String collectionName) {
+        return client.collections.use(collectionName);
     }
 
     /**
@@ -132,13 +133,18 @@ public class WeaviateService {
 
         var collection = getCollection(WeaviateSchemas.LECTURES_COLLECTION);
 
-        collection.data()
-                .insert(Map.of(WeaviateSchemas.LecturesProperties.COURSE_ID, courseId, WeaviateSchemas.LecturesProperties.COURSE_LANGUAGE, courseLanguage,
-                        WeaviateSchemas.LecturesProperties.LECTURE_ID, lectureId, WeaviateSchemas.LecturesProperties.LECTURE_UNIT_ID, lectureUnitId,
-                        WeaviateSchemas.LecturesProperties.PAGE_TEXT_CONTENT, pageTextContent, WeaviateSchemas.LecturesProperties.PAGE_NUMBER, pageNumber,
-                        WeaviateSchemas.LecturesProperties.BASE_URL, baseUrl, WeaviateSchemas.LecturesProperties.ATTACHMENT_VERSION, attachmentVersion));
+        try {
+            collection.data.insert(Map.of(WeaviateSchemas.LecturesProperties.COURSE_ID, courseId, WeaviateSchemas.LecturesProperties.COURSE_LANGUAGE, courseLanguage,
+                    WeaviateSchemas.LecturesProperties.LECTURE_ID, lectureId, WeaviateSchemas.LecturesProperties.LECTURE_UNIT_ID, lectureUnitId,
+                    WeaviateSchemas.LecturesProperties.PAGE_TEXT_CONTENT, pageTextContent, WeaviateSchemas.LecturesProperties.PAGE_NUMBER, pageNumber,
+                    WeaviateSchemas.LecturesProperties.BASE_URL, baseUrl, WeaviateSchemas.LecturesProperties.ATTACHMENT_VERSION, attachmentVersion));
 
-        log.debug("Inserted lecture page chunk for lecture unit {} page {}", lectureUnitId, pageNumber);
+            log.debug("Inserted lecture page chunk for lecture unit {} page {}", lectureUnitId, pageNumber);
+        }
+        catch (IOException e) {
+            log.error("Failed to insert lecture page chunk for lecture unit {} page {}: {}", lectureUnitId, pageNumber, e.getMessage(), e);
+            throw new WeaviateException("Failed to insert lecture page chunk", e);
+        }
     }
 
     /**
@@ -156,13 +162,18 @@ public class WeaviateService {
 
         var collection = getCollection(WeaviateSchemas.FAQS_COLLECTION);
 
-        collection.data()
-                .insert(Map.of(WeaviateSchemas.FaqsProperties.COURSE_ID, courseId, WeaviateSchemas.FaqsProperties.COURSE_NAME, courseName,
-                        WeaviateSchemas.FaqsProperties.COURSE_DESCRIPTION, courseDescription, WeaviateSchemas.FaqsProperties.COURSE_LANGUAGE, courseLanguage,
-                        WeaviateSchemas.FaqsProperties.FAQ_ID, faqId, WeaviateSchemas.FaqsProperties.QUESTION_TITLE, questionTitle, WeaviateSchemas.FaqsProperties.QUESTION_ANSWER,
-                        questionAnswer));
+        try {
+            collection.data.insert(Map.of(WeaviateSchemas.FaqsProperties.COURSE_ID, courseId, WeaviateSchemas.FaqsProperties.COURSE_NAME, courseName,
+                    WeaviateSchemas.FaqsProperties.COURSE_DESCRIPTION, courseDescription, WeaviateSchemas.FaqsProperties.COURSE_LANGUAGE, courseLanguage,
+                    WeaviateSchemas.FaqsProperties.FAQ_ID, faqId, WeaviateSchemas.FaqsProperties.QUESTION_TITLE, questionTitle, WeaviateSchemas.FaqsProperties.QUESTION_ANSWER,
+                    questionAnswer));
 
-        log.debug("Inserted FAQ {} for course {}", faqId, courseId);
+            log.debug("Inserted FAQ {} for course {}", faqId, courseId);
+        }
+        catch (IOException e) {
+            log.error("Failed to insert FAQ {} for course {}: {}", faqId, courseId, e.getMessage(), e);
+            throw new WeaviateException("Failed to insert FAQ", e);
+        }
     }
 
     /**
@@ -173,7 +184,7 @@ public class WeaviateService {
     public boolean isHealthy() {
         try {
             // Check if we can list collections
-            client.collections().listAll();
+            client.collections.list();
             return true;
         }
         catch (Exception e) {

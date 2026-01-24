@@ -33,9 +33,19 @@ public class WeaviateClientConfiguration {
      */
     @Bean
     public WeaviateClient weaviateClient() {
-        log.info("Connecting to Weaviate at {}:{} (gRPC: {})", properties.getHost(), properties.getPort(), properties.getGrpcPort());
+        String scheme = properties.isSecure() ? "https" : "http";
+        log.info("Connecting to Weaviate at {}://{}:{} (gRPC: {})", scheme, properties.getHost(), properties.getPort(), properties.getGrpcPort());
 
-        WeaviateClient client = WeaviateClient.connectToLocal(config -> config.host(properties.getHost()).port(properties.getPort()).grpcPort(properties.getGrpcPort()));
+        WeaviateClient client;
+        if (properties.isSecure()) {
+            // Use custom config for secure connections
+            client = WeaviateClient.connectToCustom(config -> config.scheme(scheme).httpHost(properties.getHost()).httpPort(properties.getPort()).grpcHost(properties.getHost())
+                    .grpcPort(properties.getGrpcPort()));
+        }
+        else {
+            // Use local config for non-secure connections
+            client = WeaviateClient.connectToLocal(config -> config.host(properties.getHost()).port(properties.getPort()).grpcPort(properties.getGrpcPort()));
+        }
 
         log.info("Successfully connected to Weaviate");
         return client;
