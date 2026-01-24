@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -236,7 +235,6 @@ public class ExerciseReviewCommentService {
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, comment.getThread().getExercise().getId());
         validateContentMatchesType(comment.getType(), content);
         comment.setContent(content);
-        comment.setLastModifiedDate(Instant.now());
         Comment saved = commentRepository.save(comment);
         return commentRepository.findWithThreadById(saved.getId()).orElse(saved);
     }
