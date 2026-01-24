@@ -36,6 +36,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      */
     private static readonly DEFAULT_LINE_DECORATION_BUTTON_WIDTH = '2.3ch';
     private static readonly SHRINK_TO_FIT_CLASS = 'monaco-shrink-to-fit';
+    private static readonly OVERLAY_HIDDEN_CLASS = 'monaco-overlay-hidden';
 
     private readonly _editor: monaco.editor.IStandaloneCodeEditor;
     private textEditorAdapter: MonacoTextEditorAdapter;
@@ -92,6 +93,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private diffEditorContainer?: HTMLElement;
     private diffSnapshotModel?: monaco.editor.ITextModel;
     private useLiveSyncedDiff = false;
+    private currentMode: MonacoEditorMode = 'normal';
 
     constructor() {
         this.monacoEditorContainerElement = this.createContainer('monaco-editor-container');
@@ -108,25 +110,16 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         effect(() => this.applyEditorOptions());
 
         effect(() => {
-            const m = this.mode();
-            if (m === 'diff' && !this._diffEditor) {
-                this.initializeDiffEditor();
-            }
-            if (m === 'normal' && this._diffEditor) {
-                this.disposeDiffEditor();
+            const newMode = this.mode();
+            if (newMode !== this.currentMode) {
+                this.switchToMode(newMode);
             }
         });
     }
 
     ngOnInit(): void {
         this.resizeObserver = new ResizeObserver(() => this.layout());
-
         this.resizeObserver.observe(this.elementRef.nativeElement);
-        this.resizeObserver.observe(this.monacoEditorContainerElement);
-
-        if (this.diffEditorContainer) {
-            this.resizeObserver.observe(this.diffEditorContainer);
-        }
 
         this.attachToEditor(this._editor);
     }
@@ -135,92 +128,131 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.reset();
         this.disposeActiveEditorListeners();
         this.diffUpdateListener?.dispose();
+
+        // Dispose all selection change listeners
+        this.selectionChangeListeners.forEach((entry) => entry.disposable?.dispose());
+        this.selectionChangeListeners = [];
+
+        // Clear all debounce timeouts
+        this.textChangedEmitTimeouts.forEach((timeout) => clearTimeout(timeout));
+        this.textChangedEmitTimeouts.clear();
+
         this.resizeObserver?.disconnect();
         this._diffEditor?.dispose();
         this._editor.dispose();
     }
 
-    private initializeDiffEditor(): void {
-        if (this._diffEditor) return;
+    /**
+     * Switches between normal and diff mode.
+     * Uses display:none to toggle containers, with explicit sizing to prevent 0-height collapse.
+     */
+    private switchToMode(newMode: MonacoEditorMode): void {
+        this.currentMode = newMode;
 
+        if (newMode === 'diff') {
+            this.ensureDiffEditor();
+            this.setContainerVisibility(this.monacoEditorContainerElement, false);
+
+            this.setContainerVisibility(this.diffEditorContainer!, true);
+            this.textEditorAdapter = new MonacoTextEditorAdapter(this._diffEditor!.getModifiedEditor());
+            this.attachToEditor(this._diffEditor!.getModifiedEditor());
+            this.bindDiffUpdateListener();
+        } else {
+            this.setContainerVisibility(this.diffEditorContainer, false);
+            this.setContainerVisibility(this.monacoEditorContainerElement, true);
+
+            // If we had modified content in diff mode, sync it back (unless live-synced)
+            if (this._diffEditor && !this.useLiveSyncedDiff) {
+                const modified = this._diffEditor.getModifiedEditor().getValue();
+                this._editor.setValue(modified);
+            }
+
+            // Clear diff model to stop background diff computation
+            this._diffEditor?.setModel(null);
+            this.diffUpdateListener?.dispose();
+            this.diffUpdateListener = undefined;
+
+            // Dispose snapshot model
+            if (this.diffSnapshotModel) {
+                const idx = this.models.indexOf(this.diffSnapshotModel);
+                if (idx !== -1) this.models.splice(idx, 1);
+                this.diffSnapshotModel.dispose();
+                this.diffSnapshotModel = undefined;
+            }
+
+            this.useLiveSyncedDiff = false;
+            this.textEditorAdapter = new MonacoTextEditorAdapter(this._editor);
+            this.attachToEditor(this._editor);
+            this._editor.layout();
+            this.emitTextChangeEvent();
+        }
+    }
+
+    /**
+     * Lazily creates the diff editor on first use. Subsequent calls are no-ops.
+     */
+    private ensureDiffEditor(): void {
+        if (this._diffEditor) {
+            // Diff editor exists, just update the snapshot model
+            this.updateDiffSnapshot();
+            return;
+        }
+
+        // Create diff editor container (hidden initially)
+        this.diffEditorContainer = this.createContainer('monaco-diff-editor-container');
+        this.setContainerVisibility(this.diffEditorContainer, false);
+        this.renderer.appendChild(this.elementRef.nativeElement, this.diffEditorContainer);
+
+        // Create the diff editor
+        this._diffEditor = this.monacoEditorService.createStandaloneDiffEditor(this.diffEditorContainer);
+        this.applyEditorOptions();
+
+        // Create and set up the diff model
+        this.updateDiffSnapshot();
+
+        // Observe diff container for resize
+        if (this.resizeObserver) {
+            this.resizeObserver.observe(this.diffEditorContainer);
+        }
+    }
+
+    /**
+     * Creates or updates the snapshot model for diff comparison.
+     */
+    private updateDiffSnapshot(): void {
         const currentModel = this._editor.getModel();
         const currentContent = currentModel?.getValue() ?? '';
         const currentLanguage = currentModel?.getLanguageId() ?? 'markdown';
 
-        // Create snapshot model (left side)
-        const snapshotUri = monaco.Uri.parse(`inmemory://model/snapshot-${this._editor.getId()}/${Date.now()}`);
-        this.diffSnapshotModel = monaco.editor.createModel(currentContent, currentLanguage, snapshotUri);
-        this.models.push(this.diffSnapshotModel);
-
-        const { widthPx, heightPx } = this.captureContainerPixelSize(this.monacoEditorContainerElement);
-
-        this.renderer.setStyle(this.monacoEditorContainerElement, 'display', 'none');
-
-        this.diffEditorContainer = this.createContainer('monaco-diff-editor-container');
-        this.renderer.setStyle(this.diffEditorContainer, 'width', widthPx);
-        this.renderer.setStyle(this.diffEditorContainer, 'height', heightPx);
-        this.renderer.appendChild(this.elementRef.nativeElement, this.diffEditorContainer);
-
-        this._diffEditor = this.monacoEditorService.createStandaloneDiffEditor(this.diffEditorContainer);
-        this.applyEditorOptions();
-
-        if (currentModel) {
-            this._diffEditor.setModel({ original: this.diffSnapshotModel, modified: currentModel });
-            this.useLiveSyncedDiff = true;
-        }
-
-        this.textEditorAdapter = new MonacoTextEditorAdapter(this._diffEditor.getModifiedEditor());
-        this.attachToEditor(this._diffEditor.getModifiedEditor());
-
-        this.bindDiffUpdateListener();
-
-        if (this.resizeObserver) {
-            this.resizeObserver.observe(this.diffEditorContainer);
-        }
-
-        this._diffEditor.layout();
-    }
-
-    private disposeDiffEditor(): void {
-        if (!this._diffEditor) {
-            return;
-        }
-
-        this.diffUpdateListener?.dispose();
-        this.diffUpdateListener = undefined;
-
-        if (this.resizeObserver && this.diffEditorContainer) {
-            this.resizeObserver.unobserve(this.diffEditorContainer);
-        }
-
-        this.renderer.setStyle(this.monacoEditorContainerElement, 'display', 'block');
-
-        if (!this.useLiveSyncedDiff) {
-            const modified = this._diffEditor.getModifiedEditor().getValue();
-            this._editor.setValue(modified);
-        }
-
-        this.textEditorAdapter = new MonacoTextEditorAdapter(this._editor);
-        this.attachToEditor(this._editor);
-
-        const diffContainerNode = this._diffEditor.getContainerDomNode();
-        this._diffEditor.dispose();
-        this._diffEditor = undefined;
-
-        this.renderer.removeChild(this.elementRef.nativeElement, diffContainerNode);
-        this.diffEditorContainer = undefined;
-
+        // Dispose old snapshot if it exists
         if (this.diffSnapshotModel) {
             const idx = this.models.indexOf(this.diffSnapshotModel);
             if (idx !== -1) this.models.splice(idx, 1);
             this.diffSnapshotModel.dispose();
-            this.diffSnapshotModel = undefined;
         }
 
-        this._editor.layout();
-        this.emitTextChangeEvent();
+        // Create new snapshot model (left side)
+        const snapshotUri = monaco.Uri.parse(`inmemory://model/snapshot-${this._editor.getId()}/${Date.now()}`);
+        this.diffSnapshotModel = monaco.editor.createModel(currentContent, currentLanguage, snapshotUri);
+        this.models.push(this.diffSnapshotModel);
 
-        this.useLiveSyncedDiff = false;
+        if (currentModel && this._diffEditor) {
+            this._diffEditor.setModel({ original: this.diffSnapshotModel, modified: currentModel });
+            this.useLiveSyncedDiff = true;
+        }
+    }
+
+    /**
+     * Sets visibility of a container using CSS overlay class.
+     */
+    private setContainerVisibility(container: HTMLElement | undefined, visible: boolean): void {
+        if (!container) return;
+
+        if (visible) {
+            this.renderer.removeClass(container, MonacoEditorComponent.OVERLAY_HIDDEN_CLASS);
+        } else {
+            this.renderer.addClass(container, MonacoEditorComponent.OVERLAY_HIDDEN_CLASS);
+        }
     }
 
     private bindDiffUpdateListener(): void {
@@ -267,7 +299,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
             this.activeEditorListeners.push(
                 editor.onDidBlurEditorWidget(() => {
-                    // iOS blur workaround
+                    // On iOS, the editor does not lose focus when clicking outside of it. This listener ensures that the editor loses focus when the editor widget loses focus.
+                    // See https://github.com/microsoft/monaco-editor/issues/307
                     if (getOS() === 'iOS' && document.activeElement && 'blur' in document.activeElement && typeof (document.activeElement as any).blur === 'function') {
                         (document.activeElement as HTMLElement).blur();
                     }
@@ -313,6 +346,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 readOnly: isReadOnly,
                 originalEditable: false,
                 renderSideBySide,
+                scrollbar: {
+                    vertical: 'visible',
+                    horizontal: 'auto',
+                },
             });
         }
     }
@@ -321,14 +358,11 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         const el = this.renderer.createElement('div');
         this.renderer.addClass(el, cssClass);
         this.renderer.addClass(el, MonacoEditorComponent.SHRINK_TO_FIT_CLASS);
-        this.renderer.setStyle(el, 'width', '100%');
-        this.renderer.setStyle(el, 'height', '100%');
-        this.renderer.setStyle(el, 'display', 'block');
-
         return el;
     }
 
     private applyShrinkToFitClass(el: HTMLElement, enabled: boolean): void {
+        // TODO: The CSS class below allows the editor to shrink in the CodeEditorContainerComponent. We should eventually remove this class and handle the editor size differently in the code editor grid.
         if (enabled) {
             this.renderer.addClass(el, MonacoEditorComponent.SHRINK_TO_FIT_CLASS);
         } else {
@@ -336,24 +370,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         }
     }
 
-    private captureContainerPixelSize(container: HTMLElement): { widthPx: string; heightPx: string } {
-        const rect = container.getBoundingClientRect();
-        return {
-            widthPx: `${rect.width}px`,
-            heightPx: `${rect.height}px`,
-        };
-    }
-
     layout(): void {
-        if (this.mode() === 'diff' && this._diffEditor) {
-            this._diffEditor.layout();
-        } else {
-            this.renderer.removeStyle(this.monacoEditorContainerElement, 'width');
-            this.renderer.removeStyle(this.monacoEditorContainerElement, 'height');
-            this.renderer.setStyle(this.monacoEditorContainerElement, 'width', '100%');
-            this.renderer.setStyle(this.monacoEditorContainerElement, 'height', '100%');
-            this._editor.layout();
-        }
+        this.getActiveEditor().layout();
     }
 
     /**
@@ -363,42 +381,33 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param height The new height of the editor.
      */
     layoutWithFixedSize(width: number, height: number): void {
-        this.renderer.setStyle(this.monacoEditorContainerElement, 'width', `${width}px`);
-        this.renderer.setStyle(this.monacoEditorContainerElement, 'height', `${height}px`);
-
         if (this.diffEditorContainer) {
             this.renderer.setStyle(this.diffEditorContainer, 'width', `${width}px`);
             this.renderer.setStyle(this.diffEditorContainer, 'height', `${height}px`);
         }
-
-        if (this._diffEditor && this.mode() === 'diff') {
-            this._diffEditor.layout({ width, height });
-        } else {
-            this._editor.layout({ width, height });
-        }
+        this.getActiveEditor().layout({ width, height });
     }
 
     applyDiffContent(newContent: string): void {
-        if (this.mode() !== 'diff' || !this._diffEditor) return;
+        if (this.currentMode !== 'diff' || !this._diffEditor) return;
 
         this.diffChanged.emit({ ready: false, lineChange: { addedLineCount: 0, removedLineCount: 0 } });
         this._diffEditor.getModifiedEditor().setValue(newContent);
 
-        const host = this.elementRef.nativeElement as HTMLElement;
-        const width = host.clientWidth || host.offsetWidth;
-        const height = host.clientHeight || host.offsetHeight;
-        if (width > 0 && height > 0) {
-            this._diffEditor.layout({ width, height });
-        }
+        requestAnimationFrame(() => {
+            this._diffEditor?.layout();
+        });
     }
 
     revertAll(): void {
-        if (this.mode() !== 'diff' || !this._diffEditor || !this.diffSnapshotModel) return;
+        if (this.currentMode !== 'diff' || !this._diffEditor || !this.diffSnapshotModel) return;
         this._diffEditor.getModifiedEditor().setValue(this.diffSnapshotModel.getValue());
     }
 
     getDiffText(): MonacoEditorDiffText | undefined {
-        if (this.mode() !== 'diff' || !this._diffEditor) return undefined;
+        if (this.currentMode !== 'diff' || !this._diffEditor) {
+            return undefined;
+        }
         return {
             original: this._diffEditor.getOriginalEditor().getValue(),
             modified: this._diffEditor.getModifiedEditor().getValue(),
@@ -406,12 +415,14 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     getModifiedEditor(): monaco.editor.IStandaloneCodeEditor | undefined {
-        if (this.mode() !== 'diff' || !this._diffEditor) return undefined;
+        if (this.currentMode !== 'diff' || !this._diffEditor) {
+            return undefined;
+        }
         return this._diffEditor.getModifiedEditor();
     }
 
     getActiveEditor(): monaco.editor.IStandaloneCodeEditor {
-        return this.mode() === 'diff' && this._diffEditor ? this._diffEditor.getModifiedEditor() : this._editor;
+        return this.currentMode === 'diff' && this._diffEditor ? this._diffEditor.getModifiedEditor() : this._editor;
     }
 
     public onDidChangeModelContent(listener: (event: monaco.editor.IModelContentChangedEvent) => void): monaco.IDisposable {
@@ -501,6 +512,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         const delay = this.textChangedEmitDelay();
         const model = this.getModel();
         const fullFilePath = this.extractFilePathFromModel(model);
+
         if (!delay) {
             this.textChanged.emit({ text: newValue, fileName: fullFilePath });
             return;

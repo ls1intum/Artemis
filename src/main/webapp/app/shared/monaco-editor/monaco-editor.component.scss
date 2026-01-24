@@ -21,12 +21,20 @@
 }
 
 /*
+ * Used to hide editor containers during mode switches.
+ * Uses display:none to remove from flow, keeping layout intact.
+ */
+.monaco-overlay-hidden {
+    display: none;
+}
+
+/*
  * The monaco editor can only grow (but not shrink) when its container is resized.
  * Along with a corresponding ResizeObserver that calls layout(), this style forces the editor to shrink
  * when its container's size is reduced.
  */
 .monaco-shrink-to-fit {
-    max-width: 99%;
+    max-width: 100%;
     max-height: 99%;
 }
 
