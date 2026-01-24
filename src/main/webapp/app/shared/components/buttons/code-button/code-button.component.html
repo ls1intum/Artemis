@@ -29,7 +29,7 @@
         }
         @if (participations().length > 1) {
             <div class="form-check form-switch">
-                <input mdbCheckbox id="switch-practice" class="form-check-input" type="checkbox" [checked]="isPracticeMode" (click)="switchPracticeMode()" />
+                <input mdbCheckbox id="switch-practice" class="form-check-input" type="checkbox" [checked]="isPracticeMode()" (click)="switchPracticeMode()" />
                 <label class="form-check-label" for="switch-practice" jhiTranslate="artemisApp.exerciseActions.practiceMode.title"></label>
             </div>
         }
@@ -78,7 +78,7 @@
             <pre
                 class="clone-url url-box-remove-line-left url-box-remove-line-right"
                 [cdkCopyToClipboard]="getHttpOrSshRepositoryUri(false)"
-                (cdkCopyToClipboardCopied)="copyEnabled ? onCopyFinished($event) : null"
+                (cdkCopyToClipboardCopied)="copyEnabled() ? onCopyFinished($event) : null"
                 >{{ getHttpOrSshRepositoryUri() }} </pre
             >
             <div class="d-flex align-items-center">
@@ -96,13 +96,13 @@
         <button
             [cdkCopyToClipboard]="getHttpOrSshRepositoryUri(false)"
             (cdkCopyToClipboardCopied)="onCopyFinished($event)"
-            [disabled]="!copyEnabled"
-            [class.btn-success]="wasCopied"
+            [disabled]="!copyEnabled()"
+            [class.btn-success]="wasCopied()"
             class="btn btn-primary btn-sm me-2"
             data-testid="copyRepoUrlButton"
             type="button"
             style="min-width: 100px"
-            jhiTranslate="{{ wasCopied ? 'artemisApp.exerciseActions.copiedUrl' : 'artemisApp.exerciseActions.copyUrl' }}"
+            jhiTranslate="{{ wasCopied() ? 'artemisApp.exerciseActions.copiedUrl' : 'artemisApp.exerciseActions.copyUrl' }}"
         ></button>
         @if (theiaEnabled) {
             <a class="btn btn-primary btn-sm me-2" (click)="startOnlineIDE()" target="_blank" rel="noopener noreferrer">
