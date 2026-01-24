@@ -257,7 +257,8 @@ public class AdminUserResource {
         boolean newAuthoritiesContainSuperAdmin = newAuthorities.contains(SUPER_ADMIN.getAuthority());
 
         if (isDefaultAdmin && !newAuthoritiesContainSuperAdmin) {
-            throw new BadRequestAlertException("Cannot remove super admin rights from the default admin user.", "userManagement", "userManagement.cannotRemoveDefaultAdminRights");
+            throw new BadRequestAlertException("You cannot remove super admin rights from the default admin user.", "userManagement",
+                    "userManagement.cannotRemoveDefaultAdminRights");
         }
     }
 

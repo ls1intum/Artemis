@@ -216,7 +216,8 @@
         "examMaxPointsTooHigh": "The maximum points value is too high. Please enter a value between 1 and 9999.",
         "examNumberOfExercisesTooHigh": "The number of exercises is too high. Please enter a value between 1 and 100.",
         "userManagement": {
-            "onlySuperAdminCanManageAdmins": "You are not a super administrator and therefore not allowed to manage administrator accounts."
+            "onlySuperAdminCanManageAdmins": "You are not a super administrator and therefore not allowed to manage administrator accounts.",
+            "cannotRemoveDefaultAdminRights": "You cannot remove super admin rights from the default admin user."
         }
     }
 }
