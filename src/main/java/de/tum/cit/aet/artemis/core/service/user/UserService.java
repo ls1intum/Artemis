@@ -171,8 +171,21 @@ public class UserService {
      *
      * @param internalAdminUsername the username for the admin user
      * @param internalAdminPassword the password for the admin user
+     * @throws IllegalArgumentException if credentials are invalid
      */
     public void ensureInternalAdminExists(String internalAdminUsername, String internalAdminPassword) {
+        if (internalAdminUsername == null || internalAdminUsername.isBlank()) {
+            throw new IllegalArgumentException("Internal admin username must not be null or blank");
+        }
+
+        if (internalAdminPassword == null || internalAdminPassword.isBlank()) {
+            throw new IllegalArgumentException("Internal admin password must not be null or blank");
+        }
+
+        if (internalAdminPassword.length() < 8) {
+            throw new IllegalArgumentException("Internal admin password must be at least 8 characters long");
+        }
+
         Optional<User> existingInternalAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(internalAdminUsername);
         if (existingInternalAdmin.isPresent()) {
             log.info("Update internal admin user {}", internalAdminUsername);
