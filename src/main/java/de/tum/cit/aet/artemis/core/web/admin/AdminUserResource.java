@@ -23,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -88,8 +89,7 @@ public class AdminUserResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    @Value("${artemis.user-management.internal-admin.username:#{null}}")
-    private Optional<String> artemisInternalAdminUsername;
+    private final String artemisInternalAdminUsername;
 
     private final UserService userService;
 
@@ -104,13 +104,15 @@ public class AdminUserResource {
     private final AuthorizationCheckService authorizationCheckService;
 
     public AdminUserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, AuthorityRepository authorityRepository,
-            Optional<LdapUserService> ldapUserService, AuthorizationCheckService authorizationCheckService) {
+            Optional<LdapUserService> ldapUserService, AuthorizationCheckService authorizationCheckService,
+            @Nullable @Value("${artemis.user-management.internal-admin.username:#{null}}") String artemisInternalAdminUsername) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
         this.authorityRepository = authorityRepository;
         this.ldapUserService = ldapUserService;
         this.authorizationCheckService = authorizationCheckService;
+        this.artemisInternalAdminUsername = artemisInternalAdminUsername;
     }
 
     /**
@@ -247,11 +249,11 @@ public class AdminUserResource {
      * @throws BadRequestAlertException if attempting to remove super admin rights from the default admin
      */
     private void checkCannotRemoveSuperAdminFromDefaultAdmin(String login, Set<String> newAuthorities) {
-        if (artemisInternalAdminUsername.isEmpty() || newAuthorities == null) {
+        if (artemisInternalAdminUsername == null || newAuthorities == null) {
             return;
         }
 
-        boolean isDefaultAdmin = artemisInternalAdminUsername.get().equals(login);
+        boolean isDefaultAdmin = artemisInternalAdminUsername.equals(login);
         boolean newAuthoritiesContainSuperAdmin = newAuthorities.contains(SUPER_ADMIN.getAuthority());
 
         if (isDefaultAdmin && !newAuthoritiesContainSuperAdmin) {
