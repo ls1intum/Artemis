@@ -40,11 +40,13 @@
                     } @else {
                         @for (lecture of filteredLectures(); track lecture.id) {
                             <button class="context-selection-box" [class.selected]="selectedLecture()?.id === lecture.id" (click)="selectLecture(lecture)">
-                                <fa-icon [icon]="faBook" class="context-icon" />
+                                <fa-icon [icon]="faChalkboardUser" class="context-icon" />
                                 <div class="context-text">
                                     <span class="context-title">{{ lecture.title }}</span>
                                     @if (lecture.startDate) {
                                         <span class="context-description">{{ lecture.startDate | artemisDate }}</span>
+                                    } @else {
+                                        <span class="context-description" jhiTranslate="artemisApp.courseOverview.sidebar.noDate"></span>
                                     }
                                 </div>
                             </button>
@@ -74,11 +76,13 @@
                     } @else {
                         @for (exercise of filteredExercises(); track exercise.id) {
                             <button class="context-selection-box" [class.selected]="selectedExercise()?.id === exercise.id" (click)="selectExercise(exercise)">
-                                <fa-icon [icon]="faCode" class="context-icon" />
+                                <fa-icon [icon]="getExerciseIcon(exercise)" class="context-icon" />
                                 <div class="context-text">
                                     <span class="context-title">{{ exercise.title }}</span>
                                     @if (exercise.dueDate) {
                                         <span class="context-description">{{ exercise.dueDate | artemisDate }}</span>
+                                    } @else {
+                                        <span class="context-description" jhiTranslate="artemisApp.courseOverview.sidebar.noDueDate"></span>
                                     }
                                 </div>
                             </button>

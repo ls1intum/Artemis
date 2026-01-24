@@ -2,12 +2,12 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { faArrowLeft, faBook, faCode, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faChalkboardUser, faGraduationCap, faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
@@ -35,17 +35,20 @@ const DEFAULT_OPTIONS: ContextOption[] = [
     },
     {
         type: 'lecture',
-        icon: faBook,
+        icon: faChalkboardUser,
         titleKey: 'artemisApp.iris.chat.contextSelection.selectLecture',
         descriptionKey: 'artemisApp.iris.chat.contextSelection.selectLectureDescription',
     },
     {
         type: 'exercise',
-        icon: faCode,
+        icon: faListAlt,
         titleKey: 'artemisApp.iris.chat.contextSelection.selectExercise',
         descriptionKey: 'artemisApp.iris.chat.contextSelection.selectExerciseDescription',
     },
 ];
+
+// Supported exercise types for Iris chat
+const SUPPORTED_EXERCISE_TYPES = [ExerciseType.TEXT, ExerciseType.PROGRAMMING];
 
 @Component({
     selector: 'jhi-context-selection',
@@ -62,8 +65,7 @@ export class ContextSelectionComponent {
 
     // Icons
     protected readonly faArrowLeft = faArrowLeft;
-    protected readonly faBook = faBook;
-    protected readonly faCode = faCode;
+    protected readonly faChalkboardUser = faChalkboardUser;
 
     // Inputs
     readonly courseId = input<number>();
@@ -102,14 +104,14 @@ export class ContextSelectionComponent {
 
     readonly filteredExercises = computed(() => {
         const query = this.searchQuery().toLowerCase();
+        const supportedExercises = this.exercises().filter((exercise) => exercise.type && SUPPORTED_EXERCISE_TYPES.includes(exercise.type));
         if (!query) {
-            return this.exercises();
+            return supportedExercises;
         }
-        return this.exercises().filter((exercise) => exercise.title?.toLowerCase().includes(query));
+        return supportedExercises.filter((exercise) => exercise.title?.toLowerCase().includes(query));
     });
 
     constructor() {
-        // Reactive data loading with automatic request cancellation
         toObservable(this.courseId)
             .pipe(
                 filter((courseId): courseId is number => courseId !== undefined),
@@ -178,5 +180,9 @@ export class ContextSelectionComponent {
 
     onSearch(query: string): void {
         this.searchQuery.set(query);
+    }
+
+    getExerciseIcon(exercise: Exercise): IconDefinition {
+        return getIcon(exercise.type) as IconDefinition;
     }
 }
