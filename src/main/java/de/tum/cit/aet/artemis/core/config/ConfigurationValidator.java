@@ -116,7 +116,7 @@ public class ConfigurationValidator {
                 String errorMessage = String.format("Internal admin username is too short. Minimum length is %d characters, but provided username has %d characters.",
                         USERNAME_MIN_LENGTH, internalAdminUsername.length());
                 log.error(errorMessage);
-                throw new InvalidAdminConfigurationException(errorMessage, "username", "artemis.user-management.internal-admin.username", internalAdminUsername,
+                throw new InvalidAdminConfigurationException(errorMessage, "username", "artemis.user-management.internal-admin.username", "***hidden***",
                         String.format("Must be between %d and %d characters", USERNAME_MIN_LENGTH, USERNAME_MAX_LENGTH));
             }
 
@@ -124,7 +124,7 @@ public class ConfigurationValidator {
                 String errorMessage = String.format("Internal admin username is too long. Maximum length is %d characters, but provided username has %d characters.",
                         USERNAME_MAX_LENGTH, internalAdminUsername.length());
                 log.error(errorMessage);
-                throw new InvalidAdminConfigurationException(errorMessage, "username", "artemis.user-management.internal-admin.username", internalAdminUsername,
+                throw new InvalidAdminConfigurationException(errorMessage, "username", "artemis.user-management.internal-admin.username", "***hidden***",
                         String.format("Must be between %d and %d characters", USERNAME_MIN_LENGTH, USERNAME_MAX_LENGTH));
             }
 

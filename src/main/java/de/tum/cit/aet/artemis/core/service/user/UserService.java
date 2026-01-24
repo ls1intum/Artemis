@@ -152,10 +152,15 @@ public class UserService {
      */
     @PostConstruct
     public void applicationReady() {
-        if (artemisInternalAdminUsername.isPresent() && artemisInternalAdminPassword.isPresent()) {
-            // authenticate so that db queries are possible
-            SecurityUtils.setAuthorizationObject();
-            ensureInternalAdminExists(artemisInternalAdminUsername.get(), artemisInternalAdminPassword.get());
+        try {
+            if (artemisInternalAdminUsername.isPresent() && artemisInternalAdminPassword.isPresent()) {
+                // authenticate so that db queries are possible
+                SecurityUtils.setAuthorizationObject();
+                ensureInternalAdminExists(artemisInternalAdminUsername.get(), artemisInternalAdminPassword.get());
+            }
+        }
+        catch (Exception exception) {
+            log.error("An error occurred after application startup when creating or updating the admin user or in the LDAP search", exception);
         }
     }
 

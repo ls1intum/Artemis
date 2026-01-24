@@ -1,5 +1,10 @@
 package de.tum.cit.aet.artemis.core.exception;
 
+import java.io.Serial;
+
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
 import de.tum.cit.aet.artemis.core.exception.failureAnalyzer.InvalidAdminConfigurationFailureAnalyzer;
 
 /**
@@ -9,6 +14,9 @@ import de.tum.cit.aet.artemis.core.exception.failureAnalyzer.InvalidAdminConfigu
  */
 public class InvalidAdminConfigurationException extends RuntimeException {
 
+    @Serial
+    private static final long serialVersionUID = 1L;
+
     private final String propertyName;
 
     private final String propertyPath;
@@ -17,7 +25,8 @@ public class InvalidAdminConfigurationException extends RuntimeException {
 
     private final String constraint;
 
-    public InvalidAdminConfigurationException(String message, String propertyName, String propertyPath, String currentValue, String constraint) {
+    public InvalidAdminConfigurationException(@NonNull String message, @NonNull String propertyName, @NonNull String propertyPath, @Nullable String currentValue,
+            @NonNull String constraint) {
         super(message);
         this.propertyName = propertyName;
         this.propertyPath = propertyPath;
