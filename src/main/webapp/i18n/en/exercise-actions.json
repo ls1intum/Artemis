@@ -68,7 +68,7 @@
             "vcsTokenTip": "To access the repository with a VCS access token, you need to add a new one to your account {link:here}.",
             "vcsTokenExpiredTip": "Your VCS access token has expired. Renew it {link:here}.",
             "startExerciseBeforeStartDate": "You cannot participate before the start date of the exercise.",
-            "deleteMultipleExercisesQuestion": "Are you sure you want to delete the selected exercises?",
+            "deleteMultipleExercisesQuestion": "Are you sure you want to delete the selected exercises of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>? This action can <strong class=\"text-danger\">NOT</strong> be undone!",
             "externalLLMUsage": {
                 "popUpLabel": "Confirm LLM Usage",
                 "popUpMessage": "By accepting, you confirm that you are at least 18 years old and that you agree to the processing of your interactions with Artemis, as well as the necessary contextual data, such as your code. No data is stored."

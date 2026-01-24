@@ -20,6 +20,7 @@ import { QuizExerciseLifecycleButtonsComponent } from '../lifecyle-buttons/quiz-
 import { QuizExerciseManageButtonsComponent } from '../manage-buttons/quiz-exercise-manage-buttons.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 
 @Component({
@@ -37,6 +38,7 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
         QuizExerciseManageButtonsComponent,
         DeleteButtonDirective,
         ArtemisDatePipe,
+        ArtemisTranslatePipe,
     ],
 })
 export class QuizExerciseComponent extends ExerciseComponent {
