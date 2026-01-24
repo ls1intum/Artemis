@@ -1966,7 +1966,7 @@ public class ProgrammingExerciseTestService {
 
         course = courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
         List<String> errors = new ArrayList<>();
-        var optionalExportedCourse = courseExamExportService.exportCourse(course, courseArchivesDirPath, errors);
+        var optionalExportedCourse = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, errors, Collections.emptyMap());
         assertThat(optionalExportedCourse).isPresent();
 
         // Extract the archive
