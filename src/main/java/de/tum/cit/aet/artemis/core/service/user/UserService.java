@@ -178,6 +178,7 @@ public class UserService {
         Optional<User> existingInternalAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(internalAdminUsername);
         if (existingInternalAdmin.isPresent()) {
             log.info("Update internal admin user {}", internalAdminUsername);
+            existingInternalAdmin.get().setActivated(true);
             existingInternalAdmin.get().setPassword(passwordService.hashPassword(internalAdminPassword));
             // needs to be mutable --> new HashSet<>(Set.of(...))
             existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
