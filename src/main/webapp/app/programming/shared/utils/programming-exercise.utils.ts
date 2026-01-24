@@ -5,8 +5,6 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { isAIResultAndFailed, isAIResultAndIsBeingProcessed, isAIResultAndProcessed, isAIResultAndTimedOut } from 'app/exercise/result/result.utils';
-import { ProgrammingExerciseDeletionSummaryDTO } from 'app/programming/shared/entities/programming-exercise-deletion-summary.model';
-import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 
 export const createBuildPlanUrl = (template: string, projectKey: string, buildPlanId: string): string | undefined => {
     if (template && projectKey && buildPlanId) {
@@ -95,13 +93,4 @@ export const hasDueDatePassed = (exercise: ProgrammingExercise) => {
         referenceDate = dayjs(referenceDate);
     }
     return referenceDate.isBefore(dayjs());
-};
-
-export const createProgrammingExerciseEntitySummary = (summary: ProgrammingExerciseDeletionSummaryDTO): EntitySummary => {
-    return {
-        'artemisApp.programmingExercise.delete.summary.numberOfStudentParticipations': summary.numberOfStudentParticipations,
-        'artemisApp.programmingExercise.delete.summary.numberOfBuilds': summary.numberOfBuilds,
-        'artemisApp.programmingExercise.delete.summary.numberOfCommunicationPosts': summary.numberOfCommunicationPosts,
-        'artemisApp.programmingExercise.delete.summary.numberOfAnswerPosts': summary.numberOfAnswerPosts,
-    };
 };

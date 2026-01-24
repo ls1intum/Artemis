@@ -63,6 +63,7 @@ import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseInstructorExerciseSharingComponent } from '../../shared/actions/programming-exercise-instructor-exercise-sharing.component';
 import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -91,6 +92,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);
     private accountService = inject(AccountService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
+    private exerciseService = inject(ExerciseService);
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private alertService = inject(AlertService);
     private programmingExerciseSubmissionPolicyService = inject(SubmissionPolicyService);
@@ -797,7 +799,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     fetchExerciseDeletionSummary(): Observable<EntitySummary> {
-        return this.programmingExerciseService.getDeletionSummary(this.programmingExercise.id!);
+        return this.exerciseService.getDeletionSummary(this.programmingExercise.id!);
     }
 
     /**

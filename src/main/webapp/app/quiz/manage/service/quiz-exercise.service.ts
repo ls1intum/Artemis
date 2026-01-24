@@ -15,7 +15,6 @@ import { toQuizExerciseUpdateDTO } from 'app/quiz/shared/entities/quiz-exercise-
 import { convertQuizExerciseToCreationDTO } from 'app/quiz/shared/entities/quiz-exercise-creation/quiz-exercise-creation-dto.model';
 import { QuizExerciseDates } from 'app/quiz/shared/entities/quiz-exercise-dates.model';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
-import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
 export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
@@ -341,9 +340,5 @@ export class QuizExerciseService {
             res.body.dueDate = convertDateFromServer(res.body.dueDate);
         }
         return res;
-    }
-
-    getDeletionSummary(exerciseId: number): Observable<EntitySummary> {
-        return this.exerciseService.getDeletionSummary(exerciseId);
     }
 }
