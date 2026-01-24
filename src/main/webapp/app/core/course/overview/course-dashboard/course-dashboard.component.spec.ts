@@ -22,6 +22,7 @@ import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { of } from 'rxjs';
 
 describe('CourseDashboardComponent', () => {
     setupTestBed({ zoneless: true });
@@ -55,7 +56,7 @@ describe('CourseDashboardComponent', () => {
                     provide: CourseStorageService,
                     useValue: {
                         getCourse: () => ({ id: 123, studentCourseAnalyticsDashboardEnabled: true, irisEnabledInCourse: true, learningPathsEnabled: true }),
-                        subscribeToCourseUpdates: () => ({ subscribe: vi.fn() }),
+                        subscribeToCourseUpdates: () => of({ id: 123, studentCourseAnalyticsDashboardEnabled: true, irisEnabledInCourse: true, learningPathsEnabled: true }),
                     },
                 },
             ],

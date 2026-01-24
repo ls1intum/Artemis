@@ -16,6 +16,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';
 import { CourseScores } from 'app/core/course/manage/course-scores/course-scores';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-overview-course-card',
@@ -31,6 +32,8 @@ export class CourseCardComponent {
     private destroyRef = inject(DestroyRef);
 
     protected readonly faArrowRight = faArrowRight;
+
+    private notificationSubscription?: Subscription;
 
     constructor() {
         effect(() => {
@@ -72,8 +75,11 @@ export class CourseCardComponent {
     } as Color;
 
     private subscribeToNotificationCount(course: Course): void {
+        // Unsubscribe from previous subscription if course changes
+        this.notificationSubscription?.unsubscribe();
+
         if (course.id) {
-            this.courseNotificationService
+            this.notificationSubscription = this.courseNotificationService
                 .getNotificationCountForCourse$(course.id!)
                 .pipe(takeUntilDestroyed(this.destroyRef))
                 .subscribe((count) => {

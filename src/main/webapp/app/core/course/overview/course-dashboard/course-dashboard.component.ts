@@ -1,7 +1,7 @@
 import { Component, DestroyRef, ElementRef, computed, inject, signal, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
-import { Subscription } from 'rxjs';
+import { Subscription, switchMap, tap } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
@@ -88,17 +88,18 @@ export class CourseDashboardComponent {
     readonly competencyAccordions = viewChildren('competencyAccordionElement', { read: ElementRef });
 
     constructor() {
-        this.route?.parent?.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-            this._courseId.set(parseInt(params['courseId'], 10));
-            this.setCourse(this.courseStorageService.getCourse(this._courseId()));
-
-            this.courseStorageService
-                .subscribeToCourseUpdates(this._courseId())
-                .pipe(takeUntilDestroyed(this.destroyRef))
-                .subscribe((course: Course) => {
-                    this.setCourse(course);
-                });
-        });
+        this.route?.parent?.params
+            .pipe(
+                tap((params) => {
+                    this._courseId.set(parseInt(params['courseId'], 10));
+                    this.setCourse(this.courseStorageService.getCourse(this._courseId()));
+                }),
+                switchMap(() => this.courseStorageService.subscribeToCourseUpdates(this._courseId())),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((course: Course) => {
+                this.setCourse(course);
+            });
 
         this._atlasEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS));
     }

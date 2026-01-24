@@ -53,7 +53,8 @@ export class OpenCodeEditorButtonComponent {
     }
 
     switchPracticeMode() {
-        this._isPracticeMode.update((value) => !value);
-        this._activeParticipation.set(this.participationService.getSpecificStudentParticipation(this.participations()!, this._isPracticeMode())!);
+        const newPracticeMode = !this._isPracticeMode();
+        this._isPracticeMode.set(newPracticeMode);
+        this._activeParticipation.set(this.participationService.getSpecificStudentParticipation(this.participations()!, newPracticeMode)!);
     }
 }
