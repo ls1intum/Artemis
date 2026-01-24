@@ -178,7 +178,8 @@ class EnrollmentServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest 
             Course course = getCourseForUnenrollmentAllowedTest();
             course.setUnenrollmentEnabled(false);
             courseRepository.save(course);
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> enrollmentService.checkUserAllowedToUnenrollFromCourseElseThrow(course));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> enrollmentService.checkUserAllowedToUnenrollFromCourseElseThrow(course))
+                    .withMessage("The course does currently not allow unenrollment.");
         }
 
         @Test
@@ -188,7 +189,8 @@ class EnrollmentServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest 
             // unenrollment period starts with enrollment period
             course.setEnrollmentStartDate(ZonedDateTime.now().plusDays(1));
             courseRepository.save(course);
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> enrollmentService.checkUserAllowedToUnenrollFromCourseElseThrow(course));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> enrollmentService.checkUserAllowedToUnenrollFromCourseElseThrow(course))
+                    .withMessage("The course does currently not allow unenrollment.");
         }
 
         @Test
@@ -197,7 +199,8 @@ class EnrollmentServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest 
             Course course = getCourseForUnenrollmentAllowedTest();
             course.setUnenrollmentEndDate(ZonedDateTime.now().minusDays(1));
             courseRepository.save(course);
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> enrollmentService.checkUserAllowedToUnenrollFromCourseElseThrow(course));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> enrollmentService.checkUserAllowedToUnenrollFromCourseElseThrow(course))
+                    .withMessage("The course does currently not allow unenrollment.");
         }
 
         @Test
@@ -207,7 +210,8 @@ class EnrollmentServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest 
             course.setUnenrollmentEndDate(null);
             course.setEndDate(ZonedDateTime.now().minusDays(1));
             courseRepository.save(course);
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> enrollmentService.checkUserAllowedToUnenrollFromCourseElseThrow(course));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> enrollmentService.checkUserAllowedToUnenrollFromCourseElseThrow(course))
+                    .withMessage("The course does currently not allow unenrollment.");
         }
 
         @Test
@@ -216,7 +220,8 @@ class EnrollmentServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest 
             Course course = getCourseForUnenrollmentAllowedTest();
             course.setOnlineCourse(true);
             courseRepository.save(course);
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> enrollmentService.checkUserAllowedToUnenrollFromCourseElseThrow(course));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> enrollmentService.checkUserAllowedToUnenrollFromCourseElseThrow(course))
+                    .withMessage("Online courses cannot be unenrolled from.");
         }
     }
 }
