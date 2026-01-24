@@ -168,7 +168,11 @@
             <column name="created_date" type="datetime(3)">
                 <constraints nullable="false"/>
             </column>
+            <column name="created_by" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
             <column name="last_modified_date" type="datetime(3)"/>
+            <column name="last_modified_by" type="varchar(50)"/>
         </createTable>
 
         <addForeignKeyConstraint baseTableName="comment"
@@ -229,7 +233,11 @@
             <column name="created_date" type="datetime(3)">
                 <constraints nullable="false"/>
             </column>
+            <column name="created_by" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
             <column name="last_modified_date" type="datetime(3)"/>
+            <column name="last_modified_by" type="varchar(50)"/>
         </createTable>
 
         <addForeignKeyConstraint baseTableName="comment"
