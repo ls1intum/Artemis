@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.TestPropertySource;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -21,10 +20,15 @@ import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 
-@TestPropertySource(properties = { "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!enrollmentservicestudent2).*$" })
 class EnrollmentServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "enrollmentservice";
+
+    /**
+     * Only the login name "enrollmentservicestudent2" is NOT allowed to enroll for courses
+     * Configured in {@link AbstractSpringIntegrationJenkinsLocalVCTest} via TestPropertySource.
+     */
+    private static final String BLOCKED_USERNAME = TEST_PREFIX + "student2";
 
     @Autowired
     private UserUtilService userUtilService;
@@ -47,7 +51,6 @@ class EnrollmentServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest 
     }
 
     @Nested
-    // Only the login name of the student2 user is NOT allowed to enroll for courses.
     class IsUserAllowedToEnrollForCourseTest {
 
         private User student1;
@@ -75,13 +78,12 @@ class EnrollmentServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest 
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+        @WithMockUser(username = BLOCKED_USERNAME, roles = "USER")
         void testIsUserAllowedToEnrollInCourseForWrongUsernamePattern() {
-            // student2 is not allowed to enroll in courses, see the @TestPropertySource annotation above.
-            var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+            var blockedStudent = userUtilService.getUserByLogin(BLOCKED_USERNAME);
             Course course = getCourseForEnrollmentAllowedTest();
             courseRepository.save(course);
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> enrollmentService.checkUserAllowedToEnrollInCourseElseThrow(student2, course))
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> enrollmentService.checkUserAllowedToEnrollInCourseElseThrow(blockedStudent, course))
                     .withMessage("Enrollment with this username is not allowed.");
         }
 
