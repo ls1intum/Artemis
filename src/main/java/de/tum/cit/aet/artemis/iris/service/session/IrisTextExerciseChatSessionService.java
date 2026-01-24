@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
@@ -67,10 +68,12 @@ public class IrisTextExerciseChatSessionService
 
     private final UserRepository userRepository;
 
+    private final IrisCitationService irisCitationService;
+
     public IrisTextExerciseChatSessionService(IrisSettingsService irisSettingsService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
             IrisMessageService irisMessageService, Optional<TextRepositoryApi> textRepositoryApi, StudentParticipationRepository studentParticipationRepository,
             PyrisPipelineService pyrisPipelineService, PyrisJobService pyrisJobService, IrisChatWebsocketService irisChatWebsocketService,
-            AuthorizationCheckService authCheckService, UserRepository userRepository) {
+            AuthorizationCheckService authCheckService, UserRepository userRepository, IrisCitationService irisCitationService) {
         this.irisSettingsService = irisSettingsService;
         this.irisSessionRepository = irisSessionRepository;
         this.rateLimitService = rateLimitService;
@@ -82,6 +85,7 @@ public class IrisTextExerciseChatSessionService
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
+        this.irisCitationService = irisCitationService;
     }
 
     @Override
@@ -138,8 +142,9 @@ public class IrisTextExerciseChatSessionService
         if (statusUpdate.result() != null) {
             var message = session.newMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
+            var citationInfo = irisCitationService.resolveCitationInfo(statusUpdate.result());
             IrisMessage savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle);
+            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle, citationInfo.isEmpty() ? null : citationInfo);
         }
         else {
             irisChatWebsocketService.sendMessage(session, null, statusUpdate.stages(), sessionTitle);

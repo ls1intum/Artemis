@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
@@ -50,9 +51,12 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
 
     private final ObjectMapper objectMapper;
 
+    private final IrisCitationService irisCitationService;
+
     public AbstractIrisChatSessionService(IrisSessionRepository irisSessionRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
-            IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService) {
+            IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService,
+            IrisCitationService irisCitationService) {
         this.irisSessionRepository = irisSessionRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -61,6 +65,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         this.irisMessageRepository = irisMessageRepository;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.llmTokenUsageService = llmTokenUsageService;
+        this.irisCitationService = irisCitationService;
     }
 
     /**
@@ -135,11 +140,12 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         if (statusUpdate.result() != null) {
             var message = new IrisMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
+            var citationInfo = irisCitationService.resolveCitationInfo(statusUpdate.result());
             message.setAccessedMemories(statusUpdate.accessedMemories());
             message.setCreatedMemories(statusUpdate.createdMemories());
             savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
             updatedJob.getAndUpdate(j -> j.withAssistantMessageId(savedMessage.getId()));
-            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle);
+            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle, citationInfo.isEmpty() ? null : citationInfo);
         }
         else {
             savedMessage = null;

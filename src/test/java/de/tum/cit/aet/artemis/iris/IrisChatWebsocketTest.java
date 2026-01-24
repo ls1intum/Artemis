@@ -63,7 +63,7 @@ class IrisChatWebsocketTest extends AbstractIrisIntegrationTest {
 
         var expectedRateLimitInfo = irisRateLimitService.getRateLimitInformation(irisSession, user);
         verify(websocketMessagingService, times(1)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/" + irisSession.getId()),
-                eq(new IrisChatWebsocketDTO(message, expectedRateLimitInfo, List.of(), null, null, null)));
+                eq(new IrisChatWebsocketDTO(message, expectedRateLimitInfo, List.of(), null, null, null, null)));
     }
 
     private IrisTextMessageContent createMockContent() {
