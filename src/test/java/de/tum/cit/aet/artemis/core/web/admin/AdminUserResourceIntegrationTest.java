@@ -618,4 +618,54 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             assertThat(deletedUser2.isDeleted()).isTrue();
         }
     }
+
+    @Nested
+    class DefaultAdminProtection {
+
+        // The default admin username is configured in application-artemis.yml as "artemis_admin"
+        private static final String DEFAULT_ADMIN_USERNAME = "artemis_admin";
+
+        @Test
+        @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+        void updateUser_removeSuperAdminFromDefaultAdmin_badRequest() throws Exception {
+            // Get the default admin user (created by UserService.applicationReady())
+            User defaultAdmin = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(DEFAULT_ADMIN_USERNAME).orElseThrow();
+
+            // Verify the default admin has super admin authority
+            assertThat(defaultAdmin.getAuthorities()).extracting(Authority::getName).contains(Authority.SUPER_ADMIN_AUTHORITY.getName());
+
+            // Try to remove super admin rights from the default admin
+            ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(defaultAdmin.getLogin());
+            managedUserVM.setId(defaultAdmin.getId());
+            managedUserVM.setAuthorities(Set.of(Role.STUDENT.getAuthority())); // Remove super admin, keep only student
+
+            mockMvc.perform(put("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+                    .andExpect(status().isBadRequest());
+
+            // Verify the default admin still has super admin authority
+            User unchangedAdmin = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(defaultAdmin.getId());
+            assertThat(unchangedAdmin.getAuthorities()).extracting(Authority::getName).contains(Authority.SUPER_ADMIN_AUTHORITY.getName());
+        }
+
+        @Test
+        @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+        void updateUser_updateDefaultAdminKeepingSuperAdmin_success() throws Exception {
+            // Get the default admin user
+            User defaultAdmin = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(DEFAULT_ADMIN_USERNAME).orElseThrow();
+
+            // Update the default admin while keeping super admin rights
+            ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(defaultAdmin.getLogin());
+            managedUserVM.setId(defaultAdmin.getId());
+            managedUserVM.setFirstName("UpdatedDefaultAdmin");
+            managedUserVM.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY.getName(), Role.STUDENT.getAuthority()));
+
+            mockMvc.perform(put("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+                    .andExpect(status().isOk());
+
+            // Verify the update was applied and super admin authority is retained
+            User updatedAdmin = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(defaultAdmin.getId());
+            assertThat(updatedAdmin.getFirstName()).isEqualTo("UpdatedDefaultAdmin");
+            assertThat(updatedAdmin.getAuthorities()).extracting(Authority::getName).contains(Authority.SUPER_ADMIN_AUTHORITY.getName());
+        }
+    }
 }

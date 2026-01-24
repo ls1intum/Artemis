@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.web.admin;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP;
+import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -86,6 +87,9 @@ public class AdminUserResource {
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
+
+    @Value("${artemis.user-management.internal-admin.username:#{null}}")
+    private Optional<String> artemisInternalAdminUsername;
 
     private final UserService userService;
 
@@ -208,6 +212,7 @@ public class AdminUserResource {
         boolean editedUserIsAdmin = AuthorizationCheckService.isAdmin(existingUser.getAuthorities());
         boolean requestedAdminEscalation = managedUserVM.getAuthorities() != null && AuthorizationCheckService.isAdminByAuthorityName(managedUserVM.getAuthorities());
         checkSuperAdminAuthorizationToManageAdmin(editedUserIsAdmin || requestedAdminEscalation);
+        checkCannotRemoveSuperAdminFromDefaultAdmin(existingUser.getLogin(), managedUserVM.getAuthorities());
 
         final boolean shouldActivateUser = !existingUser.getActivated() && managedUserVM.isActivated();
         var updatedUser = userCreationService.updateUser(existingUser, managedUserVM);
@@ -230,6 +235,27 @@ public class AdminUserResource {
         if (involvesAdminUser && !this.authorizationCheckService.isSuperAdmin()) {
             throw new AccessForbiddenAlertException("Only super administrators are allowed to manage administrators.", "userManagement",
                     "userManagement.onlySuperAdminCanManageAdmins");
+        }
+    }
+
+    /**
+     * Checks if the operation attempts to remove super admin rights from the default admin user defined in the configuration.
+     * The default admin must always retain super admin rights to ensure system accessibility.
+     *
+     * @param login          the login of the user being modified
+     * @param newAuthorities the new authorities to be assigned to the user (may be null if not changing authorities)
+     * @throws BadRequestAlertException if attempting to remove super admin rights from the default admin
+     */
+    private void checkCannotRemoveSuperAdminFromDefaultAdmin(String login, Set<String> newAuthorities) {
+        if (artemisInternalAdminUsername.isEmpty() || newAuthorities == null) {
+            return;
+        }
+
+        boolean isDefaultAdmin = artemisInternalAdminUsername.get().equals(login);
+        boolean newAuthoritiesContainSuperAdmin = newAuthorities.contains(SUPER_ADMIN.getAuthority());
+
+        if (isDefaultAdmin && !newAuthoritiesContainSuperAdmin) {
+            throw new BadRequestAlertException("Cannot remove super admin rights from the default admin user.", "userManagement", "userManagement.cannotRemoveDefaultAdminRights");
         }
     }
 
