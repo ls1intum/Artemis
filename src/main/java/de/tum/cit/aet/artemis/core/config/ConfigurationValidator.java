@@ -10,7 +10,6 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
@@ -38,11 +37,19 @@ public class ConfigurationValidator {
 
     private final boolean isPasskeyRequiredForAdministratorFeatures;
 
+    private final String internalAdminUsername;
+
+    private final String internalAdminPassword;
+
     public ConfigurationValidator(Environment environment,
-            @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures) {
+            @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures,
+            @Value("${artemis.user-management.internal-admin.username:#{null}}") String internalAdminUsername,
+            @Value("${artemis.user-management.internal-admin.password:#{null}}") String internalAdminPassword) {
         this.environment = environment;
         this.artemisConfigHelper = new ArtemisConfigHelper();
         this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
+        this.internalAdminUsername = internalAdminUsername;
+        this.internalAdminPassword = internalAdminPassword;
     }
 
     /**
@@ -83,36 +90,30 @@ public class ConfigurationValidator {
      * Throws a {@link InvalidAdminConfigurationException} if the configuration is invalid.
      */
     private void validateAdminConfiguration() {
-        Binder binder = Binder.get(environment);
-
-        // Check if internal admin is configured
-        var username = binder.bind("artemis.internal-admin.username", String.class).orElse(null);
-        var password = binder.bind("artemis.internal-admin.password", String.class).orElse(null);
-
-        if (username != null && password != null) {
+        if (internalAdminUsername != null && internalAdminPassword != null) {
             // Validate username length
-            if (username.length() < USERNAME_MIN_LENGTH) {
+            if (internalAdminUsername.length() < USERNAME_MIN_LENGTH) {
                 String errorMessage = String.format("Internal admin username is too short. Minimum length is %d characters, but provided username has %d characters.",
-                        USERNAME_MIN_LENGTH, username.length());
+                        USERNAME_MIN_LENGTH, internalAdminUsername.length());
                 log.error(errorMessage);
-                throw new InvalidAdminConfigurationException(errorMessage, "username", "artemis.internal-admin.username", username,
+                throw new InvalidAdminConfigurationException(errorMessage, "username", "artemis.user-management.internal-admin.username", internalAdminUsername,
                         String.format("Must be between %d and %d characters", USERNAME_MIN_LENGTH, USERNAME_MAX_LENGTH));
             }
 
-            if (username.length() > USERNAME_MAX_LENGTH) {
+            if (internalAdminUsername.length() > USERNAME_MAX_LENGTH) {
                 String errorMessage = String.format("Internal admin username is too long. Maximum length is %d characters, but provided username has %d characters.",
-                        USERNAME_MAX_LENGTH, username.length());
+                        USERNAME_MAX_LENGTH, internalAdminUsername.length());
                 log.error(errorMessage);
-                throw new InvalidAdminConfigurationException(errorMessage, "username", "artemis.internal-admin.username", username,
+                throw new InvalidAdminConfigurationException(errorMessage, "username", "artemis.user-management.internal-admin.username", internalAdminUsername,
                         String.format("Must be between %d and %d characters", USERNAME_MIN_LENGTH, USERNAME_MAX_LENGTH));
             }
 
             // Validate password length
-            if (password.length() < PASSWORD_MIN_LENGTH) {
+            if (internalAdminPassword.length() < PASSWORD_MIN_LENGTH) {
                 String errorMessage = String.format("Internal admin password is too short. Minimum length is %d characters, but provided password has %d characters.",
-                        PASSWORD_MIN_LENGTH, password.length());
+                        PASSWORD_MIN_LENGTH, internalAdminPassword.length());
                 log.error(errorMessage);
-                throw new InvalidAdminConfigurationException(errorMessage, "password", "artemis.internal-admin.password", "***hidden***",
+                throw new InvalidAdminConfigurationException(errorMessage, "password", "artemis.user-management.internal-admin.password", "***hidden***",
                         String.format("Must be at least %d characters", PASSWORD_MIN_LENGTH));
             }
 
