@@ -8,13 +8,13 @@ services:
       - "8001"
       - --scheme
       - http
-    image: cr.weaviate.io/semitechnologies/weaviate:1.33.0
+    image: cr.weaviate.io/semitechnologies/weaviate:1.34.10
     expose:
       - 8001
       - 50051
     ports:
-      - "8001:8001"
-      - "50051:50051"
+      - "${WEAVIATE_REST_PORT:-8001}:8001"
+      - "${WEAVIATE_GRPC_PORT:-50051}:50051"
     volumes:
       - ${WEAVIATE_VOLUME_MOUNT:-./.docker-data/weaviate-data}:/var/lib/weaviate
     restart: on-failure:3

@@ -125,7 +125,7 @@
             "fileTooLarge": "The uploaded file exceeds the maximum file size of {{ maxSize }}",
             "malformedJson": "Couldn't parse {{ roomNumber }}, the JSON appears to be malformed",
             "missingRoomNumber": "Missing room number: please ensure none of your .json files have a blank name",
-            "parseIoException": "An internal error has occurred: {{ errorMessage }}",
+            "parseIoException": "An internal error has occurred while trying to parse the rooms",
             "missingNameOrBuilding": "Room {{ roomNumber }} doesn't specify a room name and/or building",
             "missingSeats": "Couldn't parse seats from room {{ roomNumber }}",
             "malformedRow": "Room {{ roomNumber }} has a missing or otherwise malformed row",
@@ -138,6 +138,7 @@
             "seatNotFoundFixedSelection": "The seat at row index {{ rowIndex }} and seat index {{ seatIndex }} in room {{ roomNumber }} does not exist",
             "missingDefaultLayout": "The room {{ roomNumber }} does not have a default layout",
             "missingSpecifiedLayout": "The room {{ roomNumber }} does not have a {{ layoutName }} layout",
+            "duplicateRooms": "The room {{ roomNumber }} was attempted to upload more than once",
             "notFound": "The specified room does not exist",
             "alreadyInRoom": "The student already sits in this room",
             "noFreeSeats": "There are no free seats available",
@@ -174,8 +175,9 @@
         "athenaModuleChangeAfterDueDate": "Athena module cannot be changed after the due date has passed.",
         "passkeyAuth": {
             "notAuthenticatedWithPasskey": "You are not authenticated with a passkey. Please authenticate using a passkey to access this resource.",
-            "notSuperAdminApproved": "Your passkey is not approved by a super admin. Double check in the user settings whether your passkey was super admin approved and re-login in with the respective passkey.",
-            "loginRequiredButFeatureNotEnabled": "Passkey login is required but the feature is not enabled on this Artemis instance. Please enable the passkey feature on this Artemis instance."
+            "notSuperAdminApproved": "Your passkey is not approved by a super administrator. Double check in the user settings whether your passkey was super administrator approved and re-login in with the respective passkey.",
+            "loginRequiredButFeatureNotEnabled": "Passkey login is required but the feature is not enabled on this Artemis instance. Please enable the passkey feature on this Artemis instance.",
+            "cannotRevokeInternalAdminPasskeyApproval": "Cannot revoke approval for internal admin's passkey; if you want to revoke the approval delete the passkey instead."
         },
         "CourseCompetency": {
             "wrongCourse": "The competency does not belong to the exercise's course.",
@@ -202,6 +204,20 @@
             "idMissing": "The modeling exercise must be saved before it can be converted.",
             "courseIdMissing": "The courseId is required.",
             "forbidChangeCourseId": "Exercise course id does not match the stored course id"
+        },
+        "noCourse": "An exam must belong to a course.",
+        "wrongCourseId": "The course ID does not match the course connected to the exam.",
+        "examTimes": "Invalid exam times: Please check that visible date is before start date, start date is before end date, and example solution publication date (if set) is after end date.",
+        "negativePoints": "The maximum points for an exam must be greater than 0.",
+        "correctionRoundViolation": "Invalid number of correction rounds: Test exams must have 0 correction rounds, real exams must have 1 or 2 correction rounds.",
+        "attendanceCheckViolation": "Test exams cannot have attendance check enabled.",
+        "examWorkingTimeTooHigh": "The working time is too long. The maximum is 43200 minutes (30 days). Please adjust the start and/or end of working time.",
+        "examGracePeriodTooHigh": "The grace period is too long. Please enter a value between 0 and 3600 seconds.",
+        "examMaxPointsTooHigh": "The maximum points value is too high. Please enter a value between 1 and 9999.",
+        "examNumberOfExercisesTooHigh": "The number of exercises is too high. Please enter a value between 1 and 100.",
+        "userManagement": {
+            "onlySuperAdminCanCreateSuperAdmin": "You are not a super administrator and therefore not allowed to create a super administrator account.",
+            "onlySuperAdminCanManageSuperAdmins": "You are not a super administrator and therefore not allowed to manage super administrator accounts."
         }
     }
 }

@@ -31,7 +31,8 @@ class ModuleFeatureInfoContributorTest {
         Constants.TUTORIAL_GROUP_ENABLED_PROPERTY_NAME,
         Constants.PASSKEY_ENABLED_PROPERTY_NAME,
         Constants.NEBULA_ENABLED_PROPERTY_NAME,
-        Constants.SHARING_ENABLED_PROPERTY_NAME
+        Constants.SHARING_ENABLED_PROPERTY_NAME,
+        Constants.LTI_ENABLED_PROPERTY_NAME
     );
     // @formatter:on
 
@@ -48,7 +49,8 @@ class ModuleFeatureInfoContributorTest {
         Constants.MODULE_FEATURE_TUTORIALGROUP,
         Constants.FEATURE_PASSKEY,
         Constants.MODULE_FEATURE_NEBULA,
-        Constants.MODULE_FEATURE_SHARING
+        Constants.MODULE_FEATURE_SHARING,
+        Constants.MODULE_FEATURE_LTI
     );
     // @formatter:on
 
