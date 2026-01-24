@@ -154,6 +154,15 @@ artemis:
             allowed-cidrs:
                 - ::/0
                 - 0.0.0.0/0
+    
+    # Weaviate vector database configuration
+    weaviate:
+        enabled: false                    # Set to true to enable Weaviate integration
+        host: localhost                   # Weaviate server hostname
+        port: 8080                        # Weaviate HTTP port
+        grpc-port: 50051                  # Weaviate gRPC port for better performance
+        secure: false                     # Set to true for HTTPS connections
+        scheme: http                      # http or https
 
 
 

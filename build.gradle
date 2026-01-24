@@ -222,6 +222,8 @@ dependencies {
     // OpenAI / OpenAI-compatible (dev, localhost:1234, etc.)
     implementation "org.springframework.ai:spring-ai-starter-model-openai"
 
+    // Weaviate Java client for vector database operations
+    implementation "io.weaviate:weaviate-client6:6.1.0"
 
     // we have to override those values to use the latest version
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
