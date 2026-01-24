@@ -15,6 +15,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.dto.IrisCitationMetaDTO;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -49,6 +51,19 @@ public class IrisCitationService {
             }
         }
         return List.copyOf(resolved.values());
+    }
+
+    public List<IrisCitationMetaDTO> resolveCitationInfoFromMessages(List<IrisMessage> messages) {
+        if (messages == null || messages.isEmpty()) {
+            return List.of();
+        }
+        var combined = messages.stream().filter(java.util.Objects::nonNull)
+                .flatMap(message -> message.getContent() != null ? message.getContent().stream() : java.util.stream.Stream.empty()).map(IrisMessageContent::getContentAsString)
+                .filter(content -> content != null && !content.isBlank()).toList();
+        if (combined.isEmpty()) {
+            return List.of();
+        }
+        return resolveCitationInfo(String.join("\n", combined));
     }
 
     private Map<String, IrisCitationReference> extractReferences(String text) {
