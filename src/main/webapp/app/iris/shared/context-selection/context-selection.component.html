@@ -1,8 +1,8 @@
 <div class="context-selection-container">
     @switch (currentView()) {
         @case ('main') {
-            @for (option of resolvedOptions(); track option.type) {
-                <button class="context-selection-box" [class.selected]="selected() === option.type" (click)="onOptionClick(option.type)">
+            @for (option of options(); track option.type) {
+                <button class="context-selection-box" [class.selected]="selectedType() === option.type" (click)="onOptionClick(option.type)">
                     <fa-icon [icon]="option.icon" class="context-icon" />
                     <div class="context-text">
                         @if (option.type === 'lecture' && selectedLecture()) {

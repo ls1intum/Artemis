@@ -16,22 +16,7 @@ import {
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import {
-    AfterViewInit,
-    ChangeDetectionStrategy,
-    Component,
-    DestroyRef,
-    ElementRef,
-    computed,
-    effect,
-    inject,
-    input,
-    model,
-    output,
-    signal,
-    untracked,
-    viewChild,
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
@@ -57,9 +42,7 @@ import { NgClass } from '@angular/common';
 import { facSidebar } from 'app/shared/icons/icons';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
-import { ContextSelectionComponent, ContextType } from 'app/iris/shared/context-selection/context-selection.component';
-import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ContextSelectionComponent } from 'app/iris/shared/context-selection/context-selection.component';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -157,11 +140,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private previousMessageCount = 0;
     private previousMessageIds = new Set<number>();
     public ButtonType = ButtonType;
-
-    // Context selection state
-    readonly selectedContext = model<ContextType>('course');
-    readonly selectedLecture = model<Lecture | undefined>(undefined);
-    readonly selectedExercise = model<Exercise | undefined>(undefined);
 
     readonly courseId = input<number>();
     showDeclineButton = input<boolean>(true);

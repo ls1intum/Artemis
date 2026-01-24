@@ -234,7 +234,7 @@
                 <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
                 <h3 jhiTranslate="artemisApp.iris.chat.helpOffer"></h3>
                 @if (showContextSelection()) {
-                    <jhi-context-selection [courseId]="courseId()" [(selected)]="selectedContext" [(selectedLecture)]="selectedLecture" [(selectedExercise)]="selectedExercise" />
+                    <jhi-context-selection [courseId]="courseId()" />
                 }
             </div>
         }
