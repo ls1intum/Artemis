@@ -129,8 +129,8 @@
                                 [translateValues]="{
                                     courseTitle: programmingExercise.course!.title,
                                     courseType: programmingExercise.course!.testCourse
-                                        ? ('artemisApp.programmingExercise.delete.testCourse' | artemisTranslate)
-                                        : ('artemisApp.programmingExercise.delete.realCourse' | artemisTranslate),
+                                        ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
+                                        : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
                                 }"
                                 (delete)="deleteProgrammingExercise($event)"
                                 [dialogError]="dialogError$"

@@ -14,11 +14,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { Course } from 'app/core/course/shared/entities/course.model';
 
 @Component({
     selector: 'jhi-quiz-exercise-manage-buttons',
     templateUrl: './quiz-exercise-manage-buttons.component.html',
-    imports: [RouterLink, FaIconComponent, TranslateDirective, ButtonComponent, DeleteButtonDirective],
+    imports: [RouterLink, FaIconComponent, TranslateDirective, ButtonComponent, DeleteButtonDirective, ArtemisTranslatePipe],
 })
 export class QuizExerciseManageButtonsComponent implements OnInit {
     private quizExerciseService = inject(QuizExerciseService);
@@ -55,6 +57,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     isDetailPage = input(false);
 
     quizExercise = input.required<QuizExercise>();
+    course = input.required<Course>();
 
     loadQuizExercises = output<void>();
 

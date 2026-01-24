@@ -22,8 +22,10 @@
             "updated": "Updated Exercise with identifier {{ param }}",
             "deleted": "Deleted Exercise with identifier {{ param }}",
             "delete": {
-                "question": "Are you sure you want to permanently delete the exercise <strong>{{ title }}</strong>? This action can NOT be undone!",
+                "question": "Are you sure you want to permanently delete the exercise <strong>{{ title }}</strong> of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>? This action can <strong class=\"text-danger\">NOT</strong> be undone!",
                 "typeNameToConfirm": "Please type in the name of the exercise to confirm.",
+                "testCourse": "test course",
+                "realCourse": "real course",
                 "summary": {
                     "title": "Exercise Summary",
                     "numberOfStudentParticipations": "Number of Student Participations",

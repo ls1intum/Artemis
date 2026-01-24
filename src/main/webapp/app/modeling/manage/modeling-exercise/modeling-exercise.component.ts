@@ -22,11 +22,23 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-modeling-exercise',
     templateUrl: './modeling-exercise.component.html',
-    imports: [SortDirective, FormsModule, SortByDirective, TranslateDirective, FaIconComponent, RouterLink, ExerciseCategoriesComponent, DeleteButtonDirective, ArtemisDatePipe],
+    imports: [
+        SortDirective,
+        FormsModule,
+        SortByDirective,
+        TranslateDirective,
+        FaIconComponent,
+        RouterLink,
+        ExerciseCategoriesComponent,
+        DeleteButtonDirective,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ModelingExerciseComponent extends ExerciseComponent {
     protected exerciseService = inject(ExerciseService); // needed in html code
