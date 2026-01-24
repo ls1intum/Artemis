@@ -43,7 +43,6 @@ import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.communication.dto.ExerciseCommunicationDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.FilePathType;
@@ -64,9 +63,6 @@ import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
-import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
@@ -147,17 +143,12 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final Optional<CourseCompetencyApi> courseCompetencyApi;
 
-    private final ParticipationRepository participationRepository;
-
-    private final SubmissionRepository submissionRepository;
-
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
             InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
             ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService, UserRepository userRepository, QuizBatchRepository quizBatchRepository,
             ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<SlideApi> slideApi, Optional<CourseCompetencyApi> courseCompetencyApi, ParticipationRepository participationRepository,
-            SubmissionRepository submissionRepository) {
+            Optional<SlideApi> slideApi, Optional<CourseCompetencyApi> courseCompetencyApi) {
         super(dragAndDropMappingRepository, shortAnswerMappingRepository);
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
@@ -174,8 +165,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
         this.courseCompetencyApi = courseCompetencyApi;
-        this.participationRepository = participationRepository;
-        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -1372,21 +1361,5 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             return false;
         }
         return !quizExercise.isQuizEnded();
-    }
-
-    /**
-     * Get a summary of the deletion of a quiz exercise.
-     *
-     * @param exerciseId the id of the quiz exercise
-     * @return the summary of the deletion of the quiz exercise
-     */
-    public ExerciseDeletionSummaryDTO getDeletionSummary(long exerciseId) {
-        final long numberOfStudentParticipations = participationRepository.countByExerciseId(exerciseId);
-        final long numberOfSubmissions = submissionRepository.countByExerciseId(exerciseId);
-
-        ExerciseCommunicationDeletionSummaryDTO communicationDeletionSummaryDTO = channelService.getExerciseCommunicationDeletionSummary(exerciseId);
-
-        return new ExerciseDeletionSummaryDTO(numberOfStudentParticipations, null, numberOfSubmissions, null, communicationDeletionSummaryDTO.numberOfCommunicationPosts(),
-                communicationDeletionSummaryDTO.numberOfAnswerPosts());
     }
 }

@@ -8,18 +8,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
-import de.tum.cit.aet.artemis.communication.dto.ExerciseCommunicationDeletionSummaryDTO;
-import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
-import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
-import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -36,27 +29,11 @@ public class TextExerciseService {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
-    private final ChannelService channelService;
-
-    private final ParticipationRepository participationRepository;
-
-    private final SubmissionRepository submissionRepository;
-
-    private final ResultRepository resultRepository;
-
-    private final TextBlockRepository textBlockRepository;
-
     public TextExerciseService(TextExerciseRepository textExerciseRepository, ExerciseSpecificationService exerciseSpecificationService,
-            InstanceMessageSendService instanceMessageSendService, ChannelService channelService, ParticipationRepository participationRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository) {
+            InstanceMessageSendService instanceMessageSendService) {
         this.textExerciseRepository = textExerciseRepository;
         this.exerciseSpecificationService = exerciseSpecificationService;
         this.instanceMessageSendService = instanceMessageSendService;
-        this.channelService = channelService;
-        this.participationRepository = participationRepository;
-        this.submissionRepository = submissionRepository;
-        this.resultRepository = resultRepository;
-        this.textBlockRepository = textBlockRepository;
     }
 
     /**
@@ -84,22 +61,5 @@ public class TextExerciseService {
 
     public void cancelScheduledOperations(long exerciseId) {
         instanceMessageSendService.sendTextExerciseScheduleCancel(exerciseId);
-    }
-
-    /**
-     * Get a summary for the deletion of a text exercise.
-     *
-     * @param exerciseId the id of the text exercise
-     * @return the summary of the deletion of the text exercise
-     */
-    public ExerciseDeletionSummaryDTO getDeletionSummary(long exerciseId) {
-        final long numberOfStudentParticipations = participationRepository.countByExerciseId(exerciseId);
-        final long numberOfSubmissions = submissionRepository.countByExerciseId(exerciseId);
-        final long numberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId);
-
-        ExerciseCommunicationDeletionSummaryDTO communicationDeletionSummaryDTO = channelService.getExerciseCommunicationDeletionSummary(exerciseId);
-
-        return new ExerciseDeletionSummaryDTO(numberOfStudentParticipations, null, numberOfSubmissions, numberOfAssessments,
-                communicationDeletionSummaryDTO.numberOfCommunicationPosts(), communicationDeletionSummaryDTO.numberOfAnswerPosts());
     }
 }

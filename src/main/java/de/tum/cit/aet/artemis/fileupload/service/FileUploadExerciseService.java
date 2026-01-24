@@ -8,16 +8,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.communication.dto.ExerciseCommunicationDeletionSummaryDTO;
-import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
-import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
-import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.fileupload.config.FileUploadEnabled;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -32,22 +26,9 @@ public class FileUploadExerciseService {
 
     private final FileUploadExerciseRepository fileUploadExerciseRepository;
 
-    private final ChannelService channelService;
-
-    private final ParticipationRepository participationRepository;
-
-    private final SubmissionRepository submissionRepository;
-
-    private final ResultRepository resultRepository;
-
-    public FileUploadExerciseService(ExerciseSpecificationService exerciseSpecificationService, FileUploadExerciseRepository fileUploadExerciseRepository,
-            ChannelService channelService, ParticipationRepository participationRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository) {
+    public FileUploadExerciseService(ExerciseSpecificationService exerciseSpecificationService, FileUploadExerciseRepository fileUploadExerciseRepository) {
         this.exerciseSpecificationService = exerciseSpecificationService;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
-        this.channelService = channelService;
-        this.participationRepository = participationRepository;
-        this.submissionRepository = submissionRepository;
-        this.resultRepository = resultRepository;
     }
 
     /**
@@ -71,22 +52,5 @@ public class FileUploadExerciseService {
         Specification<FileUploadExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
         Page<FileUploadExercise> exercisePage = fileUploadExerciseRepository.findAll(specification, pageable);
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
-    }
-
-    /**
-     * Get a summary for the deletion of a file upload exercise.
-     *
-     * @param exerciseId the id of the file upload exercise
-     * @return the summary of the deletion of the file upload exercise
-     */
-    public ExerciseDeletionSummaryDTO getDeletionSummary(long exerciseId) {
-        final long numberOfStudentParticipations = participationRepository.countByExerciseId(exerciseId);
-        final long numberOfSubmissions = submissionRepository.countByExerciseId(exerciseId);
-        final long numberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId);
-
-        final ExerciseCommunicationDeletionSummaryDTO exerciseCommunicationDeletionSummaryDTO = channelService.getExerciseCommunicationDeletionSummary(exerciseId);
-
-        return new ExerciseDeletionSummaryDTO(numberOfStudentParticipations, null, numberOfSubmissions, numberOfAssessments,
-                exerciseCommunicationDeletionSummaryDTO.numberOfCommunicationPosts(), exerciseCommunicationDeletionSummaryDTO.numberOfAnswerPosts());
     }
 }
