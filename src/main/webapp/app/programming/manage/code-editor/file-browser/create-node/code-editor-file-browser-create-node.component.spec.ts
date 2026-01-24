@@ -14,8 +14,9 @@ describe('CodeEditorFileBrowserCreateNodeComponent', () => {
 
         fixture = TestBed.createComponent(CodeEditorFileBrowserCreateNodeComponent);
         comp = fixture.componentInstance;
-        comp.createFileType = FileType.FILE;
-        comp.folder = '/src';
+        fixture.componentRef.setInput('createFileType', FileType.FILE);
+        fixture.componentRef.setInput('folder', '/src');
+        fixture.detectChanges();
     });
 
     it('should create', () => {
@@ -75,13 +76,15 @@ describe('CodeEditorFileBrowserCreateNodeComponent', () => {
 
     describe('inputs', () => {
         it('should accept createFileType input', () => {
-            comp.createFileType = FileType.FOLDER;
-            expect(comp.createFileType).toBe(FileType.FOLDER);
+            fixture.componentRef.setInput('createFileType', FileType.FOLDER);
+            fixture.detectChanges();
+            expect(comp.createFileType()).toBe(FileType.FOLDER);
         });
 
         it('should accept folder input', () => {
-            comp.folder = '/test/folder';
-            expect(comp.folder).toBe('/test/folder');
+            fixture.componentRef.setInput('folder', '/test/folder');
+            fixture.detectChanges();
+            expect(comp.folder()).toBe('/test/folder');
         });
     });
 });
