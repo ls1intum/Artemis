@@ -80,7 +80,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private testCaseService = inject(ProgrammingExerciseGradingService);
     private profileService = inject(ProfileService);
-    private artemisIntelligenceService = inject(ArtemisIntelligenceService);
+    protected artemisIntelligenceService = inject(ArtemisIntelligenceService);
 
     participationValue: Participation | undefined;
     programmingExercise: ProgrammingExercise;
@@ -109,6 +109,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         }
         return actions;
     });
+    protected readonly isAiLoading = this.artemisIntelligenceService.isLoading;
 
     savingInstructions = false;
     unsavedChangesValue = false;
@@ -166,12 +167,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     @Output() instructionChange = new EventEmitter<string>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
 
-    // Inline refinement state
     inlineRefinementPosition = signal<{ top: number; left: number } | null>(null);
     selectedTextForRefinement = signal('');
-    /** Selection position info for character-level targeting */
     selectionPositionInfo = signal<{ startLine: number; endLine: number; startColumn: number; endColumn: number } | null>(null);
-    /** Emits when user wants to refine selected text (includes position info for character-level targeting) */
     readonly onInlineRefinement = output<{
         instruction: string;
         startLine: number;
@@ -375,8 +373,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         if (!monacoEditor) {
             return undefined;
         }
-
-        // getText() uses getActiveEditor() which automatically returns the modified editor
         return monacoEditor.getText();
     }
 
@@ -441,7 +437,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         } | null,
     ): void {
         // Show/hide inline refinement button based on selection
-        if (selection && selection.selectedText && selection.selectedText.trim().length > 0 && this.hyperionEnabled) {
+        if (selection && selection.selectedText && selection.selectedText.trim().length > 0 && this.hyperionEnabled && !this.isAiLoading()) {
             this.inlineRefinementPosition.set(selection.screenPosition);
             this.selectedTextForRefinement.set(selection.selectedText);
             this.selectionPositionInfo.set({
@@ -479,7 +475,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     applyRefinedContent(refined: string): void {
         this.markdownEditorMonaco?.applyRefinedContent(refined);
-        // Also update our internal model so that if the user edits immediately, they edit the refined version
         this.exercise.problemStatement = refined;
         this.instructionChange.emit(refined);
         this.generateHtmlSubject.next();
@@ -491,9 +486,5 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     revertAll(): void {
         this.markdownEditorMonaco?.revertAll();
-        // Since we reverted, the problem statement should effectively be the snapshot baseline
-        // But we rely on onDiffLineChange or other mechanisms to sync back if needed.
-        // Actually, revertAll in Monaco replaces the text with the baseline.
-        // That triggers onDidChangeModelContent, which updates the 'exercise.problemStatement' via the normal binding flow (if connected).
     }
 }

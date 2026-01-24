@@ -207,7 +207,8 @@
         "ProblemStatementRefinement": {
             "problemStatementEmpty": "Die Aufgabenbeschreibung darf nicht leer sein.",
             "noRefinementInstructions": "Keine Verfeinerungsanweisungen vorhanden. Bitte füge Canvas-Kommentare hinzu, um anzugeben, wie die Aufgabenbeschreibung verfeinert werden soll.",
-            "chatClientNotConfigured": "Der KI-Chat-Client ist nicht konfiguriert. Bitte kontaktiere den Administrator.",
+            "chatClientNotConfigured": "KI-Verfeinerung ist derzeit nicht verfügbar. Bitte kontaktiere den Administrator.",
+            "chatClientNotConfigured_detail": "Der KI-Chat-Client ist nicht konfiguriert.",
             "problemStatementTooLong": "Die Aufgabenbeschreibung ist zu lang. Bitte kürze den Inhalt und versuche es erneut.",
             "problemStatementRefinementNull": "Die KI hat eine leere Antwort zurückgegeben. Bitte versuche es erneut.",
             "refinedProblemStatementTooLong": "Die verfeinerte Aufgabenbeschreibung ist zu lang. Bitte passe die Verfeinerungsanweisungen an und versuche es erneut.",

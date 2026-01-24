@@ -273,6 +273,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     protected isInlineRefining = signal(false);
+    protected readonly isAiLoading = this.artemisIntelligenceService.isLoading;
     private currentRefinementSubscription: Subscription | undefined;
 
     showDiff = signal(false);

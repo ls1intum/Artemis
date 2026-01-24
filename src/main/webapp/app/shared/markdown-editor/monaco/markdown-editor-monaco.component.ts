@@ -276,12 +276,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     /** Editor mode: 'normal' or 'diff' */
     mode = input<MonacoEditorMode>('normal');
 
-    /** Original markdown content for diff mode */
-    originalMarkdown = input<string | undefined>();
-
-    /** Modified markdown content for diff mode */
-    modifiedMarkdown = input<string | undefined>();
-
     renderSideBySide = input<boolean>(true);
 
     closeEditor = output<void>();
@@ -804,10 +798,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     /**
      * Applies the refined content to the editor in diff mode.
+     * Alias for applyDiffContent for semantic clarity in refinement workflows.
      * @param refined The new content to show in the modified editor.
      */
     applyRefinedContent(refined: string): void {
-        this.monacoEditor?.applyDiffContent(refined);
+        this.applyDiffContent(refined);
     }
 
     /**

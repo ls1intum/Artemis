@@ -13,8 +13,6 @@
         <jhi-markdown-editor-monaco
             class="overflow-hidden flex-grow-1"
             [mode]="mode()"
-            [originalMarkdown]="originalContent()"
-            [modifiedMarkdown]="modifiedContent()"
             [domainActions]="domainActions"
             [artemisIntelligenceActions]="artemisIntelligenceActions()"
             [initialEditorHeight]="initialEditorHeight"
@@ -25,8 +23,8 @@
             [showDefaultPreview]="false"
             [showPreviewButton]="showPreview"
             [showEditButton]="showPreview"
-            [readOnly]="isRefining()"
-            [isAiLoading]="isRefining()"
+            [readOnly]="isRefining() || isAiLoading()"
+            [isAiLoading]="isAiLoading() || isRefining()"
             [renderSideBySide]="renderSideBySide()"
             [consistencyIssues]="consistencyIssues()"
             (markdownChange)="updateProblemStatement($event)"
@@ -61,7 +59,7 @@
                 [endLine]="selectionPositionInfo()!.endLine"
                 [startColumn]="selectionPositionInfo()!.startColumn"
                 [endColumn]="selectionPositionInfo()!.endColumn"
-                [isLoading]="isRefining()"
+                [isLoading]="isRefining() || isAiLoading()"
                 (refine)="onInlineRefine($event)"
                 (closeRefinement)="hideInlineRefinementButton()"
             />

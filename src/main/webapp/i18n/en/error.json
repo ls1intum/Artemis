@@ -207,7 +207,8 @@
         "ProblemStatementRefinement": {
             "problemStatementEmpty": "The problem statement cannot be empty.",
             "noRefinementInstructions": "No refinement instructions were provided. Please add canvas-style comments to specify how the problem statement should be refined.",
-            "chatClientNotConfigured": "AI chat client is not configured. Please contact your administrator.",
+            "chatClientNotConfigured": "AI refinement is currently unavailable. Please contact your administrator.",
+            "chatClientNotConfigured_detail": "AI chat client is not configured.",
             "problemStatementTooLong": "The problem statement is too long. Please reduce the content and try again.",
             "problemStatementRefinementNull": "The AI returned an empty response. Please try again.",
             "refinedProblemStatementTooLong": "The refined problem statement is too long. Please adjust the refinement instructions and try again.",
