@@ -1,5 +1,4 @@
-import { TestBed } from '@angular/core/testing';
-import { SimpleChange } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CodeEditorContainerComponent, CollapsableCodeEditorElement } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import {
     CommitState,
@@ -28,6 +27,7 @@ class MockFileService {
 
 describe('CodeEditorContainerComponent', () => {
     let component: CodeEditorContainerComponent;
+    let fixture: ComponentFixture<CodeEditorContainerComponent>;
     let alertService: AlertService;
     let fileService: MockFileService;
 
@@ -46,7 +46,7 @@ describe('CodeEditorContainerComponent', () => {
             })
             .compileComponents();
 
-        const fixture = TestBed.createComponent(CodeEditorContainerComponent);
+        fixture = TestBed.createComponent(CodeEditorContainerComponent);
         component = fixture.componentInstance;
         alertService = TestBed.inject(AlertService);
         fileService = TestBed.inject(CodeEditorFileService) as unknown as MockFileService;
@@ -71,13 +71,12 @@ describe('CodeEditorContainerComponent', () => {
     });
 
     it('should update file badges when feedback suggestions change', () => {
-        component.feedbackSuggestions = [
+        fixture.componentRef.setInput('feedbackSuggestions', [
             { reference: 'file:src/main/App.java_line:3' } as Feedback,
             { reference: 'file:src/main/App.java_line:10' } as Feedback,
             { reference: 'file:src/Other.java_line:5' } as Feedback,
-        ];
-
-        component.ngOnChanges({ feedbackSuggestions: new SimpleChange([], component.feedbackSuggestions, true) });
+        ]);
+        fixture.detectChanges();
 
         expect(Object.keys(component.fileBadges)).toEqual(expect.arrayContaining(['src/main/App.java', 'src/Other.java']));
         expect(component.fileBadges['src/main/App.java'][0].type).toBe(FileBadgeType.FEEDBACK_SUGGESTION);
@@ -205,13 +204,14 @@ describe('CodeEditorContainerComponent', () => {
 
     it('should expose feedbacks for submission when inline feedback is enabled', () => {
         const feedback = { id: 1 } as Feedback;
-        component.participation = {
+        fixture.componentRef.setInput('participation', {
             submissions: [{ results: [{ feedbacks: [feedback] } as Result] } as Submission],
-        } as Participation;
+        } as Participation);
 
         expect(component.feedbackForSubmission()).toEqual([feedback]);
 
-        component.showInlineFeedback = false;
+        fixture.componentRef.setInput('showInlineFeedback', false);
+        fixture.detectChanges();
         expect(component.feedbackForSubmission()).toEqual([]);
     });
 
