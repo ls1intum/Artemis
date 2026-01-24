@@ -602,14 +602,14 @@ public class CourseStudentDataExportService {
                     double exerciseScore = 0.0;
 
                     if (score != null) {
-                        exerciseScore = score;
+                        exerciseScore = roundScoreSpecifiedByCourseSettings(score, course);
                         exercisePoints = roundScoreSpecifiedByCourseSettings(score * 0.01 * exercise.getMaxPoints(), course);
                         // Add to total - exercises list is already filtered to exclude NOT_INCLUDED
                         totalPoints += exercisePoints;
                     }
 
-                    rowParts.add(String.valueOf(exercisePoints));
-                    rowParts.add(String.valueOf(exerciseScore));
+                    rowParts.add(formatValue(exercisePoints, course));
+                    rowParts.add(formatValue(exerciseScore, course));
 
                     // Collect for statistics
                     pointsByExercise.computeIfAbsent(exercise.getId(), _ -> new ArrayList<>()).add(exercisePoints);
@@ -618,14 +618,14 @@ public class CourseStudentDataExportService {
                 // Presentation score
                 if (hasPresentationPoints) {
                     double presentationScore = presentationScoresByStudent.getOrDefault(studentId, 0.0);
-                    rowParts.add(String.valueOf(presentationScore));
+                    rowParts.add(formatValue(presentationScore, course));
                 }
 
                 double overallScore = maxPoints > 0 ? roundScoreSpecifiedByCourseSettings(totalPoints / maxPoints * 100.0, course) : 0.0;
 
-                rowParts.add(String.valueOf(totalPoints));
-                rowParts.add(String.valueOf(overallScore));
-                rowParts.add(String.valueOf(maxPoints));
+                rowParts.add(formatValue(totalPoints, course));
+                rowParts.add(formatValue(overallScore, course));
+                rowParts.add(formatValue(maxPoints, course));
 
                 // Collect for statistics
                 allOverallPoints.add(totalPoints);
@@ -660,15 +660,15 @@ public class CourseStudentDataExportService {
 
             // Average row
             lines.add(String.join(",", createCourseStatisticsRow("Average", exercises, pointsByExercise, maxPointsByExercise, StatisticsUtil::calculateMean, hasPresentationPoints,
-                    allOverallPoints, allOverallScores, suffixCells)));
+                    allOverallPoints, allOverallScores, suffixCells, course)));
 
             // Median row
             lines.add(String.join(",", createCourseStatisticsRow("Median", exercises, pointsByExercise, maxPointsByExercise, StatisticsUtil::calculateMedian, hasPresentationPoints,
-                    allOverallPoints, allOverallScores, suffixCells)));
+                    allOverallPoints, allOverallScores, suffixCells, course)));
 
             // Standard deviation row
             lines.add(String.join(",", createCourseStatisticsRow("Std Dev", exercises, pointsByExercise, maxPointsByExercise, StatisticsUtil::calculateStandardDeviation,
-                    hasPresentationPoints, allOverallPoints, allOverallScores, suffixCells)));
+                    hasPresentationPoints, allOverallPoints, allOverallScores, suffixCells, course)));
 
             // Participant count row
             lines.add("Participants," + studentIds.size());
@@ -696,9 +696,10 @@ public class CourseStudentDataExportService {
      * @param examScores the exam scores data to export
      * @param outputDir  the directory to write to
      * @param errors     list to collect errors
+     * @param course     the course for rounding precision
      * @return list of paths to exported files (exam scores and grade distribution)
      */
-    public List<Path> exportExamScoresFromData(ExamScoresDTO examScores, Path outputDir, List<String> errors) {
+    public List<Path> exportExamScoresFromData(ExamScoresDTO examScores, Path outputDir, List<String> errors, Course course) {
         List<Path> exportedFiles = new ArrayList<>();
 
         if (examScores == null || examScores.studentResults().isEmpty()) {
@@ -782,8 +783,8 @@ public class CourseStudentDataExportService {
 
                     if (exerciseResult != null) {
                         rowParts.add(escapeCSV(exerciseResult.title()));
-                        rowParts.add(exerciseResult.achievedPoints() != null ? String.valueOf(exerciseResult.achievedPoints()) : "0.0");
-                        rowParts.add(exerciseResult.achievedScore() != null ? String.valueOf(exerciseResult.achievedScore()) : "0.0");
+                        rowParts.add(exerciseResult.achievedPoints() != null ? formatValue(exerciseResult.achievedPoints(), course) : formatValue(0.0, course));
+                        rowParts.add(exerciseResult.achievedScore() != null ? formatValue(exerciseResult.achievedScore(), course) : formatValue(0.0, course));
 
                         // Collect for statistics
                         if (exerciseResult.achievedPoints() != null) {
@@ -792,8 +793,8 @@ public class CourseStudentDataExportService {
                     }
                     else {
                         rowParts.add("");
-                        rowParts.add("0.0");
-                        rowParts.add("0.0");
+                        rowParts.add(formatValue(0.0, course));
+                        rowParts.add(formatValue(0.0, course));
                         pointsByExerciseGroup.computeIfAbsent(exerciseGroup.id(), _ -> new ArrayList<>()).add(0.0);
                     }
                 }
@@ -801,8 +802,8 @@ public class CourseStudentDataExportService {
                 double overallPoints = studentResult.overallPointsAchieved() != null ? studentResult.overallPointsAchieved() : 0.0;
                 double overallScore = studentResult.overallScoreAchieved() != null ? studentResult.overallScoreAchieved() : 0.0;
 
-                rowParts.add(String.valueOf(overallPoints));
-                rowParts.add(String.valueOf(overallScore));
+                rowParts.add(formatValue(overallPoints, course));
+                rowParts.add(formatValue(overallScore, course));
                 rowParts.add(points);
 
                 // Collect for statistics
@@ -822,15 +823,15 @@ public class CourseStudentDataExportService {
                 }
 
                 if (hasSecondCorrection) {
-                    rowParts.add(studentResult.overallPointsAchievedInFirstCorrection() != null ? String.valueOf(studentResult.overallPointsAchievedInFirstCorrection()) : "");
+                    rowParts.add(studentResult.overallPointsAchievedInFirstCorrection() != null ? formatValue(studentResult.overallPointsAchievedInFirstCorrection(), course) : "");
                     rowParts.add(studentResult.overallGradeInFirstCorrection() != null ? escapeCSV(studentResult.overallGradeInFirstCorrection()) : "");
                 }
 
                 if (hasBonus) {
                     if (studentResult.gradeWithBonus() != null) {
-                        rowParts.add(
-                                studentResult.gradeWithBonus().studentPointsOfBonusSource() != null ? String.valueOf(studentResult.gradeWithBonus().studentPointsOfBonusSource())
-                                        : "");
+                        rowParts.add(studentResult.gradeWithBonus().studentPointsOfBonusSource() != null
+                                ? formatValue(studentResult.gradeWithBonus().studentPointsOfBonusSource(), course)
+                                : "");
                         rowParts.add(studentResult.gradeWithBonus().bonusGrade() != null ? escapeCSV(studentResult.gradeWithBonus().bonusGrade()) : "");
                         rowParts.add(studentResult.gradeWithBonus().finalGrade() != null ? escapeCSV(studentResult.gradeWithBonus().finalGrade()) : "");
                     }
@@ -867,29 +868,30 @@ public class CourseStudentDataExportService {
                     .collect(Collectors.toMap(ExamScoresDTO.ExerciseGroup::id, eg -> eg.maxPoints() != null ? eg.maxPoints() : 0.0));
 
             // Max row
-            lines.add(String.join(",", createExamMaxRow(examScores, points)));
+            lines.add(String.join(",", createExamMaxRow(examScores, points, course)));
 
             // Average (All) row
             lines.add(String.join(",", createStatisticsRow("Average (All)", exerciseGroupIds, pointsByExerciseGroup, maxPointsByGroup, StatisticsUtil::calculateMean,
-                    allOverallPoints, maxPointsDouble)));
+                    allOverallPoints, maxPointsDouble, course)));
 
             // Average (Submitted) row
             if (!submittedOverallPoints.isEmpty()) {
-                lines.add(String.join(",", createSimpleOverallStatRow("Average (Submitted)", examScores.exerciseGroups().size() * 3, submittedOverallPoints, maxPointsDouble)));
+                lines.add(String.join(",",
+                        createSimpleOverallStatRow("Average (Submitted)", examScores.exerciseGroups().size() * 3, submittedOverallPoints, maxPointsDouble, course)));
             }
 
             // Average (Passed) row
             if (!passedOverallPoints.isEmpty()) {
-                lines.add(String.join(",", createSimpleOverallStatRow("Average (Passed)", examScores.exerciseGroups().size() * 3, passedOverallPoints, maxPointsDouble)));
+                lines.add(String.join(",", createSimpleOverallStatRow("Average (Passed)", examScores.exerciseGroups().size() * 3, passedOverallPoints, maxPointsDouble, course)));
             }
 
             // Median row
-            lines.add(String.join(",",
-                    createStatisticsRow("Median", exerciseGroupIds, pointsByExerciseGroup, maxPointsByGroup, StatisticsUtil::calculateMedian, allOverallPoints, maxPointsDouble)));
+            lines.add(String.join(",", createStatisticsRow("Median", exerciseGroupIds, pointsByExerciseGroup, maxPointsByGroup, StatisticsUtil::calculateMedian, allOverallPoints,
+                    maxPointsDouble, course)));
 
             // Standard deviation row
             lines.add(String.join(",", createStatisticsRow("Std Dev", exerciseGroupIds, pointsByExerciseGroup, maxPointsByGroup, StatisticsUtil::calculateStandardDeviation,
-                    allOverallPoints, maxPointsDouble)));
+                    allOverallPoints, maxPointsDouble, course)));
 
             String sanitizedExamTitle = examScores.title() != null ? examScores.title().replaceAll("[^a-zA-Z0-9-_]", "_") : "unnamed";
             Path outputFile = outputDir.resolve("exam-scores-" + examId + "-" + sanitizedExamTitle + ".csv");
@@ -912,19 +914,20 @@ public class CourseStudentDataExportService {
      *
      * @param examScores the exam scores data
      * @param points     the max points string
+     * @param course     the course for rounding precision
      * @return list of strings representing the max row
      */
-    private static List<String> createExamMaxRow(ExamScoresDTO examScores, String points) {
+    private List<String> createExamMaxRow(ExamScoresDTO examScores, String points, Course course) {
         List<String> maxRow = new ArrayList<>();
         maxRow.add("Max");
         maxRow.addAll(Collections.nCopies(4, ""));
         for (ExamScoresDTO.ExerciseGroup exerciseGroup : examScores.exerciseGroups()) {
             maxRow.add("");
-            maxRow.add(exerciseGroup.maxPoints() != null ? String.valueOf(exerciseGroup.maxPoints()) : "");
-            maxRow.add("100.0");
+            maxRow.add(exerciseGroup.maxPoints() != null ? formatValue(exerciseGroup.maxPoints(), course) : "");
+            maxRow.add(formatValue(100.0, course));
         }
         maxRow.add(points);
-        maxRow.add("100.0");
+        maxRow.add(formatValue(100.0, course));
         maxRow.add("");
         return maxRow;
     }
@@ -936,17 +939,18 @@ public class CourseStudentDataExportService {
      * @param exerciseGroupEmptyCells number of empty cells for exercise group columns (3 per group)
      * @param overallPoints           list of overall points for the subset
      * @param maxPoints               max points for score calculation
+     * @param course                  the course for rounding precision
      * @return the formatted row
      */
-    private static List<String> createSimpleOverallStatRow(String label, int exerciseGroupEmptyCells, List<Double> overallPoints, Double maxPoints) {
+    private List<String> createSimpleOverallStatRow(String label, int exerciseGroupEmptyCells, List<Double> overallPoints, Double maxPoints, Course course) {
         List<String> row = new ArrayList<>();
         row.add(label);
         row.addAll(Collections.nCopies(4, ""));
         row.addAll(Collections.nCopies(exerciseGroupEmptyCells, ""));
         double avgPoints = StatisticsUtil.calculateMean(overallPoints);
-        row.add(String.format("%.2f", avgPoints));
+        row.add(formatValue(avgPoints, course));
         if (maxPoints != null && maxPoints > 0) {
-            row.add(String.format("%.2f", avgPoints / maxPoints * 100.0));
+            row.add(formatValue(avgPoints / maxPoints * 100.0, course));
         }
         row.add("");
         return row;
@@ -1164,6 +1168,17 @@ public class CourseStudentDataExportService {
         return value;
     }
 
+    /**
+     * Formats a double value as a string with the number of decimal places specified by the course's accuracy setting.
+     *
+     * @param value  the value to format
+     * @param course the course that specifies the accuracy
+     * @return the formatted value as a string
+     */
+    private String formatValue(double value, Course course) {
+        return String.valueOf(roundScoreSpecifiedByCourseSettings(value, course));
+    }
+
     private Path writeLinesToFile(List<String> lines, Path outputFile) throws IOException {
         try (BufferedWriter writer = Files.newBufferedWriter(outputFile, StandardCharsets.UTF_8)) {
             for (String line : lines) {
@@ -1186,10 +1201,11 @@ public class CourseStudentDataExportService {
      * @param statisticFunction function to calculate the statistic (mean, median, stddev)
      * @param overallPoints     list of overall points for the summary columns
      * @param maxPoints         max points for overall score calculation (null to skip)
+     * @param course            the course for rounding precision
      * @return the formatted statistics row
      */
     private List<String> createStatisticsRow(String label, List<Long> groups, Map<Long, List<Double>> pointsByGroup, Map<Long, Double> maxPointsByGroup,
-            Function<List<Double>, Double> statisticFunction, List<Double> overallPoints, Double maxPoints) {
+            Function<List<Double>, Double> statisticFunction, List<Double> overallPoints, Double maxPoints, Course course) {
         List<String> row = new ArrayList<>();
         row.add(label);
         row.addAll(Collections.nCopies(4, ""));
@@ -1198,17 +1214,17 @@ public class CourseStudentDataExportService {
             List<Double> groupPoints = pointsByGroup.getOrDefault(groupId, List.of());
             double statValue = statisticFunction.apply(groupPoints);
             row.add(""); // Empty for exercise name column in exam export
-            row.add(String.format("%.2f", statValue));
+            row.add(formatValue(statValue, course));
             Double groupMax = maxPointsByGroup.get(groupId);
             double scoreValue = groupMax != null && groupMax > 0 ? statValue / groupMax * 100.0 : 0.0;
-            row.add(String.format("%.2f", scoreValue));
+            row.add(formatValue(scoreValue, course));
         }
 
         // Overall statistics
         double overallStat = statisticFunction.apply(overallPoints);
-        row.add(String.format("%.2f", overallStat));
+        row.add(formatValue(overallStat, course));
         if (maxPoints != null && maxPoints > 0) {
-            row.add(String.format("%.2f", overallStat / maxPoints * 100.0));
+            row.add(formatValue(overallStat / maxPoints * 100.0, course));
         }
         row.addAll(Collections.nCopies(1, ""));
 
@@ -1319,15 +1335,15 @@ public class CourseStudentDataExportService {
         maxRow.add("Max");
         maxRow.addAll(Collections.nCopies(3, ""));
         for (Exercise exercise : exercises) {
-            maxRow.add(String.valueOf(exercise.getMaxPoints()));
-            maxRow.add("100.0");
+            maxRow.add(formatValue(exercise.getMaxPoints(), course));
+            maxRow.add(formatValue(100.0, course));
         }
         if (hasPresentationPoints) {
-            maxRow.add(String.valueOf(course.getPresentationScore()));
+            maxRow.add(formatValue(course.getPresentationScore(), course));
         }
-        maxRow.add(String.valueOf(maxPoints));
-        maxRow.add("100.0");
-        maxRow.add(String.valueOf(maxPoints));
+        maxRow.add(formatValue(maxPoints, course));
+        maxRow.add(formatValue(100.0, course));
+        maxRow.add(formatValue(maxPoints, course));
         if (hasGradingScale) {
             maxRow.addAll(Collections.nCopies(2, ""));
         }
@@ -1346,10 +1362,12 @@ public class CourseStudentDataExportService {
      * @param allOverallPoints      list of all overall points
      * @param allOverallScores      list of all overall scores
      * @param suffixEmptyCells      number of empty cells to append
+     * @param course                the course for rounding precision
      * @return the formatted statistics row
      */
     private List<String> createCourseStatisticsRow(String label, List<Exercise> exercises, Map<Long, List<Double>> pointsByExercise, Map<Long, Double> maxPointsByExercise,
-            Function<List<Double>, Double> statisticFunction, boolean hasPresentationPoints, List<Double> allOverallPoints, List<Double> allOverallScores, int suffixEmptyCells) {
+            Function<List<Double>, Double> statisticFunction, boolean hasPresentationPoints, List<Double> allOverallPoints, List<Double> allOverallScores, int suffixEmptyCells,
+            Course course) {
         List<String> row = new ArrayList<>();
         row.add(label);
         row.addAll(Collections.nCopies(3, ""));
@@ -1359,16 +1377,16 @@ public class CourseStudentDataExportService {
             double statPoints = statisticFunction.apply(exercisePointsList);
             Double exerciseMax = maxPointsByExercise.get(exercise.getId());
             double statScore = exerciseMax != null && exerciseMax > 0 ? statPoints / exerciseMax * 100.0 : 0.0;
-            row.add(String.format("%.2f", statPoints));
-            row.add(String.format("%.2f", statScore));
+            row.add(formatValue(statPoints, course));
+            row.add(formatValue(statScore, course));
         }
 
         if (hasPresentationPoints) {
             row.add("");
         }
 
-        row.add(String.format("%.2f", statisticFunction.apply(allOverallPoints)));
-        row.add(String.format("%.2f", statisticFunction.apply(allOverallScores)));
+        row.add(formatValue(statisticFunction.apply(allOverallPoints), course));
+        row.add(formatValue(statisticFunction.apply(allOverallScores), course));
         row.add("");
 
         row.addAll(Collections.nCopies(suffixEmptyCells, ""));
