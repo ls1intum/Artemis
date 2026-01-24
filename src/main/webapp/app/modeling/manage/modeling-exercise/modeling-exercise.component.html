@@ -125,6 +125,12 @@
                                         deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                                         entitySummaryTitle="artemisApp.exercise.delete.summary.title"
                                         [fetchEntitySummary]="fetchExerciseDeletionSummary(modelingExercise.id!)"
+                                        [translateValues]="{
+                                            courseTitle: course.title,
+                                            courseType: course.testCourse
+                                                ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
+                                                : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
+                                        }"
                                         (delete)="deleteModelingExercise(modelingExercise.id!)"
                                         [dialogError]="dialogError$"
                                     >

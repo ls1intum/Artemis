@@ -130,6 +130,10 @@
             deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
             entitySummaryTitle="artemisApp.exercise.delete.summary.title"
             [fetchEntitySummary]="fetchExerciseDeletionSummary(exercise.id!)"
+            [translateValues]="{
+                courseTitle: course.title,
+                courseType: course.testCourse ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate) : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
+            }"
             (delete)="deleteExercise()"
             [dialogError]="dialogError$"
         >
@@ -145,9 +149,7 @@
             deleteQuestion="artemisApp.programmingExercise.delete.question"
             [translateValues]="{
                 courseTitle: course.title,
-                courseType: course.testCourse
-                    ? ('artemisApp.programmingExercise.delete.testCourse' | artemisTranslate)
-                    : ('artemisApp.programmingExercise.delete.realCourse' | artemisTranslate),
+                courseType: course.testCourse ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate) : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
             }"
             (delete)="deleteProgrammingExercise($event)"
             [dialogError]="dialogError$"

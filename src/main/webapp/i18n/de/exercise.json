@@ -22,8 +22,10 @@
             "updated": "Übung aktualisiert mit ID {{ param }}",
             "deleted": "Übung gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll die Übung <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "question": "Soll die Übung <strong>{{ title }}</strong> des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann <strong class=\"text-danger\">NICHT</strong> rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen der Übung zur Bestätigung ein.",
+                "testCourse": "Testkurses",
+                "realCourse": "echten Kurses",
                 "summary": {
                     "title": "Aufaben-Zusammenfassung",
                     "numberOfStudentParticipations": "Anzahl der Studierendenteilnahmen",

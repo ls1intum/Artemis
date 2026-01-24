@@ -12,11 +12,13 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { Course } from 'app/core/course/shared/entities/course.model';
 
 @Component({
     selector: 'jhi-text-exercise-row-buttons',
     templateUrl: './text-exercise-row-buttons.component.html',
-    imports: [RouterLink, FaIconComponent, TranslateDirective, DeleteButtonDirective],
+    imports: [RouterLink, FaIconComponent, TranslateDirective, DeleteButtonDirective, ArtemisTranslatePipe],
 })
 export class TextExerciseRowButtonsComponent {
     private eventManager = inject(EventManager);
@@ -24,6 +26,7 @@ export class TextExerciseRowButtonsComponent {
     private exerciseService = inject(ExerciseService);
 
     courseId = input.required<number>();
+    course = input.required<Course>();
     exercise = input.required<TextExercise>();
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
