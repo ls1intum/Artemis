@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -47,8 +48,6 @@ public class Feedback extends DomainObject {
     public static final int MAX_REFERENCE_LENGTH = 2000;
 
     public static final String STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = "SCAFeedbackIdentifier:";
-
-    public static final String BUILD_FAILED = "Build for directory failed.";
 
     public static final String SUBMISSION_POLICY_FEEDBACK_IDENTIFIER = "SubPolFeedbackIdentifier:";
 
@@ -402,13 +401,14 @@ public class Feedback extends DomainObject {
     }
 
     /**
-     * Checks whether the feedback contains any build failed messages
+     * Checks whether the feedback contains any build or make failed messages
      *
      * @return true if the feedback contains a build failed message else false
      */
     @JsonIgnore
     public boolean isBuildFailedFeedback() {
-        return this.detailText != null && this.detailText.contains(BUILD_FAILED) && this.type == FeedbackType.AUTOMATIC;
+        return this.detailText != null && Pattern.compile("make .* failed|build .* failed", Pattern.CASE_INSENSITIVE).matcher(this.detailText).find()
+                && this.type == FeedbackType.AUTOMATIC;
     }
 
     /**
