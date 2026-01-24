@@ -178,12 +178,20 @@ public class UserService {
             throw new IllegalArgumentException("Internal admin username must not be null or blank");
         }
 
+        if (internalAdminUsername.length() < USERNAME_MIN_LENGTH) {
+            throw new IllegalArgumentException("Internal admin username must be at least " + USERNAME_MIN_LENGTH + " characters long");
+        }
+
+        if (internalAdminUsername.length() > USERNAME_MAX_LENGTH) {
+            throw new IllegalArgumentException("Internal admin username must be at most " + USERNAME_MAX_LENGTH + " characters long");
+        }
+
         if (internalAdminPassword == null || internalAdminPassword.isBlank()) {
             throw new IllegalArgumentException("Internal admin password must not be null or blank");
         }
 
-        if (internalAdminPassword.length() < 8) {
-            throw new IllegalArgumentException("Internal admin password must be at least 8 characters long");
+        if (internalAdminPassword.length() < PASSWORD_MIN_LENGTH) {
+            throw new IllegalArgumentException("Internal admin password must be at least " + PASSWORD_MIN_LENGTH + " characters long");
         }
 
         Optional<User> existingInternalAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(internalAdminUsername);
