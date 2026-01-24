@@ -25,6 +25,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { EntityTitleService } from 'app/core/navbar/entity-title.service';
+import { ExerciseDeletionSummaryDTO } from 'app/exercise/shared/entities/exercise-deletion-summary.model';
+import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 
 describe('Exercise Service', () => {
     let service: ExerciseService;
@@ -520,6 +522,94 @@ describe('Exercise Service', () => {
         httpMock.expectOne({
             url: `api/exercise/exercises/${exerciseId}/toggle-second-correction`,
             method: 'PUT',
+        });
+    });
+
+    describe('getDeletionSummary', () => {
+        const exerciseId = 128;
+
+        it('should fetch and transform deletion summary with all fields', () => {
+            const dto: ExerciseDeletionSummaryDTO = {
+                numberOfStudentParticipations: 50,
+                numberOfBuilds: 100,
+                numberOfAssessments: 25,
+                numberOfCommunicationPosts: 10,
+                numberOfAnswerPosts: 5,
+            };
+
+            let result: EntitySummary | undefined;
+            service.getDeletionSummary(exerciseId).subscribe((summary) => (result = summary));
+
+            const testRequest = httpMock.expectOne({
+                url: `api/exercise/exercises/${exerciseId}/deletion-summary`,
+                method: 'GET',
+            });
+
+            testRequest.flush(dto);
+
+            expect(result).toEqual({
+                'artemisApp.exercise.delete.summary.numberOfStudentParticipations': 50,
+                'artemisApp.exercise.delete.summary.numberOfBuilds': 100,
+                'artemisApp.exercise.delete.summary.numberOfAssessments': 25,
+                'artemisApp.exercise.delete.summary.numberOfCommunicationPosts': 10,
+                'artemisApp.exercise.delete.summary.numberOfAnswerPosts': 5,
+            });
+        });
+
+        it('should filter out undefined values from deletion summary', () => {
+            const dto: ExerciseDeletionSummaryDTO = {
+                numberOfStudentParticipations: 30,
+                numberOfBuilds: undefined,
+                numberOfAssessments: undefined,
+                numberOfCommunicationPosts: 8,
+                numberOfAnswerPosts: 3,
+            };
+
+            let result: EntitySummary | undefined;
+            service.getDeletionSummary(exerciseId).subscribe((summary) => (result = summary));
+
+            const testRequest = httpMock.expectOne({
+                url: `api/exercise/exercises/${exerciseId}/deletion-summary`,
+                method: 'GET',
+            });
+
+            testRequest.flush(dto);
+
+            expect(result).toEqual({
+                'artemisApp.exercise.delete.summary.numberOfStudentParticipations': 30,
+                'artemisApp.exercise.delete.summary.numberOfCommunicationPosts': 8,
+                'artemisApp.exercise.delete.summary.numberOfAnswerPosts': 3,
+            });
+            expect(result).not.toHaveProperty('artemisApp.exercise.delete.summary.numberOfBuilds');
+            expect(result).not.toHaveProperty('artemisApp.exercise.delete.summary.numberOfAssessments');
+        });
+
+        it('should handle deletion summary with zero values', () => {
+            const dto: ExerciseDeletionSummaryDTO = {
+                numberOfStudentParticipations: 0,
+                numberOfBuilds: 0,
+                numberOfAssessments: 0,
+                numberOfCommunicationPosts: 0,
+                numberOfAnswerPosts: 0,
+            };
+
+            let result: EntitySummary | undefined;
+            service.getDeletionSummary(exerciseId).subscribe((summary) => (result = summary));
+
+            const testRequest = httpMock.expectOne({
+                url: `api/exercise/exercises/${exerciseId}/deletion-summary`,
+                method: 'GET',
+            });
+
+            testRequest.flush(dto);
+
+            expect(result).toEqual({
+                'artemisApp.exercise.delete.summary.numberOfStudentParticipations': 0,
+                'artemisApp.exercise.delete.summary.numberOfBuilds': 0,
+                'artemisApp.exercise.delete.summary.numberOfAssessments': 0,
+                'artemisApp.exercise.delete.summary.numberOfCommunicationPosts': 0,
+                'artemisApp.exercise.delete.summary.numberOfAnswerPosts': 0,
+            });
         });
     });
 });

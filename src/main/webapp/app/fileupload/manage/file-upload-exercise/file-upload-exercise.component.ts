@@ -117,7 +117,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
     }
 
     fetchExerciseDeletionSummary(exerciseId: number): Observable<EntitySummary> {
-        return this.fileUploadExerciseService.getDeletionSummary(exerciseId);
+        return this.exerciseService.getDeletionSummary(exerciseId);
     }
 
     /**

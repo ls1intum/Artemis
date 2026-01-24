@@ -7,7 +7,6 @@ import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseServicable, ExerciseService } from 'app/exercise/services/exercise.service';
 import { downloadStream } from 'app/shared/util/download.util';
 import { toUpdateModelingExerciseDTO } from 'app/modeling/shared/entities/modeling-exercise-update-dto.model';
-import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 
 export type EntityResponseType = HttpResponse<ModelingExercise>;
 export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
@@ -81,15 +80,5 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
         return this.http
             .put<ModelingExercise>(`${this.resourceUrl}/${modelingExercise.id}/re-evaluate`, dto, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
-    }
-
-    /**
-     * Retrieves the deletion summary for a modeling exercise.
-     *
-     * @param exerciseId the id of the modeling exercise
-     * @returns an observable of the deletion summary as EntitySummary
-     */
-    getDeletionSummary(exerciseId: number): Observable<EntitySummary> {
-        return this.exerciseService.getDeletionSummary(exerciseId);
     }
 }
