@@ -7,8 +7,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import io.weaviate.client6.WeaviateClient;
-import io.weaviate.client6.options.WeaviateLocalOptions;
+import io.weaviate.client6.v1.api.WeaviateClient;
 
 /**
  * Configuration class for the Weaviate client bean.
@@ -36,13 +35,7 @@ public class WeaviateClientConfiguration {
     public WeaviateClient weaviateClient() {
         log.info("Connecting to Weaviate at {}:{} (gRPC: {})", properties.getHost(), properties.getPort(), properties.getGrpcPort());
 
-        WeaviateLocalOptions.Builder optionsBuilder = WeaviateLocalOptions.builder().host(properties.getHost()).port(properties.getPort()).grpcPort(properties.getGrpcPort());
-
-        if (properties.isSecure()) {
-            optionsBuilder.secure(true);
-        }
-
-        WeaviateClient client = WeaviateClient.connectToLocal(optionsBuilder.build());
+        WeaviateClient client = WeaviateClient.connectToLocal(config -> config.host(properties.getHost()).port(properties.getPort()).grpcPort(properties.getGrpcPort()));
 
         log.info("Successfully connected to Weaviate");
         return client;
