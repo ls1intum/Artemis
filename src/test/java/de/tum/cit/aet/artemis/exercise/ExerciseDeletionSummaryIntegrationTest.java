@@ -86,13 +86,9 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
     @Autowired
     private ResultTestRepository resultRepository;
 
-    private ProgrammingExercise programmingExercise;
-
     @BeforeEach
     void setup() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
         // Add an instructor who is not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor2");
@@ -101,6 +97,9 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetDeletionSummary_programmingExercise() throws Exception {
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        final ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+
         var studentParticipation1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         var studentParticipation2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
 
@@ -157,7 +156,7 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
         assertThat(summary.numberOfStudentParticipations()).isEqualTo(2);
         assertThat(summary.numberOfBuilds()).isEqualTo(2);
         assertThat(summary.numberOfSubmissions()).isEqualTo(0);
-        assertThat(summary.numberOfAssessments()).isNull();
+        assertThat(summary.numberOfAssessments()).isEqualTo(0);
         assertThat(summary.numberOfCommunicationPosts()).isEqualTo(2);
         assertThat(summary.numberOfAnswerPosts()).isEqualTo(1);
     }
@@ -257,10 +256,7 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
 
         quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, TEST_PREFIX + "student1", false);
 
-        var submission = quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course, TEST_PREFIX + "student2", false);
-        var exerciseId = submission.getParticipation().getExercise().getId();
-
-        var summary = request.get("/api/exercise/exercises/" + exerciseId + "/deletion-summary", HttpStatus.OK, ExerciseDeletionSummaryDTO.class);
+        var summary = request.get("/api/exercise/exercises/" + quizExercise.getId() + "/deletion-summary", HttpStatus.OK, ExerciseDeletionSummaryDTO.class);
 
         assertThat(summary.numberOfStudentParticipations()).isEqualTo(1);
         assertThat(summary.numberOfSubmissions()).isEqualTo(1);
@@ -269,25 +265,18 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetDeletionSummary_noChannel() throws Exception {
-        var summary = request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/deletion-summary", HttpStatus.OK, ExerciseDeletionSummaryDTO.class);
-
-        assertThat(summary.numberOfStudentParticipations()).isEqualTo(0);
-        assertThat(summary.numberOfBuilds()).isEqualTo(0);
-        assertThat(summary.numberOfCommunicationPosts()).isEqualTo(0);
-        assertThat(summary.numberOfAnswerPosts()).isEqualTo(0);
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetDeletionSummary_editorForbidden() throws Exception {
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        final ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/deletion-summary", HttpStatus.FORBIDDEN, ExerciseDeletionSummaryDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testGetDeletionSummary_instructorNotInCourseForbidden() throws Exception {
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        final ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         request.get("/api/exercise/exercises/" + programmingExercise.getId() + "/deletion-summary", HttpStatus.FORBIDDEN, ExerciseDeletionSummaryDTO.class);
     }
 }

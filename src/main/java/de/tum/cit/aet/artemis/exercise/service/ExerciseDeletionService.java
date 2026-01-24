@@ -14,10 +14,15 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
+import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
@@ -26,20 +31,18 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseService;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
-import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseService;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismResultApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDeletionService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.text.api.TextApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.text.service.TextExerciseService;
 
 /**
  * Service Implementation for managing Exercise.
@@ -75,18 +78,26 @@ public class ExerciseDeletionService {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    private final ModelingExerciseService modelingExerciseService;
+    private final ChannelRepository channelRepository;
 
-    private final TextExerciseService textExerciseService;
+    private final PostRepository postRepository;
 
-    private final FileUploadExerciseService fileUploadExerciseService;
+    private final AnswerPostRepository answerPostRepository;
+
+    private final ResultRepository resultRepository;
+
+    private final SubmissionRepository submissionRepository;
+
+    private final BuildJobRepository buildJobRepository;
+
+    private final ParticipationRepository participationRepository;
 
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ParticipationDeletionService participationDeletionService,
             ProgrammingExerciseDeletionService programmingExerciseDeletionService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, Optional<StudentExamApi> studentExamApi,
             Optional<LectureUnitApi> lectureUnitApi, Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelService channelService,
-            Optional<CompetencyProgressApi> competencyProgressApi, ModelingExerciseService modelingExerciseService, TextExerciseService textExerciseService,
-            FileUploadExerciseService fileUploadExerciseService) {
+            Optional<CompetencyProgressApi> competencyProgressApi, ChannelRepository channelRepository, PostRepository postRepository, AnswerPostRepository answerPostRepository,
+            ResultRepository resultRepository, SubmissionRepository submissionRepository, BuildJobRepository buildJobRepository, ParticipationRepository participationRepository) {
         this.exerciseRepository = exerciseRepository;
         this.participationDeletionService = participationDeletionService;
         this.programmingExerciseDeletionService = programmingExerciseDeletionService;
@@ -99,9 +110,13 @@ public class ExerciseDeletionService {
         this.textApi = textApi;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
-        this.modelingExerciseService = modelingExerciseService;
-        this.textExerciseService = textExerciseService;
-        this.fileUploadExerciseService = fileUploadExerciseService;
+        this.channelRepository = channelRepository;
+        this.postRepository = postRepository;
+        this.answerPostRepository = answerPostRepository;
+        this.resultRepository = resultRepository;
+        this.submissionRepository = submissionRepository;
+        this.buildJobRepository = buildJobRepository;
+        this.participationRepository = participationRepository;
     }
 
     /**
@@ -113,14 +128,27 @@ public class ExerciseDeletionService {
     public ExerciseDeletionSummaryDTO getDeletionSummary(long exerciseId) {
         final Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
-        return switch (exercise) {
-            case ProgrammingExercise _ -> programmingExerciseDeletionService.getDeletionSummary(exerciseId);
-            case QuizExercise _ -> quizExerciseService.getDeletionSummary(exerciseId);
-            case ModelingExercise _ -> modelingExerciseService.getDeletionSummary(exerciseId);
-            case TextExercise _ -> textExerciseService.getDeletionSummary(exerciseId);
-            case FileUploadExercise _ -> fileUploadExerciseService.getDeletionSummary(exerciseId);
-            default -> throw new IllegalArgumentException("Unsupported exercise type: " + exercise.getClass().getName());
-        };
+        final long numberOfStudentParticipations = participationRepository.countByExerciseId(exerciseId);
+
+        final boolean hasBuilds = exercise instanceof ProgrammingExercise;
+        final Long numberOfBuilds = hasBuilds ? buildJobRepository.countBuildJobsByExerciseIds(Set.of(exerciseId)) : null;
+
+        final long numberOfSubmissions = submissionRepository.countByExerciseId(exerciseId);
+
+        final boolean hasAssesments = !(exercise instanceof QuizExercise);
+        final Long numberOfAssessments = hasAssesments ? resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId) : null;
+
+        long numberOfCommunicationPosts = 0;
+        long numberOfAnswerPosts = 0;
+        final Channel channel = channelRepository.findChannelByExerciseId(exerciseId);
+        if (channel != null) {
+            long conversationId = channel.getId();
+            numberOfCommunicationPosts = postRepository.countByConversationId(conversationId);
+            numberOfAnswerPosts = answerPostRepository.countByConversationId(conversationId);
+        }
+
+        return new ExerciseDeletionSummaryDTO(numberOfStudentParticipations, numberOfBuilds, numberOfSubmissions, numberOfAssessments, numberOfCommunicationPosts,
+                numberOfAnswerPosts);
     }
 
     /**
