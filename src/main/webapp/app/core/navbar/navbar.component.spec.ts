@@ -2,7 +2,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { expectedProfileInfo } from 'app/core/layouts/profiles/shared/profile.service.spec';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -34,6 +33,7 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
 import { ActiveMenuDirective } from 'app/core/navbar/active-menu.directive';
 import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
 import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
+import { expectedProfileInfo } from '../layouts/profiles/shared/profile.constants';
 
 class MockBreadcrumb {
     label: string;

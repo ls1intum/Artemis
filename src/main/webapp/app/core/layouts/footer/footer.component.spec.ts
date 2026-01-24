@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { expectedProfileInfo } from 'app/core/layouts/profiles/shared/profile.service.spec';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RouterModule } from '@angular/router';
@@ -8,6 +7,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { FooterComponent } from 'app/core/layouts/footer/footer.component';
 import dayJs from 'dayjs/esm';
+import { expectedProfileInfo } from '../profiles/shared/profile.constants';
 
 describe('FooterComponent', () => {
     let component: FooterComponent;
