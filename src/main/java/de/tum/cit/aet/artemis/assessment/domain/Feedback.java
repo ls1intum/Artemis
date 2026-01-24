@@ -48,6 +48,8 @@ public class Feedback extends DomainObject {
 
     public static final String STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = "SCAFeedbackIdentifier:";
 
+    public static final String BUILD_FAILED = "Build for directory failed.";
+
     public static final String SUBMISSION_POLICY_FEEDBACK_IDENTIFIER = "SubPolFeedbackIdentifier:";
 
     private static final String DETAIL_TEXT_TRIMMED_MARKER = " [...]";
@@ -397,6 +399,16 @@ public class Feedback extends DomainObject {
     @JsonIgnore
     public boolean isStaticCodeAnalysisFeedback() {
         return this.text != null && this.text.startsWith(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER) && this.type == FeedbackType.AUTOMATIC;
+    }
+
+    /**
+     * Checks whether the feedback contains any build failed messages
+     *
+     * @return true if the feedback contains a build failed message else false
+     */
+    @JsonIgnore
+    public boolean isBuildFailedFeedback() {
+        return this.detailText != null && this.detailText.contains(BUILD_FAILED) && this.type == FeedbackType.AUTOMATIC;
     }
 
     /**

@@ -171,8 +171,11 @@ public class ProgrammingExerciseGradingService {
             var latestSubmission = getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
 
             // Artemis considers a build as failed if no tests have been executed (e.g. due to a compile failure in the student code)
-            final var buildFailed = newResult.getFeedbacks().stream().allMatch(Feedback::isStaticCodeAnalysisFeedback);
-            latestSubmission.setBuildFailed(buildFailed);
+            final var staticCodeAnalysisFailed = newResult.getFeedbacks().stream().allMatch(Feedback::isStaticCodeAnalysisFeedback);
+            // For some exercises like c++, when cmake fails there is no static code analysis feedback
+            final var buildFailed = newResult.getFeedbacks().stream().anyMatch(Feedback::isBuildFailedFeedback);
+
+            latestSubmission.setBuildFailed(staticCodeAnalysisFailed || buildFailed);
 
             if (buildResult.hasLogs()) {
                 var programmingLanguage = exercise.getProgrammingLanguage();
