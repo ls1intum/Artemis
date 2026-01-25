@@ -123,4 +123,13 @@ public class ModuleFeatureService {
     public long getVideoUploadMaxFileSize() {
         return artemisConfigHelper.getVideoUploadMaxFileSize(environment);
     }
+
+    /**
+     * Check if the LTI module is enabled.
+     *
+     * @return true if the LTI module is enabled, false otherwise
+     */
+    public boolean isLtiEnabled() {
+        return artemisConfigHelper.isLtiEnabled(environment);
+    }
 }

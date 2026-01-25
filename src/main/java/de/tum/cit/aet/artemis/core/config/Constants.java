@@ -343,11 +343,6 @@ public final class Constants {
     public static final String PROFILE_LDAP = "ldap";
 
     /**
-     * The name of the Spring profile used for activating LTI in Artemis, see {@link de.tum.cit.aet.artemis.lti.web.LtiResource}.
-     */
-    public static final String PROFILE_LTI = "lti";
-
-    /**
      * The name of the Spring profile used for activating SAML2 in Artemis, see {@link de.tum.cit.aet.artemis.core.service.connectors.SAML2Service}.
      */
     public static final String PROFILE_SAML2 = "saml2";
@@ -368,11 +363,6 @@ public final class Constants {
      * NOTE: secondary nodes should only use PROFILE_CORE
      */
     public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
-
-    /**
-     * Profile combination for one primary node, where LTI AND scheduling is active
-     */
-    public static final String PROFILE_LTI_AND_SCHEDULING = PROFILE_LTI + " & " + PROFILE_SCHEDULING;
 
     /**
      * The name of the Spring profile used for Theia as an external online IDE.
@@ -465,6 +455,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_SHARING = "sharing";
 
     /**
+     * The name of the module feature used for LTI functionality.
+     */
+    public static final String MODULE_FEATURE_LTI = "lti";
+
+    /**
      * The name of the property used to enable or disable Atlas functionality.
      */
     public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
@@ -543,6 +538,11 @@ public final class Constants {
      * The key used to report the max video file size to the client.
      */
     public static final String MAX_VIDEO_FILE_SIZE_INFO_KEY = "maxVideoFileSize";
+
+    /**
+     * The name of the property used to enable or disable LTI functionality.
+     */
+    public static final String LTI_ENABLED_PROPERTY_NAME = "artemis.lti.enabled";
 
     /**
      * The name of the property used to define the directories for file uploads.
