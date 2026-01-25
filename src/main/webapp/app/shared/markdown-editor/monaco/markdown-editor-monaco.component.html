@@ -183,10 +183,7 @@
                                         @for (unit of lecture.attachmentVideoUnits; track unit.id) {
                                             <!-- Only show attachment units with an attachment -->
                                             @if (unit.attachment && unit.attachment.link) {
-                                                <button class="ps-1 me-1" mat-menu-item [matMenuTriggerFor]="lectureMenuUnitsSlide" type="button">
-                                                    <span>{{ unit.name }}</span>
-                                                </button>
-                                                <mat-menu #lectureMenuUnitsSlide="matMenu" type="button">
+                                                <ng-template #referenceLectureUnitButton>
                                                     <button
                                                         class="border-bottom ps-1 me-1"
                                                         mat-menu-item
@@ -201,6 +198,17 @@
                                                     >
                                                         {{ unit.name }}
                                                     </button>
+                                                </ng-template>
+                                                @if (unit.slides) {
+                                                    <button class="ps-1 me-1" mat-menu-item [matMenuTriggerFor]="lectureMenuUnitsSlide" type="button">
+                                                        <span>{{ unit.name }}</span>
+                                                    </button>
+                                                } @else {
+                                                    <!-- Shortcut: If no referencable slides, directly allow referencing lecture unit. -->
+                                                    <ng-container [ngTemplateOutlet]="referenceLectureUnitButton" />
+                                                }
+                                                <mat-menu #lectureMenuUnitsSlide="matMenu" type="button">
+                                                    <ng-container [ngTemplateOutlet]="referenceLectureUnitButton" />
                                                     @for (slide of unit.slides; track slide.id; let index = $index) {
                                                         <button
                                                             class="ps-1 me-1"
@@ -218,8 +226,6 @@
                                                         >
                                                             <span [jhiTranslate]="'artemisApp.markdownEditor.slideWithNumber'" [translateValues]="{ number: index + 1 }"></span>
                                                         </button>
-                                                    } @empty {
-                                                        <ng-container [ngTemplateOutlet]="noItemsAvailable" />
                                                     }
                                                 </mat-menu>
                                             }
