@@ -499,8 +499,9 @@ public class AtlasAgentService {
      * @param sessionId the session ID
      */
     public void clearSession(String sessionId) {
-        if (chatMemory != null)
+        if (chatMemory != null) {
             chatMemory.clear(sessionId);
+        }
 
         clearCachedPendingCompetencyOperations(sessionId);
     }
