@@ -160,9 +160,21 @@
                             </button>
                             <mat-menu #subMenuLecture="matMenu" type="button">
                                 @for (lecture of displayedActions.lecture.lecturesWithDetails; track lecture.id) {
-                                    <button class="ps-1 me-1" mat-menu-item [matMenuTriggerFor]="lectureMenuUnits" type="button">
-                                        {{ lecture.title }}
-                                    </button>
+                                    @if (hasReferencableAttachments(lecture)) {
+                                        <button class="ps-1 me-1" mat-menu-item [matMenuTriggerFor]="lectureMenuUnits" type="button">
+                                            {{ lecture.title }}
+                                        </button>
+                                    } @else {
+                                        <!-- Shortcut: If no referencable attachments/units, directly allow referencing lecture. -->
+                                        <button
+                                            class="border-bottom ps-1 me-1"
+                                            mat-menu-item
+                                            (click)="displayedActions.lecture.executeInCurrentEditor({ reference: ReferenceType.LECTURE, lecture })"
+                                            type="button"
+                                        >
+                                            {{ lecture.title }}
+                                        </button>
+                                    }
                                     <mat-menu #lectureMenuUnits="matMenu" type="button">
                                         <button
                                             class="border-bottom ps-1 me-1"
