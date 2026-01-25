@@ -116,13 +116,12 @@ public class DeferredEagerBeanInitializer {
      * @return a FailureAnalysis if an analyzer can handle the exception, null otherwise
      */
     private FailureAnalysis analyzeFailure(Throwable failure) {
-        // List of failure analyzers to try - add new analyzers here as needed
-        List<FailureAnalyzer> analyzers = List.of(new WeaviateConnectionFailureAnalyzer()
+        List<FailureAnalyzer> analyzersToTryOut = List.of(new WeaviateConnectionFailureAnalyzer()
         // Add more failure analyzers here, e.g.:
         // new SomeOtherFailureAnalyzer()
         );
 
-        for (FailureAnalyzer analyzer : analyzers) {
+        for (FailureAnalyzer analyzer : analyzersToTryOut) {
             try {
                 FailureAnalysis analysis = analyzer.analyze(failure);
                 if (analysis != null) {
