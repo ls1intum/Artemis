@@ -6,9 +6,9 @@ import { expect } from '@playwright/test';
 test.describe('Competency Import', { tag: '@fast' }, () => {
     let sourceCourse: Course;
     let targetCourse: Course;
-    let comp1: any;
-    let comp2: any;
-    let prereq: any;
+    let competency1: any;
+    let competency2: any;
+    let prerequisite: any;
 
     test.beforeEach(async ({ login, courseManagementAPIRequests }) => {
         await login(admin);
@@ -16,12 +16,12 @@ test.describe('Competency Import', { tag: '@fast' }, () => {
         targetCourse = await courseManagementAPIRequests.createCourse({ courseName: 'Target Course' });
 
         // Create competencies and prerequisites in source course
-        comp1 = await courseManagementAPIRequests.createCompetency(sourceCourse, 'Source Competency 1');
-        comp2 = await courseManagementAPIRequests.createCompetency(sourceCourse, 'Source Competency 2');
-        prereq = await courseManagementAPIRequests.createPrerequisite(sourceCourse, 'Source Prerequisite');
+        competency1 = await courseManagementAPIRequests.createCompetency(sourceCourse, 'Source Competency 1');
+        competency2 = await courseManagementAPIRequests.createCompetency(sourceCourse, 'Source Competency 2');
+        prerequisite = await courseManagementAPIRequests.createPrerequisite(sourceCourse, 'Source Prerequisite');
 
-        // Create relation: comp1 EXTENDS comp2
-        await courseManagementAPIRequests.createCompetencyRelation(sourceCourse, comp1.id, comp2.id, 'EXTENDS');
+        // Create relation: competency1 EXTENDS competency2
+        await courseManagementAPIRequests.createCompetencyRelation(sourceCourse, competency1.id, competency2.id, 'EXTENDS');
     });
 
     test.afterEach(async ({ courseManagementAPIRequests }) => {
@@ -42,7 +42,7 @@ test.describe('Competency Import', { tag: '@fast' }, () => {
         await page.locator('#importRelations-checkbox').check();
 
         // Search for source course by ID to ensure uniqueness
-        await page.locator('#import-objects-search').fill(sourceCourse.id!.toString());
+        await page.locator('#import-objects-search').fill(sourceCourse.title!.toString());
 
         // Wait for search results to update and select the correct course
         const sourceRow = page.getByRole('row', { name: new RegExp(`${sourceCourse.id}.*${sourceCourse.title}`) });
@@ -56,9 +56,9 @@ test.describe('Competency Import', { tag: '@fast' }, () => {
         }
 
         // Verify imported entities in the list
-        await expect(page.getByRole('link', { name: comp1.title })).toBeVisible();
-        await expect(page.getByRole('link', { name: comp2.title })).toBeVisible();
-        await expect(page.getByRole('link', { name: prereq.title })).toBeVisible();
+        await expect(page.getByRole('link', { name: competency1.title })).toBeVisible();
+        await expect(page.getByRole('link', { name: competency2.title })).toBeVisible();
+        await expect(page.getByRole('link', { name: prerequisite.title })).toBeVisible();
 
         // Verify relation
         await page.getByRole('button', { name: 'Edit relations' }).click();
@@ -67,8 +67,8 @@ test.describe('Competency Import', { tag: '@fast' }, () => {
         await expect(page.locator('jhi-course-competencies-relation-graph')).toBeVisible();
 
         // Select the imported competencies to verify the relation exists
-        await page.selectOption('#head', { label: comp2.title });
-        await page.selectOption('#tail', { label: comp1.title });
+        await page.selectOption('#head', { label: competency2.title });
+        await page.selectOption('#tail', { label: competency1.title });
 
         // If relation exists, we should see "Delete relation" button
         await expect(page.getByRole('button', { name: 'Delete relation' })).toBeVisible();
@@ -84,9 +84,9 @@ test.describe('Competency Import', { tag: '@fast' }, () => {
         await page.getByRole('button', { name: 'Import competencies' }).click();
         await page.getByRole('link', { name: 'Import from other course' }).click();
 
-        // Select only comp1
+        // Select only competency1
         await page
-            .getByRole('row', { name: '' + comp1.id + ' ' + comp1.title })
+            .getByRole('row', { name: '' + competency1.id + ' ' + competency1.title })
             .getByRole('button', { name: 'Select' })
             .click();
 
@@ -99,8 +99,8 @@ test.describe('Competency Import', { tag: '@fast' }, () => {
             await page.locator('jhi-close-circle svg').click(); // Close success message
         }
 
-        // Verify comp1 is imported but comp2 is not
-        await expect(page.getByRole('link', { name: comp1.title })).toBeVisible();
-        await expect(page.getByRole('link', { name: comp2.title })).not.toBeVisible();
+        // Verify competency1 is imported but competency2 is not
+        await expect(page.getByRole('link', { name: competency1.title })).toBeVisible();
+        await expect(page.getByRole('link', { name: competency2.title })).not.toBeVisible();
     });
 });

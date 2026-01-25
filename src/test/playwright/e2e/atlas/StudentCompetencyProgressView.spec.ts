@@ -1,16 +1,25 @@
 import { test } from '../../support/fixtures';
-import { admin, studentOne } from '../../support/users';
+import { admin, studentOne, UserRole } from '../../support/users';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
+import { Buffer } from 'buffer';
 
 test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
     let course: Course;
     let lecture: Lecture;
 
-    test.beforeEach('Setup course with learning paths enabled', async ({ login, courseManagementAPIRequests }) => {
+    test.beforeEach('Setup course with learning paths enabled', async ({ login, courseManagementAPIRequests, userManagementAPIRequests }) => {
         await login(admin);
+        const studentLookup = await userManagementAPIRequests.getUser(studentOne.username);
+        if (!studentLookup.ok()) {
+            const createResponse = await userManagementAPIRequests.createUser(studentOne.username, studentOne.password, UserRole.Student);
+            if (!createResponse.ok()) {
+                const errorBody = await createResponse.text();
+                expect(errorBody).toContain('userExists');
+            }
+        }
         course = await courseManagementAPIRequests.createCourse();
         lecture = await courseManagementAPIRequests.createLecture(course, 'Test Lecture');
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
@@ -167,6 +176,21 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             const completionCheckbox = textUnitCard.locator('#completed-checkbox');
             await completionCheckbox.click();
             await page.waitForLoadState('networkidle');
+
+            // Wait for the completion to be persisted (progress > 0)
+            await expect
+                .poll(
+                    async () => {
+                        const progressResponse = await page.request.get(`api/atlas/courses/${course.id}/course-competencies/${competency.id}/student-progress?refresh=true`);
+                        if (!progressResponse.ok()) {
+                            return 0;
+                        }
+                        const progressBody = (await progressResponse.json()) as { progress?: number };
+                        return progressBody.progress ?? 0;
+                    },
+                    { timeout: 20000 },
+                )
+                .toBeGreaterThan(0);
 
             // Wait for the completion to be reflected in progress (progress ring should update)
             // Reload the page to ensure progress is fetched fresh from server
