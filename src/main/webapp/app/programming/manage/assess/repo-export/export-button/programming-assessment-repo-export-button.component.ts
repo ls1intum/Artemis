@@ -46,7 +46,6 @@ export class ProgrammingAssessmentRepoExportButtonComponent {
      * @param {MouseEvent} event - Mouse event
      */
     openRepoExportDialog(event: MouseEvent) {
-        // TODO: The 'emit' function requires a mandatory void argument
         this.buttonPressed.emit();
         event.stopPropagation();
         const modalRef = this.modalService.open(ProgrammingAssessmentRepoExportDialogComponent, { keyboard: true, size: 'lg' });

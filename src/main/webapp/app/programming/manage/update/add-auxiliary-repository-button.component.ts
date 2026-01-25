@@ -38,7 +38,6 @@ export class AddAuxiliaryRepositoryButtonComponent {
         newAuxiliaryRepository.name = '';
         newAuxiliaryRepository.checkoutDirectory = '';
         this.programmingExercise.auxiliaryRepositories?.push(newAuxiliaryRepository);
-        // TODO: The 'emit' function requires a mandatory void argument
         this.onRefresh.emit();
         this.programmingExercise.auxiliaryRepositories = [...this.programmingExercise.auxiliaryRepositories];
     }

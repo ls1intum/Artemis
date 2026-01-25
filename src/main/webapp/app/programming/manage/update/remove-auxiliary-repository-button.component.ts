@@ -32,7 +32,6 @@ export class RemoveAuxiliaryRepositoryButtonComponent {
         // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         const auxRepoIndex = this.programmingExercise.auxiliaryRepositories?.indexOf(this.row)!;
         this.programmingExercise.auxiliaryRepositories?.splice(auxRepoIndex, 1); // Note: splice changes the array auxiliaryRepositories in place
-        // TODO: The 'emit' function requires a mandatory void argument
         this.onRefresh.emit();
         // This activates the angular change detection
         this.programmingExercise.auxiliaryRepositories = [...this.programmingExercise.auxiliaryRepositories!];

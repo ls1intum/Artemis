@@ -30,7 +30,6 @@ export class CommitsInfoRowComponent {
     @Output() toggleExpandEvent = new EventEmitter<void>();
 
     onToggleExpand() {
-        // TODO: The 'emit' function requires a mandatory void argument
         this.toggleExpandEvent.emit();
     }
 
