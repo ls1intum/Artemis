@@ -146,7 +146,7 @@ artemis:
                 - 0.0.0.0/0
     # Weaviate vector database configuration for development
     weaviate:
-        enabled: true                     # Enable Weaviate in development by default
+        enabled: false                    # Enable Weaviate in development by default
         host: localhost                   # Weaviate server hostname
         port: 8001                        # Weaviate HTTP port (avoid conflicts with main app)
         grpc-port: 50051                  # Weaviate gRPC port for better performance
