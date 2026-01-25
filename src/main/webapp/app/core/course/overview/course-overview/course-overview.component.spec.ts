@@ -11,7 +11,7 @@ import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ImageComponent } from 'app/shared/image/image.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, TemplateRef, viewChild } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -124,13 +124,13 @@ const courses: Course[] = [course2];
 class ControlsTestingComponent implements BarControlConfigurationProvider, AfterViewInit {
     controlsRendered = new EventEmitter<void>();
 
-    @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
+    private readonly controls = viewChild<TemplateRef<any>>('controls');
     public readonly controlConfiguration: BarControlConfiguration = {
         subject: new Subject<TemplateRef<any>>(),
     };
 
     ngAfterViewInit(): void {
-        this.controlConfiguration.subject!.next(this.controls);
+        this.controlConfiguration.subject!.next(this.controls()!);
     }
 }
 
