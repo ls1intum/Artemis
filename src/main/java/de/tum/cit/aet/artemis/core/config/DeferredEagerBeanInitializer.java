@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.HAZELCAST;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Arrays;
-import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,16 +12,16 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.diagnostics.FailureAnalysis;
-import org.springframework.boot.diagnostics.FailureAnalyzer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
-import org.springframework.core.io.support.SpringFactoriesLoader;
 import org.springframework.stereotype.Component;
 import org.springframework.util.PlaceholderResolutionException;
 
 import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent;
+import de.tum.cit.aet.artemis.core.exception.WeaviateConnectionException;
+import de.tum.cit.aet.artemis.core.exception.failureAnalyzer.WeaviateConnectionFailureAnalyzer;
 
 /**
  * This component initializes all lazy singleton beans after the application is ready.
@@ -84,7 +83,7 @@ public class DeferredEagerBeanInitializer {
     }
 
     private void shutdownOnDeferredInitFailure(String name, Throwable ex) {
-        // Try to use Spring Boot's FailureAnalyzers to provide helpful error messages
+        // Try to use failure analyzers for known exception types
         FailureAnalysis analysis = analyzeFailure(ex);
         if (analysis != null) {
             reportFailureAnalysis(analysis);
@@ -107,23 +106,36 @@ public class DeferredEagerBeanInitializer {
     }
 
     /**
-     * Attempts to analyze the failure using registered FailureAnalyzers.
+     * Attempts to analyze the failure using specific failure analyzers.
+     * This method checks for known exception types and uses the corresponding analyzer.
      *
      * @param failure the exception that occurred
      * @return a FailureAnalysis if an analyzer can handle the exception, null otherwise
      */
     private FailureAnalysis analyzeFailure(Throwable failure) {
-        List<FailureAnalyzer> analyzers = SpringFactoriesLoader.loadFactories(FailureAnalyzer.class, getClass().getClassLoader());
-        for (FailureAnalyzer analyzer : analyzers) {
-            try {
-                FailureAnalysis analysis = analyzer.analyze(failure);
-                if (analysis != null) {
-                    return analysis;
-                }
+        // Check for WeaviateConnectionException
+        WeaviateConnectionException weaviateEx = findCause(failure, WeaviateConnectionException.class);
+        if (weaviateEx != null) {
+            WeaviateConnectionFailureAnalyzer analyzer = new WeaviateConnectionFailureAnalyzer();
+            return analyzer.analyze(failure);
+        }
+        return null;
+    }
+
+    /**
+     * Finds a cause of the specified type in the exception chain.
+     *
+     * @param failure the root exception
+     * @param type    the type of exception to find
+     * @param <T>     the exception type
+     * @return the found exception or null if not found
+     */
+    private <T extends Throwable> T findCause(Throwable failure, Class<T> type) {
+        while (failure != null) {
+            if (type.isInstance(failure)) {
+                return type.cast(failure);
             }
-            catch (Throwable ex) {
-                log.trace("FailureAnalyzer {} failed", analyzer.getClass().getName(), ex);
-            }
+            failure = failure.getCause();
         }
         return null;
     }
