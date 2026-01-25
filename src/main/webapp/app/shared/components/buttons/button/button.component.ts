@@ -58,24 +58,24 @@ export enum TooltipPlacement {
 export class ButtonComponent {
     protected readonly faCircleNotch = faCircleNotch;
 
-    readonly btnType = input(ButtonType.PRIMARY);
-    readonly btnSize = input(ButtonSize.MEDIUM);
+    btnType = input(ButtonType.PRIMARY);
+    btnSize = input(ButtonSize.MEDIUM);
 
     /** You might need to set d-flex as well when using the button */
     fullWidth = input<boolean>(false);
     // Fa-icon name.
-    readonly icon = input<IconProp | null>(null);
+    icon = input<IconProp | null>(null);
     // Translation placeholders, will be translated in the component.
-    readonly title = input<string>('');
-    readonly tooltip = input<string>('');
-    readonly tooltipPlacement = input<TooltipPlacement>(TooltipPlacement.TOP);
+    title = input<string>('');
+    tooltip = input<string>('');
+    tooltipPlacement = input<TooltipPlacement>(TooltipPlacement.TOP);
 
-    readonly disabled = input(false);
-    readonly isLoading = input(false);
-    readonly featureToggle = input<FeatureToggle | FeatureToggle[]>([]); // Disable by feature toggle.
+    disabled = input(false);
+    isLoading = input(false);
+    featureToggle = input<FeatureToggle | FeatureToggle[]>([]); // Disable by feature toggle.
 
-    readonly shouldSubmit = input(true);
-    readonly shouldToggle = input(false);
+    shouldSubmit = input(true);
+    shouldToggle = input(false);
 
-    readonly onClick = output<MouseEvent>();
+    onClick = output<MouseEvent>();
 }

@@ -1,4 +1,4 @@
-import { Component, TemplateRef, ViewChild, inject, input, output } from '@angular/core';
+import { Component, TemplateRef, inject, input, output, viewChild } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
@@ -13,22 +13,22 @@ import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/butto
 export class ConfirmAutofocusButtonComponent {
     private modalService = inject(NgbModal);
 
-    readonly icon = input<IconProp>(undefined!);
-    readonly title = input<string>(undefined!);
-    readonly tooltip = input<string>(undefined!);
-    readonly disabled = input(false);
-    readonly isLoading = input(false);
-    readonly btnType = input(ButtonType.PRIMARY);
+    icon = input<IconProp | null>(null);
+    title = input<string>('');
+    tooltip = input<string>('');
+    disabled = input(false);
+    isLoading = input(false);
+    btnType = input(ButtonType.PRIMARY);
 
-    readonly confirmationTitle = input<string>(undefined!);
-    readonly confirmationTitleTranslationParams = input<Record<string, string>>();
-    readonly confirmationText = input<string>(undefined!);
-    readonly translateText = input<boolean>();
-    readonly textIsMarkdown = input<boolean>();
-    readonly onConfirm = output<void>();
-    readonly onCancel = output<void>();
+    confirmationTitle = input<string>('');
+    confirmationTitleTranslationParams = input<Record<string, string>>();
+    confirmationText = input<string>('');
+    translateText = input<boolean>();
+    textIsMarkdown = input<boolean>();
+    onConfirm = output<void>();
+    onCancel = output<void>();
 
-    @ViewChild('content') content?: TemplateRef<any>;
+    content = viewChild<TemplateRef<any>>('content');
 
     /**
      * open confirmation modal with text and title
@@ -53,7 +53,7 @@ export class ConfirmAutofocusButtonComponent {
         } else {
             modalRef.componentInstance.translateText = false;
         }
-        modalRef.componentInstance.contentRef = this.content;
+        modalRef.componentInstance.contentRef = this.content();
         modalRef.result.then(
             () => {
                 // TODO: The 'emit' function requires a mandatory void argument
