@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.service.weaviate;
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,36 +48,23 @@ public class WeaviateService {
      * @param collectionName the name of the collection
      * @return CollectionHandle for the specified collection
      */
-    public CollectionHandle getCollection(String collectionName) {
-        return weaviateClient.collections.get(collectionName);
+    public CollectionHandle<Map<String, Object>> getCollection(String collectionName) {
+        return weaviateClient.collections.use(collectionName);
     }
 
     /**
-     * Check if Weaviate is ready and accessible
+     * Check if Weaviate connection is healthy
      *
-     * @return true if Weaviate is ready, false otherwise
+     * @return true if Weaviate is healthy, false otherwise
      */
-    public boolean isReady() {
+    public boolean isHealthy() {
         try {
-            return weaviateClient.misc.readiness();
+            // Check if we can list collections
+            weaviateClient.collections.list();
+            return true;
         }
-        catch (IOException e) {
-            log.error("Failed to check Weaviate readiness", e);
-            return false;
-        }
-    }
-
-    /**
-     * Check if Weaviate is live and responsive
-     *
-     * @return true if Weaviate is live, false otherwise
-     */
-    public boolean isLive() {
-        try {
-            return weaviateClient.misc.liveness();
-        }
-        catch (IOException e) {
-            log.error("Failed to check Weaviate liveness", e);
+        catch (Exception e) {
+            log.warn("Weaviate health check failed: {}", e.getMessage());
             return false;
         }
     }
