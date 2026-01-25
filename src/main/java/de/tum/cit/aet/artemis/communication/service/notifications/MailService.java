@@ -122,6 +122,13 @@ public class MailService {
         sendEmailFromTemplate(user, "mail/samlSetPasswordEmail", "email.saml.title");
     }
 
+    /**
+     * Sends an email to admin users informing them that a data export has failed.
+     *
+     * @param admin      the admin user to notify
+     * @param dataExport the data export that failed
+     * @param reason     the exception that caused the failure
+     */
     public void sendDataExportFailedEmailToAdmin(User admin, DataExport dataExport, Exception reason) {
         log.debug("Sending data export failed email to admin email address '{}'", admin.getEmail());
         Locale locale = Locale.forLanguageTag(admin.getLangKey());
@@ -131,6 +138,13 @@ public class MailService {
         prepareTemplateAndSendEmailWithArgumentInSubject(admin, "mail/dataExportFailedAdminEmail", "email.dataExportFailedAdmin.title", dataExport.getUser().getLogin(), context);
     }
 
+    /**
+     * Sends an email to admin users informing them that a data export has failed.
+     *
+     * @param admin      the admin user to notify
+     * @param dataExport the data export that failed
+     * @param reason     the exception that caused the failure
+     */
     public void sendDataExportEmailFailedEmailToAdmin(User admin, DataExport dataExport, Exception reason) {
         log.debug("Sending data export email failed email to admin email address '{}'", admin.getEmail());
         Locale locale = Locale.forLanguageTag(admin.getLangKey());
