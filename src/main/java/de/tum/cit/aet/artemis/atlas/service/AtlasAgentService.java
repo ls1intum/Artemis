@@ -504,5 +504,6 @@ public class AtlasAgentService {
      */
     public void clearSession(String sessionId) {
         atlasChatMemoryRepository.deleteByConversationId(sessionId);
+        clearCachedPendingCompetencyOperations(sessionId);
     }
 }
