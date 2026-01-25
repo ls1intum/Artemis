@@ -2,7 +2,7 @@
 
 [![Build & Deploy](https://github.com/ls1intum/Artemis/actions/workflows/build.yml/badge.svg?event=push)](https://github.com/ls1intum/Artemis/actions/workflows/build.yml)
 [![Test](https://github.com/ls1intum/Artemis/actions/workflows/test.yml/badge.svg?event=push)](https://github.com/ls1intum/Artemis/actions/workflows/test.yml)
-[![Documentation](https://github.com/ls1intum/Artemis/actions/workflows/docs.yml/badge.svg?event=push)](https://docs.artemis.cit.tum.de)
+[![Documentation](https://github.com/ls1intum/Artemis/actions/workflows/docs.yml/badge.svg?event=push)](https://docs.artemis.tum.de)
 [![Code Quality Status](https://app.codacy.com/project/badge/Grade/89860aea5fa74d998ec884f1a875ed0c)](https://www.codacy.com/gh/ls1intum/Artemis?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ls1intum/Artemis&amp;utm_campaign=Badge_Grade)
 [![Coverage Status](https://app.codacy.com/project/badge/Coverage/89860aea5fa74d998ec884f1a875ed0c)](https://www.codacy.com/gh/ls1intum/Artemis?utm_source=github.com&utm_medium=referral&utm_content=ls1intum/Artemis&utm_campaign=Badge_Coverage)
 [![Latest version)](https://img.shields.io/github/v/tag/ls1intum/Artemis?label=%20Latest%20version&sort=semver)](https://github.com/ls1intum/Artemis/releases/latest)
@@ -22,11 +22,11 @@ Artemis brings interactive learning to life with instant, individual feedback on
 
 ## Main features and modules
 
-1. **[Exercises](https://docs.artemis.cit.tum.de/user/exercises)** with automatic and manual assessment. Instructors have many configuration options.
-    * **[Team exercises](https://docs.artemis.cit.tum.de/user/exercises/team-exercises/)**: Instructors can configure team exercises with real time collaboration and dedicated tutors per team.
+1. **[Exercises](https://docs.artemis.tum.de/instructor/exercises/intro)** with automatic and manual assessment. Instructors have many configuration options.
+    * **[Team exercises](https://docs.artemis.tum.de/instructor/exercises/team-exercise)**: Instructors can configure team exercises with real-time collaboration and dedicated tutors per team.
     * **Multiple submissions**: Students can participate in exercises multiple times. Instructors can configure the number of submissions and the submission deadline.
     * **Practice mode**: Students can practice exercises as often as they want. 
-2. **[Programming exercises](https://docs.artemis.cit.tum.de/user/exercises/programming/)** with version control, automatic individual feedback (and assessment) based on test cases and static code analysis (executed using continuous integration) for `any programming language`. 
+2. **[Programming exercises](https://docs.artemis.tum.de/instructor/exercises/programming-exercise)** with version control, automatic individual feedback (and assessment) based on test cases and static code analysis (executed using continuous integration) for `any programming language`. 
    * **Instant feedback**: Students receive immediate and individual feedback on submissions. Instructors can customize feedback messages easily, hide feedback during the working time (e.g., with hidden tests)
    * **Interactive:** Instructors integrate interactive instructions based on tasks and UML diagrams directly into the dynamic problem statements. They can define hints for difficult exercise parts.
    * **Independent**: Instructors can customize programming exercises to support any programming language. To simplify the setup, Artemis includes sophisticated templates for the most common languages (e.g., Java, Python, C, Haskell, Kotlin, VHDL, Assembler, Swift, Ocaml, ...)
@@ -35,38 +35,38 @@ Artemis brings interactive learning to life with instant, individual feedback on
    * **Policies**: Instructors can define submission policies (e.g., penalties after 10 attempts) to prevent that students try out all possibilities without thinking.
    * **Grading**: Instructors have many options to configure grading, analyze the results based on tests and static code analysis categories and re-evaluate the results
    * **Secure**: Test cases and student code run in Docker environments on build agents. Test frameworks such as [Ares](https://github.com/ls1intum/Ares) simplify the creation of structural and dynamic tests and prevent that students can cheat.
-3. **[Build agents](https://docs.artemis.cit.tum.de/dev/setup/integrated-code-lifecycle)** Integrated code lifecycle elevates the programming exercise experience and seamlessly integrates **version control** and **continuous integration**, creating a streamlined, cohesive environment. Unlike external systems, this integrated approach minimizes maintenance overhead and is tailored to the specific needs of a learning platform, offering unparalleled flexibility, performance, and scalability. It simplifies the initial setup for administrators and ensures a smoother, integrated workflow for students and instructors alike. Build agents are responsible for executing the build, test, and static code analysis jobs for programming exercises. They easily integrate into the Artemis infrastructure.
-4. **[Quiz exercises](https://docs.artemis.cit.tum.de/user/exercises/quiz/)** with multiple choice, drag and drop, and short answer questions
+3. **[Build agents](https://docs.artemis.tum.de/instructor/integrated-code-lifecycle)** Integrated code lifecycle elevates the programming exercise experience and seamlessly integrates **version control** and **continuous integration**, creating a streamlined, cohesive environment. Unlike external systems, this integrated approach minimizes maintenance overhead and is tailored to the specific needs of a learning platform, offering unparalleled flexibility, performance, and scalability. It simplifies the initial setup for administrators and ensures a smoother, integrated workflow for students and instructors alike. Build agents are responsible for executing the build, test, and static code analysis jobs for programming exercises. They easily integrate into the Artemis infrastructure.
+4. **[Quiz exercises](https://docs.artemis.tum.de/instructor/exercises/quiz-exercise)** with multiple choice, drag and drop, and short answer questions
     * **Modeling quizzes**: Instructors can easily create drag and drop quizzes based on UML models
     * **Different modes**: Quizzes support a live mode (rated) during lectures, a practice mode for students to repeat the quiz as often as they want, and an exam mode (see below)
-5. **[Modeling exercises](https://docs.artemis.cit.tum.de/user/exercises/modeling/)** based on the easy-to-use online modeling editor [Apollon](https://apollon.ase.in.tum.de) with semi-automatic assessment using machine learning concepts
+5. **[Modeling exercises](https://docs.artemis.tum.de/instructor/exercises/modeling-exercise)** based on the easy-to-use online modeling editor [Apollon](https://apollon.ase.in.tum.de) with semi-automatic assessment using machine learning concepts
    * **Multiple diagram types**: Artemis supports 7 UML diagram types (e.g. class diagrams) and 4 additional diagrams (e.g. flow charts)
    * **Easy to use**: Students can create models easily using drag and drop, they can explain the models using additional text.
    * **Integrated feedback**: Reviews can provide feedback and points directly next to the model elements.
-6. **[Text exercises](https://docs.artemis.cit.tum.de/user/exercises/textual/)** with manual, semi-automatic assessment based on supervised machine learning and natural language processing (NLP) using [Athena](https://github.com/ls1intum/edutelligence/tree/main/athena)
+6. **[Text exercises](https://docs.artemis.tum.de/instructor/exercises/textual-exercise)** with manual, semi-automatic assessment based on supervised machine learning and natural language processing (NLP) using [Athena](https://github.com/ls1intum/edutelligence/tree/main/athena)
    * **Integrated feedback**: Reviews can provide feedback and points directly next to the text segments.
    * **Language detection**: Artemis detects the language of the submission and shows the word and character count. 
-7. **[File upload exercises](https://docs.artemis.cit.tum.de/user/exercises/file-upload/)** allow full flexibility to instructors. Students can create any kind of file (e.g. PDF, PNG) and submit it to Artemis when they have completed their work. Artemis allows instructors and tutors to download the files and assess them manually based on structured grading criteria (see below in the section Assessment).
-8. **[Exam mode](https://docs.artemis.cit.tum.de/user/exam_mode/)**: Instructors can create online exams with exercise variants, integrated plagiarism checks, test runs and student reviews. You can find more information on [Exam mode student features](https://artemis.tum.de/features/students) and on [Exam mode instructor features](https://artemis.tum.de/features/instructors).
-9. **[Assessment](https://docs.artemis.cit.tum.de/user/exercises/assessment/)**: Artemis uses double-blind grading and structured grading criteria to improve consistency and fairness. 
+7. **[File upload exercises](https://docs.artemis.tum.de/instructor/exercises/file-upload-exercise)** allow full flexibility to instructors. Students can create any kind of file (e.g. PDF, PNG) and submit it to Artemis when they have completed their work. Artemis allows instructors and tutors to download the files and assess them manually based on structured grading criteria (see below in the section Assessment).
+8. **[Exam mode](https://docs.artemis.tum.de/instructor/exams/intro)**: Instructors can create online exams with exercise variants, integrated plagiarism checks, test runs and student reviews. You can find more information on [Exam mode student features](https://artemis.tum.de/features/students) and on [Exam mode instructor features](https://artemis.tum.de/features/instructors).
+9. **[Assessment](https://docs.artemis.tum.de/instructor/assessment)**: Artemis uses double-blind grading and structured grading criteria to improve consistency and fairness. 
     * **Training process**: It integrates an assessment training process (based on example submissions and example assessments defined by the instructor), has a grading leader board, and allows students to rate the assessments. Students can complain or ask for more feedback. 
     * **Grading**: Instructors can configure grade keys for courses and exams to automatically calculate grades and display them to students. Grades can be easily exported as csv files to upload them into university systems (such as Campus online). They can define bonus configurations for final exams to improve student grades according to their grades from a midterm exam or course exercises.
-10. **[Communication](https://docs.artemis.cit.tum.de/user/communication/)**: Instructors can post announcements. Students can ask questions, post comments, and react to other posts in channels or private chats. Tutors can filter unanswered questions.
-    * **[Notifications](https://docs.artemis.cit.tum.de/user/notifications)**: Artemis supports customizable web and email notifications. Users can enable and disable different notification types. 
-    * **[Mobile apps](https://docs.artemis.cit.tum.de/user/mobile-applications)**: Users can use mobile apps on iOS and Android for an improved user experience.
-11. **[Lectures](https://docs.artemis.cit.tum.de/user/lectures/)**: Instructors can upload lecture slides, divide lectures into units, integrate video streams, lecture recordings, and exercises into lectures, and define competencies.
-12. **[Atlas](https://docs.artemis.cit.tum.de/user/adaptive-learning)**: Atlas is the competency-based management system that supports instructors and students with adaptive learning and learning analytics.
-    * **[Adaptive learning](https://docs.artemis.cit.tum.de/user/adaptive-learning)**: Artemis allows instructors and students to define and track competencies. Students can monitor their progress towards these goals, while instructors can provide tailored feedback. This approach integrates lectures and exercises under overarching learning objectives. 
-    * **[Learning analytics](https://docs.artemis.cit.tum.de/user/learning-analytics)**: Artemis integrated different statistics for students to compare themselves to the course average. It allows instructors to evaluate the average student performance based on exercises and competencies. 
-    * **[Learning paths](https://docs.artemis.cit.tum.de/user/adaptive-learning/adaptive-learning-student.html#learning-paths)**: Based on the competency model and students' individual progress, Artemis creates learning paths that guide students through the course content.
-13. **[Iris](https://github.com/ls1intum/edutelligence/tree/main/iris)**: Artemis integrates Iris, a LLM based virtual assistant that supports students and instructors with common questions and tasks.
+10. **[Communication](https://docs.artemis.tum.de/instructor/communication)**: Instructors can post announcements. Students can ask questions, post comments, and react to other posts in channels or private chats. Tutors can filter unanswered questions.
+    * **[Notifications](https://docs.artemis.tum.de/student/notifications)**: Artemis supports customizable web and email notifications. Users can enable and disable different notification types.
+    * **[Mobile apps](https://docs.artemis.tum.de/student/mobile-applications)**: Users can use mobile apps on iOS and Android for an improved user experience.
+11. **[Lectures](https://docs.artemis.tum.de/instructor/lectures)**: Instructors can upload lecture slides, divide lectures into units, integrate video streams, lecture recordings, and exercises into lectures, and define competencies.
+12. **[Atlas](https://docs.artemis.tum.de/instructor/adaptive-learning)**: Atlas is the competency-based management system that supports instructors and students with adaptive learning and learning analytics.
+    * **[Adaptive learning](https://docs.artemis.tum.de/instructor/adaptive-learning)**: Artemis allows instructors and students to define and track competencies. Students can monitor their progress towards these goals, while instructors can provide tailored feedback. This approach integrates lectures and exercises under overarching learning objectives.
+    * **[Learning analytics](https://docs.artemis.tum.de/instructor/learning-analytics)**: Artemis integrated different statistics for students to compare themselves to the course average. It allows instructors to evaluate the average student performance based on exercises and competencies.
+    * **[Learning paths](https://docs.artemis.tum.de/student/adaptive-learning)**: Based on the competency model and students' individual progress, Artemis creates learning paths that guide students through the course content.
+13. **[Iris](https://github.com/ls1intum/edutelligence/tree/main/iris)**: Artemis integrates Iris, a LLM-based virtual assistant that supports students and instructors with common questions and tasks.
     * **Questions**: Iris supports students with answering questions about exercises, lectures, and the learning performance instantly.
     * **Pro-active assistance**: Iris can pro-actively communicate with the students, help them with the next steps in their learning experience and motivate them to continue.
 14. **[Athena](https://github.com/ls1intum/edutelligence/tree/main/athena)**: Artemis integrates Athena, a machine learning-based tool that supports instructors with the assessment of text, modeling and programming exercises. Athena offers different modules including automatic feedback suggestions based on generative AI. 
 15. **Hyperion**: Artemis integrates Hyperion (via Spring AI), an AI-driven exercise creation assistant that helps instructors create high-quality exercises more efficiently through consistency checking and more.
-16. **[Tutorial groups](https://docs.artemis.cit.tum.de/user/tutorialgroups/)**: Artemis supports the management of tutorial groups of a course. This includes planning the sessions, assigning responsible tutors, registering students and tracking the attendance.
-17. **[Plagiarism checks](https://docs.artemis.cit.tum.de/user/plagiarism-check/)**: Artemis integrates plagiarism checks for programming exercises (based on [JPlag](https://github.com/jplag/JPlag)), text exercises, and modeling exercises in courses and exams. It allows notifying students about identified plagiarism. Students can review and comment on the allegation.
-18. **[LTI](https://docs.artemis.cit.tum.de/user/lti)**: Artemis supports the Learning Tools Interoperability (LTI) standard to integrate Artemis into other learning management systems (LMS) such as Moodle and edX.
+16. **[Tutorial groups](https://docs.artemis.tum.de/instructor/tutorial-groups)**: Artemis supports the management of tutorial groups of a course. This includes planning the sessions, assigning responsible tutors, registering students and tracking the attendance.
+17. **[Plagiarism checks](https://docs.artemis.tum.de/instructor/plagiarism-check)**: Artemis integrates plagiarism checks for programming exercises (based on [JPlag](https://github.com/jplag/JPlag)), text exercises, and modeling exercises in courses and exams. It allows notifying students about identified plagiarism. Students can review and comment on the allegation.
+18. **[LTI](https://docs.artemis.tum.de/instructor/lti-configuration)**: Artemis supports the Learning Tools Interoperability (LTI) standard to integrate Artemis into other learning management systems (LMS) such as Moodle and edX.
 
 ## EduTelligence Integration
 
@@ -81,11 +81,11 @@ Additional services are available in the EduTelligence suite for advanced deploy
 
 ## Additional features and aspects
 
-1. **[Integrated markdown editor](https://docs.artemis.cit.tum.de/user/markdown-support/)**: Markdown is used to format text content across the platform using an integrated markdown editor.
-2. **[Scalable](https://docs.artemis.cit.tum.de/admin/scaling/)**: Artemis scales to multiple courses with thousands of students simultaneously using it. In fact, the largest course had 2,400 students. Administrators can easily scale Artemis with additional build agents in the continuous integration environment.
-3. **[High user satisfaction](https://docs.artemis.cit.tum.de/user/user-experience/)**: Artemis is easy to use. Developers focus on usability, user experience, and performance.
-4. **Customizable**: It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings including user management, 
-5. **[Open-source](https://docs.artemis.cit.tum.de/dev/open-source/)**: Free to use with a large community and many active maintainers.
+1. **[Integrated markdown editor](https://docs.artemis.tum.de/student/markdown-support)**: Markdown is used to format text content across the platform using an integrated markdown editor.
+2. **[Scalable](https://docs.artemis.tum.de/admin/scaling)**: Artemis scales to multiple courses with thousands of students simultaneously using it. In fact, the largest course had 2,400 students. Administrators can easily scale Artemis with additional build agents in the continuous integration environment.
+3. **[High user satisfaction](https://docs.artemis.tum.de/student/user-experience)**: Artemis is easy to use. Developers focus on usability, user experience, and performance.
+4. **Customizable**: It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings including user management,
+5. **[Open-source](https://docs.artemis.tum.de/developer/open-source)**: Free to use with a large community and many active maintainers.
 
 ## Roadmap
 
@@ -157,30 +157,30 @@ The following members of the project management team are responsible for specifi
 
 ### Development setup, coding, and design guidelines
 
-* [How to set up your local development environment](https://docs.artemis.cit.tum.de/dev/setup/)
-* [Server coding and design guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/server/)
-* [Client coding guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/client/)
+* [How to set up your local development environment](https://docs.artemis.tum.de/developer/setup)
+* [Server coding and design guidelines](https://docs.artemis.tum.de/developer/guidelines/server-development)
+* [Client coding guidelines](https://docs.artemis.tum.de/developer/guidelines/client-development)
 * [Design guidelines](https://ls1intum.github.io/ui-ux-guidelines/)
-* [Code Review Guidelines](https://docs.artemis.cit.tum.de/dev/development-process/development-process.html#review-process)
-* [Performance Guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/performance/)
+* [Code Review Guidelines](https://docs.artemis.tum.de/developer/reviewer-guidelines)
+* [Performance Guidelines](https://docs.artemis.tum.de/developer/guidelines/performance)
 
 ### Documentation
 
-The Artemis documentation is available [here](https://docs.artemis.cit.tum.de/).
+The Artemis documentation is available [here](https://docs.artemis.tum.de/).
 You can find a guide on [how to write documentation](docs/README.md).
 
 ### Server setup
 
-Setting up Artemis in your development environment or a demo production environment is really easy following the instructions on https://docs.artemis.cit.tum.de/dev/setup. When you want to support programming exercises, we recommend using the [Integrated Code Lifecycle](https://docs.artemis.cit.tum.de/dev/setup/#integrated-code-lifecycle-setup).
+Setting up Artemis in your development environment or a demo production environment is really easy following the instructions on https://docs.artemis.tum.de/developer/setup. When you want to support programming exercises, we recommend using the [Integrated Code Lifecycle](https://docs.artemis.tum.de/developer/setup#integrated-code-lifecycle-setup).
 
 Artemis can also be set up in conjunction with external tools for continuous integration:
-[LocalVC and Jenkins](https://docs.artemis.cit.tum.de/dev/setup/#jenkins-and-localvc-setup)
+[LocalVC and Jenkins](https://docs.artemis.tum.de/developer/jenkins-localvc)
 
 Artemis uses these external tools for user management and the configuration of programming exercises.
 
 ### Administration setup
 
-If needed, you can configure self service [user registration](https://docs.artemis.cit.tum.de/admin/registration).
+If needed, you can configure self-service [user registration](https://docs.artemis.tum.de/admin/user-registration).
 
 ### Building for production
 
@@ -196,7 +196,7 @@ This will create a Artemis-<version>.war file in the folder `build/libs`. The bu
 java -jar build/libs/*.war --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local,atlas
 ```
 
-(You might need to copy a yml file into the folder build/libs before, also see [development setup](https://docs.artemis.cit.tum.de/dev/setup/))
+(You might need to copy a yml file into the folder build/libs before, also see [development setup](https://docs.artemis.tum.de/developer/setup))
 
 Then navigate to [http://localhost:8080](http://localhost:8080) in your browser.
 
@@ -205,7 +205,7 @@ Refer to [Using JHipster in production](http://www.jhipster.tech/production) for
 The following command can automate the deployment to a server. The example shows the deployment to the main Artemis test server (which runs a virtual machine):
 
 ```shell
-./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-8.7.3.war
+./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-8.7.4.war
 ```
 
 ## Architecture

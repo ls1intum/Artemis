@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.EnrollmentService;
 import de.tum.cit.aet.artemis.core.service.course.CourseAccessService;
 import de.tum.cit.aet.artemis.core.service.course.CourseSearchService;
 import tech.jhipster.web.util.PaginationUtil;
@@ -69,15 +70,18 @@ public class CourseAccessResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final EnrollmentService enrollmentService;
+
     private final CourseRepository courseRepository;
 
     private final CourseSearchService courseSearchService;
 
     public CourseAccessResource(CourseAccessService courseAccessService, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
-            UserRepository userRepository, CourseSearchService courseSearchService) {
+            EnrollmentService enrollmentService, UserRepository userRepository, CourseSearchService courseSearchService) {
         this.courseAccessService = courseAccessService;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
+        this.enrollmentService = enrollmentService;
         this.userRepository = userRepository;
         this.courseSearchService = courseSearchService;
     }
@@ -132,7 +136,7 @@ public class CourseAccessResource {
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
 
         Course course = courseRepository.findSingleWithOrganizationsAndPrerequisitesElseThrow(courseId);
-        authCheckService.checkUserAllowedToEnrollInCourseElseThrow(user, course);
+        enrollmentService.checkUserAllowedToEnrollInCourseElseThrow(user, course);
 
         return ResponseEntity.ok(course);
     }
@@ -148,7 +152,8 @@ public class CourseAccessResource {
     public ResponseEntity<List<Course>> getCoursesForEnrollment() {
         log.debug("REST request to get all currently active courses that are not online courses");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
-        final var courses = courseAccessService.findAllEnrollableForUser(user).stream().filter(course -> authCheckService.isUserAllowedToSelfEnrollInCourse(user, course)).toList();
+        final var courses = courseAccessService.findAllEnrollableForUser(user).stream().filter(course -> enrollmentService.isUserAllowedToSelfEnrollInCourse(user, course))
+                .toList();
         return ResponseEntity.ok(courses);
     }
 
