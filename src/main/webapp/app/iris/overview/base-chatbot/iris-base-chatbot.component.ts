@@ -42,7 +42,7 @@ import { NgClass } from '@angular/common';
 import { facSidebar } from 'app/shared/icons/icons';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
-import { ContextSelectionComponent } from 'app/iris/shared/context-selection/context-selection.component';
+import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
