@@ -40,6 +40,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     currentMessage = signal('');
     isAgentTyping = signal(false);
     shouldScrollToBottom = signal(false);
+    protected isClearingSession = signal(false);
 
     // Event emitted when agent likely created/modified competencies
     competencyChanged = output<void>();
@@ -90,10 +91,11 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
      * and resets the UI to start a new conversation
      */
     protected onNewChat(): void {
-        if (this.isAgentTyping()) {
+        if (this.isAgentTyping() || this.isClearingSession()) {
             return;
         }
 
+        this.isClearingSession.set(true);
         this.agentChatService.clearSession(this.courseId()).subscribe({
             next: () => {
                 this.messages.set([]);
@@ -108,8 +110,12 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                 // Focus input
                 setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
             },
+            complete: () => {
+                this.isClearingSession.set(false);
+            },
             error: () => {
                 this.addMessage(this.translateService.instant('artemisApp.agent.chat.error'), false);
+                this.isClearingSession.set(false);
             },
         });
     }

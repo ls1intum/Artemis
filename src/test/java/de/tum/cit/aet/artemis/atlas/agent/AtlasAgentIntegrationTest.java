@@ -355,6 +355,13 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
         void shouldReturnForbiddenForNonInstructor() throws Exception {
             request.performMvcRequest(post("/api/atlas/agent/courses/{courseId}/chat/clear-session", course.getId())).andExpect(status().isForbidden());
         }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void shouldReturnForbiddenForEditor() throws Exception {
+            request.performMvcRequest(post("/api/atlas/agent/courses/{courseId}/chat/clear-session", course.getId())).andExpect(status().isForbidden());
+        }
+
     }
 
     @Nested

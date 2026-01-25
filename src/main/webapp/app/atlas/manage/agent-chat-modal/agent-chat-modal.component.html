@@ -10,11 +10,11 @@
                 type="button"
                 class="btn btn-sm btn-outline-primary"
                 (click)="onNewChat()"
-                [disabled]="isAgentTyping()"
+                [disabled]="isAgentTyping() || isClearingSession()"
                 [attr.title]="'artemisApp.agent.chat.newChatTitle' | artemisTranslate"
             >
                 <fa-icon [icon]="plusIcon" class="me-1" />
-                New Chat
+                <span jhiTranslate="artemisApp.agent.chat.newChat"></span>
             </button>
             <button type="button" class="btn-close" aria-label="Close" (click)="closeModal()"></button>
         </div>

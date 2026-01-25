@@ -705,7 +705,7 @@ describe('AgentChatService', () => {
             expect(req.request.method).toBe('POST');
             expect(req.request.body).toEqual({});
 
-            // Backend returns no body
+            // server returns no body
             req.flush(null);
 
             expect(completed).toBeTrue();
