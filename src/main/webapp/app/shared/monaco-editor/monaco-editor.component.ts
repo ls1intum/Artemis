@@ -38,7 +38,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private static readonly SHRINK_TO_FIT_CLASS = 'monaco-shrink-to-fit';
 
     private readonly _editor: monaco.editor.IStandaloneCodeEditor;
-    private readonly _diffEditor: monaco.editor.IStandaloneDiffEditor;
+    private _diffEditor?: monaco.editor.IStandaloneDiffEditor;
 
     private textEditorAdapter: MonacoTextEditorAdapter;
     private readonly monacoEditorContainerElement: HTMLElement;
@@ -116,19 +116,15 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.renderer.addClass(this.monacoEditorContainerElement, 'monaco-editor-container');
         this.renderer.addClass(this.monacoEditorContainerElement, MonacoEditorComponent.SHRINK_TO_FIT_CLASS);
         this._editor = this.monacoEditorService.createStandaloneCodeEditor(this.monacoEditorContainerElement);
-        this.textEditorAdapter = new MonacoTextEditorAdapter(this._editor);
         this.renderer.appendChild(this.elementRef.nativeElement, this.monacoEditorContainerElement);
-
         /*
-         * Diff editor: create once in constructor (hidden by default) and reuse by toggling visibility.
+         * Diff editor: create container once in constructor (hidden by default) but init editor lazily.
          */
         this.diffEditorContainerElement = this.renderer.createElement('div');
         this.renderer.addClass(this.diffEditorContainerElement, 'monaco-diff-editor-container');
         this.renderer.addClass(this.diffEditorContainerElement, MonacoEditorComponent.SHRINK_TO_FIT_CLASS);
         this.renderer.setStyle(this.diffEditorContainerElement, 'display', 'none');
         this.renderer.appendChild(this.elementRef.nativeElement, this.diffEditorContainerElement);
-
-        this._diffEditor = this.monacoEditorService.createStandaloneDiffEditor(this.diffEditorContainerElement);
 
         this.emojiConvertor.replace_mode = 'unified';
         this.emojiConvertor.allow_native = true;
@@ -155,7 +151,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 readOnly: isReadOnly,
             });
 
-            this._diffEditor.updateOptions({
+            this._diffEditor?.updateOptions({
                 readOnly: isReadOnly,
                 originalEditable: false,
                 renderSideBySide,
@@ -194,7 +190,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         const resizeObserver = new ResizeObserver(() => {
-            if (this.mode() === 'diff') {
+            if (this.mode() === 'diff' && this._diffEditor) {
                 this._diffEditor.layout();
             } else {
                 this._editor.layout();
@@ -229,7 +225,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.reset();
         this._editor.dispose();
-        this._diffEditor.dispose();
+        this._diffEditor?.dispose();
         this.textChangedListener?.dispose();
         this.contentHeightListener?.dispose();
         this.blurEditorWidgetListener?.dispose();
@@ -254,11 +250,22 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         const rect = this.monacoEditorContainerElement.getBoundingClientRect();
         const width = `${rect.width}px`;
         const height = `${rect.height}px`;
+
+        if (!this._diffEditor) {
+            this._diffEditor = this.monacoEditorService.createStandaloneDiffEditor(this.diffEditorContainerElement);
+            this._diffEditor.updateOptions({
+                readOnly: this.readOnly(),
+                originalEditable: false,
+                renderSideBySide: this.renderSideBySide(),
+            });
+        }
+
         // Enforce dimensions on the container to prevent the Diff Editor from collapsing or detecting 0x0 size.
         // Unlike the normal editor, the Diff Editor is sensitive to its container's explicit size during layout.
         this.renderer.setStyle(this.diffEditorContainerElement, 'width', width);
         this.renderer.setStyle(this.diffEditorContainerElement, 'height', height);
         this.setContainersVisibility('diff');
+
         if (prevMode !== 'diff') {
             this.ensureDiffModelWired();
         }
@@ -271,13 +278,22 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             this.setActiveEditorContext();
             return;
         }
-        if (!this.useLiveSyncedDiff) {
+
+        if (this._diffEditor && !this.useLiveSyncedDiff) {
             const modifiedContent = this._diffEditor.getModifiedEditor().getValue();
             this._editor.setValue(modifiedContent);
         }
-        this._diffEditor.setModel(null);
+
+        if (this._diffEditor) {
+            this._diffEditor.dispose();
+            this._diffEditor = undefined as any;
+        }
+
         this.disposeDiffSnapshotModel();
         this.useLiveSyncedDiff = false;
+        this.diffListenersAttached = false;
+        this.diffUpdateListener?.dispose();
+        this.diffUpdateListener = undefined;
 
         this.setContainersVisibility('normal');
         this.setActiveEditorContext();
@@ -291,6 +307,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     private ensureDiffModelWired(): void {
+        if (!this._diffEditor) return;
+
         const currentModel = this._editor.getModel();
         const currentContent = currentModel?.getValue() ?? '';
         const currentLanguage = currentModel?.getLanguageId() ?? 'markdown';
@@ -325,12 +343,12 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     private ensureDiffListeners(): void {
-        if (this.diffListenersAttached) return;
+        if (this.diffListenersAttached || !this._diffEditor) return;
         this.diffListenersAttached = true;
 
         this.ngZone.runOutsideAngular(() => {
-            this.diffUpdateListener = this._diffEditor.onDidUpdateDiff(() => {
-                const monacoLineChanges = this._diffEditor.getLineChanges() ?? [];
+            this.diffUpdateListener = this._diffEditor!.onDidUpdateDiff(() => {
+                const monacoLineChanges = this._diffEditor!.getLineChanges() ?? [];
                 const lineChange = this.convertMonacoLineChanges(monacoLineChanges);
                 this.ngZone.run(() => {
                     this.diffChanged.emit({ ready: true, lineChange });
@@ -340,19 +358,20 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     private setActiveEditorContext(): void {
-        this.textEditorAdapter = new MonacoTextEditorAdapter(this.getEditableEditor());
-        this.attachEditableEditorListeners();
+        const editor = this.getEditableEditor();
+        this.textEditorAdapter = new MonacoTextEditorAdapter(editor);
+        this.attachEditableEditorListeners(editor);
         this.reRegisterActions();
         this.reRegisterSelectionListeners();
     }
 
     private getEditableEditor(): monaco.editor.IStandaloneCodeEditor {
-        return this.mode() === 'diff' ? this._diffEditor.getModifiedEditor() : this._editor;
+        // If we are in diff mode but _diffEditor is not initialized for some reason, fallback to _editor.
+        // This prevents crashes, though in practice enterDiffMode should have created it.
+        return this.mode() === 'diff' && this._diffEditor ? this._diffEditor.getModifiedEditor() : this._editor;
     }
 
-    private attachEditableEditorListeners(): void {
-        const editor = this.getEditableEditor();
-
+    private attachEditableEditorListeners(editor: monaco.editor.IStandaloneCodeEditor): void {
         this.ngZone.runOutsideAngular(() => {
             this.textChangedListener?.dispose();
             this.textChangedListener = editor.onDidChangeModelContent(() => {
@@ -385,7 +404,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     applyDiffContent(newContent: string): void {
-        if (this.mode() !== 'diff') {
+        if (this.mode() !== 'diff' || !this._diffEditor) {
             return;
         }
 
@@ -397,7 +416,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     revertAll(): void {
-        if (this.mode() !== 'diff' || !this.diffSnapshotModel) {
+        if (this.mode() !== 'diff' || !this.diffSnapshotModel || !this._diffEditor) {
             return;
         }
         const snapshotContent = this.diffSnapshotModel.getValue();
@@ -405,7 +424,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     getDiffText(): MonacoEditorDiffText | undefined {
-        if (this.mode() !== 'diff') {
+        if (this.mode() !== 'diff' || !this._diffEditor) {
             return undefined;
         }
 
@@ -416,7 +435,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     getModifiedEditor(): monaco.editor.IStandaloneCodeEditor | undefined {
-        if (this.mode() !== 'diff') {
+        if (this.mode() !== 'diff' || !this._diffEditor) {
             return undefined;
         }
         return this._diffEditor.getModifiedEditor();
@@ -426,7 +445,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * Gets the active editor: the normal editor in normal mode, or the modified editor in diff mode.
      */
     getActiveEditor(): monaco.editor.IStandaloneCodeEditor {
-        return this.mode() === 'diff' ? this._diffEditor.getModifiedEditor() : this._editor;
+        return this.mode() === 'diff' && this._diffEditor ? this._diffEditor.getModifiedEditor() : this._editor;
     }
 
     public onDidChangeModelContent(listener: (event: monaco.editor.IModelContentChangedEvent) => void): monaco.IDisposable {
@@ -653,7 +672,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     layout(): void {
-        if (this.mode() === 'diff') {
+        if (this.mode() === 'diff' && this._diffEditor) {
             this._diffEditor.layout();
         } else {
             this._editor.layout();
@@ -667,7 +686,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param height The new height of the editor.
      */
     layoutWithFixedSize(width: number, height: number): void {
-        if (this.mode() === 'diff') {
+        if (this.mode() === 'diff' && this._diffEditor) {
             // Explicitly set the container style. The Diff Editor requires its container to match the layout dimensions
             // exactly to render its internal split-view correctly.
             this.renderer.setStyle(this.diffEditorContainerElement, 'width', `${width}px`);

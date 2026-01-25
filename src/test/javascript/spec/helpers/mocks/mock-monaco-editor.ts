@@ -96,21 +96,6 @@ export function clearModelCache(): void {
 
 export const editor = {
     create: createMockEditor,
-    createDiffEditor: (domElement: HTMLElement, options?: any) => {
-        const originalEditor = createMockEditor();
-        const modifiedEditor = createMockEditor();
-        return {
-            dispose: () => {},
-            getOriginalEditor: () => originalEditor,
-            getModifiedEditor: () => modifiedEditor,
-            setModel: () => {},
-            updateOptions: () => {},
-            layout: () => {},
-            getContainerDomNode: () => domElement,
-            onDidUpdateDiff: () => ({ dispose: () => {} }),
-            getLineChanges: () => [],
-        };
-    },
 
     createModel: (content?: string, language?: string, uri?: { toString: () => string }) => {
         const model = createMockModel();
