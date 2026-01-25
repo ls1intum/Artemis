@@ -25,9 +25,9 @@ public class InvalidAdminConfigurationFailureAnalyzer extends AbstractFailureAna
     }
 
     private String buildDescription(InvalidAdminConfigurationException cause) {
-        return String.format(
-                "Invalid internal admin configuration detected:%n%n" + "Property '%s' (configuration path: %s) has value: '%s'%n%n" + "This violates the constraint: %s%n%n"
-                        + "The internal admin user is required for server startup and must have valid credentials.",
+        return String.format("Invalid internal admin configuration detected:%n%n" + "Property '%s' (configuration path: %s) has value: '%s'%n%n"
+                + "This violates the constraint: %s%n%n"
+                + "The internal admin user is not required, but if defined, it must comply with the minimum username and password requirements. You can also leave all internal_admin fields empty.",
                 cause.getPropertyName(), cause.getPropertyPath(), cause.getCurrentValue(), cause.getConstraint());
     }
 
