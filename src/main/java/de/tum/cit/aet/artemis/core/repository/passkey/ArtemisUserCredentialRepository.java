@@ -13,6 +13,7 @@ import org.springframework.security.web.webauthn.management.UserCredentialReposi
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.config.PasskeyEnabled;
+import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.core.domain.PasskeyType;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -152,12 +153,7 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
     public List<PasskeyDTO> findPasskeyDtosByUserId(Bytes userId) {
         Optional<User> user = userRepository.findById(BytesConverter.bytesToLong(userId));
 
-        List<CredentialRecord> credentialRecords = user
-                .map(passkeyUser -> passkeyCredentialsRepository.findByUser(passkeyUser.getId()).stream().map(PasskeyCredential::toCredentialRecord).toList()).orElseGet(List::of);
-
-        return credentialRecords.stream()
-                .map(credential -> new PasskeyDTO(credential.getCredentialId().toBase64UrlString(), credential.getLabel(), credential.getCreated(), credential.getLastUsed()))
-                .toList();
+        return user.map(passkeyUser -> passkeyCredentialsRepository.findByUser(passkeyUser.getId()).stream().map(PasskeyCredential::toDto).toList()).orElseGet(List::of);
     }
 
     /**
@@ -166,13 +162,17 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
      * <p>
      * This method is useful when reusing an existing {@code PasskeyCredential} instance (e.g., from persistence context)
      * and updating it with fresh data from the credential record.
+     * </p>
+     * <p>
+     * If the user is a super administrator, the passkey will be automatically approved for super admin access.
+     * </p>
      *
      * @param credential       the {@link PasskeyCredential} instance to update.
      * @param credentialRecord the data source containing credential metadata and WebAuthn information.
      * @param user             the {@link User} entity to associate the credential with.
      * @return the updated {@link PasskeyCredential} instance.
      */
-    public static PasskeyCredential toPasskeyCredential(PasskeyCredential credential, CredentialRecord credentialRecord, User user) {
+    private PasskeyCredential toPasskeyCredential(PasskeyCredential credential, CredentialRecord credentialRecord, User user) {
         credential.setUser(user);
         credential.setLabel(credentialRecord.getLabel());
         credential.setCredentialType(PasskeyType.fromLabel(credentialRecord.getCredentialType().getValue()));
@@ -187,6 +187,12 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
         credential.setLastUsed(credentialRecord.getLastUsed());
         credential.setCreatedDate(credentialRecord.getCreated());
 
+        // We check the user's authorities directly instead of calling a service to respect architecture rules
+        boolean isSuperAdmin = user.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY);
+        if (isSuperAdmin) {
+            credential.setSuperAdminApproved(true);
+        }
+
         return credential;
     }
 
@@ -194,11 +200,15 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
      * Creates a new {@link PasskeyCredential} instance initialized with the data from the given {@link CredentialRecord}
      * and links it to the specified {@link User}.
      *
+     * <p>
+     * If the user is a super administrator, the passkey will be automatically approved for super admin access.
+     * </p>
+     *
      * @param credentialRecord the record containing credential data to initialize the entity.
      * @param user             the {@link User} to associate the credential with.
      * @return a new {@link PasskeyCredential} populated from the credential record.
      */
-    private static PasskeyCredential toPasskeyCredential(CredentialRecord credentialRecord, User user) {
+    private PasskeyCredential toPasskeyCredential(CredentialRecord credentialRecord, User user) {
         return toPasskeyCredential(new PasskeyCredential(), credentialRecord, user);
     }
 }

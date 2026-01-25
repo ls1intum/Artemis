@@ -1,8 +1,9 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_STUDENT } from 'app/shared/constants/authority.constants';
 import { navbarRoute } from 'app/core/navbar/navbar.route';
 import { errorRoute } from 'app/core/layouts/error/error.route';
+import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 
@@ -16,6 +17,14 @@ const routes: Routes = [
         },
     },
     {
+        path: 'passkey-required',
+        loadComponent: () => import('app/core/auth/passkey-authentication-page/passkey-authentication-page.component').then((m) => m.PasskeyAuthenticationPageComponent),
+        data: {
+            pageTitle: 'global.menu.admin.passkey-required',
+            usesModuleBackground: false,
+        },
+    },
+    {
         path: '',
         loadChildren: () => import('app/core/user/settings/user-settings.route').then((m) => m.routes),
         data: {
@@ -25,10 +34,10 @@ const routes: Routes = [
     {
         path: 'admin',
         data: {
-            authorities: [Authority.ADMIN],
+            authorities: IS_AT_LEAST_ADMIN,
             usesModuleBackground: true,
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, PasskeyAuthenticationGuard],
         loadChildren: () => import('app/core/admin/admin.routes'),
     },
     {
@@ -43,7 +52,7 @@ const routes: Routes = [
         path: 'privacy/data-exports',
         loadComponent: () => import('app/core/legal/data-export/data-export.component').then((m) => m.DataExportComponent),
         data: {
-            authorities: [Authority.USER],
+            authorities: IS_AT_LEAST_STUDENT,
             pageTitle: 'artemisApp.dataExport.title',
             usesModuleBackground: true,
         },
@@ -52,10 +61,20 @@ const routes: Routes = [
         path: 'privacy/data-exports/:id',
         loadComponent: () => import('app/core/legal/data-export/data-export.component').then((m) => m.DataExportComponent),
         data: {
-            authorities: [Authority.USER],
+            authorities: IS_AT_LEAST_STUDENT,
             pageTitle: 'artemisApp.dataExport.title',
             usesModuleBackground: true,
         },
+    },
+    {
+        path: 'course-requests',
+        loadComponent: () => import('app/core/course/request/course-request.component').then((m) => m.CourseRequestComponent),
+        data: {
+            authorities: IS_AT_LEAST_STUDENT,
+            pageTitle: 'artemisApp.courseRequest.title',
+            usesModuleBackground: true,
+        },
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'imprint',
@@ -105,7 +124,7 @@ const routes: Routes = [
                 pathMatch: 'full',
                 loadComponent: () => import('app/core/account/password/password.component').then((m) => m.PasswordComponent),
                 data: {
-                    authorities: [Authority.USER],
+                    authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'global.menu.account.password',
                 },
                 canActivate: [UserRouteAccessService],
@@ -139,7 +158,7 @@ const routes: Routes = [
                 pathMatch: 'full',
                 loadComponent: () => import('app/core/account/settings/settings.component').then((m) => m.SettingsComponent),
                 data: {
-                    authorities: [Authority.USER],
+                    authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'global.menu.account.settings',
                 },
                 canActivate: [UserRouteAccessService],
@@ -168,8 +187,8 @@ const routes: Routes = [
     },
     // ===== GRADING SYSTEM =====
     {
-        path: 'courses/:courseId/grading-system',
-        loadChildren: () => import('./assessment/manage/grading-system/grading-system.route').then((m) => m.gradingSystemRoutes),
+        path: 'courses/:courseId/grading',
+        loadComponent: () => import('app/assessment/manage/grading/grading.component').then((m) => m.GradingComponent),
         data: {
             usesModuleBackground: true,
         },
@@ -200,8 +219,8 @@ const routes: Routes = [
         loadChildren: () => import('./exam/manage/exam-management.route').then((m) => m.examManagementRoutes),
     },
     {
-        path: 'courses/:courseId/exams/:examId/grading-system',
-        loadChildren: () => import('./assessment/manage/grading-system/grading-system.route').then((m) => m.gradingSystemRoutes),
+        path: 'courses/:courseId/exams/:examId/grading',
+        loadComponent: () => import('app/assessment/manage/grading/grading.component').then((m) => m.GradingComponent),
     },
     {
         path: 'courses/:courseId/exams/:examId/exercises/:exerciseId/repository',
@@ -228,7 +247,7 @@ const routes: Routes = [
     {
         path: 'sharing/import/:basketToken',
         data: {
-            authorities: [Authority.EDITOR, Authority.ADMIN, Authority.INSTRUCTOR],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.sharing.title',
         },
         loadComponent: () => import('./sharing/sharing.component').then((m) => m.SharingComponent),

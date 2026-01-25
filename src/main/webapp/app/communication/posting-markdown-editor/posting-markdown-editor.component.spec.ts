@@ -214,7 +214,7 @@ describe('PostingsMarkdownEditor', () => {
 
     it('should show the correct amount of characters below the markdown input', () => {
         component.maxContentLength = 200;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const charCounter = getElement(debugElement, 'p.small');
         expect(charCounter.textContent).toContain(component.maxContentLength.toString());
         expect(charCounter.textContent).toContain(metisPostExerciseUser1.content!.length.toString());
@@ -223,7 +223,7 @@ describe('PostingsMarkdownEditor', () => {
 
     it('should show the correct amount of characters in red if max length exceeded', () => {
         component.maxContentLength = 5;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const charCounter = getElement(debugElement, 'p.small');
         expect(charCounter.textContent).toContain(component.maxContentLength.toString());
         expect(charCounter.textContent).toContain(metisPostExerciseUser1.content!.length.toString());
@@ -232,13 +232,13 @@ describe('PostingsMarkdownEditor', () => {
 
     it('should initialize markdown correctly with post content', () => {
         component.maxContentLength = 200;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(mockMarkdownEditorComponent.markdown).toEqual(component.content);
     });
 
     it('should update value if markdown change is emitted', () => {
         component.maxContentLength = 200;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         mockMarkdownEditorComponent.markdownChange.emit('updated text');
         expect(component.content).toBe('updated text');
     });

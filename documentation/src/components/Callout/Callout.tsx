@@ -19,6 +19,7 @@ const Callout: React.FC<CalloutProps> = ({
         display: 'flex',
         alignItems: 'center',
         gap: '12px',
+        margin: "0.5rem",
     };
 
     return (

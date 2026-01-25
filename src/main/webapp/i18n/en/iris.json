@@ -3,8 +3,42 @@
         "iris": {
             "settings": {
                 "success": "Successfully saved Iris settings",
+                "saved": "All saved",
+                "unsaved": "Unsaved changes",
+                "enabled": "Enabled",
+                "disabled": "Disabled",
+                "configure": "Configure",
+                "loading": "Loading settings...",
+                "enableLabel": "Enable Iris",
+                "enableHelp": "When enabled, Iris features will be available for all students in this course.",
+                "customInstructions": "Custom Instructions",
+                "customInstructionsPlaceholder": "e.g., 'This course uses Python 3.12 and the pytest framework'",
+                "customInstructionsHelp": "Provide Iris with important context about your course content. This can include programming languages, frameworks, libraries, or other course-specific knowledge that helps Iris assist your students better.",
+                "adminSettings": "Administrator Settings",
+                "adminOnly": "Only administrators can see and modify these settings.",
+                "variant": "Pipeline Variant",
+                "variantHelp": "Select the AI pipeline variant to use for this course.",
+                "rateLimit": "Rate Limit Override",
+                "rateLimitHelp": "Leave both fields empty to use application defaults. Set 0 requests to block all Iris usage. Timeframe must be at least 1 hour.",
+                "rateLimitRequests": "Maximum Requests",
+                "rateLimitRequestsPlaceholder": "Empty = default ({{ default }})",
+                "rateLimitTimeframe": "Timeframe (Hours)",
+                "rateLimitTimeframePlaceholder": "Empty = default ({{ default }})",
+                "rateLimitValidation": {
+                    "bothRequired": "Both fields must be filled or both must be empty. Leave both empty to use application defaults.",
+                    "requestsNonNegative": "Maximum requests must be 0 or greater (0 = no requests allowed).",
+                    "timeframePositive": "Timeframe must be at least 1 hour."
+                },
+                "effectiveRateLimit": "Effective Rate Limit",
+                "requests": "requests",
+                "per": "per",
+                "hours": "hours",
+                "unlimited": "unlimited",
+                "unlimitedTime": "∞",
                 "error": {
                     "save": "Error while saving Iris settings",
+                    "load": "Error while loading Iris settings",
+                    "noCourseId": "No course ID provided",
                     "noSettings": "Unable to load settings. Please contact your administrator if this problem persists."
                 },
                 "button": {
@@ -92,12 +126,7 @@
                         "placeholder": "Enter custom instructions for the AI (max 2048 characters)"
                     }
                 },
-                "title": {
-                    "breadcrumb": "Iris Settings",
-                    "global": "Global Iris Settings",
-                    "course": "Course Iris Settings",
-                    "exercise": "Exercise Iris Settings"
-                }
+                "title": "Iris Settings"
             },
             "error": {
                 "forbidden": "Artemis is not configured to use Iris. (Invalid token)",
@@ -126,8 +155,8 @@
                 "partiallyIngested": "Partially processed"
             },
             "ingestionAlert": {
-                "lectureUnitSuccess": "Lecture unit processing in Iris has started",
-                "lectureUnitError": "Error while sending lecture unit to Iris",
+                "lectureUnitSuccess": "Lecture content processing in Iris has started",
+                "lectureUnitError": "Error while sending lecture content to Iris",
                 "lectureSuccess": "Lecture processing in Iris has started",
                 "lectureError": "Error while sending lecture to Iris",
                 "allLecturesSuccess": "All Lectures are now being processed",
@@ -140,7 +169,7 @@
                 "transcriptionIngestionError": "Error while sending transcription"
             },
             "controlCenter": {
-                "tooltip": "By toggling you enable or disable ALL Iris features for this course. For a more precise control, please use the Iris settings by clicking on Custom."
+                "tooltip": "Enable or disable Iris for your course. To configure custom instructions, click the configure button."
             },
             "chatHistory": {
                 "title": "Chats",

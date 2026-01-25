@@ -19,6 +19,7 @@ export class MockAccountService implements IAccountService {
     updateLanguage = (languageKey: string) => of({});
     getImageUrl = () => 'blob';
     hasAuthority = (authority: string) => Promise.resolve(true);
+    isAtLeastTutor = () => this.hasAnyAuthorityDirect(['ROLE_TUTOR']);
     isAtLeastTutorInCourse = (course: Course) => true;
     isAtLeastEditorInCourse = (course: Course) => course.isAtLeastEditor!;
     isAtLeastInstructorInCourse = (course: Course) => course.isAtLeastInstructor!;
@@ -38,4 +39,9 @@ export class MockAccountService implements IAccountService {
     getToolToken = () => of();
     setUserEnabledMemiris = (enabled: boolean) => of();
     setUserAcceptedExternalLLMUsage = (accepted: boolean) => of();
+
+    askToSetupPasskey = () => false;
+    isLoggedInWithPasskey = () => true;
+    isPasskeySuperAdminApproved = () => true;
+    isUserLoggedInWithApprovedPasskey = () => true;
 }

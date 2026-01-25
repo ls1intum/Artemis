@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.test_repository;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
@@ -18,6 +19,14 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 @Primary
 @Lazy
 public interface LectureTestRepository extends LectureRepository {
+
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
+                LEFT JOIN FETCH lecture.attachments
+            WHERE lecture.course.id = :courseId
+            """)
+    Set<Lecture> findAllByCourseIdWithAttachments(@Param("courseId") Long courseId);
 
     @NonNull
     default Lecture findByIdWithAttachmentsAndLectureUnitsAndCompletionsElseThrow(long lectureId) {

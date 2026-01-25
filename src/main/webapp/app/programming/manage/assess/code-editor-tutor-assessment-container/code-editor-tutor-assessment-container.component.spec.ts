@@ -235,19 +235,21 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         };
 
         // Initialize component and children
+        const feedbackLoaded = firstValueFrom(comp.onFeedbackLoaded);
         fixture.detectChanges();
         // wait until data is loaded from CodeEditorTutorAssessmentContainer
-        await firstValueFrom(comp.onFeedbackLoaded);
-        fixture.detectChanges();
+        await feedbackLoaded;
+        fixture.changeDetectorRef.detectChanges();
 
         // Setup tree for file browser
         const codeEditorFileBrowserComp = fixture.debugElement.query(By.directive(CodeEditorFileBrowserComponent)).componentInstance;
         codeEditorFileBrowserComp.filesTreeViewItem = treeItems;
         codeEditorFileBrowserComp.repositoryFiles = repositoryFiles;
-        codeEditorFileBrowserComp.selectedFile = 'folder/file1';
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
+        codeEditorFileBrowserComp.selectedFileChange.emit('folder/file1');
+        fixture.changeDetectorRef.detectChanges();
         codeEditorFileBrowserComp.isLoadingFiles = false;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const browserComponent = fixture.debugElement.query(By.directive(CodeEditorFileBrowserComponent)).componentInstance;
         expect(browserComponent).toBeDefined();
         expect(browserComponent.filesTreeViewItem).toHaveLength(1);
@@ -285,7 +287,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.isAssessor).toBeFalse();
         addFeedbackAndValidateScore(comp, 0, 0);
         comp.submit().then(() => {
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             const alertElementSubmit = debugElement.queryAll(By.css('jhi-alert'));
             expect(alertElementSubmit).not.toBeNull();
 
@@ -361,7 +363,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(findBySubmissionIdStub).toHaveBeenCalledOnce();
         expect(comp.isAssessor).toBeTrue();
         expect(comp.complaint).not.toBeNull();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const complaintsForm = debugElement.query(By.css('jhi-complaints-for-tutor-form'));
         expect(complaintsForm).not.toBeNull();
@@ -394,7 +396,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledOnce();
         expect(findBySubmissionIdStub).toHaveBeenCalledOnce();
         expect(comp.complaint).toBeUndefined();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const complaintsForm = debugElement.query(By.css('jhi-complaints-for-tutor-form'));
         expect(complaintsForm).toBeNull();

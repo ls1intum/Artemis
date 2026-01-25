@@ -18,6 +18,8 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.core.service.RateLimitConfigurationService;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -31,15 +33,22 @@ public class FeatureToggleService {
     @Value("${artemis.science.event-logging.enable:false}")
     private boolean scienceEnabledOnStart;
 
+    private final RateLimitConfigurationService rateLimitConfigurationService;
+
     private final WebsocketMessagingService websocketMessagingService;
 
     private final HazelcastInstance hazelcastInstance;
 
+    private final ProfileService profileService;
+
     private Map<Feature, Boolean> features;
 
-    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
+            ProfileService profileService, RateLimitConfigurationService rateLimitConfigurationService) {
         this.websocketMessagingService = websocketMessagingService;
         this.hazelcastInstance = hazelcastInstance;
+        this.profileService = profileService;
+        this.rateLimitConfigurationService = rateLimitConfigurationService;
     }
 
     private Optional<Map<Feature, Boolean>> getFeatures() {
@@ -101,6 +110,15 @@ public class FeatureToggleService {
 
         if (!features.containsKey(Feature.Memiris)) {
             features.put(Feature.Memiris, false);
+        }
+
+        // Disable LectureContentProcessing in dev profile to avoid issues with local file system access
+        if (profileService.isDevActive()) {
+            features.put(Feature.LectureContentProcessing, false);
+        }
+
+        if (rateLimitConfigurationService.isRateLimitingEnabled() && !features.containsKey(Feature.RateLimit)) {
+            features.put(Feature.RateLimit, true);
         }
     }
 

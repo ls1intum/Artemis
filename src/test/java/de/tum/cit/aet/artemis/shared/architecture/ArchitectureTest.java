@@ -91,12 +91,13 @@ import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.authorization.AuthorizationTestService;
 import de.tum.cit.aet.artemis.core.config.ApplicationConfiguration;
 import de.tum.cit.aet.artemis.core.config.ConditionalMetricsExclusionConfiguration;
-import de.tum.cit.aet.artemis.core.config.PublicResourcesConfiguration;
+import de.tum.cit.aet.artemis.core.config.StaticResourcesConfiguration;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisIntegrationTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTestBase;
 
 /**
  * This class contains architecture tests that apply for the whole project.
@@ -113,7 +114,11 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNoGoogleImport() {
-        ArchRule noGoogleDependencies = noClasses().should().dependOnClassesThat().resideInAnyPackage("com.google");
+        ArchRule noGoogleDependencies = noClasses().should().dependOnClassesThat().resideInAnyPackage("com.google..")
+                .because("Google libraries (Guava, Gson) are forbidden to reduce incompatibilities, to reduce dependencies and security risks. " + "Alternatives: "
+                        + "Guava Cache -> Spring CacheManager (see CacheConfiguration), " + "Guava Collections -> Java Collections API (List.of(), Set.of(), Map.of()), "
+                        + "Guava Strings -> Apache Commons Lang3 StringUtils or Spring StringUtils, " + "Guava Preconditions -> Objects.requireNonNull() or Spring Assert, "
+                        + "Guava Optional -> java.util.Optional, " + "Gson -> Jackson ObjectMapper");
         noGoogleDependencies.check(allClasses);
     }
 
@@ -239,13 +244,28 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testJavaxActivationExclusion() {
+        var javaxActivationUsageRule = noClasses().should().dependOnClassesThat().resideInAnyPackage("javax.activation..")
+                .because("javax.activation is an outdated library, please use an alternative.");
+        var result = javaxActivationUsageRule.evaluate(allClasses);
+        assertThat(result.getFailureReport().getDetails()).hasSize(0);
+    }
+
+    @Test
     void testGsonExclusion() {
-        // TODO: Replace all uses of gson with Jackson and check that gson is not used any more
         var gsonUsageRule = noClasses().should().accessClassesThat().resideInAnyPackage("com.google.gson..").because("we use an alternative JSON parsing library.");
         var result = gsonUsageRule.evaluate(allClasses);
-        log.info("Current number of Gson usages: {}", result.getFailureReport().getDetails().size());
-        // TODO: reduce the following number to 0
-        assertThat(result.getFailureReport().getDetails()).hasSizeLessThanOrEqualTo(664);
+        log.debug("Current number of Gson usages: {}", result.getFailureReport().getDetails().size());
+        assertThat(result.getFailureReport().getDetails()).hasSize(0);
+    }
+
+    @Test
+    void testGuavaExclusion() {
+        var guavaUsageRule = noClasses().should().accessClassesThat().resideInAnyPackage("com.google.common..")
+                .because("Guava is not allowed. Use standard Java or Spring alternatives instead.");
+        var result = guavaUsageRule.evaluate(allClasses);
+        log.debug("Current number of Guava usages: {}", result.getFailureReport().getDetails().size());
+        assertThat(result.getFailureReport().getDetails()).hasSize(0);
     }
 
     /**
@@ -323,7 +343,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     void testNoRestControllersImported() {
         final var exceptions = new String[] { "AccountResourceIntegrationTest", "AndroidAppSiteAssociationResourceTest", "AppleAppSiteAssociationResourceTest",
                 "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest", "PlagiarismApiArchitectureTest", "LtiApiArchitectureTest",
-                "IrisTutorSuggestionIntegrationTest" };
+                "IrisTutorSuggestionIntegrationTest", "HyperionCodeGenerationResourceTest" };
         final var classes = classesExcept(allClasses, exceptions);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }
@@ -341,7 +361,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void shouldNotUserAutowiredAnnotation() {
         ArchRule rule = noFields().should().beAnnotatedWith(Autowired.class).because("fields should not rely on field injection via @Autowired");
-        final var exceptions = new Class[] { PublicResourcesConfiguration.class };
+        final var exceptions = new Class[] { StaticResourcesConfiguration.class };
         JavaClasses classes = classesExcept(productionClasses, exceptions);
         rule.check(classes);
     }
@@ -353,7 +373,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
         Method condCheckMethod = AuthorizationTestService.class.getMethod("testConditionalEndpoints", Map.class);
         String identifyingPackage = "authorization";
 
-        ArchRule rule = classes().that(beDirectSubclassOf(AbstractArtemisIntegrationTest.class))
+        // Exclude shared base classes that are not test environments themselves but provide shared code for multiple environments
+        ArchRule rule = classes().that(beDirectSubclassOf(AbstractArtemisIntegrationTest.class)).and(not(type(AbstractSpringIntegrationJenkinsLocalVCTestBase.class)))
                 .should(haveMatchingTestClassCallingAMethod(identifyingPackage, Set.of(allCheckMethod, condCheckMethod)))
                 .because("every test environment should have a corresponding authorization test covering the endpoints of this environment.");
         rule.check(testClasses);
@@ -416,7 +437,11 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void ensureSpringComponentsAreLazyAnnotated() {
         ArchRule rule = classes().that().areAnnotatedWith(Controller.class).or().areAnnotatedWith(RestController.class).or().areAnnotatedWith(Repository.class).or()
-                .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class).should().beAnnotatedWith(Lazy.class)
+                .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class)
+                // JacksonConfiguration must NOT be lazy because Jackson modules must be available when the ObjectMapper is created
+                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.config.JacksonConfiguration")
+                // RequestUtilService must NOT be lazy because it needs the ObjectMapper to be fully configured with Jackson modules
+                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.util.RequestUtilService").should().beAnnotatedWith(Lazy.class)
                 .because("All Spring components should be lazy-loaded to improve startup time");
 
         rule.check(allClasses);

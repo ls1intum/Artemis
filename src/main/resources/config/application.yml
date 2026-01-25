@@ -15,6 +15,8 @@
 # ===================================================================
 
 logging:
+    pattern:
+        correlation: ""
     level:
         ROOT: INFO
         de.tum.cit.aet.artemis: INFO
@@ -32,6 +34,8 @@ logging:
 artemis:
     version: #project.version#
     file-upload-path: uploads
+    feedback:
+        max-feedback-length: 20000  # Maximum length for feedback text before truncation
     submission-export-path: exports
     temp-path: ./tmp                                # a folder in which temporary files are stored, e.g. for the programming exercise import from file
     bcrypt-salt-rounds: 11 #default value, see application-artemis.yml for more information how to override and customize this value
@@ -69,7 +73,7 @@ artemis:
                 java:
                     # possible overrides: maven, gradle
                     default: "ls1tum/artemis-maven-template:java17-25"
-                    maven_blackbox: "ghcr.io/uni-passau-artemis/artemis-dejagnu:22"
+                    maven_blackbox: "ghcr.io/uni-passau-artemis/artemis-dejagnu:25"
                 kotlin:
                     # possible overrides: maven, gradle
                     default: "ls1tum/artemis-maven-template:java17-25"
@@ -135,6 +139,13 @@ artemis:
         enabled: false
         url: # Set this in production environment (e.g., https://nebula.example.com)
         secret-token: # Set this in production environment
+
+    iris:
+        ratelimit:
+            # Use -1 for both values to indicate unlimited (no rate limiting)
+            # Otherwise: default-limit >= 0 (0 = no requests allowed), default-timeframe-hours >= 1
+            default-limit: -1
+            default-timeframe-hours: -1
 
     # Default security configuration for internal endpoints accessed by other Artemis components
     # Currently set to allow all IPs. Adjust as necessary for your deployment.
@@ -371,7 +382,9 @@ jhipster:
         password: AN-ADMIN-PASSWORD-THAT-MUST-BE-CHANGED (FROM REGISTRY CONFIG)
     http:
         cache: # Used by the CachingHttpHeadersFilter
-            timeToLiveInDays: 1461
+            # 7 days balances caching benefits with allowing bug fixes to propagate within a reasonable timeframe.
+            # Longer durations (e.g., years) make it difficult to push fixes to users who have cached broken responses.
+            timeToLiveInDays: 7
     cache: # Cache configuration
         hazelcast: # Hazelcast distributed cache
             time-to-live-seconds: 3600
@@ -380,6 +393,8 @@ jhipster:
 # Eureka configuration
 eureka:
     client:
+        region: default
+        shouldEnforceRegistrationAtInit: false
         enabled: false
         service-url:
             defaultZone: http://admin:${jhipster.registry.password}@localhost:8761/eureka/
@@ -387,14 +402,15 @@ eureka:
             enabled: false
         fetch-registry: true
         register-with-eureka: true
-        instance-info-replication-interval-seconds: 10
-        registry-fetch-interval-seconds: 10
+        instance-info-replication-interval-seconds: 15
+        registry-fetch-interval-seconds: 15
+        use-dns-for-fetching-service-urls: false
     instance:
         prefer-ip-address: true
         appname: Artemis
         instanceId: Artemis:1
-        lease-renewal-interval-in-seconds: 5
-        lease-expiration-duration-in-seconds: 10
+        lease-renewal-interval-in-seconds: 20
+        lease-expiration-duration-in-seconds: 60
         status-page-url-path: ${management.endpoints.web.base-path}/info
         health-check-url-path: ${management.endpoints.web.base-path}/health
         metadata-map:

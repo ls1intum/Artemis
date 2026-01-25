@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { combineLatest } from 'rxjs';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 
@@ -14,11 +14,12 @@ import { MetricsRequestComponent } from './blocks/metrics-request/metrics-reques
 import { MetricsEndpointsRequestsComponent } from './blocks/metrics-endpoints-requests/metrics-endpoints-requests.component';
 import { MetricsCacheComponent } from './blocks/metrics-cache/metrics-cache.component';
 import { MetricsDatasourceComponent } from './blocks/metrics-datasource/metrics-datasource.component';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
+import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
 
 @Component({
     selector: 'jhi-metrics',
     templateUrl: './metrics.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,
         FaIconComponent,
@@ -30,18 +31,24 @@ import { MetricsDatasourceComponent } from './blocks/metrics-datasource/metrics-
         MetricsEndpointsRequestsComponent,
         MetricsCacheComponent,
         MetricsDatasourceComponent,
+        AdminTitleBarTitleDirective,
+        AdminTitleBarActionsDirective,
     ],
 })
 export class MetricsComponent implements OnInit {
-    private metricsService = inject(MetricsService);
-    private changeDetector = inject(ChangeDetectorRef);
+    private readonly metricsService = inject(MetricsService);
 
-    metrics?: Metrics;
-    threads: Thread[] = [];
-    updatingMetrics = true;
+    /** Current metrics data */
+    readonly metrics = signal<Metrics | undefined>(undefined);
 
-    // Icons
-    faSync = faSync;
+    /** Thread dump data */
+    readonly threads = signal<Thread[]>([]);
+
+    /** Whether metrics are currently being updated */
+    readonly updatingMetrics = signal(true);
+
+    /** Icons */
+    protected readonly faSync = faSync;
 
     /**
      * Calls the refresh method on init
@@ -54,12 +61,11 @@ export class MetricsComponent implements OnInit {
      * Refreshes the metrics by retrieving all metrics and thread dumps
      */
     refresh(): void {
-        this.updatingMetrics = true;
+        this.updatingMetrics.set(true);
         combineLatest([this.metricsService.getMetrics(), this.metricsService.threadDump()]).subscribe(([metrics, threadDump]) => {
-            this.metrics = metrics;
-            this.threads = threadDump.threads;
-            this.updatingMetrics = false;
-            this.changeDetector.markForCheck();
+            this.metrics.set(metrics);
+            this.threads.set(threadDump.threads);
+            this.updatingMetrics.set(false);
         });
     }
 
@@ -68,7 +74,7 @@ export class MetricsComponent implements OnInit {
      * @param key string identifier of a metric
      */
     metricsKeyExists(key: keyof Metrics): boolean {
-        return Boolean(this.metrics?.[key]);
+        return Boolean(this.metrics()?.[key]);
     }
 
     /**
@@ -76,6 +82,7 @@ export class MetricsComponent implements OnInit {
      * @param key key string identifier of a metric
      */
     metricsKeyExistsAndObjectNotEmpty(key: keyof Metrics): boolean {
-        return Boolean(this.metrics?.[key] && JSON.stringify(this.metrics[key]) !== '{}');
+        const m = this.metrics();
+        return Boolean(m?.[key] && JSON.stringify(m[key]) !== '{}');
     }
 }

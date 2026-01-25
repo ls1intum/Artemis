@@ -1,11 +1,11 @@
 <div class="frame">
     <div class="header">
-        <span class="h3">{{ getMonthDescription() }}</span>
+        <h3>{{ monthDescription() }}</h3>
         <div class="spacer"></div>
         <p-multiSelect
             [options]="filterOptions()"
             [ngModel]="selectedFilterOptions()"
-            (ngModelChange)="onSelectionOptionsChange($event)"
+            (ngModelChange)="onSelectedFilterOptionsChange($event)"
             optionLabel="name"
             [placeholder]="filterComponentPlaceholder()"
             [showHeader]="false"
@@ -17,7 +17,7 @@
                             <div class="chip" [attr.data-testid]="'chip-' + optionWithMetadata.option">
                                 <div class="legend-circle" [class]="optionWithMetadata.colorClassName"></div>
                                 <span>{{ optionWithMetadata.name }}</span>
-                                <button class="remove-button" (click)="removeOption(optionWithMetadata.option); $event.stopPropagation()">
+                                <button class="remove-button" (click)="removeFilterOption(optionWithMetadata.option); $event.stopPropagation()">
                                     <fa-icon [icon]="faXmark" />
                                 </button>
                             </div>
@@ -28,17 +28,17 @@
         </p-multiSelect>
         <p-selectbutton
             [options]="presentationOptions()"
-            [ngModel]="selectedPresentation()"
-            (ngModelChange)="selectedPresentation.set($event)"
+            [ngModel]="presentation()"
+            (ngModelChange)="presentation.set($event)"
             [unselectable]="true"
             optionLabel="label"
             optionValue="value"
             size="small"
             id="presentation-select-button"
         />
-        @let courseId = currentCourseId();
+        @let currentCourseId = courseId();
         @let subscriptionToken = calendarSubscriptionToken();
-        @if (courseId && subscriptionToken) {
+        @if (currentCourseId && subscriptionToken) {
             <div>
                 <button
                     data-testid="subscribe-button"
@@ -48,7 +48,7 @@
                     (click)="subscriptionPopover.open($event)"
                     jhiTranslate="artemisApp.calendar.subscribeButtonLabel"
                 ></button>
-                <jhi-calendar-subscription-popover [subscriptionToken]="subscriptionToken" [courseId]="courseId" #subscriptionPopover />
+                <jhi-calendar-subscription-popover [subscriptionToken]="subscriptionToken" [courseId]="currentCourseId" #subscriptionPopover />
             </div>
         }
         <button id="today-button" pButton size="small" outlined (click)="goToToday()" jhiTranslate="artemisApp.calendar.todayButtonLabel"></button>
@@ -64,10 +64,10 @@
     </div>
 
     <div class="calendar-presentation-container">
-        @if (selectedPresentation() === 'month') {
-            <jhi-calendar-desktop-month-presentation [firstDayOfCurrentMonth]="firstDayOfCurrentMonth()" />
+        @if (presentation() === 'month') {
+            <jhi-calendar-desktop-month-presentation [firstDateOfCurrentMonth]="firstDateOfCurrentMonth()" />
         } @else {
-            <jhi-calendar-desktop-week-presentation [firstDayOfCurrentWeek]="firstDayOfCurrentWeek()" />
+            <jhi-calendar-desktop-week-presentation [firstDayOfCurrentWeek]="firstDateOfCurrentWeek()" />
         }
         @if (isLoading()) {
             <div class="loading-overlay">

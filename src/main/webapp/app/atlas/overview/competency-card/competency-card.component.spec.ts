@@ -9,8 +9,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
-import { ArtemisTimeAgoPipe } from '../../../shared/pipes/artemis-time-ago.pipe';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('CompetencyCardComponent', () => {
     let competencyCardComponentFixture: ComponentFixture<CompetencyCardComponent>;

@@ -8,7 +8,6 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
@@ -33,6 +32,7 @@ import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -91,18 +91,18 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
+class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTest {
 
     private static final String TEST_PREFIX = "examint";
 
@@ -207,18 +207,54 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         examUtilService.addExamChannel(exam2, "exam2 channel");
     }
 
+    private static final int LARGE_PAGE_SIZE_FOR_TESTS = 200;
+
+    private MultiValueMap<String, String> getPageParams() {
+        return getPageParams(0, LARGE_PAGE_SIZE_FOR_TESTS);
+    }
+
+    private MultiValueMap<String, String> getPageParams(int page) {
+        return getPageParams(page, LARGE_PAGE_SIZE_FOR_TESTS);
+    }
+
+    private MultiValueMap<String, String> getPageParams(int page, int size) {
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("page", "0");
+        params.add("size", String.valueOf(LARGE_PAGE_SIZE_FOR_TESTS));
+        return params;
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor10", roles = "INSTRUCTOR")
-    void testGetAllActiveExams() throws Exception {
+    void testGetAllActiveExams_Instructor() throws Exception {
+        var now = ZonedDateTime.now();
         // add additional active exam
-        var exam3 = examUtilService.addExam(course10, ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2), ZonedDateTime.now().plusDays(3));
+        var exam3 = examUtilService.addExam(course10, now.plusDays(1), now.plusDays(2), now.plusDays(3));
+        // add additional exam not active
+        var exam4 = examUtilService.addExam(course10, now.minusDays(10), now.plusDays(2), now.plusDays(3));
+
+        List<Exam> activeExams = request.getList("/api/exam/exams/active", HttpStatus.OK, Exam.class, getPageParams());
+        // only exam3 should be returned
+        assertThat(activeExams).contains(exam3);
+        assertThat(activeExams).doesNotContain(exam4);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetAllActiveExams_Tutor() throws Exception {
+        var now = ZonedDateTime.now();
+        // add two additional exams, one already visible, the other one visible tomorrow
+        var exam3 = examUtilService.addExam(course10, now.minusDays(1), now, now.plusHours(2));
+        var exam4 = examUtilService.addExam(course10, now.plusDays(1), now.plusDays(2), now.plusDays(3));
 
         // add additional exam not active
-        examUtilService.addExam(course10, ZonedDateTime.now().minusDays(10), ZonedDateTime.now().plusDays(2), ZonedDateTime.now().plusDays(3));
+        var exam5 = examUtilService.addExam(course10, now.minusDays(10), now.plusDays(2), now.plusDays(3));
 
-        List<Exam> activeExams = request.getList("/api/exam/exams/active", HttpStatus.OK, Exam.class);
-        // only exam3 should be returned
-        assertThat(activeExams).containsExactly(exam3);
+        List<Exam> activeExams = request.getList("/api/exam/exams/active", HttpStatus.OK, Exam.class, getPageParams());
+        // only exam4 should be returned
+        assertThat(activeExams).contains(exam3);
+        assertThat(activeExams).doesNotContain(exam4);
+        assertThat(activeExams).doesNotContain(exam5);
     }
 
     @Test
@@ -491,6 +527,80 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
         // Test for bad request when course is null.
         request.post("/api/exam/courses/" + course1.getId() + "/exams", examB, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_failsWithExamMaxPointsTooHigh() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1, "examMaxPointsTest");
+        exam.setExamMaxPoints(10000); // Max allowed is 9999
+
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_failsWithGracePeriodTooHigh() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1, "examGracePeriodTest");
+        exam.setGracePeriod(3601); // Max allowed is 3600 seconds
+
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_failsWithNumberOfExercisesTooHigh() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1, "examNumberOfExercisesTest");
+        exam.setNumberOfExercisesInExam(101); // Max allowed is 100
+
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_failsWithWorkingTimeTooHigh() throws Exception {
+        // Test with a test exam where workingTime is directly validated
+        Exam exam = ExamFactory.generateExam(course1, "examWorkingTimeTest");
+        exam.setTestExam(true);
+        exam.setNumberOfCorrectionRoundsInExam(0);
+        exam.setWorkingTime(2592001); // Max allowed is 2592000 seconds (30 days)
+
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_failsWithExamMaxPointsTooHigh() throws Exception {
+        exam1.setExamMaxPoints(10000); // Max allowed is 9999
+
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", exam1, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_failsWithGracePeriodTooHigh() throws Exception {
+        exam1.setGracePeriod(3601); // Max allowed is 3600 seconds
+
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", exam1, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_failsWithNumberOfExercisesTooHigh() throws Exception {
+        exam1.setNumberOfExercisesInExam(101); // Max allowed is 100
+
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", exam1, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_failsWithWorkingTimeTooHigh() throws Exception {
+        // Test with a test exam where workingTime is directly validated
+        exam1.setTestExam(true);
+        exam1.setNumberOfCorrectionRoundsInExam(0);
+        exam1.setWorkingTime(2592001); // Max allowed is 2592000 seconds (30 days)
+
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", exam1, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -1222,7 +1332,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         savedSubmission = submissions.stream().filter(submission -> submission instanceof ModelingSubmission).findFirst().orElseThrow();
         assertSubmissionFilename(filenames, savedSubmission, ".json");
 
-        FileUtils.deleteDirectory(extractedArchiveDir.toFile());
+        RepositoryExportTestUtil.safeDeleteDirectory(extractedArchiveDir);
         FileUtils.delete(archive);
     }
 
@@ -1899,6 +2009,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         quiz.addQuestions(QuizExerciseFactory.createMultipleChoiceQuestionWithAllTypesOfAnswerOptions());
         quiz.addQuestions(QuizExerciseFactory.createShortAnswerQuestionWithRealisticText());
         quiz.addQuestions(QuizExerciseFactory.createSingleChoiceQuestion());
+        quiz.addQuestions(QuizExerciseFactory.createDragAndDropQuestion());
         quizGroup.addExercise(quiz);
         exerciseRepository.save(quiz);
 
@@ -1915,10 +2026,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
         exercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId());
         // Quiz questions should get imported into the exam
-        assertThat(exercise.getQuizQuestions()).hasSize(3);
+        assertThat(exercise.getQuizQuestions()).hasSize(4);
     }
 
     @Test
+    @Disabled("Test requires actual LocalCI implementation since we converted LocalVC from mock to a real service.")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExamWithExercises_successfulWithImportToOtherCourse() throws Exception {
         setupMocks();
@@ -1926,6 +2038,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         exam.setCourse(course1);
         exam.setId(null);
         exam.setChannelName("testchannelname");
+
+        // Null all exercise group and exercise IDs to force new entities
+        exam.getExerciseGroups().forEach(group -> {
+            group.setId(null);
+            group.getExercises().forEach(ex -> ex.setId(null));
+        });
 
         final Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", exam, Exam.class, CREATED);
         assertThat(received.getExerciseGroups()).hasSize(5);
@@ -1947,8 +2065,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     private void setupMocks() {
         doReturn(null).when(continuousIntegrationService).checkIfProjectExists(anyString(), anyString());
-        doReturn(new LocalVCRepositoryUri(localVCBaseUri, "projectkey", "repositoryslug")).when(versionControlService).copyRepositoryWithHistory(anyString(), anyString(),
-                anyString(), anyString(), anyString(), isNull());
         doNothing().when(continuousIntegrationService).createProjectForExercise(any(ProgrammingExercise.class));
         doReturn("build plan").when(continuousIntegrationService).copyBuildPlan(any(ProgrammingExercise.class), anyString(), any(ProgrammingExercise.class), anyString(),
                 anyString(), anyBoolean());

@@ -193,7 +193,7 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
         programmingExerciseCreationScheduleService.performScheduleOperationsAndCheckNotifications(savedProgrammingExercise);
-        programmingExerciseAtlasIrisService.updateCompetencyProgressOnCreationAndEnableIris(savedProgrammingExercise);
+        programmingExerciseAtlasIrisService.updateCompetencyProgressOnCreation(savedProgrammingExercise);
 
         return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
     }
@@ -284,7 +284,7 @@ public class ProgrammingExerciseCreationUpdateService {
 
         exerciseService.notifyAboutExerciseChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, notificationText);
 
-        programmingExerciseAtlasIrisService.updateCompetencyProgressOnExerciseUpdateAndEnableIris(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+        programmingExerciseAtlasIrisService.updateCompetencyProgressOnExerciseUpdate(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
         return savedProgrammingExercise;
     }
@@ -358,7 +358,9 @@ public class ProgrammingExerciseCreationUpdateService {
             throws EntityNotFoundException {
 
         String oldProblemStatement = programmingExercise.getProblemStatement();
-        programmingExercise.setProblemStatement(problemStatement);
+        // Trim the problem statement and convert whitespace-only strings to null
+        String trimmedProblemStatement = problemStatement != null ? problemStatement.trim() : null;
+        programmingExercise.setProblemStatement(trimmedProblemStatement != null && !trimmedProblemStatement.isEmpty() ? trimmedProblemStatement : null);
         programmingExerciseTaskService.replaceTestNamesWithIds(programmingExercise);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 

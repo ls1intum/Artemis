@@ -29,6 +29,10 @@ import de.tum.cit.aet.artemis.core.domain.User;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class UserDTO extends AuditingEntityDTO {
 
+    private static final boolean DEFAULT_IS_LOGGED_IN_WITH_PASSKEY = false;
+
+    private static final boolean DEFAULT_IS_SUPER_ADMIN_APPROVED = false;
+
     private Long id;
 
     @NotBlank
@@ -81,6 +85,10 @@ public class UserDTO extends AuditingEntityDTO {
      */
     private boolean askToSetupPasskey = false;
 
+    private boolean isLoggedInWithPasskey = DEFAULT_IS_LOGGED_IN_WITH_PASSKEY;
+
+    private boolean isPasskeySuperAdminApproved = DEFAULT_IS_SUPER_ADMIN_APPROVED;
+
     private ZonedDateTime externalLLMUsageAccepted;
 
     private boolean memirisEnabled = false;
@@ -91,13 +99,15 @@ public class UserDTO extends AuditingEntityDTO {
 
     public UserDTO(User user) {
         this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getVisibleRegistrationNumber(), user.getActivated(),
-                user.getImageUrl(), user.getLangKey(), user.isInternal(), user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(),
-                user.getAuthorities(), user.getGroups(), user.getOrganizations(), user.getExternalLLMUsageAcceptedTimestamp(), user.isMemirisEnabled());
+                user.getImageUrl(), user.getLangKey(), user.isInternal(), DEFAULT_IS_LOGGED_IN_WITH_PASSKEY, DEFAULT_IS_SUPER_ADMIN_APPROVED, user.getCreatedBy(),
+                user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(), user.getAuthorities(), user.getGroups(), user.getOrganizations(),
+                user.getExternalLLMUsageAcceptedTimestamp(), user.isMemirisEnabled());
     }
 
     public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
-            String langKey, boolean internal, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, Set<Authority> authorities,
-            Set<String> groups, Set<Organization> organizations, ZonedDateTime externalLLMUsageAccepted, boolean memirisEnabled) {
+            String langKey, boolean internal, boolean isLoggedInWithPasskey, boolean isPasskeySuperAdminApproved, String createdBy, Instant createdDate, String lastModifiedBy,
+            Instant lastModifiedDate, Set<Authority> authorities, Set<String> groups, Set<Organization> organizations, ZonedDateTime externalLLMUsageAccepted,
+            boolean memirisEnabled) {
 
         this.id = id;
         this.login = login;
@@ -121,6 +131,8 @@ public class UserDTO extends AuditingEntityDTO {
         this.organizations = organizations;
         this.externalLLMUsageAccepted = externalLLMUsageAccepted;
         this.memirisEnabled = memirisEnabled;
+        this.isLoggedInWithPasskey = isLoggedInWithPasskey;
+        this.isPasskeySuperAdminApproved = isPasskeySuperAdminApproved;
     }
 
     public Long getId() {
@@ -256,6 +268,22 @@ public class UserDTO extends AuditingEntityDTO {
         return askToSetupPasskey;
     }
 
+    public boolean isLoggedInWithPasskey() {
+        return isLoggedInWithPasskey;
+    }
+
+    public void setLoggedInWithPasskey(boolean isLoggedInWithPasskey) {
+        this.isLoggedInWithPasskey = isLoggedInWithPasskey;
+    }
+
+    public boolean isPasskeySuperAdminApproved() {
+        return isPasskeySuperAdminApproved;
+    }
+
+    public void setPasskeySuperAdminApproved(boolean isPasskeySuperAdminApproved) {
+        this.isPasskeySuperAdminApproved = isPasskeySuperAdminApproved;
+    }
+
     public boolean isInternal() {
         return internal;
     }
@@ -284,6 +312,7 @@ public class UserDTO extends AuditingEntityDTO {
     public String toString() {
         return "UserDTO{" + "login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", email='" + email + '\'' + ", imageUrl='"
                 + imageUrl + '\'' + ", activated=" + activated + ", langKey='" + langKey + '\'' + ", createdBy=" + getCreatedBy() + ", createdDate=" + getCreatedDate()
-                + ", lastModifiedBy='" + getLastModifiedBy() + '\'' + ", lastModifiedDate=" + getLastModifiedDate() + ", authorities=" + authorities + "}";
+                + ", lastModifiedBy='" + getLastModifiedBy() + '\'' + ", lastModifiedDate=" + getLastModifiedDate() + ", isLoggedInWithPasskey=" + isLoggedInWithPasskey
+                + ", authorities=" + authorities + ", isPasskeySuperAdminApproved=" + isPasskeySuperAdminApproved + "}";
     }
 }

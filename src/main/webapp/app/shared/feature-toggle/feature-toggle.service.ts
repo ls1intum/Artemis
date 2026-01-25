@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subscription } from 'rxjs';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
@@ -22,6 +22,8 @@ export enum FeatureToggle {
     AtlasML = 'AtlasML',
     AtlasAgent = 'AtlasAgent',
     Memiris = 'Memiris',
+    LectureContentProcessing = 'LectureContentProcessing',
+    RateLimit = 'RateLimit',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
 
@@ -35,6 +37,7 @@ export class FeatureToggleService {
     private readonly TOPIC = `/topic/management/feature-toggles`;
     private subject: BehaviorSubject<ActiveFeatureToggles>;
     private subscriptionInitialized = false;
+    private featureToggleSubscription?: Subscription;
 
     constructor() {
         this.subject = new BehaviorSubject<ActiveFeatureToggles>(defaultActiveFeatureState);
@@ -45,9 +48,8 @@ export class FeatureToggleService {
      */
     public subscribeFeatureToggleUpdates() {
         if (!this.subscriptionInitialized) {
-            this.websocketService.subscribe(this.TOPIC);
-            this.websocketService
-                .receive(this.TOPIC)
+            this.featureToggleSubscription = this.websocketService
+                .subscribe<ActiveFeatureToggles>(this.TOPIC)
                 .pipe(tap((activeFeatures) => this.notifySubscribers(activeFeatures)))
                 .subscribe();
             this.subscriptionInitialized = true;
@@ -59,7 +61,8 @@ export class FeatureToggleService {
      */
     public unsubscribeFeatureToggleUpdates() {
         if (this.subscriptionInitialized) {
-            this.websocketService.unsubscribe(this.TOPIC);
+            this.featureToggleSubscription?.unsubscribe();
+            this.featureToggleSubscription = undefined;
             this.subscriptionInitialized = false;
         }
     }

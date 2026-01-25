@@ -1,7 +1,7 @@
 import { Component, Input, TemplateRef, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { NgTemplateOutlet } from '@angular/common';
-import { TranslateDirective } from '../../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 @Component({
@@ -18,4 +18,5 @@ export class ConfirmAutofocusModalComponent {
     @Input() translateText: boolean;
     @Input() textIsMarkdown: boolean;
     @Input() contentRef?: TemplateRef<any>;
+    @Input() confirmDisabled = false;
 }

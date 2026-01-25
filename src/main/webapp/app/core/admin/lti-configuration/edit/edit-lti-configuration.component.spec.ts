@@ -1,147 +1,348 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { EditLtiConfigurationComponent } from 'app/core/admin/lti-configuration/edit/edit-lti-configuration.component';
-import { LtiConfigurationService } from 'app/core/admin/lti-configuration/lti-configuration.service';
-import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/shared/service/alert.service';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockPipe, MockProvider } from 'ng-mocks';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { HttpResponse } from '@angular/common/http';
 
-describe('Edit LTI Configuration Component', () => {
-    let comp: EditLtiConfigurationComponent;
+import { EditLtiConfigurationComponent } from './edit-lti-configuration.component';
+import { LtiConfigurationService } from 'app/core/admin/lti-configuration/lti-configuration.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+
+describe('EditLtiConfigurationComponent', () => {
+    setupTestBed({ zoneless: true });
+
+    let component: EditLtiConfigurationComponent;
     let fixture: ComponentFixture<EditLtiConfigurationComponent>;
     let ltiConfigurationService: LtiConfigurationService;
+    let alertService: AlertService;
+    let router: Router;
 
-    const router = new MockRouter();
-    let route: ActivatedRoute;
-
-    const platformConfiguration = {
+    const mockPlatform: LtiPlatformConfiguration = {
         id: 1,
-        registrationId: 'registration_id',
-        originalUrl: 'original_url',
-        customName: 'custom_platform',
-        clientId: 'client_id',
-        authorizationUri: 'auth_uri',
-        jwkSetUri: 'jwkSet_uri',
-        tokenUri: 'token_uri',
-    } as LtiPlatformConfiguration;
+        registrationId: 'test-registration-id',
+        clientId: 'test-client-id',
+        authorizationUri: 'https://example.com/auth',
+        tokenUri: 'https://example.com/token',
+        jwkSetUri: 'https://example.com/jwks',
+        customName: 'Test Platform',
+        originalUrl: 'https://example.com',
+    };
 
-    beforeEach(() => {
-        route = {
-            snapshot: { paramMap: convertToParamMap({ platformId: '1' }) },
-        } as ActivatedRoute;
+    const createActivatedRouteMock = (platformId: string | null) => ({
+        snapshot: {
+            paramMap: {
+                get: vi.fn().mockReturnValue(platformId),
+            },
+        },
+    });
 
-        const httpClientMock = {
-            get: jest.fn().mockReturnValue(of(platformConfiguration)),
-        };
+    describe('Create Mode', () => {
+        beforeEach(async () => {
+            await TestBed.configureTestingModule({
+                imports: [ReactiveFormsModule, FormsModule, FontAwesomeTestingModule, EditLtiConfigurationComponent, MockPipe(ArtemisTranslatePipe)],
+                providers: [
+                    MockProvider(LtiConfigurationService),
+                    MockProvider(AlertService),
+                    MockProvider(Router),
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    {
+                        provide: ActivatedRoute,
+                        useValue: createActivatedRouteMock(null),
+                    },
+                ],
+            }).compileComponents();
 
-        TestBed.configureTestingModule({
-            imports: [NgbNavModule, MockModule(NgbTooltipModule), MockModule(ReactiveFormsModule), FaIconComponent],
-            declarations: [EditLtiConfigurationComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent)],
-            providers: [
-                MockProvider(LtiConfigurationService),
-                { provide: Router, useValue: router },
-                { provide: ActivatedRoute, useValue: route },
-                { provide: HttpClient, useValue: httpClientMock },
-                MockProvider(AlertService),
-            ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(EditLtiConfigurationComponent);
-                comp = fixture.componentInstance;
-                ltiConfigurationService = TestBed.inject(LtiConfigurationService);
-                jest.spyOn(ltiConfigurationService, 'getLtiPlatformById').mockReturnValue(of(platformConfiguration));
+            fixture = TestBed.createComponent(EditLtiConfigurationComponent);
+            component = fixture.componentInstance;
+            ltiConfigurationService = TestBed.inject(LtiConfigurationService);
+            alertService = TestBed.inject(AlertService);
+            router = TestBed.inject(Router);
+        });
+
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        it('should initialize the form with empty values in create mode', () => {
+            fixture.detectChanges();
+
+            expect(component.platformConfigurationForm).toBeDefined();
+            expect(component.platformConfigurationForm.get('clientId')?.value).toBe('');
+            expect(component.platformConfigurationForm.get('authorizationUri')?.value).toBe('');
+            expect(component.platformConfigurationForm.get('tokenUri')?.value).toBe('');
+            expect(component.platformConfigurationForm.get('jwkSetUri')?.value).toBe('');
+            expect(component.isEditMode()).toBe(false);
+        });
+
+        it('should have invalid form when required fields are empty', () => {
+            fixture.detectChanges();
+
+            expect(component.platformConfigurationForm.invalid).toBe(true);
+        });
+
+        it('should have valid form when all required fields are filled', () => {
+            fixture.detectChanges();
+
+            component.platformConfigurationForm.patchValue({
+                clientId: 'test-client',
+                authorizationUri: 'https://example.com/auth',
+                tokenUri: 'https://example.com/token',
+                jwkSetUri: 'https://example.com/jwks',
             });
-    });
 
-    afterEach(() => {
-        jest.clearAllMocks();
-    });
-
-    it('should initialize', fakeAsync(() => {
-        fixture.detectChanges();
-        expect(comp).toBeTruthy();
-        expect(comp.platform).toEqual(platformConfiguration);
-        expect(comp.platformConfigurationForm).toBeDefined();
-        expect(comp.platformConfigurationForm.get('registrationId')?.value).toEqual(platformConfiguration.registrationId);
-        expect(comp.platformConfigurationForm.get('originalUrl')?.value).toEqual(platformConfiguration.originalUrl);
-        expect(comp.platformConfigurationForm.get('customName')?.value).toEqual(platformConfiguration.customName);
-        expect(comp.platformConfigurationForm.get('clientId')?.value).toEqual(platformConfiguration.clientId);
-        expect(comp.platformConfigurationForm.get('authorizationUri')?.value).toEqual(platformConfiguration.authorizationUri);
-        expect(comp.platformConfigurationForm.get('jwkSetUri')?.value).toEqual(platformConfiguration.jwkSetUri);
-        expect(comp.platformConfigurationForm.get('tokenUri')?.value).toEqual(platformConfiguration.tokenUri);
-    }));
-
-    it('should save and navigate', async () => {
-        fixture.detectChanges();
-
-        const changedConfiguration = updateConfiguration();
-
-        const updateResponse: HttpResponse<void> = new HttpResponse({
-            status: 200,
+            expect(component.platformConfigurationForm.valid).toBe(true);
         });
 
-        const updatedStub = jest.spyOn(ltiConfigurationService, 'updateLtiPlatformConfiguration').mockReturnValue(of(updateResponse));
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        it('should mark clientId as required', () => {
+            fixture.detectChanges();
 
-        expect(comp.isSaving).toBeFalse();
+            const clientIdControl = component.platformConfigurationForm.get('clientId');
+            expect(clientIdControl?.errors?.['required']).toBe(true);
 
-        await comp.save();
-
-        expect(updatedStub).toHaveBeenCalledOnce();
-        expect(updatedStub).toHaveBeenCalledWith(changedConfiguration);
-        expect(navigateSpy).toHaveBeenCalledOnce();
-        expect(navigateSpy).toHaveBeenCalledWith(['admin', 'lti-configuration']);
-    });
-
-    it('should handle save failure and display error', async () => {
-        fixture.detectChanges();
-
-        const changedConfiguration = updateConfiguration();
-
-        const errorResponse = new HttpErrorResponse({
-            error: 'test error',
-            status: 400,
-            statusText: 'Bad Request',
+            clientIdControl?.setValue('test-client');
+            expect(clientIdControl?.errors).toBeNull();
         });
 
-        const updateErrorStub = jest.spyOn(ltiConfigurationService, 'updateLtiPlatformConfiguration').mockReturnValue(throwError(() => errorResponse));
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        it('should mark authorizationUri as required', () => {
+            fixture.detectChanges();
 
-        expect(comp.isSaving).toBeFalse();
-        await comp.save();
-        expect(updateErrorStub).toHaveBeenCalledOnce();
-        expect(updateErrorStub).toHaveBeenCalledWith(changedConfiguration);
+            const authorizationUriControl = component.platformConfigurationForm.get('authorizationUri');
+            expect(authorizationUriControl?.errors?.['required']).toBe(true);
 
-        expect(navigateSpy).not.toHaveBeenCalled();
+            authorizationUriControl?.setValue('https://example.com/auth');
+            expect(authorizationUriControl?.errors).toBeNull();
+        });
+
+        it('should mark tokenUri as required', () => {
+            fixture.detectChanges();
+
+            const tokenUriControl = component.platformConfigurationForm.get('tokenUri');
+            expect(tokenUriControl?.errors?.['required']).toBe(true);
+
+            tokenUriControl?.setValue('https://example.com/token');
+            expect(tokenUriControl?.errors).toBeNull();
+        });
+
+        it('should mark jwkSetUri as required', () => {
+            fixture.detectChanges();
+
+            const jwkSetUriControl = component.platformConfigurationForm.get('jwkSetUri');
+            expect(jwkSetUriControl?.errors?.['required']).toBe(true);
+
+            jwkSetUriControl?.setValue('https://example.com/jwks');
+            expect(jwkSetUriControl?.errors).toBeNull();
+        });
+
+        describe('isFieldInvalid', () => {
+            it('should return false for untouched invalid field', () => {
+                fixture.detectChanges();
+
+                expect(component.isFieldInvalid('clientId')).toBe(false);
+            });
+
+            it('should return true for touched invalid field', () => {
+                fixture.detectChanges();
+
+                const clientIdControl = component.platformConfigurationForm.get('clientId');
+                clientIdControl?.markAsTouched();
+
+                expect(component.isFieldInvalid('clientId')).toBe(true);
+            });
+
+            it('should return true for dirty invalid field', () => {
+                fixture.detectChanges();
+
+                const clientIdControl = component.platformConfigurationForm.get('clientId');
+                clientIdControl?.markAsDirty();
+
+                expect(component.isFieldInvalid('clientId')).toBe(true);
+            });
+
+            it('should return false for valid field', () => {
+                fixture.detectChanges();
+
+                const clientIdControl = component.platformConfigurationForm.get('clientId');
+                clientIdControl?.setValue('test-client');
+                clientIdControl?.markAsTouched();
+
+                expect(component.isFieldInvalid('clientId')).toBe(false);
+            });
+        });
+
+        describe('Save in create mode', () => {
+            it('should call addLtiConfiguration when creating new platform', () => {
+                vi.spyOn(ltiConfigurationService, 'addLtiPlatformConfiguration').mockReturnValue(of(new HttpResponse({ body: mockPlatform })));
+                const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+                fixture.detectChanges();
+
+                component.platformConfigurationForm.patchValue({
+                    clientId: 'test-client',
+                    authorizationUri: 'https://example.com/auth',
+                    tokenUri: 'https://example.com/token',
+                    jwkSetUri: 'https://example.com/jwks',
+                });
+
+                component.save();
+
+                expect(ltiConfigurationService.addLtiPlatformConfiguration).toHaveBeenCalled();
+                expect(navigateSpy).toHaveBeenCalledWith(['admin', 'lti-configuration']);
+            });
+
+            it('should show error alert when save fails', () => {
+                vi.spyOn(ltiConfigurationService, 'addLtiPlatformConfiguration').mockReturnValue(throwError(() => new Error('Save failed')));
+                const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+                fixture.detectChanges();
+
+                component.platformConfigurationForm.patchValue({
+                    clientId: 'test-client',
+                    authorizationUri: 'https://example.com/auth',
+                    tokenUri: 'https://example.com/token',
+                    jwkSetUri: 'https://example.com/jwks',
+                });
+
+                component.save();
+
+                expect(alertErrorSpy).toHaveBeenCalled();
+                expect(component.isSaving()).toBe(false);
+            });
+        });
+
+        describe('Navigation', () => {
+            it('should navigate to lti-configuration page', () => {
+                fixture.detectChanges();
+
+                const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+                component.navigateToLtiConfigurationPage();
+
+                expect(navigateSpy).toHaveBeenCalledWith(['admin', 'lti-configuration']);
+            });
+        });
     });
 
-    function updateConfiguration() {
-        const changedConfiguration = {
-            ...platformConfiguration,
-            customName: 'custom_name_2',
-        } as LtiPlatformConfiguration;
+    describe('Edit Mode - Success', () => {
+        beforeEach(async () => {
+            await TestBed.configureTestingModule({
+                imports: [ReactiveFormsModule, FormsModule, FontAwesomeTestingModule, EditLtiConfigurationComponent, MockPipe(ArtemisTranslatePipe)],
+                providers: [
+                    {
+                        provide: LtiConfigurationService,
+                        useValue: {
+                            getLtiPlatformById: vi.fn().mockReturnValue(of(mockPlatform)),
+                            updateLtiPlatformConfiguration: vi.fn().mockReturnValue(of(new HttpResponse({ body: mockPlatform }))),
+                        },
+                    },
+                    MockProvider(AlertService),
+                    MockProvider(Router),
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    {
+                        provide: ActivatedRoute,
+                        useValue: createActivatedRouteMock('1'),
+                    },
+                ],
+            }).compileComponents();
 
-        comp.platformConfigurationForm = new FormGroup({
-            id: new FormControl(changedConfiguration.id),
-            registrationId: new FormControl(changedConfiguration.registrationId),
-            originalUrl: new FormControl(changedConfiguration.originalUrl),
-            customName: new FormControl(changedConfiguration.customName),
-            clientId: new FormControl(changedConfiguration.clientId),
-            authorizationUri: new FormControl(changedConfiguration.authorizationUri),
-            tokenUri: new FormControl(changedConfiguration.tokenUri),
-            jwkSetUri: new FormControl(changedConfiguration.jwkSetUri),
+            fixture = TestBed.createComponent(EditLtiConfigurationComponent);
+            component = fixture.componentInstance;
+            ltiConfigurationService = TestBed.inject(LtiConfigurationService);
+            alertService = TestBed.inject(AlertService);
+            router = TestBed.inject(Router);
         });
-        return changedConfiguration;
-    }
+
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        it('should set isEditMode and load data when platformId is provided', () => {
+            fixture.detectChanges();
+
+            expect(component.isEditMode()).toBe(true);
+            expect(ltiConfigurationService.getLtiPlatformById).toHaveBeenCalledWith(1);
+            expect(component.platform).toEqual(mockPlatform);
+            expect(component.platformConfigurationForm.get('clientId')?.value).toBe(mockPlatform.clientId);
+            expect(component.platformConfigurationForm.get('authorizationUri')?.value).toBe(mockPlatform.authorizationUri);
+        });
+
+        it('should call updateLtiConfiguration when editing existing platform', () => {
+            const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+            fixture.detectChanges();
+
+            component.platformConfigurationForm.patchValue({
+                clientId: 'updated-client',
+            });
+
+            component.save();
+
+            expect(ltiConfigurationService.updateLtiPlatformConfiguration).toHaveBeenCalled();
+            expect(navigateSpy).toHaveBeenCalledWith(['admin', 'lti-configuration']);
+        });
+    });
+
+    describe('Edit Mode - Load Failed', () => {
+        beforeEach(async () => {
+            await TestBed.configureTestingModule({
+                imports: [ReactiveFormsModule, FormsModule, FontAwesomeTestingModule, EditLtiConfigurationComponent, MockPipe(ArtemisTranslatePipe)],
+                providers: [
+                    {
+                        provide: LtiConfigurationService,
+                        useValue: {
+                            getLtiPlatformById: vi.fn().mockReturnValue(throwError(() => new Error('Load failed'))),
+                        },
+                    },
+                    MockProvider(AlertService),
+                    MockProvider(Router),
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    {
+                        provide: ActivatedRoute,
+                        useValue: createActivatedRouteMock('1'),
+                    },
+                ],
+            }).compileComponents();
+
+            fixture = TestBed.createComponent(EditLtiConfigurationComponent);
+            component = fixture.componentInstance;
+            ltiConfigurationService = TestBed.inject(LtiConfigurationService);
+            alertService = TestBed.inject(AlertService);
+            router = TestBed.inject(Router);
+        });
+
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        it('should set loadFailed when loading platform data fails', () => {
+            const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+            fixture.detectChanges();
+
+            expect(component.isEditMode()).toBe(true);
+            expect(component.loadFailed()).toBe(true);
+            expect(alertErrorSpy).toHaveBeenCalled();
+        });
+
+        it('should not save when in edit mode and load failed', () => {
+            const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+            fixture.detectChanges();
+
+            // Clear previous error call from load failure
+            alertErrorSpy.mockClear();
+
+            component.save();
+
+            expect(alertErrorSpy).toHaveBeenCalledWith('artemisApp.lti.editConfiguration.loadError');
+            expect(component.isSaving()).toBe(false);
+        });
+    });
 });

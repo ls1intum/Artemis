@@ -4,12 +4,13 @@ import { parseNumber } from './support/utils';
 import 'app/shared/util/map.extension';
 import 'app/shared/util/string.extension';
 import 'app/shared/util/array.extension';
+import path from 'path';
 
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
-dotenv.config({ path: `./playwright.env` });
+dotenv.config({ path: path.join(__dirname, 'playwright.env') });
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -49,6 +50,11 @@ export default defineConfig({
         baseURL: process.env.BASE_URL || 'http://localhost:9000',
         /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
         trace: 'on-first-retry',
+        /* Record video for all tests (passed and failed). Videos are saved in test-results folder. */
+        video: {
+            mode: 'on',
+            size: { width: 1920, height: 1080 },
+        },
         ignoreHTTPSErrors: true,
     },
 

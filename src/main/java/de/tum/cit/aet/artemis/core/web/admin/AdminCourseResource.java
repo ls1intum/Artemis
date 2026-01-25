@@ -5,11 +5,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,16 +30,17 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import de.tum.cit.aet.artemis.communication.domain.DefaultChannelType;
-import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.CourseDeletionSummaryDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseCreateDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseGroupsDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseOperationProgressDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseSummaryDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
@@ -47,13 +49,30 @@ import de.tum.cit.aet.artemis.core.service.course.CourseAccessService;
 import de.tum.cit.aet.artemis.core.service.course.CourseAdminService;
 import de.tum.cit.aet.artemis.core.service.course.CourseDeletionService;
 import de.tum.cit.aet.artemis.core.service.course.CourseLoadService;
+import de.tum.cit.aet.artemis.core.service.course.CourseOperationProgressService;
+import de.tum.cit.aet.artemis.core.service.course.CourseResetService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 
 /**
- * REST controller for managing Course.
+ * REST controller for administrative course management operations.
+ * <p>
+ * This controller provides endpoints for admin-only operations on courses, including:
+ * <ul>
+ * <li>Creating new courses with optional course icons</li>
+ * <li>Deleting courses and all associated data</li>
+ * <li>Resetting courses to remove student data while preserving structure</li>
+ * <li>Retrieving summaries of what will be affected by delete/reset operations</li>
+ * </ul>
+ * <p>
+ * All endpoints in this controller require admin privileges (enforced by {@link EnforceAdmin}).
+ * Operations are logged via Spring's audit event repository for compliance tracking.
+ *
+ * @see CourseDeletionService for course deletion logic
+ * @see CourseResetService for course reset logic
+ * @see CourseAdminService for summary calculations
  */
 @Profile(PROFILE_CORE)
 @EnforceAdmin
@@ -89,9 +108,13 @@ public class AdminCourseResource {
 
     private final CourseDeletionService courseDeletionService;
 
+    private final CourseResetService courseResetService;
+
+    private final CourseOperationProgressService progressService;
+
     public AdminCourseResource(UserRepository userRepository, CourseAdminService courseAdminService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
             FileService fileService, Optional<LtiApi> ltiApi, ChannelService channelService, CourseDeletionService courseDeletionService, CourseAccessService courseAccessService,
-            CourseLoadService courseLoadService) {
+            CourseLoadService courseLoadService, CourseResetService courseResetService, CourseOperationProgressService progressService) {
         this.courseAdminService = courseAdminService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
@@ -102,6 +125,8 @@ public class AdminCourseResource {
         this.courseDeletionService = courseDeletionService;
         this.courseAccessService = courseAccessService;
         this.courseLoadService = courseLoadService;
+        this.courseResetService = courseResetService;
+        this.progressService = progressService;
     }
 
     /**
@@ -125,23 +150,38 @@ public class AdminCourseResource {
     }
 
     /**
-     * POST /courses : create a new course.
+     * POST /courses : Create a new course.
+     * <p>
+     * Creates a new course using the provided DTO, which ensures a clean, server-controlled
+     * entity state. The course goes through several validation steps:
+     * <ul>
+     * <li>Title length validation (max 255 characters)</li>
+     * <li>Short name format and uniqueness validation</li>
+     * <li>Enrollment and complaint configuration validation</li>
+     * <li>Date range validation (start date before end date)</li>
+     * </ul>
+     * <p>
+     * If no group names are provided, default groups are created using the ARTEMIS_GROUP_DEFAULT_PREFIX.
+     * For online courses with LTI enabled, an online course configuration is automatically created.
+     * Default channels (announcements, general, etc.) are created for the course.
      *
-     * @param course the course to create
-     * @param file   the optional course icon file
-     * @return the ResponseEntity with status 201 (Created) and with body the new course, or with status 400 (Bad Request) if the course has already an ID
+     * @param courseDTO the DTO containing the course data to create (multipart form part "course")
+     * @param file      the optional course icon file (PNG/JPG image)
+     * @return the ResponseEntity with status 201 (Created) and the new course in the body,
+     *         or status 400 (Bad Request) if validation fails
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping(value = "courses", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Course> createCourse(@RequestPart Course course, @RequestPart(required = false) MultipartFile file) throws URISyntaxException {
-        log.debug("REST request to save Course : {}", course);
-        if (course.getId() != null) {
-            throw new BadRequestAlertException("A new course cannot already have an ID", Course.ENTITY_NAME, "idExists");
-        }
+    public ResponseEntity<Course> createCourse(@RequestPart("course") @Valid CourseCreateDTO courseDTO, @RequestPart(required = false) MultipartFile file)
+            throws URISyntaxException {
+        log.debug("REST request to save Course : {}", courseDTO.title());
 
-        if (course.getTitle().length() > MAX_TITLE_LENGTH) {
+        if (courseDTO.title().length() > MAX_TITLE_LENGTH) {
             throw new BadRequestAlertException("The course title is too long", Course.ENTITY_NAME, "courseTitleTooLong");
         }
+
+        // Convert DTO to entity - this ensures a clean, server-controlled entity state
+        Course course = courseDTO.toCourse();
 
         course.validateShortName();
 
@@ -173,60 +213,147 @@ public class AdminCourseResource {
             createdCourse = courseRepository.save(createdCourse);
         }
 
-        Course finalCreatedCourse = createdCourse;
-        Arrays.stream(DefaultChannelType.values()).forEach(channelType -> createDefaultChannel(finalCreatedCourse, channelType));
+        channelService.createDefaultChannels(createdCourse);
 
         return ResponseEntity.created(new URI("/api/core/courses/" + createdCourse.getId())).body(createdCourse);
     }
 
     /**
-     * DELETE /courses/:courseId : delete the "id" course.
+     * DELETE /courses/:courseId : Delete a course and all associated data.
+     * <p>
+     * Permanently deletes the course and all associated elements including:
+     * <ul>
+     * <li>All exercises with their participations, submissions, and results</li>
+     * <li>All programming exercise repositories and build plans</li>
+     * <li>All lectures with their attachments</li>
+     * <li>All exams with student exam data</li>
+     * <li>All conversations, posts, and messages</li>
+     * <li>All competencies and student progress</li>
+     * <li>All Iris chat sessions and LLM usage traces</li>
+     * <li>Default user groups created by Artemis</li>
+     * </ul>
+     * <p>
+     * The operation is logged as an audit event for compliance purposes.
+     * This action cannot be undone.
      *
-     * @param courseId the id of the course to delete
-     * @return the ResponseEntity with status 200 (OK)
+     * @param courseId the ID of the course to delete
+     * @return the ResponseEntity with status 200 (OK) on success,
+     *         or status 404 (Not Found) if the course does not exist
      */
     @DeleteMapping("courses/{courseId}")
     public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
         log.info("REST request to delete Course : {}", courseId);
-        Course course = courseLoadService.loadCourseWithExercisesLecturesLectureUnitsCompetenciesAndPrerequisites(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_COURSE, "course=" + course.getTitle());
-        auditEventRepository.add(auditEvent);
-        log.info("User {} has requested to delete the course {}", user.getLogin(), course.getTitle());
 
-        courseDeletionService.delete(course);
-        if (course.getCourseIcon() != null) {
-            fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(URI.create(course.getCourseIcon()), FilePathType.COURSE_ICON), 0);
+        // Load only minimal data needed for audit logging and cleanup
+        String courseTitle = courseRepository.getCourseTitle(courseId);
+        if (courseTitle == null) {
+            throw new EntityNotFoundException("Course", courseId);
         }
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, Course.ENTITY_NAME, course.getTitle())).build();
+        String courseIcon = courseRepository.getCourseIconById(courseId);
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_COURSE, "course=" + courseTitle);
+        auditEventRepository.add(auditEvent);
+        log.info("User {} has requested to delete the course {}", user.getLogin(), courseTitle);
+
+        courseDeletionService.delete(courseId);
+
+        if (courseIcon != null) {
+            fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(URI.create(courseIcon), FilePathType.COURSE_ICON), 0);
+        }
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, Course.ENTITY_NAME, courseTitle)).build();
     }
 
     /**
-     * GET /courses/:courseId/deletion-summary : get the deletion summary for the course with the given id.
+     * GET /courses/:courseId/summary : Get a comprehensive summary of all course data.
+     * <p>
+     * Returns counts of all entities in the course, including users, exercises, exams,
+     * posts, competencies, and AI data. This unified endpoint is used by both the
+     * deletion and reset confirmation dialogs to display impact information.
+     * <p>
+     * The client determines which fields to display based on the operation type:
+     * <ul>
+     * <li>For deletion: All data is shown (everything will be permanently removed)</li>
+     * <li>For reset: Only student data is shown (course structure is preserved)</li>
+     * </ul>
      *
-     * @param courseId the id of the course
-     * @return the ResponseEntity with status 200 (OK) and the deletion summary in the body
+     * @param courseId the ID of the course to get the summary for
+     * @return the ResponseEntity with status 200 (OK) and the course summary in the body
      */
-    @GetMapping("courses/{courseId}/deletion-summary")
-    public ResponseEntity<CourseDeletionSummaryDTO> getDeletionSummary(@PathVariable long courseId) {
-        log.debug("REST request to get deletion summary course: {}", courseId);
-        return ResponseEntity.ok().body(courseAdminService.getDeletionSummary(courseId));
+    @GetMapping("courses/{courseId}/summary")
+    public ResponseEntity<CourseSummaryDTO> getCourseSummary(@PathVariable long courseId) {
+        log.debug("REST request to get summary for course: {}", courseId);
+        return ResponseEntity.ok().body(courseAdminService.getCourseSummary(courseId));
     }
 
     /**
-     * Creates a default channel with the given name and adds all students, tutors and instructors as participants.
+     * POST /courses/:courseId/reset : Reset a course by removing all student data.
+     * <p>
+     * Resets the course by deleting all student-generated data while preserving the course structure.
+     * This is useful for data privacy compliance (e.g., GDPR) or reusing course templates for new semesters.
+     * <p>
+     * <b>Preserved data:</b>
+     * <ul>
+     * <li>Course configuration and settings</li>
+     * <li>Exercise, exam, and lecture definitions</li>
+     * <li>Competency definitions</li>
+     * <li>Conversation/channel structure</li>
+     * <li>Tutor, editor, and instructor group memberships</li>
+     * </ul>
+     * <p>
+     * <b>Deleted data:</b>
+     * <ul>
+     * <li>All participations, submissions, and results</li>
+     * <li>All student exam data</li>
+     * <li>All posts and messages in conversations</li>
+     * <li>All competency progress records</li>
+     * <li>All learner profiles</li>
+     * <li>All Iris chat sessions and LLM usage traces</li>
+     * <li>Student enrollments (removed from student group)</li>
+     * </ul>
+     * <p>
+     * The operation is logged as an audit event for compliance purposes.
+     * It is recommended to archive the course before resetting to preserve student data.
+     * This action cannot be undone.
      *
-     * @param course      the course, where the channel should be created
-     * @param channelType the default channel type
+     * @param courseId the ID of the course to reset
+     * @return the ResponseEntity with status 200 (OK) on success,
+     *         or status 404 (Not Found) if the course does not exist
+     * @see CourseResetService#resetStudentData(long)
      */
-    private void createDefaultChannel(Course course, DefaultChannelType channelType) {
-        Channel channelToCreate = new Channel();
-        channelToCreate.setName(channelType.getName());
-        channelToCreate.setIsPublic(true);
-        channelToCreate.setIsCourseWide(true);
-        channelToCreate.setIsAnnouncementChannel(channelType.equals(DefaultChannelType.ANNOUNCEMENT));
-        channelToCreate.setIsArchived(false);
-        channelToCreate.setDescription(null);
-        channelService.createChannel(course, channelToCreate, Optional.empty());
+    @PostMapping("courses/{courseId}/reset")
+    public ResponseEntity<Void> resetCourse(@PathVariable long courseId) {
+        log.info("REST request to reset Course : {}", courseId);
+
+        String courseTitle = courseRepository.getCourseTitle(courseId);
+        if (courseTitle == null) {
+            throw new EntityNotFoundException("Course", courseId);
+        }
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.RESET_COURSE, "course=" + courseTitle);
+        auditEventRepository.add(auditEvent);
+        log.info("User {} has requested to reset the course {}", user.getLogin(), courseTitle);
+
+        courseResetService.resetStudentData(courseId);
+
+        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.course.reset.success", courseTitle)).build();
+    }
+
+    /**
+     * GET /courses/:courseId/operation-progress : Get the progress of an ongoing operation.
+     * <p>
+     * Returns the current progress status of a delete, reset, or archive operation on the course.
+     * This endpoint is used for polling when WebSocket connection is not available.
+     * Real-time updates are available via WebSocket at /topic/courses/{courseId}/operation-progress
+     *
+     * @param courseId the ID of the course to get the operation progress for
+     * @return the ResponseEntity with status 200 (OK) and the progress in the body,
+     *         or status 204 (No Content) if no operation is in progress
+     */
+    @GetMapping("courses/{courseId}/operation-progress")
+    public ResponseEntity<CourseOperationProgressDTO> getOperationProgress(@PathVariable long courseId) {
+        log.debug("REST request to get operation progress for course: {}", courseId);
+        return progressService.getOperationProgress(courseId).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
     }
 }

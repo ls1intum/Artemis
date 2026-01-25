@@ -106,8 +106,6 @@ interface MarkdownActionsByGroup {
 
 export type TextWithDomainAction = { text: string; action?: TextEditorDomainAction };
 
-const EXTERNAL_HEIGHT = 'external';
-
 /**
  * The offset (in px) that is subtracted from the editor's width to prevent it from obscuring the border.
  * This consists of the width of the borders on each side (1px each) and one extra pixel to prevent the editor
@@ -115,6 +113,7 @@ const EXTERNAL_HEIGHT = 'external';
  */
 const BORDER_WIDTH_OFFSET = 3;
 const BORDER_HEIGHT_OFFSET = 2;
+
 @Component({
     selector: 'jhi-markdown-editor-monaco',
     templateUrl: './markdown-editor-monaco.component.html',
@@ -160,6 +159,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @ViewChild('fullElement', { static: true }) fullElement: ElementRef<HTMLDivElement>;
     @ViewChild('wrapper', { static: true }) wrapper: ElementRef<HTMLDivElement>;
     @ViewChild('fileUploadFooter', { static: false }) fileUploadFooter?: ElementRef<HTMLDivElement>;
+    @ViewChild('fileUploadInput', { static: false }) fileUploadInput?: ElementRef<HTMLInputElement>;
     @ViewChild('resizePlaceholder', { static: false }) resizePlaceholder?: ElementRef<HTMLDivElement>;
     @ViewChild('actionPalette', { static: false }) actionPalette?: ElementRef<HTMLElement>;
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
@@ -201,10 +201,18 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     linkEditorHeightToContentHeight = false;
 
     /**
-     * The initial height the editor should have. If set to 'external', the editor will try to grow to the available space.
+     * The initial height the editor should have.
      */
     @Input()
-    initialEditorHeight: MarkdownEditorHeight | 'external' = MarkdownEditorHeight.SMALL;
+    initialEditorHeight: MarkdownEditorHeight = MarkdownEditorHeight.SMALL;
+
+    /**
+     * If true, the editor height is managed externally by the parent container.
+     * The editor will try to grow to fill the available space rather than managing its own height.
+     * Use this when embedding the editor in a container that controls layout (e.g., code editor view).
+     */
+    @Input()
+    externalHeight = false;
 
     @Input()
     resizableMaxHeight = MarkdownEditorHeight.LARGE;
@@ -254,6 +262,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     isButtonLoading = input<boolean>(false);
     isFormGroupValid = input<boolean>(false);
     isInCommunication = input<boolean>(false);
+    showMarkdownInfoText = input<boolean>(true);
     editType = input<PostingEditType>();
     course = input<Course>();
 
@@ -366,7 +375,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     ngAfterContentInit(): void {
         // Affects the template - done in this method to avoid ExpressionChangedAfterItHasBeenCheckedErrors.
-        this.targetWrapperHeight = this.initialEditorHeight !== EXTERNAL_HEIGHT ? this.initialEditorHeight.valueOf() : undefined;
+        this.targetWrapperHeight = !this.externalHeight ? this.initialEditorHeight.valueOf() : undefined;
         this.minWrapperHeight = this.resizableMinHeight.valueOf();
         this.constrainDragPositionFn = this.constrainDragPosition.bind(this);
         this.displayedActions = {
@@ -439,9 +448,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             .forEach((action) => {
                 if (action instanceof FullscreenAction) {
                     // We include the full element if the initial height is set to 'external' so the editor is resized to fill the screen.
-                    action.element = this.isInitialHeightExternal() ? this.fullElement.nativeElement : this.wrapper.nativeElement;
+                    action.element = this.isHeightManagedExternally() ? this.fullElement.nativeElement : this.wrapper.nativeElement;
                 } else if (this.enableFileUpload && action instanceof AttachmentAction) {
                     action.setUploadCallback(this.embedFiles.bind(this));
+                    action.setOpenFileDialogCallback(this.openFilePicker.bind(this));
                 }
                 this.monacoEditor.registerAction(action);
             });
@@ -505,7 +515,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * The height of the editor is the height of the wrapper (or the full element, if the height is external) minus the height of the file upload footer and the action palette.
      */
     getEditorHeight(): number {
-        const elementHeight = this.getElementClientHeight(this.isInitialHeightExternal() ? this.fullElement : this.wrapper);
+        const elementHeight = this.getElementClientHeight(this.isHeightManagedExternally() ? this.fullElement : this.wrapper);
         const fileUploadFooterHeight = this.getElementClientHeight(this.fileUploadFooter);
         const actionPaletteHeight = this.getElementClientHeight(this.actionPalette);
         return elementHeight - fileUploadFooterHeight - actionPaletteHeight - BORDER_HEIGHT_OFFSET;
@@ -582,6 +592,13 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (event.target.files.length >= 1) {
             this.embedFiles(Array.from(event.target.files), event.target);
         }
+    }
+
+    /**
+     * Opens the file picker dialog to allow the user to select files for upload.
+     */
+    openFilePicker(): void {
+        this.fileUploadInput?.nativeElement.click();
     }
 
     /**
@@ -674,11 +691,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     /**
-     * Check if the initial height is set to 'external'. This is used to determine if the editor should grow to the available space, rather than managing its own height.
+     * Check if the editor height is managed externally. This determines if the editor should grow to fill available space, rather than managing its own height.
      * @private
      */
-    private isInitialHeightExternal(): boolean {
-        return this.initialEditorHeight === EXTERNAL_HEIGHT;
+    private isHeightManagedExternally(): boolean {
+        return this.externalHeight;
     }
 
     /**

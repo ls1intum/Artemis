@@ -109,6 +109,7 @@ public class TextExerciseFeedbackService {
 
         // athena takes over the control here
         Result automaticResult = new Result();
+        automaticResult.setExerciseId(textExercise.getId());
         automaticResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         automaticResult.setRated(true);
         automaticResult.setScore(0.0);

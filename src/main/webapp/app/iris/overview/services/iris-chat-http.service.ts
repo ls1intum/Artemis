@@ -2,10 +2,12 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { IrisAssistantMessage, IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
-import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
+import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { map, tap } from 'rxjs/operators';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
+import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
+import { randomInt } from 'app/shared/util/utils';
 
 export type Response<T> = Observable<HttpResponse<T>>;
 
@@ -17,11 +19,6 @@ export class IrisChatHttpService {
     protected httpClient = inject(HttpClient);
 
     protected apiPrefix: string = 'api/iris';
-
-    protected randomInt(): number {
-        const maxIntJava = 2147483647;
-        return Math.floor(Math.random() * maxIntJava);
-    }
 
     /**
      * gets all messages for a session by its id
@@ -58,17 +55,10 @@ export class IrisChatHttpService {
     /**
      * creates a new message in a session
      * @param sessionId of the session
-     * @param message  to be created
+     * @param request  the message request DTO containing content and optional uncommitted files
      */
-    createMessage(sessionId: number, message: IrisUserMessage): Response<IrisUserMessage> {
-        message.messageDifferentiator = this.randomInt();
-        return this.httpClient.post<IrisUserMessage>(
-            `${this.apiPrefix}/sessions/${sessionId}/messages`,
-            Object.assign({}, message, {
-                sentAt: convertDateFromClient(message.sentAt),
-            }),
-            { observe: 'response' },
-        );
+    createMessage(sessionId: number, request: IrisMessageRequestDTO): Response<IrisUserMessage> {
+        return this.httpClient.post<IrisUserMessage>(`${this.apiPrefix}/sessions/${sessionId}/messages`, request, { observe: 'response' });
     }
 
     /**
@@ -86,7 +76,7 @@ export class IrisChatHttpService {
      * @return {Response<IrisMessage>}
      */
     resendMessage(sessionId: number, message: IrisUserMessage): Response<IrisMessage> {
-        message.messageDifferentiator = message.messageDifferentiator ?? this.randomInt();
+        message.messageDifferentiator = message.messageDifferentiator ?? randomInt();
         return this.httpClient.post<IrisAssistantMessage>(`${this.apiPrefix}/sessions/${sessionId}/messages/${message.id}/resend`, null, { observe: 'response' }).pipe(
             tap((response) => {
                 if (response.body && response.body.id) {

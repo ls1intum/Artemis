@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, effect, input, model, output, signal } from '@angular/core';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
@@ -12,25 +12,32 @@ import { TextBlockAssessmentCardComponent } from '../textblock-assessment-card/t
     imports: [TextBlockAssessmentCardComponent, ManualTextSelectionComponent],
 })
 export class ManualTextblockSelectionComponent {
-    @Input() set textBlockRefs(textBlockRefs: TextBlockRef[]) {
-        this.textBlockRefGroups = TextBlockRefGroup.fromTextBlockRefs(textBlockRefs);
-    }
-    get textBlockRefs(): TextBlockRef[] {
-        return this.textBlockRefGroups.reduce((previous: TextBlockRef[], group: TextBlockRefGroup) => [...previous, ...group.refs], []);
-    }
-    @Input() selectedRef?: TextBlockRef;
-    @Input() readOnly: boolean;
-    @Input() submission: TextSubmission;
-    @Input() criteria?: GradingCriterion[];
+    textBlockRefs = model.required<TextBlockRef[]>();
+    selectedRef = model<TextBlockRef | undefined>(undefined);
+    readOnly = input.required<boolean>();
+    submission = input.required<TextSubmission>();
+    criteria = input<GradingCriterion[]>();
 
-    @Output() textBlockRefsChange = new EventEmitter<TextBlockRef[]>();
-    @Output() textBlockRefAdded = new EventEmitter<TextBlockRef>();
-    @Output() selectedRefChange = new EventEmitter<TextBlockRef | undefined>();
+    textBlockRefAdded = output<TextBlockRef>();
 
-    textBlockRefGroups: TextBlockRefGroup[];
+    textBlockRefGroups = signal<TextBlockRefGroup[]>([]);
+
+    constructor() {
+        // Effect to compute textBlockRefGroups when textBlockRefs changes
+        effect(() => {
+            const refs = this.textBlockRefs();
+            if (refs) {
+                this.textBlockRefGroups.set(TextBlockRefGroup.fromTextBlockRefs(refs));
+            }
+        });
+    }
+
+    private getTextBlockRefsFromGroups(): TextBlockRef[] {
+        return this.textBlockRefGroups().reduce((previous: TextBlockRef[], group: TextBlockRefGroup) => [...previous, ...group.refs], []);
+    }
 
     textBlockRefsChangeEmit(): void {
-        this.textBlockRefsChange.emit(this.textBlockRefs);
+        this.textBlockRefs.set(this.getTextBlockRefsFromGroups());
     }
 
     /**
@@ -47,12 +54,13 @@ export class ManualTextblockSelectionComponent {
         if (textBlock) {
             textBlock.startIndex = selectedWords[0].index;
             textBlock.endIndex = selectedWords[1].index + selectedWords[1].word.length;
-            textBlock.setTextFromSubmission(this.submission);
-            const existingRef = this.textBlockRefs.find((ref) => ref.block?.id === textBlock.id);
+            textBlock.setTextFromSubmission(this.submission());
+            const currentRefs = this.getTextBlockRefsFromGroups();
+            const existingRef = currentRefs.find((ref) => ref.block?.id === textBlock.id);
 
             if (existingRef) {
                 existingRef.initFeedback();
-                this.selectedRefChange.emit(existingRef);
+                this.selectedRef.set(existingRef);
             } else {
                 textBlockRef.initFeedback();
                 this.textBlockRefAdded.emit(textBlockRef);

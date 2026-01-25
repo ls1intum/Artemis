@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -202,12 +203,65 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     Optional<ProgrammingExercise> findWithTemplateParticipationAndLatestSubmissionById(@Param("exerciseId") long exerciseId);
 
     /**
+     * Get all programming exercise IDs that need to be scheduled based on their own dates (not individual participation dates).
+     * This is the first step in an optimized two-query approach.
+     *
+     * @param now the current time
+     * @return Set of exercise IDs that need scheduling based on exercise-level dates
+     */
+    @Query("""
+            SELECT pe.id
+            FROM ProgrammingExercise pe
+            WHERE pe.releaseDate > :now
+                OR pe.buildAndTestStudentSubmissionsAfterDueDate > :now
+                OR pe.dueDate > :now
+            """)
+    Set<Long> findAllExerciseIdsToBeScheduledByExerciseDates(@Param("now") ZonedDateTime now);
+
+    /**
+     * Get all programming exercise IDs that have participations with individual due dates in the future.
+     * This is used in combination with findAllExerciseIdsToBeScheduledByExerciseDates for complete scheduling.
+     *
+     * @param now the current time
+     * @return Set of exercise IDs with future individual due dates
+     */
+    @Query("""
+            SELECT DISTINCT p.exercise.id
+            FROM StudentParticipation p
+            WHERE TYPE(p.exercise) = ProgrammingExercise
+                AND p.individualDueDate IS NOT NULL
+                AND p.individualDueDate > :now
+            """)
+    Set<Long> findAllExerciseIdsWithIndividualDueDatesAfter(@Param("now") ZonedDateTime now);
+
+    /**
+     * Get programming exercises by IDs without fetching participations.
+     * Use this for exercises that don't need participation data for scheduling.
+     *
+     * @param exerciseIds the exercise IDs
+     * @return List of programming exercises
+     */
+    @Query("""
+            SELECT pe
+            FROM ProgrammingExercise pe
+            WHERE pe.id IN :exerciseIds
+            """)
+    List<ProgrammingExercise> findAllByIdIn(@Param("exerciseIds") Set<Long> exerciseIds);
+
+    /**
      * Get all programming exercises that need to be scheduled: Those must satisfy one of the following requirements:
      * <ul>
+     * <li>The release date is in the future</li>
      * <li>The build and test student submissions after due date is in the future</li>
      * <li>The due date is in the future</li>
      * <li>There are participations in the exercise with individual due dates in the future</li>
      * </ul>
+     * NOTE: This query can be slow on large datasets (7+ seconds observed) because it eagerly fetches all participations.
+     * For better performance, consider using the optimized multi-query approach:
+     * 1. Call findAllExerciseIdsToBeScheduledByExerciseDates to get exercises by exercise-level dates
+     * 2. Call findAllExerciseIdsWithIndividualDueDatesAfter to get exercises with individual due dates
+     * 3. Combine the IDs and load exercises using findAllByIdIn
+     * 4. Lazy-load participations only when actually needed for scheduling
      *
      * @param now the current time
      * @return List of the exercises that should be scheduled
@@ -456,11 +510,24 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     long countAssessmentsByExerciseIdSubmittedIgnoreTestRunSubmissions(@Param("exerciseId") long exerciseId);
 
+    @Query("""
+            SELECT COUNT (DISTINCT p)
+            FROM ProgrammingExerciseStudentParticipation p
+                LEFT JOIN p.submissions s
+                LEFT JOIN s.results r
+            WHERE p.exercise.id IN :exerciseIds
+                AND p.testRun = FALSE
+                AND r.submission.submitted = TRUE
+                AND r.assessor IS NOT NULL
+                AND r.completionDate IS NOT NULL
+            """)
+    long countAssessmentsByExerciseIdsSubmittedIgnoreTestRunSubmissions(@Param("exerciseIds") Set<Long> exerciseIds);
+
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
      * We therefore have to check here if any submission of the student was submitted before the due date.
      *
-     * @param examId the exam id we are interested in
+     * @param exerciseIds the exercise ids to count the submissions for
      * @return the number of the latest submissions belonging to a participation belonging to the exam id, which have the submitted flag set to true and the submission date before
      *         the exercise due date, or no exercise due date at all (only exercises with manual or semi-automatic correction are considered)
      */
@@ -469,9 +536,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             FROM ProgrammingExerciseStudentParticipation p
                 JOIN p.submissions s
             WHERE p.exercise.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
-                AND p.exercise.exerciseGroup.exam.id = :examId
+                AND p.exercise.id IN :exerciseIds
             """)
-    long countSubmissionsByExamIdSubmitted(@Param("examId") long examId);
+    long countSubmissionsByExerciseIdsSubmitted(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
@@ -491,6 +558,13 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 AND s.submitted = TRUE
             """)
     long countAllSubmissionsByExerciseIdsSubmitted(@Param("exerciseIds") Set<Long> exerciseIds);
+
+    @Query("""
+            SELECT COUNT(p)
+            FROM ProgrammingExerciseStudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+            """)
+    long countStudentParticipationsByExerciseId(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT DISTINCT p.id

@@ -24,6 +24,7 @@
             "continuousIntegrationServer": "Continuous Integration Server",
             "versionControlServer": "Version Control Server",
             "hazelcast": "Hazelcast",
+            "JHipsterRegistry": "JHipsterRegistry (Eureka Service Registry)",
             "websocketBroker": "Websocket Broker (Server -> Broker)",
             "athena": "Athena",
             "apollon": "Apollon Conversion Server",
@@ -31,7 +32,8 @@
             "ssl": "SSL",
             "hermes": "Hermes Push Notifications",
             "sharing": "Sharing Platform Connector",
-            "redis": "Redis"
+            "redis": "Redis",
+            "reactiveDiscoveryClients": "Reactive Discovery Clients"
         },
         "table": {
             "service": "Service name",

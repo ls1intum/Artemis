@@ -1,11 +1,8 @@
 package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ACTIVE_MODULE_FEATURES;
-import static de.tum.cit.aet.artemis.core.config.Constants.MODULE_FEATURE_ATLAS;
-import static de.tum.cit.aet.artemis.core.config.Constants.MODULE_FEATURE_HYPERION;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.boot.actuate.info.Info;
@@ -38,31 +35,7 @@ public class ModuleFeatureInfoContributor implements InfoContributor {
 
     @Override
     public void contribute(Info.Builder builder) {
-        List<String> enabledArtemisFeatures = new ArrayList<>();
-        if (artemisConfigHelper.isAtlasEnabled(environment)) {
-            enabledArtemisFeatures.add(MODULE_FEATURE_ATLAS);
-        }
-        if (artemisConfigHelper.isHyperionEnabled(environment)) {
-            enabledArtemisFeatures.add(MODULE_FEATURE_HYPERION);
-        }
-        if (artemisConfigHelper.isExamEnabled(environment)) {
-            enabledArtemisFeatures.add(Constants.MODULE_FEATURE_EXAM);
-        }
-        if (artemisConfigHelper.isPlagiarismEnabled(environment)) {
-            enabledArtemisFeatures.add(Constants.MODULE_FEATURE_PLAGIARISM);
-        }
-        if (artemisConfigHelper.isTextExerciseEnabled(environment)) {
-            enabledArtemisFeatures.add(Constants.MODULE_FEATURE_TEXT);
-        }
-        if (artemisConfigHelper.isTutorialGroupEnabled(environment)) {
-            enabledArtemisFeatures.add(Constants.MODULE_FEATURE_TUTORIALGROUP);
-        }
-        if (artemisConfigHelper.isPasskeyEnabled(environment)) {
-            enabledArtemisFeatures.add(Constants.FEATURE_PASSKEY);
-        }
-        if (artemisConfigHelper.isNebulaEnabled(environment)) {
-            enabledArtemisFeatures.add(Constants.MODULE_FEATURE_NEBULA);
-        }
+        List<String> enabledArtemisFeatures = artemisConfigHelper.getEnabledFeatures(environment);
         builder.withDetail(ACTIVE_MODULE_FEATURES, enabledArtemisFeatures);
     }
 }

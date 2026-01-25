@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Result, isPracticeResult } from 'app/exercise/shared/entities/result/result.model';
 import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
@@ -330,7 +330,7 @@ export class ResultService implements IResultService {
 
     public static evaluateBadge(participation: Participation, result: Result): Badge {
         if (participation.type === ParticipationType.STUDENT || participation.type === ParticipationType.PROGRAMMING) {
-            if (isPracticeMode(participation)) {
+            if (isPracticeMode(participation) || isPracticeResult(result)) {
                 return { class: 'bg-secondary', text: 'artemisApp.result.practice', tooltip: 'artemisApp.result.practiceTooltip' };
             }
         }

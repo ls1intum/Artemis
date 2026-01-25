@@ -9,7 +9,7 @@ import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-grap
 import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
-import { TranslateDirective } from '../../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';

@@ -3,7 +3,7 @@ import { NgbActiveModal, NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavLi
 import { TranslateService } from '@ngx-translate/core';
 import { faBan, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from '../../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { KeyValuePipe, NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
@@ -70,7 +70,7 @@ export class ExportModalComponent implements OnInit {
 
     ngOnInit(): void {
         // set default csv export options based on the current language
-        switch (this.translateService.currentLang) {
+        switch (this.translateService.getCurrentLang()) {
             case 'de':
                 this.options = {
                     fieldSeparator: CsvFieldSeparator.SEMICOLON,

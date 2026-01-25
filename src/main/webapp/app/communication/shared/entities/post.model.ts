@@ -6,7 +6,6 @@ import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 export class Post extends Posting {
     public title?: string;
     public answers?: AnswerPost[];
-    public tags?: string[];
     public plagiarismCase?: PlagiarismCase;
     public displayPriority?: DisplayPriority;
     public resolved?: boolean;

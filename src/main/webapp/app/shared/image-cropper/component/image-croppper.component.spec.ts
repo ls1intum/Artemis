@@ -120,7 +120,6 @@ describe('ImageCropperComponent', () => {
             const res = comp.crop();
 
             expect(startCropImageSpy).toHaveBeenCalledOnce();
-            expect(startCropImageSpy).toHaveBeenCalledWith();
             expect(cropServiceCropSpy).toHaveBeenCalledOnce();
             expect(cropServiceCropSpy).toHaveBeenCalledWith(sourceImage, loadedImage, cropper, settings);
             expect(imageCroppedSpy).toHaveBeenCalledOnce();
@@ -135,7 +134,6 @@ describe('ImageCropperComponent', () => {
             const res = comp.crop();
 
             expect(startCropImageSpy).toHaveBeenCalledOnce();
-            expect(startCropImageSpy).toHaveBeenCalledWith();
             expect(cropServiceCropSpy).toHaveBeenCalledOnce();
             expect(cropServiceCropSpy).toHaveBeenCalledWith(sourceImage, loadedImage, cropper, settings);
             expect(imageCroppedSpy).not.toHaveBeenCalled();

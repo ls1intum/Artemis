@@ -221,8 +221,9 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
         exampleSubmission = exampleSubmissionService.save(exampleSubmission);
 
         if (usedForTutorial) {
-            var result = submissionService.saveNewEmptyResult(exampleSubmission.getSubmission());
+            var result = submissionService.saveNewEmptyResult(exampleSubmission.getSubmission(), textExercise.getId());
             result.setExampleResult(true);
+            result.setExerciseId(textExercise.getId());
 
             var feedback = ParticipationFactory.createManualTextFeedback(1D, textBlockIds.getFirst());
             var gradingCriterion = ExerciseFactory.generateGradingCriterion("criterion");
@@ -244,7 +245,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
         ExampleSubmission exampleSubmission = participationUtilService.generateExampleSubmission(validModel, modelingExercise, false, usedForTutorial);
         exampleSubmissionService.save(exampleSubmission);
         if (usedForTutorial) {
-            var result = submissionService.saveNewEmptyResult(exampleSubmission.getSubmission());
+            var result = submissionService.saveNewEmptyResult(exampleSubmission.getSubmission(), modelingExercise.getId());
             result.setExampleResult(true);
             resultRepository.save(result);
         }

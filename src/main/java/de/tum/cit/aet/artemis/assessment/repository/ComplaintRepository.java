@@ -64,24 +64,23 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             """)
     Optional<Complaint> findByIdWithEagerAssessor(@Param("complaintId") Long complaintId);
 
-    /**
-     * This magic method counts the number of complaints by complaint type associated to a course id
-     *
-     * @param courseId      - the id of the course we want to filter by
-     * @param complaintType - type of complaint we want to filter by
-     * @return number of more feedback requests associated to course courseId
-     */
-    long countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType(Long courseId, ComplaintType complaintType);
+    @Query("""
+            SELECT COUNT(c)
+            FROM Complaint c
+            WHERE c.result.exerciseId IN :exerciseIds
+                AND c.complaintType = :complaintType
+            """)
+    long countByExerciseIdsAndComplaintType(@Param("exerciseIds") Set<Long> exerciseIds, @Param("complaintType") ComplaintType complaintType);
 
     /**
-     * This magic method counts the number of complaints by complaint type associated to an exam id
+     * Retrieve all complaints for an exercise by complaint type.
+     * Uses the denormalized result.exerciseId to avoid expensive joins for filtering.
      *
-     * @param examId        - the id of the exam we want to filter by
-     * @param complaintType - type of complaint we want to filter by
-     * @return number of complaints associated to course examId
+     * @param exerciseId    the id of the exercise
+     * @param complaintType the type of complaint
+     * @return list of complaints with eagerly loaded result, assessor, submission, participation and exercise
      */
-    long countByResult_Submission_Participation_Exercise_ExerciseGroup_Exam_IdAndComplaintType(Long examId, ComplaintType complaintType);
-
+    // TODO: reduce the fetched associations if not all are needed
     @Query("""
             SELECT c
             FROM Complaint c
@@ -90,8 +89,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 LEFT JOIN FETCH r.submission s
                 LEFT JOIN FETCH s.participation p
                 LEFT JOIN FETCH p.exercise e
-                LEFT JOIN FETCH r.submission
-            WHERE e.id = :exerciseId
+            WHERE c.result.exerciseId = :exerciseId
                 AND c.complaintType = :complaintType
             """)
     List<Complaint> getAllComplaintsByExerciseIdAndComplaintType(@Param("exerciseId") Long exerciseId, @Param("complaintType") ComplaintType complaintType);
@@ -99,9 +97,10 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
     /**
      * Count the number of unaccepted complaints of a student in a given course. Unaccepted means that they are either open/unhandled or rejected. We use this to limit the number
      * of complaints for a student in a course. Requests for more feedback are not counted here.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation -> exercise -> course.
      *
-     * @param studentId the id of the student
-     * @param courseId  the id of the course
+     * @param studentId   the id of the student
+     * @param exerciseIds the ids of the exercises in the course
      * @return the number of unaccepted complaints
      */
     @Query("""
@@ -109,17 +108,18 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             FROM Complaint c
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
                 AND c.student.id = :studentId
-                AND c.result.submission.participation.exercise.course.id = :courseId
+                AND c.result.exerciseId IN :exerciseIds
                 AND (c.accepted = FALSE OR c.accepted IS NULL)
             """)
-    long countUnacceptedComplaintsByStudentIdAndCourseId(@Param("studentId") Long studentId, @Param("courseId") Long courseId);
+    long countUnacceptedComplaintsByStudentIdAndExerciseIds(@Param("studentId") Long studentId, @Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * Count the number of unaccepted complaints of a team in a given course. Unaccepted means that they are either open/unhandled or rejected. We use this to limit the number
      * of complaints for a team in a course. Requests for more feedback are not counted here.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation -> exercise -> course.
      *
      * @param teamShortName the short name of the team
-     * @param courseId      the id of the course
+     * @param exerciseIds   the ids of the exercises in the course
      * @return the number of unaccepted complaints
      */
     @Query("""
@@ -127,10 +127,10 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             FROM Complaint c
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
                 AND c.team.shortName = :teamShortName
-                AND c.result.submission.participation.exercise.course.id = :courseId
+                AND c.result.exerciseId IN :exerciseIds
                 AND (c.accepted = FALSE OR c.accepted IS NULL)
             """)
-    long countUnacceptedComplaintsByComplaintTypeTeamShortNameAndCourseId(@Param("teamShortName") String teamShortName, @Param("courseId") Long courseId);
+    long countUnacceptedComplaintsByTeamShortNameAndExerciseIds(@Param("teamShortName") String teamShortName, @Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * This method counts the number of complaints by complaint type associated to an exercise id
@@ -142,7 +142,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
     @Query("""
             SELECT COUNT(c)
             FROM Complaint c
-            WHERE c.result.submission.participation.exercise.id = :exerciseId
+            WHERE c.result.exerciseId = :exerciseId
                 AND c.complaintType = :complaintType
             """)
     long countComplaintsByExerciseIdAndComplaintType(@Param("exerciseId") Long exerciseId, @Param("complaintType") ComplaintType complaintType);
@@ -156,13 +156,13 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO(
-                c.result.submission.participation.exercise.id,
+                c.result.exerciseId,
                 COUNT(DISTINCT c)
             )
             FROM Complaint c
-            WHERE c.result.submission.participation.exercise.id IN :exerciseIds
+            WHERE c.result.exerciseId IN :exerciseIds
                 AND c.complaintType = :complaintType
-            GROUP BY c.result.submission.participation.exercise.id
+            GROUP BY c.result.exerciseId
             """)
     List<ExerciseMapEntryDTO> countComplaintsByExerciseIdsAndComplaintType(@Param("exerciseIds") Set<Long> exerciseIds, @Param("complaintType") ComplaintType complaintType);
 
@@ -175,21 +175,23 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO(
-                c.result.submission.participation.exercise.id,
+                c.result.exerciseId,
                 COUNT(DISTINCT c)
             )
             FROM Complaint c
-            WHERE c.result.submission.participation.exercise.id IN :exerciseIds
+            WHERE c.result.exerciseId IN :exerciseIds
                 AND c.complaintType = :complaintType
                 AND c.result.submission.participation.testRun = FALSE
-            GROUP BY c.result.submission.participation.exercise.id
+            GROUP BY c.result.exerciseId
             """)
     List<ExerciseMapEntryDTO> countComplaintsByExerciseIdsAndComplaintTypeIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds,
             @Param("complaintType") ComplaintType complaintType);
 
     /**
      * Similar to {@link ComplaintRepository#countComplaintsByExerciseIdAndComplaintType}
-     * but ignores test run submissions
+     * but ignores test run submissions.
+     * Uses the denormalized result.exerciseId to avoid expensive joins for exercise filtering.
+     * Note: Still requires join to participation for testRun check.
      *
      * @param exerciseId    - the id of the exercise we want to filter by
      * @param complaintType - complaint type we want to filter by
@@ -200,7 +202,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             FROM Complaint c
             WHERE c.complaintType = :complaintType
                 AND c.result.submission.participation.testRun = FALSE
-                AND c.result.submission.participation.exercise.id = :exerciseId
+                AND c.result.exerciseId = :exerciseId
             """)
     long countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("complaintType") ComplaintType complaintType);
 
@@ -214,54 +216,40 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
     void deleteByResult_Id(long resultId);
 
     /**
-     * Given an exercise id, retrieve all complaints related to that exercise
+     * Given a course id, retrieve all complaints related to assessments related to that course.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation -> exercise.
      *
-     * @param exerciseId - the id of the exercise
+     * @param exerciseIds - the ids of the exercises in the course
      * @return a list of complaints
      */
     @EntityGraph(type = LOAD, attributePaths = { "result.submission.participation", "result.submission", "result.assessor" })
-    List<Complaint> getAllByResult_Submission_Participation_Exercise_Id(Long exerciseId);
-
-    /**
-     * Given a course id, retrieve all complaints related to assessments related to that course
-     *
-     * @param courseId - the id of the course
-     * @return a list of complaints
-     */
-    @EntityGraph(type = LOAD, attributePaths = { "result.submission.participation", "result.submission", "result.assessor" })
-    List<Complaint> getAllByResult_Submission_Participation_Exercise_Course_Id(Long courseId);
-
-    /**
-     * Given a examId id, retrieve all complaints related to assessments related to that course
-     *
-     * @param examId - the id of the course
-     * @return a list of complaints
-     */
-    @EntityGraph(type = LOAD, attributePaths = { "result.submission.participation", "result.submission", "result.assessor" })
-    List<Complaint> getAllByResult_Submission_Participation_Exercise_ExerciseGroup_Exam_Id(Long examId);
+    List<Complaint> findAllByResult_ExerciseIdIn(Set<Long> exerciseIds);
 
     /**
      * Given a user id and an exercise id retrieve all complaints related to assessments made by that assessor in that exercise.
+     * Uses the denormalized result.exerciseId to avoid expensive joins.
      *
      * @param assessorId - the id of the assessor
      * @param exerciseId - the id of the exercise
      * @return a list of complaints
      */
     @EntityGraph(type = LOAD, attributePaths = { "result.submission.participation", "result.submission", "result.assessor" })
-    List<Complaint> getAllByResult_Assessor_IdAndResult_Submission_Participation_Exercise_Id(Long assessorId, Long exerciseId);
+    List<Complaint> findAllByResult_Assessor_IdAndResult_ExerciseId(Long assessorId, Long exerciseId);
 
     /**
-     * Given a user id and a course id retrieve all complaints related to assessments made by that assessor in that course.
+     * Given a user id and exercise ids retrieve all complaints related to assessments made by that assessor in those exercises.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation -> exercise -> course.
      *
-     * @param assessorId - the id of the assessor
-     * @param courseId   - the id of the course
+     * @param assessorId  - the id of the assessor
+     * @param exerciseIds - the ids of the exercises (e.g., from a course)
      * @return a list of complaints
      */
     @EntityGraph(type = LOAD, attributePaths = { "result.submission.participation", "result.submission", "result.assessor" })
-    List<Complaint> getAllByResult_Assessor_IdAndResult_Submission_Participation_Exercise_Course_Id(Long assessorId, Long courseId);
+    List<Complaint> findAllByResult_Assessor_IdAndResult_ExerciseIdIn(Long assessorId, Set<Long> exerciseIds);
 
     /**
-     * Get the number of Complaints for all tutors of a course
+     * Get the number of Complaints for all tutors of a course.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation.
      *
      * @param exerciseIds - ids of the exercises in the course
      * @return list of TutorLeaderboardComplaints
@@ -275,11 +263,9 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             )
             FROM Complaint c
                 JOIN c.result r
-                JOIN r.submission s
-                JOIN s.participation p
-                JOIN p.exercise e
+                JOIN Exercise e ON r.exerciseId = e.id
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
-                AND e.id IN :exerciseIds
+                AND r.exerciseId IN :exerciseIds
                 AND r.completionDate IS NOT NULL
                 AND r.assessor.id IS NOT NULL
             GROUP BY r.assessor.id
@@ -287,7 +273,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
     List<TutorLeaderboardComplaintsDTO> findTutorLeaderboardComplaintsByCourseId(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
-     * Get the number of Complaints for all tutors of an exercise
+     * Get the number of Complaints for all tutors of an exercise.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation.
      *
      * @param exerciseId - id of the exercise
      * @return list of TutorLeaderboardComplaints
@@ -301,11 +288,9 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             )
             FROM Complaint c
                 JOIN c.result r
-                JOIN r.submission s
-                JOIN s.participation p
-                JOIN p.exercise e
+                JOIN Exercise e ON r.exerciseId = e.id
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
-                AND e.id = :exerciseId
+                AND r.exerciseId = :exerciseId
                 AND r.completionDate IS NOT NULL
                 AND r.assessor.id IS NOT NULL
             GROUP BY r.assessor.id
@@ -313,9 +298,10 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
     List<TutorLeaderboardComplaintsDTO> findTutorLeaderboardComplaintsByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
-     * Get the number of Complaints for all tutors of an exam
+     * Get the number of Complaints for all tutors of an exam.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation.
      *
-     * @param examId - id of the exercise
+     * @param exerciseIds - ids of the exercises to consider
      * @return list of TutorLeaderboardComplaints
      */
     @Query("""
@@ -327,20 +313,18 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             )
             FROM Complaint c
                 JOIN c.result r
-                JOIN r.submission s
-                JOIN s.participation p
-                JOIN p.exercise e
-                JOIN e.exerciseGroup eg
+                JOIN Exercise e ON r.exerciseId = e.id
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
-                AND eg.exam.id = :examId
+                AND r.exerciseId IN :exerciseIds
                 AND r.completionDate IS NOT NULL
                 AND r.assessor.id IS NOT NULL
             GROUP BY r.assessor.id
             """)
-    List<TutorLeaderboardComplaintsDTO> findTutorLeaderboardComplaintsByExamId(@Param("examId") long examId);
+    List<TutorLeaderboardComplaintsDTO> findTutorLeaderboardComplaintsByExerciseIds(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
-     * Get the number of complaintResponses for all tutors assessments of a course
+     * Get the number of complaintResponses for all tutors assessments of a course.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation.
      *
      * @param exerciseIds - ids of the exercises in the course
      * @return list of TutorLeaderboardComplaintResponses
@@ -354,11 +338,9 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             FROM Complaint c
                 JOIN c.complaintResponse cr
                 JOIN c.result r
-                JOIN r.submission s
-                JOIN s.participation p
-                JOIN p.exercise e
+                JOIN Exercise e ON r.exerciseId = e.id
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
-                AND e.id IN :exerciseIds
+                AND r.exerciseId IN :exerciseIds
                 AND r.completionDate IS NOT NULL
                 AND c.accepted IS NOT NULL
             GROUP BY cr.reviewer.id
@@ -366,7 +348,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
     List<TutorLeaderboardComplaintResponsesDTO> findTutorLeaderboardComplaintResponsesByCourseId(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
-     * Get the number of complaintResponses for all tutors assessments of an exercise
+     * Get the number of complaintResponses for all tutors assessments of an exercise.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation.
      *
      * @param exerciseId - id of the exercise
      * @return list of TutorLeaderboardComplaintResponses
@@ -380,11 +363,9 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             FROM Complaint c
                 JOIN c.complaintResponse cr
                 JOIN c.result r
-                JOIN r.submission s
-                JOIN s.participation p
-                JOIN p.exercise e
+                JOIN Exercise e ON r.exerciseId = e.id
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
-                AND e.id = :exerciseId
+                AND r.exerciseId = :exerciseId
                 AND r.completionDate IS NOT NULL
                 AND c.accepted IS NOT NULL
             GROUP BY cr.reviewer.id
@@ -392,9 +373,10 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
     List<TutorLeaderboardComplaintResponsesDTO> findTutorLeaderboardComplaintResponsesByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
-     * Get the number of complaintResponses for all tutors assessments of an exam
+     * Get the number of complaintResponses for all tutors assessments of an exam.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation.
      *
-     * @param examId - id of the exam
+     * @param exerciseIds - ids of the exercises to consider
      * @return list of TutorLeaderboardComplaintResponses
      */
     @Query("""
@@ -406,21 +388,19 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             FROM Complaint c
                 JOIN c.complaintResponse cr
                 JOIN c.result r
-                JOIN r.submission s
-                JOIN s.participation p
-                JOIN p.exercise e
-                JOIN e.exerciseGroup eg
+                JOIN Exercise e ON r.exerciseId = e.id
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
-                AND eg.exam.id = :examId
+                AND r.exerciseId IN :exerciseIds
                 AND r.completionDate IS NOT NULL
                 AND c.accepted IS NOT NULL
             GROUP BY cr.reviewer.id
             """)
-    List<TutorLeaderboardComplaintResponsesDTO> findTutorLeaderboardComplaintResponsesByExamId(@Param("examId") long examId);
+    List<TutorLeaderboardComplaintResponsesDTO> findTutorLeaderboardComplaintResponsesByExerciseIds(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     // Valid JPQL syntax. Only SCA fails to properly detect the types.
     /**
-     * Get the number of Feedback Requests for all tutors assessments of a course
+     * Get the number of Feedback Requests for all tutors assessments of a course.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation.
      *
      * @param exerciseIds - ids of the exercises in the course (should be filtered to only include exercises with manual assessment)
      * @return list of TutorLeaderboardMoreFeedbackRequests
@@ -434,11 +414,9 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             )
             FROM Complaint c
                 JOIN c.result r
-                JOIN r.submission s
-                JOIN s.participation p
-                JOIN p.exercise e
+                JOIN Exercise e ON r.exerciseId = e.id
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.MORE_FEEDBACK
-                AND e.id IN :exerciseIds
+                AND r.exerciseId IN :exerciseIds
                 AND r.completionDate IS NOT NULL
             GROUP BY r.assessor.id
             """)
@@ -446,7 +424,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
 
     // Valid JPQL syntax. Only SCA fails to properly detect the types.
     /**
-     * Get the number of Feedback Requests for all tutors assessments of an exercise
+     * Get the number of Feedback Requests for all tutors assessments of an exercise.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation.
      *
      * @param exerciseId - id of the exercise
      * @return list of TutorLeaderboardMoreFeedbackRequests
@@ -460,19 +439,18 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             )
             FROM Complaint c
                 JOIN c.result r
-                JOIN r.submission s
-                JOIN s.participation p
-                JOIN p.exercise e
+                JOIN Exercise e ON r.exerciseId = e.id
             WHERE
                 c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.MORE_FEEDBACK
-                AND e.id = :exerciseId
+                AND r.exerciseId = :exerciseId
                 AND r.completionDate IS NOT NULL
             GROUP BY r.assessor.id
             """)
     List<TutorLeaderboardMoreFeedbackRequestsDTO> findTutorLeaderboardMoreFeedbackRequestsByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
-     * Get the number of Feedback Request Responses for all tutors assessments of a course
+     * Get the number of Feedback Request Responses for all tutors assessments of a course.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation.
      *
      * @param exerciseIds - ids of the exercises in the course (should be filtered to only include exercises with manual assessment)
      * @return list of TutorLeaderboardAnsweredMoreFeedbackRequests
@@ -486,11 +464,9 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             FROM Complaint c
                 JOIN c.complaintResponse cr
                 JOIN c.result r
-                JOIN r.submission s
-                JOIN s.participation p
-                JOIN p.exercise e
+                JOIN Exercise e ON r.exerciseId = e.id
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.MORE_FEEDBACK
-                AND e.id IN :exerciseIds
+                AND r.exerciseId IN :exerciseIds
                 AND r.completionDate IS NOT NULL
                 AND c.accepted = TRUE
             GROUP BY cr.reviewer.id
@@ -498,7 +474,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
     List<TutorLeaderboardAnsweredMoreFeedbackRequestsDTO> findTutorLeaderboardAnsweredMoreFeedbackRequestsByCourseId(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
-     * Get the number of Feedback Request Responses for all tutors assessments of an exercise
+     * Get the number of Feedback Request Responses for all tutors assessments of an exercise.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation.
      *
      * @param exerciseId - id of the exercise
      * @return list of TutorLeaderboardAnsweredMoreFeedbackRequests
@@ -512,11 +489,9 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             FROM Complaint c
                 JOIN c.complaintResponse cr
                 JOIN c.result r
-                JOIN r.submission s
-                JOIN s.participation p
-                JOIN p.exercise e
+                JOIN Exercise e ON r.exerciseId = e.id
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.MORE_FEEDBACK
-                AND e.id = :exerciseId
+                AND r.exerciseId = :exerciseId
                 AND r.completionDate IS NOT NULL
                 AND c.accepted = TRUE
             GROUP BY cr.reviewer.id

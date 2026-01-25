@@ -1,282 +1,252 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { Subject, finalize } from 'rxjs';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
+import { Component, Signal, computed, effect, inject, signal } from '@angular/core';
+import { distinctUntilChanged } from 'rxjs/operators';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { map, takeUntil } from 'rxjs/operators';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { filter, map } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
-import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
-import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
-import { cloneDeep } from 'lodash-es';
 import { NgClass } from '@angular/common';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
-import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways, TutorialGroupCategory } from 'app/shared/types/sidebar';
+import { AccordionGroups, CollapseState, SidebarData, SidebarItemShowAlways, TutorialGroupCategory } from 'app/shared/types/sidebar';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-
-const TUTORIAL_UNIT_GROUPS: AccordionGroups = {
-    registered: { entityData: [] },
-    further: { entityData: [] },
-    all: { entityData: [] },
-};
-
-const DEFAULT_COLLAPSE_STATE: CollapseState = {
-    registered: false,
-    all: true,
-    further: true,
-};
-
-const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
-    registered: false,
-    all: false,
-    further: false,
-};
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { LectureService } from 'app/lecture/manage/services/lecture.service';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-course-tutorial-groups',
     templateUrl: './course-tutorial-groups.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
 })
-export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
+export class CourseTutorialGroupsComponent {
+    protected readonly DEFAULT_COLLAPSE_STATE: CollapseState = {
+        allGroups: true,
+        registeredGroups: false,
+        furtherGroups: true,
+        allTutorialLectures: true,
+        currentTutorialLecture: false,
+        furtherTutorialLectures: true,
+    };
+    protected readonly DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
+        allGroups: false,
+        registeredGroups: false,
+        furtherGroups: false,
+        allTutorialLectures: false,
+        currentTutorialLecture: false,
+        furtherTutorialLectures: false,
+    };
+
     private router = inject(Router);
-    private courseStorageService = inject(CourseStorageService);
-    private courseManagementService = inject(CourseManagementService);
-    private tutorialGroupService = inject(TutorialGroupsService);
-    private route = inject(ActivatedRoute);
+    private activatedRoute = inject(ActivatedRoute);
     private alertService = inject(AlertService);
-    private cdr = inject(ChangeDetectorRef);
+    private courseStorageService = inject(CourseStorageService);
+    private tutorialGroupService = inject(TutorialGroupsService);
+    private lectureService = inject(LectureService);
     private courseOverviewService = inject(CourseOverviewService);
     private sessionStorageService = inject(SessionStorageService);
 
-    ngUnsubscribe = new Subject<void>();
-
-    tutorialGroups: TutorialGroup[] = [];
-    courseId: number;
-    course?: Course;
-    configuration?: TutorialGroupsConfiguration;
-    isLoading = false;
-    tutorialGroupFreeDays: TutorialGroupFreePeriod[] = [];
+    courseId = this.getCurrentCourseIdSignal();
+    tutorialGroups = signal<TutorialGroup[]>([]);
+    tutorialLectures = signal<Lecture[]>([]);
+    sidebarData = signal<SidebarData | undefined>(undefined);
+    itemSelected = this.getItemSelectedSignal();
     isCollapsed = false;
+    currentTutorialLectureId = computed(() => this.computeCurrentTutorialLectureId());
 
-    tutorialGroupSelected = true;
-    sidebarData: SidebarData;
-    sortedTutorialGroups: TutorialGroup[] = [];
-    accordionTutorialGroupsGroups: AccordionGroups = TUTORIAL_UNIT_GROUPS;
-    readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
-    protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
-    sidebarTutorialGroups: SidebarCardElement[] = [];
-
-    get registeredTutorialGroups() {
-        if (this.course?.isAtLeastTutor) {
-            return this.tutorialGroups.filter((tutorialGroup) => tutorialGroup.isUserTutor);
-        } else {
-            return this.tutorialGroups.filter((tutorialGroup) => tutorialGroup.isUserRegistered);
-        }
-    }
-
-    ngOnInit(): void {
+    constructor() {
         this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('tutorialGroup');
 
-        this.route.parent?.paramMap
-            .pipe(takeUntil(this.ngUnsubscribe))
-            .subscribe((parentParams) => {
-                this.courseId = Number(parentParams.get('courseId'));
-                if (this.courseId) {
-                    this.setCourse();
-                    this.setTutorialGroups();
-                    this.prepareSidebarData();
-                    this.subscribeToCourseUpdates();
-                }
-            })
-            .add(() => this.cdr.detectChanges());
-    }
-
-    navigateToTutorialGroup() {
-        const upcomingTutorialGroup = this.courseOverviewService.getUpcomingTutorialGroup(this.tutorialGroups);
-        const lastSelectedTutorialGroup = this.getLastSelectedTutorialGroup();
-        const tutorialGroupId = this.route.firstChild?.snapshot.params.tutorialGroupId;
-        if (!tutorialGroupId && lastSelectedTutorialGroup) {
-            this.router.navigate([lastSelectedTutorialGroup], { relativeTo: this.route, replaceUrl: true });
-            this.tutorialGroupSelected = true;
-        } else if (!tutorialGroupId && upcomingTutorialGroup) {
-            this.router.navigate([upcomingTutorialGroup.id], { relativeTo: this.route, replaceUrl: true });
-            this.tutorialGroupSelected = true;
-        } else {
-            this.tutorialGroupSelected = tutorialGroupId ? true : false;
-        }
-    }
-
-    subscribeToCourseUpdates() {
-        this.courseStorageService
-            .subscribeToCourseUpdates(this.courseId)
-            .pipe(takeUntil(this.ngUnsubscribe))
-            .subscribe((course) => {
-                this.course = course;
-                this.configuration = course?.tutorialGroupsConfiguration;
-                this.setFreeDays();
-                this.setTutorialGroups();
-                this.prepareSidebarData();
-            })
-            .add(() => this.cdr.detectChanges());
-    }
-
-    prepareSidebarData() {
-        if (!this.course?.tutorialGroups) {
-            return;
-        }
-        this.sidebarTutorialGroups = this.courseOverviewService.mapTutorialGroupsToSidebarCardElements(this.tutorialGroups);
-        this.accordionTutorialGroupsGroups = this.groupTutorialGroupsByRegistration();
-        this.updateSidebarData();
-    }
-
-    groupTutorialGroupsByRegistration(): AccordionGroups {
-        const groupedTutorialGroupGroups = cloneDeep(TUTORIAL_UNIT_GROUPS) as AccordionGroups;
-        let tutorialGroupCategory: TutorialGroupCategory;
-
-        const hasUserAtLeastOneTutorialGroup = this.tutorialGroups.some((tutorialGroup) => tutorialGroup.isUserRegistered || tutorialGroup.isUserTutor);
-        this.tutorialGroups.forEach((tutorialGroup) => {
-            const tutorialGroupCardItem = this.courseOverviewService.mapTutorialGroupToSidebarCardElement(tutorialGroup);
-            if (!hasUserAtLeastOneTutorialGroup) {
-                tutorialGroupCategory = 'all';
-            } else {
-                tutorialGroupCategory = tutorialGroup.isUserTutor || tutorialGroup.isUserRegistered ? 'registered' : 'further';
+        effect(() => {
+            const courseId = this.courseId();
+            if (courseId) {
+                this.setTutorialGroupsAndTutorialLectures(courseId);
             }
-            groupedTutorialGroupGroups[tutorialGroupCategory].entityData.push(tutorialGroupCardItem);
         });
-        return groupedTutorialGroupGroups;
-    }
 
-    updateSidebarData() {
-        this.sidebarData = {
-            groupByCategory: true,
-            storageId: 'tutorialGroup',
-            groupedData: this.accordionTutorialGroupsGroups,
-            ungroupedData: this.sidebarTutorialGroups,
-        };
+        effect(() => {
+            const tutorialGroups = this.tutorialGroups();
+            const tutorialLectures = this.tutorialLectures();
+            if (tutorialGroups.length || tutorialLectures.length) {
+                this.prepareSidebarData(tutorialGroups, tutorialLectures);
+                this.autoNavigateToLastSelectedOrUpcomingTutorialGroup(tutorialGroups);
+            }
+        });
+
+        effect(() => {
+            this.lectureService.currentTutorialLectureId = this.currentTutorialLectureId();
+        });
     }
 
     toggleSidebar() {
         this.isCollapsed = !this.isCollapsed;
         this.courseOverviewService.setSidebarCollapseState('tutorialGroup', this.isCollapsed);
-        this.cdr.detectChanges();
     }
 
-    getLastSelectedTutorialGroup(): string | undefined {
-        return this.sessionStorageService.retrieve<string>('sidebar.lastSelectedItem.tutorialGroup.byCourse.' + this.courseId);
-    }
-
-    private setFreeDays() {
-        if (this.course?.tutorialGroupsConfiguration?.tutorialGroupFreePeriods) {
-            this.tutorialGroupFreeDays = this.course.tutorialGroupsConfiguration.tutorialGroupFreePeriods;
+    private setTutorialGroupsAndTutorialLectures(courseId: number) {
+        const course = this.courseStorageService.getCourse(courseId);
+        const cachedTutorialGroups = course?.tutorialGroups;
+        const cachedLectures = course?.lectures;
+        if (cachedTutorialGroups) {
+            this.tutorialGroups.set(cachedTutorialGroups);
         } else {
-            this.tutorialGroupFreeDays = [];
+            this.loadAndSetTutorialGroups(courseId);
         }
-    }
-
-    setTutorialGroups() {
-        const tutorialGroupsLoadedFromCache = this.loadTutorialGroupsFromCache();
-        if (!tutorialGroupsLoadedFromCache) {
-            this.loadTutorialGroupsFromServer();
-        }
-        this.navigateToTutorialGroup();
-    }
-
-    setCourse() {
-        const courseLoadedFromCache = this.loadCourseFromCache();
-        if (!courseLoadedFromCache) {
-            this.loadCourseFromServer();
-        }
-    }
-
-    loadCourseFromCache() {
-        const cachedCourse = this.courseStorageService.getCourse(this.courseId);
-        if (cachedCourse === undefined) {
-            return false;
+        if (cachedLectures) {
+            this.tutorialLectures.set(cachedLectures.filter((lecture) => lecture.isTutorialLecture));
         } else {
-            this.course = cachedCourse;
-            this.configuration = this.course?.tutorialGroupsConfiguration;
-            this.setFreeDays();
-            return true;
+            this.loadAndSetTutorialLectures(courseId);
         }
     }
 
-    loadTutorialGroupsFromCache(): boolean {
-        const cachedTutorialGroups = this.courseStorageService.getCourse(this.courseId)?.tutorialGroups;
-        if (cachedTutorialGroups === undefined) {
-            return false;
-        } else {
-            this.tutorialGroups = cachedTutorialGroups;
-            return true;
-        }
+    private loadAndSetTutorialGroups(courseId: number) {
+        this.tutorialGroupService.getAllForCourse(courseId).subscribe({
+            next: ({ body }) => {
+                const tutorialGroups = body ?? [];
+                this.tutorialGroups.set(tutorialGroups);
+                this.updateCachedTutorialGroups(tutorialGroups, courseId);
+            },
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
     }
 
-    updateCachedTutorialGroups() {
-        const course = this.courseStorageService.getCourse(this.courseId);
+    private updateCachedTutorialGroups(tutorialGroups: TutorialGroup[], courseId: number) {
+        const course = this.courseStorageService.getCourse(courseId);
         if (course) {
-            course.tutorialGroups = this.tutorialGroups;
+            course.tutorialGroups = tutorialGroups;
             this.courseStorageService.updateCourse(course);
         }
     }
 
-    loadTutorialGroupsFromServer() {
-        this.isLoading = true;
-        this.tutorialGroupService
-            .getAllForCourse(this.courseId)
-            .pipe(
-                map((res: HttpResponse<TutorialGroup[]>) => res.body),
-                finalize(() => {
-                    this.isLoading = false;
-                }),
-                takeUntil(this.ngUnsubscribe),
-            )
-            .subscribe({
-                next: (tutorialGroups: TutorialGroup[]) => {
-                    this.tutorialGroups = tutorialGroups ?? [];
-                    this.updateCachedTutorialGroups();
-                },
-                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            })
-            .add(() => this.cdr.detectChanges());
+    private loadAndSetTutorialLectures(courseId: number) {
+        this.lectureService.findAllTutorialLecturesByCourseId(courseId).subscribe({
+            next: ({ body }) => {
+                const tutorialLectures = body ?? [];
+                this.tutorialLectures.set(tutorialLectures);
+                this.updateCachedLectures(tutorialLectures, courseId);
+            },
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
     }
 
-    loadCourseFromServer() {
-        this.isLoading = true;
-        this.courseManagementService
-            .find(this.courseId)
-            .pipe(
-                map((res: HttpResponse<Course>) => res.body),
-                finalize(() => {
-                    this.isLoading = false;
-                }),
-                takeUntil(this.ngUnsubscribe),
-            )
-            .subscribe({
-                next: (course: Course) => {
-                    this.course = course;
-                    this.configuration = this.course?.tutorialGroupsConfiguration;
-                    this.setFreeDays();
-                },
-                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            })
-            .add(() => this.cdr.detectChanges());
-    }
-
-    onSubRouteDeactivate() {
-        if (this.route.firstChild) {
+    private updateCachedLectures(lecturesToUpdate: Lecture[], courseId: number) {
+        const course = this.courseStorageService.getCourse(courseId);
+        if (!course) {
             return;
         }
-        this.navigateToTutorialGroup();
+        const existingLectures = course.lectures ?? [];
+        const remainingLectures = existingLectures.filter((existing) => !lecturesToUpdate.some((updated) => updated.id === existing.id));
+        course.lectures = [...remainingLectures, ...lecturesToUpdate];
+        this.courseStorageService.updateCourse(course);
     }
 
-    ngOnDestroy(): void {
-        this.ngUnsubscribe.next();
-        this.ngUnsubscribe.complete();
+    private prepareSidebarData(tutorialGroups: TutorialGroup[], tutorialLectures: Lecture[]) {
+        const tutorialGroupCardElements = this.courseOverviewService.mapTutorialGroupsToSidebarCardElements(tutorialGroups);
+        const tutorialLectureCardElements = this.courseOverviewService.mapLecturesToSidebarCardElements(tutorialLectures);
+        const cardElements = [...tutorialGroupCardElements, ...tutorialLectureCardElements];
+        const accordionGroups: AccordionGroups = this.createAccordionGroups(tutorialGroups, tutorialLectures);
+        this.sidebarData.set({
+            groupByCategory: true,
+            storageId: 'tutorialGroup',
+            groupedData: accordionGroups,
+            ungroupedData: cardElements,
+        });
+    }
+
+    private createAccordionGroups(tutorialGroups: TutorialGroup[], tutorialLectures: Lecture[]): AccordionGroups {
+        const accordionGroups: AccordionGroups = {
+            allGroups: { entityData: [] },
+            registeredGroups: { entityData: [] },
+            furtherGroups: { entityData: [] },
+            allTutorialLectures: { entityData: [] },
+            currentTutorialLecture: { entityData: [] },
+            furtherTutorialLectures: { entityData: [] },
+        };
+        let tutorialGroupCategory: TutorialGroupCategory;
+
+        const hasUserAtLeastOneTutorialGroup = tutorialGroups.some((tutorialGroup) => tutorialGroup.isUserRegistered || tutorialGroup.isUserTutor);
+        tutorialGroups.forEach((tutorialGroup) => {
+            const tutorialGroupCardItem = this.courseOverviewService.mapTutorialGroupToSidebarCardElement(tutorialGroup);
+            if (!hasUserAtLeastOneTutorialGroup) {
+                tutorialGroupCategory = 'allGroups';
+            } else {
+                tutorialGroupCategory = tutorialGroup.isUserTutor || tutorialGroup.isUserRegistered ? 'registeredGroups' : 'furtherGroups';
+            }
+            accordionGroups[tutorialGroupCategory].entityData.push(tutorialGroupCardItem);
+        });
+
+        const now = dayjs();
+        const currentLectures = tutorialLectures.filter(
+            (lecture) => lecture.startDate && lecture.startDate.isSameOrBefore(now) && (!lecture.endDate || now.isSameOrBefore(lecture.endDate)),
+        );
+        const mostRecentlyStartedCurrentLecture =
+            currentLectures.length === 0 ? undefined : currentLectures.reduce((latest, current) => (current.startDate!.isAfter(latest.startDate) ? current : latest));
+        tutorialLectures.forEach((tutorialLecture) => {
+            const tutorialLectureCardItem = this.courseOverviewService.mapLectureToSidebarCardElement(tutorialLecture);
+            if (!mostRecentlyStartedCurrentLecture) {
+                tutorialGroupCategory = 'allTutorialLectures';
+            } else {
+                const isCurrentTutorialLecture = mostRecentlyStartedCurrentLecture ? tutorialLecture.id === mostRecentlyStartedCurrentLecture.id : false;
+                tutorialGroupCategory = isCurrentTutorialLecture ? 'currentTutorialLecture' : 'furtherTutorialLectures';
+            }
+            accordionGroups[tutorialGroupCategory].entityData.push(tutorialLectureCardItem);
+        });
+        return accordionGroups;
+    }
+
+    private autoNavigateToLastSelectedOrUpcomingTutorialGroup(tutorialGroups: TutorialGroup[]) {
+        const upcomingTutorialGroup = this.courseOverviewService.getUpcomingTutorialGroup(tutorialGroups);
+        const lastSelectedSubRoute = this.getLastSelectedSubRoute();
+        const nothingSelected = !this.itemSelected();
+        if (nothingSelected && lastSelectedSubRoute) {
+            this.router.navigate([lastSelectedSubRoute], { relativeTo: this.activatedRoute, replaceUrl: true });
+        } else if (nothingSelected && upcomingTutorialGroup) {
+            this.router.navigate([upcomingTutorialGroup.id], { relativeTo: this.activatedRoute, replaceUrl: true });
+        }
+    }
+
+    private getLastSelectedSubRoute(): string | undefined {
+        return this.sessionStorageService.retrieve<string>('sidebar.lastSelectedItem.tutorialGroup.byCourse.' + this.courseId());
+    }
+
+    private getCurrentCourseIdSignal(): Signal<number | undefined> {
+        return toSignal(
+            this.activatedRoute.parent!.paramMap.pipe(
+                map((parameterMap) => {
+                    const courseIdParameter = parameterMap.get('courseId');
+                    return courseIdParameter !== null ? Number(courseIdParameter) : undefined;
+                }),
+                distinctUntilChanged(),
+            ),
+            { initialValue: undefined },
+        );
+    }
+
+    private computeCurrentTutorialLectureId(): number | undefined {
+        const sidebarData = this.sidebarData();
+        if (!sidebarData) {
+            return undefined;
+        }
+        const groupedData = sidebarData.groupedData;
+        if (!groupedData) {
+            return undefined;
+        }
+        const currentTutorialLecture = groupedData.currentTutorialLecture.entityData.at(0);
+        return currentTutorialLecture ? (currentTutorialLecture.id as number) : undefined;
+    }
+
+    private getItemSelectedSignal(): Signal<boolean> {
+        return toSignal(
+            this.router.events.pipe(
+                filter((event) => event instanceof NavigationEnd),
+                map(() => !!this.activatedRoute.firstChild),
+            ),
+            { initialValue: !!this.activatedRoute.firstChild },
+        );
     }
 }

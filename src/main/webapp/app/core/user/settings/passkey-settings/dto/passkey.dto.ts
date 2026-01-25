@@ -14,4 +14,9 @@ export interface PasskeyDTO {
      * ISO 8601 date string
      */
     lastUsed: string;
+
+    /**
+     * Super admin approval is required for privileged features (e.g. administrator features)
+     */
+    isSuperAdminApproved: boolean;
 }

@@ -3,12 +3,12 @@
         <div class="week-row">
             @for (day of week.days; track day.id) {
                 @if (day.isInDisplayedMonth) {
-                    <div class="day" (click)="selectDate.emit(day.date)">
-                        <jhi-calendar-day-badge [day]="day.date" />
+                    <div class="day" (click)="onDateSelected.emit(day.date)">
+                        <jhi-calendar-day-badge [date]="day.date" />
                         <div class="event-stack">
-                            @if (day.events.length > 3) {
-                                @for (event of day.firstTwoEvents; track event.id) {
-                                    <ng-container *ngTemplateOutlet="eventCell; context: { $implicit: event }" />
+                            @if (day.eventsAndMetadata.length > 3) {
+                                @for (eventAndMetadata of day.firstTwoEventsAndMetadata; track eventAndMetadata.event.id) {
+                                    <ng-container *ngTemplateOutlet="eventCell; context: { $implicit: eventAndMetadata }" />
                                 }
                                 <div class="ellipsis">
                                     <span class="dot"></span>
@@ -16,8 +16,8 @@
                                     <span class="dot"></span>
                                 </div>
                             } @else {
-                                @for (event of day.events; track event.id) {
-                                    <ng-container *ngTemplateOutlet="eventCell; context: { $implicit: event }" />
+                                @for (eventAndMetadata of day.eventsAndMetadata; track eventAndMetadata.event.id) {
+                                    <ng-container *ngTemplateOutlet="eventCell; context: { $implicit: eventAndMetadata }" />
                                 }
                             }
                         </div>
@@ -30,14 +30,7 @@
     }
 </div>
 
-<ng-template #eventCell let-event>
-    <div
-        class="event-cell"
-        [ngClass]="{
-            'exam-event-cell': event.isOfType(CalendarEventType.Exam),
-            'lecture-event-cell': event.isOfType(CalendarEventType.Lecture),
-            'tutorial-event-cell': event.isOfType(CalendarEventType.Tutorial),
-            'exercise-event-cell': event.isOfExerciseType(),
-        }"
-    ></div>
+<ng-template #eventCell let-eventAndMetadata>
+    @let color = eventAndMetadata.color;
+    <div class="event-cell" [style.background-color]="color"></div>
 </ng-template>

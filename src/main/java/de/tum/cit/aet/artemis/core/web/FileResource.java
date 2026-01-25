@@ -7,7 +7,6 @@ import static org.apache.velocity.shaded.commons.io.FilenameUtils.getExtension;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.FileNameMap;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLConnection;
@@ -19,8 +18,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.activation.MimetypesFileTypeMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.NonNull;
@@ -34,6 +31,7 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -56,7 +54,6 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
@@ -241,7 +238,7 @@ public class FileResource {
     public ResponseEntity<byte[]> getMarkdownFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         sanitizeFilenameElseThrow(filename);
-        return buildFileResponse(FilePathConverter.getMarkdownFilePath(), filename, false);
+        return buildFileResponse(FilePathConverter.getMarkdownFilePath(), filename, 30);
     }
 
     /**
@@ -394,6 +391,7 @@ public class FileResource {
     @GetMapping("files/templates/code-of-conduct")
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getCourseCodeOfConduct() throws IOException {
+        // TODO: store a Constant
         var templatePath = Path.of("templates", "codeofconduct", "README.md");
         log.debug("REST request to get template : {}", templatePath);
         var resource = resourceLoaderService.getResource(templatePath);
@@ -407,15 +405,15 @@ public class FileResource {
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/exam-user/signatures/{examUserId}/*")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastTutor
     public ResponseEntity<byte[]> getUserSignature(@PathVariable Long examUserId) {
         log.debug("REST request to get signature for exam user : {}", examUserId);
         ExamUserApi api = examUserApi.orElseThrow(() -> new ExamApiNotPresentException(ExamUserApi.class));
 
         ExamUser examUser = api.findWithExamById(examUserId).orElseThrow();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, examUser.getExam().getCourse(), null);
 
-        return buildFileResponse(getActualPathFromPublicPathString(examUser.getSigningImagePath(), FilePathType.EXAM_USER_SIGNATURE), false);
+        return buildFileResponse(getActualPathFromPublicPathString(examUser.getSigningImagePath(), FilePathType.EXAM_USER_SIGNATURE), 30);
     }
 
     /**
@@ -425,15 +423,15 @@ public class FileResource {
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/exam-user/{examUserId}/*")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastTutor
     public ResponseEntity<byte[]> getExamUserImage(@PathVariable long examUserId) {
         log.debug("REST request to get image for exam user : {}", examUserId);
         ExamUserApi api = examUserApi.orElseThrow(() -> new ExamApiNotPresentException(ExamUserApi.class));
 
         ExamUser examUser = api.findWithExamById(examUserId).orElseThrow();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, examUser.getExam().getCourse(), null);
 
-        return buildFileResponse(getActualPathFromPublicPathString(examUser.getStudentImagePath(), FilePathType.EXAM_USER_IMAGE), true);
+        return buildFileResponse(getActualPathFromPublicPathString(examUser.getStudentImagePath(), FilePathType.EXAM_USER_IMAGE), 30);
     }
 
     /**
@@ -690,6 +688,17 @@ public class FileResource {
     /**
      * Builds the response with headers, body and content type for specified path containing the file name
      *
+     * @param path      to the file including the file name
+     * @param cacheDays the number of days to cache the response
+     * @return response entity
+     */
+    private ResponseEntity<byte[]> buildFileResponse(Path path, int cacheDays) {
+        return buildFileResponse(path.getParent(), path.getFileName().toString(), Optional.empty(), cacheDays);
+    }
+
+    /**
+     * Builds the response with headers, body and content type for specified path containing the file name
+     *
      * @param path     to the file including the file name
      * @param filename the name of the file
      * @param cache    true if the response should contain a header that allows caching; false otherwise
@@ -697,6 +706,18 @@ public class FileResource {
      */
     private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, boolean cache) {
         return buildFileResponse(path, filename, Optional.empty(), cache);
+    }
+
+    /**
+     * Builds the response with headers, body and content type for specified path containing the file name
+     *
+     * @param path      to the file including the file name
+     * @param filename  the name of the file
+     * @param cacheDays the number of days to cache the response
+     * @return response entity
+     */
+    private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, int cacheDays) {
+        return buildFileResponse(path, filename, Optional.empty(), cacheDays);
     }
 
     /**
@@ -720,6 +741,19 @@ public class FileResource {
      * @return response entity
      */
     private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, Optional<String> replaceFilename, boolean cache) {
+        return buildFileResponse(path, filename, replaceFilename, cache ? DAYS_TO_CACHE : 0);
+    }
+
+    /**
+     * Builds the response with headers, body and content type for specified path and file name
+     *
+     * @param path            to the file
+     * @param filename        the name of the file
+     * @param replaceFilename replaces the downloaded file's name, if provided
+     * @param cacheDays       the number of days to cache the response (0 for no caching)
+     * @return response entity
+     */
+    private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, Optional<String> replaceFilename, int cacheDays) {
         try {
             Path actualPath = path.resolve(filename);
             byte[] file = fileService.getFileForPath(actualPath);
@@ -739,8 +773,8 @@ public class FileResource {
             headers.set("Filename", headerFilename);
 
             var response = ResponseEntity.ok().headers(headers).contentType(getMediaTypeFromFilename(filename)).header("filename", filename);
-            if (cache) {
-                var cacheControl = CacheControl.maxAge(Duration.ofDays(DAYS_TO_CACHE)).cachePublic();
+            if (cacheDays > 0) {
+                var cacheControl = CacheControl.maxAge(Duration.ofDays(cacheDays)).cachePublic();
                 response = response.cacheControl(cacheControl);
             }
             return response.body(file);
@@ -764,14 +798,20 @@ public class FileResource {
     }
 
     private MediaType getMediaTypeFromFilename(String filename) {
-        FileNameMap fileNameMap = URLConnection.getFileNameMap();
-        String mimeType = fileNameMap.getContentTypeFor(filename);
-        if (mimeType != null) {
+        // 1) Spring’s mapping (uses common extensions → MediaType)
+        Optional<MediaType> fromSpring = MediaTypeFactory.getMediaType(filename);
+        if (fromSpring.isPresent()) {
+            return fromSpring.get();
+        }
+
+        // 2) JDK fallback (may return null depending on OS/config)
+        String mimeType = URLConnection.guessContentTypeFromName(filename);
+        if (mimeType != null && !mimeType.isBlank()) {
             return MediaType.parseMediaType(mimeType);
         }
-        MimetypesFileTypeMap fileTypeMap = new MimetypesFileTypeMap();
 
-        return MediaType.parseMediaType(fileTypeMap.getContentType(filename));
+        // 3) Last resort
+        return MediaType.APPLICATION_OCTET_STREAM;
     }
 
     /**

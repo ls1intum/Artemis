@@ -2,16 +2,15 @@ package de.tum.cit.aet.artemis.core.service.user;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.domain.Authority.ADMIN_AUTHORITY;
+import static de.tum.cit.aet.artemis.core.domain.Authority.SUPER_ADMIN_AUTHORITY;
 import static de.tum.cit.aet.artemis.core.security.Role.EDITOR;
 import static de.tum.cit.aet.artemis.core.security.Role.INSTRUCTOR;
 import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 import static de.tum.cit.aet.artemis.core.security.Role.TEACHING_ASSISTANT;
 
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -24,9 +23,6 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 @Lazy
 @Service
 public class AuthorityService {
-
-    @Value("${artemis.user-management.external.admin-group-name:#{null}}")
-    private Optional<String> adminGroupName;
 
     private final CourseRepository courseRepository;
 
@@ -53,12 +49,10 @@ public class AuthorityService {
             groups = new HashSet<>();
         }
 
-        // Check if the user is admin in case the admin group is defined
-        if (adminGroupName.isPresent() && groups.contains(adminGroupName.get())) {
-            authorities.add(ADMIN_AUTHORITY);
-        }
-
         // Users who already have admin access, keep admin access.
+        if (user.getAuthorities() != null && user.getAuthorities().contains(SUPER_ADMIN_AUTHORITY)) {
+            authorities.add(SUPER_ADMIN_AUTHORITY);
+        }
         if (user.getAuthorities() != null && user.getAuthorities().contains(ADMIN_AUTHORITY)) {
             authorities.add(ADMIN_AUTHORITY);
         }

@@ -7,6 +7,13 @@
     grid-template-rows: min-content auto auto;
     row-gap: 10px;
 
+    // In assessment context, the wrapper is inside assessment-layout which handles scrolling
+    // In non-assessment context (e.g., student code editor), constrain to viewport
+    &:not(.assessment-wrapper) {
+        max-height: 100vh;
+        overflow: hidden;
+    }
+
     .collapsed--horizontal {
         width: 50px !important;
     }
@@ -76,6 +83,7 @@
         display: flex;
         flex-flow: column nowrap;
         height: 200px;
+        overflow: auto;
 
         /* Hide grip when bottom area is empty */
         .rg-bottom-bottom {
@@ -89,6 +97,11 @@
         > * {
             height: inherit;
         }
+    }
+
+    // In non-assessment mode, constrain the bottom section to fit in the viewport
+    &:not(.assessment-wrapper) .editor-bottom {
+        max-height: calc(100vh - 550px);
     }
 }
 
@@ -255,6 +268,7 @@
    Resizable drag elements
    ========================================================================== */
 
+/* stylelint-disable no-descending-specificity -- These selectors are used in different contexts */
 .rg-main-bottom,
 .rg-bottom-bottom,
 .rg-sidebar-left,
@@ -262,7 +276,15 @@
     align-self: center;
     color: var(--code-editor-grid-grip-lines-color);
     justify-self: center;
+    font-size: 0.7rem;
+    opacity: 1;
+    transition: opacity 0.2s;
+
+    &:hover {
+        opacity: 0.8;
+    }
 }
+/* stylelint-enable no-descending-specificity */
 
 .rg-main-bottom {
     cursor: row-resize;
@@ -271,11 +293,11 @@
 .rg-sidebar-left,
 .rg-sidebar-right {
     cursor: col-resize;
-    margin-left: 1px;
-    margin-right: 1px;
+    margin-left: 0;
+    margin-right: 0;
 
     /* easier to grab + avoid selecting editor text while dragging */
-    padding: 1px 1px;
+    padding: 0 0;
     -webkit-user-select: none;
     user-select: none;
     touch-action: none;
@@ -283,7 +305,7 @@
 }
 
 .separator {
-    margin: 5px;
+    margin: 0;
 }
 
 /* ==========================================================================

@@ -215,6 +215,7 @@ describe('FeedbackComponent', () => {
                     participantIdentifier: 'student42',
                     repositoryUri: 'https://artemis.tum.de/projects/somekey/repos/somekey-student42',
                 },
+                buildFailed: true,
             },
         } as Result;
         buildLogService = TestBed.inject(BuildLogService);
@@ -302,7 +303,6 @@ describe('FeedbackComponent', () => {
 
     it('should try to retrieve build logs if the exercise type is PROGRAMMING and a submission was provided which was marked with build failed.', () => {
         comp.exerciseType = ExerciseType.PROGRAMMING;
-        comp.participation = { ...comp.participation, submissions: [{ buildFailed: true } as ProgrammingSubmission] };
 
         comp.ngOnInit();
 
@@ -336,7 +336,6 @@ describe('FeedbackComponent', () => {
 
     it('fetchBuildLogs should suppress 403 error', () => {
         comp.exerciseType = ExerciseType.PROGRAMMING;
-        comp.participation = { ...comp.participation, submissions: [{ buildFailed: true } as ProgrammingSubmission] };
         const response = new HttpErrorResponse({ status: 403 });
         buildlogsStub.mockReturnValue(throwError(() => response));
 
@@ -350,7 +349,6 @@ describe('FeedbackComponent', () => {
 
     it('fetchBuildLogs should not suppress errors with status other than 403', () => {
         comp.exerciseType = ExerciseType.PROGRAMMING;
-        comp.participation = { ...comp.participation, submissions: [{ buildFailed: true } as ProgrammingSubmission] };
         const response = new HttpErrorResponse({ status: 500 });
         buildlogsStub.mockReturnValue(throwError(() => response));
         comp.ngOnInit();

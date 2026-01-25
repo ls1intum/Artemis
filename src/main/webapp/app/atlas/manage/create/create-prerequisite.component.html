@@ -10,12 +10,6 @@
             <h3 jhiTranslate="artemisApp.prerequisite.create.title"></h3>
             <jhi-documentation-button [type]="documentationType" />
         </div>
-        <jhi-prerequisite-form
-            [isEditMode]="false"
-            (formSubmitted)="createPrerequisite($event)"
-            [courseId]="courseId"
-            [lecturesOfCourseWithLectureUnits]="lecturesWithLectureUnits"
-            [prerequisite]="prerequisiteToCreate"
-        />
+        <jhi-prerequisite-form [isEditMode]="false" (formSubmitted)="createPrerequisite($event)" [courseId]="courseId" [prerequisite]="prerequisiteToCreate" />
     </div>
 }

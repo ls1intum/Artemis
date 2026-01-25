@@ -247,7 +247,7 @@
                                 @if (value?.submissions?.last()?.results?.last()?.assessmentNote?.note?.trim()) {
                                     <span class="w-100 text-center">
                                         <fa-icon
-                                            [ngbPopover]="value.results?.last()?.assessmentNote.note"
+                                            [ngbPopover]="value.submissions.last().results.last().assessmentNote.note"
                                             [triggers]="'hover'"
                                             [icon]="faComment"
                                             [container]="'body'"

@@ -24,8 +24,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.UserScheduleService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.iris.api.IrisLectureUnitAutoIngestionApi;
-import de.tum.cit.aet.artemis.lecture.service.SlideUnhideScheduleService;
+import de.tum.cit.aet.artemis.lecture.api.SlideUnhideScheduleApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseScheduleService;
@@ -58,19 +57,16 @@ public class InstanceMessageReceiveService {
 
     private final UserRepository userRepository;
 
-    private final SlideUnhideScheduleService slideUnhideScheduleService;
+    private final Optional<SlideUnhideScheduleApi> slideUnhideScheduleApi;
 
     private final HazelcastInstance hazelcastInstance;
 
     private final QuizScheduleService quizScheduleService;
 
-    private final Optional<IrisLectureUnitAutoIngestionApi> irisLectureUnitAutoIngestionApi;
-
     public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
             ExerciseRepository exerciseRepository, Optional<AthenaApi> athenaApi, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
             UserRepository userRepository, UserScheduleService userScheduleService, NotificationScheduleService notificationScheduleService,
-            ParticipantScoreScheduleService participantScoreScheduleService, QuizScheduleService quizScheduleService, SlideUnhideScheduleService slideUnhideScheduleService,
-            Optional<IrisLectureUnitAutoIngestionApi> irisLectureUnitAutoIngestionApi) {
+            ParticipantScoreScheduleService participantScoreScheduleService, QuizScheduleService quizScheduleService, Optional<SlideUnhideScheduleApi> slideUnhideScheduleApi) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.athenaApi = athenaApi;
@@ -81,8 +77,7 @@ public class InstanceMessageReceiveService {
         this.participantScoreScheduleService = participantScoreScheduleService;
         this.hazelcastInstance = hazelcastInstance;
         this.quizScheduleService = quizScheduleService;
-        this.slideUnhideScheduleService = slideUnhideScheduleService;
-        this.irisLectureUnitAutoIngestionApi = irisLectureUnitAutoIngestionApi;
+        this.slideUnhideScheduleApi = slideUnhideScheduleApi;
     }
 
     /**
@@ -145,15 +140,6 @@ public class InstanceMessageReceiveService {
         hazelcastInstance.<Long>getTopic(MessageTopic.SLIDE_UNHIDE_SCHEDULE_CANCEL.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
             processCancelSlideUnhide(message.getMessageObject());
-        });
-
-        hazelcastInstance.<Long>getTopic(MessageTopic.LECTURE_UNIT_AUTO_INGESTION_SCHEDULE.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processLectureUnitAutoIngestionSchedule(message.getMessageObject());
-        });
-        hazelcastInstance.<Long>getTopic(MessageTopic.LECTURE_UNIT_AUTO_INGESTION_SCHEDULE_CANCEL.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processLectureUnitAutoIngestionScheduleCancel(message.getMessageObject());
         });
     }
 
@@ -222,21 +208,11 @@ public class InstanceMessageReceiveService {
 
     public void processScheduleSlideUnhide(Long slideId) {
         log.info("Received schedule update for slide unhiding {}", slideId);
-        slideUnhideScheduleService.scheduleSlideUnhiding(slideId);
+        slideUnhideScheduleApi.ifPresent(api -> api.scheduleSlideUnhiding(slideId));
     }
 
     public void processCancelSlideUnhide(Long slideId) {
         log.info("Received schedule cancel for slide unhiding {}", slideId);
-        slideUnhideScheduleService.cancelScheduledUnhiding(slideId);
-    }
-
-    public void processLectureUnitAutoIngestionSchedule(Long lectureUnitId) {
-        log.info("Received schedule lecture unit ingestion for lecture unit id {}", lectureUnitId);
-        irisLectureUnitAutoIngestionApi.ifPresent(api -> api.scheduleLectureUnitAutoIngestion(lectureUnitId));
-    }
-
-    public void processLectureUnitAutoIngestionScheduleCancel(Long lectureUnitId) {
-        log.info("Received schedule cancel lecture unit ingestion for lecture unit id {}", lectureUnitId);
-        irisLectureUnitAutoIngestionApi.ifPresent(api -> api.cancelLectureUnitAutoIngestion(lectureUnitId));
+        slideUnhideScheduleApi.ifPresent(api -> api.cancelScheduledUnhiding(slideId));
     }
 }

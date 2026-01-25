@@ -126,7 +126,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.participationSubscription = oldSubscription;
 
         triggerChanges(comp, { property: 'participation', currentValue: participation, previousValue: oldParticipation, firstChange: false });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(getTestCasesSpy).toHaveBeenCalledOnce();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
@@ -137,7 +137,39 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(comp.isInitial).toBeTrue();
     }));
 
-    it('should emit that no instructions are available if there is no problem statement', () => {
+    it('should properly assign and cleanup generateHtmlSubscription when generateHtmlEvents is provided', fakeAsync(() => {
+        const exercise: ProgrammingExercise = {
+            id: 1,
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+            isAtLeastTutor: true,
+            problemStatement: 'lorem ipsum dolor sit amet',
+        };
+        const oldParticipation: Participation = { id: 1 };
+        const result: Result = { id: 1 };
+        const participation: Participation = { id: 2, submissions: [{ results: [result] }] };
+        const oldSubscription = new Subscription();
+        const generateHtmlEvents = of(undefined);
+
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
+        comp.exercise = exercise;
+        comp.participation = participation;
+        comp.generateHtmlEvents = generateHtmlEvents;
+        // @ts-ignore
+        comp.generateHtmlSubscription = oldSubscription;
+
+        triggerChanges(comp, { property: 'participation', currentValue: participation, previousValue: oldParticipation, firstChange: false });
+        fixture.changeDetectorRef.detectChanges();
+
+        // @ts-ignore - the generateHtmlSubscription should be reassigned, not left as the old one
+        expect(comp.generateHtmlSubscription).not.toEqual(oldSubscription);
+        // @ts-ignore - verify it's actually a subscription
+        expect(comp.generateHtmlSubscription).toBeInstanceOf(Subscription);
+        flush();
+    }));
+
+    it('should process empty problem statement and show empty state', () => {
         const result: Result = { id: 1, feedbacks: [] };
         const participation: Participation = { id: 2 };
         const exercise: ProgrammingExercise = {
@@ -159,18 +191,20 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         triggerChanges(comp);
         // @ts-ignore
         expect(comp.problemStatement).toBeUndefined();
-        expect(loadInitialResultStub).not.toHaveBeenCalled();
-        expect(comp.latestResult).toBeUndefined();
-        expect(updateMarkdownStub).not.toHaveBeenCalled();
-        expect(noInstructionsAvailableSpy).toHaveBeenCalledOnce();
+        // Component now processes empty problem statements to show empty state
+        expect(loadInitialResultStub).toHaveBeenCalledOnce();
+        expect(comp.latestResult).toBe(result);
+        expect(updateMarkdownStub).toHaveBeenCalledOnce();
+        // No longer emits onNoInstructionsAvailable - shows empty state instead
+        expect(noInstructionsAvailableSpy).not.toHaveBeenCalled();
         expect(comp.isInitial).toBeFalse();
         expect(comp.isLoading).toBeFalse();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).toBeNull();
         expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).not.toBeNull();
     });
 
-    it('should NOT update markdown if the problemStatement is changed', () => {
+    it('should NOT update markdown if the problemStatement is changed', fakeAsync(() => {
         const participation: Participation = { id: 2 };
         const exercise: ProgrammingExercise = {
             id: 3,
@@ -193,11 +227,13 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             currentValue: { ...comp.exercise, problemStatement: newProblemStatement },
             firstChange: false,
         });
+        // Wait for debounce (150ms) to complete
+        tick(150);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
         expect(loadInitialResult).not.toHaveBeenCalled();
-    });
+    }));
 
-    it('should NOT update the markdown if there is no participation and the exercise has changed', () => {
+    it('should NOT update the markdown if there is no participation and the exercise has changed', fakeAsync(() => {
         const participation: Participation = { id: 2 };
         const exercise: ProgrammingExercise = {
             id: 3,
@@ -214,11 +250,13 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.participation = participation;
         comp.isInitial = false;
         triggerChanges(comp, { property: 'exercise', currentValue: { ...comp.exercise, problemStatement: newProblemStatement }, firstChange: false });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
+        // Wait for debounce (150ms) to complete
+        tick(150);
         expect(comp.markdownExtensions).toHaveLength(2);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
         expect(loadInitialResult).not.toHaveBeenCalled();
-    });
+    }));
 
     it('should still render the instructions if fetching the latest result fails', () => {
         const participation: Participation = { id: 2 };
@@ -289,12 +327,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             taskName: 'Implement Merge Sort',
             testIds: [2],
         });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(debugElement.query(By.css('.stepwizard'))).not.toBeNull();
         expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         // TODO: make sure to exclude random numbers here that change after updates of dependencies
         const expectedHtml = problemStatementBubbleSortNotExecutedHtml.replaceAll('{{ANGULAR_VERSION}}', VERSION.full);
         expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).toEqual(expectedHtml);
@@ -369,12 +407,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             taskName: 'Merge Sort',
             testIds: [],
         });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(debugElement.query(By.css('.stepwizard'))).not.toBeNull();
         expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const expectedHtml = problemStatementEmptySecondTaskNotExecutedHtml.replaceAll('{{ANGULAR_VERSION}}', VERSION.full);
         // TODO: make sure to exclude random numbers here that change after updates of dependencies
@@ -435,7 +473,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         comp.updateMarkdown();
 
-        tick();
+        // Flush all pending timers (setTimeout in renderMarkdown)
+        flush();
 
         // first test should be green (successful), second red (failed)
         const expectedUML = '@startuml\nclass Policy {\n<color:green>+configure()</color>\n<color:red>+testWithParenthesis()</color>}\n@enduml';
@@ -460,7 +499,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.isInitial = false;
         themeService.applyThemePreference(Theme.DARK);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // toObservable triggers a effect in the background on initial detectChanges
         expect(updateMarkdownStub).toHaveBeenCalledOnce();

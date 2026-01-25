@@ -876,6 +876,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         var feedback3 = new Feedback().result(result).testCase(tests.get("test3")).positive(test3Passes).type(FeedbackType.AUTOMATIC);
         result.addFeedback(feedback3);
         result.rated(true).successful(test1Passes && test2Passes && test3Passes).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
+        result.setExerciseId(programmingExercise.getId());
         gradingService.calculateScoreForResult(result, programmingExercise, true);
         return resultRepository.save(result);
     }
@@ -1455,6 +1456,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
                 .type(FeedbackType.AUTOMATIC).positive(false));
 
         result.rated(true).successful(test1Passes && test2Passes && test3Passes).completionDate(completionDate).assessmentType(AssessmentType.AUTOMATIC);
+        result.setExerciseId(programmingExerciseSCAEnabled.getId());
 
         gradingService.calculateScoreForResult(result, programmingExerciseSCAEnabled, true);
 

@@ -1,24 +1,25 @@
 import { ActivatedRoute, Router } from '@angular/router';
-import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, OnInit, inject, viewChild } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, map, merge } from 'rxjs';
+import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, firstValueFrom, map, merge } from 'rxjs';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled, unsetCourseIcon } from 'app/core/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
-import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATLAS, PROFILE_ATHENA, PROFILE_LTI } from 'app/app.constants';
+import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI, PROFILE_ATHENA } from 'app/app.constants';
 import { ImageComponent } from 'app/shared/image/image.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { Organization } from 'app/core/shared/entities/organization.model';
-import { NgbModal, NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
-import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
+import { OrganizationSelectorComponent, OrganizationSelectorDialogData } from 'app/shared/organization-selector/organization-selector.component';
 import { faBan, faExclamationTriangle, faPen, faQuestionCircle, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/shared/util/blob-util';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
@@ -33,6 +34,7 @@ import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
 import { KeyValuePipe, NgStyle, NgTemplateOutlet } from '@angular/common';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
@@ -42,6 +44,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { FileService } from 'app/shared/service/file.service';
+import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
 
 const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
 
@@ -73,31 +76,40 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
     ],
 })
 export class CourseUpdateComponent implements OnInit {
-    private eventManager = inject(EventManager);
-    private courseManagementService = inject(CourseManagementService);
-    private courseAdminService = inject(CourseAdminService);
-    private activatedRoute = inject(ActivatedRoute);
-    private fileService = inject(FileService);
-    private alertService = inject(AlertService);
-    private profileService = inject(ProfileService);
-    private organizationService = inject(OrganizationManagementService);
-    private modalService = inject(NgbModal);
-    private navigationUtilService = inject(ArtemisNavigationUtilService);
-    private router = inject(Router);
-    private accountService = inject(AccountService);
+    private readonly eventManager = inject(EventManager);
+    private readonly courseManagementService = inject(CourseManagementService);
+    private readonly courseAdminService = inject(CourseAdminService);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly fileService = inject(FileService);
+    private readonly alertService = inject(AlertService);
+    private readonly profileService = inject(ProfileService);
+    private readonly organizationService = inject(OrganizationManagementService);
+    private readonly dialogService = inject(DialogService);
+    private readonly translateService = inject(TranslateService);
+    private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
+    private readonly router = inject(Router);
+    private readonly accountService = inject(AccountService);
 
-    ProgrammingLanguage = ProgrammingLanguage;
+    protected readonly ProgrammingLanguage = ProgrammingLanguage;
+    protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
+    protected readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
 
-    @ViewChild('fileInput', { static: false }) fileInput: ElementRef<HTMLInputElement>;
-    @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
-    @ViewChild('timeZoneInput') tzTypeAhead: NgbTypeahead;
+    protected readonly faSave = faSave;
+    protected readonly faBan = faBan;
+    protected readonly faTimes = faTimes;
+    protected readonly faTrash = faTrash;
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly faPen = faPen;
+
+    readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
+    readonly colorSelector = viewChild.required(ColorSelectorComponent);
+    readonly tzTypeAhead = viewChild.required<NgbTypeahead>('timeZoneInput');
 
     tzFocus$ = new Subject<string>();
     tzClick$ = new Subject<string>();
     timeZones: string[] = [];
     originalTimeZone?: string;
-
-    readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
 
     courseForm: FormGroup;
     course: Course;
@@ -109,14 +121,6 @@ export class CourseUpdateComponent implements OnInit {
     customizeGroupNames = false;
     courseOrganizations: Organization[];
     isAdmin = false;
-    // Icons
-    faSave = faSave;
-    faBan = faBan;
-    faTimes = faTimes;
-    faTrash = faTrash;
-    faQuestionCircle = faQuestionCircle;
-    faExclamationTriangle = faExclamationTriangle;
-    faPen = faPen;
 
     faqEnabled = true;
     communicationEnabled = true;
@@ -186,7 +190,7 @@ export class CourseUpdateComponent implements OnInit {
             }
         }
         this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
-        this.ltiEnabled = this.profileService.isProfileActive(PROFILE_LTI);
+        this.ltiEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI);
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
 
         this.communicationEnabled = isCommunicationEnabled(this.course);
@@ -273,7 +277,7 @@ export class CourseUpdateComponent implements OnInit {
 
     tzSearch: OperatorFunction<string, readonly string[]> = (text$: Observable<string>) => {
         const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
-        const clicksWithClosedPopup$ = this.tzClick$.pipe(filter(() => !this.tzTypeAhead.isPopupOpen()));
+        const clicksWithClosedPopup$ = this.tzClick$.pipe(filter(() => !this.tzTypeAhead().isPopupOpen()));
         const inputFocus$ = this.tzFocus$;
 
         return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
@@ -335,7 +339,7 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     openColorSelector(event: MouseEvent) {
-        this.colorSelector.openColorSelector(event);
+        this.colorSelector().openColorSelector(event);
     }
 
     onSelectedColor(selectedColor: string) {
@@ -557,9 +561,17 @@ export class CourseUpdateComponent implements OnInit {
      * Opens the organizations modal used to select an organization to add
      */
     openOrganizationsModal() {
-        const modalRef = this.modalService.open(OrganizationSelectorComponent, { size: 'xl', backdrop: 'static' });
-        modalRef.componentInstance.organizations = this.courseOrganizations;
-        modalRef.closed.subscribe((organization) => {
+        const dialogRef = this.dialogService.open(OrganizationSelectorComponent, {
+            header: this.translateService.instant('artemisApp.organizationManagement.modalSelector.title'),
+            width: '80vw',
+            modal: true,
+            closable: true,
+            dismissableMask: true,
+            data: {
+                organizations: this.courseOrganizations,
+            } as OrganizationSelectorDialogData,
+        });
+        dialogRef?.onClose.subscribe((organization) => {
             if (organization !== undefined) {
                 if (this.courseOrganizations === undefined) {
                     this.courseOrganizations = [];
@@ -665,18 +677,43 @@ export class CourseUpdateComponent implements OnInit {
     protected readonly FeatureToggle = FeatureToggle;
 
     triggerFileInput() {
-        this.fileInput.nativeElement.click();
+        this.fileInput().nativeElement.click();
     }
 
     openCropper(): void {
-        const modalRef = this.modalService.open(ImageCropperModalComponent, { size: 'm' });
-        modalRef.componentInstance.uploadFile = this.courseImageUploadFile;
-        modalRef.componentInstance.croppedImage = this.croppedImage;
-        modalRef.result.then((result) => {
+        const dialogRef = this.dialogService.open(ImageCropperModalComponent, {
+            header: '',
+            width: '500px',
+            data: {
+                uploadFile: this.courseImageUploadFile,
+            },
+        });
+        dialogRef?.onClose.subscribe((result: string | undefined) => {
             if (result) {
                 this.croppedImage = result;
             }
         });
+    }
+
+    /**
+     * Enable or disable communication
+     */
+    async changeCommunicationEnabled() {
+        if (this.communicationEnabled && !this.course.courseInformationSharingMessagingCodeOfConduct) {
+            try {
+                const res = await firstValueFrom(this.fileService.getTemplateCodeOfConduct());
+                if (res.body) {
+                    this.course.courseInformationSharingMessagingCodeOfConduct = res.body;
+                    this.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].setValue(res.body);
+                }
+            } catch (err) {
+                onError(this.alertService, err as HttpErrorResponse);
+            }
+        }
+
+        if (this.communicationEnabled) {
+            this.disableMessaging();
+        }
     }
 
     disableMessaging() {

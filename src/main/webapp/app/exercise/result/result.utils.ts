@@ -263,7 +263,8 @@ export const isOnlyCompilationTested = (result: Result | undefined, participatio
     return (
         templateStatus !== ResultTemplateStatus.NO_RESULT &&
         templateStatus !== ResultTemplateStatus.IS_BUILDING &&
-        !isBuildFailed(getLatestSubmission(participation)) &&
+        // prefer the potentially newer result.submission when available (so that buildFailed is up-to-date)
+        !isBuildFailed(result?.submission ?? getLatestSubmission(participation)) &&
         zeroTests &&
         isProgrammingExercise
     );

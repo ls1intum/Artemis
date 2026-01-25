@@ -14,9 +14,9 @@ import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
 import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
+import * as calendarUtils from 'app/shared/util/global.utils';
 
 describe('CalendarMobileOverviewComponent', () => {
     let fixture: ComponentFixture<CalendarMobileOverviewComponent>;
@@ -31,7 +31,6 @@ describe('CalendarMobileOverviewComponent', () => {
             eventMap: signal(new Map<string, CalendarEvent[]>()),
             loadEventsForCurrentMonth: jest.fn().mockReturnValue(of([])),
             subscriptionToken: signal('testToken'),
-            loadSubscriptionToken: jest.fn().mockReturnValue(of([])),
             includedEventFilterOptions: signal([
                 CalendarEventFilterOption.LectureEvents,
                 CalendarEventFilterOption.ExerciseEvents,
@@ -59,9 +58,10 @@ describe('CalendarMobileOverviewComponent', () => {
                     },
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
-                provideNoopAnimations(),
             ],
         }).compileComponents();
+
+        jest.spyOn(calendarUtils, 'getCurrentLocaleSignal').mockReturnValue(signal('en'));
 
         fixture = TestBed.createComponent(CalendarMobileOverviewComponent);
         component = fixture.componentInstance;

@@ -119,14 +119,14 @@
                 "descriptionMaxLengthValidationError": "Die Beschreibung der Kompetenz ist auf maximal {{max}} Symbole beschränkt",
                 "softDueDate": "Empfohlenes Fertigstellungsdatum",
                 "softDueDateHint": "Empfehle einen Zeitpunkt, zu dem die Studierenden diese Kompetenz gemeistert haben sollten. Dies ist keine harte Frist.",
-                "connectWithLectureUnits": "Verbinde die Kompetenz mit Vorlesungseinheiten"
+                "connectWithLectureUnits": "Verbinde die Kompetenz mit Vorlesungsinhalten"
             },
             "edit": {
                 "title": "Bearbeite eine Kompetenz"
             },
             "link": {
                 "title": "Verbundene Kompetenzen",
-                "lectureUnit": "Verbinde diese Vorlesungseinheit wahlweise mit einer oder mehreren Kompetenzen.",
+                "lectureUnit": "Verbinde diese Vorlesungsinhalte wahlweise mit einer oder mehreren Kompetenzen.",
                 "exercise": "Verbinde diese Übung wahlweise mit einer oder mehreren Kompetenzen.",
                 "weightTooltip": "Die Relevanz dieses Lernobjektes für die Kompetenz.",
                 "weightLabels": {
@@ -139,11 +139,11 @@
                 "tooltip": "Diese Kompetenz wird von der KI auf Grundlage der Aufgabenstellung vorgeschlagen."
             },
             "competencyCard": {
-                "connectedLectureUnits": "Verbundene Vorlesungseinheiten",
-                "connectedLectureUnitsExplanation": "Die folgenden Vorlesungseinheiten sind mit der Kompetenz verbunden:",
+                "connectedLectureUnits": "Verbundene Vorlesungsinhalte",
+                "connectedLectureUnitsExplanation": "Die folgenden Vorlesungsinhalte sind mit der Kompetenz verbunden:",
                 "ringsTooltip": "Dein Weg zum Erwerb der Kompetenz. (Rot = Kompetenzbeherrschung, Grün = Fortschritt)",
                 "ringsTooltipHideProgress": "Du hast dein Verständnis dieser Kompetenz noch nicht bewertet. Bitte bewerte es, um deinen Fortschritt zu sehen.",
-                "exerciseNote": "Bitte beachte, dass bei Aufgabeneinheiten immer die letzte Einreichung berücksichtigt wird. Auch Einreichungen nach dem Fälligkeitsdatum. Das bedeutet, dass du z. B. deinen Fortschritt verbessern kannst, indem du ein Quiz beliebig oft erneut versuchst. Es ist daher normal, dass deine Bewertung hier von der Bewertung, welche du offiziell in einer Übung erreicht hast, abweichen kann.",
+                "exerciseNote": "Bitte beachte, dass bei Aufgaben immer die letzte Einreichung berücksichtigt wird. Auch Einreichungen nach dem Fälligkeitsdatum. Das bedeutet, dass du z. B. deinen Fortschritt verbessern kannst, indem du ein Quiz beliebig oft erneut versuchst. Es ist daher normal, dass deine Bewertung hier von der Bewertung, welche du offiziell in einer Übung erreicht hast, abweichen kann.",
                 "delete": {
                     "question": "Willst du wirklich die Kompetenz <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
                     "typeNameToConfirm": "Bitte gib zur Bestätigung den Namen der Kompetenz ein.",
@@ -151,8 +151,8 @@
                 },
                 "remove": "Entfernen",
                 "achieved": "erreicht",
-                "progressUnavailable": "Die Fortschrittsberechnung ist momentan nur für Kompetenzen verfügbar, welche mit Lerneinheiten verbunden wurden.",
-                "noUnitsConnected": "Die Kompetenz ist mit keinen Vorlesungseinheiten verbunden",
+                "progressUnavailable": "Die Fortschrittsberechnung ist momentan nur für Kompetenzen verfügbar, welche mit Vorlesungsinhalten verbunden wurden.",
+                "noUnitsConnected": "Die Kompetenz ist mit keinen Vorlesungsinhalten verbunden",
                 "progressExplanation": "Fortschritt: Momentan hast du <strong>{{ progress }}%</strong> von <strong>{{ points }}</strong> Punkten erreicht.",
                 "progressCourseExplanation": "Durchschnittlicher Kurs Fortschritt: Momentan hat der Kurs durchschnittlich <strong>{{ progress }}%</strong> von <strong>{{ points }}</strong> Punkten erreicht.",
                 "softDueDate": "Empfohlen"
@@ -257,7 +257,7 @@
                 "averageStudentScore": "Durchschnittliche Bewertung der Studierenden",
                 "selectLecture": "Wähle eine Vorlesung aus",
                 "noLectures": "Dieser Kurs hat keine Vorlesungen",
-                "dropdown": "{{lectureTitle}} ({{ noOfConnectedUnits }} Vorlesungseinheiten verbunden)",
+                "dropdown": "{{lectureTitle}} ({{ noOfConnectedUnits }} Vorlesungsinhalte verbunden)",
                 "lectureUnitTable": {
                     "type": "Typ",
                     "name": "Vorlesungseinheit",
@@ -389,7 +389,7 @@
                 "descriptionMaxLengthValidationError": "Die Beschreibung der Voraussetzung ist auf maximal {{max}} Symbole beschränkt",
                 "softDueDate": "Empfohlenes Fertigstellungsdatum",
                 "softDueDateHint": "Empfehle einen Zeitpunkt, zu dem die Studierenden diese Voraussetzung gemeistert haben sollten. Dies ist keine harte Frist.",
-                "connectWithLectureUnits": "Verbinde die Voraussetzung mit Vorlesungseinheiten"
+                "connectWithLectureUnits": "Verbinde die Voraussetzung mit Vorlesungsinhalten"
             },
             "edit": {
                 "title": "Bearbeite eine Voraussetzung"
@@ -409,7 +409,7 @@
         "learningPath": {
             "learningPathButton": "Lernpfade",
             "breadcrumbs": {
-                "lectureUnit": "Vorlesungseinheit",
+                "lectureUnit": "Vorlesungsinhalt",
                 "exercise": "Aufgabe"
             },
             "manageLearningPaths": {

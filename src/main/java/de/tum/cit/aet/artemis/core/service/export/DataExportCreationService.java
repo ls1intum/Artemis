@@ -8,7 +8,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.Optional;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -19,17 +18,18 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
-import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.DataExportState;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.EmailFailedException;
 import de.tum.cit.aet.artemis.core.repository.DataExportRepository;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
-import de.tum.cit.aet.artemis.core.service.user.UserService;
 
 /**
  * A service to create data exports for users
@@ -45,19 +45,18 @@ public class DataExportCreationService {
 
     private static final Logger log = LoggerFactory.getLogger(DataExportCreationService.class);
 
+    @Value("${info.contact:}")
+    private String adminEmail;
+
     private final Path dataExportsPath;
 
     private final ZipFileService zipFileService;
 
     private final FileService fileService;
 
-    private final SingleUserNotificationService singleUserNotificationService;
-
     private final DataExportRepository dataExportRepository;
 
     private final MailService mailService;
-
-    private final UserService userService;
 
     private final DataExportExerciseCreationService dataExportExerciseCreationService;
 
@@ -67,25 +66,39 @@ public class DataExportCreationService {
 
     private final DataExportScienceEventService dataExportScienceEventService;
 
+    private final DataExportIrisService dataExportIrisService;
+
+    private final DataExportLearnerProfileService dataExportLearnerProfileService;
+
+    private final DataExportCompetencyProgressService dataExportCompetencyProgressService;
+
+    private final DataExportTutorialGroupService dataExportTutorialGroupService;
+
     private final ResourceLoaderService resourceLoaderService;
 
+    private final TempFileUtilService tempFileUtilService;
+
     public DataExportCreationService(@Value("${artemis.data-export-path:./data-exports}") Path dataExportsPath, ZipFileService zipFileService, FileService fileService,
-            SingleUserNotificationService singleUserNotificationService, DataExportRepository dataExportRepository, MailService mailService, UserService userService,
-            DataExportExerciseCreationService dataExportExerciseCreationService, DataExportExamCreationService dataExportExamCreationService,
-            DataExportCommunicationDataService dataExportCommunicationDataService, DataExportScienceEventService dataExportScienceEventService,
-            ResourceLoaderService resourceLoaderService) {
+            DataExportRepository dataExportRepository, MailService mailService, DataExportExerciseCreationService dataExportExerciseCreationService,
+            DataExportExamCreationService dataExportExamCreationService, DataExportCommunicationDataService dataExportCommunicationDataService,
+            DataExportScienceEventService dataExportScienceEventService, DataExportIrisService dataExportIrisService,
+            DataExportLearnerProfileService dataExportLearnerProfileService, DataExportCompetencyProgressService dataExportCompetencyProgressService,
+            DataExportTutorialGroupService dataExportTutorialGroupService, ResourceLoaderService resourceLoaderService, TempFileUtilService tempFileUtilService) {
         this.zipFileService = zipFileService;
         this.fileService = fileService;
-        this.singleUserNotificationService = singleUserNotificationService;
         this.dataExportRepository = dataExportRepository;
         this.mailService = mailService;
-        this.userService = userService;
         this.dataExportExerciseCreationService = dataExportExerciseCreationService;
         this.dataExportExamCreationService = dataExportExamCreationService;
         this.dataExportCommunicationDataService = dataExportCommunicationDataService;
         this.dataExportScienceEventService = dataExportScienceEventService;
+        this.dataExportIrisService = dataExportIrisService;
+        this.dataExportLearnerProfileService = dataExportLearnerProfileService;
+        this.dataExportCompetencyProgressService = dataExportCompetencyProgressService;
+        this.dataExportTutorialGroupService = dataExportTutorialGroupService;
         this.dataExportsPath = dataExportsPath;
         this.resourceLoaderService = resourceLoaderService;
+        this.tempFileUtilService = tempFileUtilService;
     }
 
     /**
@@ -94,7 +107,7 @@ public class DataExportCreationService {
      *
      * @param dataExport the data export to be created
      **/
-    private DataExport createDataExportWithContent(DataExport dataExport) throws IOException, URISyntaxException {
+    private void createAndSaveDataExportWithContent(DataExport dataExport) throws IOException, URISyntaxException, EmailFailedException {
         log.info("Creating data export for user {}", dataExport.getUser().getLogin());
         var userId = dataExport.getUser().getId();
         var user = dataExport.getUser();
@@ -103,10 +116,14 @@ public class DataExportCreationService {
         dataExportExamCreationService.createExportForExams(userId, workingDirectory);
         dataExportCommunicationDataService.createCommunicationDataExport(userId, workingDirectory);
         dataExportScienceEventService.createScienceEventExport(user.getLogin(), workingDirectory);
+        dataExportIrisService.createIrisExport(userId, workingDirectory);
+        dataExportLearnerProfileService.createLearnerProfileExport(userId, workingDirectory);
+        dataExportCompetencyProgressService.createCompetencyProgressExport(userId, workingDirectory);
+        dataExportTutorialGroupService.createTutorialGroupExport(userId, workingDirectory);
         addGeneralUserInformation(user, workingDirectory);
         addReadmeFile(workingDirectory);
         var dataExportPath = createDataExportZipFile(user.getLogin(), workingDirectory);
-        return finishDataExportCreation(dataExport, dataExportPath);
+        finishDataExportCreation(dataExport, dataExportPath);
     }
 
     /**
@@ -136,14 +153,39 @@ public class DataExportCreationService {
      */
     public boolean createDataExport(DataExport dataExport) {
         try {
-            dataExport = createDataExportWithContent(dataExport);
+            createAndSaveDataExportWithContent(dataExport);
         }
+        // First, catch email failures separately to set the correct state and notify the admin
+        catch (EmailFailedException emailFailedException) {
+            handleEmailFailure(dataExport, emailFailedException);
+            return false;
+        }
+        // Then catch all other exceptions which indicate a failure during creation
         catch (Exception e) {
             log.error("Error while creating data export for user {}", dataExport.getUser().getLogin(), e);
             handleCreationFailure(dataExport, e);
             return false;
         }
         return true;
+    }
+
+    private void handleEmailFailure(DataExport dataExport, EmailFailedException emailFailedException) {
+        dataExport.setDataExportState(DataExportState.EMAIL_FAILED);
+        dataExport = dataExportRepository.save(dataExport);
+
+        if (!StringUtils.hasText(adminEmail)) {
+            log.warn("Admin email (info.contact) is not configured. Cannot send email to admin about data export notification failure.");
+            return;
+        }
+
+        // Create a recipient user object with the configured admin email
+        User adminRecipient = new User();
+        adminRecipient.setEmail(adminEmail);
+        adminRecipient.setLangKey("en");
+        adminRecipient.setLogin("data-export-admin-recipient");
+        adminRecipient.setFirstName("Administrator");
+
+        mailService.sendDataExportEmailFailedEmailToAdmin(adminRecipient, dataExport, emailFailedException);
     }
 
     /**
@@ -158,27 +200,42 @@ public class DataExportCreationService {
     private void handleCreationFailure(DataExport dataExport, Exception exception) {
         dataExport.setDataExportState(DataExportState.FAILED);
         dataExport = dataExportRepository.save(dataExport);
-        Optional<User> admin = userService.findInternalAdminUser();
-        if (admin.isEmpty()) {
-            log.warn("No internal admin user found. Cannot send email to admin about data export failure.");
+
+        if (!StringUtils.hasText(adminEmail)) {
+            log.warn("Admin email (info.contact) is not configured. Cannot send email to admin about data export failure.");
             return;
         }
-        mailService.sendDataExportFailedEmailToAdmin(admin.get(), dataExport, exception);
+
+        // Create a recipient user object with the configured admin email
+        User adminRecipient = new User();
+        adminRecipient.setEmail(adminEmail);
+        adminRecipient.setLangKey("en");
+        adminRecipient.setLogin("data-export-admin-recipient");
+        adminRecipient.setFirstName("Administrator");
+
+        mailService.sendDataExportFailedEmailToAdmin(adminRecipient, dataExport, exception);
     }
 
     /**
      * Finishes the creation of the data export by setting the file path to the zip file, the state to EMAIL_SENT and the creation finished date.
+     * Also sends an email to the user informing them that their data export is ready for download.
      *
      * @param dataExport     the data export whose creation is finished
      * @param dataExportPath the path to the zip file containing the data export
-     * @return the updated data export from the database
      */
-    private DataExport finishDataExportCreation(DataExport dataExport, Path dataExportPath) {
+    private void finishDataExportCreation(DataExport dataExport, Path dataExportPath) throws EmailFailedException {
         dataExport.setFilePath(dataExportPath.toString());
         dataExport.setCreationFinishedDate(ZonedDateTime.now());
         dataExport = dataExportRepository.save(dataExport);
+        try {
+            mailService.sendDataExportCreatedEmail(dataExport.getUser(), dataExport);
+        }
+        catch (Exception e) {
+            log.error("Failed to send data export created email to user {}", dataExport.getUser().getLogin(), e);
+            throw new EmailFailedException("Failed to send data export created email to user " + dataExport.getUser().getLogin(), e);
+        }
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
-        return dataExportRepository.save(dataExport);
+        dataExportRepository.save(dataExport);
     }
 
     /**
@@ -195,8 +252,8 @@ public class DataExportCreationService {
             Files.createDirectories(dataExportsPath);
         }
         dataExport = dataExportRepository.save(dataExport);
-        Path workingDirectory = Files.createTempDirectory(dataExportsPath, "data-export-working-dir");
-        fileService.scheduleDirectoryPathForRecursiveDeletion(workingDirectory, 30);
+        Path workingDirectory = tempFileUtilService.createTempDirectory(dataExportsPath, "data-export-working-dir");
+        fileService.scheduleDirectoryPathForRecursiveDeletion(workingDirectory, 60); // Delete working directory after 60 minutes
         dataExport.setDataExportState(DataExportState.IN_CREATION);
         dataExportRepository.save(dataExport);
         return workingDirectory;

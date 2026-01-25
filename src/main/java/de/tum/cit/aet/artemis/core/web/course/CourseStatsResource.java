@@ -206,7 +206,10 @@ public class CourseStatsResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         GradingScale gradingScale = gradingScaleRepository.findByCourseId(courseId).orElse(null);
+        var startTime = System.currentTimeMillis();
         CourseManagementDetailViewDTO managementDetailViewDTO = courseStatsService.getStatsForDetailView(course, gradingScale);
+        var endTime = System.currentTimeMillis();
+        log.debug("Getting data for course management detail view took {} ms", (endTime - startTime));
         return ResponseEntity.ok(managementDetailViewDTO);
     }
 }

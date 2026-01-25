@@ -43,7 +43,7 @@ describe('SidebarCardMediumComponent', () => {
 
     it('should have success border class for easy difficulty', () => {
         component.sidebarItem.difficulty = DifficultyLevel.EASY;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         const classes = element.className;
         expect(classes).toContain('border-success');
@@ -51,7 +51,7 @@ describe('SidebarCardMediumComponent', () => {
 
     it('should have success border class for medium difficulty', () => {
         component.sidebarItem.difficulty = DifficultyLevel.MEDIUM;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         const classes = element.className;
         expect(classes).toContain('border-warning');
@@ -59,45 +59,41 @@ describe('SidebarCardMediumComponent', () => {
 
     it('should have success border class for hard difficulty', () => {
         component.sidebarItem.difficulty = DifficultyLevel.HARD;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         const classes = element.className;
         expect(classes).toContain('border-danger');
     });
 
-    it('should store route on click', () => {
-        jest.spyOn(component, 'emitStoreAndRefresh');
+    it('should store target subroute and refresh on click when previously an item was selected', async () => {
+        jest.spyOn(component, 'storeTargetComponentSubRoute');
         jest.spyOn(component, 'refreshChildComponent');
-        const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
-        element.click();
-        fixture.detectChanges();
-        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith(component.sidebarItem.id);
+        component.itemSelected = true;
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
+        itemElement.click();
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.storeTargetComponentSubRoute).toHaveBeenCalled();
         expect(component.refreshChildComponent).toHaveBeenCalled();
     });
 
-    it('should navigate to the item URL on click', async () => {
-        jest.spyOn(component, 'emitStoreAndRefresh');
-        component.itemSelected = true;
-        fixture.detectChanges();
-        const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
-        itemElement.click();
-        await fixture.whenStable();
-        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith('testId');
-        expect(router.navigate).toHaveBeenCalled();
-        const navigationArray = router.navigate.mock.calls[1][0];
-        expect(navigationArray).toStrictEqual(['./testId']);
-    });
-
-    it('should navigate to the when no item was selected before', async () => {
-        jest.spyOn(component, 'emitStoreAndRefresh');
+    it('should store target subroute on click when previously no item was selected', async () => {
+        jest.spyOn(component, 'storeTargetComponentSubRoute');
+        jest.spyOn(component, 'refreshChildComponent');
         component.itemSelected = false;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         itemElement.click();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
-        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith('testId');
-        expect(router.navigate).toHaveBeenCalled();
-        const navigationArray = router.navigate.mock.calls[1][0];
-        expect(navigationArray).toStrictEqual(['', 'testId']);
+
+        expect(component.storeTargetComponentSubRoute).toHaveBeenCalled();
+        expect(component.refreshChildComponent).not.toHaveBeenCalled();
     });
 });

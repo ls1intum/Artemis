@@ -161,7 +161,7 @@ describe('CodeEditorContainerIntegration', () => {
         getBuildLogsStub.mockReturnValue(getBuildLogsSubject);
         getLatestPendingSubmissionStub.mockReturnValue(getLatestPendingSubmissionSubject);
 
-        container.participation = participation as any;
+        containerFixture.componentRef.setInput('participation', participation as any);
 
         // TODO: This should be replaced by testing with route params.
         domainService.setDomain([DomainType.PARTICIPATION, participation]);
@@ -174,7 +174,7 @@ describe('CodeEditorContainerIntegration', () => {
         getRepositoryContentSubject.next({ file: FileType.FILE, folder: FileType.FOLDER, file2: FileType.FILE });
         getLatestPendingSubmissionSubject.next({ participationId: 1, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined });
 
-        containerFixture.detectChanges();
+        containerFixture.changeDetectorRef.detectChanges();
 
         // container
         expect(container.commitState).toBe(CommitState.CLEAN);
@@ -185,8 +185,8 @@ describe('CodeEditorContainerIntegration', () => {
         // file browser
         expect(checkIfRepositoryIsCleanStub).toHaveBeenCalledOnce();
         expect(getRepositoryContentStub).toHaveBeenCalledOnce();
-        expect(container.fileBrowser.errorFiles).toEqual(extractedErrorFiles);
-        expect(container.fileBrowser.unsavedFiles).toHaveLength(0);
+        expect(container.fileBrowser.errorFiles()).toEqual(extractedErrorFiles);
+        expect(container.fileBrowser.unsavedFiles()).toHaveLength(0);
 
         // monaco editor
         expect(container.monacoEditor.loadingCount()).toBe(0);
@@ -216,13 +216,14 @@ describe('CodeEditorContainerIntegration', () => {
 
     const loadFile = async (fileName: string, fileContent: string) => {
         getFileStub.mockReturnValue(of({ fileContent }));
-        container.fileBrowser.selectedFile = fileName;
-        await container.monacoEditor.selectFileInEditor(fileName);
+        container.selectedFile = fileName;
+        containerFixture.detectChanges();
+        await containerFixture.whenStable();
     };
 
     it('should initialize all components correctly if all server calls are successful', fakeAsync(() => {
         cleanInitialize();
-        flush();
+        tick();
         discardPeriodicTasks();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
     }));
@@ -237,7 +238,7 @@ describe('CodeEditorContainerIntegration', () => {
         getFeedbackDetailsForResultStub.mockReturnValue(of([]));
         getBuildLogsStub.mockReturnValue(getBuildLogsSubject);
 
-        container.participation = participation;
+        containerFixture.componentRef.setInput('participation', participation);
 
         // TODO: This should be replaced by testing with route params.
         domainService.setDomain([DomainType.PARTICIPATION, participation]);
@@ -249,7 +250,7 @@ describe('CodeEditorContainerIntegration', () => {
         getBuildLogsSubject.next(buildLogs);
         getLatestPendingSubmissionSubject.next({ participationId: 1, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: undefined });
 
-        containerFixture.detectChanges();
+        containerFixture.changeDetectorRef.detectChanges();
 
         // container
         expect(container.commitState).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
@@ -260,8 +261,8 @@ describe('CodeEditorContainerIntegration', () => {
         // file browser
         expect(checkIfRepositoryIsCleanStub).toHaveBeenCalledOnce();
         expect(getRepositoryContentStub).not.toHaveBeenCalled();
-        expect(container.fileBrowser.errorFiles).toEqual(extractedErrorFiles);
-        expect(container.fileBrowser.unsavedFiles).toHaveLength(0);
+        expect(container.fileBrowser.errorFiles()).toEqual(extractedErrorFiles);
+        expect(container.fileBrowser.unsavedFiles()).toHaveLength(0);
 
         // monaco editor
         expect(container.monacoEditor.loadingCount()).toBe(0);
@@ -300,7 +301,7 @@ describe('CodeEditorContainerIntegration', () => {
         const fileContent = 'lorem ipsum';
         await loadFile(selectedFile, fileContent);
 
-        containerFixture.detectChanges();
+        containerFixture.changeDetectorRef.detectChanges();
         expect(container.selectedFile).toBe(selectedFile);
         expect(container.monacoEditor.selectedFile()).toBe(selectedFile);
         expect(container.monacoEditor.loadingCount()).toBe(0);
@@ -308,7 +309,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(getFileStub).toHaveBeenCalledOnce();
         expect(getFileStub).toHaveBeenCalledWith(selectedFile);
 
-        containerFixture.detectChanges();
+        containerFixture.changeDetectorRef.detectChanges();
         expect(container.getText()).toBe(fileContent);
     });
 
@@ -319,14 +320,14 @@ describe('CodeEditorContainerIntegration', () => {
         const newFileContent = 'new lorem ipsum';
         await loadFile(selectedFile, fileContent);
 
-        containerFixture.detectChanges();
+        containerFixture.changeDetectorRef.detectChanges();
         container.monacoEditor.onFileTextChanged({ text: newFileContent, fileName: selectedFile });
-        containerFixture.detectChanges();
+        containerFixture.changeDetectorRef.detectChanges();
 
         expect(getFileStub).toHaveBeenCalledOnce();
         expect(getFileStub).toHaveBeenCalledWith(selectedFile);
         expect(container.unsavedFiles).toEqual({ [selectedFile]: newFileContent });
-        expect(container.fileBrowser.unsavedFiles).toEqual([selectedFile]);
+        expect(container.fileBrowser.unsavedFiles()).toEqual([selectedFile]);
         expect(container.editorState).toBe(EditorState.UNSAVED_CHANGES);
         expect(container.actions.editorState).toBe(EditorState.UNSAVED_CHANGES);
     });
@@ -342,7 +343,7 @@ describe('CodeEditorContainerIntegration', () => {
         saveFilesStub.mockReturnValue(saveFilesSubject);
         container.unsavedFiles = { [otherFileWithUnsavedChanges]: 'lorem ipsum dolet', [selectedFile]: newFileContent };
         await loadFile(selectedFile, fileContent);
-        containerFixture.detectChanges();
+        containerFixture.changeDetectorRef.detectChanges();
 
         // init saving
         container.actions.saveChangedFiles().subscribe();
@@ -351,13 +352,13 @@ describe('CodeEditorContainerIntegration', () => {
 
         // emit saving result
         saveFilesSubject.next({ [selectedFile]: undefined, [otherFileWithUnsavedChanges]: undefined });
-        containerFixture.detectChanges();
+        containerFixture.changeDetectorRef.detectChanges();
 
         // check if saving result updates comps as expected
         expect(container.unsavedFiles).toStrictEqual({});
         expect(container.editorState).toBe(EditorState.CLEAN);
         expect(container.commitState).toBe(CommitState.UNCOMMITTED_CHANGES);
-        expect(container.fileBrowser.unsavedFiles).toHaveLength(0);
+        expect(container.fileBrowser.unsavedFiles()).toHaveLength(0);
         expect(container.actions.editorState).toBe(EditorState.CLEAN);
     });
 
@@ -369,13 +370,18 @@ describe('CodeEditorContainerIntegration', () => {
         container.fileBrowser.repositoryFiles = repositoryFiles;
         container.unsavedFiles = unsavedChanges;
 
-        containerFixture.detectChanges();
+        containerFixture.changeDetectorRef.detectChanges();
+        // Ensure child component receives latest state despite OnPush change detection.
+        container.actions.editorState = container.editorState;
+        container.actions.unsavedFiles = container.unsavedFiles;
+        container.actions.commitState = container.commitState;
+        containerFixture.changeDetectorRef.detectChanges();
 
-        expect(container.fileBrowser.unsavedFiles).toEqual(Object.keys(unsavedChanges));
+        expect(container.unsavedFiles).toEqual(unsavedChanges);
         expect(container.actions.editorState).toBe(EditorState.UNSAVED_CHANGES);
 
         container.fileBrowser.onFileDeleted(new DeleteFileChange(FileType.FILE, 'file'));
-        containerFixture.detectChanges();
+        containerFixture.changeDetectorRef.detectChanges();
         expect(container.unsavedFiles).toStrictEqual({});
         expect(container.fileBrowser.repositoryFiles).toEqual(expectedFilesAfterDelete);
         expect(container.actions.editorState).toBe(EditorState.CLEAN);
@@ -390,10 +396,13 @@ describe('CodeEditorContainerIntegration', () => {
         const expectedBuildLog = new BuildLogEntryArray();
         expect(container.unsavedFiles).toStrictEqual({});
         container.commitState = CommitState.UNCOMMITTED_CHANGES;
-        containerFixture.detectChanges();
+        containerFixture.changeDetectorRef.detectChanges();
+        // Ensure the child component input reflects the current state for OnPush change detection.
+        container.actions.commitState = container.commitState;
+        containerFixture.changeDetectorRef.detectChanges();
 
         // commit
-        expect(container.actions.commitState).toBe(CommitState.UNCOMMITTED_CHANGES);
+        expect(container.actions.commitState).toBe(container.commitState);
         commitStub.mockReturnValue(of(undefined));
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
@@ -401,7 +410,7 @@ describe('CodeEditorContainerIntegration', () => {
             participationId: successfulResult!.submission.participation!.id!,
         });
         container.actions.commit();
-        containerFixture.detectChanges();
+        containerFixture.changeDetectorRef.detectChanges();
 
         // waiting for build successfulResult
         expect(container.commitState).toBe(CommitState.CLEAN);
@@ -413,11 +422,11 @@ describe('CodeEditorContainerIntegration', () => {
             participationId: successfulResult!.submission.participation!.id!,
         });
         subscribeForLatestResultOfParticipationSubject.next(successfulResult);
-        containerFixture.detectChanges();
+        containerFixture.changeDetectorRef.detectChanges();
 
         expect(container.buildOutput.isBuilding).toBeFalse();
         expect(container.buildOutput.rawBuildLogs).toEqual(expectedBuildLog);
-        expect(container.fileBrowser.errorFiles).toHaveLength(0);
+        expect(container.fileBrowser.errorFiles()).toHaveLength(0);
     });
 
     it('should first save unsaved files before triggering commit', async () => {
@@ -432,11 +441,16 @@ describe('CodeEditorContainerIntegration', () => {
         container.unsavedFiles = { [unsavedFile]: 'lorem ipsum' };
         container.editorState = EditorState.UNSAVED_CHANGES;
         container.commitState = CommitState.UNCOMMITTED_CHANGES;
-        containerFixture.detectChanges();
+        containerFixture.changeDetectorRef.detectChanges();
+        // Propagate state to the actions component which uses OnPush change detection.
+        container.actions.unsavedFiles = container.unsavedFiles;
+        container.actions.editorState = container.editorState;
+        container.actions.commitState = container.commitState;
+        containerFixture.changeDetectorRef.detectChanges();
 
         // trying to commit
         container.actions.commit();
-        containerFixture.detectChanges();
+        containerFixture.changeDetectorRef.detectChanges();
 
         // saving before commit
         expect(saveFilesStub).toHaveBeenCalledOnce();
@@ -458,7 +472,7 @@ describe('CodeEditorContainerIntegration', () => {
         });
 
         // Commit state should change asynchronously
-        containerFixture.detectChanges();
+        containerFixture.changeDetectorRef.detectChanges();
         await firstValueFrom(container.actions.commitStateChange);
 
         // waiting for build result
@@ -470,11 +484,11 @@ describe('CodeEditorContainerIntegration', () => {
             submission: undefined,
             participationId: successfulResult!.submission.participation!.id!,
         });
-        containerFixture.detectChanges();
+        containerFixture.changeDetectorRef.detectChanges();
 
         expect(container.buildOutput.isBuilding).toBeFalse();
         expect(container.buildOutput.rawBuildLogs).toEqual(expectedBuildLog);
-        expect(container.fileBrowser.errorFiles).toHaveLength(0);
+        expect(container.fileBrowser.errorFiles()).toHaveLength(0);
 
         containerFixture.destroy();
     });
@@ -490,18 +504,18 @@ describe('CodeEditorContainerIntegration', () => {
         getFeedbackDetailsForResultStub.mockReturnValue(of(feedbacks));
         getRepositoryContentStub.mockReturnValue(of([]));
 
-        container.participation = participation;
+        containerFixture.componentRef.setInput('participation', participation);
         domainService.setDomain([DomainType.PARTICIPATION, participation]);
 
         containerFixture.detectChanges();
 
         findWithLatestResultSubject.next(participation);
 
-        containerFixture.detectChanges();
+        containerFixture.changeDetectorRef.detectChanges();
 
         // Create conflict.
         isCleanSubject.next({ repositoryStatus: CommitState.CONFLICT });
-        containerFixture.detectChanges();
+        containerFixture.changeDetectorRef.detectChanges();
 
         expect(container.commitState).toBe(CommitState.CONFLICT);
         expect(getRepositoryContentStub).not.toHaveBeenCalled();
@@ -509,9 +523,9 @@ describe('CodeEditorContainerIntegration', () => {
         // Resolve conflict.
         conflictService.notifyConflictState(GitConflictState.OK);
         tick();
-        containerFixture.detectChanges();
+        containerFixture.changeDetectorRef.detectChanges();
         isCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
-        containerFixture.detectChanges();
+        containerFixture.changeDetectorRef.detectChanges();
 
         expect(container.commitState).toBe(CommitState.CLEAN);
         expect(getRepositoryContentStub).toHaveBeenCalledOnce();
@@ -531,14 +545,18 @@ describe('CodeEditorContainerIntegration', () => {
     });
 
     it('should create file badges for feedback suggestions', () => {
-        container.feedbackSuggestions = [
+        const participation = { id: 1 } as Participation;
+        containerFixture.componentRef.setInput('participation', participation);
+        domainService.setDomain([DomainType.PARTICIPATION, participation]);
+        containerFixture.componentRef.setInput('feedbackSuggestions', [
             { reference: 'file:src/Test1.java_line:2' },
             { reference: 'file:src/Test2.java_line:2' },
             { reference: 'file:src/Test2.java_line:4' },
             { reference: 'file:src/Test3.java_line:4' },
             { reference: 'file:src/Test3.java_line:10' },
             { reference: 'file:src/Test3.java_line:11' },
-        ];
+        ]);
+        containerFixture.detectChanges();
         container.updateFileBadges();
         expect(container.fileBadges).toEqual({
             'src/Test1.java': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 1)],

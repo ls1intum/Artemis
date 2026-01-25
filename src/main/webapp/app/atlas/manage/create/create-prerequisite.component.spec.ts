@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
@@ -9,8 +9,6 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
 
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -42,14 +40,8 @@ describe('CreatePrerequisite', () => {
                     useValue: {
                         parent: {
                             parent: {
-                                paramMap: of({
-                                    get: (key: string) => {
-                                        switch (key) {
-                                            case 'courseId':
-                                                return 1;
-                                        }
-                                    },
-                                }),
+                                paramMap: of(convertToParamMap({ courseId: 1 })),
+                                snapshot: { paramMap: convertToParamMap({ courseId: 1 }) },
                             },
                         },
                     },
@@ -70,38 +62,6 @@ describe('CreatePrerequisite', () => {
     it('should initialize', () => {
         createPrerequisiteComponentFixture.detectChanges();
         expect(createPrerequisiteComponent).toBeDefined();
-    });
-
-    it('should set lecture units', () => {
-        const lectureService = TestBed.inject(LectureService);
-        const lecture: Lecture = {
-            id: 1,
-            lectureUnits: [{ id: 1, type: LectureUnitType.TEXT }],
-        };
-        const lecturesResponse = new HttpResponse({
-            body: [lecture],
-            status: 200,
-        });
-        jest.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(of(lecturesResponse));
-
-        createPrerequisiteComponentFixture.detectChanges();
-
-        expect(createPrerequisiteComponent.lecturesWithLectureUnits).toEqual([lecture]);
-    });
-
-    it('should set empty array of lecture units if lecture has none', () => {
-        const lectureService = TestBed.inject(LectureService);
-        const lecture: Lecture = { id: 1, lectureUnits: undefined };
-        const expectedLecture: Lecture = { id: 1, lectureUnits: [] };
-        const lecturesResponse = new HttpResponse({
-            body: [lecture],
-            status: 200,
-        });
-        jest.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(of(lecturesResponse));
-
-        createPrerequisiteComponentFixture.detectChanges();
-
-        expect(createPrerequisiteComponent.lecturesWithLectureUnits).toEqual([expectedLecture]);
     });
 
     it('should send POST request upon form submission and navigate', async () => {
@@ -129,12 +89,17 @@ describe('CreatePrerequisite', () => {
         competencyForm.formSubmitted.emit(formData);
 
         return createPrerequisiteComponentFixture.whenStable().then(() => {
-            const competency: Prerequisite = new Prerequisite();
-            competency.title = formData.title;
-            competency.description = formData.description;
-            competency.optional = formData.optional;
-
-            expect(createSpy).toHaveBeenCalledWith(competency, 1);
+            expect(createSpy).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    title: formData.title,
+                    description: formData.description,
+                    softDueDate: formData.softDueDate,
+                    taxonomy: formData.taxonomy,
+                    masteryThreshold: formData.masteryThreshold,
+                    optional: formData.optional,
+                }),
+                1,
+            );
             expect(createSpy).toHaveBeenCalledOnce();
             expect(navigateSpy).toHaveBeenCalledOnce();
         });

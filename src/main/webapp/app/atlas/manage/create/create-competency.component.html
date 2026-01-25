@@ -10,12 +10,6 @@
             <h3 jhiTranslate="artemisApp.competency.create.title"></h3>
             <jhi-documentation-button [type]="documentationType" />
         </div>
-        <jhi-competency-form
-            [isEditMode]="false"
-            (formSubmitted)="createCompetency($event)"
-            [courseId]="courseId"
-            [lecturesOfCourseWithLectureUnits]="lecturesWithLectureUnits"
-            [competency]="competencyToCreate"
-        />
+        <jhi-competency-form [isEditMode]="false" (formSubmitted)="createCompetency($event)" [courseId]="courseId" [competency]="competencyToCreate" />
     </div>
 }

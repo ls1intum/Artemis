@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.quiz;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.within;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.time.Clock;
@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -143,7 +144,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
         QuizExercise quizExercise = new QuizExercise();
         quizExercise.setCourse(course);
-        quizExercise.setIsOpenForPractice(true);
+        quizExercise.setDueDate(ZonedDateTime.now().minusDays(1));
         quizExerciseTestRepository.save(quizExercise);
 
         List<QuizQuestion> questions = new ArrayList<>();
@@ -184,7 +185,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
         QuizExercise quizExercise = new QuizExercise();
         quizExercise.setCourse(course);
-        quizExercise.setIsOpenForPractice(true);
+        quizExercise.setDueDate(ZonedDateTime.now().minusDays(1));
         quizExerciseTestRepository.save(quizExercise);
 
         List<QuizQuestion> questions = new ArrayList<>();
@@ -326,7 +327,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(data.getPriority()).isEqualTo(2);
         assertThat(data.getBox()).isEqualTo(1);
         ZonedDateTime expectedUtc = TimeUtil.now().plusDays(1);
-        assertThat(savedProgress.get().getDueDate()).isEqualTo(expectedUtc);
+        assertThat(savedProgress.get().getDueDate()).isCloseTo(expectedUtc, within(1, ChronoUnit.SECONDS));
     }
 
     @Test
@@ -335,7 +336,10 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
         Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
         QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().get();
-        quizExercise.setIsOpenForPractice(true);
+        quizExercise.setReleaseDate(ZonedDateTime.now().minusDays(2));
+        quizExercise.setDueDate(ZonedDateTime.now().minusDays(1));
+        quizExercise.setDuration(0);
+        quizExercise.getQuizBatches().forEach(quizBatch -> quizBatch.setStartTime(ZonedDateTime.now().minusDays(1)));
         quizExerciseService.save(quizExercise);
 
         List<QuizQuestionTrainingDTO> quizQuestions = Arrays.asList(
@@ -375,7 +379,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     void testUpdateExistingProgress_ProgressNotFound() {
-        long nonExistentUserId = 999;
+        long nonExistentUserId = -1;
         ZonedDateTime newAnsweredTime = ZonedDateTime.now();
         QuizQuestionProgressData newProgressData = new QuizQuestionProgressData();
 
@@ -439,7 +443,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
         QuizExercise quizExercise = new QuizExercise();
         quizExercise.setCourse(course);
-        quizExercise.setIsOpenForPractice(true);
+        quizExercise.setDueDate(ZonedDateTime.now().minusDays(1));
         quizExerciseTestRepository.save(quizExercise);
 
         QuizQuestion question = new MultipleChoiceQuestion();

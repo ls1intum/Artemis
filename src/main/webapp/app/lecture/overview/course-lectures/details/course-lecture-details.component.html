@@ -27,7 +27,7 @@
             <div class="row">
                 <div class="col pe-0 pb-3 flex-grow-1">
                     <div class="d-flex flex-row gap-2 mb-3">
-                        @for (informationBoxData of informationBoxData; track informationBoxData) {
+                        @for (informationBoxData of informationBoxData; track informationBoxData.title) {
                             <jhi-information-box [informationBoxData]="informationBoxData">
                                 <ng-container contentComponent>
                                     @if (informationBoxData.content.type === 'dateTime') {
@@ -63,7 +63,7 @@
                             }
                         </div>
                     }
-                    @for (lectureUnit of lectureUnits; track lectureUnit) {
+                    @for (lectureUnit of lectureUnits; track lectureUnit.id) {
                         <div class="row m-0 mt-3 d-flex flex-nowrap">
                             <div class="col-lg-11 p-0 col-10">
                                 @switch (lectureUnit.type) {
@@ -102,7 +102,7 @@
                     @if (lecture.attachments) {
                         <div class="mb-2">
                             <ul>
-                                @for (attachment of lecture.attachments; track attachment) {
+                                @for (attachment of lecture.attachments; track attachment.id) {
                                     <li class="mb-3">
                                         <h5 class="mb-1">
                                             @if (!isDownloadingLink) {
@@ -135,13 +135,13 @@
                 </div>
                 <!-- LECTURE END -->
                 <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
-                    @if (lecture && (isCommunicationEnabled(lecture.course) || isMessagingEnabled(lecture.course))) {
+                    @if (lecture && !lecture.isTutorialLecture && (isCommunicationEnabled(lecture.course) || isMessagingEnabled(lecture.course))) {
                         <jhi-discussion-section [lecture]="lecture" />
                     }
                 </div>
             </div>
         </div>
-        @if (irisSettings?.irisLectureChatSettings?.enabled) {
+        @if (irisSettings?.settings?.enabled && !lecture.isTutorialLecture) {
             <jhi-exercise-chatbot-button [mode]="ChatServiceMode.LECTURE" />
         }
     </div>

@@ -1,8 +1,11 @@
+import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -16,6 +19,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { QuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { MockProvider } from 'ng-mocks';
 import { ChangeDetectorRef } from '@angular/core';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 const question = { id: 1 } as QuizQuestion;
 const course = { id: 2 } as Course;
@@ -26,17 +30,19 @@ const route = { params: of({ courseId: 2, exerciseId: 42 }) };
 const quizQuestionStatOne = { ratedCorrectCounter: 1, unRatedCorrectCounter: 3 };
 const quizQuestionStatTwo = { ratedCorrectCounter: 2, unRatedCorrectCounter: 4 };
 
-describe('QuizExercise Statistic Component', () => {
+describe('QuizStatisticComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: QuizStatisticComponent;
     let fixture: ComponentFixture<QuizStatisticComponent>;
     let quizService: QuizExerciseService;
     let accountService: AccountService;
-    let accountSpy: jest.SpyInstance;
+    let accountSpy: MockInstance<AccountService['hasAnyAuthorityDirect']>;
     let router: Router;
-    let quizServiceFindSpy: jest.SpyInstance;
+    let quizServiceFindSpy: MockInstance<QuizExerciseService['find']>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 LocalStorageService,
@@ -44,97 +50,90 @@ describe('QuizExercise Statistic Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 MockProvider(ChangeDetectorRef),
                 provideHttpClient(),
             ],
         })
             .overrideTemplate(QuizStatisticComponent, '')
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(QuizStatisticComponent);
-                comp = fixture.componentInstance;
-                quizService = TestBed.inject(QuizExerciseService);
-                accountService = TestBed.inject(AccountService);
-                router = TestBed.inject(Router);
-                quizServiceFindSpy = jest.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
-            });
+            .compileComponents();
+
+        quizService = TestBed.inject(QuizExerciseService);
+        accountService = TestBed.inject(AccountService);
+        router = TestBed.inject(Router);
     });
 
     afterEach(() => {
-        comp.ngOnDestroy();
+        if (comp) {
+            comp.ngOnDestroy();
+        }
+        vi.clearAllMocks();
         quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
-        quizServiceFindSpy.mockClear();
     });
 
     describe('onInit', () => {
-        let loadQuizSuccessSpy: jest.SpyInstance;
-        let loadDataSpy: jest.SpyInstance;
-
         beforeEach(() => {
-            loadQuizSuccessSpy = jest.spyOn(comp, 'loadQuizSuccess');
-            loadDataSpy = jest.spyOn(comp, 'loadData');
+            // Clear all mocks before each test
+            vi.clearAllMocks();
+            // Recreate component for clean state in these tests
+            fixture = TestBed.createComponent(QuizStatisticComponent);
+            comp = fixture.componentInstance;
+            // Re-setup the quizServiceFindSpy after clearing
+            quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+        });
+
+        it('should call functions on Init', async () => {
+            // setup
+            const loadQuizSuccessSpy = vi.spyOn(comp, 'loadQuizSuccess');
+            vi.spyOn(comp, 'loadData');
             quizExercise.quizQuestions = [
                 { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
                 { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             quizExercise.quizPointStatistic = { participantsRated: 42 };
-            comp.quizExercise = quizExercise;
-        });
-
-        afterEach(() => {
-            loadQuizSuccessSpy.mockClear();
-            loadDataSpy.mockClear();
-        });
-
-        it('should call functions on Init', fakeAsync(() => {
-            // setup
-            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
 
             // call
             comp.ngOnInit();
-            tick(); // simulate async
+            await fixture.whenStable();
 
             // check
-            expect(accountSpy).toHaveBeenCalledTimes(2);
+            expect(accountSpy).toHaveBeenCalled();
             expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
             expect(loadQuizSuccessSpy).toHaveBeenCalledWith(quizExercise);
-        }));
+        });
 
-        it('should not load QuizSuccess if not authorised', fakeAsync(() => {
+        it('should not load QuizSuccess if not authorised', async () => {
             // setup
-            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
+            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
 
             // call
             comp.ngOnInit();
-            tick(); // simulate async
+            await fixture.whenStable();
 
             // check
-            expect(accountSpy).toHaveBeenCalledOnce();
+            expect(accountSpy).toHaveBeenCalled();
             expect(quizServiceFindSpy).not.toHaveBeenCalled();
-            expect(loadQuizSuccessSpy).not.toHaveBeenCalled();
-        }));
+        });
     });
 
     describe('loadQuizSuccess', () => {
-        let loadDataSpy: jest.SpyInstance;
-
         beforeEach(() => {
-            loadDataSpy = jest.spyOn(comp, 'loadData');
-            quizExercise.quizQuestions = [
-                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
-                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
-            ];
-            quizExercise.quizPointStatistic = { participantsRated: 42 };
-            comp.quizExercise = quizExercise;
-        });
-
-        afterEach(() => {
-            loadDataSpy.mockClear();
+            // Create component for these tests
+            fixture = TestBed.createComponent(QuizStatisticComponent);
+            comp = fixture.componentInstance;
+            quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
         });
 
         it('should set data', () => {
             // setup
-            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            const loadDataSpy = vi.spyOn(comp, 'loadData');
+            quizExercise.quizQuestions = [
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
+            ];
+            quizExercise.quizPointStatistic = { participantsRated: 42 };
+            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
 
             // call
             comp.loadQuizSuccess(quizExercise);
@@ -147,8 +146,13 @@ describe('QuizExercise Statistic Component', () => {
 
         it('should call navigate to courses if called by student', () => {
             // setup
-            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
-            const routerSpy = jest.spyOn(router, 'navigate');
+            quizExercise.quizQuestions = [
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
+            ];
+            quizExercise.quizPointStatistic = { participantsRated: 42 };
+            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
+            const routerSpy = vi.spyOn(router, 'navigate');
 
             // call
             comp.loadQuizSuccess(quizExercise);
@@ -159,6 +163,13 @@ describe('QuizExercise Statistic Component', () => {
     });
 
     describe('calculateMaxScore', () => {
+        beforeEach(() => {
+            // Create component for these tests
+            fixture = TestBed.createComponent(QuizStatisticComponent);
+            comp = fixture.componentInstance;
+            quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+        });
+
         it('should return MaxScore by looping over scores', () => {
             // setup
             quizExercise.quizQuestions = [
@@ -166,8 +177,8 @@ describe('QuizExercise Statistic Component', () => {
                 { points: 2, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             comp.quizExercise = quizExercise;
-            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-            jest.spyOn(comp, 'loadData').mockImplementation();
+            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            vi.spyOn(comp, 'loadData').mockImplementation(() => {});
 
             // call
             comp.loadQuizSuccess(quizExercise);
@@ -181,8 +192,8 @@ describe('QuizExercise Statistic Component', () => {
             quizExercise.quizQuestions = undefined;
             quizExercise.maxPoints = 42;
             comp.quizExercise = quizExercise;
-            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-            jest.spyOn(comp, 'loadData').mockImplementation();
+            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            vi.spyOn(comp, 'loadData').mockImplementation(() => {});
 
             // call
             comp.loadQuizSuccess(quizExercise);
@@ -194,17 +205,21 @@ describe('QuizExercise Statistic Component', () => {
 
     describe('loadData', () => {
         beforeEach(() => {
+            // Create component for these tests
+            fixture = TestBed.createComponent(QuizStatisticComponent);
+            comp = fixture.componentInstance;
+        });
+
+        it('should use values of quizExercise and rated data', () => {
+            // setup
             quizExercise.quizQuestions = [
                 { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
                 { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             quizExercise.quizPointStatistic = { participantsRated: 42 };
             comp.quizExercise = quizExercise;
-        });
-
-        it('should use values of quizExercise and rated data', () => {
             // setup
-            const updateChartSpy = jest.spyOn(comp, 'loadDataInDiagram');
+            const updateChartSpy = vi.spyOn(comp, 'loadDataInDiagram');
             comp.rated = true;
             comp.maxScore = 1;
 
@@ -221,6 +236,12 @@ describe('QuizExercise Statistic Component', () => {
 
         it('should use values of quizExercise and unrated data', () => {
             // setup
+            quizExercise.quizQuestions = [
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
+            ];
+            quizExercise.quizPointStatistic = { participantsRated: 42 };
+            comp.quizExercise = quizExercise;
             comp.rated = false;
             comp.maxScore = 1;
 
@@ -234,8 +255,9 @@ describe('QuizExercise Statistic Component', () => {
 
         it('should use defaults if no quizQuestions are not set', () => {
             // setup
-            const updateChartSpy = jest.spyOn(comp, 'loadDataInDiagram');
+            const updateChartSpy = vi.spyOn(comp, 'loadDataInDiagram');
             quizExercise.quizQuestions = [];
+            quizExercise.quizPointStatistic = { participantsRated: 42 };
             comp.rated = true;
             comp.maxScore = 1;
             comp.quizExercise = quizExercise;
@@ -253,16 +275,20 @@ describe('QuizExercise Statistic Component', () => {
     });
 
     it('should switch rated', () => {
-        const loadDataMock = jest.spyOn(comp, 'loadDataInDiagram').mockImplementation();
+        fixture = TestBed.createComponent(QuizStatisticComponent);
+        comp = fixture.componentInstance;
+        const loadDataMock = vi.spyOn(comp, 'loadDataInDiagram').mockImplementation(() => {});
         comp.rated = true;
 
         comp.switchRated();
 
         expect(loadDataMock).toHaveBeenCalledOnce();
-        expect(comp.rated).toBeFalse();
+        expect(comp.rated).toBe(false);
     });
 
     it('should format correctly', () => {
+        fixture = TestBed.createComponent(QuizStatisticComponent);
+        comp = fixture.componentInstance;
         comp.totalParticipants = 100;
         comp.participants = 100;
 

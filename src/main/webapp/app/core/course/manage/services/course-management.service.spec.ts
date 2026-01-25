@@ -1,5 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
@@ -9,10 +11,8 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { CourseManagementOverviewStatisticsDto } from 'app/core/course/manage/overview/course-management-overview-statistics-dto.model';
 import { Course, CourseGroup } from 'app/core/course/shared/entities/course.model';
 import { Exercise, ExerciseType, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { Organization } from 'app/core/shared/entities/organization.model';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -26,11 +26,13 @@ import { CourseScores } from 'app/core/course/manage/course-scores/course-scores
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { OnlineCourseDtoModel } from 'app/lti/shared/entities/online-course-dto.model';
 import { CoursesForDashboardDTO } from 'app/core/course/shared/entities/courses-for-dashboard-dto';
-import { UMLDiagramType } from '@ls1intum/apollon';
 import { provideHttpClient } from '@angular/common/http';
+import { createSampleCourse } from 'test/helpers/sample/course-sample-data';
 import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';
 
 describe('Course Management Service', () => {
+    setupTestBed({ zoneless: true });
+
     let courseManagementService: CourseManagementService;
     let accountService: AccountService;
     let lectureService: LectureService;
@@ -39,12 +41,12 @@ describe('Course Management Service', () => {
     let scoresStorageService: ScoresStorageService;
     let localStorageService: LocalStorageService;
 
-    let isAtLeastTutorInCourseSpy: jest.SpyInstance;
-    let isAtLeastEditorInCourseSpy: jest.SpyInstance;
-    let isAtLeastInstructorInCourseSpy: jest.SpyInstance;
-    let convertExercisesDateFromServerSpy: jest.SpyInstance;
-    let convertDatesForLecturesFromServerSpy: jest.SpyInstance;
-    let syncGroupsSpy: jest.SpyInstance;
+    let isAtLeastTutorInCourseSpy: ReturnType<typeof vi.spyOn>;
+    let isAtLeastEditorInCourseSpy: ReturnType<typeof vi.spyOn>;
+    let isAtLeastInstructorInCourseSpy: ReturnType<typeof vi.spyOn>;
+    let convertExercisesDateFromServerSpy: ReturnType<typeof vi.spyOn>;
+    let convertDatesForLecturesFromServerSpy: ReturnType<typeof vi.spyOn>;
+    let syncGroupsSpy: ReturnType<typeof vi.spyOn>;
 
     const resourceUrl = 'api/core/courses';
 
@@ -57,7 +59,6 @@ describe('Course Management Service', () => {
     let onlineCourseConfiguration: OnlineCourseConfiguration;
     let exercises: Exercise[];
     let returnedFromService: any;
-    let participations: StudentParticipation[];
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -78,21 +79,12 @@ describe('Course Management Service', () => {
         scoresStorageService = TestBed.inject(ScoresStorageService);
         localStorageService = TestBed.inject(LocalStorageService);
 
-        isAtLeastTutorInCourseSpy = jest.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(false);
-        isAtLeastEditorInCourseSpy = jest.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(false);
-        isAtLeastInstructorInCourseSpy = jest.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(false);
-        syncGroupsSpy = jest.spyOn(accountService, 'syncGroups').mockImplementation();
-        convertDatesForLecturesFromServerSpy = jest.spyOn(lectureService, 'convertLectureArrayDatesFromServer');
-        course = new Course();
-        course.id = 1234;
-        course.title = 'testTitle';
-        exercises = [new ModelingExercise(UMLDiagramType.ComponentDiagram, undefined, undefined), new ModelingExercise(UMLDiagramType.ComponentDiagram, undefined, undefined)];
-        course.exercises = exercises;
-        course.lectures = undefined;
-        course.startDate = undefined;
-        course.endDate = undefined;
-        course.competencies = [];
-        course.prerequisites = [];
+        isAtLeastTutorInCourseSpy = vi.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(false);
+        isAtLeastEditorInCourseSpy = vi.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(false);
+        isAtLeastInstructorInCourseSpy = vi.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(false);
+        syncGroupsSpy = vi.spyOn(accountService, 'syncGroups').mockImplementation(() => undefined);
+        convertDatesForLecturesFromServerSpy = vi.spyOn(lectureService, 'convertLectureArrayDatesFromServer');
+        ({ course, exercises } = createSampleCourse());
 
         courseForDashboard = new CourseForDashboardDTO();
         courseForDashboard.course = course;
@@ -120,13 +112,12 @@ describe('Course Management Service', () => {
         onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.id = 234;
         returnedFromService = { ...course } as Course;
-        participations = [new StudentParticipation()];
-        convertExercisesDateFromServerSpy = jest.spyOn(ExerciseService, 'convertExercisesDateFromServer').mockReturnValue(exercises);
+        convertExercisesDateFromServerSpy = vi.spyOn(ExerciseService, 'convertExercisesDateFromServer').mockReturnValue(exercises);
     });
 
     afterEach(() => {
         httpMock.verify();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     const expectDateConversionToBeCalled = (courseForConversion: Course) => {
@@ -149,7 +140,7 @@ describe('Course Management Service', () => {
         }
     };
 
-    it('should update course', fakeAsync(() => {
+    it('should update course', () => {
         const courseImage = new Blob();
         courseManagementService
             .update(1, { ...course }, courseImage)
@@ -158,10 +149,9 @@ describe('Course Management Service', () => {
 
         const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/1` });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should update online course configuration', fakeAsync(() => {
+    it('should update online course configuration', () => {
         courseManagementService
             .updateOnlineCourseConfiguration(1, onlineCourseConfiguration)
             .pipe(take(1))
@@ -169,8 +159,7 @@ describe('Course Management Service', () => {
 
         const req = httpMock.expectOne({ method: 'PUT', url: `api/lti/courses/1/online-course-configuration` });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
     it('should fetch online courses for given registration ID', () => {
         const mockClientId = 'client-123';
@@ -184,39 +173,36 @@ describe('Course Management Service', () => {
             expect(courses).toEqual(mockResponse);
         });
 
-        const req = httpMock.expectOne(`${resourceUrl}/for-lti-dashboard?clientId=${mockClientId}`);
+        const req = httpMock.expectOne(`api/lti/courses/for-lti-dashboard?clientId=${mockClientId}`);
         expect(req.request.method).toBe('GET');
         req.flush(mockResponse);
     });
 
-    it('should find the course', fakeAsync(() => {
+    it('should find the course', () => {
         courseManagementService
             .find(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
         requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}`, returnedFromService, course);
-        tick();
-    }));
+    });
 
-    it('should set accessRights with by using the AccountService', fakeAsync(() => {
+    it('should set accessRights with by using the AccountService', () => {
         courseManagementService
             .find(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
         requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}`, returnedFromService, course, true);
-        tick();
-    }));
+    });
 
-    it('should find course with exercises', fakeAsync(() => {
+    it('should find course with exercises', () => {
         courseManagementService
             .findWithExercises(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
         requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/with-exercises`, returnedFromService, course);
-        tick();
-    }));
+    });
 
-    it('should find course with organizations', fakeAsync(() => {
+    it('should find course with organizations', () => {
         course.organizations = [new Organization()];
         returnedFromService = { ...course };
         courseManagementService
@@ -224,11 +210,10 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
         requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/with-organizations`, returnedFromService, course);
-        tick();
-    }));
+    });
 
-    it('should find all courses for dashboard', fakeAsync(() => {
-        const courseStorageServiceSpy = jest.spyOn(courseStorageService, 'setCourses');
+    it('should find all courses for dashboard', () => {
+        const courseStorageServiceSpy = vi.spyOn(courseStorageService, 'setCourses');
         returnedFromService = coursesForDashboard;
         courseManagementService
             .findAllForDashboard()
@@ -238,8 +223,7 @@ describe('Course Management Service', () => {
                 expect(courseStorageServiceSpy).toHaveBeenCalledOnce();
             });
         requestAndExpectDateConversion('GET', `${resourceUrl}/for-dashboard`, returnedFromService, course);
-        tick();
-    }));
+    });
 
     it('should pass on an empty response body when fetching all courses for dashboard and there is no response body sent from the server', () => {
         courseManagementService.findAllForDashboard().subscribe((res) => expect(res.body).toBeNull());
@@ -248,7 +232,7 @@ describe('Course Management Service', () => {
         req.flush(null);
     });
 
-    it('should find one course for dashboard', fakeAsync(() => {
+    it('should find one course for dashboard', () => {
         returnedFromService = { ...courseForDashboard };
         courseStorageService
             .subscribeToCourseUpdates(course.id!)
@@ -261,8 +245,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
         requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/for-dashboard`, returnedFromService, course, true);
-        tick();
-    }));
+    });
 
     it('should pass on an empty response body when fetching one course for dashboard and there is no response body sent from the server', () => {
         courseManagementService.findOneForDashboard(course.id!).subscribe((res) => expect(res.body).toBeNull());
@@ -271,10 +254,10 @@ describe('Course Management Service', () => {
         req.flush(null);
     });
 
-    it('should set the totalScores, the scoresPerExerciseType, and the participantScores in the scoresStorageService', fakeAsync(() => {
-        const setStoredTotalScoresSpy = jest.spyOn(scoresStorageService, 'setStoredTotalScores');
-        const setStoredScoresPerExerciseTypeSpy = jest.spyOn(scoresStorageService, 'setStoredScoresPerExerciseType');
-        const setParticipationResultsSpy = jest.spyOn(scoresStorageService, 'setStoredParticipationResults');
+    it('should set the totalScores, the scoresPerExerciseType, and the participantScores in the scoresStorageService', () => {
+        const setStoredTotalScoresSpy = vi.spyOn(scoresStorageService, 'setStoredTotalScores');
+        const setStoredScoresPerExerciseTypeSpy = vi.spyOn(scoresStorageService, 'setStoredScoresPerExerciseType');
+        const setParticipationResultsSpy = vi.spyOn(scoresStorageService, 'setStoredParticipationResults');
         courseManagementService
             .findOneForDashboard(course.id!)
             .pipe(take(1))
@@ -285,47 +268,46 @@ describe('Course Management Service', () => {
             });
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/for-dashboard` });
         req.flush(courseForDashboard);
-        tick();
-    }));
+    });
 
-    it('should find participations for the course', fakeAsync(() => {
-        returnedFromService = [...participations];
+    it('should find grade scores for the course', () => {
+        const gradeInformation = {
+            gradeScores: [],
+            students: [],
+        };
+        returnedFromService = gradeInformation;
         courseManagementService
             .findGradeScores(course.id!)
             .pipe(take(1))
-            .subscribe((res) => expect(res).toEqual(participations));
+            .subscribe((res) => expect(res).toEqual(gradeInformation));
         const req = httpMock.expectOne({ method: 'GET', url: `api/assessment/courses/${course.id}/grade-scores` });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should find results for the course', fakeAsync(() => {
+    it('should find results for the course', () => {
         courseManagementService.findAllResultsOfCourseForExerciseAndCurrentUser(course.id!).subscribe((res) => expect(res).toEqual(course));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/results` });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should find all courses to register', fakeAsync(() => {
+    it('should find all courses to register', () => {
         returnedFromService = [{ ...course }];
         courseManagementService
             .findAllForRegistration()
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
         requestAndExpectDateConversion('GET', `${resourceUrl}/for-enrollment`, returnedFromService, course);
-        tick();
-    }));
+    });
 
-    it('should find course with interesting exercises', fakeAsync(() => {
+    it('should find course with interesting exercises', () => {
         courseManagementService
             .getCourseWithInterestingExercisesForTutors(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
         requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/for-assessment-dashboard`, returnedFromService, course);
-        tick();
-    }));
+    });
 
-    it('should get stats of course', fakeAsync(() => {
+    it('should get stats of course', () => {
         const stats = new StatsForDashboard();
         returnedFromService = { ...stats };
         courseManagementService
@@ -334,21 +316,21 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res.body).toEqual(stats));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/stats-for-assessment-dashboard` });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
     it('should getStatisticsData', () => {
         const periodIndex = 0;
         const periodSize = 5;
+        const statsData = [1, 2, 3, 4, 5];
         courseManagementService
             .getStatisticsData(course.id!, periodIndex, periodSize)
             .pipe(take(1))
             .subscribe((stats) => expect(stats).toHaveLength(periodSize));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/statistics?periodIndex=${periodIndex}&periodSize=${periodSize}` });
-        req.flush(returnedFromService);
+        req.flush(statsData);
     });
 
-    it('should register for the course', fakeAsync(() => {
+    it('should register for the course', () => {
         const groups = ['student-group-name'];
         courseManagementService
             .registerForCourse(course.id!)
@@ -357,10 +339,9 @@ describe('Course Management Service', () => {
         const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/enroll` });
         req.flush(groups);
         expect(syncGroupsSpy).toHaveBeenCalledWith(groups);
-        tick();
-    }));
+    });
 
-    it('should unenroll from the course', fakeAsync(() => {
+    it('should unenroll from the course', () => {
         const groups = ['student-group-name'];
         courseManagementService
             .unenrollFromCourse(course.id!)
@@ -369,20 +350,18 @@ describe('Course Management Service', () => {
         const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/unenroll` });
         req.flush(groups);
         expect(syncGroupsSpy).toHaveBeenCalledWith(groups);
-        tick();
-    }));
+    });
 
-    it('should get all courses with quiz exercises', fakeAsync(() => {
+    it('should get all courses with quiz exercises', () => {
         returnedFromService = [{ ...course }];
         courseManagementService
             .getAllCoursesWithQuizExercises()
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
         requestAndExpectDateConversion('GET', `${resourceUrl}/courses-with-quiz`, returnedFromService, course, true);
-        tick();
-    }));
+    });
 
-    it('should get all courses together with user stats', fakeAsync(() => {
+    it('should get all courses together with user stats', () => {
         const params = { testParam: 'testParamValue' };
         returnedFromService = [{ ...course }];
         courseManagementService
@@ -390,10 +369,9 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
         requestAndExpectDateConversion('GET', `${resourceUrl}/with-user-stats?testParam=testParamValue`, returnedFromService, course, true);
-        tick();
-    }));
+    });
 
-    it('should get all courses for overview', fakeAsync(() => {
+    it('should get all courses for overview', () => {
         const params = { testParam: 'testParamValue' };
         returnedFromService = [{ ...course }];
         courseManagementService
@@ -403,20 +381,18 @@ describe('Course Management Service', () => {
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/course-management-overview?testParam=testParamValue` });
         req.flush(returnedFromService);
         expectAccessRightsToBeCalled(1, 1, 1);
-        tick();
-    }));
+    });
 
-    it('should get all exercise details', fakeAsync(() => {
+    it('should get all exercise details', () => {
         returnedFromService = [{ ...course }] as Course[];
         courseManagementService
             .getExercisesForManagementOverview(true)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
         requestAndExpectDateConversion('GET', `${resourceUrl}/exercises-for-management-overview?onlyActive=true`, returnedFromService, course);
-        tick();
-    }));
+    });
 
-    it('should get all stats for overview', fakeAsync(() => {
+    it('should get all stats for overview', () => {
         const stats = [new CourseManagementOverviewStatisticsDto()];
         returnedFromService = [...stats];
         courseManagementService
@@ -425,10 +401,9 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res.body).toEqual(stats));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/stats-for-management-overview?onlyActive=true` });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should find all categories of course', fakeAsync(() => {
+    it('should find all categories of course', () => {
         const categories = ['category1', 'category2'];
         returnedFromService = [...categories];
         courseManagementService
@@ -437,10 +412,9 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res.body).toEqual(categories));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/categories` });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should find all users of course group', fakeAsync(() => {
+    it('should find all users of course group', () => {
         const users = [new User(1, 'user1'), new User(2, 'user2')];
         returnedFromService = [...users];
         const courseGroup = CourseGroup.STUDENTS;
@@ -450,40 +424,36 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res.body).toEqual(users));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/${courseGroup}` });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
     it('should download course archive', () => {
-        const windowSpy = jest.spyOn(window, 'open').mockImplementation();
+        const windowSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
         courseManagementService.downloadCourseArchive(1);
         expect(windowSpy).toHaveBeenCalledWith(`${resourceUrl}/1/download-archive`, '_blank');
     });
 
-    it('should archive the course', fakeAsync(() => {
+    it('should archive the course', () => {
         courseManagementService.archiveCourse(course.id!).subscribe((res) => expect(res.body).toEqual(course));
         const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/${course.id}/archive` });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should clean up the course', fakeAsync(() => {
+    it('should clean up the course', () => {
         courseManagementService.cleanupCourse(course.id!).subscribe((res) => expect(res.body).toEqual(course));
         const req = httpMock.expectOne({ method: 'DELETE', url: `${resourceUrl}/${course.id}/cleanup` });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should find all locked submissions of course', fakeAsync(() => {
+    it('should find all locked submissions of course', () => {
         const submission = new ModelingSubmission();
         const submissions = [submission];
         returnedFromService = [...submissions];
         courseManagementService.findAllLockedSubmissionsOfCourse(course.id!).subscribe((res) => expect(res.body).toEqual(submissions));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/locked-submissions` });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should add user to course group', fakeAsync(() => {
+    it('should add user to course group', () => {
         const user = new User(1, 'name');
         const courseGroup = CourseGroup.STUDENTS;
         courseManagementService
@@ -492,10 +462,9 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res.body).toEqual({}));
         const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/${courseGroup}/${user.login}` });
         req.flush({});
-        tick();
-    }));
+    });
 
-    it('should remove user from course group', fakeAsync(() => {
+    it('should remove user from course group', () => {
         const user = new User(1, 'name');
         const courseGroup = CourseGroup.STUDENTS;
         courseManagementService
@@ -504,10 +473,9 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res.body).toEqual({}));
         const req = httpMock.expectOne({ method: 'DELETE', url: `${resourceUrl}/${course.id}/${courseGroup}/${user.login}` });
         req.flush({});
-        tick();
-    }));
+    });
 
-    it('should return lifetime overview data', fakeAsync(() => {
+    it('should return lifetime overview data', () => {
         const stats = [34, 23, 45, 67, 89, 201, 67, 890, 1359];
         courseManagementService
             .getStatisticsForLifetimeOverview(course.id!)
@@ -515,10 +483,9 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res).toEqual(stats));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/statistics-lifetime-overview` });
         req.flush(stats);
-        tick();
-    }));
+    });
 
-    it('should search other users within course', fakeAsync(() => {
+    it('should search other users within course', () => {
         const users = [new User(1, 'user1')];
         returnedFromService = [...users];
         courseManagementService
@@ -527,8 +494,7 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res.body).toEqual(users));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/search-other-users?nameOfUser=user1` });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
     it('getNumberOfAllowedComplaintsInCourse', () => {
         const courseId = 42;
@@ -548,7 +514,7 @@ describe('Course Management Service', () => {
     describe('Semester collapse state storage', () => {
         it('should return false if no collapse state is stored', () => {
             const collapseState = courseManagementService.getSemesterCollapseStateFromStorage('2024');
-            expect(collapseState).toBeFalse();
+            expect(collapseState).toBe(false);
         });
 
         it('should store the collapse state via service method and retrieve it correctly', () => {
@@ -556,10 +522,10 @@ describe('Course Management Service', () => {
             courseManagementService.setSemesterCollapseState(storageId, false);
 
             const storedValue = localStorageService.retrieve<boolean>(`semester.collapseState.${storageId}`);
-            expect(storedValue).toBeFalse();
+            expect(storedValue).toBe(false);
 
             const retrieved = courseManagementService.getSemesterCollapseStateFromStorage(storageId);
-            expect(retrieved).toBeFalse();
+            expect(retrieved).toBe(false);
         });
     });
 });

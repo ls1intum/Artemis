@@ -1,10 +1,10 @@
-import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/shared/service/alert.service';
-import { Observable, catchError, map, of } from 'rxjs';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { FaqState } from 'app/communication/shared/entities/faq.model';
+import { AlertService } from 'app/shared/service/alert.service';
+import { onError } from 'app/shared/util/global.utils';
+import { Observable, catchError, map, of } from 'rxjs';
 
 export function loadCourseFaqCategories(courseId: number | undefined, alertService: AlertService, faqService: FaqService, faqState?: FaqState): Observable<FaqCategory[]> {
     if (courseId === undefined) {
@@ -14,8 +14,7 @@ export function loadCourseFaqCategories(courseId: number | undefined, alertServi
     if (faqState) {
         return faqService.findAllCategoriesByCourseIdAndCategory(courseId, faqState).pipe(
             map((categoryRes: HttpResponse<string[]>) => {
-                const existingCategories = faqService.convertFaqCategoriesAsStringFromServer(categoryRes.body || []);
-                return existingCategories;
+                return faqService.convertFaqCategoriesAsStringFromServer(categoryRes.body || []);
             }),
             catchError((error: HttpErrorResponse) => {
                 onError(alertService, error);
@@ -26,8 +25,7 @@ export function loadCourseFaqCategories(courseId: number | undefined, alertServi
 
     return faqService.findAllCategoriesByCourseId(courseId).pipe(
         map((categoryRes: HttpResponse<string[]>) => {
-            const existingCategories = faqService.convertFaqCategoriesAsStringFromServer(categoryRes.body || []);
-            return existingCategories;
+            return faqService.convertFaqCategoriesAsStringFromServer(categoryRes.body || []);
         }),
         catchError((error: HttpErrorResponse) => {
             onError(alertService, error);

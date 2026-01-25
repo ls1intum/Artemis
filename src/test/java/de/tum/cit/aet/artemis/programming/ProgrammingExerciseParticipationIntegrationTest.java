@@ -1,27 +1,25 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.time.ZoneId;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
+import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.NoHeadException;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.jspecify.annotations.NonNull;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -40,6 +38,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
@@ -51,6 +50,7 @@ import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestReposito
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -60,6 +60,8 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepoNameProgrammingStudentParticipationDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
@@ -91,6 +93,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @Autowired
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
+    @Autowired
+    private TempFileUtilService tempFileUtilService;
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
@@ -98,6 +103,11 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
         programmingExerciseIntegrationTestService.addAuxiliaryRepositoryToExercise(programmingExercise);
+    }
+
+    @AfterEach
+    void cleanup() {
+        RepositoryExportTestUtil.cleanupTrackedRepositories();
     }
 
     private static Stream<Arguments> argumentsForGetParticipationResults() {
@@ -159,7 +169,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         programmingExercise.setAssessmentDueDate(assessmentDueDate);
         programmingExerciseRepository.save(programmingExercise);
         // Add a parameterized second result
-        StudentParticipation participation = (StudentParticipation) firstResult.getSubmission().getParticipation();
+        StudentParticipation participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(firstResult.getSubmission().getParticipation().getId())
+                .orElseThrow();
         Result secondResult = participationUtilService.addResultToSubmission(participation, participation.getSubmissions().iterator().next());
         secondResult.successful(true).rated(true).score(100D).assessmentType(assessmentType).completionDate(completionDate);
         secondResult = participationUtilService.addVariousVisibilityFeedbackToResult(secondResult);
@@ -366,11 +377,10 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetParticipationAllResults_showsResultsDuringExam() throws Exception {
         var result = setupExamExerciseWithParticipationAndResult(1, TEST_PREFIX + "student1");
-        Submission submission = result.getSubmission();
-        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
+        var submission = submissionRepository.findByIdWithResultsElseThrow(result.getSubmission().getId());
         participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1), submission);
         submissionRepository.save(submission);
-        var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK,
+        var requestedParticipation = request.get(participationsBaseUrl + submission.getParticipation().getId() + "/student-participation-with-all-results", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
         assertThat(participationUtilService.getResultsForParticipation(requestedParticipation)).hasSize(2);
     }
@@ -380,7 +390,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     void testGetParticipationAllResults_afterExam_hidesResultsBeforeExamResultsPublished() throws Exception {
         var result = setupExamExerciseWithParticipationAndResult(4, TEST_PREFIX + "student1");
         StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
-        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1), result.getSubmission());
+        var submission = submissionRepository.findByIdWithResultsElseThrow(result.getSubmission().getId());
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1), submission);
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
         assertThat(participationUtilService.getResultsForParticipation(requestedParticipation)).isEmpty();
@@ -390,11 +401,10 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetParticipationAllResults_showsResultsAfterExamResultsPublished() throws Exception {
         var result = setupExamExerciseWithParticipationAndResult(10, TEST_PREFIX + "student1");
-        Submission submission = result.getSubmission();
-        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
+        Submission submission = submissionRepository.findByIdWithResultsElseThrow(result.getSubmission().getId());
         participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1), submission);
         submissionRepository.save(submission);
-        var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK,
+        var requestedParticipation = request.get(participationsBaseUrl + submission.getParticipation().getId() + "/student-participation-with-all-results", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
         assertThat(participationUtilService.getResultsForParticipation(requestedParticipation)).hasSize(2);
     }
@@ -532,7 +542,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         assertThat(resultResponse.getFeedbacks()).noneMatch(Feedback::isAfterDueDate);
         assertThat(resultResponse.getFeedbacks()).containsExactlyInAnyOrderElementsOf(result.getFeedbacks());
 
-        assertThat(result).usingRecursiveComparison().ignoringFields("submission", "feedbacks", "participation", "lastModifiedDate").isEqualTo(resultResponse);
+        assertThat(result).usingRecursiveComparison().ignoringFields("submission", "feedbacks", "participation", "lastModifiedDate", "exerciseId").isEqualTo(resultResponse);
         if (withSubmission) {
             assertThat(submission).isEqualTo(resultResponse.getSubmission());
         }
@@ -575,7 +585,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     void testGetLatestPendingSubmissionIfNotExists_student() throws Exception {
         // Submission has a result, therefore not considered pending.
 
-        Result result = resultRepository.save(new Result());
+        Result result = new Result();
+        result.setExerciseId(programmingExercise.getId());
+        result = resultRepository.save(result);
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
         submission.addResult(result);
@@ -588,7 +600,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetLatestPendingSubmissionIfNotExists_ta() throws Exception {
         // Submission has a result, therefore not considered pending.
-        Result result = resultRepository.save(new Result());
+        Result result = new Result();
+        result.setExerciseId(programmingExercise.getId());
+        result = resultRepository.save(result);
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
         submission.addResult(result);
@@ -601,7 +615,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetLatestPendingSubmissionIfNotExists_instructor() throws Exception {
         // Submission has a result, therefore not considered pending.
-        Result result = resultRepository.save(new Result());
+        Result result = new Result();
+        result.setExerciseId(programmingExercise.getId());
+        result = resultRepository.save(result);
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
         submission.addResult(result);
@@ -850,15 +866,34 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
         ProgrammingExercise programmingExerciseWithAuxRepo;
 
+        String templateCommitMessage;
+
+        String solutionCommitMessage;
+
+        String testsCommitMessage;
+
+        String auxiliaryCommitMessage;
+
         @BeforeEach
-        void setup() throws GitAPIException {
+        void setup() throws Exception {
             userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
             var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
             programmingExerciseWithAuxRepo = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-            programmingExerciseWithAuxRepo = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExerciseWithAuxRepo.getId()).orElseThrow();
+            programmingExerciseWithAuxRepo = programmingExerciseRepository
+                    .findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExerciseWithAuxRepo.getId()).orElseThrow();
             programmingExerciseIntegrationTestService.addAuxiliaryRepositoryToExercise(programmingExerciseWithAuxRepo);
+            RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExerciseWithAuxRepo);
+            programmingExerciseRepository.save(programmingExerciseWithAuxRepo);
+            templateCommitMessage = "Template commit";
+            solutionCommitMessage = "Solution commit";
+            testsCommitMessage = "Tests commit";
+            auxiliaryCommitMessage = "Auxiliary commit";
 
-            doThrow(new NoHeadException("error")).when(gitService).getCommitInfos(any());
+            commitToRepository(programmingExerciseWithAuxRepo.getTemplateRepositoryUri(), Map.of("template/Example.java", "class Template {}"), templateCommitMessage);
+            commitToRepository(programmingExerciseWithAuxRepo.getSolutionRepositoryUri(), Map.of("solution/Example.java", "class Solution {}"), solutionCommitMessage);
+            commitToRepository(programmingExerciseWithAuxRepo.getTestRepositoryUri(), Map.of("tests/ExampleTest.java", "class Tests {}"), testsCommitMessage);
+            AuxiliaryRepository auxiliaryRepository = ensureAuxiliaryRepositoryConfigured();
+            commitToRepository(auxiliaryRepository.getRepositoryUri(), Map.of("auxiliary/Example.md", "Aux repo"), auxiliaryCommitMessage);
             PATH_PREFIX = "/api/programming/programming-exercise/" + programmingExerciseWithAuxRepo.getId() + "/commit-history/";
         }
 
@@ -871,26 +906,34 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldGetListForTemplateRepository() throws Exception {
-            assertThat(request.getList(PATH_PREFIX + "TEMPLATE", HttpStatus.OK, CommitInfoDTO.class)).isEmpty();
+            var commits = request.getList(PATH_PREFIX + "TEMPLATE", HttpStatus.OK, CommitInfoDTO.class);
+            assertThat(commits).isNotEmpty();
+            assertThat(commits).anySatisfy(commit -> assertThat(commit.message()).isEqualTo(templateCommitMessage));
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldGetListForSolutionRepository() throws Exception {
-            assertThat(request.getList(PATH_PREFIX + "SOLUTION", HttpStatus.OK, CommitInfoDTO.class)).isEmpty();
+            var commits = request.getList(PATH_PREFIX + "SOLUTION", HttpStatus.OK, CommitInfoDTO.class);
+            assertThat(commits).isNotEmpty();
+            assertThat(commits).anySatisfy(commit -> assertThat(commit.message()).isEqualTo(solutionCommitMessage));
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldGetListForTestsRepository() throws Exception {
-            assertThat(request.getList(PATH_PREFIX + "TESTS", HttpStatus.OK, CommitInfoDTO.class)).isEmpty();
+            var commits = request.getList(PATH_PREFIX + "TESTS", HttpStatus.OK, CommitInfoDTO.class);
+            assertThat(commits).isNotEmpty();
+            assertThat(commits).anySatisfy(commit -> assertThat(commit.message()).isEqualTo(testsCommitMessage));
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldGetListForAuxiliaryRepository() throws Exception {
-            assertThat(request.getList(PATH_PREFIX + "AUXILIARY?repositoryId=" + programmingExerciseWithAuxRepo.getAuxiliaryRepositories().getFirst().getId(), HttpStatus.OK,
-                    CommitInfoDTO.class)).isEmpty();
+            var repositoryId = programmingExerciseWithAuxRepo.getAuxiliaryRepositories().getFirst().getId();
+            var commits = request.getList(PATH_PREFIX + "AUXILIARY?repositoryId=" + repositoryId, HttpStatus.OK, CommitInfoDTO.class);
+            assertThat(commits).isNotEmpty();
+            assertThat(commits).anySatisfy(commit -> assertThat(commit.message()).isEqualTo(auxiliaryCommitMessage));
         }
 
         @Test
@@ -898,6 +941,18 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         void shouldThrowWithInvalidAuxiliaryRepositoryId() throws Exception {
             long maxId = auxiliaryRepositoryRepository.findAll().stream().mapToLong(DomainObject::getId).max().orElse(0);
             request.getList(PATH_PREFIX + "AUXILIARY?repositoryId=" + (maxId + 1), HttpStatus.NOT_FOUND, CommitInfoDTO.class);
+        }
+
+        private AuxiliaryRepository ensureAuxiliaryRepositoryConfigured() throws Exception {
+            AuxiliaryRepository auxiliaryRepository = programmingExerciseWithAuxRepo.getAuxiliaryRepositories().getFirst();
+            if (auxiliaryRepository.getRepositoryUri() == null) {
+                String projectKey = programmingExerciseWithAuxRepo.getProjectKey();
+                String repositorySlug = programmingExerciseWithAuxRepo.generateRepositoryName(auxiliaryRepository.getName());
+                RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repositorySlug));
+                auxiliaryRepository.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, repositorySlug));
+                auxiliaryRepository = auxiliaryRepositoryRepository.save(auxiliaryRepository);
+            }
+            return auxiliaryRepository;
         }
     }
 
@@ -907,16 +962,15 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getParticipationRepositoryFilesInstructorSuccess() throws Exception {
-        var commitHash = "commitHash";
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        var commitInfo = new CommitInfoDTO("hash", "msg1", ZonedDateTime.of(2020, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC")), "author", "authorEmail");
-        var commitInfo2 = new CommitInfoDTO("hash2", "msg2", ZonedDateTime.of(2020, 1, 2, 0, 0, 0, 0, ZoneId.of("UTC")), "author2", "authorEmail2");
-        doReturn(List.of(commitInfo, commitInfo2)).when(gitService).getCommitInfos(participation.getVcsRepositoryUri());
-        doReturn(Map.of()).when(gitService).listFilesAndFolders(any());
-        doReturn(Map.of()).when(gitService).listFilesAndFolders(any(), anyBoolean());
-        doNothing().when(gitService).switchBackToDefaultBranchHead(any());
+        Map<String, String> seededFiles = Map.of("README.md", "Instructor view", "src/App.java", "class App {}\n");
+        var commit = commitToParticipationRepository(participation, seededFiles, "Seed instructor files");
 
-        request.getMap("/api/programming/programming-exercise-participations/" + participation.getId() + "/files-content/" + commitHash, HttpStatus.OK, String.class, String.class);
+        var files = request.getMap("/api/programming/programming-exercise-participations/" + participation.getId() + "/files-content/" + commit.getName(), HttpStatus.OK,
+                String.class, String.class);
+        assertThat(files).isNotEmpty();
+        assertThat(files).containsEntry("README.md", "Instructor view");
+        assertThat(files).containsEntry("src/App.java", "class App {}\n");
     }
 
     /**
@@ -926,51 +980,64 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @Nested
     class GetParticipationRepositoryFilesForCommitsDetailsView {
 
-        String PATH_PREFIX;
+        String basePath;
 
-        String COMMIT_HASH;
+        String studentCommitHash;
+
+        String templateCommitHash;
+
+        String solutionCommitHash;
 
         ProgrammingExerciseParticipation participation;
 
         @BeforeEach
-        void setup() throws GitAPIException, URISyntaxException, IOException {
+        void setup() throws Exception {
             userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
-            participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
             var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
             programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-            programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
+            programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
             programmingExerciseIntegrationTestService.addAuxiliaryRepositoryToExercise(programmingExercise);
-            COMMIT_HASH = "commitHash";
+            RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+            programmingExerciseRepository.save(programmingExercise);
 
-            doReturn(Map.of()).when(gitService).listFilesAndFolders(any());
-            doReturn(Map.of()).when(gitService).listFilesAndFolders(any(), anyBoolean());
-            doNothing().when(gitService).switchBackToDefaultBranchHead(any());
-            doThrow(new NoHeadException("error")).when(gitService).getCommitInfos(any());
-            PATH_PREFIX = "/api/programming/programming-exercise/" + participation.getProgrammingExercise().getId() + "/files-content-commit-details/" + COMMIT_HASH;
+            participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+            Map<String, String> studentFiles = Map.of("student/Example.java", "class StudentExample {}\n");
+            var studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
+            studentCommitHash = commitToParticipationRepository(studentParticipation, studentFiles, "Student detail commit").getName();
+
+            templateCommitHash = commitToRepository(programmingExercise.getTemplateRepositoryUri(), Map.of("template/Example.java", "class TemplateDetail {}"),
+                    "Template detail commit").getName();
+            solutionCommitHash = commitToRepository(programmingExercise.getSolutionRepositoryUri(), Map.of("solution/Example.java", "class SolutionDetail {}"),
+                    "Solution detail commit").getName();
+
+            basePath = "/api/programming/programming-exercise/" + programmingExercise.getId() + "/files-content-commit-details/";
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldReturnBadRequestWithoutAnyProvidedParameters() throws Exception {
-            request.getMap(PATH_PREFIX, HttpStatus.BAD_REQUEST, String.class, String.class);
+            request.getMap(basePath + studentCommitHash, HttpStatus.BAD_REQUEST, String.class, String.class);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldReturnForParticipation() throws Exception {
-            assertThat(request.getMap(PATH_PREFIX + "?participationId=" + participation.getId(), HttpStatus.OK, String.class, String.class)).isEmpty();
+            var files = request.getMap(basePath + studentCommitHash + "?participationId=" + participation.getId(), HttpStatus.OK, String.class, String.class);
+            assertThat(files).containsEntry("student/Example.java", "class StudentExample {}\n");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldReturnFilesForTemplateRepository() throws Exception {
-            assertThat(request.getMap(PATH_PREFIX + "?repositoryType=TEMPLATE", HttpStatus.OK, String.class, String.class)).isEmpty();
+            var files = request.getMap(basePath + templateCommitHash + "?repositoryType=TEMPLATE", HttpStatus.OK, String.class, String.class);
+            assertThat(files).containsEntry("template/Example.java", "class TemplateDetail {}");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldReturnFilesForSolutionRepository() throws Exception {
-            assertThat(request.getMap(PATH_PREFIX + "?repositoryType=SOLUTION", HttpStatus.OK, String.class, String.class)).isEmpty();
+            var files = request.getMap(basePath + solutionCommitHash + "?repositoryType=SOLUTION", HttpStatus.OK, String.class, String.class);
+            assertThat(files).containsEntry("solution/Example.java", "class SolutionDetail {}");
         }
 
     }
@@ -979,17 +1046,18 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void retrieveCommitHistoryInstructorSuccess() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        var commitInfo = new CommitInfoDTO("hash", "msg1", ZonedDateTime.of(2020, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC")), "author", "authorEmail");
-        var commitInfo2 = new CommitInfoDTO("hash2", "msg2", ZonedDateTime.of(2020, 1, 2, 0, 0, 0, 0, ZoneId.of("UTC")), "author2", "authorEmail2");
-        doReturn(List.of(commitInfo, commitInfo2)).when(gitService).getCommitInfos(participation.getVcsRepositoryUri());
-        request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/commit-history", HttpStatus.OK, CommitInfoDTO.class);
+        String commitMessage = "Instructor commit history";
+        commitToParticipationRepository(participation, Map.of("src/Instructor.java", "class Instructor {}"), commitMessage);
+        var commits = request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/commit-history", HttpStatus.OK, CommitInfoDTO.class);
+        assertThat(commits).isNotEmpty();
+        assertThat(commits).anySatisfy(commit -> assertThat(commit.message()).isEqualTo(commitMessage));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void retrieveCommitHistoryGitExceptionEmptyList() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        doThrow(new NoHeadException("error")).when(gitService).getCommitInfos(participation.getVcsRepositoryUri());
+        doThrow(new NoHeadException("error")).when(gitServiceSpy).getCommitInfos(participation.getVcsRepositoryUri());
         assertThat(request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/commit-history", HttpStatus.OK, CommitInfoDTO.class))
                 .isEmpty();
     }
@@ -998,10 +1066,11 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void retrieveCommitHistoryStudentSuccess() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        var commitInfo = new CommitInfoDTO("hash", "msg1", ZonedDateTime.of(2020, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC")), "author", "authorEmail");
-        var commitInfo2 = new CommitInfoDTO("hash2", "msg2", ZonedDateTime.of(2020, 1, 2, 0, 0, 0, 0, ZoneId.of("UTC")), "author2", "authorEmail2");
-        doReturn(List.of(commitInfo, commitInfo2)).when(gitService).getCommitInfos(participation.getVcsRepositoryUri());
-        request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/commit-history", HttpStatus.OK, CommitInfoDTO.class);
+        String commitMessage = "Student commit history";
+        commitToParticipationRepository(participation, Map.of("src/Student.java", "class Student {}"), commitMessage);
+        var commits = request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/commit-history", HttpStatus.OK, CommitInfoDTO.class);
+        assertThat(commits).isNotEmpty();
+        assertThat(commits).anySatisfy(commit -> assertThat(commit.message()).isEqualTo(commitMessage));
     }
 
     @Test
@@ -1015,29 +1084,30 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void retrieveCommitHistoryTutorNotOwningParticipationSuccess() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        var commitInfo = new CommitInfoDTO("hash", "msg1", ZonedDateTime.of(2020, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC")), "author", "authorEmail");
-        var commitInfo2 = new CommitInfoDTO("hash2", "msg2", ZonedDateTime.of(2020, 1, 2, 0, 0, 0, 0, ZoneId.of("UTC")), "author2", "authorEmail2");
-        doReturn(List.of(commitInfo, commitInfo2)).when(gitService).getCommitInfos(participation.getVcsRepositoryUri());
-        request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/commit-history", HttpStatus.OK, CommitInfoDTO.class);
+        String commitMessage = "Tutor view commit";
+        commitToParticipationRepository(participation, Map.of("src/Tutor.java", "class Tutor {}"), commitMessage);
+        var commits = request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/commit-history", HttpStatus.OK, CommitInfoDTO.class);
+        assertThat(commits).isNotEmpty();
+        assertThat(commits).anySatisfy(commit -> assertThat(commit.message()).isEqualTo(commitMessage));
     }
 
     private Result addStudentParticipationWithResult(AssessmentType assessmentType, ZonedDateTime completionDate) {
         programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
         var submission = ParticipationFactory.generateProgrammingSubmission(true);
-        Result r = programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, submission, TEST_PREFIX + "student1");
-        r.successful(true).rated(true).score(100D).assessmentType(assessmentType).completionDate(completionDate);
+        Result result = programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, submission, TEST_PREFIX + "student1");
+        result.successful(true).rated(true).score(100D).assessmentType(assessmentType).completionDate(completionDate);
 
-        return participationUtilService.addVariousVisibilityFeedbackToResult(r);
+        return participationUtilService.addVariousVisibilityFeedbackToResult(result);
     }
 
     private TemplateProgrammingExerciseParticipation addTemplateParticipationWithResult() {
         programmingExerciseParticipation = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise)
                 .getTemplateParticipation();
-        Result r = programmingExerciseUtilService.addTemplateSubmissionWithResult(programmingExercise);
-        r.successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(null);
+        Result result = programmingExerciseUtilService.addTemplateSubmissionWithResult(programmingExercise);
+        result.successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(null);
 
-        participationUtilService.addVariousVisibilityFeedbackToResult(r);
+        participationUtilService.addVariousVisibilityFeedbackToResult(result);
         return (TemplateProgrammingExerciseParticipation) programmingExerciseParticipation;
     }
 
@@ -1049,6 +1119,51 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
         participationUtilService.addVariousVisibilityFeedbackToResult(result);
         return (SolutionProgrammingExerciseParticipation) programmingExerciseParticipation;
+    }
+
+    private RevCommit commitToParticipationRepository(ProgrammingExerciseStudentParticipation participation, Map<String, String> files, String message) throws Exception {
+        return commitToRepository(participation.getVcsRepositoryUri(), files, message);
+    }
+
+    private RevCommit commitToRepository(String repositoryUri, Map<String, String> files, String message) throws Exception {
+        return commitToRepository(new LocalVCRepositoryUri(repositoryUri), files, message);
+    }
+
+    private RevCommit commitToRepository(LocalVCRepositoryUri repositoryUri, Map<String, String> files, String message) throws Exception {
+        ensureLocalVcRepositoryExists(repositoryUri);
+        Path remoteRepoPath = repositoryUri.getLocalRepositoryPath(localVCBasePath);
+        return writeFilesAndPush(remoteRepoPath, files, message);
+    }
+
+    private void ensureLocalVcRepositoryExists(LocalVCRepositoryUri repositoryUri) throws Exception {
+        Path repoPath = repositoryUri.getLocalRepositoryPath(localVCBasePath);
+        if (Files.exists(repoPath)) {
+            return;
+        }
+        String slugWithGit = repositoryUri.getRelativeRepositoryPath().getFileName().toString();
+        String repositorySlug = slugWithGit.endsWith(".git") ? slugWithGit.substring(0, slugWithGit.length() - 4) : slugWithGit;
+        RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(repositoryUri.getProjectKey(), repositorySlug));
+    }
+
+    private RevCommit writeFilesAndPush(Path remoteRepoPath, Map<String, String> files, String message) throws Exception {
+        Path workingCopy = tempFileUtilService.createTempDirectory(tempPath, "repo-clone");
+        try (Git git = Git.cloneRepository().setURI(remoteRepoPath.toUri().toString()).setDirectory(workingCopy.toFile()).call()) {
+            for (Map.Entry<String, String> entry : files.entrySet()) {
+                Path filePath = workingCopy.resolve(entry.getKey());
+                Path parent = filePath.getParent();
+                if (parent != null) {
+                    Files.createDirectories(parent);
+                }
+                FileUtils.writeStringToFile(filePath.toFile(), entry.getValue(), StandardCharsets.UTF_8);
+            }
+            git.add().addFilepattern(".").call();
+            RevCommit commit = de.tum.cit.aet.artemis.programming.service.GitService.commit(git).setMessage(message).call();
+            git.push().call();
+            return commit;
+        }
+        finally {
+            RepositoryExportTestUtil.safeDeleteDirectory(workingCopy);
+        }
     }
 
     /**

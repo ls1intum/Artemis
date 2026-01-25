@@ -28,9 +28,9 @@ describe('AccountService', () => {
     const updateLanguageUrl = 'api/core/public/account/change-language';
     const user = { id: 1, groups: ['USER'] } as User;
     const user2 = { id: 2, groups: ['USER'] } as User;
-    const user3 = { id: 3, groups: ['USER', 'TA'], authorities: [Authority.USER] } as User;
+    const user3 = { id: 3, groups: ['USER', 'TA'], authorities: [Authority.STUDENT] } as User;
 
-    const authorities = [Authority.USER, Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA];
+    const authorities = [Authority.STUDENT, Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TUTOR];
     const course = {
         instructorGroupName: 'INSTRUCTOR',
         editorGroupName: 'EDITOR',

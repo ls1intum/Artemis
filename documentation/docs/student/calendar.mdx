@@ -1,0 +1,75 @@
+---
+id: calendar
+title: Calendar
+sidebar_label: Calendar
+---
+
+import calendarTabImage from './assets/calendar/calendar-tab.png';
+import desktopMonthPresentationImage from './assets/calendar/desktop-month-presentation.png';
+import desktopWeekPresentationImage from './assets/calendar/desktop-week-presentation.png';
+import mobileMonthPresentationImage from './assets/calendar/mobile-month-presentation.png';
+import mobileDayPresentationImage from './assets/calendar/mobile-day-presentation.png';
+import eventDetailsImage from './assets/calendar/event-details.png';
+import desktopSubscriptionComponent from './assets/calendar/desktop-subscription-component.png';
+import mobileSubscriptionComponent from './assets/calendar/mobile-subscription-component.png';
+import desktopFilterComponent from './assets/calendar/desktop-filter-component.png';
+import mobileFilterComponent from './assets/calendar/mobile-filter-component.png';
+import Image, {ImageSize} from "../../src/components/Image/Image";
+
+# Calendar
+Artemis features a calendar that allows users to quickly view all important events related to a specific course.
+
+## General Information
+The Artemis calendar can be found in the Calendar tab of the course overview.
+It displays important events related to lectures, tutorials, exercises, and exams.
+
+<Image src={calendarTabImage} alt={"Calendar Tab in Course Overview Sidebar"} size={ImageSize.small}></Image>
+
+The following table shows the dates that are displayed as calendar events, if available.
+Note that an event can either represent a specific point in time (in which case it only has a start date) or a time period (in which case it has both a start and an end date).
+
+| Artemis Concept  | Dates                                                            |
+|----------|------------------------------------------------------------------|
+| Lecture  | start, end  |
+| Tutorial  | start, end  |
+| Exercise  | release, start, due, assessment due  |
+| Exam  | start, end, results release, student review start, student review end |
+
+## Switching between Presentations
+To view events in the calendar, users can switch between a high-level overview and a more detailed presentation.
+The available views differ between small and large devices to optimize the calendar layout for each screen size.
+
+On larger devices, such as laptops and desktop computers, the calendar offers a high-level **month** presentation and a more detailed **week** presentation.
+
+<Image src={desktopMonthPresentationImage} alt={"Month Presentation for Large Devices"}  caption={"Month Presentation for Large Devices"} size={ImageSize.large} hideBorder={true}></Image>
+<Image src={desktopWeekPresentationImage} alt={"Week Presentation for Large Devices"} caption={"Week Presentation for Large Devices"} size={ImageSize.large} hideBorder={true}></Image>
+
+On small devices, such as mobile phones, there is a high-level **month** presentation and a detailed **day** presentation.
+
+<div style={{ display: 'flex', gap: '1rem' }}>
+    <Image src={mobileMonthPresentationImage} alt={"Month Presentation for Small Devices"} caption={"Month Presentation for Small Devices"} style={{ maxHeight: '550px' }} hideBorder={true}></Image>
+    <Image src={mobileDayPresentationImage} alt={"Day Presentation for Small Devices"} caption={"Day Presentation for Small Devices"} style={{ maxHeight: '550px' }} hideBorder={true}></Image>
+</div>
+
+## Viewing Event Details
+In the desktop month and week presentations, as well as in the mobile day presentation, users can click on an event to view its details.
+
+<Image src={eventDetailsImage} alt={"Event Details Popover"} size={ImageSize.medium}></Image>
+
+## Filtering Events
+By using the filter component of the calendar, users can include or exclude events based on their type.
+
+<div style={{ display: 'flex', gap: '1rem' }}>
+    <Image src={desktopFilterComponent} alt={"Filter Component for Large Devices"} caption={"Filter Component for Large Devices"} style={{ maxHeight: '300px', maxWidth: 'none' }}></Image>
+    <Image src={mobileFilterComponent} alt={"Filter Component for Small Devices"} caption={"Filter Component for Small Devices"} style={{ maxHeight: '300px', maxWidth: 'none' }}></Image>
+</div>
+
+## Subscribing External Calendars
+Users can subscribe external calendar applications to the Artemis calendar by clicking the Subscribe button, selecting a language, choosing which event types to include, and copying the generated link.
+This link can then be pasted into the settings of third-party calendar applications (e.g., Apple Calendar, Google Calendar, etc.) to subscribe them to the Artemis calendar.
+
+<div style={{ display: 'flex', alignItems: 'start', gap: '1rem' }}>
+    <Image src={desktopSubscriptionComponent} alt={"iCalendar Subscription Popover for Large Devices"} caption={"iCalendar Subscription Popover for Large Devices"} style={{ maxHeight: '340px', maxWidth: 'none' }}></Image>
+    <Image src={mobileSubscriptionComponent} alt={"iCalendar Subscription Popover for Small Devices"} caption={"iCalendar Subscription Popover for Small Devices"} style={{ maxHeight: '340px', maxWidth: 'none' }}></Image>
+</div>
+

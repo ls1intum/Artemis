@@ -48,7 +48,7 @@ public class FaqService {
                 throw new IllegalArgumentException("Faq is not in the state accepted, you cannot ingest this faq");
             }
             pyrisFaqApi.get().addFaq(faq);
-        }, () -> faqRepository.findAllByCourseIdAndFaqState(courseId, FaqState.ACCEPTED).forEach(faq -> pyrisFaqApi.get().addFaq(faq)));
+        }, () -> faqRepository.findAllByCourseIdAndFaqStateOrderByCreatedDateDesc(courseId, FaqState.ACCEPTED).forEach(faq -> pyrisFaqApi.get().addFaq(faq)));
     }
 
     /**

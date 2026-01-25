@@ -58,7 +58,7 @@ public abstract class ExerciseImportService {
         newExercise.setReleaseDate(importedExercise.getReleaseDate());
         newExercise.setDueDate(importedExercise.getDueDate());
         newExercise.setAssessmentDueDate(importedExercise.getAssessmentDueDate());
-        newExercise.setExampleSolutionPublicationDate(null); // This should not be imported.
+        newExercise.setExampleSolutionPublicationDate(null); // This should not be imported as the client might serve the original date as the default.
         newExercise.validateDates();
         newExercise.setDifficulty(importedExercise.getDifficulty());
         newExercise.setGradingInstructions(importedExercise.getGradingInstructions());
@@ -96,6 +96,7 @@ public abstract class ExerciseImportService {
         newResult.setAssessor(originalResult.getAssessor());
         newResult.setCompletionDate(originalResult.getCompletionDate());
         newResult.setExampleResult(true);
+        newResult.setExerciseId(originalResult.getExerciseId());
         newResult.setRated(true);
         newResult.setScore(originalResult.getScore());
         newResult.copyProgrammingExerciseCounters(originalResult);

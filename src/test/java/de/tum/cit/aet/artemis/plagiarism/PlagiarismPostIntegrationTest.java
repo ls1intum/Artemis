@@ -333,7 +333,6 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         post.setContent("Content Post");
         post.setVisibleForStudents(true);
         post.setDisplayPriority(DisplayPriority.NONE);
-        post.addTag("Tag");
         return post;
     }
 
@@ -341,7 +340,6 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         postToUpdate.setTitle("New Title");
         postToUpdate.setContent("New Test Post");
         postToUpdate.setVisibleForStudents(false);
-        postToUpdate.addTag("New Tag");
         return postToUpdate;
     }
 
@@ -350,11 +348,10 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         assertThat(createdPost).isNotNull();
         assertThat(createdPost.getId()).isNotNull();
 
-        // check if title, content, creation date, and tags are set correctly on creation
+        // check if title, content, creation date are set correctly on creation
         assertThat(createdPost.getTitle()).isEqualTo(expectedPost.getTitle());
         assertThat(createdPost.getContent()).isEqualTo(expectedPost.getContent());
         assertThat(createdPost.getCreationDate()).isNotNull();
-        assertThat(createdPost.getTags()).isEqualTo(expectedPost.getTags());
 
         // check if default values are set correctly on creation
         assertThat(createdPost.getAnswers()).isEmpty();

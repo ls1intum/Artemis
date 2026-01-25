@@ -1,4 +1,4 @@
-import { Component, OnDestroy, effect, inject, signal } from '@angular/core';
+import { Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AccountService } from 'app/core/auth/account.service';
@@ -16,6 +16,9 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { CustomMaxLengthDirective } from 'app/shared/validators/custom-max-length-validator/custom-max-length-validator.directive';
 import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
+import { BadgeModule } from 'primeng/badge';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { Authority, IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
 
 export interface DisplayedPasskey extends PasskeyDTO {
     isEditingLabel?: boolean;
@@ -24,9 +27,20 @@ export interface DisplayedPasskey extends PasskeyDTO {
 
 @Component({
     selector: 'jhi-passkey-settings',
-    imports: [TranslateDirective, FaIconComponent, DeleteButtonDirective, ArtemisDatePipe, ButtonComponent, CommonModule, FormsModule, CustomMaxLengthDirective],
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        DeleteButtonDirective,
+        ArtemisDatePipe,
+        ButtonComponent,
+        CommonModule,
+        FormsModule,
+        CustomMaxLengthDirective,
+        BadgeModule,
+        ArtemisTranslatePipe,
+    ],
     templateUrl: './passkey-settings.component.html',
-    styleUrl: './passkey-settings.component.scss',
+    styleUrls: ['../user-settings.scss'],
 })
 export class PasskeySettingsComponent implements OnDestroy {
     protected readonly ActionType = ActionType;
@@ -41,10 +55,10 @@ export class PasskeySettingsComponent implements OnDestroy {
     protected readonly faKey = faKey;
     protected readonly MAX_PASSKEY_LABEL_LENGTH = 64;
 
-    protected alertService = inject(AlertService);
-    protected webauthnService = inject(WebauthnService);
-    private accountService = inject(AccountService);
-    private passkeySettingsApiService = inject(PasskeySettingsApiService);
+    protected readonly alertService = inject(AlertService);
+    protected readonly webauthnService = inject(WebauthnService);
+    private readonly accountService = inject(AccountService);
+    private readonly passkeySettingsApiService = inject(PasskeySettingsApiService);
 
     private dialogErrorSource = new Subject<string>();
 
@@ -53,6 +67,11 @@ export class PasskeySettingsComponent implements OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     currentUser = signal<User | undefined>(undefined);
+
+    isAdmin = computed(() => {
+        const authorities = this.currentUser()?.authorities ?? [];
+        return authorities.some((authority) => IS_AT_LEAST_ADMIN.includes(authority as Authority));
+    });
 
     deleteMessage = '';
     isDeletingPasskey = false;
@@ -78,6 +97,14 @@ export class PasskeySettingsComponent implements OnDestroy {
 
     async updateRegisteredPasskeys(): Promise<void> {
         this.registeredPasskeys.set(await this.passkeySettingsApiService.getRegisteredPasskeys());
+
+        if (this.registeredPasskeys().length === 0) {
+            this.accountService.userIdentity.set({
+                ...this.accountService.userIdentity(),
+                askToSetupPasskey: true,
+                internal: this.accountService.userIdentity()?.internal ?? false,
+            });
+        }
     }
 
     private loadCurrentUser() {

@@ -16,6 +16,7 @@ on:
         options:
           - artemis-staging-localci.artemis.cit.tum.de
           - staging1.artemis.cit.tum.de
+          - staging2.artemis.cit.tum.de
           - artemis.tum.de
       triggered_by:
         description: "Username that triggered deployment (not required, shown if triggered via GitHub UI, logged if triggered via GitHub app)"
@@ -117,14 +118,14 @@ jobs:
           chmod 644 ~/.ssh/known_hosts
 
       - name: Checkout Artemis-Ansible repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: 'ls1intum/artemis-ansible'
 
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.x'
+          python-version: '3.14'
 
       - name: Install Artemis-Ansible dependencies
         run: |
@@ -139,7 +140,7 @@ jobs:
           export VAULT_TOKEN=$(cat ~/.vault-token)
 
       - name: Download artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: Artemis.war
           path: /tmp/artifact

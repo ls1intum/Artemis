@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -16,6 +18,17 @@ import dayjs from 'dayjs/esm';
 import { firstValueFrom } from 'rxjs';
 import JSZip from 'jszip';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
+
+// Mock JSZip to prevent unhandled rejection errors during zip creation
+vi.mock('jszip', () => {
+    class MockJSZip {
+        file = vi.fn();
+        generateAsync = vi.fn().mockResolvedValue(new Blob(['mock zip content'], { type: 'application/zip' }));
+    }
+    return {
+        default: MockJSZip,
+    };
+});
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
@@ -91,13 +104,15 @@ const makeExamQuiz = () => {
 };
 
 describe('QuizExercise Service', () => {
+    setupTestBed({ zoneless: true });
+
     const fileMap = new Map<string, Blob>();
     fileMap.set('file.jpg', new Blob());
 
     let service: QuizExerciseService;
     let httpMock: HttpTestingController;
     let elemDefault: QuizExercise;
-    const mockJSZip: jest.Mocked<JSZip> = {} as jest.Mocked<JSZip>;
+    const mockJSZip = {} as JSZip;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -118,7 +133,7 @@ describe('QuizExercise Service', () => {
 
     afterEach(() => {
         httpMock.verify();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should find an element', async () => {
@@ -176,7 +191,6 @@ describe('QuizExercise Service', () => {
                 randomizeQuestionOrder: true,
                 allowedNumberOfAttempts: 1,
                 isVisibleBeforeStart: true,
-                isOpenForPractice: true,
                 isPlannedToStart: true,
                 duration: 1,
             },
@@ -201,7 +215,6 @@ describe('QuizExercise Service', () => {
                 randomizeQuestionOrder: true,
                 allowedNumberOfAttempts: 1,
                 isVisibleBeforeStart: true,
-                isOpenForPractice: true,
                 isPlannedToStart: true,
                 duration: 1,
             },
@@ -223,7 +236,6 @@ describe('QuizExercise Service', () => {
                 randomizeQuestionOrder: true,
                 allowedNumberOfAttempts: 1,
                 isVisibleBeforeStart: true,
-                isOpenForPractice: true,
                 isPlannedToStart: true,
                 duration: 1,
             },
@@ -246,7 +258,6 @@ describe('QuizExercise Service', () => {
         ['setVisible', [123], quizEx, 'PUT', '/set-visible'],
         ['end', [123], quizEx, 'PUT', '/end-now'],
         ['start', [123], quizEx, 'PUT', '/start-now'],
-        ['openForPractice', [123], quizEx, 'PUT', '/open-for-practice'],
         ['findForStudent', [123], quizEx, 'GET', '/for-student'],
         ['findForExam', [123], [quizEx], 'GET', '/quiz-exercises'],
         ['findForCourse', [123], [quizEx], 'GET', '/quiz-exercises'],
@@ -259,24 +270,24 @@ describe('QuizExercise Service', () => {
         }
         const result = firstValueFrom(functionToCall.apply(service, args)) as Promise<HttpResponse<unknown>>;
         const req = httpMock.expectOne({ method: httpMethod });
-        expect(req.request.url).toEndWith(urlSuffix);
+        expect(req.request.url.endsWith(urlSuffix)).toBe(true);
         req.flush(response);
         const resp = await result;
-        expect(resp.ok).toBeTrue();
+        expect(resp.ok).toBe(true);
         expect(resp.body).toEqual(response);
     });
 
     it.each([
-        [QuizStatus.INVISIBLE, false, false, false, false],
-        [QuizStatus.VISIBLE, true, false, false, false],
-        [QuizStatus.CLOSED, true, true, false, false],
-        [QuizStatus.OPEN_FOR_PRACTICE, true, true, false, true],
-        [QuizStatus.ACTIVE, true, false, true, false],
+        [QuizStatus.INVISIBLE, false, false, false],
+        [QuizStatus.VISIBLE, true, false, false],
+        [QuizStatus.OPEN_FOR_PRACTICE, true, true, false],
+        [QuizStatus.ACTIVE, true, false, true],
         // all other combinations are not valid
-    ])('should get status %p', (result, quizStarted, quizEnded, started, practice) => {
+    ])('should get status %p', (result, quizStarted, quizEnded, started) => {
         elemDefault.quizStarted = quizStarted;
         elemDefault.quizEnded = quizEnded;
-        elemDefault.isOpenForPractice = practice;
+        elemDefault.dueDate = dayjs().add(1, 'day');
+        elemDefault.visibleToStudents = quizStarted;
         if (started !== undefined) {
             elemDefault.quizBatches = [{ started }];
         }
@@ -326,7 +337,7 @@ describe('QuizExercise Service', () => {
             2,
         ],
     ])('should export a quiz with no assets as json (%#)', async (questions, exportAll, filename, count) => {
-        const spy = jest.spyOn(downloadUtil, 'downloadFile').mockReturnValue();
+        const spy = vi.spyOn(downloadUtil, 'downloadFile').mockReturnValue();
         service.exportQuiz(questions, exportAll, filename);
 
         if (count === 0) {
@@ -342,13 +353,13 @@ describe('QuizExercise Service', () => {
                 };
             });
             expect(blob.type).toBe('application/json');
-            expect(data).toBeArrayOfSize(count);
-            expect(file).toEndWith('.json');
+            expect(data).toHaveLength(count);
+            expect(file.endsWith('.json')).toBe(true);
         }
     });
 
     it('should fetch correct image names and paths from drag and drop questions', async () => {
-        const spy = jest.spyOn(service, 'fetchFilePromise').mockResolvedValue();
+        const spy = vi.spyOn(service, 'fetchFilePromise').mockResolvedValue();
         const questions: QuizQuestion[] = [
             {
                 type: QuizQuestionType.DRAG_AND_DROP,
@@ -372,7 +383,7 @@ describe('QuizExercise Service', () => {
     });
 
     it('should export images from multiple choice options', async () => {
-        const spy = jest.spyOn(service, 'fetchFilePromise').mockResolvedValue();
+        const spy = vi.spyOn(service, 'fetchFilePromise').mockResolvedValue();
         const questions: QuizQuestion[] = [
             {
                 type: QuizQuestionType.MULTIPLE_CHOICE,
@@ -392,7 +403,7 @@ describe('QuizExercise Service', () => {
     });
 
     it('should export images from short answer questions', async () => {
-        const spy = jest.spyOn(service, 'fetchFilePromise').mockResolvedValue();
+        const spy = vi.spyOn(service, 'fetchFilePromise').mockResolvedValue();
         const questions: QuizQuestion[] = [
             {
                 type: QuizQuestionType.SHORT_ANSWER,
@@ -408,8 +419,8 @@ describe('QuizExercise Service', () => {
     });
 
     it('should not try to fetch files if there are no images to export', async () => {
-        const spy = jest.spyOn(service, 'fetchFilePromise').mockResolvedValue();
-        const spyDownload = jest.spyOn(downloadUtil, 'downloadFile').mockReturnValue();
+        const spy = vi.spyOn(service, 'fetchFilePromise').mockResolvedValue();
+        const spyDownload = vi.spyOn(downloadUtil, 'downloadFile').mockReturnValue();
 
         const questions: QuizQuestion[] = [
             {
@@ -438,7 +449,7 @@ describe('QuizExercise Service', () => {
         const fileName = 'mockFile.png';
         const filePath = 'path/to/mockFile.png';
         const errorMessage = 'File with name: mockFile.png at path: path/to/mockFile.png could not be fetched';
-        jest.spyOn(service, 'fetchFilePromise').mockRejectedValue(new Error(errorMessage));
+        vi.spyOn(service, 'fetchFilePromise').mockRejectedValue(new Error(errorMessage));
 
         await expect(service.fetchFilePromise(fileName, mockJSZip, filePath)).rejects.toThrow(`File with name: ${fileName} at path: ${filePath} could not be fetched`);
     });
@@ -447,7 +458,7 @@ describe('QuizExercise Service', () => {
         expect(req.request.body).toBeInstanceOf(FormData);
         expect(req.request.body.get('exercise')).toBeInstanceOf(Blob);
         const fileArray = req.request.body.getAll('files');
-        expect(fileArray).toBeArrayOfSize(1);
+        expect(fileArray).toHaveLength(1);
         expect(fileArray[0]).toBeInstanceOf(Blob);
     }
 });

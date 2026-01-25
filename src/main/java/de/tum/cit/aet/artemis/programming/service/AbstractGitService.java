@@ -74,7 +74,7 @@ public abstract class AbstractGitService {
      * @param remoteRepositoryUri The URI of the remote repository, not null.
      * @param defaultBranch       The name of the default branch to be checked out, not null.
      * @param isBare              Whether the repository is a bare repository (without working directory)
-     * @param writeAccess         Whether we write to the repository or not. If true, we set the git Repo config for better performance.
+     * @param writeAccess         Whether we write to the repository or not. If true, the method sets the git Repo config for better performance.
      * @return The configured Repository instance.
      * @throws IOException             If an I/O error occurs during repository initialization or configuration.
      * @throws InvalidRefNameException If the provided default branch name is invalid.
@@ -82,28 +82,73 @@ public abstract class AbstractGitService {
     @NonNull
     public static Repository linkRepositoryForExistingGit(Path localPath, LocalVCRepositoryUri remoteRepositoryUri, String defaultBranch, boolean isBare, boolean writeAccess)
             throws IOException, InvalidRefNameException {
-        // Open the repository from the filesystem
+        // Configure a JGit repository builder for an already existing repository on disk
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
 
         if (isBare) {
+            // Bare repository: repository lives directly in localPath (no working tree), this is typically used for the "remote" repository
             builder.setBare();
             builder.setGitDir(localPath.toFile());
         }
         else {
+            // Non-bare repository: working tree at localPath, metadata in .git/
             builder.setGitDir(localPath.resolve(".git").toFile());
         }
-        builder.setInitialBranch(defaultBranch).setMustExist(true).readEnvironment().findGitDir().setup(); // scan environment GIT_* variables
 
-        try (Repository repository = new Repository(builder, localPath, remoteRepositoryUri)) {
-            // Read JavaDoc for more information
-            if (writeAccess) {
-                setRepoConfig(defaultBranch, repository);
-            }
+        builder.setInitialBranch(defaultBranch) // used when initializing / linking branches
+                .setMustExist(true)              // fail fast if the repository does not exist
+                .readEnvironment()               // honor standard GIT_* environment variables
+                .findGitDir()                    // keep builder behavior consistent if GIT_DIR is set
+                .setup();                        // finalize builder configuration
 
-            return repository;
+        Repository repository = new Repository(builder, localPath, remoteRepositoryUri);
+        // Apply safe default Git configuration (GC, symlinks, commit signing, HEAD, etc.)
+        // Only modify config if write access to the repository is needed
+        if (writeAccess) {
+            setRepoConfig(defaultBranch, repository);
         }
+
+        return repository;
     }
 
+    /**
+     * Configures essential repository settings for a newly created or existing Git repository.
+     * <p>
+     * This method adjusts several Git configuration options to ensure predictable,
+     * secure, and stable behavior when the repository is used programmatically.
+     * Key aspects include:
+     * </p>
+     *
+     * <ul>
+     * <li><strong>Garbage collection:</strong> Disables automatic GC, auto-detach,
+     * and auto-pack operations to avoid unexpected background maintenance tasks
+     * that may interfere with server-side automation or testing workflows.</li>
+     *
+     * <li><strong>Security hardening:</strong> Explicitly disables symbolic links
+     * to prevent potential security vulnerabilities such as remote code
+     * execution on systems where symlink handling may be unsafe.</li>
+     *
+     * <li><strong>Commit signing:</strong> Turns off automatic GPG signing, ensuring
+     * consistent commit creation in environments where signing keys may not be
+     * available.</li>
+     *
+     * <li><strong>Branch configuration:</strong> Sets the remote tracking branch
+     * and merge reference for the given {@code defaultBranch} so that Git
+     * operations (e.g., merges or pulls) behave correctly.</li>
+     *
+     * <li><strong>HEAD initialization:</strong> For empty repositories, forcefully
+     * links {@code HEAD} to the default branch. This is required to ensure the
+     * new branch becomes the initial checked-out branch.</li>
+     * </ul>
+     *
+     * <p>
+     * After applying all settings, the updated configuration is persisted to disk.
+     * </p>
+     *
+     * @param defaultBranch the name of the default branch (e.g. {@code "main"})
+     * @param repository    the JGit {@link Repository} to configure
+     * @throws IOException if the configuration cannot be written to disk
+     */
     private static void setRepoConfig(String defaultBranch, Repository repository) throws IOException {
         StoredConfig gitRepoConfig = repository.getConfig();
         gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
@@ -144,9 +189,7 @@ public abstract class AbstractGitService {
         builder.setGitDir(localPath.toFile());
         builder.setInitialBranch(defaultBranch).setMustExist(true).readEnvironment().findGitDir().setup(); // scan environment GIT_* variables
 
-        try (Repository repository = new Repository(builder, localPath, bareRepositoryUri)) {
-            return repository;
-        }
+        return new Repository(builder, localPath, bareRepositoryUri);
     }
 
     @NonNull
@@ -160,11 +203,11 @@ public abstract class AbstractGitService {
      * Get last commit hash from HEAD
      *
      * @param repoUri to get the latest hash from.
-     * @return the latestHash of the given repo.
+     * @return the latestHash of the given repo as a String.
      * @throws EntityNotFoundException if retrieving the latestHash from the git repo failed.
      */
     @Nullable
-    public ObjectId getLastCommitHash(@Nullable LocalVCRepositoryUri repoUri) throws EntityNotFoundException {
+    public String getLastCommitHash(@Nullable LocalVCRepositoryUri repoUri) throws EntityNotFoundException {
         if (repoUri == null || repoUri.getURI() == null) {
             return null;
         }
@@ -177,7 +220,8 @@ public abstract class AbstractGitService {
                 return null;
             }
 
-            return headRef.getObjectId();
+            ObjectId objectId = headRef.getObjectId();
+            return objectId != null ? objectId.getName() : null;
         }
         catch (GitAPIException | URISyntaxException ex) {
             throw new EntityNotFoundException("Could not retrieve the last commit hash for repoUri " + repoUri + " due to the following exception: " + ex);
@@ -211,13 +255,13 @@ public abstract class AbstractGitService {
      *
      * @param repository the Git repository (bare) to search within.
      * @param message    the commit message substring to search for (case-sensitive).
-     * @return the {@link ObjectId} of the first commit whose message contains {@code message},
-     *         or the {@link ObjectId} of the oldest commit if no match is found;
+     * @return the commit hash as a String of the first commit whose message contains {@code message},
+     *         or the commit hash of the oldest commit if no match is found;
      *         or {@code null} if the repository URI is invalid or inaccessible.
      * @throws EntityNotFoundException if the repository cannot be opened or traversed.
      */
     @Nullable
-    public ObjectId getFirstCommitWithMessage(Repository repository, String message) throws EntityNotFoundException {
+    public String getFirstCommitWithMessage(Repository repository, String message) throws EntityNotFoundException {
 
         try {
             try (RevWalk walk = new RevWalk(repository)) {
@@ -244,13 +288,13 @@ public abstract class AbstractGitService {
 
                     String msg = commit.getFullMessage();
                     if (msg != null && msg.contains(message)) {
-                        return commit.getId(); // Found a match, return early
+                        return commit.getId().getName(); // Found a match, return early
                     }
                 }
 
                 // Fallback: return the first (oldest) commit if no message matched
                 if (firstCommit != null) {
-                    return firstCommit.getId();
+                    return firstCommit.getId().getName();
                 }
 
                 return null;
@@ -262,7 +306,7 @@ public abstract class AbstractGitService {
         }
     }
 
-    protected String getGitUriAsString(LocalVCRepositoryUri vcsRepositoryUri) throws URISyntaxException {
+    public String getGitUriAsString(LocalVCRepositoryUri vcsRepositoryUri) throws URISyntaxException {
         return getGitUri(vcsRepositoryUri).toString();
     }
 
@@ -282,7 +326,7 @@ public abstract class AbstractGitService {
      * @param repository Local Repository Object.
      * @throws IOException if the deletion of the repository failed.
      */
-    public void deleteLocalRepository(Repository repository) throws IOException {
+    public void deleteLocalRepository(@NonNull Repository repository) throws IOException {
         Path repoPath = repository.getLocalPath();
         // if repository is not closed, it causes weird IO issues when trying to delete the repository again
         // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
