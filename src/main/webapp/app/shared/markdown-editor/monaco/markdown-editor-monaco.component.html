@@ -187,9 +187,9 @@
                                                 <button
                                                     class="ps-1 me-1"
                                                     mat-menu-item
-                                                    [matMenuTriggerFor]="unit.slides ? lectureMenuUnitsSlide : null"
+                                                    [matMenuTriggerFor]="unit.slides?.length ? lectureMenuUnitsSlide : null"
                                                     (click)="
-                                                        !unit.slides &&
+                                                        !unit.slides?.length &&
                                                             displayedActions.lecture.executeInCurrentEditor({
                                                                 reference: ReferenceType.ATTACHMENT_UNITS,
                                                                 lecture,
