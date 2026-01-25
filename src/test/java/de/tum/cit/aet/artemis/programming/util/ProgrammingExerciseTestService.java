@@ -1860,6 +1860,16 @@ public class ProgrammingExerciseTestService {
         createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
         createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
         createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
+
+        // Verify that the exercise has proper repository URIs before export
+        // This helps diagnose issues when exports fail
+        verifyExerciseRepositoryUrisAreSet();
+
+        // Wait for repositories to be fully clonable (not just exist on disk)
+        // This prevents 503 errors caused by Git operations failing on repos that
+        // aren't fully ready for cloning on slow CI systems
+        waitForRepositoriesToBeClonable();
+
         var url = "/api/programming/programming-exercises/" + exercise.getId() + "/export-instructor-exercise";
         var zipFile = request.getFile(url, expectedStatus, new LinkedMultiValueMap<>());
         if (zipFile != null) {
@@ -1868,10 +1878,111 @@ public class ProgrammingExerciseTestService {
         return zipFile;
     }
 
+    /**
+     * Waits for all exercise repositories (template, solution, tests) to be fully ready for cloning.
+     * This addresses race conditions where Git clone operations fail with 503 errors because
+     * the repositories aren't fully flushed to disk yet.
+     */
+    private void waitForRepositoriesToBeClonable() {
+        var freshExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
+
+        // Wait for each repository to be clonable
+        waitForSingleRepositoryToBeClonable(freshExercise.getTemplateRepositoryUri(), "template");
+        waitForSingleRepositoryToBeClonable(freshExercise.getSolutionRepositoryUri(), "solution");
+        waitForSingleRepositoryToBeClonable(freshExercise.getTestRepositoryUri(), "test");
+    }
+
+    /**
+     * Waits for a single repository to be fully ready for cloning operations.
+     *
+     * @param repositoryUri the URI of the repository
+     * @param repoType      the type of repository (for logging)
+     */
+    private void waitForSingleRepositoryToBeClonable(String repositoryUri, String repoType) {
+        try {
+            var localVcUri = new de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri(repositoryUri);
+            Path repoPath = localVcUri.getLocalRepositoryPath(localVCBasePath);
+
+            await().atMost(15, TimeUnit.SECONDS).pollInterval(200, TimeUnit.MILLISECONDS).until(() -> {
+                try {
+                    // Verify the repository can be opened and has valid refs
+                    try (Git git = Git.open(repoPath.toFile())) {
+                        var repo = git.getRepository();
+                        // Check HEAD exists and is valid
+                        var headRef = repo.resolve("HEAD");
+                        if (headRef == null) {
+                            return false;
+                        }
+                        // Try to parse the commit to ensure it's valid
+                        try (var revWalk = new org.eclipse.jgit.revwalk.RevWalk(repo)) {
+                            revWalk.parseCommit(headRef);
+                        }
+                        // Check that the default branch exists
+                        var branches = git.branchList().call();
+                        if (branches.isEmpty()) {
+                            return false;
+                        }
+                        return true;
+                    }
+                }
+                catch (Exception e) {
+                    log.debug("Repository {} not ready yet: {}", repoType, e.getMessage());
+                    return false;
+                }
+            });
+            log.debug("Repository {} at {} is ready for cloning", repoType, repoPath);
+        }
+        catch (Exception e) {
+            log.warn("Timeout waiting for {} repository to be clonable: {}", repoType, e.getMessage());
+        }
+    }
+
+    /**
+     * Verifies that the exercise has all repository URIs properly set and that the
+     * corresponding LocalVC repositories exist on disk. This helps catch configuration
+     * issues early and provides clear error messages for debugging.
+     */
+    private void verifyExerciseRepositoryUrisAreSet() {
+        // Reload exercise to get the latest state from DB
+        var freshExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
+
+        // Check that repository URIs are set on the exercise
+        assertThat(freshExercise.getTemplateRepositoryUri()).as("Template repository URI should be set").isNotNull().isNotBlank();
+        assertThat(freshExercise.getSolutionRepositoryUri()).as("Solution repository URI should be set").isNotNull().isNotBlank();
+        assertThat(freshExercise.getTestRepositoryUri()).as("Test repository URI should be set").isNotNull().isNotBlank();
+
+        // Verify that the LocalVC bare repositories exist on disk
+        verifyLocalVcRepositoryExists(freshExercise.getTemplateRepositoryUri(), "template");
+        verifyLocalVcRepositoryExists(freshExercise.getSolutionRepositoryUri(), "solution");
+        verifyLocalVcRepositoryExists(freshExercise.getTestRepositoryUri(), "test");
+
+        log.info("All repository URIs verified for exercise {}: template={}, solution={}, test={}", freshExercise.getId(), freshExercise.getTemplateRepositoryUri(),
+                freshExercise.getSolutionRepositoryUri(), freshExercise.getTestRepositoryUri());
+    }
+
+    /**
+     * Verifies that a LocalVC repository exists at the path derived from the given URI.
+     *
+     * @param repositoryUri the repository URI
+     * @param repoType      the type of repository (for error messages)
+     */
+    private void verifyLocalVcRepositoryExists(String repositoryUri, String repoType) {
+        try {
+            var localVcUri = new de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri(repositoryUri);
+            Path repoPath = localVcUri.getLocalRepositoryPath(localVCBasePath);
+            assertThat(Files.exists(repoPath)).as("LocalVC %s repository should exist at %s", repoType, repoPath).isTrue();
+            assertThat(Files.exists(repoPath.resolve("HEAD"))).as("LocalVC %s repository should have HEAD file", repoType).isTrue();
+        }
+        catch (Exception e) {
+            fail("Failed to verify %s repository URI %s: %s", repoType, repositoryUri, e.getMessage());
+        }
+    }
+
     private void generateProgrammingExerciseWithProblemStatementNullForExport() {
         exercise.setProblemStatement(null);
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
-        exercise = programmingExerciseRepository.save(exercise);
+        // Use saveAndFlush to ensure data is committed before the HTTP request
+        exercise = programmingExerciseRepository.saveAndFlush(exercise);
         exercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
@@ -1896,7 +2007,8 @@ public class ProgrammingExerciseTestService {
                     FilePathConverter.getMarkdownFilePath().resolve(embeddedFileName2).toFile());
         }
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
-        exercise = programmingExerciseRepository.save(exercise);
+        // Use saveAndFlush to ensure data is committed before the HTTP request
+        exercise = programmingExerciseRepository.saveAndFlush(exercise);
         if (shouldIncludeBuildPlan) {
             buildPlanRepository.setBuildPlanForExercise("my build plan", exercise);
         }
@@ -1933,6 +2045,9 @@ public class ProgrammingExerciseTestService {
         createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
         createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
         createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
+
+        // Verify that repository URIs are properly set before triggering archive
+        verifyExerciseRepositoryUrisAreSet();
 
         request.put("/api/core/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
         await().until(() -> courseRepository.findById(course.getId()).orElseThrow().getCourseArchivePath() != null);
@@ -2076,6 +2191,44 @@ public class ProgrammingExerciseTestService {
         localRepository.workingCopyGitRepo.add().addFilepattern(file.getFileName().toString()).call();
         GitService.commit(localRepository.workingCopyGitRepo).setMessage("Added testfile").call();
         localRepository.workingCopyGitRepo.push().setRemote("origin").call();
+
+        // Wait for the bare repository to be fully ready for cloning
+        // This prevents race conditions on slow CI systems where the export service
+        // might try to clone the repo before it's fully written to disk
+        waitForBareRepositoryReady(localRepository);
+    }
+
+    /**
+     * Waits for a bare repository to be fully ready for cloning operations.
+     * This addresses flaky test failures caused by race conditions where the export service
+     * tries to clone a repository immediately after a push, but the repository files
+     * aren't fully flushed to disk yet on slow CI systems.
+     *
+     * @param localRepository the local repository whose bare repo should be verified
+     */
+    private void waitForBareRepositoryReady(LocalRepository localRepository) {
+        await().atMost(10, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+            try {
+                // Try to open the bare repository and resolve HEAD
+                // This verifies the repo is accessible and has a valid HEAD reference
+                try (Git git = Git.open(localRepository.remoteBareGitRepoFile)) {
+                    var headRef = git.getRepository().resolve("HEAD");
+                    if (headRef == null) {
+                        log.debug("Bare repository HEAD is null, waiting...");
+                        return false;
+                    }
+                    // Verify we can read the commit object
+                    try (var revWalk = new org.eclipse.jgit.revwalk.RevWalk(git.getRepository())) {
+                        revWalk.parseCommit(headRef);
+                    }
+                    return true;
+                }
+            }
+            catch (Exception e) {
+                log.debug("Bare repository not ready yet: {}", e.getMessage());
+                return false;
+            }
+        });
     }
 
     // Test
