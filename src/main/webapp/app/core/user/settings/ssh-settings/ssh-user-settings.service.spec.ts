@@ -96,7 +96,7 @@ describe('SshUserSettingsService', () => {
             const promise = sshUserSettingsService.getCachedSshKeys();
 
             const req = httpMock.expectOne({ method: 'GET', url: 'api/programming/ssh-settings/public-keys' });
-            req.error(new ErrorEvent('Network error'));
+            req.error(new ProgressEvent('error'));
 
             const result = await promise;
             expect(result).toBeUndefined();

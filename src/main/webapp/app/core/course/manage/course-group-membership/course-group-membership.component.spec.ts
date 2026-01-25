@@ -238,9 +238,6 @@ describe('Course Group Membership Component', () => {
 
     describe('loadAll with invalid course group', () => {
         it('should redirect to course-management when course group is not in predefined groups', async () => {
-            const router = TestBed.inject(Router);
-            const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-
             // Create a new fixture with an invalid course group
             const invalidCourseGroup = 'invalid-group';
             const invalidParentRoute = {

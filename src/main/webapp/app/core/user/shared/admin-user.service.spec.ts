@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { User } from 'app/core/user/user.model';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AdminUserService } from 'app/core/user/shared/admin-user.service';
-import { HttpParams, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { AuthorityFilter, OriginFilter, RegistrationNumberFilter, StatusFilter, UserFilter } from 'app/core/admin/user-management/user-management.component';
 
 describe('AdminUserService', () => {

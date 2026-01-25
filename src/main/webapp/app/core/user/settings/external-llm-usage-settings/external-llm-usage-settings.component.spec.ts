@@ -7,7 +7,7 @@ import { ExternalLlmUsageSettingsComponent } from './external-llm-usage-settings
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AccountService } from 'app/core/auth/account.service';

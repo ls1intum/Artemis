@@ -31,7 +31,7 @@ describe('SentryErrorHandler', () => {
     const createProfileInfo = (options: { sentry?: SentryConfig; testServer?: boolean }): ProfileInfo => {
         const profileInfo = new ProfileInfo();
         profileInfo.sentry = options.sentry ?? { dsn: 'https://test@sentry.io/123' };
-        profileInfo.testServer = options.testServer;
+        profileInfo.testServer = options.testServer ?? false;
         return profileInfo;
     };
 

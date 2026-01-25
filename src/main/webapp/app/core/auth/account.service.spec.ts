@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { of } from 'rxjs';
@@ -725,7 +725,7 @@ describe('AccountService', () => {
             const authState$ = accountService.getAuthenticationState();
 
             expect(authState$).toBeDefined();
-            expect(typeof authState$.subscribe).toBe('function');
+            expect(authState$).toHaveProperty('subscribe');
         });
     });
 

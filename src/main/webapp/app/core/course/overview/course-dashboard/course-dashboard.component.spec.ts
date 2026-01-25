@@ -5,7 +5,7 @@ import { CourseDashboardComponent } from 'app/core/course/overview/course-dashbo
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
@@ -178,7 +178,7 @@ describe('CourseDashboardComponent', () => {
                 {
                     provide: CourseDashboardService,
                     useValue: {
-                        getCourseMetricsForUser: vi.fn().mockReturnValue(of({ body: mockStudentMetrics })),
+                        getCourseMetricsForUser: vi.fn().mockReturnValue(of(new HttpResponse({ body: mockStudentMetrics }))),
                     },
                 },
                 {
@@ -502,7 +502,7 @@ describe('CourseDashboardComponent', () => {
             },
         };
 
-        vi.spyOn(courseDashboardService, 'getCourseMetricsForUser').mockReturnValue(of({ body: metricsWithCompetencies }));
+        vi.spyOn(courseDashboardService, 'getCourseMetricsForUser').mockReturnValue(of(new HttpResponse({ body: metricsWithCompetencies })));
 
         component.loadMetrics();
 
@@ -561,7 +561,7 @@ describe('CourseDashboardComponent', () => {
             },
         };
 
-        vi.spyOn(courseDashboardService, 'getCourseMetricsForUser').mockReturnValue(of({ body: metricsWithLectureUnits }));
+        vi.spyOn(courseDashboardService, 'getCourseMetricsForUser').mockReturnValue(of(new HttpResponse({ body: metricsWithLectureUnits })));
 
         component.loadMetrics();
 
@@ -572,7 +572,7 @@ describe('CourseDashboardComponent', () => {
 
     it('should handle response with null body', () => {
         const previousMetrics = component.studentMetrics();
-        vi.spyOn(courseDashboardService, 'getCourseMetricsForUser').mockReturnValue(of({ body: null }));
+        vi.spyOn(courseDashboardService, 'getCourseMetricsForUser').mockReturnValue(of(new HttpResponse<StudentMetrics>({ body: null })));
 
         component.loadMetrics();
 
@@ -627,7 +627,7 @@ describe('CourseDashboardComponent', () => {
             },
         };
 
-        vi.spyOn(courseDashboardService, 'getCourseMetricsForUser').mockReturnValue(of({ body: metricsWithMultipleCompetencies }));
+        vi.spyOn(courseDashboardService, 'getCourseMetricsForUser').mockReturnValue(of(new HttpResponse({ body: metricsWithMultipleCompetencies })));
 
         component.loadMetrics();
 
@@ -659,7 +659,7 @@ describe('CourseDashboardComponent', () => {
             },
         };
 
-        vi.spyOn(courseDashboardService, 'getCourseMetricsForUser').mockReturnValue(of({ body: metricsWithManyExercises }));
+        vi.spyOn(courseDashboardService, 'getCourseMetricsForUser').mockReturnValue(of(new HttpResponse({ body: metricsWithManyExercises })));
 
         component.loadMetrics();
 
@@ -679,7 +679,7 @@ describe('CourseDashboardComponent', () => {
             },
         };
 
-        vi.spyOn(courseDashboardService, 'getCourseMetricsForUser').mockReturnValue(of({ body: emptyMetrics }));
+        vi.spyOn(courseDashboardService, 'getCourseMetricsForUser').mockReturnValue(of(new HttpResponse({ body: emptyMetrics })));
 
         component.loadMetrics();
 
@@ -689,7 +689,7 @@ describe('CourseDashboardComponent', () => {
     it('should handle empty exercise metrics', () => {
         const metricsWithoutExercises: StudentMetrics = {};
 
-        vi.spyOn(courseDashboardService, 'getCourseMetricsForUser').mockReturnValue(of({ body: metricsWithoutExercises }));
+        vi.spyOn(courseDashboardService, 'getCourseMetricsForUser').mockReturnValue(of(new HttpResponse({ body: metricsWithoutExercises })));
 
         component.loadMetrics();
 
@@ -715,7 +715,7 @@ describe('CourseDashboardComponent', () => {
             },
         };
 
-        vi.spyOn(courseDashboardService, 'getCourseMetricsForUser').mockReturnValue(of({ body: metricsWithoutCompetencies }));
+        vi.spyOn(courseDashboardService, 'getCourseMetricsForUser').mockReturnValue(of(new HttpResponse({ body: metricsWithoutCompetencies })));
 
         component.loadMetrics();
 
@@ -772,7 +772,7 @@ describe('CourseDashboardComponent', () => {
             },
         };
 
-        vi.spyOn(courseDashboardService, 'getCourseMetricsForUser').mockReturnValue(of({ body: metricsWithMixedDates }));
+        vi.spyOn(courseDashboardService, 'getCourseMetricsForUser').mockReturnValue(of(new HttpResponse({ body: metricsWithMixedDates })));
 
         component.loadMetrics();
 

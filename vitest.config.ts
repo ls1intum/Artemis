@@ -63,7 +63,16 @@ export default defineConfig({
                 'src/main/webapp/app/modeling/**/*.ts',         // include modeling for code coverage
                 'src/main/webapp/app/iris/**/*.ts',             // include iris for code coverage
             ],
-            exclude: ['**/node_modules/**', '**/*.spec.ts', '**/*.route.ts', '**/*.routes.ts', '**/*.model.ts'],
+            exclude: [
+                '**/node_modules/**',   // exclude node_modules with third-party code
+                '**/*.spec.ts',         // exclude test specification files
+                '**/*.route.ts',        // exclude route definition files (not really testable)
+                '**/*.routes.ts',       // exclude route definition files (not really testable)
+                '**/*.model.ts',        // exclude data model files (not really testable)
+                'src/main/webapp/app/core/config/dayjs.ts',             // exclude dayjs configuration file (not really testable)
+                'src/main/webapp/app/core/config/monaco.config.ts',     // exclude monaco configuration file (not really testable)
+                'src/main/webapp/app/core/config/prod.config.ts',       // exclude dayjs configuration file (not really testable)
+            ],
             thresholds: {
                 lines: 92.20,
                 statements: 92.00,

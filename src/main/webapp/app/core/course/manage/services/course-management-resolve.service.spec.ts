@@ -58,11 +58,9 @@ describe('CourseManagementResolve', () => {
 
         route.params = { courseId: 42 };
         let result: Course | undefined;
-        let completed = false;
 
         resolver.resolve(route).subscribe({
             next: (res) => (result = res),
-            complete: () => (completed = true),
         });
 
         expect(service.find).toHaveBeenCalledWith(42);

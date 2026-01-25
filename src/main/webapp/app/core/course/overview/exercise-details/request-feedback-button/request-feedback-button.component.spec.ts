@@ -25,6 +25,7 @@ import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mo
 import { UserService } from 'app/core/user/shared/user.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import dayjs from 'dayjs/esm';
 
 describe('RequestFeedbackButtonComponent', () => {
     setupTestBed({ zoneless: true });
@@ -359,7 +360,7 @@ describe('RequestFeedbackButtonComponent', () => {
         component.hasUserAcceptedExternalLLMUsage = false;
 
         const mockModal = { close: vi.fn() };
-        vi.spyOn(userService, 'updateExternalLLMUsageConsent').mockReturnValue(of({}));
+        vi.spyOn(userService, 'updateExternalLLMUsageConsent').mockReturnValue(of(new HttpResponse<void>({})));
         vi.spyOn(accountService, 'setUserAcceptedExternalLLMUsage');
         vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
 
@@ -387,7 +388,7 @@ describe('RequestFeedbackButtonComponent', () => {
         const athenaResult: Result = {
             id: 1,
             assessmentType: AssessmentType.AUTOMATIC_ATHENA,
-            completionDate: new Date(),
+            completionDate: dayjs(),
             successful: true,
         } as Result;
 
@@ -411,7 +412,7 @@ describe('RequestFeedbackButtonComponent', () => {
         const athenaResult: Result = {
             id: 1,
             assessmentType: AssessmentType.AUTOMATIC_ATHENA,
-            completionDate: new Date(),
+            completionDate: dayjs(),
             successful: false,
         } as Result;
 
