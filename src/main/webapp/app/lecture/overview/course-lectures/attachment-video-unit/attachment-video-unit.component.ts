@@ -52,6 +52,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
     readonly isLoading = signal<boolean>(false);
+    readonly isCollapsed = signal<boolean>(true);
 
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
 
@@ -118,6 +119,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     override toggleCollapse(isCollapsed: boolean): void {
         super.toggleCollapse(isCollapsed);
+        this.isCollapsed.set(isCollapsed);
 
         if (!isCollapsed) {
             this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);

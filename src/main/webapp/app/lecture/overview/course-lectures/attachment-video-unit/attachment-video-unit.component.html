@@ -42,7 +42,7 @@
         <hr />
     }
 
-    @if (!!videoUrl()) {
+    @if (!isCollapsed() && !!videoUrl()) {
         @if (isLoading()) {
             <div class="d-flex justify-content-center p-3">
                 <div class="spinner-border" role="status">
@@ -54,7 +54,7 @@
         } @else if (isUploadedVideoFile()) {
             <div class="video-player-container">
                 <div class="ratio ratio-16x9">
-                    <video id="uploadedVideo" class="rounded" controls preload="auto" playsinline>
+                    <video id="uploadedVideo" class="rounded" controls preload="metadata" playsinline>
                         <source [attr.src]="videoUrl()" type="video/mp4" />
                         <span jhiTranslate="artemisApp.attachmentVideoUnit.videoPlayer.notSupported"></span>
                     </video>
