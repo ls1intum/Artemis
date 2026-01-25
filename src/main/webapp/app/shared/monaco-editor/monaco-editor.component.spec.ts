@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { EventEmitter, NgZone } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
@@ -22,22 +23,32 @@ describe('MonacoEditorComponent', () => {
 
     const buildAnnotationArray: Annotation[] = [{ fileName: 'example.java', row: 1, column: 0, timestamp: 0, type: MonacoEditorBuildAnnotationType.ERROR, text: 'example error' }];
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [MonacoEditorComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ThemeService, useClass: MockThemeService },
+                {
+                    provide: NgZone,
+                    useValue: {
+                        run: (fn: any) => fn(),
+                        runOutsideAngular: (fn: any) => fn(),
+                        onStable: new EventEmitter<any>(),
+                        onUnstable: new EventEmitter<any>(),
+                        onMicrotaskEmpty: new EventEmitter<any>(),
+                        onError: new EventEmitter<any>(),
+                    },
+                },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(MonacoEditorComponent);
-                comp = fixture.componentInstance;
-                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-                    return new MockResizeObserver(callback);
-                });
-            });
+        }).compileComponents();
+
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
+
+        fixture = TestBed.createComponent(MonacoEditorComponent);
+        comp = fixture.componentInstance;
     });
 
     afterEach(() => {
