@@ -4,7 +4,7 @@
     "private": true,
     "license": "MIT",
     "devDependencies": {
-        "@playwright/test": "1.57.0",
+        "@playwright/test": "1.58.0",
         "cross-env": "10.1.0",
         "dayjs": "1.11.19",
         "dotenv": "17.2.3",
@@ -12,7 +12,7 @@
         "istanbul-lib-report": "3.0.1",
         "istanbul-reports": "3.2.0",
         "junit-merge": "2.0.0",
-        "npm-check-updates": "19.2.0",
+        "npm-check-updates": "19.3.1",
         "monocart-reporter": "2.9.23",
         "npm-run-all2": "8.0.4",
         "simple-git": "3.30.0",
