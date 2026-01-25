@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.DataExportState;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.EmailFailedException;
 import de.tum.cit.aet.artemis.core.repository.DataExportRepository;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
@@ -106,7 +107,7 @@ public class DataExportCreationService {
      *
      * @param dataExport the data export to be created
      **/
-    private void createAndSaveDataExportWithContent(DataExport dataExport) throws IOException, URISyntaxException {
+    private void createAndSaveDataExportWithContent(DataExport dataExport) throws IOException, URISyntaxException, EmailFailedException {
         log.info("Creating data export for user {}", dataExport.getUser().getLogin());
         var userId = dataExport.getUser().getId();
         var user = dataExport.getUser();
@@ -154,12 +155,37 @@ public class DataExportCreationService {
         try {
             createAndSaveDataExportWithContent(dataExport);
         }
+        // First, catch email failures separately to set the correct state and notify the admin
+        catch (EmailFailedException emailFailedException) {
+            handleEmailFailure(dataExport, emailFailedException);
+            return false;
+        }
+        // Then catch all other exceptions which indicate a failure during creation
         catch (Exception e) {
             log.error("Error while creating data export for user {}", dataExport.getUser().getLogin(), e);
             handleCreationFailure(dataExport, e);
             return false;
         }
         return true;
+    }
+
+    private void handleEmailFailure(DataExport dataExport, EmailFailedException emailFailedException) {
+        dataExport.setDataExportState(DataExportState.EMAIL_FAILED);
+        dataExport = dataExportRepository.save(dataExport);
+
+        if (!StringUtils.hasText(adminEmail)) {
+            log.warn("Admin email (info.contact) is not configured. Cannot send email to admin about data export notification failure.");
+            return;
+        }
+
+        // Create a recipient user object with the configured admin email
+        User adminRecipient = new User();
+        adminRecipient.setEmail(adminEmail);
+        adminRecipient.setLangKey("en");
+        adminRecipient.setLogin("data-export-admin-recipient");
+        adminRecipient.setFirstName("Administrator");
+
+        mailService.sendDataExportEmailFailedEmailToAdmin(adminRecipient, dataExport, emailFailedException);
     }
 
     /**
@@ -197,11 +223,17 @@ public class DataExportCreationService {
      * @param dataExport     the data export whose creation is finished
      * @param dataExportPath the path to the zip file containing the data export
      */
-    private void finishDataExportCreation(DataExport dataExport, Path dataExportPath) {
+    private void finishDataExportCreation(DataExport dataExport, Path dataExportPath) throws EmailFailedException {
         dataExport.setFilePath(dataExportPath.toString());
         dataExport.setCreationFinishedDate(ZonedDateTime.now());
         dataExport = dataExportRepository.save(dataExport);
-        mailService.sendDataExportCreatedEmail(dataExport.getUser(), dataExport);
+        try {
+            mailService.sendDataExportCreatedEmail(dataExport.getUser(), dataExport);
+        }
+        catch (Exception e) {
+            log.error("Failed to send data export created email to user {}", dataExport.getUser().getLogin(), e);
+            throw new EmailFailedException("Failed to send data export created email to user " + dataExport.getUser().getLogin(), e);
+        }
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
         dataExportRepository.save(dataExport);
     }
@@ -221,7 +253,7 @@ public class DataExportCreationService {
         }
         dataExport = dataExportRepository.save(dataExport);
         Path workingDirectory = tempFileUtilService.createTempDirectory(dataExportsPath, "data-export-working-dir");
-        fileService.scheduleDirectoryPathForRecursiveDeletion(workingDirectory, 30);
+        fileService.scheduleDirectoryPathForRecursiveDeletion(workingDirectory, 60); // Delete working directory after 60 minutes
         dataExport.setDataExportState(DataExportState.IN_CREATION);
         dataExportRepository.save(dataExport);
         return workingDirectory;
