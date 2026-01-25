@@ -23,7 +23,6 @@ import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -499,7 +498,6 @@ public class AtlasAgentService {
      *
      * @param sessionId the session ID
      */
-    @Transactional
     public void clearSession(String sessionId) {
         if (chatMemory != null)
             chatMemory.clear(sessionId);
