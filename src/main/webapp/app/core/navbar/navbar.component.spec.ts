@@ -4,7 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { expectedProfileInfo } from 'app/core/layouts/profiles/shared/profile.service.spec';
+import { expectedProfileInfo } from 'test/helpers/mocks/service/mock-profile-info';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
