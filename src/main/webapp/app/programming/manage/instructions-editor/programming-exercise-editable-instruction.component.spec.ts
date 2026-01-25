@@ -414,11 +414,11 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         comp.selectedTextForRefinement.set('some text');
         comp.selectionPositionInfo.set({ startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
 
-        comp.onEditorSelectionChange(null);
+        comp.onEditorSelectionChange(undefined);
 
-        expect(comp.inlineRefinementPosition()).toBeNull();
+        expect(comp.inlineRefinementPosition()).toBeUndefined();
         expect(comp.selectedTextForRefinement()).toBe('');
-        expect(comp.selectionPositionInfo()).toBeNull();
+        expect(comp.selectionPositionInfo()).toBeUndefined();
     });
 
     it('should hide inline refinement button when selection has only whitespace', () => {
@@ -437,7 +437,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         comp.onEditorSelectionChange(selection);
 
-        expect(comp.inlineRefinementPosition()).toBeNull();
+        expect(comp.inlineRefinementPosition()).toBeUndefined();
     });
 
     it('should emit inline refinement event and hide button on refine', () => {
@@ -458,9 +458,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         comp.onInlineRefine(event);
 
         expect(emitSpy).toHaveBeenCalledWith(event);
-        expect(comp.inlineRefinementPosition()).toBeNull();
+        expect(comp.inlineRefinementPosition()).toBeUndefined();
         expect(comp.selectedTextForRefinement()).toBe('');
-        expect(comp.selectionPositionInfo()).toBeNull();
+        expect(comp.selectionPositionInfo()).toBeUndefined();
     });
 
     it('should get current content from editor', () => {
@@ -500,8 +500,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         comp.hideInlineRefinementButton();
 
-        expect(comp.inlineRefinementPosition()).toBeNull();
+        expect(comp.inlineRefinementPosition()).toBeUndefined();
         expect(comp.selectedTextForRefinement()).toBe('');
-        expect(comp.selectionPositionInfo()).toBeNull();
+        expect(comp.selectionPositionInfo()).toBeUndefined();
     });
 });
