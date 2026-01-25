@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentChatResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentHistoryMessageDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyPreviewDTO;
+import de.tum.cit.aet.artemis.atlas.repository.AtlasChatMemoryRepository;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService.CompetencyOperation;
 
 /**
@@ -74,6 +75,8 @@ public class AtlasAgentService {
     private final ToolCallbackProvider competencyExpertToolCallbackProvider;
 
     private final ChatMemory chatMemory;
+
+    private final AtlasChatMemoryRepository atlasChatMemoryRepository;
 
     private final String deploymentName;
 
@@ -140,14 +143,15 @@ public class AtlasAgentService {
 
     public AtlasAgentService(CacheManager cacheManager, @Autowired(required = false) ChatClient chatClient, AtlasPromptTemplateService templateService,
             @Autowired(required = false) ToolCallbackProvider mainAgentToolCallbackProvider, @Autowired(required = false) ToolCallbackProvider competencyExpertToolCallbackProvider,
-            @Autowired(required = false) ChatMemory chatMemory, @Value("${atlas.chat-model:gpt-4o}") String deploymentName,
-            @Value("${atlas.chat-temperature:0.2}") double temperature) {
+            @Autowired(required = false) ChatMemory chatMemory, @Autowired(required = false) AtlasChatMemoryRepository atlasChatMemoryRepository,
+            @Value("${atlas.chat-model:gpt-4o}") String deploymentName, @Value("${atlas.chat-temperature:0.2}") double temperature) {
         this.cacheManager = cacheManager;
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.mainAgentToolCallbackProvider = mainAgentToolCallbackProvider;
         this.competencyExpertToolCallbackProvider = competencyExpertToolCallbackProvider;
         this.chatMemory = chatMemory;
+        this.atlasChatMemoryRepository = atlasChatMemoryRepository;
         this.deploymentName = deploymentName;
         this.temperature = temperature;
     }
@@ -499,10 +503,6 @@ public class AtlasAgentService {
      * @param sessionId the session ID
      */
     public void clearSession(String sessionId) {
-        if (chatMemory != null) {
-            chatMemory.clear(sessionId);
-        }
-
-        clearCachedPendingCompetencyOperations(sessionId);
+        atlasChatMemoryRepository.deleteByConversationId(sessionId);
     }
 }
