@@ -123,8 +123,7 @@ describe('RequestFeedbackButtonComponent', () => {
         );
         jest.spyOn(alertService, 'error');
 
-        const mockTemplateRef = {} as TemplateRef<any>;
-        component.requestAIFeedback(mockTemplateRef);
+        component.requestAIFeedback();
         tick();
 
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.someError');
@@ -221,7 +220,7 @@ describe('RequestFeedbackButtonComponent', () => {
             jest.spyOn(component, 'hasAthenaResultForLatestSubmission').mockReturnValue(true);
             jest.spyOn(alertService, 'warning');
 
-            component.requestAIFeedback({} as any);
+            component.requestAIFeedback();
 
             expect(alertService.warning).toHaveBeenCalled();
         }));
@@ -263,8 +262,7 @@ describe('RequestFeedbackButtonComponent', () => {
             const modalSpy = jest.spyOn(modalService, 'open');
             const processFeedbackSpy = jest.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
 
-            const mockTemplateRef = {} as TemplateRef<any>;
-            component.requestAIFeedback(mockTemplateRef);
+            component.requestAIFeedback();
             tick();
 
             expect(modalSpy).not.toHaveBeenCalled();

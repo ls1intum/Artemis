@@ -40,7 +40,6 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { User } from 'app/core/user/user.model';
 import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { LLMSelectionModalComponent } from 'app/logos/llm-selection-popup.component';
 
 describe('IrisBaseChatbotComponent', () => {
     setupTestBed({ zoneless: true });
