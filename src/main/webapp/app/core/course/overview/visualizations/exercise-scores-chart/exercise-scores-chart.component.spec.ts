@@ -66,6 +66,13 @@ describe('ExerciseScoresChartComponent', () => {
     });
 
     it('should initialize', () => {
+        const exerciseScoresChartService = TestBed.inject(ExerciseScoresChartService);
+        const exerciseScoresResponse: HttpResponse<ExerciseScoresDTO[]> = new HttpResponse({
+            body: [],
+            status: 200,
+        });
+        vi.spyOn(exerciseScoresChartService, 'getExerciseScoresForCourse').mockReturnValue(of(exerciseScoresResponse));
+        fixture.componentRef.setInput('filteredExerciseIDs', []);
         fixture.detectChanges();
         expect(component.courseId).toBe(1);
     });

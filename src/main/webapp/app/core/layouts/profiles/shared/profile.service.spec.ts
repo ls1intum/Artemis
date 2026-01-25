@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { PROFILE_DEV, PROFILE_PROD } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, PROFILE_DEV, PROFILE_PROD } from 'app/app.constants';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -81,6 +81,87 @@ describe('ProfileService', () => {
             // @ts-ignore
             service.profileInfo = {};
             expect(service.isProfileActive(PROFILE_DEV)).toBe(false);
+        });
+
+        describe('isModuleFeatureActive', () => {
+            it('should return true if the module feature is active', () => {
+                // @ts-ignore
+                service.profileInfo = { activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM] };
+                expect(service.isModuleFeatureActive(MODULE_FEATURE_ATLAS)).toBe(true);
+                expect(service.isModuleFeatureActive(MODULE_FEATURE_EXAM)).toBe(true);
+            });
+
+            it('should return false if the module feature is not active', () => {
+                // @ts-ignore
+                service.profileInfo = { activeModuleFeatures: [MODULE_FEATURE_ATLAS] };
+                expect(service.isModuleFeatureActive(MODULE_FEATURE_EXAM)).toBe(false);
+            });
+
+            it('should return false if activeModuleFeatures is undefined', () => {
+                // @ts-ignore
+                service.profileInfo = {};
+                expect(service.isModuleFeatureActive(MODULE_FEATURE_ATLAS)).toBe(false);
+            });
+        });
+
+        describe('isDevelopment', () => {
+            it('should return true when dev profile is active', () => {
+                // @ts-ignore
+                service.profileInfo = { activeProfiles: [PROFILE_DEV] };
+                expect(service.isDevelopment()).toBe(true);
+            });
+
+            it('should return false when dev profile is not active', () => {
+                // @ts-ignore
+                service.profileInfo = { activeProfiles: [PROFILE_PROD] };
+                expect(service.isDevelopment()).toBe(false);
+            });
+
+            it('should return false when activeProfiles is undefined', () => {
+                // @ts-ignore
+                service.profileInfo = {};
+                expect(service.isDevelopment()).toBe(false);
+            });
+        });
+
+        describe('isProduction', () => {
+            it('should return true when prod profile is active', () => {
+                // @ts-ignore
+                service.profileInfo = { activeProfiles: [PROFILE_PROD] };
+                expect(service.isProduction()).toBe(true);
+            });
+
+            it('should return false when prod profile is not active', () => {
+                // @ts-ignore
+                service.profileInfo = { activeProfiles: [PROFILE_DEV] };
+                expect(service.isProduction()).toBe(false);
+            });
+
+            it('should return false when activeProfiles is undefined', () => {
+                // @ts-ignore
+                service.profileInfo = {};
+                expect(service.isProduction()).toBe(false);
+            });
+        });
+
+        describe('isTestServer', () => {
+            it('should return true when testServer is true', () => {
+                // @ts-ignore
+                service.profileInfo = { testServer: true };
+                expect(service.isTestServer()).toBe(true);
+            });
+
+            it('should return false when testServer is false', () => {
+                // @ts-ignore
+                service.profileInfo = { testServer: false };
+                expect(service.isTestServer()).toBe(false);
+            });
+
+            it('should return false when testServer is undefined', () => {
+                // @ts-ignore
+                service.profileInfo = {};
+                expect(service.isTestServer()).toBe(false);
+            });
         });
     });
 });

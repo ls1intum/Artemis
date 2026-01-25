@@ -28,7 +28,7 @@ describe('VcsAccessTokensSettingsComponent', () => {
         deleteUserVcsAccessToken: ReturnType<typeof vi.fn>;
         addNewVcsAccessToken: ReturnType<typeof vi.fn>;
     };
-    const alertServiceMock = { error: vi.fn(), addAlert: vi.fn() };
+    const alertServiceMock = { error: vi.fn(), addAlert: vi.fn(), success: vi.fn() };
     let translateService: TranslateService;
 
     const token = 'initial-token';

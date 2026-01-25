@@ -42,6 +42,6 @@ describe('Exercise Scores Chart Service', () => {
         service.getExerciseScoresForCourse(1).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(JSON.stringify(returnedFromService));
+        req.flush(returnedFromService);
     });
 });

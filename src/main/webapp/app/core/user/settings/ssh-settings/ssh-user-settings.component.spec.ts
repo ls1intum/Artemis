@@ -32,6 +32,7 @@ describe('SshUserSettingsComponent', () => {
     ];
     let alertServiceMock: {
         error: ReturnType<typeof vi.fn>;
+        success: ReturnType<typeof vi.fn>;
     };
     let sshServiceMock: {
         deleteSshPublicKey: ReturnType<typeof vi.fn>;
@@ -46,6 +47,7 @@ describe('SshUserSettingsComponent', () => {
         };
         alertServiceMock = {
             error: vi.fn(),
+            success: vi.fn(),
         };
         await TestBed.configureTestingModule({
             providers: [

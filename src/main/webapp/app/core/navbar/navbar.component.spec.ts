@@ -15,7 +15,7 @@ import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { Component } from '@angular/core';
+import { Component, input } from '@angular/core';
 
 // Create stub components that don't have dependencies
 @Component({ selector: 'jhi-connection-warning', template: '' })
@@ -23,6 +23,11 @@ class StubConnectionWarningComponent {}
 
 @Component({ selector: 'jhi-loading-notification', template: '' })
 class StubLoadingNotificationComponent {}
+
+@Component({ selector: 'jhi-theme-switch', template: '' })
+class StubThemeSwitchComponent {
+    popoverPlacement = input<string>();
+}
 import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
@@ -101,7 +106,6 @@ describe('NavbarComponent', () => {
                 MockPipe(FindLanguageFromKeyPipe),
                 MockComponent(SystemNotificationComponent),
                 FaIconComponent,
-                MockComponent(ThemeSwitchComponent),
             ],
             providers: [
                 provideHttpClient(),
@@ -123,7 +127,7 @@ describe('NavbarComponent', () => {
                     imports: [ThemeSwitchComponent, JhiConnectionWarningComponent, LoadingNotificationComponent],
                 },
                 add: {
-                    imports: [StubConnectionWarningComponent, StubLoadingNotificationComponent],
+                    imports: [StubThemeSwitchComponent, StubConnectionWarningComponent, StubLoadingNotificationComponent],
                 },
             })
             .compileComponents();

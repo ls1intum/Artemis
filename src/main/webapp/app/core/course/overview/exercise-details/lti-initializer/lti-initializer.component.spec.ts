@@ -34,7 +34,7 @@ describe('LtiInitializerComponent', () => {
             providers: [
                 MockProvider(AlertService),
                 { provide: UserService, useClass: MockUserService },
-                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
                 { provide: Router, useClass: MockRouter },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: NgbModal, useClass: MockNgbModalService },
