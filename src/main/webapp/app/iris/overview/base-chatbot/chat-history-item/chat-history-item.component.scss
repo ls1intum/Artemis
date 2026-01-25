@@ -3,9 +3,10 @@
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
-    padding: 6px 16px;
+    padding: 6px;
+    margin: 0 8px;
     font-size: 14px;
-    min-width: 17rem;
+    // min-width: 17rem;
 
     .chat-history-text {
         overflow: hidden;
@@ -29,16 +30,20 @@
     }
 
     &:hover {
-        background-color: var(--iris-rate-background);
-        border-radius: 6px;
-    }
-
-    &.chat-history-item-selected {
-        background-color: var(--iris-client-chat-background);
+        background-color: var(--iris-accent-background);
         border-radius: 6px;
 
         .related-entity-info {
-            border: 1px solid var(--gray-500);
+            border: 1px solid var(--iris-accent-border-color);
+        }
+    }
+
+    &.chat-history-item-selected {
+        background-color: var(--iris-tertiary-background);
+        border-radius: 6px;
+
+        .related-entity-info {
+            border: 1px solid var(--iris-accent-border-color);
         }
     }
 }
