@@ -42,6 +42,7 @@ import { PostingContentComponent } from 'app/communication/posting-content/posti
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ForwardedMessageComponent } from 'app/communication/forwarded-message/forwarded-message.component';
 import { CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
+import { Observable } from 'rxjs';
 
 @Component({
     selector: 'jhi-post',
@@ -128,6 +129,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     course: Course;
 
     hasOriginalPostBeenDeleted: boolean;
+    createAnswerOverride = input<((answerPost: AnswerPost) => Observable<AnswerPost>) | undefined>(undefined);
 
     constructor() {
         super();

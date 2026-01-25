@@ -53,9 +53,9 @@ public class PlagiarismAnswerPostService extends PostingService {
      * sets resolves post to false by default,
      * persists the answer post, and sends a notification to affected user groups
      *
-     * @param courseId   id of the course the answer post belongs to
+     * @param courseId   id of course the answer post belongs to
      * @param answerPost answer post to create
-     * @return created answer post that was persisted
+     * @return created an answer post that was persisted
      */
     public AnswerPost createAnswerPost(Long courseId, AnswerPost answerPost) {
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();

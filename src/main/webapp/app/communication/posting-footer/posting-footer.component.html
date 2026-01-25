@@ -38,6 +38,7 @@
         #createAnswerPostModal
         [posting]="createdAnswerPost"
         [createEditAnswerPostContainerRef]="containerRef"
-        (onCreate)="createdAnswerPost = createEmptyAnswerPost(); showAnswers()"
+        [createOverride]="createAnswerOverride()"
+        (onCreate)="createdAnswerPost = createEmptyAnswerPost(); openThread.emit()"
     />
 </div>
