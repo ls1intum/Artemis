@@ -79,7 +79,7 @@ export class CodeButtonComponent implements OnInit {
 
     loading = input<boolean>(false);
 
-    // either use the participation token (true) OR the user token (false)
+    // Input
     smallButtons = input.required<boolean>();
     repositoryUri = input.required<string>();
     routerLinkForRepositoryView = input.required<(string | number)[]>();
@@ -87,55 +87,71 @@ export class CodeButtonComponent implements OnInit {
     exercise = input<ProgrammingExercise>();
     hideLabelMobile = input<boolean>(false);
 
-    // this is the fallback with a default order in case the server does not specify this as part of the profile info endpoint
-    authenticationMechanisms = [RepositoryAuthenticationMethod.Password, RepositoryAuthenticationMethod.Token, RepositoryAuthenticationMethod.SSH];
-
-    userTokenStillValid = false;
-    userTokenPresent = false;
-
+    // Fields
     sshEnabled = false;
     sshTemplateUrl?: string;
     versionControlUrl: string;
-
-    doesUserHaveSSHkeys = false;
-    areAnySshKeysExpired = false;
     isInCourseManagement = false;
-
     sshSettingsUrl: string;
     vcsTokenSettingsUrl: string;
-    sshKeyMissingTip: string;
-    sshKeysExpiredTip: string;
-    tokenMissingTip: string;
-    tokenExpiredTip: string;
     user: User;
     sshKeys?: UserSshPublicKey[];
 
-    // Signals
+    // Signals (we ideally declare everything related to change detection/UI to signals and leave component fields
+    // as they are
     isPracticeMode = signal<boolean | null>(null);
     wasCopied = signal(false);
     copyEnabled = signal(false);
     isTeamParticipation = computed(() => !!this.activeParticipation()?.team);
+    doesUserHaveSSHkeys = signal(false);
+    areAnySshKeysExpired = signal(false);
+    // either use the participation token (true) OR the user token (false)
+    userTokenStillValid = signal(false);
+    userTokenPresent = signal(false);
+    sshKeyMissingTip = signal('');
+    sshKeysExpiredTip = signal('');
+    tokenMissingTip = signal('');
+    tokenExpiredTip = signal('');
+    theiaEnabled = signal(false);
+    ideName = signal('');
+    // this is the fallback with a default order in case the server does not specify this as part of the profile info endpoint
+    authenticationMechanisms = signal<RepositoryAuthenticationMethod[]>([
+        RepositoryAuthenticationMethod.Password,
+        RepositoryAuthenticationMethod.Token,
+        RepositoryAuthenticationMethod.SSH,
+    ]);
 
     // Computed/Derived States
-    cloneHeadline = computed(() => {
-        const parts = this.participations();
-        if (!parts.length) return 'artemisApp.exerciseActions.cloneExerciseRepository';
+    clonedHeadline = computed(() => {
+        const participations = this.participations();
+        if (!participations.length) return 'artemisApp.exerciseActions.cloneExerciseRepository';
 
-        const ex = this.exercise();
-        // null coalescing: if the practiceMode signal is not set, we refer to the participation for deriving mode
-        const preferPractice = this.isPracticeMode() ?? isPracticeMode(this.activeParticipation());
+        const exercise = this.exercise();
+        const practice = this.effectivePracticeMode();
 
-        return preferPractice && !ex?.exerciseGroup ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
+        return practice && !exercise?.exerciseGroup ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
     });
+    // Default preference from exercise (reflecting behaviour before signal migration)
+    preferPracticeDefault = computed(() => this.participationService.shouldPreferPractice(this.exercise()));
+    // Selection preference: user override if set, else default (reflecting behavior before signal migration)
+    preferPracticeForSelection = computed(() => this.isPracticeMode() ?? this.preferPracticeDefault());
     activeParticipation: Signal<ProgrammingExerciseStudentParticipation | undefined> = computed(() => {
         const participations = this.participations();
-        if (!participations.length) return undefined;
+        if (!participations.length) {
+            return undefined;
+        }
 
-        const mode = this.isPracticeMode();
-        // null coalescing: only if the practiceMode signal is not set, we refer to the participation for deriving mode
-        const preferPractice = mode ?? this.participationService.shouldPreferPractice(this.exercise());
+        const preferredMode = this.preferPracticeForSelection();
+        return this.participationService.getSpecificStudentParticipation(participations, preferredMode) ?? participations[0];
+    });
+    effectivePracticeMode = computed(() => {
+        const initialMode = this.isPracticeMode();
+        if (initialMode !== null) {
+            return initialMode;
+        }
 
-        return this.participationService.getSpecificStudentParticipation(participations, preferPractice) ?? participations[0];
+        const currentParticipation = this.activeParticipation();
+        return currentParticipation ? (isPracticeMode(currentParticipation) ?? false) : this.preferPracticeDefault();
     });
     selectedAuthenticationMechanism = signal<RepositoryAuthenticationMethod>(
         this.localStorageService.retrieve<RepositoryAuthenticationMethod>('code-button-state') ?? RepositoryAuthenticationMethod.Password,
@@ -147,13 +163,11 @@ export class CodeButtonComponent implements OnInit {
     vscodeFallback: Ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
     programmingLanguageToIde: Map<ProgrammingLanguage, Ide> = new Map([[ProgrammingLanguage.EMPTY, this.vscodeFallback]]);
 
-    theiaEnabled = false;
     theiaPortalURL: string;
 
     // Icons
     readonly faCode = faCode;
     readonly faExternalLink = faExternalLink;
-    ideName: string;
 
     constructor() {
         this.isInCourseManagement = this.router.url.includes('course-management');
@@ -185,9 +199,10 @@ export class CodeButtonComponent implements OnInit {
         this.sshTemplateUrl = profileInfo.sshCloneURLTemplate;
 
         if (profileInfo.repositoryAuthenticationMechanisms?.length) {
-            this.authenticationMechanisms = profileInfo.repositoryAuthenticationMechanisms.filter((method): method is RepositoryAuthenticationMethod =>
+            const filteredMechanisms = profileInfo.repositoryAuthenticationMechanisms.filter((method): method is RepositoryAuthenticationMethod =>
                 Object.values(RepositoryAuthenticationMethod).includes(method as RepositoryAuthenticationMethod),
             );
+            this.authenticationMechanisms.set(filteredMechanisms);
         }
         if (profileInfo.versionControlUrl) {
             this.versionControlUrl = profileInfo.versionControlUrl;
@@ -200,13 +215,13 @@ export class CodeButtonComponent implements OnInit {
             if (programmingLanguageToIde.size) {
                 this.programmingLanguageToIde = programmingLanguageToIde;
             }
-            this.ideName = this.getIde().name;
+            this.ideName.set(this.getIde().name);
         });
     }
 
     public useSshUrl() {
         this.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.SSH);
-        this.copyEnabled.set(this.doesUserHaveSSHkeys);
+        this.copyEnabled.set(this.doesUserHaveSSHkeys());
         this.storeToLocalStorage();
     }
 
@@ -215,6 +230,8 @@ export class CodeButtonComponent implements OnInit {
         if (this.isInCourseManagement) {
             const stillValid = dayjs().isBefore(dayjs(this.user.vcsAccessTokenExpiryDate));
             const present = !!this.user.vcsAccessToken?.startsWith('vcpat');
+            this.userTokenStillValid.set(stillValid);
+            this.userTokenPresent.set(present);
             this.copyEnabled.set(present && stillValid);
         } else {
             this.copyEnabled.set(!!this.activeParticipation()?.vcsAccessToken);
@@ -242,7 +259,7 @@ export class CodeButtonComponent implements OnInit {
 
     onClick() {
         const storedState = this.localStorageService.retrieve<RepositoryAuthenticationMethod>('code-button-state');
-        const selectedMechanism = storedState && this.authenticationMechanisms.includes(storedState) ? storedState : this.authenticationMechanisms[0];
+        const selectedMechanism = storedState && this.authenticationMechanisms().includes(storedState) ? storedState : this.authenticationMechanisms()[0];
         this.selectedAuthenticationMechanism.set(selectedMechanism);
 
         if (this.useSsh()) {
@@ -381,11 +398,10 @@ export class CodeButtonComponent implements OnInit {
     }
 
     switchPracticeMode() {
-        // null coalescing: only if the practiceMode signal is not set, we refer to the participation for deriving mode
-        this.isPracticeMode.update((currentPracticeMode) => !(currentPracticeMode ?? this.participationService.shouldPreferPractice(this.exercise())));
-        const active = this.activeParticipation();
-        if (active?.vcsAccessToken) {
-            this.user.vcsAccessToken = active.vcsAccessToken;
+        this.isPracticeMode.set(!this.effectivePracticeMode());
+        const currentParticipation = this.activeParticipation();
+        if (currentParticipation?.vcsAccessToken) {
+            this.user.vcsAccessToken = currentParticipation.vcsAccessToken;
         }
     }
 
@@ -396,22 +412,23 @@ export class CodeButtonComponent implements OnInit {
         this.sshKeys = await this.sshUserSettingsService.getCachedSshKeys();
         if (this.sshKeys) {
             const now = dayjs();
-            this.doesUserHaveSSHkeys = this.sshKeys.length > 0;
-            this.areAnySshKeysExpired = this.sshKeys.some((key) => {
+            this.doesUserHaveSSHkeys.set(this.sshKeys.length > 0);
+            const areSSHkeysExpired = this.sshKeys.some((key) => {
                 if (key.expiryDate) {
                     return dayjs(key.expiryDate).isBefore(now);
                 }
             });
+            this.areAnySshKeysExpired.set(areSSHkeysExpired);
         }
     }
 
     private configureTooltips() {
         this.vcsTokenSettingsUrl = `${window.location.origin}/user-settings/vcs-token`;
         this.sshSettingsUrl = `${window.location.origin}/user-settings/ssh`;
-        this.tokenMissingTip = this.formatTip('artemisApp.exerciseActions.vcsTokenTip', this.vcsTokenSettingsUrl);
-        this.tokenExpiredTip = this.formatTip('artemisApp.exerciseActions.vcsTokenExpiredTip', this.vcsTokenSettingsUrl);
-        this.sshKeyMissingTip = this.formatTip('artemisApp.exerciseActions.sshKeyTip', this.sshSettingsUrl);
-        this.sshKeysExpiredTip = this.formatTip('artemisApp.exerciseActions.sshKeyExpiredTip', this.sshSettingsUrl);
+        this.tokenMissingTip.set(this.formatTip('artemisApp.exerciseActions.vcsTokenTip', this.vcsTokenSettingsUrl));
+        this.tokenExpiredTip.set(this.formatTip('artemisApp.exerciseActions.vcsTokenExpiredTip', this.vcsTokenSettingsUrl));
+        this.sshKeyMissingTip.set(this.formatTip('artemisApp.exerciseActions.sshKeyTip', this.sshSettingsUrl));
+        this.sshKeysExpiredTip.set(this.formatTip('artemisApp.exerciseActions.sshKeyExpiredTip', this.sshSettingsUrl));
     }
 
     private initTheia(profileInfo: ProfileInfo) {
@@ -427,7 +444,7 @@ export class CodeButtonComponent implements OnInit {
 
                 // Verify that all conditions are met
                 if (this.theiaPortalURL !== '' && exercise.allowOnlineIde && theiaConfig.theiaImage) {
-                    this.theiaEnabled = true;
+                    this.theiaEnabled.set(true);
                 }
             });
         }

@@ -15,43 +15,43 @@
         container="body"
     ></button>
     <ng-template #popContent>
-        @if (this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.SSH && !doesUserHaveSSHkeys) {
-            <div class="alert alert-warning" [innerHTML]="sshKeyMissingTip"></div>
+        @if (this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH && !doesUserHaveSSHkeys()) {
+            <div class="alert alert-warning" [innerHTML]="sshKeyMissingTip()"></div>
         }
-        @if (this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.SSH && areAnySshKeysExpired) {
-            <div class="alert alert-warning" [innerHTML]="sshKeysExpiredTip"></div>
+        @if (this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH && areAnySshKeysExpired()) {
+            <div class="alert alert-warning" [innerHTML]="sshKeysExpiredTip()"></div>
         }
-        @if (this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.Token && isInCourseManagement && !userTokenPresent) {
-            <div class="alert alert-warning" [innerHTML]="tokenMissingTip"></div>
+        @if (this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token && isInCourseManagement && !userTokenPresent()) {
+            <div class="alert alert-warning" [innerHTML]="tokenMissingTip()"></div>
         }
-        @if (this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.Token && isInCourseManagement && userTokenPresent && !userTokenStillValid) {
-            <div class="alert alert-warning" [innerHTML]="tokenExpiredTip"></div>
+        @if (this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token && isInCourseManagement && userTokenPresent() && !userTokenStillValid()) {
+            <div class="alert alert-warning" [innerHTML]="tokenExpiredTip()"></div>
         }
         @if (participations().length > 1) {
             <div class="form-check form-switch">
-                <input mdbCheckbox id="switch-practice" class="form-check-input" type="checkbox" [checked]="isPracticeMode()" (click)="switchPracticeMode()" />
+                <input mdbCheckbox id="switch-practice" class="form-check-input" type="checkbox" [checked]="effectivePracticeMode()" (click)="switchPracticeMode()" />
                 <label class="form-check-label" for="switch-practice" jhiTranslate="artemisApp.exerciseActions.practiceMode.title"></label>
             </div>
         }
-        <h5 [jhiTranslate]="cloneHeadline"></h5>
+        <h5 [jhiTranslate]="clonedHeadline()"></h5>
 
         <div class="d-flex" style="margin: 0; max-width: 100%">
             <div aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group" style="margin-bottom: 10px">
                 <button class="btn btn-primary btn-sm dropdown-toggle https-or-ssh-button" ngbDropdownToggle type="button">
                     {{
-                        this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.SSH
+                        this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH
                             ? 'SSH'
-                            : this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.Token
+                            : this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token
                               ? 'Token'
                               : 'HTTPS'
                     }}
                 </button>
                 <div class="dropdown-menu" ngbDropdownMenu style="min-width: 100%">
-                    @for (mechanism of authenticationMechanisms; track mechanism) {
+                    @for (mechanism of authenticationMechanisms(); track mechanism) {
                         @if (mechanism === RepositoryAuthenticationMethod.Password) {
                             <a
                                 (click)="useHttpsPassword()"
-                                class="dropdown-item {{ this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.Password ? 'active' : '' }}"
+                                class="dropdown-item {{ this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Password ? 'active' : '' }}"
                                 id="useHTTPSButton"
                                 >HTTPS</a
                             >
@@ -59,7 +59,7 @@
                         @if (mechanism === RepositoryAuthenticationMethod.Token) {
                             <a
                                 (click)="useHttpsToken()"
-                                class="dropdown-item {{ this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.Token ? 'active' : '' }}"
+                                class="dropdown-item {{ this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token ? 'active' : '' }}"
                                 id="useHTTPSWithTokenButton"
                                 >Token</a
                             >
@@ -67,7 +67,7 @@
                         @if (mechanism === RepositoryAuthenticationMethod.SSH) {
                             <a
                                 (click)="useSshUrl()"
-                                class="dropdown-item {{ this.selectedAuthenticationMechanism === RepositoryAuthenticationMethod.SSH ? 'active' : '' }}"
+                                class="dropdown-item {{ this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH ? 'active' : '' }}"
                                 id="useSSHButton"
                                 >SSH</a
                             >
@@ -104,7 +104,7 @@
             style="min-width: 100px"
             jhiTranslate="{{ wasCopied() ? 'artemisApp.exerciseActions.copiedUrl' : 'artemisApp.exerciseActions.copyUrl' }}"
         ></button>
-        @if (theiaEnabled) {
+        @if (theiaEnabled()) {
             <a class="btn btn-primary btn-sm me-2" (click)="startOnlineIDE()" target="_blank" rel="noopener noreferrer">
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.openOnlineIDE" data-testid="openOnlineIDEButton"></span>
             </a>
@@ -114,7 +114,7 @@
             target="hidden-iframe"
             [href]="buildIdeUrl() | safeUrl"
             jhiTranslate="artemisApp.exerciseActions.ideButton.openIn"
-            [translateValues]="{ ideName: ideName }"
+            [translateValues]="{ ideName: ideName() }"
         >
         </a>
         <jhi-help-icon placement="right auto" text="artemisApp.exerciseActions.ideButton.helpIcon" />

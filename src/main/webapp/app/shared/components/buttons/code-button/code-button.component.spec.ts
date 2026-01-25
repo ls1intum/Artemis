@@ -159,7 +159,7 @@ describe('CodeButtonComponent', () => {
         localStorageState = RepositoryAuthenticationMethod.Password;
         await component.ngOnInit();
 
-        component.authenticationMechanisms = [RepositoryAuthenticationMethod.Token, RepositoryAuthenticationMethod.SSH];
+        component.authenticationMechanisms.set([RepositoryAuthenticationMethod.Token, RepositoryAuthenticationMethod.SSH]);
         component.onClick();
 
         expect(component.selectedAuthenticationMechanism()).toEqual(RepositoryAuthenticationMethod.Token);
@@ -277,13 +277,13 @@ describe('CodeButtonComponent', () => {
 
         expect(component.activeParticipation()).toEqual(participation1);
         expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git');
-        expect(component.cloneHeadline()).toBe('artemisApp.exerciseActions.cloneRatedRepository');
+        expect(component.clonedHeadline()).toBe('artemisApp.exerciseActions.cloneRatedRepository');
 
         component.switchPracticeMode();
 
         expect(component.activeParticipation()).toEqual(participation2);
         expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-practice.git');
-        expect(component.cloneHeadline()).toBe('artemisApp.exerciseActions.clonePracticeRepository');
+        expect(component.clonedHeadline()).toBe('artemisApp.exerciseActions.clonePracticeRepository');
     });
 
     it('should handle no participation', () => {
@@ -317,7 +317,7 @@ describe('CodeButtonComponent', () => {
 
         component.sshEnabled = true;
         component.sshTemplateUrl = 'ssh://git@artemis.tum.de:7999/';
-        component.authenticationMechanisms = [RepositoryAuthenticationMethod.Password, RepositoryAuthenticationMethod.Token, RepositoryAuthenticationMethod.SSH];
+        component.authenticationMechanisms.set([RepositoryAuthenticationMethod.Password, RepositoryAuthenticationMethod.Token, RepositoryAuthenticationMethod.SSH]);
 
         fixture.changeDetectorRef.detectChanges();
 
@@ -468,7 +468,7 @@ describe('CodeButtonComponent', () => {
 
         await component.ngOnInit();
 
-        expect(component.theiaEnabled).toBe(expectedVisibility);
+        expect(component.theiaEnabled()).toBe(expectedVisibility);
     });
 
     it('should include the correct data in the form submission when startOnlineIDE is called', async () => {
