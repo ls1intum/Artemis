@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -24,6 +25,7 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -210,6 +212,18 @@ class AtlasAgentServiceTest {
         assertThat(result.get(2).isUser()).isTrue();
         assertThat(result.get(3).isUser()).isFalse();
         verify(chatMemory).get(sessionId);
+    }
+
+    @Test
+    void shouldClearChatMemoryAndCache() {
+        String sessionId = "course_123_user_456";
+        Cache mockCache = mock(Cache.class);
+        when(cacheManager.getCache(AtlasAgentService.ATLAS_SESSION_PENDING_OPERATIONS_CACHE)).thenReturn(mockCache);
+
+        atlasAgentService.clearSession(sessionId);
+
+        verify(chatMemory).clear(sessionId);
+        verify(mockCache).evict(sessionId);
     }
 
     @Nested

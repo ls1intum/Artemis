@@ -71,10 +71,6 @@ export class AgentChatService {
      * This resets conversation history and cached operations
      */
     clearSession(courseId: number): Observable<void> {
-        return this.http.post<void>(`api/atlas/agent/courses/${courseId}/chat/clear-session`, {}).pipe(
-            catchError(() => {
-                return of(undefined);
-            }),
-        );
+        return this.http.post<void>(`api/atlas/agent/courses/${courseId}/chat/clear-session`, {});
     }
 }

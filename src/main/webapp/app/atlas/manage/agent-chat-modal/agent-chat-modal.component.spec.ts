@@ -108,6 +108,28 @@ describe('AgentChatModalComponent', () => {
         component.messages.set([]);
     });
 
+    describe('onNewChat', () => {
+        it('should clear messages and show welcome message after clearing session', () => {
+            // Setup: add some existing messages
+            component.messages.set([
+                { id: '1', content: 'User message', isUser: true, timestamp: new Date() },
+                { id: '2', content: 'Agent response', isUser: false, timestamp: new Date() },
+            ]);
+
+            const welcomeMessage = 'Welcome to a new chat!';
+            jest.spyOn(mockTranslateService, 'instant').mockReturnValue(welcomeMessage);
+            mockAgentChatService.clearSession = jest.fn().mockReturnValue(of(undefined));
+
+            component.onNewChat();
+
+            expect(mockAgentChatService.clearSession).toHaveBeenCalledWith(123);
+            const messages = component.messages();
+            expect(messages).toHaveLength(1);
+            expect(messages[0].isUser).toBeFalse();
+            expect(messages[0].content).toBe(welcomeMessage);
+        });
+    });
+
     describe('Component Initialization', () => {
         it('should create', () => {
             expect(component).toBeTruthy();

@@ -2,6 +2,7 @@
     "artemisApp": {
         "agent": {
             "chat": {
+                "newChatTitle": "Neu Chat",
                 "title": "KI-Kompetenz-Assistent",
                 "inputHint": "Enter drücken zum Senden, Shift+Enter für neue Zeile",
                 "typing": "Assistent denkt nach...",

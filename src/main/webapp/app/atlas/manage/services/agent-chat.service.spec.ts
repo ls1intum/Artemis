@@ -686,4 +686,29 @@ describe('AgentChatService', () => {
             expect(result[1].competencyPreviews).toHaveLength(0);
         });
     });
+
+    describe('clearSession', () => {
+        const courseId = 456;
+        const expectedUrl = `api/atlas/agent/courses/${courseId}/chat/clear-session`;
+
+        it('should send POST request to clear the chat session', () => {
+            let completed = false;
+
+            service.clearSession(courseId).subscribe({
+                next: () => {},
+                complete: () => {
+                    completed = true;
+                },
+            });
+
+            const req = httpMock.expectOne(expectedUrl);
+            expect(req.request.method).toBe('POST');
+            expect(req.request.body).toEqual({});
+
+            // Backend returns no body
+            req.flush(null);
+
+            expect(completed).toBeTrue();
+        });
+    });
 });

@@ -6,7 +6,13 @@
             <h4 class="modal-title mb-0 text-body" jhiTranslate="artemisApp.agent.chat.title"></h4>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <button type="button" class="btn btn-sm btn-outline-primary" (click)="onNewChat()" [disabled]="isAgentTyping()" title="Start a new conversation">
+            <button
+                type="button"
+                class="btn btn-sm btn-outline-primary"
+                (click)="onNewChat()"
+                [disabled]="isAgentTyping()"
+                [attr.title]="'artemisApp.agent.chat.newChatTitle' | artemisTranslate"
+            >
                 <fa-icon [icon]="plusIcon" class="me-1" />
                 New Chat
             </button>
