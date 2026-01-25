@@ -129,6 +129,9 @@
                                 <fa-icon [icon]="faCheck" class="me-1" />
                                 <strong>{{ fileName() }}</strong>
                             </span>
+                            <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeFile()" [disabled]="isUploading()">
+                                <fa-icon [icon]="faTrash" />
+                            </button>
                         } @else if (fileInputTouched) {
                             <span class="text-muted">
                                 <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.noFileSelected"></span>
@@ -224,6 +227,9 @@
                                         <fa-icon [icon]="faCheck" class="me-1" />
                                         <strong>{{ videoFileName() }}</strong>
                                     </span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeVideoFile()" [disabled]="isUploading()">
+                                        <fa-icon [icon]="faTrash" />
+                                    </button>
                                 } @else if (videoFileInputTouched) {
                                     <span class="text-muted">
                                         <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.noVideoFileSelected"></span>

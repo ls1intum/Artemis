@@ -3,7 +3,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
-import { faArrowLeft, faCheck, faExclamationTriangle, faFile, faLink, faQuestionCircle, faTimes, faVideo } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faCheck, faExclamationTriangle, faFile, faLink, faQuestionCircle, faTimes, faTrash, faVideo } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { MAX_FILE_SIZE, MAX_VIDEO_FILE_SIZE } from 'app/shared/constants/input.constants';
@@ -116,6 +116,7 @@ export class AttachmentVideoUnitFormComponent implements OnDestroy {
     protected readonly faCheck = faCheck;
     protected readonly faFile = faFile;
     protected readonly faVideo = faVideo;
+    protected readonly faTrash = faTrash;
     protected readonly faLink = faLink;
     protected readonly faExclamationTriangle = faExclamationTriangle;
 
@@ -276,6 +277,27 @@ export class AttachmentVideoUnitFormComponent implements OnDestroy {
         }
     }
 
+    removeFile(): void {
+        this.file = undefined!;
+        this.fileName.set(undefined);
+        this.fileInputTouched = false;
+        this.isFileTooBig.set(false);
+        const fileInputEl = this.fileInput();
+        if (fileInputEl) {
+            fileInputEl.nativeElement.value = '';
+        }
+    }
+
+    removeVideoFile(): void {
+        this.videoFile = undefined!;
+        this.videoFileName.set(undefined);
+        this.existingVideoPath = undefined;
+        this.videoFileInputTouched = false;
+        this.isVideoFileTooBig.set(false);
+        if (this.videoFileInput) {
+            this.videoFileInput.nativeElement.value = '';
+        }
+    }
     get nameControl() {
         return this.form.get('name');
     }

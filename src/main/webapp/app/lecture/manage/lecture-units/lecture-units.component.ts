@@ -165,10 +165,10 @@ export class LectureUpdateUnitsComponent implements OnInit {
 
     createEditAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData): void {
         const { description, name, releaseDate, videoSource, updateNotificationText, competencyLinks } = attachmentVideoUnitFormData.formProperties;
-
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
+        const { videoFile, videoFileName } = attachmentVideoUnitFormData.videoFileProperties ?? {};
 
-        if (!name || (!fileName && !videoSource)) {
+        if (!name || (!(file && fileName) && !(videoFile && videoFileName) && !videoSource)) {
             return;
         }
 
@@ -214,6 +214,9 @@ export class LectureUpdateUnitsComponent implements OnInit {
         if (!!file && !!fileName) {
             formData.append('file', file, fileName);
             formData.append('attachment', objectToJsonBlob(attachmentToCreateOrEdit));
+        }
+        if (!!videoFile && !!videoFileName) {
+            formData.append('videoFile', videoFile, videoFileName);
         }
         formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
 
