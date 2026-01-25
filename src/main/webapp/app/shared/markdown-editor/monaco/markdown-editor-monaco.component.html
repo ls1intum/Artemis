@@ -163,7 +163,7 @@
                                     <button
                                         class="ps-1 me-1"
                                         mat-menu-item
-                                        [matMenuTriggerFor]="hasReferencableAttachments(lecture) ? lectureMenuUnits : undefined"
+                                        [matMenuTriggerFor]="hasReferencableAttachments(lecture) ? lectureMenuUnits : null"
                                         (click)="
                                             !hasReferencableAttachments(lecture) && displayedActions.lecture.executeInCurrentEditor({ reference: ReferenceType.LECTURE, lecture })
                                         "
@@ -187,7 +187,7 @@
                                                 <button
                                                     class="ps-1 me-1"
                                                     mat-menu-item
-                                                    [matMenuTriggerFor]="unit.slides?.length ? lectureMenuUnitsSlide : undefined"
+                                                    [matMenuTriggerFor]="unit.slides?.length ? lectureMenuUnitsSlide : null"
                                                     (click)="
                                                         !unit.slides?.length &&
                                                             displayedActions.lecture.executeInCurrentEditor({
