@@ -75,6 +75,9 @@ public class IrisRequestMockProvider {
     @Value("${artemis.iris.url}/api/v1/memiris")
     private URL memirisApiURL;
 
+    @Value("${artemis.iris.url}/api/v2/memiris")
+    private URL memirisApiV2URL;
+
     @Value("${artemis.iris.url}")
     private String irisBaseUrl;
 
@@ -370,6 +373,24 @@ public class IrisRequestMockProvider {
         // @formatter:off
         mockServer
             .expect(ExpectedCount.once(), requestTo(memirisApiURL + "/user/" + userId))
+            .andExpect(method(HttpMethod.GET))
+            .andRespond(withRawStatus(status.value()));
+        // @formatter:on
+    }
+
+    public void mockListMemoryData(long userId, Object responseBody) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(memirisApiV2URL + "/user/" + userId))
+            .andExpect(method(HttpMethod.GET))
+            .andRespond(withSuccess(write(responseBody), MediaType.APPLICATION_JSON));
+        // @formatter:on
+    }
+
+    public void mockListMemoryDataError(long userId, HttpStatus status) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(memirisApiV2URL + "/user/" + userId))
             .andExpect(method(HttpMethod.GET))
             .andRespond(withRawStatus(status.value()));
         // @formatter:on

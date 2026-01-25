@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.iris.dto.MemirisLearningDTO;
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryConnectionDTO;
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDTO;
+import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDataDTO;
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryWithRelationsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisLearningDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryConnectionDTO;
@@ -47,31 +48,37 @@ class IrisMemoryResourceIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getMemories_shouldReturnItems() throws Exception {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        var items = List.of(new MemirisMemoryDTO("A", "Title A", "Content A", List.of(), List.of(), false, false),
+        var memories = List.of(new MemirisMemoryDTO("A", "Title A", "Content A", List.of(), List.of(), false, false),
                 new MemirisMemoryDTO("B", "Title B", "Content B", List.of("L1"), List.of("C1"), true, false));
-        irisRequestMockProvider.mockListMemories(user.getId(), items);
+        var learnings = List.of(new MemirisLearningDTO("L1", "LTitle", "LContent", "Ref", List.of("B")));
+        var connections = List.of(new MemirisMemoryConnectionDTO("C1", "related", List.of("B"), "desc", 0.8));
+        irisRequestMockProvider.mockListMemoryData(user.getId(), new MemirisMemoryDataDTO(memories, learnings, connections));
 
-        List<MemirisMemoryDTO> response = request.getList("/api/iris/memories/user", HttpStatus.OK, MemirisMemoryDTO.class);
-        assertThat(response).hasSize(2);
-        assertThat(response.get(0).id()).isEqualTo("A");
-        assertThat(response.get(1).slept_on()).isTrue();
+        var response = request.get("/api/iris/user/memoryData", HttpStatus.OK, MemirisMemoryDataDTO.class);
+        assertThat(response.memories()).hasSize(2);
+        assertThat(response.memories().getFirst().id()).isEqualTo("A");
+        assertThat(response.memories().get(1).slept_on()).isTrue();
+        assertThat(response.learnings()).hasSize(1);
+        assertThat(response.connections()).hasSize(1);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getMemories_shouldReturnEmptyList() throws Exception {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        irisRequestMockProvider.mockListMemories(user.getId(), List.of());
-        List<MemirisMemoryDTO> response = request.getList("/api/iris/memories/user", HttpStatus.OK, MemirisMemoryDTO.class);
-        assertThat(response).isEmpty();
+        irisRequestMockProvider.mockListMemoryData(user.getId(), new MemirisMemoryDataDTO(List.of(), List.of(), List.of()));
+        var response = request.get("/api/iris/user/memoryData", HttpStatus.OK, MemirisMemoryDataDTO.class);
+        assertThat(response.memories()).isNullOrEmpty();
+        assertThat(response.learnings()).isNullOrEmpty();
+        assertThat(response.connections()).isNullOrEmpty();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getMemories_whenPyrisFails_shouldReturnInternalServerError() throws Exception {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        irisRequestMockProvider.mockListMemoriesError(user.getId(), HttpStatus.INTERNAL_SERVER_ERROR);
-        request.getList("/api/iris/memories/user", HttpStatus.INTERNAL_SERVER_ERROR, MemirisMemoryDTO.class);
+        irisRequestMockProvider.mockListMemoryDataError(user.getId(), HttpStatus.INTERNAL_SERVER_ERROR);
+        request.get("/api/iris/user/memoryData", HttpStatus.INTERNAL_SERVER_ERROR, MemirisMemoryDataDTO.class);
     }
 
     @Test
@@ -86,7 +93,7 @@ class IrisMemoryResourceIntegrationTest extends AbstractIrisIntegrationTest {
         var body = new PyrisMemoryWithRelationsDTO(pyrisMemory, List.of(learning), List.of(connection));
         irisRequestMockProvider.mockGetMemoryWithRelations(user.getId(), memoryId, body);
 
-        var dto = request.get("/api/iris/memories/user/" + memoryId, HttpStatus.OK, MemirisMemoryWithRelationsDTO.class);
+        var dto = request.get("/api/iris/user/memory/" + memoryId, HttpStatus.OK, MemirisMemoryWithRelationsDTO.class);
         assertThat(dto.id()).isEqualTo(memoryId);
         assertThat(dto.title()).isEqualTo("T");
         assertThat(dto.sleptOn()).isTrue();
@@ -103,7 +110,7 @@ class IrisMemoryResourceIntegrationTest extends AbstractIrisIntegrationTest {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var memoryId = "missing";
         irisRequestMockProvider.mockGetMemoryWithRelationsError(user.getId(), memoryId, HttpStatus.NOT_FOUND);
-        request.get("/api/iris/memories/user/" + memoryId, HttpStatus.NOT_FOUND, MemirisMemoryWithRelationsDTO.class);
+        request.get("/api/iris/user/memory/" + memoryId, HttpStatus.NOT_FOUND, MemirisMemoryWithRelationsDTO.class);
     }
 
     @Test
@@ -112,7 +119,7 @@ class IrisMemoryResourceIntegrationTest extends AbstractIrisIntegrationTest {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var memoryId = "DEL-1";
         irisRequestMockProvider.mockDeleteMemory(user.getId(), memoryId);
-        request.delete("/api/iris/memories/user/" + memoryId, HttpStatus.NO_CONTENT);
+        request.delete("/api/iris/user/memory/" + memoryId, HttpStatus.NO_CONTENT);
     }
 
     @Test
@@ -121,6 +128,6 @@ class IrisMemoryResourceIntegrationTest extends AbstractIrisIntegrationTest {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var memoryId = "FAIL-1";
         irisRequestMockProvider.mockDeleteMemoryError(user.getId(), memoryId, HttpStatus.INTERNAL_SERVER_ERROR);
-        request.delete("/api/iris/memories/user/" + memoryId, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.delete("/api/iris/user/memory/" + memoryId, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

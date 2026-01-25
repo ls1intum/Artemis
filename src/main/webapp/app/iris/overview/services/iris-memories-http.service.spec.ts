@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { IrisMemoriesHttpService } from 'app/iris/overview/services/iris-memories-http.service';
-import { MemirisMemory, MemirisMemoryWithRelationsDTO } from 'app/iris/shared/entities/memiris.model';
+import { MemirisLearningDTO, MemirisMemory, MemirisMemoryConnectionDTO, MemirisMemoryDataDTO, MemirisMemoryWithRelationsDTO } from 'app/iris/shared/entities/memiris.model';
 
 describe('IrisMemoriesHttpService', () => {
     setupTestBed({ zoneless: true });
@@ -29,16 +29,19 @@ describe('IrisMemoriesHttpService', () => {
         expect(service).toBeTruthy();
     });
 
-    it('should list user memories', async () => {
-        const returnedFromService: MemirisMemory[] = [
+    it('should load aggregated user memory data', async () => {
+        const memories: MemirisMemory[] = [
             { id: '1', title: 'First', content: 'Content A', learnings: ['L1'], connections: ['C1'], slept_on: false, deleted: false },
             { id: '2', title: 'Second', content: 'Content B', learnings: [], connections: [], slept_on: true, deleted: false },
         ];
+        const learnings: MemirisLearningDTO[] = [{ id: 'L1', title: 'Learning 1', content: 'L content', reference: 'ref', memories: ['1'] }];
+        const connections: MemirisMemoryConnectionDTO[] = [{ id: 'C1', connectionType: 'related', memories: ['1', '2'], description: 'desc', weight: 0.5 }];
+        const returnedFromService: MemirisMemoryDataDTO = { memories, learnings, connections };
 
-        let result: MemirisMemory[] | undefined;
-        service.listUserMemories().subscribe((memories) => (result = memories));
+        let result: MemirisMemoryDataDTO | undefined;
+        service.getUserMemoryData().subscribe((data) => (result = data));
 
-        const req = httpMock.expectOne('api/iris/memories/user');
+        const req = httpMock.expectOne('api/iris/user/memoryData');
         expect(req.request.method).toBe('GET');
         req.flush(returnedFromService);
         await vi.waitFor(() => expect(result).toBeDefined());
@@ -48,7 +51,7 @@ describe('IrisMemoriesHttpService', () => {
 
     it('should get a specific user memory with relations and URL-encode the id', async () => {
         const rawId = 'a/b?c=d e';
-        const expectedUrl = `api/iris/memories/user/${encodeURIComponent(rawId)}`;
+        const expectedUrl = `api/iris/user/memory/${encodeURIComponent(rawId)}`;
         const returnedFromService: MemirisMemoryWithRelationsDTO = {
             id: rawId,
             title: 'Title',
@@ -76,7 +79,7 @@ describe('IrisMemoriesHttpService', () => {
         let completed = false;
         service.deleteUserMemory(memoryId).subscribe(() => (completed = true));
 
-        const req = httpMock.expectOne(`api/iris/memories/user/${memoryId}`);
+        const req = httpMock.expectOne(`api/iris/user/memory/${memoryId}`);
         expect(req.request.method).toBe('DELETE');
         req.flush(null, { status: 200, statusText: 'OK' });
         await vi.waitFor(() => expect(completed).toBe(true));

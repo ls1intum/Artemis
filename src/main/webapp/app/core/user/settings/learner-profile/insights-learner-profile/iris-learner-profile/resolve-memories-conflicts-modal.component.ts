@@ -26,6 +26,7 @@ export class ResolveMemoriesConflictsModalComponent implements OnInit {
     groups = signal<string[][]>([]);
     currentIndex = signal<number>(0);
     busy = signal<boolean>(false);
+    private deletedIds: string[] = [];
 
     currentGroup = computed<string[]>(() => {
         const idx = this.currentIndex();
@@ -33,17 +34,26 @@ export class ResolveMemoriesConflictsModalComponent implements OnInit {
         return g.length > 0 && idx >= 0 && idx < g.length ? g[idx] : [];
     });
 
+    /**
+     * Initializes local modal state from the provided conflict groups.
+     */
     ngOnInit(): void {
-        // Copy input groups to local state to manage progression within the modal
         const inputGroups = this.conflictGroups ?? [];
         this.groups.set(inputGroups.map((arr) => [...arr]));
         this.currentIndex.set(0);
     }
 
+    /** Closes the modal without applying changes. */
     close(): void {
         this.activeModal.dismiss();
     }
 
+    /**
+     * Keeps a selected memory in the current conflict group and deletes the others.
+     * On completion, advances to the next group or closes the modal.
+     * @param _groupIndex The current group index (unused; relies on signal state).
+     * @param keepId The memory id to retain.
+     */
     async keep(_groupIndex: number, keepId: string): Promise<void> {
         const group = this.currentGroup();
         if (!group?.length) return;
@@ -53,6 +63,7 @@ export class ResolveMemoriesConflictsModalComponent implements OnInit {
             for (const id of toDelete) {
                 try {
                     await firstValueFrom(this.irisMemoriesHttpService.deleteUserMemory(id));
+                    this.deletedIds.push(id);
                 } catch (error) {
                     this.alertService.error('artemisApp.iris.memories.error.deleteFailed');
                 }
@@ -63,7 +74,7 @@ export class ResolveMemoriesConflictsModalComponent implements OnInit {
             this.groups.set(g);
             // Move to next available group or finish
             if (g.length === 0) {
-                this.activeModal.close('resolved');
+                this.activeModal.close(this.deletedIds);
             } else if (this.currentIndex() >= g.length) {
                 this.currentIndex.set(g.length - 1);
             }
@@ -72,11 +83,13 @@ export class ResolveMemoriesConflictsModalComponent implements OnInit {
         }
     }
 
+    /** Moves to the previous conflict group if available. */
     prev(): void {
         const idx = this.currentIndex();
         if (idx > 0) this.currentIndex.set(idx - 1);
     }
 
+    /** Moves to the next conflict group if available. */
     next(): void {
         const idx = this.currentIndex();
         if (idx < this.groups().length - 1) this.currentIndex.set(idx + 1);
