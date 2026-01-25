@@ -86,7 +86,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     }
 
     /**
-     * Clears the chat session (conversation history, cached operations, agent state)
+     * Clears the chat session
      * and resets the UI to start a new conversation
      */
     protected onNewChat(): void {
@@ -96,7 +96,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
         this.agentChatService.clearSession(this.courseId()).subscribe({
             next: () => {
-                // Clear local messages
                 this.messages.set([]);
 
                 // Clear current input

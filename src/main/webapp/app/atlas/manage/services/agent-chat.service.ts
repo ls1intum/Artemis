@@ -68,7 +68,7 @@ export class AgentChatService {
 
     /**
      * Clears the chat session for the current user in the specified course
-     * This resets conversation history, cached operations, and agent state
+     * This resets conversation history and cached operations
      */
     clearSession(courseId: number): Observable<void> {
         return this.http.post<void>(`api/atlas/agent/courses/${courseId}/chat/clear-session`, {}).pipe(

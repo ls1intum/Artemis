@@ -77,7 +77,7 @@ public class AtlasAgentResource {
 
     /**
      * POST /courses/{courseId}/chat/clear-session : Clear the chat session for the current user
-     * This clears the conversation history, cached operations, and resets the agent state
+     * This clears the conversation history and cached operations
      *
      * @param courseId the course ID
      * @return empty response
