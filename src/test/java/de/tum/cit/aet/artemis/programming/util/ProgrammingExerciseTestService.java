@@ -1986,6 +1986,24 @@ public class ProgrammingExerciseTestService {
         exercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
+
+        // Explicitly set the repository URIs to match where setupRepositoryMocks created the bare repos.
+        // This ensures consistency between the participation URIs and the actual repo locations.
+        String projectKey = exercise.getProjectKey();
+        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
+        String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
+        String testsRepositorySlug = projectKey.toLowerCase() + "-tests";
+
+        var templateParticipation = exercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, templateRepositorySlug));
+        templateProgrammingExerciseParticipationRepository.saveAndFlush(templateParticipation);
+
+        var solutionParticipation = exercise.getSolutionParticipation();
+        solutionParticipation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, solutionRepositorySlug));
+        solutionProgrammingExerciseParticipationRepository.saveAndFlush(solutionParticipation);
+
+        exercise.setTestRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, testsRepositorySlug));
+        exercise = programmingExerciseRepository.saveAndFlush(exercise);
     }
 
     private void generateProgrammingExerciseForExport() throws IOException {
@@ -2016,6 +2034,23 @@ public class ProgrammingExerciseTestService {
         exercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
 
+        // Explicitly set the repository URIs to match where setupRepositoryMocks created the bare repos.
+        // This ensures consistency between the participation URIs and the actual repo locations.
+        String projectKey = exercise.getProjectKey();
+        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
+        String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
+        String testsRepositorySlug = projectKey.toLowerCase() + "-tests";
+
+        var templateParticipation = exercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, templateRepositorySlug));
+        templateProgrammingExerciseParticipationRepository.saveAndFlush(templateParticipation);
+
+        var solutionParticipation = exercise.getSolutionParticipation();
+        solutionParticipation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, solutionRepositorySlug));
+        solutionProgrammingExerciseParticipationRepository.saveAndFlush(solutionParticipation);
+
+        exercise.setTestRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, testsRepositorySlug));
+        exercise = programmingExerciseRepository.saveAndFlush(exercise);
     }
 
     private void setupMockRepo(LocalRepository localRepo, RepositoryType repoType, String fileName) throws GitAPIException, IOException {
