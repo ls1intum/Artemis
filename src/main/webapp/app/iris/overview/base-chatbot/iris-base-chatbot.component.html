@@ -237,7 +237,7 @@
         <div class="scroll-to-bottom" [hidden]="isScrolledToBottom()" (click)="scrollToBottom('smooth')" #scrollArrow>
             <fa-icon [icon]="faArrowDown" />
         </div>
-        @if (error()) {
+        @if (error() && userAccepted() !== LLMSelectionDecision.NO_AI) {
             <div class="client-chat-error">
                 {{ error() | artemisTranslate: { hours: rateLimitInfo()?.rateLimitTimeframeHours } }}
             </div>
