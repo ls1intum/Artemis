@@ -1,12 +1,10 @@
 package de.tum.cit.aet.artemis.core.config.weaviate;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 
 /**
  * Configuration properties for Weaviate integration
  */
-@Configuration
 @ConfigurationProperties(prefix = "artemis.weaviate")
 public class WeaviateConfigurationProperties {
 
