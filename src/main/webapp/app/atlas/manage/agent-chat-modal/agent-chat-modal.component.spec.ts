@@ -110,7 +110,6 @@ describe('AgentChatModalComponent', () => {
 
     describe('onNewChat', () => {
         it('should clear messages and show welcome message after clearing session', () => {
-            // Setup: add some existing messages
             component.messages.set([
                 { id: '1', content: 'User message', isUser: true, timestamp: new Date() },
                 { id: '2', content: 'Agent response', isUser: false, timestamp: new Date() },
@@ -120,7 +119,7 @@ describe('AgentChatModalComponent', () => {
             jest.spyOn(mockTranslateService, 'instant').mockReturnValue(welcomeMessage);
             mockAgentChatService.clearSession = jest.fn().mockReturnValue(of(undefined));
 
-            component.onNewChat();
+            component['onNewChat']();
 
             expect(mockAgentChatService.clearSession).toHaveBeenCalledWith(123);
             const messages = component.messages();
