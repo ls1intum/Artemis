@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.core.config.weaviate;
 
-import java.io.IOException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -43,9 +41,9 @@ public class WeaviateClientConfiguration {
             log.info("Connected to Weaviate at {}://{}:{}", weaviateProperties.getScheme(), weaviateProperties.getHost(), weaviateProperties.getPort());
             return client;
         }
-        catch (IOException e) {
-            log.error("Failed to create Weaviate client", e);
-            throw new RuntimeException("Failed to initialize Weaviate client", e);
+        catch (Exception exception) {
+            log.error("Failed to create Weaviate client", exception);
+            throw new RuntimeException("Failed to initialize Weaviate client", exception);
         }
     }
 }
