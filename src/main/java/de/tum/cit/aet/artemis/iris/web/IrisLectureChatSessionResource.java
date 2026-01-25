@@ -23,7 +23,10 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisLectureChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.AbstractIrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisLectureChatSessionService;
@@ -55,9 +58,14 @@ public class IrisLectureChatSessionResource {
 
     private final MessageSource messageSource;
 
+    private final IrisCitationService irisCitationService;
+
+    private final IrisSessionRepository irisSessionRepository;
+
     protected IrisLectureChatSessionResource(UserRepository userRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
             Optional<LectureRepositoryApi> lectureRepositoryApi, IrisLectureChatSessionService irisLectureChatSessionService,
-            IrisLectureChatSessionRepository irisLectureChatSessionRepository, AuthorizationCheckService authorizationCheckService, MessageSource messageSource) {
+            IrisLectureChatSessionRepository irisLectureChatSessionRepository, AuthorizationCheckService authorizationCheckService, MessageSource messageSource,
+            IrisCitationService irisCitationService, IrisSessionRepository irisSessionRepository) {
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
@@ -66,6 +74,8 @@ public class IrisLectureChatSessionResource {
         this.irisLectureChatSessionRepository = irisLectureChatSessionRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.messageSource = messageSource;
+        this.irisCitationService = irisCitationService;
+        this.irisSessionRepository = irisSessionRepository;
     }
 
     /**
@@ -93,6 +103,8 @@ public class IrisLectureChatSessionResource {
         if (sessionOptional.isPresent()) {
             var session = sessionOptional.get();
             irisSessionService.checkHasAccessToIrisSession(session, user);
+            IrisSession sessionWithContents = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
+            session.setCitationInfo(irisCitationService.resolveCitationInfoFromMessages(sessionWithContents.getMessages()));
             return ResponseEntity.ok(session);
         }
 

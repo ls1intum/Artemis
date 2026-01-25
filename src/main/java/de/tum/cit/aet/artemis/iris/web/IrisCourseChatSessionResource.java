@@ -19,7 +19,10 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisHealthIndicator;
@@ -51,9 +54,13 @@ public class IrisCourseChatSessionResource {
 
     private final IrisCourseChatSessionService irisCourseChatSessionService;
 
+    private final IrisCitationService irisCitationService;
+
+    private final IrisSessionRepository irisSessionRepository;
+
     protected IrisCourseChatSessionResource(IrisCourseChatSessionRepository irisCourseChatSessionRepository, UserRepository userRepository, CourseRepository courseRepository,
             IrisSessionService irisSessionService, IrisSettingsService irisSettingsService, PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService,
-            IrisCourseChatSessionService irisCourseChatSessionService) {
+            IrisCourseChatSessionService irisCourseChatSessionService, IrisCitationService irisCitationService, IrisSessionRepository irisSessionRepository) {
         this.irisCourseChatSessionRepository = irisCourseChatSessionRepository;
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
@@ -62,6 +69,8 @@ public class IrisCourseChatSessionResource {
         this.irisRateLimitService = irisRateLimitService;
         this.courseRepository = courseRepository;
         this.irisCourseChatSessionService = irisCourseChatSessionService;
+        this.irisCitationService = irisCitationService;
+        this.irisSessionRepository = irisSessionRepository;
     }
 
     /**
@@ -78,6 +87,8 @@ public class IrisCourseChatSessionResource {
         user.hasAcceptedExternalLLMUsageElseThrow();
 
         var session = irisCourseChatSessionService.getCurrentSessionOrCreateIfNotExists(course, user, true);
+        IrisSession sessionWithContents = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
+        session.setCitationInfo(irisCitationService.resolveCitationInfoFromMessages(sessionWithContents.getMessages()));
         return ResponseEntity.ok(session);
     }
 

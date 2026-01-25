@@ -5,10 +5,11 @@ import { Overlay } from '@angular/cdk/overlay';
 import { ActivatedRoute, Params } from '@angular/router';
 import { IrisChatbotWidgetComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component';
 import { EMPTY, filter, of, switchMap } from 'rxjs';
-import { faAngleDoubleDown, faChevronDown, faCircle } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDoubleDown, faCircle } from '@fortawesome/free-solid-svg-icons';
 import { IrisLogoLookDirection, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { isTextContent } from 'app/iris/shared/entities/iris-content-type.model';
+import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -24,7 +25,6 @@ import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 })
 export class IrisExerciseChatbotButtonComponent {
     protected readonly faCircle = faCircle;
-    protected readonly faChevronDown = faChevronDown;
     protected readonly faAngleDoubleDown = faAngleDoubleDown;
 
     private readonly dialog = inject(MatDialog);
@@ -50,6 +50,7 @@ export class IrisExerciseChatbotButtonComponent {
     // Convert numNewMessages observable to signal
     private readonly numNewMessages = toSignal(this.chatService.numNewMessages, { initialValue: 0 });
     readonly hasNewMessages = computed(() => this.numNewMessages() > 0);
+    private readonly citationInfo = toSignal(this.chatService.currentCitationInfo(), { initialValue: [] as IrisCitationMetaDTO[] });
 
     // Convert newIrisMessage observable to signal for tracking incoming messages
     private readonly latestIrisMessageContent = toSignal(
@@ -195,10 +196,114 @@ export class IrisExerciseChatbotButtonComponent {
         if (!message?.text) {
             return '';
         }
-        return htmlForMarkdown(message.text);
+        const withCitations = this.replaceCitationsPreview(message.text, this.citationInfo());
+        return htmlForMarkdown(withCitations);
+    }
+
+    private replaceCitationsPreview(text: string, citationInfo: IrisCitationMetaDTO[]): string {
+        if (!text || !text.includes('[cite:')) {
+            return text;
+        }
+        const citationMap = new Map<number, IrisCitationMetaDTO>(citationInfo.map((citation) => [citation.entityId, citation]));
+        const citationRegex = /\[cite:[^\]]+\]/g;
+        return text.replace(citationRegex, (match) => {
+            const parsed = this.parseCitation(match);
+            if (!parsed) {
+                return match;
+            }
+            const meta = parsed.type === 'L' ? citationMap.get(parsed.entityId) : undefined;
+            return this.renderCitationPreviewHtml(parsed, meta);
+        });
+    }
+
+    private parseCitation(raw: string): IrisCitationParsed | undefined {
+        const content = raw.slice(6, -1);
+        const parts = content.split(':');
+        if (parts.length < 2) {
+            return undefined;
+        }
+        let type = parts[0];
+        let entityIdValue = parts[1];
+        let offset = 2;
+        if (!this.isCitationType(type) && this.isCitationType(parts[1])) {
+            type = parts[1];
+            entityIdValue = parts[0];
+            offset = 2;
+        }
+        if (!this.isCitationType(type)) {
+            return undefined;
+        }
+        const entityId = Number(entityIdValue);
+        if (!Number.isFinite(entityId)) {
+            return undefined;
+        }
+        const page = parts[offset] ?? '';
+        const start = parts[offset + 1] ?? '';
+        const end = parts[offset + 2] ?? '';
+        const keyword = parts[offset + 3] ?? '';
+        return {
+            type,
+            entityId,
+            page,
+            start,
+            end,
+            keyword,
+        };
+    }
+
+    private isCitationType(value?: string): value is 'L' | 'F' {
+        return value === 'L' || value === 'F';
+    }
+
+    private renderCitationPreviewHtml(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
+        const label = this.formatCitationLabel(parsed, meta);
+        const typeClass = this.resolveCitationTypeClass(parsed);
+        const classes = ['iris-citation', typeClass].filter(Boolean).join(' ');
+        return `<span class="${classes}"><span class="iris-citation__icon"></span><span class="iris-citation__text">${label}</span></span>`;
+    }
+
+    private formatCitationLabel(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
+        const parts: string[] = [];
+        if (parsed.type === 'L') {
+            if (meta?.lectureTitle) {
+                parts.push(meta.lectureTitle);
+            }
+            if (meta?.lectureUnitTitle) {
+                parts.push(meta.lectureUnitTitle);
+            }
+        }
+        const fallback = parsed.keyword?.trim() || (parsed.type === 'F' ? 'FAQ' : 'Source');
+        const label = parts.length > 0 ? parts.join(' - ') : fallback;
+        return this.escapeHtml(label);
+    }
+
+    private resolveCitationTypeClass(parsed: IrisCitationParsed): string {
+        if (parsed.type === 'F') {
+            return 'iris-citation--faq';
+        }
+        if (parsed.start || parsed.end) {
+            return 'iris-citation--video';
+        }
+        if (parsed.page) {
+            return 'iris-citation--slide';
+        }
+        return 'iris-citation--source';
+    }
+
+    private escapeHtml(text: string): string {
+        return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 }
 
 type ChatBubbleMessage = {
     text: string;
+};
+
+type IrisCitationParsed = {
+    type: 'L' | 'F';
+    entityId: number;
+    page: string;
+    start: string;
+    end: string;
+    keyword: string;
 };

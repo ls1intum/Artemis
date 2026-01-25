@@ -122,50 +122,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         position: relative;
-        --iris-citation-shift: 0px;
         z-index: 0;
-    }
-
-    ::ng-deep .iris-citation__summary {
-        position: absolute;
-        top: 100%;
-        left: 50%;
-        width: 280px;
-        max-width: 70vw;
-        padding: 8px 10px;
-        border-radius: 8px;
-        background-color: var(--iris-client-chat-background);
-        border: 1px solid rgba(0, 0, 0, 0.14);
-        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.22);
-        font-size: 1em;
-        line-height: 1.4;
-        color: inherit;
-        white-space: normal;
-        transform: translate(-50%, -100%) translateX(var(--iris-citation-shift));
-        opacity: 0;
-        visibility: hidden;
-        pointer-events: none;
-        transition:
-            opacity 120ms ease,
-            visibility 120ms ease;
-    }
-
-    ::ng-deep .iris-citation--has-summary:hover {
-        z-index: 20;
-    }
-
-    ::ng-deep .iris-citation--has-summary {
-        overflow: visible;
-    }
-
-    ::ng-deep .iris-citation--has-summary:hover .iris-citation__text {
-        visibility: hidden;
-    }
-
-    ::ng-deep .iris-citation--has-summary:hover .iris-citation__summary {
-        opacity: 1;
-        visibility: visible;
-        pointer-events: auto;
     }
 
     ::ng-deep .iris-citation__icon {

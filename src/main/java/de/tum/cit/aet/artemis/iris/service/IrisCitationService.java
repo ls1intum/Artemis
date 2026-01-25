@@ -28,7 +28,7 @@ public class IrisCitationService {
 
     private static final Logger log = LoggerFactory.getLogger(IrisCitationService.class);
 
-    private static final Pattern CITATION_PATTERN = Pattern.compile("\\[cite:(?<entityId>[^:\\]]+):(?<type>[LF])(?:[^\\]]*)\\]");
+    private static final Pattern CITATION_PATTERN = Pattern.compile("\\[cite:(?<payload>[^\\]]+)\\]");
 
     private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
@@ -70,9 +70,8 @@ public class IrisCitationService {
         var references = new LinkedHashMap<String, IrisCitationReference>();
         var matcher = CITATION_PATTERN.matcher(text);
         while (matcher.find()) {
-            var entityIdValue = matcher.group("entityId");
-            var typeValue = matcher.group("type");
-            var parsed = parseReference(entityIdValue, typeValue);
+            var payload = matcher.group("payload");
+            var parsed = parseReference(payload);
             if (parsed.isPresent()) {
                 var reference = parsed.get();
                 references.put(reference.type().name() + ":" + reference.entityId(), reference);
@@ -81,7 +80,21 @@ public class IrisCitationService {
         return references;
     }
 
-    private Optional<IrisCitationReference> parseReference(String entityIdValue, String typeValue) {
+    private Optional<IrisCitationReference> parseReference(String payload) {
+        if (payload == null || payload.isBlank()) {
+            return Optional.empty();
+        }
+        var parts = payload.split(":");
+        if (parts.length < 2) {
+            return Optional.empty();
+        }
+        var typeValue = parts[0];
+        var entityIdValue = parts[1];
+        if (!isCitationType(typeValue)) {
+            log.debug("Skipping citation with unsupported type in payload {}", payload);
+            return Optional.empty();
+        }
+
         long entityId;
         try {
             entityId = Long.parseLong(entityIdValue);
@@ -92,13 +105,16 @@ public class IrisCitationService {
         }
 
         var type = "L".equals(typeValue) ? CitationType.LECTURE_UNIT : null;
-
         if (type == null) {
             log.debug("Skipping citation with unsupported type {}", typeValue);
             return Optional.empty();
         }
 
         return Optional.of(new IrisCitationReference(entityId, type));
+    }
+
+    private boolean isCitationType(String value) {
+        return "L".equals(value) || "F".equals(value);
     }
 
     private Optional<IrisCitationMetaDTO> resolveLectureUnit(IrisCitationReference reference) {
