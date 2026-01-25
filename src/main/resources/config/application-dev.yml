@@ -144,7 +144,6 @@ artemis:
             allowed-cidrs:
                 - ::/0
                 - 0.0.0.0/0
-    # Weaviate vector database configuration for development
     weaviate:
         enabled: false                    # Enable Weaviate in development by default
         host: localhost                   # Weaviate server hostname
