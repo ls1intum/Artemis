@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import de.tum.cit.aet.artemis.core.exception.WeaviateConnectionException;
 import io.weaviate.client6.v1.api.WeaviateClient;
 
 /**
@@ -23,6 +24,12 @@ public class WeaviateClientConfiguration {
         this.weaviateProperties = weaviateProperties;
     }
 
+    /**
+     * Creates and configures a Weaviate client bean.
+     *
+     * @return the configured WeaviateClient instance
+     * @throws WeaviateConnectionException if the connection to Weaviate fails
+     */
     @Bean
     public WeaviateClient weaviateClient() {
         try {
@@ -42,8 +49,10 @@ public class WeaviateClientConfiguration {
             return client;
         }
         catch (Exception exception) {
-            log.error("Failed to create Weaviate client", exception);
-            throw new RuntimeException("Failed to initialize Weaviate client", exception);
+            log.error("Failed to connect to Weaviate at {}://{}:{} (gRPC port: {})", weaviateProperties.getScheme(), weaviateProperties.getHost(), weaviateProperties.getPort(),
+                    weaviateProperties.getGrpcPort(), exception);
+            throw new WeaviateConnectionException("Failed to connect to Weaviate", exception, weaviateProperties.getHost(), weaviateProperties.getPort(),
+                    weaviateProperties.getGrpcPort(), weaviateProperties.isSecure());
         }
     }
 }
