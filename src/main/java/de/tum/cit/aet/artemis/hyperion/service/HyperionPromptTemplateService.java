@@ -26,12 +26,23 @@ public class HyperionPromptTemplateService {
      * @param variables    map of variables used during rendering
      * @return the rendered string
      */
-    public String render(String resourcePath, Map<String, String> variables) {
+    public String render(String resourcePath, Map<String, ?> variables) {
         try {
             var resource = new ClassPathResource(resourcePath);
             String rendered = StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
+
+            if (variables == null) {
+                return rendered;
+            }
+
             for (var entry : variables.entrySet()) {
-                rendered = rendered.replace("{{" + entry.getKey() + "}}", entry.getValue());
+                String key = entry.getKey();
+                Object value = entry.getValue();
+
+                // Handle null values
+                String stringValue = (value == null) ? "" : String.valueOf(value);
+
+                rendered = rendered.replace("{{" + key + "}}", stringValue);
             }
             return rendered;
         }

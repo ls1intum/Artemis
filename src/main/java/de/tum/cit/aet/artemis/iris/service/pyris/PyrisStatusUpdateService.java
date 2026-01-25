@@ -10,14 +10,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
-import de.tum.cit.aet.artemis.iris.service.IrisRewritingService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting.PyrisRewritingStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
@@ -27,7 +25,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.RewritingJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
@@ -53,8 +50,6 @@ public class PyrisStatusUpdateService {
 
     private final IrisCompetencyGenerationService competencyGenerationService;
 
-    private final IrisRewritingService rewritingService;
-
     private final IrisLectureChatSessionService irisLectureChatSessionService;
 
     private final IrisTutorSuggestionSessionService irisTutorSuggestionSessionService;
@@ -63,7 +58,7 @@ public class PyrisStatusUpdateService {
 
     public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisExerciseChatSessionService irisExerciseChatSessionService,
             IrisTextExerciseChatSessionService irisTextExerciseChatSessionService, IrisCourseChatSessionService courseChatSessionService,
-            IrisCompetencyGenerationService competencyGenerationService, IrisLectureChatSessionService irisLectureChatSessionService, IrisRewritingService rewritingService,
+            IrisCompetencyGenerationService competencyGenerationService, IrisLectureChatSessionService irisLectureChatSessionService,
             IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, Optional<LectureContentProcessingApi> lectureContentProcessingApi) {
         this.pyrisJobService = pyrisJobService;
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
@@ -71,7 +66,6 @@ public class PyrisStatusUpdateService {
         this.courseChatSessionService = courseChatSessionService;
         this.competencyGenerationService = competencyGenerationService;
         this.irisLectureChatSessionService = irisLectureChatSessionService;
-        this.rewritingService = rewritingService;
         this.irisTutorSuggestionSessionService = irisTutorSuggestionSessionService;
         this.lectureContentProcessingApi = lectureContentProcessingApi;
     }
@@ -125,18 +119,6 @@ public class PyrisStatusUpdateService {
     public void handleStatusUpdate(CompetencyExtractionJob job, PyrisCompetencyStatusUpdateDTO statusUpdate) {
         var updatedJob = competencyGenerationService.handleStatusUpdate(job, statusUpdate);
 
-        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
-    }
-
-    /**
-     * Handles the status update of a rewriting job and forwards it to
-     * {@link IrisRewritingService#handleStatusUpdate(RewritingJob, PyrisRewritingStatusUpdateDTO)}
-     *
-     * @param job          the job that is updated
-     * @param statusUpdate the status update
-     */
-    public void handleStatusUpdate(RewritingJob job, PyrisRewritingStatusUpdateDTO statusUpdate) {
-        var updatedJob = rewritingService.handleStatusUpdate(job, statusUpdate);
         removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
     }
 
