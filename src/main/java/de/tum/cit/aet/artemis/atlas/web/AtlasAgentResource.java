@@ -74,4 +74,21 @@ public class AtlasAgentResource {
         List<AtlasAgentHistoryMessageDTO> history = atlasAgentService.getConversationHistoryAsDTO(sessionId);
         return ResponseEntity.ok(history);
     }
+
+    /**
+     * POST /courses/{courseId}/chat/clear-session : Clear the chat session for the current user
+     * This clears the conversation history, cached operations, and resets the agent state
+     *
+     * @param courseId the course ID
+     * @return empty response
+     */
+    @PostMapping("courses/{courseId}/chat/clear-session")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Void> clearChatSession(@PathVariable Long courseId) {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        String sessionId = atlasAgentService.generateSessionId(courseId, user.getId());
+
+        atlasAgentService.clearSession(sessionId);
+        return ResponseEntity.ok().build();
+    }
 }

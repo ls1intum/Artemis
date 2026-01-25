@@ -1,11 +1,17 @@
 <div class="agent-chat-modal">
     <!-- Header -->
-    <div class="modal-header border-bottom bg-light">
+    <div class="modal-header border-bottom bg-light d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center">
             <fa-icon [icon]="robotIcon" class="text-primary me-2 fs-5" />
             <h4 class="modal-title mb-0 text-body" jhiTranslate="artemisApp.agent.chat.title"></h4>
         </div>
-        <button type="button" class="btn-close" aria-label="Close" (click)="closeModal()"></button>
+        <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-sm btn-outline-primary" (click)="onNewChat()" [disabled]="isAgentTyping()" title="Start a new conversation">
+                <fa-icon [icon]="plusIcon" class="me-1" />
+                New Chat
+            </button>
+            <button type="button" class="btn-close" aria-label="Close" (click)="closeModal()"></button>
+        </div>
     </div>
 
     <!-- Messages Container -->

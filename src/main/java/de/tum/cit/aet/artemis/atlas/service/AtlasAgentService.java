@@ -23,6 +23,7 @@ import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -257,17 +258,18 @@ public class AtlasAgentService {
         // Append courseId to system prompt so that the Sub-Agents have course context (invisible to conversation history)
         String systemPromptWithContext = systemPrompt + "\n\nCONTEXT FOR THIS REQUEST:\nCourse ID: " + courseId;
 
-        // Build chat client with memory advisor for this specific session
         ChatClient.Builder clientBuilder = chatClient.mutate();
-        // Add memory advisor only for Atlas with conversation-specific session ID
         if (chatMemory != null) {
-            clientBuilder.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).conversationId(sessionId).build());
+            clientBuilder.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build());
         }
         ChatClient sessionClient = clientBuilder.build();
 
         ToolCallingChatOptions options = AzureOpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature).build();
 
-        ChatClientRequestSpec promptSpec = sessionClient.prompt().system(systemPromptWithContext).user(message).options(options);
+        // Pass the sessionId dynamically per request using advisors param
+        // This ensures proper memory isolation and allows clearSession() to work correctly
+        ChatClientRequestSpec promptSpec = sessionClient.prompt().system(systemPromptWithContext).user(message).options(options)
+                .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, sessionId).param("chat_memory_conversation_id", sessionId));
 
         if (agentType.equals(AgentType.MAIN_AGENT)) {
             if (mainAgentToolCallbackProvider != null) {
@@ -488,5 +490,19 @@ public class AtlasAgentService {
      * Result of extracting preview data from a message.
      */
     private record PreviewDataResult(String cleanedText, @Nullable List<CompetencyPreviewDTO> previews) {
+    }
+
+    /**
+     * Clear all session data including chat memory and caches.
+     * Called when user starts a new chat to reset the conversation.
+     *
+     * @param sessionId the session ID
+     */
+    @Transactional
+    public void clearSession(String sessionId) {
+        if (chatMemory != null)
+            chatMemory.clear(sessionId);
+
+        clearCachedPendingCompetencyOperations(sessionId);
     }
 }
