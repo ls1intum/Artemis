@@ -50,7 +50,7 @@ describe('ExerciseUnitComponent', () => {
         exerciseUnitComponentFixture.detectChanges();
         const courseExerciseRowComponent: CourseExerciseRowComponent = exerciseUnitComponentFixture.debugElement.query(By.directive(CourseExerciseRowComponent)).componentInstance;
 
-        expect(courseExerciseRowComponent.course).toEqual(exerciseUnitComponent.course());
-        expect(courseExerciseRowComponent.exercise).toEqual(exerciseUnitComponent.exerciseUnit().exercise);
+        expect(courseExerciseRowComponent.course()).toEqual(exerciseUnitComponent.course());
+        expect(courseExerciseRowComponent.exercise()).toEqual(exerciseUnitComponent.exerciseUnit().exercise);
     });
 });
