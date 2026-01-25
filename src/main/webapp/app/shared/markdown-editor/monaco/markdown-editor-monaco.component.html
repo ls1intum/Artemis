@@ -160,7 +160,19 @@
                             </button>
                             <mat-menu #subMenuLecture="matMenu" type="button">
                                 @for (lecture of displayedActions.lecture.lecturesWithDetails; track lecture.id) {
-                                    <ng-template #referenceLectureButton>
+                                    <button
+                                        class="ps-1 me-1"
+                                        mat-menu-item
+                                        [matMenuTriggerFor]="hasReferencableAttachments(lecture) ? lectureMenuUnits : null"
+                                        (click)="
+                                            !hasReferencableAttachments(lecture) && displayedActions.lecture.executeInCurrentEditor({ reference: ReferenceType.LECTURE, lecture })
+                                        "
+                                        type="button"
+                                    >
+                                        {{ lecture.title }}
+                                    </button>
+
+                                    <mat-menu #lectureMenuUnits="matMenu" type="button">
                                         <button
                                             class="border-bottom ps-1 me-1"
                                             mat-menu-item
@@ -169,21 +181,26 @@
                                         >
                                             {{ lecture.title }}
                                         </button>
-                                    </ng-template>
-                                    @if (hasReferencableAttachments(lecture)) {
-                                        <button class="ps-1 me-1" mat-menu-item [matMenuTriggerFor]="lectureMenuUnits" type="button">
-                                            {{ lecture.title }}
-                                        </button>
-                                    } @else {
-                                        <!-- Shortcut: If no referencable attachments/units, directly allow referencing lecture. -->
-                                        <ng-container [ngTemplateOutlet]="referenceLectureButton" />
-                                    }
-                                    <mat-menu #lectureMenuUnits="matMenu" type="button">
-                                        <ng-container [ngTemplateOutlet]="referenceLectureButton" />
                                         @for (unit of lecture.attachmentVideoUnits; track unit.id) {
                                             <!-- Only show attachment units with an attachment -->
                                             @if (unit.attachment && unit.attachment.link) {
-                                                <ng-template #referenceLectureUnitButton>
+                                                <button
+                                                    class="ps-1 me-1"
+                                                    mat-menu-item
+                                                    [matMenuTriggerFor]="unit.slides ? lectureMenuUnitsSlide : null"
+                                                    (click)="
+                                                        !unit.slides &&
+                                                            displayedActions.lecture.executeInCurrentEditor({
+                                                                reference: ReferenceType.ATTACHMENT_UNITS,
+                                                                lecture,
+                                                                attachmentVideoUnit: unit,
+                                                            })
+                                                    "
+                                                    type="button"
+                                                >
+                                                    <span>{{ unit.name }}</span>
+                                                </button>
+                                                <mat-menu #lectureMenuUnitsSlide="matMenu" type="button">
                                                     <button
                                                         class="border-bottom ps-1 me-1"
                                                         mat-menu-item
@@ -198,17 +215,6 @@
                                                     >
                                                         {{ unit.name }}
                                                     </button>
-                                                </ng-template>
-                                                @if (unit.slides) {
-                                                    <button class="ps-1 me-1" mat-menu-item [matMenuTriggerFor]="lectureMenuUnitsSlide" type="button">
-                                                        <span>{{ unit.name }}</span>
-                                                    </button>
-                                                } @else {
-                                                    <!-- Shortcut: If no referencable slides, directly allow referencing lecture unit. -->
-                                                    <ng-container [ngTemplateOutlet]="referenceLectureUnitButton" />
-                                                }
-                                                <mat-menu #lectureMenuUnitsSlide="matMenu" type="button">
-                                                    <ng-container [ngTemplateOutlet]="referenceLectureUnitButton" />
                                                     @for (slide of unit.slides; track slide.id; let index = $index) {
                                                         <button
                                                             class="ps-1 me-1"
