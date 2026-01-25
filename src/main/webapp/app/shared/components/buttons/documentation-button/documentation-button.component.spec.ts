@@ -22,7 +22,7 @@ describe('DocumentationButtonComponent', () => {
                 fixture = TestBed.createComponent(DocumentationButtonComponent);
                 translateService = TestBed.inject(TranslateService);
                 comp = fixture.componentInstance;
-                comp.type = 'Course';
+                fixture.componentRef.setInput('type', 'Course');
             });
     });
 

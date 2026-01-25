@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, TemplateRef, ViewChild, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -117,11 +117,9 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         return this.accountService.isAtLeastInstructorInCourse(course) && hasBeenArchived;
     });
 
-    @ViewChild('archiveCompleteWithWarningsModal', { static: false })
-    archiveCompleteWithWarningsModal: TemplateRef<any>;
+    archiveCompleteWithWarningsModal = viewChild.required<TemplateRef<any>>('archiveCompleteWithWarningsModal');
 
-    @ViewChild('archiveConfirmModal', { static: false })
-    archiveConfirmModal: TemplateRef<any>;
+    archiveConfirmModal = viewChild.required<TemplateRef<any>>('archiveConfirmModal');
 
     // Subscriptions
     private dialogErrorSource = new Subject<string>();
@@ -215,7 +213,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
             this.alertService.success(this.getArchiveSuccessText());
             this.reloadCourseOrExam();
         } else if (exportState === 'COMPLETED_WITH_WARNINGS') {
-            this.openModal(this.archiveCompleteWithWarningsModal);
+            this.openModal(this.archiveCompleteWithWarningsModal());
             this.reloadCourseOrExam();
         } else if (exportState === 'COMPLETED_WITH_ERRORS') {
             this.alertService.error(this.getArchiveErrorText(subMessage!));
@@ -268,7 +266,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         this.modalService.open(modalRef).result.then(
             (result: string) => {
                 if (result === 'archive-confirm' && this.canDownloadArchive()) {
-                    this.openModal(this.archiveConfirmModal);
+                    this.openModal(this.archiveConfirmModal());
                 }
                 if (result === 'archive' || !this.canDownloadArchive()) {
                     this.archive();

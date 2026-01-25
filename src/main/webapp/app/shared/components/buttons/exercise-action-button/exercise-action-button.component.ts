@@ -11,16 +11,16 @@ import { NgClass } from '@angular/common';
     imports: [FaIconComponent, NgClass],
 })
 export class ExerciseActionButtonComponent {
-    readonly buttonIcon = input<IconProp>(undefined!);
-    readonly buttonLabel = input<string>(undefined!);
-    readonly hideLabelMobile = input(true);
-    readonly overwriteDisabled = input(false);
-    readonly buttonLoading = input(false);
+    buttonIcon = input<IconProp>(undefined!);
+    buttonLabel = input<string>(undefined!);
+    hideLabelMobile = input(true);
+    overwriteDisabled = input(false);
+    buttonLoading = input(false);
 
     @HostBinding('class.btn-outline-primary')
-    readonly outlined = input(false);
+    outlined = input(false);
     @HostBinding('class.btn-sm')
-    readonly smallButton = input(false);
+    smallButton = input(false);
     @HostBinding('class.btn') isButton = true;
 
     @HostBinding('class.btn-primary')
