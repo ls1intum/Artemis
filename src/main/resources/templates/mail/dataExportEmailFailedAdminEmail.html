@@ -9,9 +9,7 @@
 <th:block th:replace="~{mail/notification/fragments :: header}"/>
 <!-- Message Body Start -->
 <div id="message-body">
-    <span th:text="#{email.dataExportEmailFailedAdmin.text}">A data export notification email failed. </span>
-    <span class="bold-text" th:text="${dataExport.user.login}">Username</span>
-    <span th:text="#{email.dataExportEmailFailedAdmin.textFailed}">failed</span>
+    <span th:text="#{email.dataExportEmailFailedAdmin.message(${dataExport.user.login})}">The data export notification email for [Username] failed to send.</span>
 
     <p th:text="#{email.dataExportEmailFailedAdmin.reason(${reason})}">The error message </p>
     <p
