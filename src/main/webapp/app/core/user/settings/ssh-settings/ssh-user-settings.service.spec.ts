@@ -55,7 +55,7 @@ describe('SshUserSettingsService', () => {
             });
 
             const req = httpMock.expectOne({ method: 'POST', url: 'api/programming/ssh-settings/public-key' });
-            req.flush({});
+            req.flush(userSshPublicKey);
 
             expect(req.request.method).toBe('POST');
         });
