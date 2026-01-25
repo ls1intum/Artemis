@@ -242,7 +242,9 @@
                 {{ error() | artemisTranslate: { hours: rateLimitInfo()?.rateLimitTimeframeHours } }}
             </div>
         }
-        @if (!active()) {
+        @if (userAccepted() === LLMSelectionDecision.NO_AI) {
+            <div class="client-chat-error" [jhiTranslate]="IrisErrorMessageKey.AI_USAGE_DECLINED"></div>
+        } @else if (!active()) {
             <div class="client-chat-error" [jhiTranslate]="IrisErrorMessageKey.IRIS_NOT_AVAILABLE"></div>
         }
         @if (userAccepted() === LLMSelectionDecision.CLOUD_AI || userAccepted() === LLMSelectionDecision.LOCAL_AI) {
@@ -273,8 +275,6 @@
                     <span class="disclaimer-message" jhiTranslate="artemisApp.exerciseChatbot.disclaimerGPT"></span>
                 }
             </div>
-        } @else if (userAccepted() === LLMSelectionDecision.NO_AI) {
-            <div class="client-chat-error" [jhiTranslate]="IrisErrorMessageKey.AI_USAGE_DECLINED"></div>
         }
     </div>
 </div>
