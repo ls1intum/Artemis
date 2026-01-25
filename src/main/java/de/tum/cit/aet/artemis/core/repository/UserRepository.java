@@ -175,9 +175,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "organizations" })
     Optional<User> findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(String userLogin);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "aiSelectionDecisionDate" })
-    Optional<User> findOneWithGroupsAndAuthoritiesAndSelectedLLMUsageTimestampByLogin(String login);
-
     Long countByDeletedIsFalseAndGroupsContains(String groupName);
 
     @Query("""

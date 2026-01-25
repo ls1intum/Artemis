@@ -11,5 +11,5 @@ export interface UpdateLLMSelectionDecisionDto {
     /**
      * CLOUD_AI if the user has accepted the cloud LLM usage policy, LOCAL_AI if the user has accepted only the local LLM usage policy, else NO_AI.
      */
-    selection: string;
+    selection: LLMSelectionDecision;
 }
