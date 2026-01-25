@@ -163,7 +163,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
         // Show AI selection modal if user hasn't accepted
         if (!this.userAccepted()) {
-            this.showAISelectionModal();
+            setTimeout(() => this.showAISelectionModal(), 0);
         } else {
             this.focusInputAfterAcceptance();
         }
@@ -273,22 +273,25 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         setTimeout(() => this.adjustTextareaRows(), 0);
     }
 
+    readonly reopenChat = output<void>();
+
     async showAISelectionModal(): Promise<void> {
+        this.closeChat();
         const choice = await this.llmModalService.open();
 
         switch (choice) {
             case 'cloud':
                 this.acceptPermission(LLMSelectionDecision.CLOUD_AI);
+                this.reopenChat.emit();
                 break;
             case 'local':
                 this.acceptPermission(LLMSelectionDecision.LOCAL_AI);
+                this.reopenChat.emit();
                 break;
             case 'no_ai':
                 this.chatService.updateLLMUsageConsent(LLMSelectionDecision.NO_AI);
-                this.closeChat();
                 break;
             case 'none':
-                this.closeChat();
                 break;
         }
     }

@@ -99,6 +99,9 @@ export class IrisChatService implements OnDestroy {
 
     private sessionCreationIdentifier?: string;
 
+    private shouldReopenChatSubject = new BehaviorSubject<boolean>(false);
+    public shouldReopenChat$ = this.shouldReopenChatSubject.asObservable();
+
     hasJustAcceptedLLMUsage = false;
 
     /**
@@ -654,5 +657,12 @@ export class IrisChatService implements OnDestroy {
 
     public availableChatSessions(): Observable<IrisSessionDTO[]> {
         return this.chatSessions.asObservable();
+    }
+
+    /**
+     * Sets whether the chat should reopen after being closed by LLM selection modal.
+     */
+    public setShouldReopenChat(value: boolean): void {
+        this.shouldReopenChatSubject.next(value);
     }
 }
