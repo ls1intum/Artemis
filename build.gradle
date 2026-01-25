@@ -222,9 +222,6 @@ dependencies {
     // OpenAI / OpenAI-compatible (dev, localhost:1234, etc.)
     implementation "org.springframework.ai:spring-ai-starter-model-openai"
 
-    // Weaviate Java client for vector database operations
-    implementation "io.weaviate:weaviate-client6:6.1.0"
-
     // we have to override those values to use the latest version
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
     implementation "org.slf4j:jul-to-slf4j:${slf4j_version}"
@@ -397,6 +394,9 @@ dependencies {
 
     implementation "com.bucket4j:bucket4j_jdk17:${bucket4j_version}"
     implementation "com.bucket4j:bucket4j_jdk17-hazelcast:${bucket4j_version}"
+
+    // Weaviate vector database client for semantic search
+    implementation "io.weaviate:client6:${weaviate_client_version}"
 
     implementation "org.opensaml:opensaml-saml-api:${opensaml_version}"
     implementation "org.opensaml:opensaml-saml-impl:${opensaml_version}"
