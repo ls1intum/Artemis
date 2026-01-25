@@ -599,7 +599,7 @@ describe('AccountService', () => {
             });
 
             const req = httpMock.expectOne({ method: 'GET', url: `api/core/account/participation-vcs-access-token?participationId=${participationId}` });
-            req.flush({ body: token });
+            req.flush(token);
         });
 
         it('should create VCS access token for a participation', () => {
@@ -609,7 +609,7 @@ describe('AccountService', () => {
             accountService.createVcsAccessToken(participationId).subscribe(() => {});
 
             const req = httpMock.expectOne({ method: 'PUT', url: `api/core/account/participation-vcs-access-token?participationId=${participationId}` });
-            req.flush({ body: token });
+            req.flush(token);
         });
     });
 
