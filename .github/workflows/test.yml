@@ -114,7 +114,7 @@ jobs:
         ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
     - name: Upload JUnit Test Results
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: JUnit Test Results
         path: build/test-results/test/*.xml
@@ -146,7 +146,7 @@ jobs:
       run: bash supporting_scripts/extract_number_of_server_starts.sh
     - name: Upload Server Test Coverage Report
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: Coverage Report Server Tests
         path: build/reports/jacoco/aggregated/html
@@ -206,25 +206,25 @@ jobs:
           run: npm run test:ci
         - name: Upload Client Test Coverage Report
           if: success() || failure()
-          uses: actions/upload-artifact@v5
+          uses: actions/upload-artifact@v6
           with:
               name: Coverage Report Client Tests
               path: build/test-results/lcov-report/
         - name: Upload Vitest Coverage Report
           if: success() || failure()
-          uses: actions/upload-artifact@v5
+          uses: actions/upload-artifact@v6
           with:
               name: Vitest Coverage Report
               path: build/test-results/vitest/coverage/
         - name: Upload JUnit Test Results
           if: success() || failure()
-          uses: actions/upload-artifact@v5
+          uses: actions/upload-artifact@v6
           with:
             name: Client JUnit Test Results
             path: junit.xml
         - name: Upload Vitest JUnit Test Results
           if: success() || failure()
-          uses: actions/upload-artifact@v5
+          uses: actions/upload-artifact@v6
           with:
             name: Vitest JUnit Test Results
             path: build/test-results/vitest/junit.xml
