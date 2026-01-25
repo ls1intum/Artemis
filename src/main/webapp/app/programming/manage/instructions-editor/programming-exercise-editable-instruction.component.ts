@@ -167,9 +167,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     @Output() instructionChange = new EventEmitter<string>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
 
-    inlineRefinementPosition = signal<{ top: number; left: number } | null>(null);
+    inlineRefinementPosition = signal<{ top: number; left: number } | undefined>(undefined);
     selectedTextForRefinement = signal('');
-    selectionPositionInfo = signal<{ startLine: number; endLine: number; startColumn: number; endColumn: number } | null>(null);
+    selectionPositionInfo = signal<{ startLine: number; endLine: number; startColumn: number; endColumn: number } | undefined>(undefined);
     readonly onInlineRefinement = output<{
         instruction: string;
         startLine: number;
@@ -427,14 +427,16 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * Shows floating refinement button when text is selected.
      */
     onEditorSelectionChange(
-        selection: {
-            startLine: number;
-            endLine: number;
-            startColumn: number;
-            endColumn: number;
-            selectedText: string;
-            screenPosition: { top: number; left: number };
-        } | null,
+        selection:
+            | {
+                  startLine: number;
+                  endLine: number;
+                  startColumn: number;
+                  endColumn: number;
+                  selectedText: string;
+                  screenPosition: { top: number; left: number };
+              }
+            | undefined,
     ): void {
         // Show/hide inline refinement button based on selection
         if (selection && selection.selectedText && selection.selectedText.trim().length > 0 && this.hyperionEnabled && !this.isAiLoading()) {
@@ -455,9 +457,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * Hides the floating inline refinement button.
      */
     hideInlineRefinementButton(): void {
-        this.inlineRefinementPosition.set(null);
+        this.inlineRefinementPosition.set(undefined);
         this.selectedTextForRefinement.set('');
-        this.selectionPositionInfo.set(null);
+        this.selectionPositionInfo.set(undefined);
     }
 
     /**

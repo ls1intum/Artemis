@@ -307,14 +307,17 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     onLeaveVisualTab = new EventEmitter<void>();
 
     /** Emits when user selects lines in the editor (includes selectedText, position, and column info for inline refinement) */
-    readonly onSelectionChange = output<{
-        startLine: number;
-        endLine: number;
-        startColumn: number;
-        endColumn: number;
-        selectedText: string;
-        screenPosition: { top: number; left: number };
-    } | null>();
+    readonly onSelectionChange = output<
+        | {
+              startLine: number;
+              endLine: number;
+              startColumn: number;
+              endColumn: number;
+              selectedText: string;
+              screenPosition: { top: number; left: number };
+          }
+        | undefined
+    >();
 
     defaultPreviewHtml: SafeHtml | undefined;
     inPreviewMode = false;
@@ -518,7 +521,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                     screenPosition,
                 });
             } else {
-                this.onSelectionChange.emit(null);
+                this.onSelectionChange.emit(undefined);
             }
         });
     }
