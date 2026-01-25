@@ -56,11 +56,9 @@ export class ConfirmAutofocusButtonComponent {
         modalRef.componentInstance.contentRef = this.content();
         modalRef.result.then(
             () => {
-                // TODO: The 'emit' function requires a mandatory void argument
                 this.onConfirm.emit();
             },
             () => {
-                // TODO: The 'emit' function requires a mandatory void argument
                 this.onCancel.emit();
             },
         );
