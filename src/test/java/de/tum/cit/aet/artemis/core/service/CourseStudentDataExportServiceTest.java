@@ -45,7 +45,7 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
     private GradingScaleRepository gradingScaleRepository;
 
     @Autowired
-    private CourseTestRepository courseTestRepository;
+    private CourseTestRepository courseRepository;
 
     @Autowired
     private TempFileUtilService tempFileUtilService;
@@ -258,7 +258,7 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
 
         // Update course accuracy to 2 decimal places
         course.setAccuracyOfScores(2);
-        courseTestRepository.save(course);
+        courseRepository.save(course);
 
         List<String> errors = new ArrayList<>();
         courseStudentDataExportService.exportAllStudentData(course.getId(), tempDir, errors);
@@ -293,7 +293,7 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
 
         // Update course accuracy to 0 decimal places (whole numbers only)
         course.setAccuracyOfScores(0);
-        courseTestRepository.save(course);
+        courseRepository.save(course);
 
         List<String> errors = new ArrayList<>();
         courseStudentDataExportService.exportAllStudentData(course.getId(), tempDir, errors);
