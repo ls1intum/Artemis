@@ -10,8 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 
 /**
- * Repository wrapper for Spring AI's ChatMemoryRepository.
- * Provides transactional access to chat memory operations.
+ * Repository for transactional chat memory operations.
+ * Wraps Spring AI's ChatMemoryRepository to provide proper transaction management.
  */
 @Conditional(AtlasEnabled.class)
 @Lazy
@@ -24,11 +24,6 @@ public class AtlasChatMemoryRepository {
         this.chatMemoryRepository = chatMemoryRepository;
     }
 
-    /**
-     * Deletes all messages for a given conversation/session.
-     *
-     * @param conversationId the conversation/session ID
-     */
     @Transactional
     public void deleteByConversationId(String conversationId) {
         if (chatMemoryRepository != null) {

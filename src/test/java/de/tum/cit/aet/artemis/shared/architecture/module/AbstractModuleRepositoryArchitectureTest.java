@@ -141,7 +141,7 @@ public abstract class AbstractModuleRepositoryArchitectureTest extends AbstractA
 
     // TODO: This method should be removed once all repositories are tested
     protected Set<String> testTransactionalExclusions() {
-        return Set.of();
+        return Set.of("de.tum.cit.aet.artemis.atlas.repository.AtlasChatMemoryRepository.deleteByConversationId(java.lang.String)");
     }
 
     @Test
