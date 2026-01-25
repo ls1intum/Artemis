@@ -16,7 +16,7 @@
                 <p [jhiTranslate]="'artemisApp.courseExamArchive.archiveSuccessWithWarnings'">The archival process has completed with the following warnings:</p>
                 <br />
                 <ul style="height: 200px; overflow: auto">
-                    @for (item of archiveWarnings; track item) {
+                    @for (item of archiveWarnings(); track item) {
                         <li>{{ item }}</li>
                     }
                 </ul>
@@ -40,14 +40,16 @@
         </div>
         <div class="modal-body">
             @if (archiveMode() === 'Course') {
-                <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.course.question'" [translateValues]="{ title: course().title }">Are you sure you want to archive??</p>
+                <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.course.question'" [translateValues]="{ title: currentCourse().title }">Are you sure you want to archive??</p>
                 <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.course.statement1'">
                     The process will compress all student code repositories, file upload exercises, modeling exercises, and text exercises for exercises and exams.
                 </p>
                 <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.course.statement1b'">Additionally, the archive will include comprehensive student data.</p>
             }
             @if (archiveMode() === 'Exam') {
-                <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.exam.question'" [translateValues]="{ title: exam()?.title || '' }">Are you sure you want to archive??</p>
+                <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.exam.question'" [translateValues]="{ title: currentExam()?.title || '' }">
+                    Are you sure you want to archive??
+                </p>
                 <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.exam.statement1'">
                     The process will compress all student code repositories, file upload exercises, modeling exercises, and text exercises in the exam.
                 </p>
@@ -90,32 +92,32 @@
     @if (canArchive()) {
         <button
             [jhiFeatureToggle]="FeatureToggle.Exports"
-            [overwriteDisabled]="isBeingArchived"
+            [overwriteDisabled]="isBeingArchived()"
             type="button"
             [attr.data-mode]="archiveMode()"
             id="archiveButton"
             class="btn btn-sm btn-warning"
             (click)="openModal(archiveWarningPopup)"
         >
-            <fa-icon [hidden]="!isBeingArchived" animation="spin" [icon]="faCircleNotch" />
-            <fa-icon [hidden]="isBeingArchived" [icon]="faArchive" />&nbsp;
-            <span>{{ archiveButtonText }}</span>
+            <fa-icon [hidden]="!isBeingArchived()" animation="spin" [icon]="faCircleNotch" />
+            <fa-icon [hidden]="isBeingArchived()" [icon]="faArchive" />&nbsp;
+            <span>{{ archiveButtonText() }}</span>
         </button>
     }
-    @if (displayDownloadArchiveButton) {
-        <button [disabled]="isBeingArchived" type="button" [attr.data-mode]="archiveMode()" class="btn btn-sm btn-primary" (click)="downloadArchive()">
+    @if (displayDownloadArchiveButton()) {
+        <button [disabled]="isBeingArchived()" type="button" [attr.data-mode]="archiveMode()" class="btn btn-sm btn-primary" (click)="downloadArchive()">
             <fa-icon [icon]="faDownload" />&nbsp;
             <span jhiTranslate="artemisApp.courseExamArchive.downloadArchive"></span>
         </button>
     }
     @if (canCleanup() && archiveMode() === 'Course') {
         <button
-            [disabled]="isBeingArchived"
+            [disabled]="isBeingArchived()"
             [attr.data-mode]="archiveMode()"
             jhiDeleteButton
             [buttonSize]="ButtonSize.SMALL"
             [actionType]="ActionType.Cleanup"
-            [entityTitle]="course().title!"
+            [entityTitle]="currentCourse().title!"
             deleteQuestion="artemisApp.course.cleanup.question"
             (delete)="cleanup()"
             [dialogError]="dialogError$"
@@ -127,12 +129,12 @@
     }
     @if (canCleanup() && archiveMode() === 'Exam') {
         <button
-            [disabled]="isBeingArchived"
+            [disabled]="isBeingArchived()"
             [attr.data-mode]="archiveMode()"
             jhiDeleteButton
             [buttonSize]="ButtonSize.SMALL"
             [actionType]="ActionType.Cleanup"
-            [entityTitle]="exam()!.title!"
+            [entityTitle]="currentExam().title!"
             deleteQuestion="artemisApp.exam.cleanup.question"
             (delete)="cleanup()"
             [dialogError]="dialogError$"

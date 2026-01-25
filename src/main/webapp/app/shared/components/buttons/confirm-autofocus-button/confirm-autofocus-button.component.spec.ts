@@ -47,32 +47,38 @@ describe('ConfirmAutofocusButtonComponent', () => {
     describe('inputs', () => {
         it('should accept icon input', () => {
             fixture.componentRef.setInput('icon', faCheck);
+            fixture.detectChanges();
             expect(comp.icon()).toEqual(faCheck);
         });
 
         it('should accept title input', () => {
             fixture.componentRef.setInput('title', 'Test Title');
+            fixture.detectChanges();
             expect(comp.title()).toBe('Test Title');
         });
 
         it('should accept tooltip input', () => {
             fixture.componentRef.setInput('tooltip', 'Test Tooltip');
+            fixture.detectChanges();
             expect(comp.tooltip()).toBe('Test Tooltip');
         });
 
         it('should accept confirmationTitle input', () => {
             fixture.componentRef.setInput('confirmationTitle', 'Confirm Title');
+            fixture.detectChanges();
             expect(comp.confirmationTitle()).toBe('Confirm Title');
         });
 
         it('should accept confirmationText input', () => {
             fixture.componentRef.setInput('confirmationText', 'Confirm Text');
+            fixture.detectChanges();
             expect(comp.confirmationText()).toBe('Confirm Text');
         });
 
         it('should accept confirmationTitleTranslationParams input', () => {
             const params = { name: 'Test' };
             fixture.componentRef.setInput('confirmationTitleTranslationParams', params);
+            fixture.detectChanges();
             expect(comp.confirmationTitleTranslationParams()).toEqual(params);
         });
     });
@@ -92,6 +98,7 @@ describe('ConfirmAutofocusButtonComponent', () => {
             fixture.componentRef.setInput('confirmationText', 'Plain text content');
             fixture.componentRef.setInput('confirmationTitle', 'Test Title');
             fixture.componentRef.setInput('textIsMarkdown', false);
+            fixture.detectChanges();
 
             comp.onOpenConfirmationModal();
 
@@ -106,6 +113,7 @@ describe('ConfirmAutofocusButtonComponent', () => {
             fixture.componentRef.setInput('confirmationText', '**Bold text**');
             fixture.componentRef.setInput('confirmationTitle', 'Test Title');
             fixture.componentRef.setInput('textIsMarkdown', true);
+            fixture.detectChanges();
 
             comp.onOpenConfirmationModal();
 
@@ -116,6 +124,7 @@ describe('ConfirmAutofocusButtonComponent', () => {
         it('should set translateText to true when specified', () => {
             vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
             fixture.componentRef.setInput('translateText', true);
+            fixture.detectChanges();
 
             comp.onOpenConfirmationModal();
 
@@ -125,6 +134,7 @@ describe('ConfirmAutofocusButtonComponent', () => {
         it('should set translateText to false when not specified', () => {
             vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
             fixture.componentRef.setInput('translateText', undefined);
+            fixture.detectChanges();
 
             comp.onOpenConfirmationModal();
 
@@ -135,6 +145,7 @@ describe('ConfirmAutofocusButtonComponent', () => {
             vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
             const params = { name: 'Test' };
             fixture.componentRef.setInput('confirmationTitleTranslationParams', params);
+            fixture.detectChanges();
 
             comp.onOpenConfirmationModal();
 

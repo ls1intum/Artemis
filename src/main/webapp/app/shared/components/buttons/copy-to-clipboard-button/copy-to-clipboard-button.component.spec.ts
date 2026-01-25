@@ -4,8 +4,11 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CopyToClipboardButtonComponent } from 'app/shared/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('JhiCopyIconButtonComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: CopyToClipboardButtonComponent;
     let fixture: ComponentFixture<CopyToClipboardButtonComponent>;
 
@@ -42,16 +45,16 @@ describe('JhiCopyIconButtonComponent', () => {
     });
 
     it('should show it was copied on click', () => {
-        jest.useFakeTimers();
+        vi.useFakeTimers();
 
         fixture.detectChanges();
 
         const copyButton = fixture.debugElement.nativeElement.querySelector('#copyButton');
         copyButton.click();
 
-        expect(component.wasCopied()).toBeTrue();
+        expect(component.wasCopied()).toBeTruthy();
 
-        jest.advanceTimersByTime(3000);
-        expect(component.wasCopied()).toBeFalse();
+        vi.advanceTimersByTime(3000);
+        expect(component.wasCopied()).toBeFalsy();
     });
 });

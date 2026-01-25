@@ -94,6 +94,7 @@ describe('CodeButtonComponent', () => {
                     .spyOn(sshUserSettingsService, 'getCachedSshKeys')
                     .mockImplementation(() => Promise.resolve([{ id: 99, publicKey: 'key' } as UserSshPublicKey]));
                 fixture.componentRef.setInput('repositoryUri', '');
+                fixture.detectChanges();
                 vi.spyOn(localStorageMock, 'retrieve').mockImplementation(() => {
                     return localStorageState;
                 });
@@ -107,6 +108,7 @@ describe('CodeButtonComponent', () => {
                 fixture.componentRef.setInput('participations', []);
                 fixture.componentRef.setInput('smallButtons', true);
                 fixture.componentRef.setInput('routerLinkForRepositoryView', []);
+                fixture.detectChanges();
 
                 stubServices();
             });
@@ -132,7 +134,6 @@ describe('CodeButtonComponent', () => {
     it('should not load participation vcsAccessToken when it already exists in participation', async () => {
         participation.vcsAccessToken = 'vcpat-1234';
         fixture.componentRef.setInput('participations', [participation]);
-
         await component.ngOnInit();
         component.onClick();
 
@@ -143,7 +144,6 @@ describe('CodeButtonComponent', () => {
 
     it('should load participation vcsAccessToken if it exists on the server', async () => {
         fixture.componentRef.setInput('participations', [participation]);
-
         await component.ngOnInit();
         fixture.detectChanges();
         await fixture.whenStable();

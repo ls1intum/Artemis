@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, TemplateRef, ViewChild, inject, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef, ViewChild, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -41,16 +41,81 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     private translateService = inject(TranslateService);
     private modalService = inject(NgbModal);
     private accountService = inject(AccountService);
+    private websocketRegistered = false;
 
     ButtonSize = ButtonSize;
     ActionType = ActionType;
-    readonly FeatureToggle = FeatureToggle;
+    FeatureToggle = FeatureToggle;
 
-    readonly archiveMode = input<'Exam' | 'Course'>('Course');
+    // signals
+    archiveMode = input<'Exam' | 'Course'>('Course');
+    course = input<Course | undefined>(undefined);
+    currentCourse = signal<Course | undefined>(undefined);
+    exam = input<Exam | undefined>(undefined);
+    currentExam = signal<Exam | undefined>(undefined);
+    currentLang = signal(this.translateService.getCurrentLang() ?? '');
+    archiveState = signal<CourseExamArchiveState | null>(null);
 
-    readonly course = input<Course>(undefined!);
+    // Derived State / Computed
+    isBeingArchived = computed(() => this.archiveState()?.exportState === 'RUNNING');
+    archiveStateMessage = computed(() => this.archiveState()?.message ?? '');
+    archiveWarnings = computed(() => (this.archiveState()?.exportState === 'COMPLETED_WITH_WARNINGS' ? (this.archiveState()?.message ?? '').split('\n') : []));
+    displayDownloadArchiveButton = computed(() => this.canDownloadArchive());
+    archiveButtonText = computed(() => {
+        // recompute whenever language changes
+        this.currentLang();
+        if (this.isBeingArchived()) {
+            // show the websocket-provided message while running
+            return this.archiveStateMessage();
+        }
 
-    readonly exam = input<Exam>();
+        return this.archiveMode() === 'Course'
+            ? this.translateService.instant('artemisApp.courseExamArchive.archiveCourse')
+            : this.translateService.instant('artemisApp.courseExamArchive.archiveExam');
+    });
+    canArchive = computed(() => {
+        const mode = this.archiveMode();
+        const course = this.currentCourse();
+        const exam = this.currentExam();
+        let isOver = false;
+        if (mode === 'Exam' && exam) {
+            isOver = !!exam.endDate?.isBefore(dayjs());
+        } else if (course) {
+            isOver = !!course.endDate?.isBefore(dayjs());
+        }
+        return this.accountService.isAtLeastInstructorInCourse(course) && isOver;
+    });
+    canDownloadArchive = computed(() => {
+        const mode = this.archiveMode();
+        const exam = this.currentExam();
+        const course = this.currentCourse();
+
+        let hasArchive = false;
+
+        if (mode === 'Exam' && exam) {
+            hasArchive = (exam.examArchivePath?.length ?? 0) > 0;
+        } else if (course) {
+            hasArchive = (course.courseArchivePath?.length ?? 0) > 0;
+        }
+        // You can only download one if the path to the archive is present
+        return this.accountService.isAtLeastInstructorInCourse(course) && hasArchive;
+    });
+    canCleanup = computed(() => {
+        const mode = this.archiveMode();
+        const exam = this.currentExam();
+        const course = this.currentCourse();
+
+        let hasBeenArchived = false;
+
+        if (mode === 'Exam' && exam) {
+            hasBeenArchived = !!exam.examArchivePath && exam.examArchivePath.length > 0;
+        } else if (course) {
+            hasBeenArchived = !!course.courseArchivePath && course.courseArchivePath.length > 0;
+        }
+
+        // A course / exam can only be cleaned up if the course / exam has been archived.
+        return this.accountService.isAtLeastInstructorInCourse(course) && hasBeenArchived;
+    });
 
     @ViewChild('archiveCompleteWithWarningsModal', { static: false })
     archiveCompleteWithWarningsModal: TemplateRef<any>;
@@ -58,14 +123,11 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     @ViewChild('archiveConfirmModal', { static: false })
     archiveConfirmModal: TemplateRef<any>;
 
-    isBeingArchived = false;
-    archiveButtonText = '';
-    archiveWarnings: string[] = [];
-    displayDownloadArchiveButton = false;
-
+    // Subscriptions
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
     private archiveSubscription?: Subscription;
+    private changeLangSubscription?: Subscription;
 
     // Icons
     faDownload = faDownload;
@@ -73,21 +135,57 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     faEraser = faEraser;
     faArchive = faArchive;
 
+    /**
+     * Since course and exam are input signals, their state should not be owned by this component, instead we use
+     * writeable signals (currentCourse, currentExam) for each of these input signals which controls the internal
+     * state of this component.
+     */
+    constructor() {
+        effect(() => {
+            const courseFromParent = this.course();
+            const courseId = courseFromParent?.id ?? null;
+            const currentCourseId = this.currentCourse()?.id ?? null;
+
+            // only set value from parent if course has not been fetched in this component or refetched course id differs for some reason
+            if (currentCourseId === null || courseId !== currentCourseId) {
+                // current Course is registered in effect, we do not track it to prevent feedback loop
+                untracked(() => this.currentCourse.set(courseFromParent));
+            }
+        });
+
+        effect(() => {
+            const examFromParent = this.exam();
+            const examId = examFromParent?.id ?? null;
+            const currentExamId = this.currentExam()?.id ?? null;
+
+            // only set value from parent if exam has not been fetched in this component or refetched exam id differs for some reason
+            if (currentExamId === null || examId !== currentExamId) {
+                // current Exam is registered in effect, we do not track it to prevent feedback loop
+                untracked(() => this.currentExam.set(examFromParent));
+            }
+        });
+
+        effect(() => {
+            if (this.websocketRegistered) return;
+
+            const topic = this.getArchiveStateTopic();
+            if (!topic) return;
+
+            this.websocketRegistered = true;
+            this.registerArchiveWebsocket(topic);
+        });
+    }
+
     ngOnInit() {
-        if (!this.course() && !this.exam()) {
+        // Our current state is the writable signal
+        if (!this.currentCourse() && !this.currentExam()) {
             // Component isn't initialized
             return;
         }
 
-        this.registerArchiveWebsocket();
-        this.archiveButtonText = this.getArchiveButtonText();
-        this.displayDownloadArchiveButton = this.canDownloadArchive();
-
-        // update the span title on each language change
-        this.translateService.onLangChange.subscribe(() => {
-            if (!this.isBeingArchived) {
-                this.archiveButtonText = this.getArchiveButtonText();
-            }
+        // Store subscription to unsubscribe and prevent memory leaks
+        this.changeLangSubscription = this.translateService.onLangChange.subscribe((selectedLang) => {
+            this.currentLang.set(selectedLang.lang);
         });
     }
 
@@ -97,25 +195,26 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.archiveSubscription?.unsubscribe();
         this.dialogErrorSource.unsubscribe();
+        this.changeLangSubscription?.unsubscribe();
     }
 
-    registerArchiveWebsocket() {
-        const topic = this.getArchiveStateTopic();
-        this.archiveSubscription = this.websocketService
-            .subscribe<CourseExamArchiveState>(topic)
-            .pipe(tap((archiveState: CourseExamArchiveState) => this.handleArchiveStateChanges(archiveState)))
-            .subscribe();
+    registerArchiveWebsocket(topic: string) {
+        if (topic) {
+            this.archiveSubscription = this.websocketService
+                .subscribe<CourseExamArchiveState>(topic)
+                .pipe(tap((archiveState: CourseExamArchiveState) => this.handleArchiveStateChanges(archiveState)))
+                .subscribe();
+        }
     }
 
     handleArchiveStateChanges(courseArchiveState: CourseExamArchiveState) {
-        const { exportState, message, subMessage } = courseArchiveState;
-        this.isBeingArchived = exportState === 'RUNNING';
-        this.archiveButtonText = exportState === 'RUNNING' ? message : this.getArchiveButtonText();
+        this.archiveState.set(courseArchiveState);
+        const { exportState, subMessage } = courseArchiveState;
+
         if (exportState === 'COMPLETED') {
             this.alertService.success(this.getArchiveSuccessText());
             this.reloadCourseOrExam();
         } else if (exportState === 'COMPLETED_WITH_WARNINGS') {
-            this.archiveWarnings = message.split('\n');
             this.openModal(this.archiveCompleteWithWarningsModal);
             this.reloadCourseOrExam();
         } else if (exportState === 'COMPLETED_WITH_ERRORS') {
@@ -124,16 +223,17 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     }
 
     reloadCourseOrExam() {
-        const exam = this.exam();
-        if (this.archiveMode() === 'Exam' && exam) {
-            this.examService.find(this.course().id!, exam.id!).subscribe((res) => {
-                this.exam = res.body!;
-                this.displayDownloadArchiveButton = this.canDownloadArchive();
+        const course = this.currentCourse();
+        if (!course?.id) return;
+        const exam = this.currentExam();
+
+        if (this.archiveMode() === 'Exam' && exam?.id) {
+            this.examService.find(course.id, exam.id).subscribe((res) => {
+                this.currentExam.set(res.body ?? undefined);
             });
         } else {
-            this.courseService.find(this.course().id!).subscribe((res) => {
-                this.course = res.body!;
-                this.displayDownloadArchiveButton = this.canDownloadArchive();
+            this.courseService.find(course.id).subscribe((res) => {
+                this.currentCourse.set(res.body ?? undefined);
             });
         }
     }
@@ -148,39 +248,20 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
 
     getArchiveErrorText(message: string) {
         if (this.archiveMode() === 'Course') {
-            return this.translateService.instant(`artemisApp.courseExamArchive.archiveCourseError.${message}`, { courseName: this.course().title });
+            return this.translateService.instant(`artemisApp.courseExamArchive.archiveCourseError.${message}`, { courseName: this.currentCourse()?.title });
         } else {
-            return this.translateService.instant('artemisApp.courseExamArchive.archiveExamError', { examName: this.exam()?.title });
-        }
-    }
-
-    getArchiveButtonText() {
-        if (this.archiveMode() === 'Course') {
-            return this.translateService.instant('artemisApp.courseExamArchive.archiveCourse');
-        } else {
-            return this.translateService.instant('artemisApp.courseExamArchive.archiveExam');
+            return this.translateService.instant('artemisApp.courseExamArchive.archiveExamError', { examName: this.currentExam()?.title });
         }
     }
 
     getArchiveStateTopic() {
-        const exam = this.exam();
+        const exam = this.currentExam();
+        const course = this.currentCourse();
         if (this.archiveMode() === 'Exam' && exam) {
             return '/topic/exams/' + exam.id + '/export';
-        } else {
-            return '/topic/courses/' + this.course().id + '/export-course';
-        }
-    }
-
-    canArchive() {
-        let isOver: boolean;
-        const course = this.course();
-        const exam = this.exam();
-        if (this.archiveMode() === 'Exam' && exam) {
-            isOver = !!exam.endDate?.isBefore(dayjs());
-        } else {
-            isOver = !!course.endDate?.isBefore(dayjs());
-        }
-        return this.accountService.isAtLeastInstructorInCourse(course) && isOver;
+        } else if (course) {
+            return '/topic/courses/' + course.id + '/export-course';
+        } else return null;
     }
 
     openModal(modalRef: TemplateRef<any>) {
@@ -198,52 +279,27 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     }
 
     archive() {
-        const exam = this.exam();
+        const exam = this.currentExam();
         if (this.archiveMode() === 'Exam' && exam) {
-            this.examService.archiveExam(this.course().id!, exam.id!).subscribe();
+            this.examService.archiveExam(this.currentCourse()?.id!, exam.id!).subscribe();
         } else {
-            this.courseService.archiveCourse(this.course().id!).subscribe();
+            this.courseService.archiveCourse(this.currentCourse()?.id!).subscribe();
         }
-    }
-
-    canDownloadArchive() {
-        let hasArchive: boolean;
-        const exam = this.exam();
-        if (this.archiveMode() === 'Exam' && exam) {
-            hasArchive = (exam.examArchivePath?.length ?? 0) > 0;
-        } else {
-            hasArchive = (this.course().courseArchivePath?.length ?? 0) > 0;
-        }
-        // You can only download one if the path to the archive is present
-        return this.accountService.isAtLeastInstructorInCourse(this.course()) && hasArchive;
     }
 
     downloadArchive() {
-        const exam = this.exam();
+        const exam = this.currentExam();
         if (this.archiveMode() === 'Exam' && exam) {
-            this.examService.downloadExamArchive(this.course().id!, exam.id!);
+            this.examService.downloadExamArchive(this.currentCourse()?.id!, exam.id!);
         } else {
-            this.courseService.downloadCourseArchive(this.course().id!);
+            this.courseService.downloadCourseArchive(this.currentCourse()?.id!);
         }
-    }
-
-    canCleanup() {
-        let hasBeenArchived: boolean;
-        const exam = this.exam();
-        if (this.archiveMode() === 'Exam' && exam) {
-            hasBeenArchived = !!exam.examArchivePath && exam.examArchivePath.length > 0;
-        } else {
-            const course = this.course();
-            hasBeenArchived = !!course.courseArchivePath && course.courseArchivePath.length > 0;
-        }
-        // A course / exam can only be cleaned up if the course / exam has been archived.
-        return this.accountService.isAtLeastInstructorInCourse(this.course()) && hasBeenArchived;
     }
 
     cleanup() {
-        const exam = this.exam();
+        const exam = this.currentExam();
         if (this.archiveMode() === 'Exam' && exam) {
-            this.examService.cleanupExam(this.course().id!, exam.id!).subscribe({
+            this.examService.cleanupExam(this.currentCourse()?.id!, exam.id!).subscribe({
                 next: () => {
                     this.alertService.success('artemisApp.programmingExercise.cleanup.successMessageCleanup');
                     this.dialogErrorSource.next('');
@@ -253,7 +309,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
                 },
             });
         } else {
-            this.courseService.cleanupCourse(this.course().id!).subscribe({
+            this.courseService.cleanupCourse(this.currentCourse()?.id!).subscribe({
                 next: () => {
                     this.alertService.success('artemisApp.programmingExercise.cleanup.successMessageCleanup');
                     this.dialogErrorSource.next('');
