@@ -5,7 +5,7 @@ import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass, NgTemplateOutlet, SlicePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ActivatedRoute, RouterLink, RouterLinkActive } from '@angular/router';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -21,6 +21,7 @@ import { Course, CourseInformationSharingConfiguration } from 'app/core/course/s
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import { BehaviorSubject } from 'rxjs';
+import { ScienceService } from 'app/shared/science/science.service';
 
 describe('CourseSidebarComponent', () => {
     let component: CourseSidebarComponent;
@@ -114,6 +115,7 @@ describe('CourseSidebarComponent', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                MockProvider(ScienceService),
             ],
         }).compileComponents();
 
