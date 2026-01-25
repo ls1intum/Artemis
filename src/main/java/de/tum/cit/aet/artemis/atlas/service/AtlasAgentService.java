@@ -260,6 +260,7 @@ public class AtlasAgentService {
 
         ChatClient.Builder clientBuilder = chatClient.mutate();
         if (chatMemory != null) {
+            // Build chat client with memory advisor for this specific session
             clientBuilder.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build());
         }
         ChatClient sessionClient = clientBuilder.build();
