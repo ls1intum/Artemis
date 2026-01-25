@@ -100,7 +100,7 @@ export class CourseExerciseRowComponent implements OnInit {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((changedParticipation: StudentParticipation) => {
                 const exerciseValue = this.exercise();
-                if (changedParticipation && exerciseValue && changedParticipation.exercise?.id === exerciseValue.id) {
+                if (changedParticipation && exerciseValue?.id && changedParticipation.exercise?.id === exerciseValue.id) {
                     exerciseValue.studentParticipations = exerciseValue.studentParticipations?.length
                         ? exerciseValue.studentParticipations.map((el) => {
                               return el.id === changedParticipation.id ? changedParticipation : el;
@@ -114,6 +114,9 @@ export class CourseExerciseRowComponent implements OnInit {
     }
 
     private updateExerciseData(exercise: Exercise, course: Course): void {
+        if (!exercise) {
+            return;
+        }
         const cachedParticipations = this.participationWebsocketService.getParticipationsForExercise(exercise.id!);
         if (cachedParticipations?.length) {
             exercise.studentParticipations = cachedParticipations;

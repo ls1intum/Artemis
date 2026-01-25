@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { AccountService } from 'app/core/auth/account.service';
-import { expectedProfileInfo } from 'app/core/layouts/profiles/shared/profile.service.spec';
+import { expectedProfileInfo } from 'test/helpers/mocks/service/mock-profile-info';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
