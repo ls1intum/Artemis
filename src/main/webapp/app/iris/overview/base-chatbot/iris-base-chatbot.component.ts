@@ -1,10 +1,12 @@
 import {
     faArrowDown,
+    faCheck,
     faChevronRight,
     faCircle,
     faCircleInfo,
     faCircleNotch,
     faCompress,
+    faCopy,
     faExpand,
     faLink,
     faPaperPlane,
@@ -91,6 +93,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly facSidebar = facSidebar;
     protected readonly faLink = faLink;
     protected readonly faCircleNotch = faCircleNotch;
+    protected readonly faCopy = faCopy;
+    protected readonly faCheck = faCheck;
 
     // Types
     protected readonly IrisLogoSize = IrisLogoSize;
@@ -121,6 +125,16 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     // Computed state
     readonly hasActiveStage = computed(() => this.stages()?.some((stage) => [IrisStageStateDTO.IN_PROGRESS, IrisStageStateDTO.NOT_STARTED].includes(stage.state)) ?? false);
+    readonly isEmptyState = computed(() => !this.messages()?.length && !this.isEmbeddedChat());
+    readonly hasHeaderContent = computed(() => {
+        const hasRelatedEntity = !!this.relatedEntityRoute() && !!this.relatedEntityLinkButtonLabel() && this.isChatHistoryAvailable();
+        const rateLimit = this.rateLimitInfo()?.rateLimit ?? 0;
+        const hasRateLimitInfo = rateLimit > 0;
+        const hasClearButton = !this.isChatHistoryAvailable() && this.messages().length >= 1;
+        const hasSizeToggle = this.fullSize() !== undefined;
+        const hasCloseButton = this.showCloseButton();
+        return hasRelatedEntity || hasRateLimitInfo || hasClearButton || hasSizeToggle || hasCloseButton;
+    });
 
     // UI state signals
     readonly newMessageTextContent = signal('');
@@ -138,7 +152,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private previousSessionId: number | undefined;
     private previousMessageCount = 0;
     private previousMessageIds = new Set<number>();
+    private copyResetTimeoutId: ReturnType<typeof setTimeout> | undefined;
     public ButtonType = ButtonType;
+    readonly copiedMessageKey = signal<number | undefined>(undefined);
 
     showDeclineButton = input<boolean>(true);
     isChatHistoryAvailable = input<boolean>(false);
@@ -236,12 +252,21 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
         }, 150);
         this.destroyRef.onDestroy(() => clearTimeout(focusTimeoutId));
+        this.destroyRef.onDestroy(() => {
+            if (this.copyResetTimeoutId) {
+                clearTimeout(this.copyResetTimeoutId);
+            }
+        });
     }
 
     /**
      * Process messages for display (clone, reverse, format)
      */
     private processMessages(rawMessages: IrisMessage[]): IrisMessage[] {
+        const hasUserMessage = rawMessages.some((message) => message.sender === IrisSender.USER);
+        if (!hasUserMessage && rawMessages.length > 0 && rawMessages.every((message) => message.sender === IrisSender.LLM)) {
+            return [];
+        }
         const processed = _.cloneDeep(rawMessages).reverse();
         processed.forEach((message) => {
             if (message.content?.[0] && 'textContent' in message.content[0]) {
@@ -264,7 +289,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
      */
     onSend(): void {
         this.chatService.messagesRead();
-        const content = this.newMessageTextContent();
+        const content = this.newMessageTextContent().trim();
         if (content) {
             this.isLoading.set(true);
             this.chatService
@@ -312,6 +337,61 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
         message.helpful = !!helpful;
         this.chatService.rateMessage(message, helpful).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+    }
+
+    copyMessage(message: IrisMessage, messageIndex?: number) {
+        const text = this.getCopyText(message);
+        if (!text) {
+            return;
+        }
+        const key = this.getMessageKey(message, messageIndex);
+        this.setCopiedKey(key);
+        if (navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(text).catch(() => this.fallbackCopy(text, key));
+            return;
+        }
+        this.fallbackCopy(text, key);
+    }
+
+    private fallbackCopy(text: string, key: number | undefined) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        this.setCopiedKey(key);
+    }
+
+    private getCopyText(message: IrisMessage): string {
+        if (!message.content?.length) {
+            return '';
+        }
+        const parts = message.content
+            .filter((content) => content.type === IrisMessageContentType.TEXT)
+            .map((content) => (content as IrisTextMessageContent).textContent ?? '')
+            .filter((value) => value);
+        return parts.join('\n\n');
+    }
+
+    isCopied(message: IrisMessage, messageIndex?: number): boolean {
+        return this.copiedMessageKey() === this.getMessageKey(message, messageIndex);
+    }
+
+    private getMessageKey(message: IrisMessage, messageIndex?: number): number | undefined {
+        return message.id ?? messageIndex;
+    }
+
+    private setCopiedKey(key: number | undefined) {
+        this.copiedMessageKey.set(key);
+        if (this.copyResetTimeoutId) {
+            clearTimeout(this.copyResetTimeoutId);
+        }
+        this.copyResetTimeoutId = setTimeout(() => {
+            this.copiedMessageKey.set(undefined);
+        }, 1500);
     }
 
     /**
@@ -392,14 +472,18 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         if (!textareaRef) return;
         const textarea: HTMLTextAreaElement = textareaRef.nativeElement;
         textarea.style.height = 'auto'; // Reset the height to auto
+        if (!textarea.value.trim()) {
+            textarea.style.height = '';
+            this.adjustScrollButtonPosition(1);
+            return;
+        }
         const bufferForSpaceBetweenLines = 4;
         const lineHeight = parseInt(getComputedStyle(textarea).lineHeight, 10) + bufferForSpaceBetweenLines;
-        const maxRows = 3;
-        const maxHeight = lineHeight * maxRows;
+        const maxHeight = 200;
+        const newHeight = Math.min(textarea.scrollHeight, maxHeight);
+        textarea.style.height = `${newHeight}px`;
 
-        textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
-
-        this.adjustScrollButtonPosition(Math.min(textarea.scrollHeight, maxHeight) / lineHeight);
+        this.adjustScrollButtonPosition(newHeight / lineHeight);
     }
 
     /**
@@ -447,6 +531,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     onSessionClick(session: IrisSessionDTO) {
+        if (this.isNewChatSession(session)) {
+            this.openNewSession();
+            return;
+        }
         this.chatService.switchToSession(session);
     }
 

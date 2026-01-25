@@ -620,9 +620,28 @@ describe('IrisBaseChatbotComponent', () => {
         });
     });
 
+    it('should start a new session when the new chat item is clicked', () => {
+        const newChatSession: IrisSessionDTO = {
+            id: 2,
+            title: 'New chat',
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+        const clearChatSpy = vi.spyOn(chatService, 'clearChat').mockReturnValue();
+        const switchToSessionSpy = vi.spyOn(chatService, 'switchToSession').mockReturnValue();
+
+        component.onSessionClick(newChatSession);
+
+        expect(clearChatSpy).toHaveBeenCalledOnce();
+        expect(switchToSessionSpy).not.toHaveBeenCalled();
+    });
+
     it('should switch to the selected session on session click', () => {
         const mockSession: IrisSessionDTO = {
-            id: 2,
+            id: 3,
+            title: 'Course chat',
             creationDate: new Date(),
             chatMode: ChatServiceMode.COURSE,
             entityId: 1,

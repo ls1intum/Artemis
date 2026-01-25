@@ -630,20 +630,14 @@ $competency-rings-blue: $blue;
 $competency-rings-blue-bg: transparentize($competency-rings-blue, 0.8);
 
 // Iris Chatbot
-$iris-chat-widget-background: var(--neutral-dark-l-5);
-$iris-chat-client-background: var(--neutral-dark);
-$iris-chat-bubble-fade: $black;
-$iris-chat-history-background: var(--neutral-dark-l-5);
-$iris-chat-history-label-color: var(--gray-500);
-$iris-client-chat-background: var(--neutral-dark-l-10);
-$iris-client-chat-input: var(--neutral-dark-l-5);
-$iris-my-chat-background: var(--neutral-dark-l-10);
-// $iris-btn-circle: var(--teal);
-// $iris-btn-circle-hover: var(--success);
-$iris-tool-background: var(--neutral-dark-l-10);
-$iris-rate-background: var(--neutral-dark-l-15);
-$iris-chat-header-button-background: var(--neutral-dark-l-15);
-
+// New Iris Theme Variables
+$iris-primary-background: var(--neutral-dark);
+$iris-secondary-background: var(--neutral-dark-l-5);
+$iris-tertiary-background: var(--neutral-dark-l-10);
+$iris-accent-background: var(--neutral-dark-l-15);
+$iris-btn-primary: var(--primary);
+$iris-label-color: var(--gray-500);
+$iris-accent-border-color: var(--gray-500);
 // Iris Communication
 $tutor-suggestion-background: $gray-700;
 

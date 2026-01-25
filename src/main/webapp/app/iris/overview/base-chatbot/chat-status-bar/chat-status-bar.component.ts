@@ -69,11 +69,9 @@ export class ChatStatusBarComponent {
             } else {
                 this.activeStage.set(undefined);
                 if (this.open()) {
-                    this.openTimeout = setTimeout(() => {
-                        this.open.set(false);
-                        this.displayedText.set(undefined);
-                        this.displayedSubText.set(undefined);
-                    }, 5000);
+                    this.open.set(false);
+                    this.displayedText.set(undefined);
+                    this.displayedSubText.set(undefined);
                 }
             }
 
