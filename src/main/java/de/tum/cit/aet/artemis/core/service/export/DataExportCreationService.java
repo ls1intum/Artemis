@@ -29,7 +29,6 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
-import de.tum.cit.aet.artemis.core.service.user.UserService;
 
 /**
  * A service to create data exports for users
@@ -58,8 +57,6 @@ public class DataExportCreationService {
 
     private final MailService mailService;
 
-    private final UserService userService;
-
     private final DataExportExerciseCreationService dataExportExerciseCreationService;
 
     private final DataExportExamCreationService dataExportExamCreationService;
@@ -81,7 +78,7 @@ public class DataExportCreationService {
     private final TempFileUtilService tempFileUtilService;
 
     public DataExportCreationService(@Value("${artemis.data-export-path:./data-exports}") Path dataExportsPath, ZipFileService zipFileService, FileService fileService,
-            DataExportRepository dataExportRepository, MailService mailService, UserService userService, DataExportExerciseCreationService dataExportExerciseCreationService,
+            DataExportRepository dataExportRepository, MailService mailService, DataExportExerciseCreationService dataExportExerciseCreationService,
             DataExportExamCreationService dataExportExamCreationService, DataExportCommunicationDataService dataExportCommunicationDataService,
             DataExportScienceEventService dataExportScienceEventService, DataExportIrisService dataExportIrisService,
             DataExportLearnerProfileService dataExportLearnerProfileService, DataExportCompetencyProgressService dataExportCompetencyProgressService,
@@ -90,7 +87,6 @@ public class DataExportCreationService {
         this.fileService = fileService;
         this.dataExportRepository = dataExportRepository;
         this.mailService = mailService;
-        this.userService = userService;
         this.dataExportExerciseCreationService = dataExportExerciseCreationService;
         this.dataExportExamCreationService = dataExportExamCreationService;
         this.dataExportCommunicationDataService = dataExportCommunicationDataService;
@@ -110,7 +106,7 @@ public class DataExportCreationService {
      *
      * @param dataExport the data export to be created
      **/
-    private DataExport createDataExportWithContent(DataExport dataExport) throws IOException, URISyntaxException {
+    private void createAndSaveDataExportWithContent(DataExport dataExport) throws IOException, URISyntaxException {
         log.info("Creating data export for user {}", dataExport.getUser().getLogin());
         var userId = dataExport.getUser().getId();
         var user = dataExport.getUser();
@@ -126,7 +122,7 @@ public class DataExportCreationService {
         addGeneralUserInformation(user, workingDirectory);
         addReadmeFile(workingDirectory);
         var dataExportPath = createDataExportZipFile(user.getLogin(), workingDirectory);
-        return finishDataExportCreation(dataExport, dataExportPath);
+        finishDataExportCreation(dataExport, dataExportPath);
     }
 
     /**
@@ -156,7 +152,7 @@ public class DataExportCreationService {
      */
     public boolean createDataExport(DataExport dataExport) {
         try {
-            dataExport = createDataExportWithContent(dataExport);
+            createAndSaveDataExportWithContent(dataExport);
         }
         catch (Exception e) {
             log.error("Error while creating data export for user {}", dataExport.getUser().getLogin(), e);
@@ -200,15 +196,14 @@ public class DataExportCreationService {
      *
      * @param dataExport     the data export whose creation is finished
      * @param dataExportPath the path to the zip file containing the data export
-     * @return the updated data export from the database
      */
-    private DataExport finishDataExportCreation(DataExport dataExport, Path dataExportPath) {
+    private void finishDataExportCreation(DataExport dataExport, Path dataExportPath) {
         dataExport.setFilePath(dataExportPath.toString());
         dataExport.setCreationFinishedDate(ZonedDateTime.now());
         dataExport = dataExportRepository.save(dataExport);
         mailService.sendDataExportCreatedEmail(dataExport.getUser(), dataExport);
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
-        return dataExportRepository.save(dataExport);
+        dataExportRepository.save(dataExport);
     }
 
     /**
