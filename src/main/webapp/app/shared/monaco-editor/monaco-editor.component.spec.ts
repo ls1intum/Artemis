@@ -44,6 +44,25 @@ describe('MonacoEditorComponent', () => {
         jest.restoreAllMocks();
     });
 
+    const createMockDiffEditor = () => ({
+        dispose: jest.fn(),
+        updateOptions: jest.fn(),
+        layout: jest.fn(),
+        getModifiedEditor: jest.fn().mockReturnValue({
+            getValue: jest.fn().mockReturnValue('modified content'),
+            setValue: jest.fn(),
+            onDidChangeModelContent: jest.fn(),
+            onDidFocusEditorText: jest.fn(),
+            updateOptions: jest.fn(),
+            dispose: jest.fn(),
+            addCommand: jest.fn(),
+        }),
+        getOriginalEditor: jest.fn().mockReturnValue({ getValue: jest.fn() }),
+        setModel: jest.fn(),
+        onDidUpdateDiff: jest.fn(),
+        getLineChanges: jest.fn(),
+    });
+
     it('should set the text of the editor', () => {
         fixture.detectChanges();
         comp.setText(singleLineText);
@@ -443,7 +462,6 @@ describe('MonacoEditorComponent', () => {
     it('should dispose selection change listeners on destroy', () => {
         fixture.detectChanges();
 
-        // Add a mock selection change listener
         const mockDisposable = { dispose: jest.fn() };
         comp['selectionChangeListeners'] = [{ listener: jest.fn(), disposable: mockDisposable }];
 
@@ -468,7 +486,109 @@ describe('MonacoEditorComponent', () => {
         fixture.componentRef.setInput('textChangedEmitDelay', 1000);
         fixture.detectChanges();
 
-        // Verify the timeouts map exists
         expect(comp['textChangedEmitTimeouts']).toBeDefined();
     });
+
+    it('should create diff editor lazily when entering diff mode', fakeAsync(() => {
+        fixture.detectChanges();
+        // Initially undefined
+        expect(comp['_diffEditor']).toBeUndefined();
+
+        // Mock createStandaloneDiffEditor
+        const mockDiffEditor = createMockDiffEditor();
+        const createDiffSpy = jest.spyOn(comp['monacoEditorService'], 'createStandaloneDiffEditor').mockReturnValue(mockDiffEditor as any);
+
+        fixture.componentRef.setInput('mode', 'diff');
+        fixture.detectChanges();
+        tick();
+
+        expect(createDiffSpy).toHaveBeenCalled();
+        expect(comp['_diffEditor']).toBeDefined();
+    }));
+
+    it('should dispose diff editor when leaving diff mode and sync content if needed', fakeAsync(() => {
+        fixture.detectChanges();
+
+        const editorSetValueSpy = jest.spyOn(comp['_editor'], 'setValue').mockImplementation(() => {});
+
+        // Setup diff mode first
+        const mockDiffEditor = createMockDiffEditor();
+        jest.spyOn(comp['monacoEditorService'], 'createStandaloneDiffEditor').mockReturnValue(mockDiffEditor as any);
+
+        fixture.componentRef.setInput('mode', 'diff');
+        fixture.detectChanges();
+        tick();
+
+        expect(comp['_diffEditor']).toBeDefined();
+
+        // (Accessing private property)
+        (comp as any).useLiveSyncedDiff = false;
+
+        // Switch back to normal
+        fixture.componentRef.setInput('mode', 'normal');
+        fixture.detectChanges();
+        tick();
+
+        expect(mockDiffEditor.dispose).toHaveBeenCalled();
+        expect(editorSetValueSpy).toHaveBeenCalledWith('modified content');
+    }));
+
+    it('should apply diff content in diff mode', fakeAsync(() => {
+        fixture.detectChanges();
+
+        const setValueSpy = jest.fn();
+        const layoutSpy = jest.fn();
+
+        const mockDiffEditor = createMockDiffEditor();
+        // Override specific spies
+        mockDiffEditor.layout = layoutSpy;
+        const modifiedEditorMock = {
+            getValue: jest.fn().mockReturnValue(''),
+            setValue: setValueSpy,
+            onDidChangeModelContent: jest.fn(),
+            onDidFocusEditorText: jest.fn(),
+            dispose: jest.fn(),
+            addCommand: jest.fn(),
+        };
+        mockDiffEditor.getModifiedEditor.mockReturnValue(modifiedEditorMock);
+
+        jest.spyOn(comp['monacoEditorService'], 'createStandaloneDiffEditor').mockReturnValue(mockDiffEditor as any);
+
+        fixture.componentRef.setInput('mode', 'diff');
+        fixture.detectChanges();
+        tick();
+
+        comp.applyDiffContent('new content');
+
+        expect(setValueSpy).toHaveBeenCalledWith('new content');
+        expect(layoutSpy).toHaveBeenCalled();
+    }));
+
+    it('should share the same model between normal editor and modified diff editor', fakeAsync(() => {
+        fixture.detectChanges();
+        const mockModel = {
+            getValue: jest.fn().mockReturnValue('shared content'),
+            getLanguageId: jest.fn().mockReturnValue('typescript'),
+            dispose: jest.fn(),
+        };
+        // Ensure the normal editor returns this model
+        jest.spyOn(comp['_editor'], 'getModel').mockReturnValue(mockModel as any);
+
+        const setModelSpy = jest.fn();
+        const mockDiffEditor = createMockDiffEditor();
+        mockDiffEditor.setModel = setModelSpy;
+
+        jest.spyOn(comp['monacoEditorService'], 'createStandaloneDiffEditor').mockReturnValue(mockDiffEditor as any);
+
+        fixture.componentRef.setInput('mode', 'diff');
+        fixture.detectChanges();
+        tick();
+
+        // Verify that setModel was called with the shared model as 'modified'
+        expect(setModelSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                modified: mockModel,
+            }),
+        );
+    }));
 });

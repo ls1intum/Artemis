@@ -178,6 +178,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     /**
      * Replaces emoticon-like text (e.g., ":)", ":D") with their corresponding emoji characters.
      * Only words that start with ":" are processed for conversion.
+     *
+     * @param text The raw input text to be scanned for emoji patterns.
+     * @returns The transformed string with applicable emoticons replaced by emojis.
      */
     convertTextToEmoji(text: string): string {
         const words = text.split(' ');
@@ -186,6 +189,19 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
 
         return convertedWords.join(' ');
+    }
+
+    public onDidChangeModelContent(listener: (event: monaco.editor.IModelContentChangedEvent) => void): monaco.IDisposable {
+        return this.getActiveEditor().onDidChangeModelContent(listener);
+    }
+
+    public getModel() {
+        return this.getActiveEditor().getModel();
+    }
+
+    public getLineContent(lineNumber: number): string {
+        const model = this.getActiveEditor().getModel();
+        return model ? model.getLineContent(lineNumber) : '';
     }
 
     ngOnInit(): void {
@@ -446,19 +462,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      */
     getActiveEditor(): monaco.editor.IStandaloneCodeEditor {
         return this.mode() === 'diff' && this._diffEditor ? this._diffEditor.getModifiedEditor() : this._editor;
-    }
-
-    public onDidChangeModelContent(listener: (event: monaco.editor.IModelContentChangedEvent) => void): monaco.IDisposable {
-        return this.getActiveEditor().onDidChangeModelContent(listener);
-    }
-
-    public getModel() {
-        return this.getActiveEditor().getModel();
-    }
-
-    public getLineContent(lineNumber: number): string {
-        const model = this.getActiveEditor().getModel();
-        return model ? model.getLineContent(lineNumber) : '';
     }
 
     private emitTextChangeEvent() {

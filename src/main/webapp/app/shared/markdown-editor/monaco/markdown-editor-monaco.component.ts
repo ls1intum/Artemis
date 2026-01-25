@@ -636,6 +636,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         }
     }
 
+    onDiffChanged(event: { ready: boolean; lineChange: LineChange }): void {
+        this.diffLineChange.emit(event);
+    }
+
     parseMarkdown(domainActionsToCheck: TextEditorDomainAction[] = this.domainActions): void {
         if (this.showDefaultPreview) {
             this.defaultPreviewHtml = this.artemisMarkdown.safeHtmlForMarkdown(this._markdown);

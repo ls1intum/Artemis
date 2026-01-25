@@ -27,7 +27,7 @@
                             [textChangedEmitDelay]="200"
                             (textChanged)="onTextChanged($event)"
                             (contentHeightChanged)="onContentHeightChanged($event)"
-                            (diffChanged)="diffLineChange.emit($event)"
+                            (diffChanged)="onDiffChanged($event)"
                             (drop)="onFileDrop($event)"
                             (onBlurEditor)="onBlurEditor.emit()"
                         />
