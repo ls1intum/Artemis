@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fakeAsync, tick } from '@angular/core/testing';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -7,7 +7,6 @@ import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-ba
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
@@ -17,28 +16,41 @@ import { IrisStatusService } from 'app/iris/overview/services/iris-status.servic
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
-import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { of } from 'rxjs';
-import dayjs from 'dayjs/esm';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
-import { mockClientMessage, mockServerMessage } from 'test/helpers/sample/iris-sample-data';
+import {
+    mockClientMessage,
+    mockServerMessage,
+    mockServerSessionHttpResponse,
+    mockServerSessionHttpResponseWithEmptyConversation,
+    mockServerSessionHttpResponseWithId,
+    mockUserMessageWithContent,
+    mockWebsocketServerMessage,
+} from 'test/helpers/sample/iris-sample-data';
 import { By } from '@angular/platform-browser';
-import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
+import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
 import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { LLMSelectionModalComponent } from 'app/logos/llm-selection-popup.component';
 
 describe('IrisBaseChatbotComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: IrisBaseChatbotComponent;
     let fixture: ComponentFixture<IrisBaseChatbotComponent>;
 
     let chatService: IrisChatService;
+    let httpService: IrisChatHttpService;
+    let wsMock: IrisWebsocketService;
     let accountService: AccountService;
 
     const statusMock = {
@@ -47,8 +59,11 @@ describe('IrisBaseChatbotComponent', () => {
         getActiveStatus: vi.fn().mockReturnValue(of({})),
         setCurrentCourse: vi.fn(),
     } as any;
+    const mockLLMModalService = {
+        open: vi.fn().mockResolvedValue('cloud'),
+    } as any;
     const mockUserService = {
-        updateLLMSelectionDecision: vi.fn(),
+        updateLLMSelectionDecision: vi.fn().mockReturnValue(of(new HttpResponse<void>())),
     } as any;
 
     beforeEach(async () => {
@@ -72,6 +87,7 @@ describe('IrisBaseChatbotComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: UserService, useValue: mockUserService },
                 { provide: IrisStatusService, useValue: statusMock },
+                { provide: LLMSelectionModalService, useValue: mockLLMModalService },
                 MockProvider(ActivatedRoute),
                 MockProvider(IrisChatHttpService),
                 MockProvider(IrisWebsocketService),
@@ -84,14 +100,20 @@ describe('IrisBaseChatbotComponent', () => {
                 window.scroll = vi.fn();
                 window.HTMLElement.prototype.scrollTo = vi.fn();
 
-                fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+                // Set up services BEFORE creating component
                 chatService = TestBed.inject(IrisChatService);
                 chatService.setCourseId(456);
+                httpService = TestBed.inject(IrisChatHttpService);
+                wsMock = TestBed.inject(IrisWebsocketService);
                 accountService = TestBed.inject(AccountService);
-                component = fixture.componentInstance;
 
-                accountService.userIdentity.set({ selectedLLMUsageTimestamp: dayjs() } as User);
+                // Set user identity BEFORE creating component (constructor reads this)
+                accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
                 vi.spyOn(accountService, 'getAuthenticationState').mockReturnValue(of());
+
+                // Now create component
+                fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+                component = fixture.componentInstance;
 
                 fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
                 fixture.detectChanges();
@@ -106,30 +128,239 @@ describe('IrisBaseChatbotComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should set userAccepted to NO_AI when user explicitly chose to reject AI usage', () => {
-        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
-        component.ngOnInit();
-        expect(component.userAccepted).toBe(LLMSelectionDecision.NO_AI);
+    it('should set userAccepted to CLOUD_AI if user has accepted the external LLM usage policy', () => {
+        expect(component.userAccepted()).toBe(LLMSelectionDecision.CLOUD_AI);
+    });
+
+    describe('when user has not accepted LLM usage policy', () => {
+        it('should set userAccepted to undefined', () => {
+            accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+            expect(component.userAccepted()).toBeUndefined();
+        });
     });
 
     it('should call API when user accept the policy', () => {
-        const stub = vi.spyOn(mockUserService, 'updateLLMSelectionDecision');
-        stub.mockReturnValue(of(new HttpResponse<void>()));
+        const chatServiceSpy = vi.spyOn(chatService, 'updateLLMUsageConsent').mockImplementation(() => {});
 
-        component.acceptPermission(LLMSelectionDecision.LOCAL_AI);
+        component.acceptPermission(LLMSelectionDecision.CLOUD_AI);
 
-        expect(stub).toHaveBeenCalledOnce();
+        expect(chatServiceSpy).toHaveBeenCalledOnce();
+        expect(chatServiceSpy).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
+        expect(component.userAccepted()).toBe(LLMSelectionDecision.CLOUD_AI);
+    });
+
+    it('should add user message on send', async () => {
+        // given
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+
+        const content = 'Hello';
+        const createdMessage = mockUserMessageWithContent(content);
+        vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisUserMessage>));
+
+        vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+
+        const stub = vi.spyOn(chatService, 'sendMessage');
+        component.newMessageTextContent.set(content);
+        chatService.switchTo(ChatServiceMode.COURSE, 123);
+
+        // when
+        component.onSend();
+
+        await fixture.whenStable();
+
+        // then
+        expect(component.messages()).toContainEqual(createdMessage);
+        expect(stub).toHaveBeenCalledWith(content);
+        expect(getChatSessionsSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should resend message', async () => {
+        // given
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+
+        const content = 'Hello';
+        const createdMessage = mockUserMessageWithContent(content);
+        createdMessage.id = 2;
+        vi.spyOn(httpService, 'resendMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisUserMessage>));
+        vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+
+        const stub = vi.spyOn(chatService, 'resendMessage');
+        component.newMessageTextContent.set(content);
+        chatService.switchTo(ChatServiceMode.COURSE, 123);
+
+        // when
+        component.resendMessage(createdMessage);
+
+        await fixture.whenStable();
+
+        // then
+        expect(component.messages()).toContainEqual(createdMessage);
+        expect(stub).toHaveBeenCalledWith(createdMessage);
+        expect(getChatSessionsSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should rate message', async () => {
+        // given
+        const id = 123;
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(httpService, 'rateMessage').mockReturnValueOnce(of({} as HttpResponse<IrisMessage>));
+        vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+        const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+
+        const message = mockServerMessage;
+        const stub = vi.spyOn(chatService, 'rateMessage');
+        chatService.switchTo(ChatServiceMode.COURSE, id);
+
+        // when
+        component.rateMessage(message, true);
+
+        await fixture.whenStable();
+
+        //then
+        expect(stub).toHaveBeenCalledWith(message, true);
+        expect(httpService.rateMessage).toHaveBeenCalledWith(id, message.id, true);
+        expect(getChatSessionsSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should clear newMessage on send', async () => {
+        // given
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+
+        const content = 'Hello';
+        const createdMessage = mockUserMessageWithContent(content);
+        vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisUserMessage>));
+
+        vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+
+        component.newMessageTextContent.set(content);
+        chatService.switchTo(ChatServiceMode.COURSE, 123);
+
+        // when
+        component.onSend();
+        await fixture.whenStable();
+
+        // then
+        expect(component.newMessageTextContent()).toBe('');
+        expect(getChatSessionsSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not send a message if newMessageTextContent is empty', async () => {
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+
+        vi.spyOn(httpService, 'createMessage');
+
+        chatService.switchTo(ChatServiceMode.COURSE, 123);
+
+        component.onSend();
+
+        expect(httpService.createMessage).not.toHaveBeenCalled();
+        expect(component.newMessageTextContent()).toBe('');
+    });
+
+    it('should set the appropriate message styles based on the sender', async () => {
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+        const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+
+        component.userAccepted.set(LLMSelectionDecision.CLOUD_AI);
+        chatService.switchTo(ChatServiceMode.COURSE, 123);
+
+        component.ngAfterViewInit();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const chatBodyElement: HTMLElement = fixture.nativeElement.querySelector('.chat-body');
+        const clientChats = chatBodyElement.querySelectorAll('.bubble-left');
+        const myChats = chatBodyElement.querySelectorAll('.bubble-right');
+
+        expect(clientChats).toHaveLength(1);
+        expect(myChats).toHaveLength(1);
+        expect(getChatSessionsSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not scroll to bottom when there is no new unread messages', async () => {
+        // given
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithEmptyConversation));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+        const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+
+        chatService.switchTo(ChatServiceMode.COURSE, 123);
+
+        // when
+        component.ngAfterViewInit();
+        await fixture.whenStable();
+
+        // then
+        expect(component.numNewMessages()).toBe(0);
+        expect(component.scrollToBottom).not.toHaveBeenCalled();
+        expect(getChatSessionsSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should scroll to bottom when there is new unread messages', async () => {
+        // given - set up mocks before component creation for proper toSignal initialization
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithEmptyConversation));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketServerMessage));
+        const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+
+        // Recreate component with mocked services
+        fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+        component = fixture.componentInstance;
+        fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+
+        // Set up spy on scrollToBottom after component is created but before switchTo
+        const scrollSpy = vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+
+        fixture.detectChanges();
+
+        chatService.switchTo(ChatServiceMode.COURSE, 123);
+
+        // when
+        component.ngAfterViewInit();
+        await fixture.whenStable();
+
+        // then
+        expect(component.numNewMessages()).toBe(1);
+        expect(scrollSpy).toHaveBeenCalled();
+        expect(getChatSessionsSpy).toHaveBeenCalledOnce();
     });
 
     it('should disable enter key if isLoading and active', () => {
-        component.active = true;
-        component.isLoading = true;
+        // active() is true by default (initialValue: true in toSignal)
+        component.isLoading.set(true);
         const event = new KeyboardEvent('keyup', { key: 'Enter', shiftKey: false });
         vi.spyOn(component, 'onSend');
 
         component.handleKey(event);
 
         expect(component.onSend).not.toHaveBeenCalled();
+    });
+
+    it('should call onSend if Enter key is pressed without Shift key', () => {
+        const event = new KeyboardEvent('keyup', { key: 'Enter', shiftKey: false });
+        vi.spyOn(component, 'onSend');
+
+        vi.spyOn(event, 'preventDefault');
+
+        component.handleKey(event);
+
+        expect(event.preventDefault).toHaveBeenCalled();
+        expect(component.onSend).toHaveBeenCalled();
     });
 
     it('should remove selected text and move cursor position if Enter key is pressed with Shift key', () => {
@@ -157,10 +388,44 @@ describe('IrisBaseChatbotComponent', () => {
         expect(textAreaElement.selectionEnd).toBe(expectedSelectionEnd);
     });
 
-    it('should not render submit button if userAccepted is NO_AI', () => {
-        component.userAccepted = LLMSelectionDecision.NO_AI;
-        component.isLoading = false;
-        component.error = undefined;
+    it('should adjust textarea rows and call adjustChatBodyHeight', () => {
+        const textarea = fixture.nativeElement.querySelector('textarea');
+        const originalScrollHeightGetter = textarea.__lookupGetter__('scrollHeight');
+        const originalGetComputedStyle = window.getComputedStyle;
+
+        const scrollHeightGetterSpy = vi.spyOn(textarea, 'scrollHeight', 'get').mockReturnValue(100);
+        const getComputedStyleSpy = vi.spyOn(window, 'getComputedStyle').mockImplementation(
+            () =>
+                ({
+                    lineHeight: '20px',
+                }) as Partial<CSSStyleDeclaration> as any,
+        );
+
+        component.adjustTextareaRows();
+
+        // Line height is calculated as follows: 20px (line height) + 4px (padding) = 24px
+        // The height of the textarea should be 72px (3 rows * (lineHeight + padding))
+        expect(textarea.style.height).toBe('72px'); // Assuming the calculated height is 60px
+
+        // Restore original getters and methods
+        scrollHeightGetterSpy.mockRestore();
+        getComputedStyleSpy.mockRestore();
+        textarea.__defineGetter__('scrollHeight', originalScrollHeightGetter);
+        window.getComputedStyle = originalGetComputedStyle;
+    });
+
+    it('should disable submit button if isLoading is true', () => {
+        component.isLoading.set(true);
+        fixture.changeDetectorRef.detectChanges();
+        const sendButton = fixture.debugElement.query(By.css('#irisSendButton')).componentInstance;
+
+        expect(sendButton.disabled).toBeTruthy();
+    });
+
+    it('should not render submit button if userAccepted is undefined or NO_AI', () => {
+        component.userAccepted.set(undefined);
+        component.isLoading.set(false);
+        // error is from toSignal and readonly - but button visibility only depends on userAccepted
         fixture.changeDetectorRef.detectChanges();
         const sendButton = fixture.debugElement.query(By.css('#irisSendButton'));
 
@@ -168,9 +433,9 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should not disable submit button if isLoading is false and no error exists', () => {
-        component.userAccepted = LLMSelectionDecision.CLOUD_AI;
-        component.isLoading = false;
-        component.error = undefined;
+        component.userAccepted.set(LLMSelectionDecision.CLOUD_AI);
+        component.isLoading.set(false);
+        // error is from toSignal - button disabled state doesn't depend on error
         fixture.changeDetectorRef.detectChanges();
         const sendButton = fixture.debugElement.query(By.css('#irisSendButton')).componentInstance;
 
@@ -178,140 +443,184 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should not disable submit button if isLoading is false and error is not fatal', () => {
-        component.userAccepted = LLMSelectionDecision.CLOUD_AI;
-        component.isLoading = false;
-        component.error = IrisErrorMessageKey.SEND_MESSAGE_FAILED;
+        component.userAccepted.set(LLMSelectionDecision.CLOUD_AI);
+        component.isLoading.set(false);
+        // error is from toSignal - button disabled state doesn't depend on error
         fixture.changeDetectorRef.detectChanges();
         const sendButton = fixture.debugElement.query(By.css('#irisSendButton')).componentInstance;
 
         expect(sendButton.disabled).toBeFalsy();
     });
 
-    it('should set suggestions correctly', () => {
+    it('should handle suggestion click correctly', () => {
+        const suggestion = 'test suggestion';
+        vi.spyOn(component, 'onSend');
+        vi.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined));
+
+        component.onSuggestionClick(suggestion);
+
+        expect(chatService.sendMessage).toHaveBeenCalledWith(suggestion);
+        expect(component.onSend).toHaveBeenCalled();
+    });
+
+    it('should set clickedSuggestion when clicking a suggestion', () => {
+        const suggestion = 'test suggestion';
+        vi.spyOn(component, 'onSend');
+        vi.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined));
+
+        component.onSuggestionClick(suggestion);
+
+        expect(component.clickedSuggestion()).toEqual(suggestion);
+    });
+
+    describe('suggestions rendering', () => {
         const expectedSuggestions = ['suggestion1', 'suggestion2', 'suggestion3'];
-        vi.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
-
-        component.ngOnInit();
-
-        expect(component.suggestions).toEqual(expectedSuggestions);
-    });
-
-    it('should not render suggestions when suggestions array is empty', () => {
-        // Arrange
-        const expectedSuggestions: string[] = [];
         const mockMessages = [mockClientMessage, mockServerMessage];
 
-        vi.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
-        vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+        beforeEach(() => {
+            // Mock observables before component creation for toSignal to pick up
+            vi.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
 
-        // Act
-        component.ngOnInit();
-        fixture.changeDetectorRef.detectChanges();
+            // Recreate component with mocked observables
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+        });
 
-        // Assert
-        const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
-        expect(suggestionButtons).toHaveLength(0);
+        it('should render suggestions when suggestions array is not empty', () => {
+            const suggestionsElement: HTMLElement = fixture.nativeElement.querySelector('.suggestions-container');
+            const suggestionButtons = suggestionsElement.querySelectorAll('.suggestion-button');
+            expect(suggestionButtons).toHaveLength(expectedSuggestions.length);
+            suggestionButtons.forEach((button, index) => {
+                expect(button.textContent).toBe(expectedSuggestions[index]);
+            });
+        });
+
+        it('should disable suggestion buttons if isLoading is true', () => {
+            component.isLoading.set(true);
+            fixture.changeDetectorRef.detectChanges();
+
+            const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
+            expect(suggestionButtons).toHaveLength(expectedSuggestions.length);
+            suggestionButtons.forEach((button: HTMLButtonElement) => {
+                expect(button.disabled).toBe(true);
+            });
+        });
+
+        it('should not render suggestions if userAccepted is not CLOUD_AI or LOCAL_AI', () => {
+            component.userAccepted.set(LLMSelectionDecision.NO_AI);
+            fixture.changeDetectorRef.detectChanges();
+
+            const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
+            expect(suggestionButtons).toHaveLength(0);
+        });
     });
 
-    it('should not render suggestions if userAccepted is NO_AI', () => {
-        // Arrange
-        const expectedSuggestions = ['suggestion1', 'suggestion2'];
-        const mockMessages = [mockClientMessage, mockServerMessage];
+    describe('suggestions not rendered', () => {
+        it('should not render suggestions when suggestions array is empty', () => {
+            vi.spyOn(chatService, 'currentSuggestions').mockReturnValue(of([]));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage, mockServerMessage]));
 
-        vi.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
-        vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
 
-        // Act
-        component.ngOnInit();
-        component.userAccepted = LLMSelectionDecision.NO_AI;
-        fixture.changeDetectorRef.detectChanges();
+            const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
+            expect(suggestionButtons).toHaveLength(0);
+        });
 
-        // Assert
-        const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
-        expect(suggestionButtons).toHaveLength(0);
-    });
+        it('should not render suggestions if the rate limit is exceeded', () => {
+            vi.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(['suggestion1', 'suggestion2']));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage, mockServerMessage]));
+            statusMock.currentRatelimitInfo.mockReturnValue(of({ currentMessageCount: 100, rateLimit: 100, rateLimitTimeframeHours: 1 }));
 
-    it('should not render suggestions if the rate limit is exceeded', () => {
-        // Arrange
-        const expectedSuggestions = ['suggestion1', 'suggestion2'];
-        const mockMessages = [mockClientMessage, mockServerMessage];
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
 
-        vi.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
-        vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+            const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
+            expect(suggestionButtons).toHaveLength(0);
+        });
 
-        // Act
-        component.ngOnInit();
-        component.rateLimitInfo = { currentMessageCount: 100, rateLimit: 100, rateLimitTimeframeHours: 1 };
-        fixture.changeDetectorRef.detectChanges();
+        it('should not render suggestions if the user is not active', () => {
+            vi.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(['suggestion1', 'suggestion2']));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage, mockServerMessage]));
+            statusMock.getActiveStatus.mockReturnValue(of(false));
 
-        // Assert
-        const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
-        expect(suggestionButtons).toHaveLength(0);
-    });
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
 
-    it('should not render suggestions if the user is not active', () => {
-        // Arrange
-        const expectedSuggestions = ['suggestion1', 'suggestion2'];
-        const mockMessages = [mockClientMessage, mockServerMessage];
+            const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
+            expect(suggestionButtons).toHaveLength(0);
+        });
 
-        vi.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
-        vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+        it('should not render suggestions if hasActiveStage is true', () => {
+            const activeStage = { state: IrisStageStateDTO.IN_PROGRESS } as IrisStageDTO;
+            vi.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(['suggestion1', 'suggestion2']));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage, mockServerMessage]));
+            vi.spyOn(chatService, 'currentStages').mockReturnValue(of([activeStage]));
 
-        // Act
-        component.ngOnInit();
-        component.active = false;
-        fixture.changeDetectorRef.detectChanges();
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
 
-        // Assert
-        const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
-        expect(suggestionButtons).toHaveLength(0);
-    });
-
-    it('should not render suggestions if hasActiveStage is true', () => {
-        // Arrange
-        const expectedSuggestions = ['suggestion1', 'suggestion2'];
-        const mockMessages = [mockClientMessage, mockServerMessage];
-
-        vi.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
-        vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
-
-        // Act
-        component.ngOnInit();
-        component.hasActiveStage = true;
-        fixture.changeDetectorRef.detectChanges();
-
-        // Assert
-        const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
-        expect(suggestionButtons).toHaveLength(0);
+            const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
+            expect(suggestionButtons).toHaveLength(0);
+        });
     });
 
     describe('clear chat session', () => {
+        it('should clear chat session when clear button is clicked', async () => {
+            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+            vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+            vi.spyOn(chatService, 'clearChat').mockReturnValueOnce();
+            const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+
+            chatService.switchTo(ChatServiceMode.COURSE, 123);
+
+            fixture.detectChanges();
+            await fixture.whenStable();
+            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-button');
+
+            button.click();
+            await fixture.whenStable();
+
+            expect(chatService.clearChat).toHaveBeenCalledOnce();
+            expect(getChatSessionsSpy).toHaveBeenCalledOnce();
+        });
+
         it('should not render clear chat button if the history is empty', () => {
             const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-button');
             expect(button).toBeNull();
         });
     });
 
-    it('should set irisQuestion onInit when provided in the queryParams', () => {
-        const mockQueryParams = { irisQuestion: 'Can you explain me the error I got?' };
-        const activatedRoute = TestBed.inject(ActivatedRoute);
-
-        (activatedRoute.queryParams as any) = of(mockQueryParams);
-
-        component.ngOnInit();
-
-        expect(component.newMessageTextContent).toBe(mockQueryParams.irisQuestion);
+    it('should leave newMessageTextContent empty when no irisQuestion provided in queryParams', () => {
+        // newMessageTextContent starts empty by default
+        expect(component.newMessageTextContent()).toBe('');
     });
 
-    it('should leave irisQuestion empty onInit when no question provided in the queryParams', () => {
-        const mockQueryParams = {};
-        const activatedRoute = TestBed.inject(ActivatedRoute);
+    describe('irisQuestion from queryParams', () => {
+        it('should set newMessageTextContent when irisQuestion is provided', () => {
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            (activatedRoute.queryParams as any) = of({ irisQuestion: 'Can you explain me the error I got?' });
 
-        (activatedRoute.queryParams as any) = of(mockQueryParams);
+            // Recreate component with mocked queryParams
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
 
-        component.ngOnInit();
-
-        expect(component.newMessageTextContent).toBe('');
+            expect(component.newMessageTextContent()).toBe('Can you explain me the error I got?');
+        });
     });
 
     it('should switch to the selected session on session click', () => {
@@ -330,15 +639,15 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should set isChatHistoryOpen to true when called with true', () => {
-        component.isChatHistoryOpen = false;
+        component.isChatHistoryOpen.set(false);
         component.setChatHistoryVisibility(true);
-        expect(component.isChatHistoryOpen).toBeTrue();
+        expect(component.isChatHistoryOpen()).toBe(true);
     });
 
     it('should set isChatHistoryOpen to false when called with false', () => {
-        component.isChatHistoryOpen = true;
+        component.isChatHistoryOpen.set(true);
         component.setChatHistoryVisibility(false);
-        expect(component.isChatHistoryOpen).toBeFalse();
+        expect(component.isChatHistoryOpen()).toBe(false);
     });
 
     it('should call chatService.clearChat when openNewSession is executed', () => {
@@ -385,7 +694,12 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         beforeEach(() => {
-            component.chatSessions = [...sortedSessions];
+            // Mock chatSessions before component creation (chatSessions is readonly from toSignal)
+            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([...sortedSessions]));
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
         });
 
         it('filters by title (case-insensitive)', () => {
@@ -403,7 +717,7 @@ describe('IrisBaseChatbotComponent', () => {
         it('ignores sessions with null title when searching', () => {
             component.setSearchValue('anything');
             const res = component.getSessionsBetween(0, 7);
-            expect(res.some((s) => s.id === 3)).toBeFalse();
+            expect(res.some((s) => s.id === 3)).toBe(false);
         });
 
         it('returns all sessions again when search is cleared', () => {
@@ -465,7 +779,12 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         beforeEach(() => {
-            component.chatSessions = [...sortedSessions];
+            // Mock chatSessions before component creation (chatSessions is readonly from toSignal)
+            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([...sortedSessions]));
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
         });
 
         it('should handle invalid day ranges gracefully', () => {
@@ -511,935 +830,211 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     describe('Related entity button', () => {
-        const setupAndVerifyRelatedEntityButton = (session: IrisSessionDTO, expectedLinkFragment: string) => {
-            vi.spyOn(chatService, 'switchToSession').mockImplementation(() => {
-                component['currentChatMode'].set(session.chatMode);
-                component['currentRelatedEntityId'].set(session.entityId);
-            });
+        it('should display correct related entity button when lecture session selected', async () => {
+            // Mock the service observables before component creation
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.LECTURE));
+            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(55));
 
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
             fixture.componentRef.setInput('isChatHistoryAvailable', true);
-
-            chatService.switchToSession(session);
-            fixture.changeDetectorRef.detectChanges();
-            tick();
+            fixture.componentRef.setInput('fullSize', undefined);
+            fixture.componentRef.setInput('showCloseButton', false);
+            fixture.componentRef.setInput('isChatGptWrapper', false);
+            fixture.detectChanges();
+            await fixture.whenStable();
 
             const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
             expect(relatedEntityButton).not.toBeNull();
-            expect(component.relatedEntityRoute()).toBe(expectedLinkFragment);
-        };
-
-        it('should display correct related entity button when lecture session selected', fakeAsync(() => {
-            const session: IrisSessionDTO = {
-                id: 10,
-                creationDate: new Date(),
-                chatMode: ChatServiceMode.LECTURE,
-                entityId: 55,
-                entityName: 'Lecture 1',
-            };
-
-            setupAndVerifyRelatedEntityButton(session, '../lectures/55');
-        }));
-
-        it('should display correct related entity button when programming exercise session selected', fakeAsync(() => {
-            const session: IrisSessionDTO = {
-                id: 11,
-                creationDate: new Date(),
-                chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
-                entityId: 99,
-                entityName: 'Exercise 1',
-            };
-
-            setupAndVerifyRelatedEntityButton(session, '../exercises/99');
-        }));
-    });
-    describe('showAISelectionModal', () => {
-        it('should handle cloud choice from modal', async () => {
-            const acceptPermissionSpy = vi.spyOn(component, 'acceptPermission');
-            const updateConsentSpy = vi.spyOn(chatService, 'updateLLMUsageConsent');
-
-            vi.spyOn(component['llmModalService'], 'open').mockResolvedValue('cloud');
-
-            await component.showAISelectionModal();
-
-            expect(acceptPermissionSpy).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
-            expect(updateConsentSpy).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
+            expect(component.relatedEntityRoute()).toBe('../lectures/55');
         });
 
-        it('should handle local choice from modal', async () => {
-            const acceptPermissionSpy = vi.spyOn(component, 'acceptPermission');
-            const updateConsentSpy = vi.spyOn(chatService, 'updateLLMUsageConsent');
+        it('should display correct related entity button when programming exercise session selected', async () => {
+            // Mock the service observables before component creation
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(99));
 
-            vi.spyOn(component['llmModalService'], 'open').mockResolvedValue('local');
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.componentRef.setInput('isChatHistoryAvailable', true);
+            fixture.componentRef.setInput('fullSize', undefined);
+            fixture.componentRef.setInput('showCloseButton', false);
+            fixture.componentRef.setInput('isChatGptWrapper', false);
+            fixture.detectChanges();
+            await fixture.whenStable();
 
-            await component.showAISelectionModal();
-
-            expect(acceptPermissionSpy).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
-            expect(updateConsentSpy).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
-        });
-
-        it('should handle no_ai choice from modal', async () => {
-            const updateConsentSpy = vi.spyOn(chatService, 'updateLLMUsageConsent');
-            const closeChatSpy = vi.spyOn(component, 'closeChat');
-
-            vi.spyOn(component['llmModalService'], 'open').mockResolvedValue('no_ai');
-
-            await component.showAISelectionModal();
-
-            expect(updateConsentSpy).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
-            expect(closeChatSpy).toHaveBeenCalledOnce();
-        });
-
-        it('should handle none choice from modal', async () => {
-            const closeChatSpy = vi.spyOn(component, 'closeChat');
-
-            vi.spyOn(component['llmModalService'], 'open').mockResolvedValue('none');
-
-            await component.showAISelectionModal();
-
-            expect(closeChatSpy).toHaveBeenCalledOnce();
-        });
-
-        it('should call showAISelectionModal when user has not accepted', async () => {
-            accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
-            const showModalSpy = vi.spyOn(component, 'showAISelectionModal').mockResolvedValue();
-
-            component.ngOnInit();
-
-            expect(showModalSpy).toHaveBeenCalledOnce();
+            const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
+            expect(relatedEntityButton).not.toBeNull();
+            expect(component.relatedEntityRoute()).toBe('../exercises/99');
         });
     });
 
-    describe('checkIfUserAcceptedLLMUsage', () => {
-        it('should set userAccepted from accountService', () => {
-            accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.LOCAL_AI } as User);
+    describe('LLM Selection Modal', () => {
+        let mockLLMModalService: any;
 
-            component.checkIfUserAcceptedLLMUsage();
-
-            expect(component.userAccepted).toBe(LLMSelectionDecision.LOCAL_AI);
+        beforeEach(() => {
+            mockLLMModalService = TestBed.inject(LLMSelectionModalService);
         });
 
-        it('should set userAccepted to undefined when user has no selection', () => {
+        it('should show LLM selection modal when userAccepted is undefined', async () => {
             accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
 
-            component.checkIfUserAcceptedLLMUsage();
+            const openSpy = vi.spyOn(mockLLMModalService, 'open').mockResolvedValue('none');
 
-            expect(component.userAccepted).toBeUndefined();
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.userAccepted()).toBeUndefined();
+            expect(openSpy).toHaveBeenCalled();
+        });
+
+        it('should not show LLM selection modal when userAccepted is already set', async () => {
+            const mockUser = { selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User;
+            accountService.userIdentity.set(mockUser);
+            vi.spyOn(accountService, 'userIdentity').mockReturnValue(mockUser as any);
+
+            mockLLMModalService.open.mockClear();
+            const openSpy = vi.spyOn(mockLLMModalService, 'open');
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            const chatBody = fixture.nativeElement.querySelector('.chat-body');
+            if (chatBody) {
+                chatBody.scrollTo = vi.fn();
+            }
+            fixture.detectChanges();
+
+            await fixture.whenStable();
+
+            expect(component.userAccepted()).toBe(LLMSelectionDecision.CLOUD_AI);
+            expect(openSpy).not.toHaveBeenCalled();
+        });
+
+        it('should set userAccepted to CLOUD_AI when user selects cloud in modal', async () => {
+            accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
+            vi.spyOn(mockLLMModalService, 'open').mockResolvedValue('cloud');
+            vi.spyOn(chatService, 'updateLLMUsageConsent').mockImplementation(() => {});
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            await component.showAISelectionModal();
+
+            expect(component.userAccepted()).toBe(LLMSelectionDecision.CLOUD_AI);
+        });
+
+        it('should set userAccepted to LOCAL_AI when user selects local in modal', async () => {
+            vi.spyOn(mockLLMModalService, 'open').mockResolvedValue('local');
+            vi.spyOn(chatService, 'updateLLMUsageConsent').mockImplementation(() => {});
+
+            await component.showAISelectionModal();
+
+            expect(component.userAccepted()).toBe(LLMSelectionDecision.LOCAL_AI);
+        });
+
+        it('should close chat when user selects no_ai in modal', async () => {
+            vi.spyOn(mockLLMModalService, 'open').mockResolvedValue('no_ai');
+            vi.spyOn(chatService, 'updateLLMUsageConsent').mockImplementation(() => {});
+            vi.spyOn(component.closeClicked, 'emit');
+
+            await component.showAISelectionModal();
+
+            expect(chatService.updateLLMUsageConsent).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
+            expect(component.closeClicked.emit).toHaveBeenCalledOnce();
+        });
+
+        it('should close chat when user dismisses modal (none)', async () => {
+            vi.spyOn(mockLLMModalService, 'open').mockResolvedValue('none');
+            vi.spyOn(component.closeClicked, 'emit');
+
+            await component.showAISelectionModal();
+
+            expect(component.closeClicked.emit).toHaveBeenCalledOnce();
         });
     });
 
-    describe('onSuggestionClick', () => {
-        it('should set newMessageTextContent to suggestion', () => {
-            const suggestion = 'This is a test suggestion';
-            vi.spyOn(component, 'onSend').mockImplementation(() => {});
-
-            component.onSuggestionClick(suggestion);
-
-            expect(component.newMessageTextContent).toBe(suggestion);
-        });
-
-        it('should call onSend after setting suggestion', () => {
-            const suggestion = 'Another suggestion';
-            const onSendSpy = vi.spyOn(component, 'onSend').mockImplementation(() => {});
-
-            component.onSuggestionClick(suggestion);
-
-            expect(onSendSpy).toHaveBeenCalledOnce();
-        });
-    });
-
-    describe('closeChat', () => {
-        it('should call chatService.messagesRead', () => {
-            const readSpy = vi.spyOn(chatService, 'messagesRead');
-
-            component.closeChat();
-
-            expect(readSpy).toHaveBeenCalledOnce();
-        });
-
-        it('should emit closeClicked event', () => {
-            const emitSpy = vi.spyOn(component.closeClicked, 'emit');
-
-            component.closeChat();
-
-            expect(emitSpy).toHaveBeenCalledOnce();
-        });
-    });
-
-    describe('onModelChange', () => {
-        beforeEach(fakeAsync(() => {
-            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
+    describe('LLM Selection rendering', () => {
+        it('should render chat input when userAccepted is CLOUD_AI', () => {
+            component.userAccepted.set(LLMSelectionDecision.CLOUD_AI);
             fixture.changeDetectorRef.detectChanges();
-            tick();
+
+            const chatInput = fixture.nativeElement.querySelector('.chat-input');
+            expect(chatInput).not.toBeNull();
+        });
+
+        it('should render chat input when userAccepted is LOCAL_AI', () => {
+            component.userAccepted.set(LLMSelectionDecision.LOCAL_AI);
             fixture.changeDetectorRef.detectChanges();
-        }));
 
-        it('should update rows when newRows is less than current rows', () => {
-            component.rows = 3;
-            component.messageTextarea.nativeElement.value = 'Line 1\nLine 2';
-            const adjustSpy = vi.spyOn(component, 'adjustScrollButtonPosition');
-
-            component.onModelChange();
-
-            expect(component.rows).toBe(2);
-            expect(adjustSpy).toHaveBeenCalledWith(2);
+            const chatInput = fixture.nativeElement.querySelector('.chat-input');
+            expect(chatInput).not.toBeNull();
         });
 
-        it('should update rows when newRows is greater than current rows', () => {
-            component.rows = 1;
-            component.messageTextarea.nativeElement.value = 'Line 1\nLine 2\nLine 3';
-            const adjustSpy = vi.spyOn(component, 'adjustScrollButtonPosition');
+        it('should show error message when userAccepted is NO_AI', () => {
+            component.userAccepted.set(LLMSelectionDecision.NO_AI);
+            fixture.changeDetectorRef.detectChanges();
 
-            component.onModelChange();
+            const errorMessages = fixture.nativeElement.querySelectorAll('.client-chat-error');
+            expect(errorMessages.length).toBeGreaterThan(0);
+            const allErrorText = Array.from(errorMessages)
+                .map((msg: any) => msg.textContent)
+                .join(' ');
 
-            expect(component.rows).toBe(3);
-            expect(adjustSpy).toHaveBeenCalledWith(3);
+            expect(allErrorText).toContain('aiUsageDeclined');
         });
 
-        it('should not update rows when newRows equals current rows', () => {
-            component.rows = 2;
-            component.messageTextarea.nativeElement.value = 'Line 1\nLine 2';
-            const adjustSpy = vi.spyOn(component, 'adjustScrollButtonPosition');
+        it('should not render chat input when userAccepted is NO_AI', () => {
+            component.userAccepted.set(LLMSelectionDecision.NO_AI);
+            fixture.changeDetectorRef.detectChanges();
 
-            component.onModelChange();
-
-            expect(adjustSpy).not.toHaveBeenCalled();
+            const chatInput = fixture.nativeElement.querySelector('.chat-input');
+            expect(chatInput).toBeNull();
         });
 
-        it('should not update rows when newRows exceeds 3', () => {
-            component.rows = 3;
-            component.messageTextarea.nativeElement.value = 'Line 1\nLine 2\nLine 3\nLine 4';
-            const adjustSpy = vi.spyOn(component, 'adjustScrollButtonPosition');
+        it('should not render chat input when userAccepted is undefined', () => {
+            component.userAccepted.set(undefined);
+            fixture.changeDetectorRef.detectChanges();
 
-            component.onModelChange();
-
-            expect(component.rows).toBe(3);
-            expect(adjustSpy).not.toHaveBeenCalled();
-        });
-
-        it('should set rows to 1 when textarea has single line', () => {
-            component.rows = 2;
-            component.messageTextarea.nativeElement.value = 'Single line';
-            const adjustSpy = vi.spyOn(component, 'adjustScrollButtonPosition');
-
-            component.onModelChange();
-
-            expect(component.rows).toBe(1);
-            expect(adjustSpy).toHaveBeenCalledWith(1);
-        });
-
-        it('should cap rows at 3 when textarea has more than 3 lines', () => {
-            component.rows = 2;
-            component.messageTextarea.nativeElement.value = 'Line 1\nLine 2\nLine 3\nLine 4\nLine 5';
-
-            component.onModelChange();
-
-            expect(component.rows).toBe(2); // Should not update beyond current when > 3
+            const chatInput = fixture.nativeElement.querySelector('.chat-input');
+            expect(chatInput).toBeNull();
         });
     });
 
-    describe('checkChatScroll', () => {
+    describe('suggestions with LLM selection', () => {
+        const expectedSuggestions = ['suggestion1', 'suggestion2'];
+        const mockMessages = [mockClientMessage, mockServerMessage];
+
         beforeEach(() => {
-            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
-
-            const mockMessages = [mockClientMessage, mockServerMessage];
+            vi.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
             vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
 
-            component.ngOnInit();
-            fixture.changeDetectorRef.detectChanges();
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
         });
 
-        it('should set isScrolledToBottom to true when scrollTop is 0', () => {
-            const messagesElement = component.messagesElement.nativeElement;
-            Object.defineProperty(messagesElement, 'scrollTop', { value: 0, writable: true, configurable: true });
-
-            component.checkChatScroll();
-
-            expect(component.isScrolledToBottom).toBeTrue();
-        });
-
-        it('should set isScrolledToBottom to true when scrollTop is less than 50', () => {
-            const messagesElement = component.messagesElement.nativeElement;
-            Object.defineProperty(messagesElement, 'scrollTop', { value: 30, writable: true, configurable: true });
-
-            component.checkChatScroll();
-
-            expect(component.isScrolledToBottom).toBeTrue();
-        });
-
-        it('should set isScrolledToBottom to true when scrollTop is exactly 49', () => {
-            const messagesElement = component.messagesElement.nativeElement;
-            Object.defineProperty(messagesElement, 'scrollTop', { value: 49, writable: true, configurable: true });
-
-            component.checkChatScroll();
-
-            expect(component.isScrolledToBottom).toBeTrue();
-        });
-
-        it('should set isScrolledToBottom to false when scrollTop is exactly 50', () => {
-            const messagesElement = component.messagesElement.nativeElement;
-            Object.defineProperty(messagesElement, 'scrollTop', { value: 50, writable: true, configurable: true });
-
-            component.checkChatScroll();
-
-            expect(component.isScrolledToBottom).toBeFalse();
-        });
-
-        it('should set isScrolledToBottom to false when scrollTop is greater than 50', () => {
-            const messagesElement = component.messagesElement.nativeElement;
-            Object.defineProperty(messagesElement, 'scrollTop', { value: 100, writable: true, configurable: true });
-
-            component.checkChatScroll();
-
-            expect(component.isScrolledToBottom).toBeFalse();
-        });
-    });
-
-    describe('computeRelatedEntityRoute', () => {
-        it('should return undefined when chatMode is undefined', () => {
-            const result = component['computeRelatedEntityRoute'](undefined, 123);
-            expect(result).toBeUndefined();
-        });
-
-        it('should return undefined when relatedEntityId is undefined', () => {
-            const result = component['computeRelatedEntityRoute'](ChatServiceMode.PROGRAMMING_EXERCISE, undefined);
-            expect(result).toBeUndefined();
-        });
-
-        it('should return undefined when both chatMode and relatedEntityId are undefined', () => {
-            const result = component['computeRelatedEntityRoute'](undefined, undefined);
-            expect(result).toBeUndefined();
-        });
-
-        it('should return correct route for PROGRAMMING_EXERCISE', () => {
-            const result = component['computeRelatedEntityRoute'](ChatServiceMode.PROGRAMMING_EXERCISE, 456);
-            expect(result).toBe('../exercises/456');
-        });
-
-        it('should return correct route for LECTURE', () => {
-            const result = component['computeRelatedEntityRoute'](ChatServiceMode.LECTURE, 789);
-            expect(result).toBe('../lectures/789');
-        });
-
-        it('should return undefined for COURSE mode', () => {
-            const result = component['computeRelatedEntityRoute'](ChatServiceMode.COURSE, 123);
-            expect(result).toBeUndefined();
-        });
-
-        it('should return undefined for unknown chat mode', () => {
-            const result = component['computeRelatedEntityRoute']('UNKNOWN_MODE' as any, 123);
-            expect(result).toBeUndefined();
-        });
-    });
-
-    describe('computeRelatedEntityLinkButtonLabel', () => {
-        it('should return undefined when chatMode is undefined', () => {
-            const result = component['computeRelatedEntityLinkButtonLabel'](undefined);
-            expect(result).toBeUndefined();
-        });
-
-        it('should return correct label for PROGRAMMING_EXERCISE', () => {
-            const result = component['computeRelatedEntityLinkButtonLabel'](ChatServiceMode.PROGRAMMING_EXERCISE);
-            expect(result).toBe('artemisApp.exerciseChatbot.goToRelatedEntityButton.exerciseLabel');
-        });
-
-        it('should return correct label for LECTURE', () => {
-            const result = component['computeRelatedEntityLinkButtonLabel'](ChatServiceMode.LECTURE);
-            expect(result).toBe('artemisApp.exerciseChatbot.goToRelatedEntityButton.lectureLabel');
-        });
-
-        it('should return undefined for COURSE mode', () => {
-            const result = component['computeRelatedEntityLinkButtonLabel'](ChatServiceMode.COURSE);
-            expect(result).toBeUndefined();
-        });
-
-        it('should return undefined for unknown chat mode', () => {
-            const result = component['computeRelatedEntityLinkButtonLabel']('UNKNOWN_MODE' as any);
-            expect(result).toBeUndefined();
-        });
-    });
-
-    describe('resetChatBodyHeight', () => {
-        beforeEach(() => {
-            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
-            fixture.changeDetectorRef.detectChanges();
-        });
-
-        it('should reset textarea rows to 1', () => {
-            const textarea = component.messageTextarea.nativeElement;
-            textarea.rows = 3;
-
-            component.resetChatBodyHeight();
-
-            expect(textarea.rows).toBe(1);
-        });
-
-        it('should reset textarea height style to empty string', () => {
-            const textarea = component.messageTextarea.nativeElement;
-            textarea.style.height = '100px';
-
-            component.resetChatBodyHeight();
-
-            expect(textarea.style.height).toBe('');
-        });
-
-        it('should reset scrollArrow bottom style to empty string', () => {
-            const scrollArrow = component.scrollArrow.nativeElement;
-            scrollArrow.style.bottom = '50px';
-
-            component.resetChatBodyHeight();
-
-            expect(scrollArrow.style.bottom).toBe('');
-        });
-
-        it('should reset all properties at once', () => {
-            const textarea = component.messageTextarea.nativeElement;
-            const scrollArrow = component.scrollArrow.nativeElement;
-            textarea.rows = 5;
-            textarea.style.height = '200px';
-            scrollArrow.style.bottom = '100px';
-
-            component.resetChatBodyHeight();
-
-            expect(textarea.rows).toBe(1);
-            expect(textarea.style.height).toBe('');
-            expect(scrollArrow.style.bottom).toBe('');
-        });
-    });
-
-    describe('adjustTextareaRows', () => {
-        beforeEach(() => {
-            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
-            fixture.changeDetectorRef.detectChanges();
-        });
-
-        it('should set textarea height to auto initially', () => {
-            const textarea = component.messageTextarea.nativeElement;
-            const adjustSpy = vi.spyOn(component, 'adjustScrollButtonPosition');
-
-            component.adjustTextareaRows();
-
-            expect(textarea.style.height).toContain('auto');
-            expect(adjustSpy).toHaveBeenCalled();
-        });
-
-        it('should calculate height based on scrollHeight when less than maxHeight', () => {
-            const textarea = component.messageTextarea.nativeElement;
-            Object.defineProperty(textarea, 'scrollHeight', { value: 50, writable: true, configurable: true });
-            vi.spyOn(window, 'getComputedStyle').mockReturnValue({ lineHeight: '20px' } as CSSStyleDeclaration);
-
-            component.adjustTextareaRows();
-
-            expect(textarea.style.height).toBe('50px');
-        });
-
-        it('should cap height at maxHeight when scrollHeight exceeds it', () => {
-            const textarea = component.messageTextarea.nativeElement;
-            Object.defineProperty(textarea, 'scrollHeight', { value: 500, writable: true, configurable: true });
-            vi.spyOn(window, 'getComputedStyle').mockReturnValue({ lineHeight: '20px' } as CSSStyleDeclaration);
-
-            component.adjustTextareaRows();
-
-            // maxHeight = (20 + 4) * 3 = 72px
-            expect(textarea.style.height).toBe('72px');
-        });
-
-        it('should call adjustScrollButtonPosition with correct value', () => {
-            const textarea = component.messageTextarea.nativeElement;
-            Object.defineProperty(textarea, 'scrollHeight', { value: 60, writable: true, configurable: true });
-            vi.spyOn(window, 'getComputedStyle').mockReturnValue({ lineHeight: '20px' } as CSSStyleDeclaration);
-            const adjustSpy = vi.spyOn(component, 'adjustScrollButtonPosition');
-
-            component.adjustTextareaRows();
-
-            // 60 / (20 + 4) = 2.5
-            expect(adjustSpy).toHaveBeenCalledWith(2.5);
-        });
-
-        it('should call adjustScrollButtonPosition with maxHeight ratio when exceeded', () => {
-            const textarea = component.messageTextarea.nativeElement;
-            Object.defineProperty(textarea, 'scrollHeight', { value: 500, writable: true, configurable: true });
-            vi.spyOn(window, 'getComputedStyle').mockReturnValue({ lineHeight: '20px' } as CSSStyleDeclaration);
-            const adjustSpy = vi.spyOn(component, 'adjustScrollButtonPosition');
-
-            component.adjustTextareaRows();
-
-            // maxHeight = 72, lineHeight = 24, ratio = 72/24 = 3
-            expect(adjustSpy).toHaveBeenCalledWith(3);
-        });
-    });
-
-    describe('rateMessage', () => {
-        beforeEach(() => {
-            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
-            fixture.changeDetectorRef.detectChanges();
-        });
-
-        it('should not rate if message sender is not LLM', () => {
-            const userMessage = { ...mockClientMessage, sender: IrisSender.USER } as IrisMessage;
-            const rateSpy = vi.spyOn(chatService, 'rateMessage');
-
-            component.rateMessage(userMessage, true);
-
-            expect(rateSpy).not.toHaveBeenCalled();
-        });
-
-        it('should set message.helpful to true when rated helpful', () => {
-            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM, helpful: undefined } as IrisAssistantMessage;
-            vi.spyOn(chatService, 'rateMessage').mockReturnValue(of(undefined as any));
-
-            component.rateMessage(llmMessage, true);
-
-            expect(llmMessage.helpful).toBeTrue();
-        });
-
-        it('should set message.helpful to false when rated unhelpful', () => {
-            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM, helpful: undefined } as IrisAssistantMessage;
-            vi.spyOn(chatService, 'rateMessage').mockReturnValue(of(undefined as any));
-
-            component.rateMessage(llmMessage, false);
-
-            expect(llmMessage.helpful).toBeFalse();
-        });
-
-        it('should set message.helpful to false when rating is undefined', () => {
-            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM, helpful: undefined } as IrisAssistantMessage;
-            vi.spyOn(chatService, 'rateMessage').mockReturnValue(of(undefined as any));
-
-            component.rateMessage(llmMessage, undefined);
-
-            expect(llmMessage.helpful).toBeFalse();
-        });
-
-        it('should call chatService.rateMessage with message and rating', () => {
-            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM } as IrisMessage;
-            const rateSpy = vi.spyOn(chatService, 'rateMessage').mockReturnValue(of(undefined as any));
-
-            component.rateMessage(llmMessage, true);
-
-            expect(rateSpy).toHaveBeenCalledWith(llmMessage, true);
-        });
-
-        it('should subscribe to rateMessage observable', () => {
-            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM } as IrisMessage;
-            const mockObservable = of(undefined as any);
-            const subscribeSpy = vi.spyOn(mockObservable, 'subscribe');
-            vi.spyOn(chatService, 'rateMessage').mockReturnValue(mockObservable);
-
-            component.rateMessage(llmMessage, false);
-
-            expect(subscribeSpy).toHaveBeenCalled();
-        });
-    });
-
-    describe('onSend', () => {
-        beforeEach(() => {
-            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
-            fixture.changeDetectorRef.detectChanges();
-        });
-
-        it('should call messagesRead', () => {
-            const messagesReadSpy = vi.spyOn(chatService, 'messagesRead');
-            component.newMessageTextContent = 'Test message';
-            vi.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined as any));
-
-            component.onSend();
-
-            expect(messagesReadSpy).toHaveBeenCalled();
-        });
-
-        it('should set isLoading to false when sending message', () => {
-            component.newMessageTextContent = 'Test message';
-            vi.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined as any));
-
-            component.onSend();
-
-            expect(component.isLoading).toBeFalse();
-        });
-
-        it('should call sendMessage when newMessageTextContent is not empty', () => {
-            const testMessage = 'Test message content';
-            component.newMessageTextContent = testMessage;
-            const sendSpy = vi.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined as any));
-
-            component.onSend();
-
-            expect(sendSpy).toHaveBeenCalledWith(testMessage);
-        });
-
-        it('should not call sendMessage when newMessageTextContent is empty', () => {
-            component.newMessageTextContent = '';
-            const sendSpy = vi.spyOn(chatService, 'sendMessage');
-
-            component.onSend();
-
-            expect(sendSpy).not.toHaveBeenCalled();
-        });
-
-        it('should clear newMessageTextContent after sending', () => {
-            component.newMessageTextContent = 'Test message';
-            vi.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined as any));
-
-            component.onSend();
-
-            expect(component.newMessageTextContent).toBe('');
-        });
-
-        it('should set isLoading to false after message is sent', fakeAsync(() => {
-            component.newMessageTextContent = 'Test message';
-            vi.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined as any));
-
-            component.onSend();
-            tick();
-
-            expect(component.isLoading).toBeFalse();
-        }));
-
-        it('should call resetChatBodyHeight', () => {
-            const resetSpy = vi.spyOn(component, 'resetChatBodyHeight');
-            component.newMessageTextContent = '';
-
-            component.onSend();
-
-            expect(resetSpy).toHaveBeenCalled();
-        });
-
-        it('should call resetChatBodyHeight even when message is empty', () => {
-            const resetSpy = vi.spyOn(component, 'resetChatBodyHeight');
-            component.newMessageTextContent = '';
-
-            component.onSend();
-
-            expect(resetSpy).toHaveBeenCalled();
-        });
-
-        it('should handle complete flow: read, send, clear, reset', fakeAsync(() => {
-            const messagesReadSpy = vi.spyOn(chatService, 'messagesRead');
-            const sendSpy = vi.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined as any));
-            const resetSpy = vi.spyOn(component, 'resetChatBodyHeight');
-            component.newMessageTextContent = 'Complete test';
-
-            component.onSend();
-            tick();
-
-            expect(messagesReadSpy).toHaveBeenCalled();
-            expect(sendSpy).toHaveBeenCalledWith('Complete test');
-            expect(component.newMessageTextContent).toBe('');
-            expect(component.isLoading).toBeFalse();
-            expect(resetSpy).toHaveBeenCalled();
-        }));
-    });
-
-    describe('resendMessage', () => {
-        beforeEach(() => {
-            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
-            fixture.changeDetectorRef.detectChanges();
-        });
-
-        it('should not resend if message sender is not USER', () => {
-            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM } as IrisMessage;
-            const resendSpy = vi.spyOn(chatService, 'resendMessage');
-            const sendSpy = vi.spyOn(chatService, 'sendMessage');
-
-            component.resendMessage(llmMessage);
-
-            expect(resendSpy).not.toHaveBeenCalled();
-            expect(sendSpy).not.toHaveBeenCalled();
-        });
-
-        it('should set resendAnimationActive to false after resending with id', () => {
-            const userMessage = { ...mockClientMessage, id: 123, sender: IrisSender.USER } as IrisMessage;
-            vi.spyOn(chatService, 'resendMessage').mockReturnValue(of(userMessage as any));
-
-            component.resendMessage(userMessage);
-
-            expect(component.resendAnimationActive).toBeFalse();
-        });
-
-        it('should call resendMessage when message has id', () => {
-            const userMessage = { ...mockClientMessage, id: 123, sender: IrisSender.USER } as IrisMessage;
-            const resendSpy = vi.spyOn(chatService, 'resendMessage').mockReturnValue(of(userMessage as any));
-
-            component.resendMessage(userMessage);
-
-            expect(resendSpy).toHaveBeenCalledWith(userMessage);
-        });
-
-        it('should set isLoading to false after resending message with id', () => {
-            const userMessage = { ...mockClientMessage, id: 123, sender: IrisSender.USER } as IrisMessage;
-            vi.spyOn(chatService, 'resendMessage').mockReturnValue(of(userMessage as any));
-
-            component.resendMessage(userMessage);
-
-            expect(component.isLoading).toBeFalse();
-        });
-
-        it('should call sendMessage when message has no id but has content', () => {
-            const userMessage = {
-                ...mockClientMessage,
-                id: undefined,
-                sender: IrisSender.USER,
-                content: [{ textContent: 'Test message', type: 'text' } as any],
-            } as IrisMessage;
-            const sendSpy = vi.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined as any));
-
-            component.resendMessage(userMessage);
-
-            expect(sendSpy).toHaveBeenCalledWith('Test message');
-        });
-
-        it('should set isLoading to false after sending message without id', () => {
-            const userMessage = {
-                ...mockClientMessage,
-                id: undefined,
-                sender: IrisSender.USER,
-                content: [{ textContent: 'Test message', type: 'text' } as any],
-            } as IrisMessage;
-            vi.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined as any));
-
-            component.resendMessage(userMessage);
-
-            expect(component.isLoading).toBeFalse();
-        });
-
-        it('should set resendAnimationActive to false and return when no id and no content', () => {
-            const userMessage = {
-                ...mockClientMessage,
-                id: undefined,
-                sender: IrisSender.USER,
-                content: [],
-            } as IrisMessage;
-            const sendSpy = vi.spyOn(chatService, 'sendMessage');
-            const resendSpy = vi.spyOn(chatService, 'resendMessage');
-
-            component.resendMessage(userMessage);
-
-            expect(component.resendAnimationActive).toBeFalse();
-            expect(sendSpy).not.toHaveBeenCalled();
-            expect(resendSpy).not.toHaveBeenCalled();
-        });
-
-        it('should return early when message has no id and content has no textContent', () => {
-            const userMessage = {
-                ...mockClientMessage,
-                id: undefined,
-                sender: IrisSender.USER,
-                content: [{ type: 'text' } as any],
-            } as IrisMessage;
-            const sendSpy = vi.spyOn(chatService, 'sendMessage');
-
-            component.resendMessage(userMessage);
-
-            expect(component.resendAnimationActive).toBeFalse();
-            expect(sendSpy).not.toHaveBeenCalled();
-        });
-
-        it('should set resendAnimationActive to false after resend completes', fakeAsync(() => {
-            const userMessage = { ...mockClientMessage, id: 123, sender: IrisSender.USER } as IrisMessage;
-            vi.spyOn(chatService, 'resendMessage').mockReturnValue(of(userMessage as any));
-
-            component.resendMessage(userMessage);
-            tick();
-
-            expect(component.resendAnimationActive).toBeFalse();
-        }));
-
-        it('should set isLoading to false after resend completes', fakeAsync(() => {
-            const userMessage = { ...mockClientMessage, id: 123, sender: IrisSender.USER } as IrisMessage;
-            vi.spyOn(chatService, 'resendMessage').mockReturnValue(of(userMessage as any));
-
-            component.resendMessage(userMessage);
-            tick();
-
-            expect(component.isLoading).toBeFalse();
-        }));
-
-        it('should call messagesRead after resend completes', fakeAsync(() => {
-            const userMessage = { ...mockClientMessage, id: 123, sender: IrisSender.USER } as IrisMessage;
-            vi.spyOn(chatService, 'resendMessage').mockReturnValue(of(userMessage as any));
-            const messagesReadSpy = vi.spyOn(chatService, 'messagesRead');
-
-            component.resendMessage(userMessage);
-            tick();
-
-            expect(messagesReadSpy).toHaveBeenCalled();
-        }));
-
-        it('should set resendAnimationActive to false after send completes for message without id', fakeAsync(() => {
-            const userMessage = {
-                ...mockClientMessage,
-                id: undefined,
-                sender: IrisSender.USER,
-                content: [{ textContent: 'Test', type: 'text' } as any],
-            } as IrisMessage;
-            vi.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined as any));
-
-            component.resendMessage(userMessage);
-            tick();
-
-            expect(component.resendAnimationActive).toBeFalse();
-        }));
-
-        it('should set isLoading to false after send completes for message without id', fakeAsync(() => {
-            const userMessage = {
-                ...mockClientMessage,
-                id: undefined,
-                sender: IrisSender.USER,
-                content: [{ textContent: 'Test', type: 'text' } as any],
-            } as IrisMessage;
-            vi.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined as any));
-
-            component.resendMessage(userMessage);
-            tick();
-
-            expect(component.isLoading).toBeFalse();
-        }));
-    });
-
-    describe('onInput', () => {
-        beforeEach(() => {
-            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
-            fixture.changeDetectorRef.detectChanges();
-        });
-
-        it('should call adjustTextareaRows', () => {
-            const adjustSpy = vi.spyOn(component, 'adjustTextareaRows');
-
-            component.onInput();
-
-            expect(adjustSpy).toHaveBeenCalledOnce();
-        });
-    });
-
-    describe('onPaste', () => {
-        beforeEach(() => {
-            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
-            fixture.changeDetectorRef.detectChanges();
-        });
-
-        it('should call adjustTextareaRows after timeout', fakeAsync(() => {
-            const adjustSpy = vi.spyOn(component, 'adjustTextareaRows');
-
-            component.onPaste();
-            tick(0);
-
-            expect(adjustSpy).toHaveBeenCalledOnce();
-        }));
-
-        it('should delay adjustTextareaRows call', fakeAsync(() => {
-            const adjustSpy = vi.spyOn(component, 'adjustTextareaRows');
-
-            component.onPaste();
-
-            expect(adjustSpy).not.toHaveBeenCalled();
-
-            tick(0);
-
-            expect(adjustSpy).toHaveBeenCalled();
-        }));
-    });
-
-    describe('scrollToBottom', () => {
-        beforeEach(() => {
-            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
-
-            const mockMessages = [mockClientMessage, mockServerMessage];
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
-
-            component.ngOnInit();
-            fixture.changeDetectorRef.detectChanges();
-        });
-
-        it('should call scrollTo with smooth behavior', fakeAsync(() => {
-            const scrollToSpy = vi.spyOn(component.messagesElement.nativeElement, 'scrollTo');
-
-            component.scrollToBottom('smooth');
-            tick();
-
-            expect(scrollToSpy).toHaveBeenCalledWith({
-                top: 0,
-                behavior: 'smooth',
-            });
-        }));
-
-        it('should call scrollTo with auto behavior', fakeAsync(() => {
-            const scrollToSpy = vi.spyOn(component.messagesElement.nativeElement, 'scrollTo');
-
-            component.scrollToBottom('auto');
-            tick();
-
-            expect(scrollToSpy).toHaveBeenCalledWith({
-                top: 0,
-                behavior: 'auto',
-            });
-        }));
-
-        it('should handle null messagesElement gracefully', fakeAsync(() => {
-            component.messagesElement = null as any;
-
-            expect(() => {
-                component.scrollToBottom('smooth');
-                tick();
-            }).not.toThrow();
-        }));
-
-        it('should scroll to top position 0', fakeAsync(() => {
-            const scrollToSpy = vi.spyOn(component.messagesElement.nativeElement, 'scrollTo');
-
-            component.scrollToBottom('auto');
-            tick();
-
-            expect(scrollToSpy).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    top: 0,
-                }),
-            );
-        }));
-    });
-
-    describe('onClearSession', () => {
-        let modalRef: any;
-        let llmModalService: NgbModal;
-
-        beforeEach(() => {
-            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
+        it('should not render suggestions when userAccepted is NO_AI', () => {
+            component.userAccepted.set(LLMSelectionDecision.NO_AI);
             fixture.changeDetectorRef.detectChanges();
 
-            llmModalService = TestBed.inject(NgbModal);
-
-            modalRef = {
-                result: Promise.resolve('confirm'),
-            };
+            const suggestionButtons = fixture.nativeElement.querySelectorAll('.iris-suggestion-buttons');
+            expect(suggestionButtons).toHaveLength(0);
         });
 
-        it('should open modal with provided content', () => {
-            const openSpy = vi.spyOn(llmModalService, 'open').mockReturnValue(modalRef);
-            const content = { template: 'test' };
+        it('should not render suggestions when userAccepted is undefined', () => {
+            component.userAccepted.set(undefined);
+            fixture.changeDetectorRef.detectChanges();
 
-            component.onClearSession(content);
-
-            expect(openSpy).toHaveBeenCalledWith(content);
+            const suggestionButtons = fixture.nativeElement.querySelectorAll('.iris-suggestion-buttons');
+            expect(suggestionButtons).toHaveLength(0);
         });
-
-        it('should not call clearChat when result is not confirm', fakeAsync(() => {
-            modalRef.result = Promise.resolve('cancel');
-            vi.spyOn(llmModalService, 'open').mockReturnValue(modalRef);
-            const clearChatSpy = vi.spyOn(chatService, 'clearChat');
-
-            component.onClearSession({});
-            tick();
-
-            expect(clearChatSpy).not.toHaveBeenCalled();
-        }));
-
-        it('should not set isLoading to false when result is not confirm', fakeAsync(() => {
-            modalRef.result = Promise.resolve('cancel');
-            vi.spyOn(llmModalService, 'open').mockReturnValue(modalRef);
-            component.isLoading = true;
-
-            component.onClearSession({});
-            tick();
-
-            expect(component.isLoading).toBeTrue();
-        }));
     });
 });

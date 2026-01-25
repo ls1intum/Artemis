@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { DebugElement } from '@angular/core';
+import { DebugElement, TemplateRef } from '@angular/core';
 import { PROFILE_ATHENA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Observable, of } from 'rxjs';
@@ -18,9 +18,11 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
+import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { UserService } from 'app/core/user/shared/user.service';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('RequestFeedbackButtonComponent', () => {
     let component: RequestFeedbackButtonComponent;
@@ -31,6 +33,14 @@ describe('RequestFeedbackButtonComponent', () => {
     let courseExerciseService: CourseExerciseService;
     let exerciseService: ExerciseService;
 
+    const mockLLMModalService = {
+        open: jest.fn().mockResolvedValue('none'),
+    } as any;
+
+    const mockUserService = {
+        updateLLMSelectionDecision: jest.fn().mockReturnValue(of(new HttpResponse<void>())),
+    } as any;
+
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [RequestFeedbackButtonComponent, NgbTooltipModule],
@@ -39,6 +49,8 @@ describe('RequestFeedbackButtonComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                { provide: LLMSelectionModalService, useValue: mockLLMModalService },
+                { provide: UserService, useValue: mockUserService },
                 provideHttpClient(),
             ],
         })
@@ -110,192 +122,153 @@ describe('RequestFeedbackButtonComponent', () => {
             }),
         );
         jest.spyOn(alertService, 'error');
-        component.requestAIFeedback();
+
+        const mockTemplateRef = {} as TemplateRef<any>;
+        component.requestAIFeedback(mockTemplateRef);
         tick();
 
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.someError');
     }));
 
-    it('should not display the button when it is an exam exercise', fakeAsync(() => {
-        setAthenaEnabled(true);
-        const exercise = createBaseExercise(ExerciseType.TEXT, true);
-        setupComponentInputs(exercise);
-
-        initAndTick();
-
-        const button = debugElement.query(By.css('button'));
-        const link = debugElement.query(By.css('a'));
-        expect(button).toBeNull();
-        expect(link).toBeNull();
-    }));
-
-    it('should not open modal when hasUserAcceptedLLMUsage is true and requestAIFeedback is clicked', fakeAsync(() => {
-        setAthenaEnabled(true);
-        const participation = createParticipation();
-        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
-        setupComponentInputs(exercise, true, false);
-        component.hasUserAcceptedLLMUsage = true;
-
-        // Set up spies
-        const modalService = TestBed.inject(NgbModal);
-        const modalSpy = jest.spyOn(modalService, 'open');
-        const processFeedbackSpy = jest.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
-
-        component.requestAIFeedback();
-        tick();
-
-        expect(modalSpy).not.toHaveBeenCalled();
-        expect(processFeedbackSpy).toHaveBeenCalledWith(exercise.id);
-    }));
-
-    describe('showLLMSelectionModal', () => {
-        it('should call acceptLLMUsage with CLOUD_AI when cloud is chosen', async () => {
-            jest.spyOn(component['llmModalService'], 'open').mockResolvedValue('cloud');
-            const acceptSpy = jest.spyOn(component, 'acceptLLMUsage');
-
-            await component.showLLMSelectionModal();
-
-            expect(acceptSpy).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
-        });
-
-        it('should call acceptLLMUsage with LOCAL_AI when local is chosen', async () => {
-            jest.spyOn(component['llmModalService'], 'open').mockResolvedValue('local');
-            const acceptSpy = jest.spyOn(component, 'acceptLLMUsage');
-
-            await component.showLLMSelectionModal();
-
-            expect(acceptSpy).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
-        });
-
-        it('should call acceptLLMUsage with NO_AI when no_ai is chosen', async () => {
-            jest.spyOn(component['llmModalService'], 'open').mockResolvedValue('no_ai');
-            const acceptSpy = jest.spyOn(component, 'acceptLLMUsage');
-
-            await component.showLLMSelectionModal();
-
-            expect(acceptSpy).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
-        });
-
-        it('should not call acceptLLMUsage when none is chosen', async () => {
-            jest.spyOn(component['llmModalService'], 'open').mockResolvedValue('none');
-            const acceptSpy = jest.spyOn(component, 'acceptLLMUsage');
-
-            await component.showLLMSelectionModal();
-
-            expect(acceptSpy).not.toHaveBeenCalled();
-        });
-
-        it('should open the LLM modal', async () => {
-            const openSpy = jest.spyOn(component['llmModalService'], 'open').mockResolvedValue('cloud');
-            jest.spyOn(component, 'acceptLLMUsage').mockImplementation();
-
-            await component.showLLMSelectionModal();
-
-            expect(openSpy).toHaveBeenCalledOnce();
-        });
-    });
-
-    describe('acceptLLMUsage', () => {
-        let updateLLMDecisionSpy: jest.SpyInstance;
-
+    describe('when user has accepted LLM usage', () => {
         beforeEach(() => {
-            const accountService = component['accountService'];
-            if (!accountService.setUserLLMSelectionDecision) {
-                accountService.setUserLLMSelectionDecision = jest.fn();
-            }
-
-            updateLLMDecisionSpy = jest.spyOn(component['userService'], 'updateLLMSelectionDecision').mockReturnValue(of(undefined as any));
+            const accountService = TestBed.inject(AccountService);
+            accountService.userIdentity.set({
+                selectedLLMUsage: LLMSelectionDecision.CLOUD_AI,
+            } as any);
         });
 
-        it('should unsubscribe from previous acceptSubscription if exists', () => {
-            const mockSubscription = { unsubscribe: jest.fn() } as any;
-            component['acceptSubscription'] = mockSubscription;
+        it('should display the button when Athena is enabled and it is not an exam exercise', fakeAsync(() => {
+            setAthenaEnabled(true);
+            const exercise = createBaseExercise(ExerciseType.TEXT, false);
+            exercise.allowFeedbackRequests = true;
+            setupComponentInputs(exercise);
 
-            component.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI);
+            initAndTick();
 
-            expect(mockSubscription.unsubscribe).toHaveBeenCalledOnce();
-        });
-
-        it('should not throw error if acceptSubscription is undefined', () => {
-            component['acceptSubscription'] = undefined;
-
-            expect(() => component.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI)).not.toThrow();
-        });
-
-        it('should call updateLLMSelectionDecision with CLOUD_AI', () => {
-            component.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI);
-
-            expect(updateLLMDecisionSpy).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
-        });
-
-        it('should call updateLLMSelectionDecision with LOCAL_AI', () => {
-            component.acceptLLMUsage(LLMSelectionDecision.LOCAL_AI);
-
-            expect(updateLLMDecisionSpy).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
-        });
-
-        it('should call updateLLMSelectionDecision with NO_AI', () => {
-            component.acceptLLMUsage(LLMSelectionDecision.NO_AI);
-
-            expect(updateLLMDecisionSpy).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
-        });
-
-        it('should set hasUserAcceptedLLMUsage to false for NO_AI', fakeAsync(() => {
-            component.acceptLLMUsage(LLMSelectionDecision.NO_AI);
-            tick();
-
-            expect(component.hasUserAcceptedLLMUsage).toBeFalse();
+            const button = debugElement.query(By.css('button'));
+            expect(button).not.toBeNull();
+            expect(button.nativeElement.disabled).toBeTrue();
         }));
 
-        it('should store the subscription in acceptSubscription', () => {
-            component.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI);
+        it('should not display the button when it is an exam exercise', fakeAsync(() => {
+            setAthenaEnabled(true);
+            const exercise = createBaseExercise(ExerciseType.TEXT, true);
+            setupComponentInputs(exercise);
 
-            expect(component['acceptSubscription']).toBeDefined();
-        });
-    });
+            initAndTick();
 
-    describe('requestAIFeedback', () => {
-        let showModalSpy: jest.SpyInstance;
-        let requestFeedbackSpy: jest.SpyInstance;
+            const button = debugElement.query(By.css('button'));
+            const link = debugElement.query(By.css('a'));
+            expect(button).toBeNull();
+            expect(link).toBeNull();
+        }));
 
-        beforeEach(() => {
-            showModalSpy = jest.spyOn(component, 'showLLMSelectionModal').mockResolvedValue();
-            requestFeedbackSpy = jest.spyOn(component, 'requestFeedback').mockImplementation();
-        });
+        it('should disable the button when participation is missing', fakeAsync(() => {
+            setAthenaEnabled(true);
+            const exercise = createBaseExercise(ExerciseType.TEXT, false);
+            setupComponentInputs(exercise);
 
-        it('should call showLLMSelectionModal when user has not accepted LLM usage', async () => {
-            component.hasUserAcceptedLLMUsage = false;
+            initAndTick();
 
-            await component.requestAIFeedback();
+            const button = debugElement.query(By.css('button'));
+            expect(button).not.toBeNull();
+            expect(button.nativeElement.disabled).toBeTrue();
+        }));
 
-            expect(showModalSpy).toHaveBeenCalledOnce();
-            expect(requestFeedbackSpy).not.toHaveBeenCalled();
-        });
+        it('should display the correct button label and style when Athena is enabled', fakeAsync(() => {
+            setAthenaEnabled(true);
+            const participation = createParticipation();
+            const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+            setupComponentInputs(exercise);
+            component.isExamExercise = false;
 
-        it('should call requestFeedback when user has accepted LLM usage', async () => {
+            initAndTick();
+
+            const button = debugElement.query(By.css('button'));
+            expect(button).not.toBeNull();
+
+            const span = button.query(By.css('span'));
+            expect(span.nativeElement.textContent).toContain('artemisApp.exerciseActions.requestAutomaticFeedback');
+        }));
+
+        it('should call requestAIFeedback() when button is clicked', fakeAsync(() => {
+            setAthenaEnabled(true);
+            const participation = createParticipation();
+            const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
+            setupComponentInputs(exercise);
             component.hasUserAcceptedLLMUsage = true;
 
-            await component.requestAIFeedback();
+            initAndTick();
 
-            expect(showModalSpy).not.toHaveBeenCalled();
-            expect(requestFeedbackSpy).toHaveBeenCalledOnce();
-        });
+            jest.spyOn(component, 'requestAIFeedback');
+            jest.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
 
-        it('should return early after showing modal when user has not accepted', async () => {
-            component.hasUserAcceptedLLMUsage = false;
+            const button = debugElement.query(By.css('button'));
+            expect(button).not.toBeNull();
+            button.nativeElement.click();
+            tick();
 
-            await component.requestAIFeedback();
+            expect(component.requestAIFeedback).toHaveBeenCalled();
+        }));
 
-            expect(showModalSpy).toHaveBeenCalledOnce();
-            expect(requestFeedbackSpy).not.toHaveBeenCalled();
-        });
-
-        it('should not show modal when user has already accepted', async () => {
+        it('should show an alert when requestAIFeedback() is called and conditions are not satisfied', fakeAsync(() => {
+            setAthenaEnabled(true);
+            const exercise = createBaseExercise(ExerciseType.TEXT, false);
+            setupComponentInputs(exercise);
             component.hasUserAcceptedLLMUsage = true;
 
-            await component.requestAIFeedback();
+            jest.spyOn(component, 'hasAthenaResultForLatestSubmission').mockReturnValue(true);
+            jest.spyOn(alertService, 'warning');
 
-            expect(showModalSpy).not.toHaveBeenCalled();
-        });
+            component.requestAIFeedback({} as any);
+
+            expect(alertService.warning).toHaveBeenCalled();
+        }));
+
+        it('should disable the button if latest submission is not submitted or feedback is generating', fakeAsync(() => {
+            setAthenaEnabled(true);
+            const participation = createParticipation();
+            const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+            setupComponentInputs(exercise, false, false);
+
+            initAndTick();
+
+            const button = debugElement.query(By.css('button'));
+            expect(button).not.toBeNull();
+            expect(button.nativeElement.disabled).toBeTrue();
+        }));
+
+        it('should enable the button if latest submission is submitted and feedback is not generating', fakeAsync(() => {
+            setAthenaEnabled(true);
+            const participation = createParticipation();
+            const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+            setupComponentInputs(exercise, true, false);
+
+            initAndTick();
+
+            const button = debugElement.query(By.css('button'));
+            expect(button).not.toBeNull();
+            expect(button.nativeElement.disabled).toBeFalse();
+        }));
+
+        it('should not open modal when hasUserAcceptedExternalLLMUsage is true and requestAIFeedback is clicked', fakeAsync(() => {
+            setAthenaEnabled(true);
+            const participation = createParticipation();
+            const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+            setupComponentInputs(exercise, true, false);
+            component.hasUserAcceptedLLMUsage = true;
+
+            const modalService = TestBed.inject(NgbModal);
+            const modalSpy = jest.spyOn(modalService, 'open');
+            const processFeedbackSpy = jest.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
+
+            const mockTemplateRef = {} as TemplateRef<any>;
+            component.requestAIFeedback(mockTemplateRef);
+            tick();
+
+            expect(modalSpy).not.toHaveBeenCalled();
+            expect(processFeedbackSpy).toHaveBeenCalledWith(exercise.id);
+        }));
     });
 });
