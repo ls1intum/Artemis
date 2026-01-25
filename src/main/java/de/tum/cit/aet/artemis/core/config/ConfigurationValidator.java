@@ -2,6 +2,9 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
@@ -12,13 +15,21 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.core.config.weaviate.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.core.exception.ConflictingPasskeyConfigurationException;
+import de.tum.cit.aet.artemis.core.exception.WeaviateConfigurationException;
 
 /**
- * Validates the passkey configuration at application startup.
+ * Validates application configuration at startup.
  * This ensures that invalid configuration combinations are caught early.
  * This bean is marked as non-lazy to ensure validation happens during normal
  * Spring Boot startup, allowing the FailureAnalyzer to provide helpful error messages.
+ * <p>
+ * Currently validates:
+ * <ul>
+ * <li>Passkey configuration (conflicting settings)</li>
+ * <li>Weaviate configuration (required properties when enabled)</li>
+ * </ul>
  */
 @Component
 @Profile(PROFILE_CORE)
@@ -27,25 +38,42 @@ public class ConfigurationValidator {
 
     private static final Logger log = LoggerFactory.getLogger(ConfigurationValidator.class);
 
+    private static final int MIN_PORT = 1;
+
+    private static final int MAX_PORT = 65535;
+
     private final Environment environment;
 
     private final ArtemisConfigHelper artemisConfigHelper;
 
     private final boolean isPasskeyRequiredForAdministratorFeatures;
 
+    private final WeaviateConfigurationProperties weaviateProperties;
+
     public ConfigurationValidator(Environment environment,
-            @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures) {
+            @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures,
+            WeaviateConfigurationProperties weaviateProperties) {
         this.environment = environment;
         this.artemisConfigHelper = new ArtemisConfigHelper();
         this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
+        this.weaviateProperties = weaviateProperties;
     }
 
     /**
-     * Validates the passkey configuration at startup.
-     * Throws a {@link ConflictingPasskeyConfigurationException} if the configuration is invalid.
+     * Validates configuration at startup.
+     * Throws appropriate exceptions if configurations are invalid.
      */
     @PostConstruct
-    public void validatePasskeyConfiguration() {
+    public void validateConfiguration() {
+        validatePasskeyConfiguration();
+        validateWeaviateConfiguration();
+    }
+
+    /**
+     * Validates the passkey configuration.
+     * Throws a {@link ConflictingPasskeyConfigurationException} if the configuration is invalid.
+     */
+    private void validatePasskeyConfiguration() {
         boolean passkeyEnabled = artemisConfigHelper.isPasskeyEnabled(environment);
         boolean passkeyRequiredForAdminFeatures = isPasskeyRequiredForAdministratorFeatures;
 
@@ -62,5 +90,43 @@ public class ConfigurationValidator {
         if (passkeyRequiredForAdminFeatures) {
             log.info("Passkey authentication is required for administrator features");
         }
+    }
+
+    /**
+     * Validates the Weaviate configuration when Weaviate is enabled.
+     * Throws a {@link WeaviateConfigurationException} if required properties are missing or invalid.
+     */
+    private void validateWeaviateConfiguration() {
+        if (!weaviateProperties.isEnabled()) {
+            return;
+        }
+
+        List<String> invalidProperties = new ArrayList<>();
+
+        if (weaviateProperties.getHost() == null || weaviateProperties.getHost().isBlank()) {
+            invalidProperties.add("artemis.weaviate.host (must not be empty)");
+        }
+
+        if (!isValidPort(weaviateProperties.getPort())) {
+            invalidProperties.add("artemis.weaviate.port (must be between " + MIN_PORT + " and " + MAX_PORT + ")");
+        }
+
+        if (!isValidPort(weaviateProperties.getGrpcPort())) {
+            invalidProperties.add("artemis.weaviate.grpc-port (must be between " + MIN_PORT + " and " + MAX_PORT + ")");
+        }
+
+        if (!invalidProperties.isEmpty()) {
+            String errorMessage = "Invalid Weaviate configuration: Weaviate is enabled but the following properties are missing or invalid: "
+                    + String.join(", ", invalidProperties);
+            log.error(errorMessage);
+            throw new WeaviateConfigurationException(errorMessage, invalidProperties);
+        }
+
+        log.info("Weaviate is enabled and configured with host: {}:{} (gRPC port: {})", weaviateProperties.getHost(), weaviateProperties.getPort(),
+                weaviateProperties.getGrpcPort());
+    }
+
+    private boolean isValidPort(int port) {
+        return port >= MIN_PORT && port <= MAX_PORT;
     }
 }
