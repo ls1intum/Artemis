@@ -115,7 +115,7 @@
                     [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
                     [showStatus]="!!programmingExercise()?.id"
                     [editMode]="!!programmingExercise()?.id"
-                    [isRefining]="isAnyApplying()"
+                    [isRefining]="isRefining() || isGenerating()"
                     (hasUnsavedChanges)="programmingExerciseCreationConfig().hasUnsavedChanges = $event"
                     (instructionChange)="onProblemStatementChange($event)"
                     (exerciseChange)="programmingExerciseChange.emit($event)"
