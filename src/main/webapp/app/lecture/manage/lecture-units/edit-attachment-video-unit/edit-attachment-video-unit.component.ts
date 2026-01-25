@@ -81,10 +81,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                             videoSource: unit.videoSource,
                         },
                         fileProperties: {
-                            fileName: attach.link,
-                        },
-                        videoFileProperties: {
-                            videoFileName: undefined,
+                            fileName: attach.link?.split('/').pop(),
                         },
                     });
                 },

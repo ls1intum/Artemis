@@ -43,15 +43,6 @@ export const UPLOAD_FILE_EXTENSIONS = [
     'odc',
     'odi',
     'odf',
-    'mp4',
-    'webm',
-    'ogg',
-    'mov',
-    'avi',
-    'mkv',
-    'flv',
-    'wmv',
-    'm4v',
 ];
 
 /**

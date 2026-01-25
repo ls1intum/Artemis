@@ -121,6 +121,10 @@ export class AttachmentVideoUnitFormComponent implements OnDestroy {
 
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
+
+    // Stores original video file path when editing (to preserve if no new video uploaded)
+    private existingVideoPath?: string;
+
     // Upload progress tracking
     isUploading = signal(false);
     uploadProgress = signal(0);
@@ -260,9 +264,10 @@ export class AttachmentVideoUnitFormComponent implements OnDestroy {
             this.videoSourceControl?.setValue(undefined);
             this.urlHelperControl?.setValue(undefined);
         } else {
-            // Clear video file upload
+            // Clear video file upload and any existing video path
             this.videoFile = undefined!;
             this.videoFileName.set(undefined);
+            this.existingVideoPath = undefined;
             this.videoFileInputTouched = false;
             this.isVideoFileTooBig.set(false);
             if (this.videoFileInput) {
@@ -302,6 +307,12 @@ export class AttachmentVideoUnitFormComponent implements OnDestroy {
     submitForm() {
         const formValue = this.form.value;
         const formProperties: FormProperties = { ...formValue };
+
+        // Preserve existing video path if no new video file was uploaded
+        if (this.existingVideoPath && !this.videoFile) {
+            formProperties.videoSource = this.existingVideoPath;
+        }
+
         const fileProperties: FileProperties = {
             file: this.file,
             fileName: this.fileName(),
@@ -342,7 +353,23 @@ export class AttachmentVideoUnitFormComponent implements OnDestroy {
 
     private setFormValues(formData: AttachmentVideoUnitFormData) {
         if (formData?.formProperties) {
-            this.form.patchValue(formData.formProperties);
+            const { videoSource, ...otherProps } = formData.formProperties;
+            this.form.patchValue(otherProps);
+
+            // Handle videoSource separately - detect if it's a file path or embeddable URL
+            if (videoSource) {
+                const isExternalUrl = videoSource.startsWith('http');
+                if (!isExternalUrl) {
+                    // It's an uploaded video file path - store it and extract filename
+                    this.existingVideoPath = videoSource;
+                    this.videoFileName.set(videoSource.split('/').pop());
+                    this.videoSourceType.set('upload');
+                } else {
+                    // It's an embeddable URL - set in form control
+                    this.form.patchValue({ videoSource });
+                    this.videoSourceType.set('url');
+                }
+            }
         }
         if (formData?.fileProperties?.file) {
             this.file = formData?.fileProperties?.file;
@@ -352,9 +379,6 @@ export class AttachmentVideoUnitFormComponent implements OnDestroy {
         }
         if (formData?.videoFileProperties?.videoFile) {
             this.videoFile = formData?.videoFileProperties?.videoFile;
-        }
-        if (formData?.videoFileProperties?.videoFileName) {
-            this.videoFileName.set(formData?.videoFileProperties?.videoFileName);
         }
     }
 
