@@ -33,7 +33,7 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
     let component: AdminImportStandardizedCompetenciesComponent;
 
     beforeEach(async () => {
-        await TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [AdminImportStandardizedCompetenciesComponent],
             providers: [
                 MockProvider(AlertService),
@@ -43,23 +43,20 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .overrideComponent(AdminImportStandardizedCompetenciesComponent, {
-                set: {
-                    imports: [
-                        MockModule(FontAwesomeModule),
-                        MockComponent(StandardizedCompetencyDetailComponent),
-                        MockComponent(KnowledgeAreaTreeComponent),
-                        MockComponent(ButtonComponent),
-                        MockPipe(HtmlForMarkdownPipe),
-                    ],
-                },
-            })
-            .compileComponents()
-            .then(() => {
-                componentFixture = TestBed.createComponent(AdminImportStandardizedCompetenciesComponent);
-                component = componentFixture.componentInstance;
-            });
+        }).overrideComponent(AdminImportStandardizedCompetenciesComponent, {
+            set: {
+                imports: [
+                    MockModule(FontAwesomeModule),
+                    MockComponent(StandardizedCompetencyDetailComponent),
+                    MockComponent(KnowledgeAreaTreeComponent),
+                    MockComponent(ButtonComponent),
+                    MockPipe(HtmlForMarkdownPipe),
+                ],
+            },
+        });
+        await TestBed.compileComponents();
+        componentFixture = TestBed.createComponent(AdminImportStandardizedCompetenciesComponent);
+        component = componentFixture.componentInstance;
     });
 
     afterEach(() => {

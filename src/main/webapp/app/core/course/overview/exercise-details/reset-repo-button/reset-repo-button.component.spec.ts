@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -21,23 +23,37 @@ import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ResetRepoButtonComponent } from 'app/core/course/overview/exercise-details/reset-repo-button/reset-repo-button.component';
+import { of } from 'rxjs';
+
+class MockFeatureToggleServiceWithPluralMethod extends MockFeatureToggleService {
+    getFeatureTogglesActive() {
+        return of(true);
+    }
+}
 
 describe('JhiResetRepoButtonComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: ResetRepoButtonComponent;
     let fixture: ComponentFixture<ResetRepoButtonComponent>;
 
-    let resetRepositoryStub: jest.SpyInstance;
+    let resetRepositoryStub: ReturnType<typeof vi.spyOn>;
 
     const gradedParticipation: StudentParticipation = { id: 1, testRun: false };
     const practiceParticipation: StudentParticipation = { id: 2, testRun: true };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgbPopoverModule],
-            declarations: [ResetRepoButtonComponent, MockComponent(ExerciseActionButtonComponent), MockPipe(ArtemisTranslatePipe), MockDirective(FeatureToggleDirective)],
+            imports: [
+                ResetRepoButtonComponent,
+                NgbPopoverModule,
+                MockComponent(ExerciseActionButtonComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(FeatureToggleDirective),
+            ],
             providers: [
                 { provide: ParticipationService, useClass: MockParticipationService },
-                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleServiceWithPluralMethod },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 provideHttpClient(),
@@ -48,20 +64,20 @@ describe('JhiResetRepoButtonComponent', () => {
         comp = fixture.componentInstance;
         const programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
 
-        resetRepositoryStub = jest.spyOn(programmingExerciseParticipationService, 'resetRepository');
+        resetRepositoryStub = vi.spyOn(programmingExerciseParticipationService, 'resetRepository');
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize correctly', () => {
-        comp.exercise = { numberOfAssessmentsOfCorrectionRounds: [], secondCorrectionEnabled: false, studentAssignedTeamIdComputed: false };
-        comp.participations = [gradedParticipation, practiceParticipation];
-        comp.ngOnInit();
+        fixture.componentRef.setInput('exercise', { numberOfAssessmentsOfCorrectionRounds: [], secondCorrectionEnabled: false, studentAssignedTeamIdComputed: false });
+        fixture.componentRef.setInput('participations', [gradedParticipation, practiceParticipation]);
+        TestBed.tick();
 
-        expect(comp.gradedParticipation).toEqual(gradedParticipation);
-        expect(comp.practiceParticipation).toEqual(practiceParticipation);
+        expect(comp.gradedParticipation()).toEqual(gradedParticipation);
+        expect(comp.practiceParticipation()).toEqual(practiceParticipation);
     });
 
     it.each([
@@ -83,11 +99,10 @@ describe('JhiResetRepoButtonComponent', () => {
             shouldShowButton: true,
         },
     ])('should show button for correct configurations', ({ participations, exercise, shouldShowButton }) => {
-        comp.exercise = exercise as ProgrammingExercise;
-        comp.participations = participations;
+        fixture.componentRef.setInput('exercise', exercise as ProgrammingExercise);
+        fixture.componentRef.setInput('participations', participations);
 
-        comp.ngOnInit();
-
+        TestBed.tick();
         fixture.detectChanges();
 
         const resetButton = fixture.debugElement.query(By.css('.btn-danger'));
@@ -102,13 +117,13 @@ describe('JhiResetRepoButtonComponent', () => {
     ])('should reset repository correctly', ({ participations, expectedResetId, gradedParticipationId }) => {
         const resetSubject = new Subject<void>();
 
-        comp.participations = participations;
-        comp.exercise = { id: 3 } as ProgrammingExercise;
-        comp.ngOnInit();
+        fixture.componentRef.setInput('participations', participations);
+        fixture.componentRef.setInput('exercise', { id: 3 } as ProgrammingExercise);
+        TestBed.tick();
 
         resetRepositoryStub.mockReturnValue(resetSubject);
         comp.resetRepository(gradedParticipationId);
-        expect(comp.exercise.loading).toBeTrue();
+        expect(comp.exercise().loading).toBe(true);
         resetSubject.next();
 
         expect(resetRepositoryStub).toHaveBeenCalledWith(expectedResetId, gradedParticipationId);

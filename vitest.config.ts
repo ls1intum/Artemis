@@ -26,9 +26,7 @@ export default defineConfig({
         setupFiles: ['src/test/javascript/spec/vitest-test-setup.ts'],
         include: [
             'src/main/webapp/app/fileupload/**/*.spec.ts',      // include fileupload tests
-            'src/main/webapp/app/core/account/**/*.spec.ts',    // include core account tests
-            'src/main/webapp/app/core/admin/**/*.spec.ts',      // include core admin tests
-            'src/main/webapp/app/core/course/manage/**/*.spec.ts', // include course manage tests
+            'src/main/webapp/app/core/**/*.spec.ts',            // include all core tests
             'src/main/webapp/app/buildagent/**/*.spec.ts',      // include build agent tests
             'src/main/webapp/app/text/**/*.spec.ts',            // include text module tests
             'src/main/webapp/app/assessment/**/*.spec.ts',      // include assessment tests
@@ -55,9 +53,7 @@ export default defineConfig({
             include: [
                 'src/main/webapp/app/assessment/**/*.ts',       // include assessment for code coverage
                 'src/main/webapp/app/buildagent/**/*.ts',       // include buildagent for code coverage
-                'src/main/webapp/app/core/account/**/*.ts',     // include core account for code coverage
-                'src/main/webapp/app/core/admin/**/*.ts',       // include core admin for code coverage
-                'src/main/webapp/app/core/course/manage/**/*.ts', // include course manage for code coverage
+                'src/main/webapp/app/core/**/*.ts',             // include all core for code coverage
                 'src/main/webapp/app/fileupload/**/*.ts',       // include fileupload for code coverage
                 'src/main/webapp/app/lecture/**/*.ts',          // include lecture for code coverage
                 'src/main/webapp/app/quiz/**/*.ts',             // include quiz for code coverage
@@ -67,7 +63,16 @@ export default defineConfig({
                 'src/main/webapp/app/modeling/**/*.ts',         // include modeling for code coverage
                 'src/main/webapp/app/iris/**/*.ts',             // include iris for code coverage
             ],
-            exclude: ['**/node_modules/**', '**/*.spec.ts', '**/*.route.ts', '**/*.routes.ts', '**/*.model.ts'],
+            exclude: [
+                '**/node_modules/**',   // exclude node_modules with third-party code
+                '**/*.spec.ts',         // exclude test specification files
+                '**/*.route.ts',        // exclude route definition files (not really testable)
+                '**/*.routes.ts',       // exclude route definition files (not really testable)
+                '**/*.model.ts',        // exclude data model files (not really testable)
+                'src/main/webapp/app/core/config/dayjs.ts',             // exclude dayjs configuration file (not really testable)
+                'src/main/webapp/app/core/config/monaco.config.ts',     // exclude monaco configuration file (not really testable)
+                'src/main/webapp/app/core/config/prod.config.ts',       // exclude dayjs configuration file (not really testable)
+            ],
             thresholds: {
                 lines: 92.20,
                 statements: 92.00,

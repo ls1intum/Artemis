@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MemirisMemoriesListComponent } from './memiris-memories-list.component';
 import { IrisMemoriesHttpService } from 'app/iris/overview/services/iris-memories-http.service';
@@ -9,10 +11,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('MemirisMemoriesListComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<MemirisMemoriesListComponent>;
     let component: MemirisMemoriesListComponent;
-    let http: jest.Mocked<IrisMemoriesHttpService>;
-    let alerts: jest.Mocked<AlertService>;
+    let http: { listUserMemories: ReturnType<typeof vi.fn>; getUserMemory: ReturnType<typeof vi.fn>; deleteUserMemory: ReturnType<typeof vi.fn> };
+    let alerts: { error: ReturnType<typeof vi.fn> };
 
     const mockMemories = [
         { id: 'm1', title: 'Memory 1', content: '', learnings: [], connections: [], slept_on: false, deleted: false },
@@ -38,21 +42,23 @@ describe('MemirisMemoriesListComponent', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(IrisMemoriesHttpService, {
-                    listUserMemories: jest.fn().mockReturnValue(of(mockMemories as any)),
-                    getUserMemory: jest.fn().mockReturnValue(of(mockDetails as any)),
-                    deleteUserMemory: jest.fn().mockReturnValue(of(void 0)),
+                    listUserMemories: vi.fn().mockReturnValue(of(mockMemories as any)),
+                    getUserMemory: vi.fn().mockReturnValue(of(mockDetails as any)),
+                    deleteUserMemory: vi.fn().mockReturnValue(of(void 0)),
                 }),
-                MockProvider(AlertService, { error: jest.fn() }),
+                MockProvider(AlertService, { error: vi.fn() }),
             ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(MemirisMemoriesListComponent);
         component = fixture.componentInstance;
-        http = TestBed.inject(IrisMemoriesHttpService) as jest.Mocked<IrisMemoriesHttpService>;
-        alerts = TestBed.inject(AlertService) as jest.Mocked<AlertService>;
+        http = TestBed.inject(IrisMemoriesHttpService) as any;
+        alerts = TestBed.inject(AlertService) as any;
     });
 
-    afterEach(() => jest.restoreAllMocks());
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
     it('should create and load memories on init', async () => {
         await component.loadMemories();
@@ -76,12 +82,12 @@ describe('MemirisMemoriesListComponent', () => {
         await component.toggleOpen(mem);
         const details = component.details[mem.id]!;
         expect(details.content).toBe('Some detailed content');
-        expect(details.learnings).toBeArrayOfSize(2);
-        expect(details.connections).toBeArrayOfSize(1);
+        expect(details.learnings).toHaveLength(2);
+        expect(details.connections).toHaveLength(1);
     });
 
     it('should provide details with/without connections depending on service response', async () => {
-        jest.spyOn(http, 'getUserMemory').mockImplementation((id: string) => {
+        vi.spyOn(http, 'getUserMemory').mockImplementation((id: string) => {
             if (id === 'm1') return of(mockDetails as any);
             return of({ ...mockDetails, id: 'm2', connections: [] } as any);
         });
@@ -93,24 +99,24 @@ describe('MemirisMemoriesListComponent', () => {
     });
 
     it('should delete a memory and reload list', async () => {
-        const listSpy = jest.spyOn(http, 'listUserMemories');
+        const listSpy = vi.spyOn(http, 'listUserMemories');
         await component.loadMemories();
         await component.deleteMemory(component.memories[0]);
         expect(http.deleteUserMemory).toHaveBeenCalledWith('m1');
         expect(listSpy).toHaveBeenCalledTimes(2);
-        expect(component.deleting['m1']).toBeFalse();
+        expect(component.deleting['m1']).toBe(false);
     });
 
     it('should show alerts on errors for list, details, and delete', async () => {
-        (http.listUserMemories as jest.Mock).mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+        (http.listUserMemories as ReturnType<typeof vi.fn>).mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
         await component.loadMemories();
         expect(alerts.error).toHaveBeenCalledWith('artemisApp.iris.memories.error.loadFailed');
 
-        (http.getUserMemory as jest.Mock).mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+        (http.getUserMemory as ReturnType<typeof vi.fn>).mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
         await component.toggleOpen({ id: 'mX' } as any);
         expect(alerts.error).toHaveBeenCalledWith('artemisApp.iris.memories.error.detailsLoadFailed');
 
-        (http.deleteUserMemory as jest.Mock).mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+        (http.deleteUserMemory as ReturnType<typeof vi.fn>).mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
         await component.deleteMemory({ id: 'm1' } as any);
         expect(alerts.error).toHaveBeenCalledWith('artemisApp.iris.memories.error.deleteFailed');
     });

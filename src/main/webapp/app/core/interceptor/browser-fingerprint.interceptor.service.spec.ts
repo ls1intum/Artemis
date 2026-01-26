@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpRequest } from '@angular/common/http';
 import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fingerprint.interceptor.service';
 import { of } from 'rxjs';
@@ -5,6 +7,8 @@ import { TestBed } from '@angular/core/testing';
 import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
 
 describe(`BrowserFingerprintInterceptor`, () => {
+    setupTestBed({ zoneless: true });
+
     let fingerprintInterceptor: BrowserFingerprintInterceptor;
 
     const fingerprint = '123456789012345';
@@ -35,14 +39,14 @@ describe(`BrowserFingerprintInterceptor`, () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     const testExpectedFingerprintAndInstanceID = (localFingerprint: string, localInstanceIdentifier: string) => {
         const requestMock = new HttpRequest('GET', `test`);
-        const cloneSpy = jest.spyOn(requestMock, 'clone');
+        const cloneSpy = vi.spyOn(requestMock, 'clone');
         const mockHandler = {
-            handle: jest.fn(),
+            handle: vi.fn(),
         };
 
         fingerprintInterceptor.intercept(requestMock, mockHandler);
@@ -77,9 +81,9 @@ describe(`BrowserFingerprintInterceptor`, () => {
         const otherFingerprintInterceptor = TestBed.inject(BrowserFingerprintInterceptor);
 
         const requestMock = new HttpRequest('GET', `test`);
-        const cloneSpy = jest.spyOn(requestMock, 'clone');
+        const cloneSpy = vi.spyOn(requestMock, 'clone');
         const mockHandler = {
-            handle: jest.fn(),
+            handle: vi.fn(),
         };
 
         otherFingerprintInterceptor.intercept(requestMock, mockHandler);
@@ -91,9 +95,9 @@ describe(`BrowserFingerprintInterceptor`, () => {
 
     it('should do nothing if the request goes elsewhere', () => {
         const requestMock = new HttpRequest('GET', 'https://example.com/test');
-        const cloneSpy = jest.spyOn(requestMock, 'clone');
+        const cloneSpy = vi.spyOn(requestMock, 'clone');
         const mockHandler = {
-            handle: jest.fn(),
+            handle: vi.fn(),
         };
 
         fingerprintInterceptor.intercept(requestMock, mockHandler);

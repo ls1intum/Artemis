@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
@@ -14,6 +16,8 @@ import { SshUserSettingsKeyDetailsComponent } from 'app/core/user/settings/ssh-s
 import { SshUserSettingsService } from 'app/core/user/settings/ssh-settings/ssh-user-settings.service';
 
 describe('SshUserSettingsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<SshUserSettingsKeyDetailsComponent>;
     let comp: SshUserSettingsKeyDetailsComponent;
     const mockKey = 'mock-key';
@@ -27,28 +31,28 @@ describe('SshUserSettingsComponent', () => {
     } as UserSshPublicKey;
     let router: Router;
     let sshServiceMock: {
-        getSshPublicKey: jest.Mock;
-        addSshPublicKey: jest.Mock;
-        addNewSshPublicKey: jest.Mock;
+        getSshPublicKey: ReturnType<typeof vi.fn>;
+        addSshPublicKey: ReturnType<typeof vi.fn>;
+        addNewSshPublicKey: ReturnType<typeof vi.fn>;
     };
     let alertServiceMock: {
-        error: jest.Mock;
-        success: jest.Mock;
+        error: ReturnType<typeof vi.fn>;
+        success: ReturnType<typeof vi.fn>;
     };
     let translateService: TranslateService;
     let activatedRoute: MockActivatedRoute;
 
     beforeEach(async () => {
         sshServiceMock = {
-            getSshPublicKey: jest.fn(),
-            addSshPublicKey: jest.fn(),
-            addNewSshPublicKey: jest.fn(),
+            getSshPublicKey: vi.fn(),
+            addSshPublicKey: vi.fn(),
+            addNewSshPublicKey: vi.fn(),
         };
         alertServiceMock = {
-            error: jest.fn(),
-            success: jest.fn(),
+            error: vi.fn(),
+            success: vi.fn(),
         };
-        const routerMock = { navigate: jest.fn() };
+        const routerMock = { navigate: vi.fn() };
         await TestBed.configureTestingModule({
             providers: [
                 {
@@ -71,16 +75,20 @@ describe('SshUserSettingsComponent', () => {
         activatedRoute = TestBed.inject(ActivatedRoute) as unknown as MockActivatedRoute;
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should initialize view for adding new keys and save new key', () => {
         sshServiceMock.addNewSshPublicKey.mockReturnValue(of({}));
         comp.ngOnInit();
         expect(sshServiceMock.getSshPublicKey).not.toHaveBeenCalled();
-        expect(comp.isLoading).toBeFalse();
+        expect(comp.isLoading).toBe(false);
         comp.displayedSshKey = mockKey;
         comp.displayedExpiryDate = dayjs();
         comp.displayedKeyLabel = 'label';
         comp.validateExpiryDate();
-        expect(comp.isExpiryDateValid).toBeTrue();
+        expect(comp.isExpiryDateValid).toBe(true);
         comp.saveSshKey();
         expect(alertServiceMock.success).toHaveBeenCalled();
         expect(router.navigate).toHaveBeenCalledWith(['/user-settings/ssh']);
@@ -98,12 +106,12 @@ describe('SshUserSettingsComponent', () => {
         sshServiceMock.addNewSshPublicKey.mockReturnValue(throwError(() => httpError1));
         comp.ngOnInit();
         expect(sshServiceMock.getSshPublicKey).not.toHaveBeenCalled();
-        expect(comp.isLoading).toBeFalse();
+        expect(comp.isLoading).toBe(false);
         comp.displayedSshKey = mockKey;
         comp.displayedExpiryDate = dayjs();
         comp.displayedKeyLabel = 'label';
         comp.validateExpiryDate();
-        expect(comp.isExpiryDateValid).toBeTrue();
+        expect(comp.isExpiryDateValid).toBe(true);
         comp.saveSshKey();
         sshServiceMock.addNewSshPublicKey.mockReturnValue(throwError(() => httpError2));
         comp.saveSshKey();
@@ -116,44 +124,44 @@ describe('SshUserSettingsComponent', () => {
         activatedRoute.setParameters({ keyId: 1 });
         comp.ngOnInit();
         expect(sshServiceMock.getSshPublicKey).toHaveBeenCalled();
-        expect(comp.isLoading).toBeFalse();
+        expect(comp.isLoading).toBe(false);
         expect(comp.displayedSshKey).toEqual(mockKey);
         comp.goBack();
         expect(router.navigate).toHaveBeenCalledWith(['/user-settings/ssh']);
     });
 
     it('should detect Windows', () => {
-        jest.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
+        vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
         comp.ngOnInit();
         expect(comp.copyInstructions).toBe('cat ~/.ssh/id_ed25519.pub | clip');
     });
 
     it('should detect MacOS', () => {
-        jest.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)');
+        vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)');
         comp.ngOnInit();
         expect(comp.copyInstructions).toBe('pbcopy < ~/.ssh/id_ed25519.pub');
     });
 
     it('should detect Linux', () => {
-        jest.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (X11; Linux x86_64)');
+        vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (X11; Linux x86_64)');
         comp.ngOnInit();
         expect(comp.copyInstructions).toBe('xclip -selection clipboard < ~/.ssh/id_ed25519.pub');
     });
 
     it('should detect Android', () => {
-        jest.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Linux; Android 10; Pixel 3)');
+        vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Linux; Android 10; Pixel 3)');
         comp.ngOnInit();
         expect(comp.copyInstructions).toBe('termux-clipboard-set < ~/.ssh/id_ed25519.pub');
     });
 
     it('should detect iOS', () => {
-        jest.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone; CPU iPhone OS 13_5)');
+        vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone; CPU iPhone OS 13_5)');
         comp.ngOnInit();
         expect(comp.copyInstructions).toBe('Ctrl + C');
     });
 
     it('should return Unknown for unrecognized OS', () => {
-        jest.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Unknown OS)');
+        vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Unknown OS)');
         comp.ngOnInit();
         expect(comp.copyInstructions).toBe('Ctrl + C');
     });

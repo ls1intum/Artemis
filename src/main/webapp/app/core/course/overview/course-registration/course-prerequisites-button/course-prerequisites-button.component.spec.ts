@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
@@ -6,6 +8,8 @@ import { CoursePrerequisitesModalComponent } from 'app/core/course/overview/cour
 import { CoursePrerequisitesButtonComponent } from 'app/core/course/overview/course-registration/course-prerequisites-button/course-prerequisites-button.component';
 
 describe('CoursePrerequisitesButtonComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CoursePrerequisitesButtonComponent>;
     let component: CoursePrerequisitesButtonComponent;
     let modalService: NgbModal;
@@ -15,24 +19,22 @@ describe('CoursePrerequisitesButtonComponent', () => {
         title: 'Course A',
     } as Course;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
             providers: [{ provide: NgbModal, useClass: MockNgbModalService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CoursePrerequisitesButtonComponent);
-                component = fixture.componentInstance;
-                modalService = TestBed.inject(NgbModal);
-            });
+        });
+        await TestBed.compileComponents();
+        fixture = TestBed.createComponent(CoursePrerequisitesButtonComponent);
+        component = fixture.componentInstance;
+        modalService = TestBed.inject(NgbModal);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should open modal with prerequisites for course', () => {
-        const openModalSpy = jest.spyOn(modalService, 'open');
+        const openModalSpy = vi.spyOn(modalService, 'open');
 
         component.showPrerequisites(course1.id!);
 

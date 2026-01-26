@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
@@ -11,9 +13,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CourseTitleBarComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CourseTitleBarComponent;
     let fixture: ComponentFixture<CourseTitleBarComponent>;
-    let toggleSidebarSpy: jest.SpyInstance;
+    let toggleSidebarSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -29,9 +33,13 @@ describe('CourseTitleBarComponent', () => {
         fixture.componentRef.setInput('isSidebarCollapsed', false);
         fixture.componentRef.setInput('isExamStarted', false);
 
-        toggleSidebarSpy = jest.spyOn(component.toggleSidebar, 'emit');
+        toggleSidebarSpy = vi.spyOn(component.toggleSidebar, 'emit');
 
         fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should create the component', () => {

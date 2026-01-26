@@ -1,7 +1,7 @@
 <ng-container>
     @if (
-        (practiceParticipation?.initializationState === INITIALIZED && !beforeIndividualDueDate) ||
-        (gradedParticipation?.initializationState === INITIALIZED && beforeIndividualDueDate)
+        (practiceParticipation()?.initializationState === INITIALIZED && !beforeIndividualDueDate()) ||
+        (gradedParticipation()?.initializationState === INITIALIZED && beforeIndividualDueDate())
     ) {
         <button
             jhi-exercise-action-button
@@ -9,8 +9,8 @@
             [buttonIcon]="faBackward"
             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
             [buttonLabel]="'artemisApp.exerciseActions.resetRepository.label' | artemisTranslate"
-            [buttonLoading]="!!exercise.loading"
-            [smallButton]="smallButtons"
+            [buttonLoading]="!!exercise().loading"
+            [smallButton]="smallButtons()"
             [hideLabelMobile]="false"
             [ngbPopover]="popContent"
             #popover="ngbPopover"
@@ -21,24 +21,24 @@
     }
     <ng-template #popContent>
         <form style="max-width: 660px" #resetForm="ngForm">
-            <h5>{{ 'artemisApp.exerciseActions.resetRepository.title' + (practiceParticipation ? 'Practice' : 'Graded') | artemisTranslate }}</h5>
+            <h5>{{ 'artemisApp.exerciseActions.resetRepository.title' + (practiceParticipation() ? 'Practice' : 'Graded') | artemisTranslate }}</h5>
             <p jhiTranslate="artemisApp.exerciseActions.resetRepository.explanation"></p>
-            @if (exercise.allowOfflineIde) {
+            @if (exercise().allowOfflineIde) {
                 <p jhiTranslate="artemisApp.exerciseActions.resetRepository.offlineIDEExplanation"></p>
             }
-            @if (gradedParticipation && practiceParticipation) {
+            @if (gradedParticipation() && practiceParticipation()) {
                 <p jhiTranslate="artemisApp.exerciseActions.resetRepository.repositoryChoice"></p>
             }
             <p
-                [jhiTranslate]="'artemisApp.exerciseActions.resetRepository.question' + (practiceParticipation ? 'Practice' : 'Graded')"
-                [translateValues]="{ title: exercise.title }"
+                [jhiTranslate]="'artemisApp.exerciseActions.resetRepository.question' + (practiceParticipation() ? 'Practice' : 'Graded')"
+                [translateValues]="{ title: exercise().title }"
             >
                 <span jhiTranslate="entity.action.deleteQuestion"></span>
             </p>
-            @if (exercise.title) {
+            @if (exercise().title) {
                 <jhi-confirm-entity-name
                     confirmationText="artemisApp.exerciseActions.resetRepository.typeNameToConfirm"
-                    [entityName]="exercise.title"
+                    [entityName]="exercise().title!"
                     warningTextColor="text-danger"
                     name="confirmExerciseName"
                     ngModel
@@ -48,8 +48,8 @@
                 <button class="btn btn-danger" type="submit" [disabled]="resetForm.invalid" (click)="resetRepository()">
                     <span jhiTranslate="artemisApp.exerciseActions.resetRepository.resetToTemplate"></span>
                 </button>
-                @if (gradedParticipation && practiceParticipation) {
-                    <button class="btn btn-danger ms-2" type="submit" [disabled]="resetForm.invalid" (click)="resetRepository(gradedParticipation?.id)">
+                @if (gradedParticipation() && practiceParticipation()) {
+                    <button class="btn btn-danger ms-2" type="submit" [disabled]="resetForm.invalid" (click)="resetRepository(gradedParticipation()?.id)">
                         <span jhiTranslate="artemisApp.exerciseActions.resetRepository.resetToGradedParticipation"></span>
                     </button>
                 }

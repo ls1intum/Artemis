@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { finalize } from 'rxjs/operators';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
@@ -21,37 +21,46 @@ import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle
     styleUrls: ['./start-practice-mode-button.component.scss'],
     imports: [ExerciseActionButtonComponent, FeatureToggleDirective, NgbPopover, TranslateDirective, ArtemisTranslatePipe],
 })
-export class StartPracticeModeButtonComponent implements OnInit {
+export class StartPracticeModeButtonComponent {
     private courseExerciseService = inject(CourseExerciseService);
     private alertService = inject(AlertService);
     private participationService = inject(ParticipationService);
 
     readonly FeatureToggle = FeatureToggle;
 
-    @Input() smallButtons: boolean;
-    @Input() exercise: Exercise;
-    @Output() practiceModeStarted = new EventEmitter();
+    readonly smallButtons = input<boolean>(undefined!);
+    readonly exercise = input<Exercise>(undefined!);
+    readonly practiceModeStarted = output<StudentParticipation>();
 
-    startingPracticeMode = false;
-    gradedStudentParticipation?: StudentParticipation;
+    private readonly _startingPracticeMode = signal(false);
+    private readonly _gradedStudentParticipation = signal<StudentParticipation | undefined>(undefined);
+
+    readonly startingPracticeMode = computed(() => this._startingPracticeMode());
+    readonly gradedStudentParticipation = computed(() => this._gradedStudentParticipation());
 
     // Icons
     faRedo = faRedo;
 
-    ngOnInit() {
-        this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.exercise.studentParticipations ?? [], false);
+    constructor() {
+        effect(() => {
+            const exercise = this.exercise();
+            untracked(() => {
+                this._gradedStudentParticipation.set(this.participationService.getSpecificStudentParticipation(exercise.studentParticipations ?? [], false));
+            });
+        });
     }
 
     startPractice(useGradedParticipation: boolean): void {
-        this.startingPracticeMode = true;
+        this._startingPracticeMode.set(true);
         this.courseExerciseService
-            .startPractice(this.exercise.id!, useGradedParticipation)
-            .pipe(finalize(() => (this.startingPracticeMode = false)))
+            .startPractice(this.exercise().id!, useGradedParticipation)
+            .pipe(finalize(() => this._startingPracticeMode.set(false)))
             .subscribe({
                 next: (participation) => {
-                    if (this.exercise.type === ExerciseType.PROGRAMMING) {
+                    const exercise = this.exercise();
+                    if (exercise.type === ExerciseType.PROGRAMMING) {
                         if (participation?.initializationState === InitializationState.INITIALIZED) {
-                            if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
+                            if ((exercise as ProgrammingExercise).allowOfflineIde) {
                                 this.alertService.success('artemisApp.exercise.personalRepositoryClone');
                             } else {
                                 this.alertService.success('artemisApp.exercise.personalRepositoryOnline');

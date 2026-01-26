@@ -17,16 +17,15 @@ describe('ActivateService', () => {
 
     const getURL = 'api/core/public/activate';
 
-    beforeEach(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
             providers: [{ provide: HttpClient, useClass: MockHttpService }],
-        })
-            .compileComponents()
-            .then(() => {
-                httpService = TestBed.inject(HttpClient);
-                activateService = TestBed.inject(ActivateService);
-                getStub = vi.spyOn(httpService, 'get');
-            });
+        });
+        await TestBed.compileComponents();
+
+        httpService = TestBed.inject(HttpClient);
+        activateService = TestBed.inject(ActivateService);
+        getStub = vi.spyOn(httpService, 'get');
     });
 
     afterEach(() => {

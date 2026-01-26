@@ -189,6 +189,7 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
             this.programmingExercise.submissionPolicy = newPolicy;
         }
         this.setAuxiliaryBooleansOnSubmissionPolicyChange(submissionPolicyType);
+        // TODO: The 'emit' function requires a mandatory void argument
         this.submissionPolicyTypeChange.emit();
         return submissionPolicyType!;
     }

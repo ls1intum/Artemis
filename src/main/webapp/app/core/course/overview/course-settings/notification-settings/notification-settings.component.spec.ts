@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NotificationSettingsComponent } from 'app/core/course/overview/course-settings/notification-settings/notification-settings.component';
 import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
@@ -18,12 +20,25 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseNotificationSettingsMap } from 'app/communication/shared/entities/course-notification/course-notification-settings-map';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('NotificationSettingsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: NotificationSettingsComponent;
     let fixture: ComponentFixture<NotificationSettingsComponent>;
-    let courseNotificationServiceMock: jest.Mocked<CourseNotificationService>;
-    let courseNotificationSettingServiceMock: jest.Mocked<CourseNotificationSettingService>;
+    let courseNotificationServiceMock: {
+        getInfo: ReturnType<typeof vi.fn>;
+        getIconFromType: ReturnType<typeof vi.fn>;
+        getDateTranslationKey: ReturnType<typeof vi.fn>;
+        getDateTranslationParams: ReturnType<typeof vi.fn>;
+    };
+    let courseNotificationSettingServiceMock: {
+        getSettingInfo: ReturnType<typeof vi.fn>;
+        setSettingPreset: ReturnType<typeof vi.fn>;
+        setSettingSpecification: ReturnType<typeof vi.fn>;
+    };
     let activatedRouteMock: { params: { courseId: string } };
 
     const courseId = 123;
@@ -75,33 +90,43 @@ describe('NotificationSettingsComponent', () => {
 
     beforeEach(async () => {
         courseNotificationServiceMock = {
-            getInfo: jest.fn().mockReturnValue(of(new HttpResponse({ body: mockInfo }))),
-        } as unknown as jest.Mocked<CourseNotificationService>;
+            getInfo: vi.fn().mockReturnValue(of(new HttpResponse({ body: mockInfo }))),
+            getIconFromType: vi.fn().mockReturnValue(undefined),
+            getDateTranslationKey: vi.fn().mockReturnValue('artemisApp.courseNotification.temporal.now'),
+            getDateTranslationParams: vi.fn().mockReturnValue({}),
+        };
 
         courseNotificationSettingServiceMock = {
-            getSettingInfo: jest.fn().mockReturnValue(of(mockSettingInfo)),
-            setSettingPreset: jest.fn(),
-            setSettingSpecification: jest.fn(),
-        } as unknown as jest.Mocked<CourseNotificationSettingService>;
+            getSettingInfo: vi.fn().mockReturnValue(of(mockSettingInfo)),
+            setSettingPreset: vi.fn(),
+            setSettingSpecification: vi.fn(),
+        };
 
         activatedRouteMock = {
             params: { courseId: courseId.toString() },
         };
 
         await TestBed.configureTestingModule({
-            imports: [
-                NotificationSettingsComponent,
-                MockDirective(TranslateDirective),
-                FaIconComponent,
-                MockComponent(CourseNotificationPresetPickerComponent),
-                MockComponent(CourseNotificationSettingSpecificationCardComponent),
-            ],
+            imports: [NotificationSettingsComponent],
             providers: [
                 { provide: CourseNotificationService, useValue: courseNotificationServiceMock },
                 { provide: CourseNotificationSettingService, useValue: courseNotificationSettingServiceMock },
                 { provide: ActivatedRoute, useValue: activatedRouteMock },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(NotificationSettingsComponent, {
+                remove: { imports: [FaIconComponent, TranslateDirective, CourseNotificationPresetPickerComponent, CourseNotificationSettingSpecificationCardComponent] },
+                add: {
+                    imports: [
+                        MockComponent(FaIconComponent),
+                        MockDirective(TranslateDirective),
+                        MockComponent(CourseNotificationPresetPickerComponent),
+                        MockComponent(CourseNotificationSettingSpecificationCardComponent),
+                    ],
+                },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(NotificationSettingsComponent);
         component = fixture.componentInstance;
@@ -113,6 +138,10 @@ describe('NotificationSettingsComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should create', () => {
         expect(component).toBeTruthy();
     });
@@ -122,17 +151,16 @@ describe('NotificationSettingsComponent', () => {
         expect(courseNotificationServiceMock.getInfo).toHaveBeenCalled();
     });
 
-    it('should initialize values after receiving both info responses', fakeAsync(() => {
+    it('should initialize values after receiving both info responses', async () => {
         component['settingInfo'] = mockSettingInfo;
         component['info'] = mockInfo;
         component.initializeValues();
-        tick();
 
-        expect(component['isLoading']).toBeFalse();
+        expect(component['isLoading']).toBe(false);
         expect(component['selectableSettingPresets']).toEqual(mockPresets);
         expect(component['selectedSettingPreset']).toEqual(mockPresets[0]);
         expect(component['notificationSpecifications']).toHaveLength(1);
-    }));
+    });
 
     it('should update selected preset when presetSelected is called', () => {
         component['settingInfo'] = mockSettingInfo;

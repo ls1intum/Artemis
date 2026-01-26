@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -14,7 +16,6 @@ import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/core/
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ImageComponent } from 'app/shared/image/image.component';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
-import { SimpleChange, signal } from '@angular/core';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
@@ -23,6 +24,8 @@ import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.servic
 import { BehaviorSubject } from 'rxjs';
 
 describe('CourseSidebarComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CourseSidebarComponent;
     let fixture: ComponentFixture<CourseSidebarComponent>;
     let layoutService: LayoutService;
@@ -120,7 +123,7 @@ describe('CourseSidebarComponent', () => {
         // we have to set this up before we create the component because the signal is set up in the constructor
         layoutService = TestBed.inject(LayoutService);
         breakpointsSubject = new BehaviorSubject<string[]>([]);
-        jest.spyOn(layoutService, 'subscribeToLayoutChanges').mockReturnValue(breakpointsSubject.asObservable());
+        vi.spyOn(layoutService, 'subscribeToLayoutChanges').mockReturnValue(breakpointsSubject.asObservable());
 
         fixture = TestBed.createComponent(CourseSidebarComponent);
         component = fixture.componentInstance;
@@ -133,33 +136,40 @@ describe('CourseSidebarComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should update canExpand when activeBreakpoints changes', () => {
         expect(component.activeBreakpoints()).toEqual([]);
-        expect(component.canExpand()).toBeFalse();
+        expect(component.canExpand()).toBe(false);
         layoutService.activeBreakpoints = [CustomBreakpointNames.sidebarExpandable];
         fixture.changeDetectorRef.detectChanges();
-        const isBreakpointActiveSpy = jest.spyOn(layoutService, 'isBreakpointActive');
+        const isBreakpointActiveSpy = vi.spyOn(layoutService, 'isBreakpointActive');
 
         breakpointsSubject.next([CustomBreakpointNames.sidebarExpandable]);
         fixture.detectChanges();
 
         expect(isBreakpointActiveSpy).toHaveBeenCalledExactlyOnceWith(CustomBreakpointNames.sidebarExpandable);
-        expect(component.canExpand()).toBeTrue();
+        expect(component.canExpand()).toBe(true);
 
         layoutService.activeBreakpoints = [CustomBreakpointNames.small];
         breakpointsSubject.next([CustomBreakpointNames.small]);
         fixture.changeDetectorRef.detectChanges();
-        expect(component.canExpand()).toBeFalse();
+        expect(component.canExpand()).toBe(false);
     });
 
     it('should initialize visible/hidden items on  sidebar update', () => {
-        const updateVisibleNavbarItemsSpy = jest.spyOn(component, 'updateVisibleNavbarItems');
-        component.ngOnChanges({ sidebarItems: new SimpleChange([], mockSidebarItems, true) });
+        const updateVisibleNavbarItemsSpy = vi.spyOn(component, 'updateVisibleNavbarItems');
+        // Provide a new array instance to trigger the effect
+        const newSidebarItems = [...mockSidebarItems];
+        fixture.componentRef.setInput('sidebarItems', newSidebarItems);
+        fixture.detectChanges();
 
         expect(updateVisibleNavbarItemsSpy).toHaveBeenCalledWith(window.innerHeight);
     });
     it('should call updateVisibleNavbarItems on window resize', () => {
-        const updateVisibleNavbarItemsSpy = jest.spyOn(component, 'updateVisibleNavbarItems');
+        const updateVisibleNavbarItemsSpy = vi.spyOn(component, 'updateVisibleNavbarItems');
 
         window.dispatchEvent(new Event('resize'));
 
@@ -168,12 +178,13 @@ describe('CourseSidebarComponent', () => {
 
     it('should check if dropdown should be closed when updating visible navbar items', () => {
         const mockDropdown = {
-            open: jest.fn(),
-            close: jest.fn(),
+            open: vi.fn(),
+            close: vi.fn(),
         };
-        component.itemsDrop = mockDropdown as unknown as NgbDropdown;
+        // itemsDrop is a viewChild signal, so we need to spy on it to return our mock
+        vi.spyOn(component, 'itemsDrop').mockReturnValue(mockDropdown as unknown as NgbDropdown);
 
-        jest.spyOn(component, 'applyThreshold').mockImplementation(() => {
+        vi.spyOn(component, 'applyThreshold').mockImplementation(() => {
             component.anyItemHidden.set(false);
             component.hiddenItems.set([]);
         });
@@ -198,12 +209,12 @@ describe('CourseSidebarComponent', () => {
 
         component.applyThreshold(threshold, height);
 
-        expect(component.anyItemHidden()).toBeTrue();
+        expect(component.anyItemHidden()).toBe(true);
         expect(component.hiddenItems().length).toBeGreaterThan(0);
 
         component.applyThreshold(100, 1000);
 
-        expect(component.anyItemHidden()).toBeFalse();
+        expect(component.anyItemHidden()).toBe(false);
         expect(component.hiddenItems()).toHaveLength(0);
     });
 
@@ -219,11 +230,11 @@ describe('CourseSidebarComponent', () => {
     it('should display more icon and label if at least one item gets hidden in the sidebar', () => {
         component.anyItemHidden.set(true);
         fixture.changeDetectorRef.detectChanges();
-        expect(fixture.nativeElement.querySelector('.three-dots').hidden).toBeFalse();
+        expect(fixture.nativeElement.querySelector('.three-dots').hidden).toBe(false);
 
         component.anyItemHidden.set(false);
         fixture.changeDetectorRef.detectChanges();
-        expect(fixture.nativeElement.querySelector('.three-dots').hidden).toBeTrue();
+        expect(fixture.nativeElement.querySelector('.three-dots').hidden).toBe(true);
     });
     it('should display course icon when available', () => {
         fixture.detectChanges();
@@ -245,9 +256,11 @@ describe('CourseSidebarComponent', () => {
     });
 
     it('should emit toggleCollapseState when collapse chevron is clicked', () => {
-        const toggleCollapseStateSpy = jest.spyOn(component.toggleCollapseState, 'emit');
-        component.canExpand = signal(true);
-        fixture.changeDetectorRef.detectChanges();
+        const toggleCollapseStateSpy = vi.spyOn(component.toggleCollapseState, 'emit');
+        // Set up layoutService to return true for sidebarExpandable breakpoint to make canExpand() return true
+        layoutService.activeBreakpoints = [CustomBreakpointNames.sidebarExpandable];
+        breakpointsSubject.next([CustomBreakpointNames.sidebarExpandable]);
+        fixture.detectChanges();
         const collapseButton = fixture.debugElement.query(By.css('.double-arrow'));
         expect(collapseButton).toBeTruthy();
         collapseButton.nativeElement.click();
@@ -255,7 +268,7 @@ describe('CourseSidebarComponent', () => {
     });
 
     it('should emit switchCourse when a course is selected from dropdown', () => {
-        const switchCourseSpy = jest.spyOn(component.switchCourse, 'emit');
+        const switchCourseSpy = vi.spyOn(component.switchCourse, 'emit');
         fixture.componentRef.setInput('courses', [course1, course2]);
         fixture.detectChanges();
 
@@ -265,7 +278,7 @@ describe('CourseSidebarComponent', () => {
     });
 
     it('should emit courseActionItemClick when an action item is clicked', () => {
-        const courseActionItemClickSpy = jest.spyOn(component.courseActionItemClick, 'emit');
+        const courseActionItemClickSpy = vi.spyOn(component.courseActionItemClick, 'emit');
         component.anyItemHidden.set(false);
         fixture.changeDetectorRef.detectChanges();
         const actionItem = fixture.debugElement.query(By.css('#action-item-0'));

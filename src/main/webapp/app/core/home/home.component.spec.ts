@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HomeComponent } from './home.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -25,6 +27,8 @@ import { User } from 'app/core/user/user.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 describe('HomeComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: HomeComponent;
     let fixture: ComponentFixture<HomeComponent>;
     let accountService: AccountService;
@@ -74,76 +78,84 @@ describe('HomeComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should create the component', () => {
         expect(component).toBeTruthy();
     });
 
     it('should initialize with profile info and prefilled username', () => {
         expect(component.username).toBe('prefilledUsername');
-        expect(component.isPasskeyEnabled).toBeFalse();
+        expect(component.isPasskeyEnabled).toBe(false);
     });
 
     it('should validate form correctly', () => {
         component.username = 'testUser';
         component.password = 'password123';
         component.checkFormValidity();
-        expect(component.isFormValid).toBeTrue();
+        expect(component.isFormValid).toBe(true);
 
         component.password = '';
         component.checkFormValidity();
-        expect(component.isFormValid).toBeFalse();
+        expect(component.isFormValid).toBe(false);
     });
 
     it('should handle successful login', async () => {
-        const loginSpy = jest.spyOn(loginService, 'login').mockResolvedValue();
-        const handleLoginSuccessSpy = jest.spyOn(component as any, 'handleLoginSuccess');
+        const loginSpy = vi.spyOn(loginService, 'login').mockResolvedValue(undefined);
+        const handleLoginSuccessSpy = vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
 
         component.username = 'testUser';
         component.password = 'password123';
         component.rememberMe = true;
 
         await component.login();
+        await fixture.whenStable();
 
-        expect(component.isSubmittingLogin).toBeFalse();
+        expect(component.isSubmittingLogin).toBe(false);
         expect(loginSpy).toHaveBeenCalledWith({
             username: 'testUser',
             password: 'password123',
             rememberMe: true,
         });
         expect(handleLoginSuccessSpy).toHaveBeenCalled();
-        expect(component.authenticationError).toBeFalse();
+        expect(component.authenticationError).toBe(false);
     });
 
     it('should handle failed login', async () => {
-        jest.spyOn(loginService, 'login').mockRejectedValue(new Error('Login failed'));
+        vi.spyOn(loginService, 'login').mockRejectedValue(new Error('Login failed'));
 
         component.username = 'testUser';
         component.password = 'wrongPassword';
 
         await component.login();
+        await fixture.whenStable();
 
-        expect(component.isSubmittingLogin).toBeFalse();
-        expect(component.authenticationError).toBeTrue();
+        expect(component.isSubmittingLogin).toBe(false);
+        expect(component.authenticationError).toBe(true);
     });
 
     it('should set and reset isSubmittingLogin flag', async () => {
-        const loginSpy = jest.spyOn(loginService, 'login').mockResolvedValue();
+        const loginSpy = vi.spyOn(loginService, 'login').mockResolvedValue(undefined);
+        vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
 
         component.username = 'testUser';
         component.password = 'password123';
 
         const loginPromise = component.login();
-        expect(component.isSubmittingLogin).toBeTrue();
+        expect(component.isSubmittingLogin).toBe(true);
 
         await loginPromise;
-        expect(component.isSubmittingLogin).toBeFalse();
+        await fixture.whenStable();
+        expect(component.isSubmittingLogin).toBe(false);
         expect(loginSpy).toHaveBeenCalled();
     });
 
     describe('openSetupPasskeyModal', () => {
         it('should not open the modal if passkey feature is disabled', () => {
             component.isPasskeyEnabled = false;
-            const openModalSpy = jest.spyOn(modalService, 'open');
+            const openModalSpy = vi.spyOn(modalService, 'open');
             accountService.userIdentity.set({ askToSetupPasskey: true } as User);
 
             component.openSetupPasskeyModal();
@@ -153,7 +165,7 @@ describe('HomeComponent', () => {
 
         it('should not open the modal if the user has already registered a passkey', () => {
             component.isPasskeyEnabled = true;
-            const openModalSpy = jest.spyOn(modalService, 'open');
+            const openModalSpy = vi.spyOn(modalService, 'open');
             accountService.userIdentity.set({ askToSetupPasskey: false } as User);
 
             component.openSetupPasskeyModal();
@@ -163,7 +175,7 @@ describe('HomeComponent', () => {
 
         it('should open the modal if the passkey feature is enabled, the user is authenticated, and no passkey is registered', () => {
             component.isPasskeyEnabled = true;
-            const openModalSpy = jest.spyOn(modalService, 'open');
+            const openModalSpy = vi.spyOn(modalService, 'open');
 
             accountService.userIdentity.set({ askToSetupPasskey: true } as User);
 
@@ -179,7 +191,7 @@ describe('HomeComponent', () => {
             localStorageService.store(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, futureDate);
 
             accountService.userIdentity.set({ askToSetupPasskey: true } as User);
-            const openModalSpy = jest.spyOn(modalService, 'open');
+            const openModalSpy = vi.spyOn(modalService, 'open');
 
             component.openSetupPasskeyModal();
 
@@ -193,7 +205,7 @@ describe('HomeComponent', () => {
             localStorageService.store(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, dateInPast);
 
             accountService.userIdentity.set({ askToSetupPasskey: true } as User);
-            const openModalSpy = jest.spyOn(modalService, 'open');
+            const openModalSpy = vi.spyOn(modalService, 'open');
 
             component.openSetupPasskeyModal();
 

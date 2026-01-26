@@ -1,39 +1,39 @@
 <div class="col-auto">
-    @if (shouldShowResult) {
+    @if (shouldShowResult()) {
         <!-- Updating result -->
         <span>
             <jhi-updating-result
                 id="submission-result-graded"
-                [exercise]="exercise"
-                [participation]="studentParticipation!"
-                [class]="updatingResultClass"
-                [showUngradedResults]="showUngradedResults"
-                [showBadge]="showBadge"
-                [showIcon]="showIcon"
-                [isInSidebarCard]="isInSidebarCard"
-                [showCompletion]="showCompletion"
-                [short]="short"
+                [exercise]="exercise()"
+                [participation]="studentParticipation()!"
+                [class]="updatingResultClass()"
+                [showUngradedResults]="showUngradedResults()"
+                [showBadge]="showBadge()"
+                [showIcon]="showIcon()"
+                [isInSidebarCard]="isInSidebarCard()"
+                [showCompletion]="showCompletion()"
+                [short]="short()"
                 [personalParticipation]="true"
-                [showProgressBar]="showProgressBar"
+                [showProgressBar]="showProgressBar()"
             />
         </span>
     } @else {
         <div>
-            @if (exercise.teamMode && exercise.studentAssignedTeamIdComputed && !exercise.studentAssignedTeamId) {
+            @if (exercise().teamMode && exercise().studentAssignedTeamIdComputed && !exercise().studentAssignedTeamId) {
                 <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.userNotAssignedToTeamShort"></span>
-            } @else if (uninitialized) {
+            } @else if (uninitialized()) {
                 <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.userNotStartedExerciseShort"></span>
-            } @else if (exerciseMissedDueDate) {
+            } @else if (exerciseMissedDueDate()) {
                 <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseMissedDueDateShort"></span>
-            } @else if (notSubmitted) {
+            } @else if (notSubmitted()) {
                 <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseNotSubmittedShort"></span>
-            } @else if (!notSubmitted && studentParticipation?.initializationState === InitializationState.FINISHED) {
+            } @else if (!notSubmitted() && studentParticipation()?.initializationState === InitializationState.FINISHED) {
                 <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.userSubmittedShort"></span>
-            } @else if (studentParticipation?.initializationState === InitializationState.INITIALIZED && exercise.type === ExerciseType.QUIZ && !submitted) {
+            } @else if (studentParticipation()?.initializationState === InitializationState.INITIALIZED && exercise().type === ExerciseType.QUIZ && !submitted()) {
                 <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.userParticipatingShort"></span>
-            } @else if (studentParticipation?.initializationState === InitializationState.INITIALIZED && exercise.type === ExerciseType.QUIZ && submitted) {
+            } @else if (studentParticipation()?.initializationState === InitializationState.INITIALIZED && exercise().type === ExerciseType.QUIZ && submitted()) {
                 <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.userWaitingForDueDateShort"></span>
-            } @else if (quizNotStarted) {
+            } @else if (quizNotStarted()) {
                 <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.quizNotStartedShort"></span>
             } @else {
                 <span class="text-body-secondary">-</span>
@@ -41,7 +41,7 @@
         </div>
     }
     <!-- For programming exercises -->
-    @if (exercise.type === ExerciseType.PROGRAMMING && studentParticipation) {
-        <jhi-programming-exercise-student-trigger-build-button [exercise]="exercise" [participation]="studentParticipation" [triggerLastGraded]="triggerLastGraded" />
+    @if (exercise().type === ExerciseType.PROGRAMMING && studentParticipation()) {
+        <jhi-programming-exercise-student-trigger-build-button [exercise]="exercise()" [participation]="studentParticipation()!" [triggerLastGraded]="triggerLastGraded()" />
     }
 </div>

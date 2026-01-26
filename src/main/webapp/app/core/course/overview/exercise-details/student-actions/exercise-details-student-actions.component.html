@@ -1,5 +1,5 @@
 <div>
-    @switch (exercise.type) {
+    @switch (exercise().type) {
         <!-- QUIZ EXERCISE ACTIONS START -->
         @case (ExerciseType.QUIZ) {
             <div class="btn-group">
@@ -9,12 +9,12 @@
                         [ngTemplateOutletContext]="{ $implicit: { icon: faRedo, label: 'artemisApp.exerciseActions.practice', quizMode: 'practice', hideLabelMobile: false } }"
                     />
                 }
-                @if (quizNotStarted || gradedParticipation?.initializationState === InitializationState.INITIALIZED) {
+                @if (quizNotStarted() || gradedParticipation()?.initializationState === InitializationState.INITIALIZED) {
                     <ng-container
                         [ngTemplateOutlet]="quizActionButton"
                         [ngTemplateOutletContext]="{
                             $implicit: {
-                                id: 'open-exercise-' + exercise.id,
+                                id: 'open-exercise-' + exercise().id,
                                 icon: faPlayCircle,
                                 label: 'artemisApp.exerciseActions.openQuiz',
                                 quizMode: 'live',
@@ -23,12 +23,12 @@
                         }"
                     />
                 }
-                @if (uninitializedQuiz) {
+                @if (uninitializedQuiz()) {
                     <ng-container
                         [ngTemplateOutlet]="quizActionButton"
                         [ngTemplateOutletContext]="{
                             $implicit: {
-                                id: 'start-exercise-' + exercise.id,
+                                id: 'start-exercise-' + exercise().id,
                                 icon: faPlayCircle,
                                 label: 'artemisApp.exerciseActions.startQuiz',
                                 quizMode: 'live',
@@ -37,7 +37,7 @@
                         }"
                     />
                 }
-                @if (gradedParticipation?.initializationState === InitializationState.FINISHED && !numberOfGradedParticipationResults) {
+                @if (gradedParticipation()?.initializationState === InitializationState.FINISHED && !numberOfGradedParticipationResults()) {
                     <ng-container
                         [ngTemplateOutlet]="quizActionButton"
                         [ngTemplateOutletContext]="{
@@ -50,7 +50,7 @@
                         }"
                     />
                 }
-                @if (numberOfGradedParticipationResults) {
+                @if (numberOfGradedParticipationResults()) {
                     <ng-container
                         [ngTemplateOutlet]="quizActionButton"
                         [ngTemplateOutletContext]="{
@@ -69,28 +69,28 @@
         <!-- PROGRAMMING EXERCISE ACTIONS START -->
         @case (ExerciseType.PROGRAMMING) {
             <div class="d-flex flex-wrap gap-1">
-                @if (isTeamAvailable) {
+                @if (isTeamAvailable()) {
                     <button
                         class="view-team"
                         jhi-exercise-action-button
                         [buttonIcon]="faUsers"
                         [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-                        [smallButton]="smallButtons"
+                        [smallButton]="smallButtons()"
                         [hideLabelMobile]="true"
-                        [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
+                        [routerLink]="['/courses', courseId(), 'exercises', exercise().id, 'teams', assignedTeamId]"
                     ></button>
                 }
                 @if (isStartExerciseAvailable()) {
                     <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''">
                         <button
-                            [id]="'start-exercise-' + exercise.id"
+                            [id]="'start-exercise-' + exercise().id"
                             class="start-exercise"
                             jhi-exercise-action-button
                             [buttonIcon]="faPlayCircle"
                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                             [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
-                            [buttonLoading]="!!exercise.loading"
-                            [smallButton]="smallButtons"
+                            [buttonLoading]="!!exercise().loading"
+                            [smallButton]="smallButtons()"
                             [hideLabelMobile]="false"
                             [overwriteDisabled]="isBeforeStartDateAndStudent"
                             (click)="startExercise()"
@@ -99,71 +99,72 @@
                 }
                 @if (isStartPracticeAvailable()) {
                     <jhi-start-practice-mode-button
-                        [id]="'start-practice-' + exercise.id"
+                        [id]="'start-practice-' + exercise().id"
                         class="start-practice"
-                        [smallButtons]="smallButtons"
-                        [exercise]="exercise"
+                        [smallButtons]="smallButtons()"
+                        [exercise]="exercise()"
                         (practiceModeStarted)="receiveNewParticipation($event)"
                     />
                 }
                 <!-- TODO: The exam mode reuses the whole component at the moment. We need the code button but not the open
                     code editor button. We should think about defining a component that contains only the code button. -->
                 @if (shouldDisplayIDEButtons()) {
-                    @if (!examMode && programmingExercise?.allowOnlineEditor) {
+                    @if (!examMode() && programmingExercise()?.allowOnlineEditor) {
                         <jhi-open-code-editor-button
-                            [loading]="!!exercise.loading"
-                            [smallButtons]="smallButtons"
-                            [participations]="exercise.studentParticipations!"
-                            [courseAndExerciseNavigationUrlSegment]="['/courses', courseId, 'exercises', 'programming-exercises', exercise.id, 'code-editor']"
-                            [exercise]="exercise"
+                            [loading]="!!exercise().loading"
+                            [smallButtons]="smallButtons()"
+                            [participations]="exercise().studentParticipations!"
+                            [courseAndExerciseNavigationUrlSegment]="['/courses', courseId(), 'exercises', 'programming-exercises', exercise().id, 'code-editor']"
+                            [exercise]="exercise()"
                             [hideLabelMobile]="true"
                         />
                     }
-                    @if (programmingExercise?.allowOfflineIde) {
+                    @if (programmingExercise()?.allowOfflineIde) {
                         <jhi-code-button
-                            [loading]="!!exercise.loading"
-                            [smallButtons]="smallButtons"
-                            [participations]="exercise.studentParticipations!"
-                            [exercise]="exercise"
-                            [routerLinkForRepositoryView]="['/courses', courseId, 'exercises', exercise.id!, 'repository', exercise.studentParticipations![0].id!]"
+                            [loading]="!!exercise().loading"
+                            [smallButtons]="smallButtons()"
+                            [participations]="exercise().studentParticipations!"
+                            [exercise]="exercise()"
+                            [routerLinkForRepositoryView]="['/courses', courseId(), 'exercises', exercise().id!, 'repository', exercise().studentParticipations![0].id!]"
                             [hideLabelMobile]="true"
                             [repositoryUri]="''"
                         />
                     }
-                    @if (exercise.allowFeedbackRequests && gradedParticipation && exercise.type === ExerciseType.PROGRAMMING) {
-                        <jhi-request-feedback-button [exercise]="exercise" [smallButtons]="smallButtons" />
+                    @if (exercise().allowFeedbackRequests && gradedParticipation() && exercise().type === ExerciseType.PROGRAMMING) {
+                        <jhi-request-feedback-button [exercise]="exercise()" [smallButtons]="smallButtons()" />
                     }
                     <!--                    </ng-container>-->
                 }
                 <!-- NOTE: we use the same logic 'isStartExerciseAvailable' in ngIf as above because start and resume are not always possible -->
                 @if (
-                    (gradedParticipation?.initializationState === InitializationState.INACTIVE || gradedParticipation?.initializationState === InitializationState.FINISHED) &&
-                    isResumeExerciseAvailable(gradedParticipation)
+                    (gradedParticipation()?.initializationState === InitializationState.INACTIVE || gradedParticipation()?.initializationState === InitializationState.FINISHED) &&
+                    isResumeExerciseAvailable(gradedParticipation())
                 ) {
                     <button
-                        [id]="'resume-exercise-' + exercise.id"
+                        [id]="'resume-exercise-' + exercise().id"
                         jhi-exercise-action-button
                         [buttonIcon]="faPlayCircle"
                         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                         [buttonLabel]="'artemisApp.exerciseActions.resumeExercise' | artemisTranslate"
-                        [buttonLoading]="!!exercise.loading"
-                        [smallButton]="smallButtons"
+                        [buttonLoading]="!!exercise().loading"
+                        [smallButton]="smallButtons()"
                         [hideLabelMobile]="false"
                         (click)="resumeProgrammingExercise(false)"
                     ></button>
                 }
                 @if (
-                    (practiceParticipation?.initializationState === InitializationState.INACTIVE || practiceParticipation?.initializationState === InitializationState.FINISHED) &&
-                    isResumeExerciseAvailable(practiceParticipation)
+                    (practiceParticipation()?.initializationState === InitializationState.INACTIVE ||
+                        practiceParticipation()?.initializationState === InitializationState.FINISHED) &&
+                    isResumeExerciseAvailable(practiceParticipation())
                 ) {
                     <button
-                        [id]="'resume-practice-exercise-' + exercise.id"
+                        [id]="'resume-practice-exercise-' + exercise().id"
                         jhi-exercise-action-button
                         [buttonIcon]="faPlayCircle"
                         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                         [buttonLabel]="'artemisApp.exerciseActions.resumeExercisePractice' | artemisTranslate"
-                        [buttonLoading]="!!exercise.loading"
-                        [smallButton]="smallButtons"
+                        [buttonLoading]="!!exercise().loading"
+                        [smallButton]="smallButtons()"
                         [hideLabelMobile]="false"
                         (click)="resumeProgrammingExercise(true)"
                     ></button>
@@ -174,27 +175,27 @@
         <!-- MODELING/TEXT/FILE UPLOAD EXERCISE ACTIONS START -->
         @default {
             <div class="btn-group gap-1">
-                @if (isTeamAvailable) {
+                @if (isTeamAvailable()) {
                     <button
                         class="view-team"
                         jhi-exercise-action-button
                         [buttonIcon]="faUsers"
                         [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-                        [smallButton]="smallButtons"
+                        [smallButton]="smallButtons()"
                         [hideLabelMobile]="true"
-                        [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
+                        [routerLink]="['/courses', courseId(), 'exercises', exercise().id, 'teams', assignedTeamId]"
                     ></button>
                 }
                 <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''">
-                    @if (!gradedParticipation && isStartExerciseAvailable()) {
+                    @if (!gradedParticipation() && isStartExerciseAvailable()) {
                         <button
-                            [id]="'start-exercise-' + exercise.id"
+                            [id]="'start-exercise-' + exercise().id"
                             class="start-exercise"
                             jhi-exercise-action-button
                             [buttonIcon]="faPlayCircle"
                             [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
-                            [buttonLoading]="!!exercise.loading"
-                            [smallButton]="smallButtons"
+                            [buttonLoading]="!!exercise().loading"
+                            [smallButton]="smallButtons()"
                             [hideLabelMobile]="false"
                             [overwriteDisabled]="isBeforeStartDateAndStudent"
                             (click)="startExercise()"
@@ -203,31 +204,33 @@
                 </span>
                 @if (allowEditing) {
                     <button
-                        [id]="'open-exercise-' + exercise.id"
+                        [id]="'open-exercise-' + exercise().id"
                         class="open-exercise"
                         jhi-exercise-action-button
                         [buttonIcon]="faFolderOpen"
                         [buttonLabel]="
                             'artemisApp.exerciseActions.' +
-                                (gradedParticipation?.initializationState === InitializationState.INITIALIZED || (beforeDueDate && !hasRatedGradedResult)
-                                    ? editorLabel
-                                    : hasRatedGradedResult
+                                (gradedParticipation()?.initializationState === InitializationState.INITIALIZED || (beforeDueDate() && !hasRatedGradedResult())
+                                    ? editorLabel()
+                                    : hasRatedGradedResult()
                                       ? 'viewResults'
                                       : 'viewSubmissions') | artemisTranslate
                         "
-                        [outlined]="(!beforeDueDate || hasRatedGradedResult) && gradedParticipation?.initializationState === InitializationState.FINISHED"
-                        [buttonLoading]="!!exercise.loading"
-                        [smallButton]="smallButtons"
+                        [outlined]="(!beforeDueDate() || hasRatedGradedResult()) && gradedParticipation()?.initializationState === InitializationState.FINISHED"
+                        [buttonLoading]="!!exercise().loading"
+                        [smallButton]="smallButtons()"
                         [hideLabelMobile]="false"
-                        [routerLink]="['/courses', courseId, 'exercises', exercise.type + '-exercises', exercise.id, 'participate', gradedParticipation!.id]"
+                        [routerLink]="['/courses', courseId(), 'exercises', exercise().type + '-exercises', exercise().id, 'participate', gradedParticipation()!.id]"
                     ></button>
-                    @if (exercise.allowFeedbackRequests && athenaEnabled && (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING) && beforeDueDate) {
+                    @if (
+                        exercise().allowFeedbackRequests && athenaEnabled && (exercise().type === ExerciseType.TEXT || exercise().type === ExerciseType.MODELING) && beforeDueDate()
+                    ) {
                         <jhi-request-feedback-button
-                            [exercise]="exercise"
-                            [smallButtons]="smallButtons"
-                            [isGeneratingFeedback]="isGeneratingFeedback"
-                            (generatingFeedback)="this.isGeneratingFeedback = true"
-                            [isSubmitted]="gradedParticipation?.submissions?.last()?.submitted || false"
+                            [exercise]="exercise()"
+                            [smallButtons]="smallButtons()"
+                            [isGeneratingFeedback]="isGeneratingFeedback()"
+                            (generatingFeedback)="generatingFeedback.emit()"
+                            [isSubmitted]="gradedParticipation()?.submissions?.last()?.submitted || false"
                         />
                     }
                 }
@@ -243,10 +246,10 @@
         [id]="button.id"
         [buttonIcon]="button.icon"
         [buttonLabel]="button.label | artemisTranslate"
-        [buttonLoading]="!!exercise.loading"
-        [smallButton]="smallButtons"
+        [buttonLoading]="!!exercise().loading"
+        [smallButton]="smallButtons()"
         [hideLabelMobile]="button.hideLabelMobile"
         [outlined]="button.outlined"
-        [routerLink]="['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, button.quizMode]"
+        [routerLink]="['/courses', courseId(), 'exercises', 'quiz-exercises', exercise().id, button.quizMode]"
     ></button>
 </ng-template>

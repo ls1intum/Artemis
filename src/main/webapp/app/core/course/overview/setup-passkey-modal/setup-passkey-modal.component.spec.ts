@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -8,8 +10,12 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/shared/service/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('SetupPasskeyModalComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: SetupPasskeyModalComponent;
     let fixture: ComponentFixture<SetupPasskeyModalComponent>;
     let activeModal: NgbActiveModal;
@@ -17,15 +23,14 @@ describe('SetupPasskeyModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [SetupPasskeyModalComponent],
-            declarations: [MockDirective(TranslateDirective)],
+            imports: [SetupPasskeyModalComponent, MockDirective(TranslateDirective)],
             providers: [
                 MockProvider(NgbActiveModal),
-                MockProvider(AlertService),
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(AccountService),
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 
@@ -36,8 +41,12 @@ describe('SetupPasskeyModalComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should close the modal', () => {
-        const closeModalSpy = jest.spyOn(activeModal, 'close');
+        const closeModalSpy = vi.spyOn(activeModal, 'close');
 
         component.closeModal();
 
@@ -45,8 +54,8 @@ describe('SetupPasskeyModalComponent', () => {
     });
 
     it('should set reminder date in localStorage and close the modal', () => {
-        const localStorageServiceSpy = jest.spyOn(localStorageService, 'store');
-        const closeModalSpy = jest.spyOn(activeModal, 'close');
+        const localStorageServiceSpy = vi.spyOn(localStorageService, 'store');
+        const closeModalSpy = vi.spyOn(activeModal, 'close');
 
         const expectedDateOnlyWithDayToEnsureTestIsNotFlaky = new Date();
         expectedDateOnlyWithDayToEnsureTestIsNotFlaky.setDate(expectedDateOnlyWithDayToEnsureTestIsNotFlaky.getDate() + 30);

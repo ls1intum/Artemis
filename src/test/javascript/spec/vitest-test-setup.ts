@@ -3,6 +3,7 @@
  *
  * Parallel to jest-test-setup.ts, this provides global mocks for Vitest tests.
  * NOTE: monaco-editor is mocked via path alias in vitest.config.ts.
+ * NOTE: All tests run in zoneless mode - do not import zone.js
  */
 import '@angular/compiler';
 import '@angular/localize/init';

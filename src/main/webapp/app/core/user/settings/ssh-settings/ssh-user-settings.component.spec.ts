@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
@@ -9,6 +11,8 @@ import { SshUserSettingsComponent } from 'app/core/user/settings/ssh-settings/ss
 import { SshUserSettingsService } from 'app/core/user/settings/ssh-settings/ssh-user-settings.service';
 
 describe('SshUserSettingsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<SshUserSettingsComponent>;
     let comp: SshUserSettingsComponent;
     const mockKey = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJxKWdvcbNTWl4vBjsijoY5HN5dpjxU40huy1PFpdd2o comment';
@@ -27,21 +31,23 @@ describe('SshUserSettingsComponent', () => {
         } as UserSshPublicKey,
     ];
     let alertServiceMock: {
-        error: jest.Mock;
+        error: ReturnType<typeof vi.fn>;
+        success: ReturnType<typeof vi.fn>;
     };
     let sshServiceMock: {
-        deleteSshPublicKey: jest.Mock;
-        getSshPublicKeys: jest.Mock;
+        deleteSshPublicKey: ReturnType<typeof vi.fn>;
+        getSshPublicKeys: ReturnType<typeof vi.fn>;
     };
     let translateService: TranslateService;
 
     beforeEach(async () => {
         sshServiceMock = {
-            deleteSshPublicKey: jest.fn(),
-            getSshPublicKeys: jest.fn(),
+            deleteSshPublicKey: vi.fn(),
+            getSshPublicKeys: vi.fn(),
         };
         alertServiceMock = {
-            error: jest.fn(),
+            error: vi.fn(),
+            success: vi.fn(),
         };
         await TestBed.configureTestingModule({
             providers: [
@@ -54,6 +60,10 @@ describe('SshUserSettingsComponent', () => {
         comp = fixture.componentInstance;
         translateService = TestBed.inject(TranslateService);
         translateService.use('en');
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should initialize with User without keys', async () => {

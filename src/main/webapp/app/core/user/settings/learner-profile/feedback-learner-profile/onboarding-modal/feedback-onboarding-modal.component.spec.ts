@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FeedbackOnboardingModalComponent } from './feedback-onboarding-modal.component';
 import { LearnerProfileApiService } from '../../learner-profile-api.service';
@@ -10,14 +12,16 @@ import { MockProvider } from 'ng-mocks';
 import { TranslateModule } from '@ngx-translate/core';
 
 class MockActiveModal {
-    close = jest.fn();
+    close = vi.fn();
 }
 class MockAlertService {
-    addAlert = jest.fn();
-    closeAll = jest.fn();
+    addAlert = vi.fn();
+    closeAll = vi.fn();
 }
 
 describe('FeedbackOnboardingModalComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: FeedbackOnboardingModalComponent;
     let fixture: ComponentFixture<FeedbackOnboardingModalComponent>;
     let learnerProfileApiService: LearnerProfileApiService;
@@ -45,7 +49,7 @@ describe('FeedbackOnboardingModalComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
@@ -85,8 +89,8 @@ describe('FeedbackOnboardingModalComponent', () => {
     describe('finish', () => {
         it('should PUT updated profile', async () => {
             component.selected = [1, 0];
-            const getSpy = jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(new LearnerProfileDTO({ id: 42 }));
-            const putSpy = jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockResolvedValue(new LearnerProfileDTO({}));
+            const getSpy = vi.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(new LearnerProfileDTO({ id: 42 }));
+            const putSpy = vi.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockResolvedValue(new LearnerProfileDTO({}));
             await component.finish();
             expect(getSpy).toHaveBeenCalled();
             expect(putSpy).toHaveBeenCalledWith(
@@ -108,7 +112,7 @@ describe('FeedbackOnboardingModalComponent', () => {
 
         it('should handle non-HTTP error and close modal', async () => {
             component.selected = [undefined, undefined];
-            jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockRejectedValue(new Error('fail'));
+            vi.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockRejectedValue(new Error('fail'));
             await component.finish();
             expect(alertService.addAlert).toHaveBeenCalledWith({
                 type: AlertType.DANGER,

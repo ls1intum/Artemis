@@ -1,4 +1,4 @@
-import { Component, HostListener, OnChanges, Signal, SimpleChanges, ViewChild, computed, inject, input, output, signal } from '@angular/core';
+import { Component, HostListener, Signal, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { IconDefinition, faChevronRight, faCog, faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -53,7 +53,7 @@ export interface SidebarItem {
         SlicePipe,
     ],
 })
-export class CourseSidebarComponent implements OnChanges {
+export class CourseSidebarComponent {
     protected readonly faChevronRight = faChevronRight;
     protected readonly faEllipsis = faEllipsis;
     protected readonly faCog = faCog;
@@ -81,7 +81,7 @@ export class CourseSidebarComponent implements OnChanges {
     activeBreakpoints: Signal<string[]>;
     canExpand: Signal<boolean>;
 
-    @ViewChild('itemsDrop') itemsDrop!: NgbDropdown;
+    readonly itemsDrop = viewChild.required<NgbDropdown>('itemsDrop');
 
     // Constants for threshold calculation
     readonly WINDOW_OFFSET: number = 225;
@@ -93,14 +93,15 @@ export class CourseSidebarComponent implements OnChanges {
             this.activeBreakpoints();
             return this.layoutService.isBreakpointActive(CustomBreakpointNames.sidebarExpandable);
         });
-    }
 
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes['sidebarItems']) {
-            this.updateVisibleNavbarItems(window.innerHeight);
-            this.sidebarItemsTop.set(this.sidebarItems().filter((item) => !item.bottom));
-            this.sidebarItemsBottom.set(this.sidebarItems().filter((item) => item.bottom));
-        }
+        effect(() => {
+            const items = this.sidebarItems();
+            untracked(() => {
+                this.updateVisibleNavbarItems(window.innerHeight);
+                this.sidebarItemsTop.set(items.filter((item) => !item.bottom));
+                this.sidebarItemsBottom.set(items.filter((item) => item.bottom));
+            });
+        });
     }
 
     /** Listen window resize event by height */
@@ -114,8 +115,9 @@ export class CourseSidebarComponent implements OnChanges {
         const threshold = this.calculateThreshold();
         this.applyThreshold(threshold, height);
 
-        if (!this.anyItemHidden() && this.itemsDrop) {
-            this.itemsDrop.close();
+        const itemsDrop = this.itemsDrop();
+        if (!this.anyItemHidden() && itemsDrop) {
+            itemsDrop.close();
         }
     }
 

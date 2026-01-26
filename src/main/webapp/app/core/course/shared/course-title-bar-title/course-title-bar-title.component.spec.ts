@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { CourseTitleBarTitleComponent } from './course-title-bar-title.component';
@@ -8,6 +10,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CourseTitleBarTitleComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CourseTitleBarTitleComponent;
     let fixture: ComponentFixture<CourseTitleBarTitleComponent>;
 
@@ -30,6 +34,10 @@ describe('CourseTitleBarTitleComponent', () => {
         fixture.componentRef.setInput('title', 'artemisApp.test.defaultIdTitle');
         component = fixture.componentInstance;
         fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should use "course-title-bar-title" as default id and apply it to the h5 element', () => {
@@ -60,7 +68,7 @@ describe('CourseTitleBarTitleComponent', () => {
 
         const h5Element = fixture.debugElement.query(By.css('h5'));
         expect(h5Element).toBeTruthy();
-        expect(h5Element.classes['mb-0']).toBeTrue();
+        expect(h5Element.classes['mb-0']).toBe(true);
         expect(h5Element.nativeElement.textContent).toBe(testTitleKey);
     });
 });

@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpRequest } from '@angular/common/http';
 import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interceptor';
@@ -8,6 +10,8 @@ import { throwError } from 'rxjs';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
 describe('AuthExpiredInterceptor', () => {
+    setupTestBed({ zoneless: true });
+
     let authInterceptor: AuthExpiredInterceptor;
 
     let loginServiceMock: LoginService;
@@ -24,13 +28,13 @@ describe('AuthExpiredInterceptor', () => {
 
     beforeEach(() => {
         loginServiceMock = {
-            logout: jest.fn(),
+            logout: vi.fn(),
         } as any as LoginService;
         sessionStorageServiceMock = {
-            store: jest.fn(),
+            store: vi.fn(),
         } as any as SessionStorageService;
         accountServiceMock = {
-            isAuthenticated: jest.fn(),
+            isAuthenticated: vi.fn(),
         } as any as AccountService;
 
         TestBed.configureTestingModule({
@@ -47,14 +51,14 @@ describe('AuthExpiredInterceptor', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should logout and store the current url if status is 401 and user is authenticated', () => {
         const mockHandler = {
             handle: () => throwError(() => new HttpErrorResponse({ status: 401 })),
         };
-        const isAuthenticatedSpy = jest.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(true);
+        const isAuthenticatedSpy = vi.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(true);
 
         authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
 
@@ -67,7 +71,7 @@ describe('AuthExpiredInterceptor', () => {
         const mockHandler = {
             handle: () => throwError(() => new HttpErrorResponse({ status: 401 })),
         };
-        const isAuthenticatedSpy = jest.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(false);
+        const isAuthenticatedSpy = vi.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(false);
 
         authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
 
@@ -80,7 +84,7 @@ describe('AuthExpiredInterceptor', () => {
         const mockHandler = {
             handle: () => throwError(() => new HttpErrorResponse({ status: 400 })),
         };
-        const isAuthenticatedSpy = jest.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(true);
+        const isAuthenticatedSpy = vi.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(true);
 
         authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
 

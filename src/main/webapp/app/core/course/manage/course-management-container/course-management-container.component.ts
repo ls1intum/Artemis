@@ -1,7 +1,8 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, RouterLink, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable, Subject, Subscription, of } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith } from 'rxjs/operators';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
@@ -60,6 +61,7 @@ import { CourseOperationProgressComponent } from 'app/core/course/manage/course-
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
+import { Subscription } from 'rxjs';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 
 @Component({
@@ -87,6 +89,7 @@ import { convertDateFromServer } from 'app/shared/util/date.utils';
     ],
 })
 export class CourseManagementContainerComponent extends BaseCourseContainerComponent implements OnInit, OnDestroy, AfterViewInit {
+    private readonly destroyRef = inject(DestroyRef);
     private readonly eventManager = inject(EventManager);
     private readonly featureToggleService = inject(FeatureToggleService);
     private readonly sidebarItemService = inject(CourseSidebarItemService);
@@ -113,12 +116,10 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     protected readonly ActionType = ActionType;
     protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
 
-    private eventSubscriber: Subscription;
-    private featureToggleSub: Subscription;
-    private courseSub?: Subscription;
-    private urlSubscription?: Subscription;
-    private routeSubscription?: Subscription;
+    // Keep progressSubscription as it needs manual management due to dynamic re-subscription
     private progressSubscription?: Subscription;
+    // Keep eventSubscriber as EventManager.subscribe() returns Subscription, not Observable
+    private eventSubscriber?: Subscription;
 
     operationProgress = signal<CourseOperationProgressDTO | undefined>(undefined);
 
@@ -162,15 +163,18 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     >(undefined);
 
     async ngOnInit() {
-        this.subscription = this.route.firstChild?.params.subscribe((params: { courseId: string }) => {
+        this.route.firstChild?.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params: { courseId: string }) => {
             const id = Number(params.courseId);
             this.handleCourseIdChange(id);
             this.checkIfSettingsPage();
         });
 
-        this.featureToggleSub = this.featureToggleService.getFeatureToggleActive(FeatureToggle.LearningPaths).subscribe((isActive) => {
-            this.learningPathsActive.set(isActive);
-        });
+        this.featureToggleService
+            .getFeatureToggleActive(FeatureToggle.LearningPaths)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((isActive) => {
+                this.learningPathsActive.set(isActive);
+            });
 
         await super.ngOnInit();
 
@@ -254,8 +258,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     private subscribeToCourseUpdates(courseId: number) {
-        this.courseSub?.unsubscribe();
-        this.courseSub = this.courseManagementService.find(courseId).subscribe((courseResponse) => {
+        this.courseManagementService.find(courseId).subscribe((courseResponse) => {
             if (courseResponse.body) {
                 this.course.set(courseResponse.body!);
             }
@@ -432,12 +435,8 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     ngOnDestroy() {
         super.ngOnDestroy();
-        this.eventManager.destroy(this.eventSubscriber);
-        this.featureToggleSub?.unsubscribe();
-        this.urlSubscription?.unsubscribe();
-        this.courseSub?.unsubscribe();
-        this.routeSubscription?.unsubscribe();
         this.progressSubscription?.unsubscribe();
+        this.eventSubscriber?.unsubscribe();
     }
 
     fetchCourseDeletionSummary(): Observable<EntitySummaryCategory[]> {

@@ -24,8 +24,8 @@ describe('PasswordResetInitComponent', () => {
     let fixture: ComponentFixture<PasswordResetInitComponent>;
     let comp: PasswordResetInitComponent;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        TestBed.configureTestingModule({
             imports: [PasswordResetInitComponent],
             providers: [
                 FormBuilder,
@@ -35,20 +35,19 @@ describe('PasswordResetInitComponent', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
                 provideHttpClient(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                // Mock ProfileService before component creation
-                const profileService = TestBed.inject(ProfileService);
-                vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
-                    useExternal: false,
-                    externalCredentialProvider: '',
-                    externalPasswordResetLinkMap: {},
-                } as any);
+        });
+        await TestBed.compileComponents();
 
-                fixture = TestBed.createComponent(PasswordResetInitComponent);
-                comp = fixture.componentInstance;
-            });
+        // Mock ProfileService before component creation
+        const profileService = TestBed.inject(ProfileService);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
+            useExternal: false,
+            externalCredentialProvider: '',
+            externalPasswordResetLinkMap: {},
+        } as any);
+
+        fixture = TestBed.createComponent(PasswordResetInitComponent);
+        comp = fixture.componentInstance;
     });
 
     it('sets focus after the view has been initialized', () => {

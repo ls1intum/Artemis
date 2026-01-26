@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
@@ -79,8 +81,12 @@ class MockIrisExerciseChatbotButtonComponent {
 }
 import { mockCourseSettings } from 'test/helpers/mocks/iris/mock-settings';
 import { MockScienceService } from 'test/helpers/mocks/service/mock-science-service';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
+import { WebsocketService } from 'app/shared/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { provideHttpClient } from '@angular/common/http';
 import { ElementRef, signal } from '@angular/core';
@@ -88,6 +94,8 @@ import { ResetRepoButtonComponent } from 'app/core/course/overview/exercise-deta
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('CourseExerciseDetailsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: CourseExerciseDetailsComponent;
     let fixture: ComponentFixture<CourseExerciseDetailsComponent>;
     let exerciseService: ExerciseService;
@@ -95,12 +103,12 @@ describe('CourseExerciseDetailsComponent', () => {
     let participationService: ParticipationService;
     let participationWebsocketService: ParticipationWebsocketService;
     let complaintService: ComplaintService;
-    let getExerciseDetailsMock: jest.SpyInstance;
-    let mergeStudentParticipationMock: jest.SpyInstance;
-    let subscribeForParticipationChangesMock: jest.SpyInstance;
+    let getExerciseDetailsMock: ReturnType<typeof vi.spyOn>;
+    let mergeStudentParticipationMock: ReturnType<typeof vi.spyOn>;
+    let subscribeForParticipationChangesMock: ReturnType<typeof vi.spyOn>;
     let participationWebsocketBehaviorSubject: BehaviorSubject<Participation | undefined>;
     let scienceService: ScienceService;
-    let logEventStub: jest.SpyInstance;
+    let logEventStub: ReturnType<typeof vi.spyOn>;
 
     const exercise = {
         id: 42,
@@ -148,11 +156,12 @@ describe('CourseExerciseDetailsComponent', () => {
     // @ts-ignore
     MockInstance(DiscussionSectionComponent, 'postCreateEditModal', signal(new ElementRef(document.createElement('div'))));
 
-    beforeEach(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [MockComponent(DiscussionSectionComponent), FaIconComponent],
-            declarations: [
+            imports: [
                 CourseExerciseDetailsComponent,
+                MockComponent(DiscussionSectionComponent),
+                FaIconComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisTimeAgoPipe),
                 MockPipe(HtmlForMarkdownPipe),
@@ -169,7 +178,6 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockComponent(ResetRepoButtonComponent),
                 MockComponent(RatingComponent),
                 MockRouterLinkDirective,
-                MockComponent(ExerciseDetailsStudentActionsComponent),
                 MockDirective(ExtensionPointDirective),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(LtiInitializerComponent),
@@ -186,6 +194,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: ScienceService, useClass: MockScienceService },
                 MockProvider(ExerciseService),
@@ -198,66 +207,68 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(PlagiarismCasesService),
                 MockProvider(AlertService),
                 MockProvider(IrisSettingsService),
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
-        })
-            .overrideComponent(CourseExerciseDetailsComponent, {
-                remove: { imports: [IrisExerciseChatbotButtonComponent] },
-                add: { imports: [MockIrisExerciseChatbotButtonComponent] },
-            })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CourseExerciseDetailsComponent);
-                comp = fixture.componentInstance;
+        }).overrideComponent(CourseExerciseDetailsComponent, {
+            remove: { imports: [IrisExerciseChatbotButtonComponent] },
+            add: { imports: [MockIrisExerciseChatbotButtonComponent] },
+        });
+        await TestBed.compileComponents();
+        fixture = TestBed.createComponent(CourseExerciseDetailsComponent);
+        comp = fixture.componentInstance;
 
-                comp.studentParticipations = [];
+        comp.studentParticipations = [];
 
-                // mock exerciseService
-                exerciseService = TestBed.inject(ExerciseService);
-                getExerciseDetailsMock = jest.spyOn(exerciseService, 'getExerciseDetails');
-                getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: exercise } }));
+        // mock exerciseService
+        exerciseService = TestBed.inject(ExerciseService);
+        getExerciseDetailsMock = vi.spyOn(exerciseService, 'getExerciseDetails');
+        getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: exercise } }));
 
-                // mock teamService, needed for team assignment
-                teamService = TestBed.inject(TeamService);
-                const teamAssignmentPayload = {
-                    exerciseId: 2,
-                    teamId: 2,
-                    studentParticipations: [],
-                } as TeamAssignmentPayload;
-                jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockReturnValue(Promise.resolve(of(teamAssignmentPayload)));
+        // mock teamService, needed for team assignment
+        teamService = TestBed.inject(TeamService);
+        const teamAssignmentPayload = {
+            exerciseId: 2,
+            teamId: 2,
+            studentParticipations: [],
+        } as TeamAssignmentPayload;
+        vi.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockReturnValue(Promise.resolve(of(teamAssignmentPayload)));
 
-                // mock participationService, needed for team assignment
-                participationWebsocketBehaviorSubject = new BehaviorSubject<Participation | undefined>(undefined);
-                participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
-                subscribeForParticipationChangesMock = jest.spyOn(participationWebsocketService, 'subscribeForParticipationChanges');
-                subscribeForParticipationChangesMock.mockReturnValue(participationWebsocketBehaviorSubject);
+        // mock participationService, needed for team assignment
+        participationWebsocketBehaviorSubject = new BehaviorSubject<Participation | undefined>(undefined);
+        participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
+        subscribeForParticipationChangesMock = vi.spyOn(participationWebsocketService, 'subscribeForParticipationChanges');
+        subscribeForParticipationChangesMock.mockReturnValue(participationWebsocketBehaviorSubject);
 
-                complaintService = TestBed.inject(ComplaintService);
+        complaintService = TestBed.inject(ComplaintService);
 
-                scienceService = TestBed.inject(ScienceService);
-                logEventStub = jest.spyOn(scienceService, 'logEvent');
+        scienceService = TestBed.inject(ScienceService);
+        logEventStub = vi.spyOn(scienceService, 'logEvent');
 
-                participationService = TestBed.inject(ParticipationService);
-                mergeStudentParticipationMock = jest.spyOn(participationService, 'mergeStudentParticipations');
-            });
+        participationService = TestBed.inject(ParticipationService);
+        mergeStudentParticipationMock = vi.spyOn(participationService, 'mergeStudentParticipations');
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.useRealTimers();
+        vi.restoreAllMocks();
     });
 
-    it('should initialize', fakeAsync(() => {
+    it('should initialize', async () => {
+        vi.useFakeTimers();
         fixture.detectChanges();
-        tick(500);
+        await vi.advanceTimersByTimeAsync(500);
         expect(comp.exerciseId).toBe(42);
         expect(comp.courseId).toBe(1);
         expect(comp.exercise).toStrictEqual(exercise);
-        expect(comp.hasMoreResults).toBeFalse();
+        expect(comp.hasMoreResults).toBe(false);
         comp.ngOnDestroy();
-    }));
+    });
 
-    it('should have student participations', fakeAsync(() => {
+    it('should have student participations', async () => {
+        vi.useFakeTimers();
         const studentParticipation = new StudentParticipation();
         studentParticipation.student = new User(99);
+        studentParticipation.testRun = false;
         const result = new Result();
         result.id = 1;
         result.completionDate = dayjs();
@@ -273,11 +284,16 @@ describe('CourseExerciseDetailsComponent', () => {
         const exerciseDetailResponse = of({ body: exerciseDetail });
 
         // return initial participation for websocketService
-        jest.spyOn(participationWebsocketService, 'getParticipationsForExercise').mockReturnValue([studentParticipation]);
-        jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({} as EntityResponseType));
+        vi.spyOn(participationWebsocketService, 'getParticipationsForExercise').mockReturnValue([studentParticipation]);
+        vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({} as EntityResponseType));
 
-        // mock participationService, needed for team assignment
+        // mock participationService methods
         mergeStudentParticipationMock.mockReturnValue([studentParticipation]);
+        const getSpecificMock = vi.spyOn(participationService, 'getSpecificStudentParticipation');
+        getSpecificMock.mockImplementation((participations, testRun) => {
+            return participations?.find((p) => p.testRun === testRun);
+        });
+
         const changedParticipation = cloneDeep(studentParticipation);
         const changedResult = { ...result, id: 2 };
 
@@ -285,21 +301,24 @@ describe('CourseExerciseDetailsComponent', () => {
         subscribeForParticipationChangesMock.mockReturnValue(new BehaviorSubject<Participation | undefined>(changedParticipation));
 
         fixture.detectChanges();
-        tick(500);
+        await vi.advanceTimersByTimeAsync(500);
+        await fixture.whenStable();
 
         // override mock to return exercise with participation
         getExerciseDetailsMock.mockReturnValue(exerciseDetailResponse);
         mergeStudentParticipationMock.mockReturnValue([changedParticipation]);
         comp.loadExercise();
+        await vi.advanceTimersByTimeAsync(0);
+        await fixture.whenStable();
         fixture.detectChanges();
         expect(comp.courseId).toBe(1);
         expect(comp.studentParticipations?.[0].exercise?.id).toBe(exercise.id);
         expect(comp.exercise!.id).toBe(exercise.id);
         expect(comp.exercise!.studentParticipations![0].submissions![0].results![0]).toStrictEqual(changedResult);
         expect(comp.plagiarismCaseInfo).toEqual(plagiarismCaseInfo);
-        expect(comp.hasMoreResults).toBeFalse();
+        expect(comp.hasMoreResults).toBe(false);
         expect(comp.exerciseRatedBadge(result)).toBe('bg-info');
-    }));
+    });
 
     it('should not be a quiz exercise', () => {
         comp.exercise = { ...exercise };
@@ -308,7 +327,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
     it('should configure example solution for exercise', () => {
         const exampleSolutionInfo = {} as ExampleSolutionInfo;
-        const exerciseServiceSpy = jest.spyOn(ExerciseService, 'extractExampleSolutionInfo').mockReturnValue(exampleSolutionInfo);
+        const exerciseServiceSpy = vi.spyOn(ExerciseService, 'extractExampleSolutionInfo').mockReturnValue(exampleSolutionInfo);
 
         const artemisMarkdown = TestBed.inject(ArtemisMarkdownService);
 
@@ -323,19 +342,19 @@ describe('CourseExerciseDetailsComponent', () => {
     it('should collapse example solution for tutors', () => {
         expect(comp.exampleSolutionCollapsed).toBeUndefined();
         comp.showIfExampleSolutionPresent({ ...textExercise, isAtLeastTutor: true });
-        expect(comp.exampleSolutionCollapsed).toBeTrue();
+        expect(comp.exampleSolutionCollapsed).toBe(true);
 
         comp.showIfExampleSolutionPresent({ ...textExercise, isAtLeastTutor: false });
-        expect(comp.exampleSolutionCollapsed).toBeFalse();
+        expect(comp.exampleSolutionCollapsed).toBe(false);
     });
 
     it('should collapse/expand example solution when clicked', () => {
         expect(comp.exampleSolutionCollapsed).toBeUndefined();
         comp.changeExampleSolution();
-        expect(comp.exampleSolutionCollapsed).toBeTrue();
+        expect(comp.exampleSolutionCollapsed).toBe(true);
 
         comp.changeExampleSolution();
-        expect(comp.exampleSolutionCollapsed).toBeFalse();
+        expect(comp.exampleSolutionCollapsed).toBe(false);
     });
 
     it('should sort results by completion date in ascending order', () => {
@@ -385,99 +404,106 @@ describe('CourseExerciseDetailsComponent', () => {
 
         comp.handleNewExercise({ exercise: programmingExercise });
         expect(comp.baseResource).toBe(`/course-management/${courseId}/${programmingExercise.type}-exercises/${programmingExercise.id}/`);
-        expect(comp.allowComplaintsForAutomaticAssessments).toBeTrue();
+        expect(comp.allowComplaintsForAutomaticAssessments).toBe(true);
         expect(comp.submissionPolicy).toEqual(submissionPolicy);
     });
 
-    it('should handle error when getting latest rated result', fakeAsync(() => {
+    it('should handle error when getting latest rated result', async () => {
+        vi.useFakeTimers();
         const alertService = TestBed.inject(AlertService);
-        const alertServiceSpy = jest.spyOn(alertService, 'error');
+        const alertServiceSpy = vi.spyOn(alertService, 'error');
         const error = { message: 'Error msg' };
-        const complaintServiceSpy = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(throwError(() => error));
+        const complaintServiceSpy = vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(throwError(() => error));
 
         const submissionId = 55;
-        comp.gradedStudentParticipation = { submissions: [{ id: submissionId }] };
+        const gradedParticipation = { submissions: [{ id: submissionId }], testRun: false } as StudentParticipation;
+
+        // Mock getSpecificStudentParticipation to return the graded participation
+        vi.spyOn(participationService, 'getSpecificStudentParticipation').mockImplementation((participations, testRun) => {
+            return participations?.find((p) => p.testRun === testRun);
+        });
+
+        comp.studentParticipations = [gradedParticipation];
         comp.sortedHistoryResults = [{ id: 2 }];
         comp.exercise = { ...exercise };
 
         comp.loadComplaintAndLatestRatedResult();
-        tick();
+        await vi.advanceTimersByTimeAsync(0);
 
         expect(complaintServiceSpy).toHaveBeenCalledOnce();
         expect(complaintServiceSpy).toHaveBeenCalledWith(submissionId);
 
         expect(alertServiceSpy).toHaveBeenCalledOnce();
         expect(alertServiceSpy).toHaveBeenCalledWith(error.message);
-    }));
+    });
 
-    it('should handle participation update', fakeAsync(() => {
+    it('should handle participation update', async () => {
+        vi.useFakeTimers();
         const submissionId = 55;
         const submission: Submission = { id: submissionId } satisfies Submission;
-        const participation: Participation = { submissions: [submission] } satisfies Participation;
-        comp.gradedStudentParticipation = participation;
+        const participation = { submissions: [submission], testRun: false } as StudentParticipation;
+        comp.studentParticipations = [participation];
         comp.sortedHistoryResults = [{ id: 2 }];
         comp.exercise = { ...programmingExercise };
 
         comp.courseId = programmingExercise.course!.id!;
 
         comp.handleNewExercise({ exercise: programmingExercise });
-        tick();
+        await vi.advanceTimersByTimeAsync(0);
 
         const newParticipation = { ...participation, submissions: [submission, { id: submissionId + 1 } satisfies Submission] } satisfies Participation;
 
         mergeStudentParticipationMock.mockReturnValue([newParticipation]);
 
         participationWebsocketBehaviorSubject.next({ ...newParticipation, exercise: programmingExercise });
-    }));
+    });
 
-    it.each<[string[]]>([[[]], [[PROFILE_IRIS]]])(
-        'should load iris settings only if profile iris is active',
-        fakeAsync((activeProfiles: string[]) => {
-            // Setup
-            const submissionPolicy = new LockRepositoryPolicy();
-            const programmingExercise = {
-                id: 42,
-                type: ExerciseType.PROGRAMMING,
-                studentParticipations: [],
-                course: { id: 1 },
-                submissionPolicy: submissionPolicy,
-            } as unknown as ProgrammingExercise;
+    it.each<[string[]]>([[[]], [[PROFILE_IRIS]]])('should load iris settings only if profile iris is active', async (activeProfiles: string[]) => {
+        vi.useFakeTimers();
+        // Setup
+        const submissionPolicy = new LockRepositoryPolicy();
+        const programmingExercise = {
+            id: 42,
+            type: ExerciseType.PROGRAMMING,
+            studentParticipations: [],
+            course: { id: 1 },
+            submissionPolicy: submissionPolicy,
+        } as unknown as ProgrammingExercise;
 
-            const fakeSettings = mockCourseSettings(1, true);
+        const fakeSettings = mockCourseSettings(1, true);
 
-            getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: programmingExercise } }));
+        getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: programmingExercise } }));
 
-            const profileService = TestBed.inject(ProfileService);
-            jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles } as any as ProfileInfo);
-            jest.spyOn(profileService, 'isProfileActive').mockReturnValue(activeProfiles.includes(PROFILE_IRIS));
+        const profileService = TestBed.inject(ProfileService);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles } as any as ProfileInfo);
+        vi.spyOn(profileService, 'isProfileActive').mockReturnValue(activeProfiles.includes(PROFILE_IRIS));
 
-            const irisSettingsService = TestBed.inject(IrisSettingsService);
-            const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(fakeSettings));
+        const irisSettingsService = TestBed.inject(IrisSettingsService);
+        const getCourseSettingsSpy = vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(fakeSettings));
 
-            // Act
-            comp.ngOnInit();
-            tick();
+        // Act
+        comp.ngOnInit();
+        await vi.advanceTimersByTimeAsync(0);
 
-            if (activeProfiles.includes(PROFILE_IRIS)) {
-                // Should have called getCourseSettings if 'iris' is active
-                expect(getCourseSettingsSpy).toHaveBeenCalledWith(1);
-                expect(comp.irisEnabled).toBeTrue();
-                expect(comp.irisChatEnabled).toBeTrue();
-            } else {
-                // Should not have called getCourseSettings if 'iris' is not active
-                expect(getCourseSettingsSpy).not.toHaveBeenCalled();
-                expect(comp.irisEnabled).toBeFalse();
-                expect(comp.irisChatEnabled).toBeFalse();
-            }
-        }),
-    );
+        if (activeProfiles.includes(PROFILE_IRIS)) {
+            // Should have called getCourseSettings if 'iris' is active
+            expect(getCourseSettingsSpy).toHaveBeenCalledWith(1);
+            expect(comp.irisEnabled).toBe(true);
+            expect(comp.irisChatEnabled).toBe(true);
+        } else {
+            // Should not have called getCourseSettings if 'iris' is not active
+            expect(getCourseSettingsSpy).not.toHaveBeenCalled();
+            expect(comp.irisEnabled).toBe(false);
+            expect(comp.irisChatEnabled).toBe(false);
+        }
+    });
 
     it('should log event on init', () => {
         fixture.detectChanges();
         expect(logEventStub).toHaveBeenCalledExactlyOnceWith(ScienceEventType.EXERCISE__OPEN, exercise.id);
     });
 
-    it('should not show discussion section when communication is disabled', fakeAsync(() => {
+    it('should not show discussion section when communication is disabled', async () => {
         const newExercise = {
             ...exercise,
             course: { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED },
@@ -485,16 +511,18 @@ describe('CourseExerciseDetailsComponent', () => {
         getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: newExercise } }));
 
         fixture.detectChanges();
+        await fixture.whenStable();
 
         const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
         expect(discussionSection).toBeFalsy();
-    }));
+    });
 
-    it('should show discussion section when communication is enabled', fakeAsync(() => {
+    it('should show discussion section when communication is enabled', async () => {
+        vi.useFakeTimers();
         fixture.detectChanges();
-        tick(500);
+        await vi.advanceTimersByTimeAsync(500);
 
         const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
         expect(discussionSection).toBeTruthy();
-    }));
+    });
 });

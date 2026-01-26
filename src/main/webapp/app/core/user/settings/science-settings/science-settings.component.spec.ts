@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -15,6 +17,8 @@ import { ScienceSettingsService } from 'app/core/user/settings/science-settings/
 import { ScienceSetting, scienceSettingsStructure } from 'app/core/user/settings/science-settings/science-settings-structure';
 
 describe('ScienceSettingsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: ScienceSettingsComponent;
     let fixture: ComponentFixture<ScienceSettingsComponent>;
 
@@ -28,7 +32,6 @@ describe('ScienceSettingsComponent', () => {
         changed: false,
     };
 
-    const declarations = [ScienceSettingsComponent, MockHasAnyAuthorityDirective, MockPipe(ArtemisTranslatePipe)];
     const providers = [
         MockProvider(AlertService),
         MockProvider(ScienceSettingsService),
@@ -39,17 +42,19 @@ describe('ScienceSettingsComponent', () => {
         provideHttpClient(),
     ];
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
-            declarations,
+    beforeEach(async () => {
+        TestBed.configureTestingModule({
+            imports: [ScienceSettingsComponent, MockHasAnyAuthorityDirective, MockPipe(ArtemisTranslatePipe)],
             providers,
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ScienceSettingsComponent);
-                comp = fixture.componentInstance;
-                scienceSettingsServiceMock = TestBed.inject(ScienceSettingsService);
-            });
+        });
+        await TestBed.compileComponents();
+        fixture = TestBed.createComponent(ScienceSettingsComponent);
+        comp = fixture.componentInstance;
+        scienceSettingsServiceMock = TestBed.inject(ScienceSettingsService);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should toggle setting', () => {
@@ -59,18 +64,18 @@ describe('ScienceSettingsComponent', () => {
                 id: settingId,
             },
         };
-        expect(comp.settingsChanged).toBeFalse();
-        expect(scienceSetting.changed).toBeFalse();
+        expect(comp.settingsChanged).toBe(false);
+        expect(scienceSetting.changed).toBe(false);
 
         comp.toggleSetting(event);
 
         expect(scienceSetting.active).not.toEqual(activeStatus);
-        expect(scienceSetting.changed).toBeTrue();
-        expect(comp.settingsChanged).toBeTrue();
+        expect(scienceSetting.changed).toBe(true);
+        expect(comp.settingsChanged).toBe(true);
     });
 
     it('should reuse settings via service if they were already loaded', () => {
-        const settingGetMock = jest.spyOn(scienceSettingsServiceMock, 'getScienceSettings').mockReturnValue([scienceSetting]);
+        const settingGetMock = vi.spyOn(scienceSettingsServiceMock, 'getScienceSettings').mockReturnValue([scienceSetting]);
         comp.ngOnInit();
         expect(settingGetMock).toHaveBeenCalledOnce();
         // check if current settings are not empty

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { finalize } from 'rxjs/operators';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -17,14 +17,13 @@ export class CoursePrerequisitesModalComponent implements OnInit {
     private activeModal = inject(NgbActiveModal);
     private prerequisiteService = inject(PrerequisiteService);
 
-    @Input()
-    courseId: number;
+    readonly courseId = input<number>(undefined!);
 
     isLoading = false;
     prerequisites: Prerequisite[] = [];
 
     ngOnInit(): void {
-        if (this.courseId) {
+        if (this.courseId()) {
             this.loadData();
         }
     }
@@ -36,7 +35,7 @@ export class CoursePrerequisitesModalComponent implements OnInit {
     loadData() {
         this.isLoading = true;
         this.prerequisiteService
-            .getAllForCourse(this.courseId)
+            .getAllForCourse(this.courseId())
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

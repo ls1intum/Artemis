@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { of, throwError } from 'rxjs';
@@ -15,60 +17,65 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
-describe('CourseRegistrationButtonComponent', () => {
+describe('CourseUnenrollmentModalComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CourseUnenrollmentModalComponent>;
     let component: CourseUnenrollmentModalComponent;
     let courseService: CourseManagementService;
-    let unenrollFromCourseStub: jest.SpyInstance;
+    let unenrollFromCourseStub: ReturnType<typeof vi.spyOn>;
     let alertService: AlertService;
-    let successAlertStub: jest.SpyInstance;
-    let errorAlertStub: jest.SpyInstance;
+    let successAlertStub: ReturnType<typeof vi.spyOn>;
+    let errorAlertStub: ReturnType<typeof vi.spyOn>;
     let router: Router;
-    let navigateStub: jest.SpyInstance;
+    let navigateStub: ReturnType<typeof vi.spyOn>;
 
-    beforeEach(() => {
+    const activeModalStub = {
+        close: () => {},
+        dismiss: () => {},
+    };
+
+    beforeEach(async () => {
         TestBed.configureTestingModule({
-            declarations: [CourseUnenrollmentModalComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
+            imports: [CourseUnenrollmentModalComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
             providers: [
                 provideRouter([]),
                 MockProvider(CourseManagementService),
                 MockProvider(AlertService),
-                MockProvider(NgbActiveModal),
+                { provide: NgbActiveModal, useValue: activeModalStub },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CourseUnenrollmentModalComponent);
-                component = fixture.componentInstance;
-                component.course = new Course();
-                component.course.id = 1;
-                component.course.title = 'Unenrollment Test Course Title';
-                courseService = TestBed.inject(CourseManagementService);
-                unenrollFromCourseStub = jest.spyOn(courseService, 'unenrollFromCourse').mockReturnValue(of(new HttpResponse({ body: ['student-group-name'] })));
-                alertService = TestBed.inject(AlertService);
-                successAlertStub = jest.spyOn(alertService, 'success');
-                errorAlertStub = jest.spyOn(alertService, 'error');
-                router = TestBed.inject(Router);
-                navigateStub = jest.spyOn(router, 'navigate').mockImplementation();
-                fixture.detectChanges();
-            });
+        });
+        await TestBed.compileComponents();
+        fixture = TestBed.createComponent(CourseUnenrollmentModalComponent);
+        component = fixture.componentInstance;
+        component.course = new Course();
+        component.course.id = 1;
+        component.course.title = 'Unenrollment Test Course Title';
+        courseService = TestBed.inject(CourseManagementService);
+        unenrollFromCourseStub = vi.spyOn(courseService, 'unenrollFromCourse').mockReturnValue(of(new HttpResponse({ body: ['student-group-name'] })));
+        alertService = TestBed.inject(AlertService);
+        successAlertStub = vi.spyOn(alertService, 'success');
+        errorAlertStub = vi.spyOn(alertService, 'error');
+        router = TestBed.inject(Router);
+        navigateStub = vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
+        fixture.detectChanges();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should disable unenrollment button when confirmation input is invalid', () => {
         const confirmationInput = fixture.nativeElement.querySelector('input');
         const unenrollButton = fixture.debugElement.query(By.css('#course-unenrollment-accept-button')).nativeElement;
         fixture.detectChanges();
-        expect(unenrollButton.disabled).toBeTrue();
+        expect(unenrollButton.disabled).toBe(true);
         const inputEvent = new Event('input');
         confirmationInput.value = 'Some invalid Title';
         confirmationInput.dispatchEvent(inputEvent);
         fixture.detectChanges();
-        expect(unenrollButton.disabled).toBeTrue();
+        expect(unenrollButton.disabled).toBe(true);
     });
 
     it('should enable unenrollment button when confirmation input is valid', () => {
@@ -78,7 +85,7 @@ describe('CourseRegistrationButtonComponent', () => {
         confirmationInput.value = 'Unenrollment Test Course Title';
         confirmationInput.dispatchEvent(inputEvent);
         fixture.detectChanges();
-        expect(unenrollButton.disabled).toBeFalse();
+        expect(unenrollButton.disabled).toBe(false);
     });
 
     it('should alert success after unenrollment', () => {
@@ -94,7 +101,7 @@ describe('CourseRegistrationButtonComponent', () => {
 
     it('should alert error after unsuccessful unenrollment', () => {
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        unenrollFromCourseStub = jest.spyOn(courseService, 'unenrollFromCourse').mockReturnValue(throwError(() => httpError));
+        unenrollFromCourseStub = vi.spyOn(courseService, 'unenrollFromCourse').mockReturnValue(throwError(() => httpError));
         fixture.changeDetectorRef.detectChanges();
         component.onUnenroll();
         expect(unenrollFromCourseStub).toHaveBeenCalledOnce();
@@ -106,7 +113,7 @@ describe('CourseRegistrationButtonComponent', () => {
         component.course.enrollmentEnabled = true;
         component.course.enrollmentEndDate = dayjs().add(1, 'day');
         fixture.changeDetectorRef.detectChanges();
-        expect(component.canEnrollAgain).toBeTrue();
+        expect(component.canEnrollAgain).toBe(true);
     });
 
     it('should not report student can enroll again for invalid', () => {
@@ -114,6 +121,6 @@ describe('CourseRegistrationButtonComponent', () => {
         component.course.enrollmentEnabled = true;
         component.course.enrollmentEndDate = dayjs().subtract(1, 'day');
         fixture.changeDetectorRef.detectChanges();
-        expect(component.canEnrollAgain).toBeFalse();
+        expect(component.canEnrollAgain).toBe(false);
     });
 });
