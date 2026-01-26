@@ -202,7 +202,9 @@ export class CodeButtonComponent implements OnInit {
             const filteredMechanisms = profileInfo.repositoryAuthenticationMechanisms.filter((method): method is RepositoryAuthenticationMethod =>
                 Object.values(RepositoryAuthenticationMethod).includes(method as RepositoryAuthenticationMethod),
             );
-            this.authenticationMechanisms.set(filteredMechanisms);
+            if (filteredMechanisms.length) {
+                this.authenticationMechanisms.set(filteredMechanisms);
+            }
         }
         if (profileInfo.versionControlUrl) {
             this.versionControlUrl = profileInfo.versionControlUrl;

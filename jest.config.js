@@ -163,7 +163,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/lti/',           // lti module
         '<rootDir>/src/main/webapp/app/iris/',          // iris module
         '<rootDir>/src/main/webapp/app/core/course/manage/', // core course manage module
-        '<rootDir>/src/main/webapp/app/shared/components/buttons', // shared/buttons components
+        '<rootDir>/src/main/webapp/app/shared/components/buttons/', // shared/buttons components
     ],
     testTimeout: 3000,
     testMatch: [

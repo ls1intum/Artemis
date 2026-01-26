@@ -50,10 +50,10 @@ export class DocumentationButtonComponent {
     readonly faCircleInfo = faCircleInfo;
     readonly DocumentationLinks = DocumentationLinks;
 
-    readonly type = input<DocumentationType>(undefined!);
+    readonly type = input<DocumentationType | undefined>(undefined);
 
     getTooltipForType() {
-        const typeKey = 'artemisApp.documentationLinks.' + this.type().toLowerCase();
+        const typeKey = 'artemisApp.documentationLinks.' + this.type()?.toLowerCase();
         return this.translateService.instant('artemisApp.documentationLinks.prefix') + this.translateService.instant(typeKey);
     }
 }

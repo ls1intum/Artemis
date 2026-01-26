@@ -278,19 +278,27 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
 
     archive() {
         const exam = this.currentExam();
+        const course = this.currentCourse();
+        if (!course?.id) {
+            return;
+        }
         if (this.archiveMode() === 'Exam' && exam) {
-            this.examService.archiveExam(this.currentCourse()?.id!, exam.id!).subscribe();
+            this.examService.archiveExam(course.id, exam.id!).subscribe();
         } else {
-            this.courseService.archiveCourse(this.currentCourse()?.id!).subscribe();
+            this.courseService.archiveCourse(course.id!).subscribe();
         }
     }
 
     downloadArchive() {
         const exam = this.currentExam();
+        const course = this.currentCourse();
+        if (!course?.id) {
+            return;
+        }
         if (this.archiveMode() === 'Exam' && exam) {
-            this.examService.downloadExamArchive(this.currentCourse()?.id!, exam.id!);
+            this.examService.downloadExamArchive(course.id, exam.id!);
         } else {
-            this.courseService.downloadCourseArchive(this.currentCourse()?.id!);
+            this.courseService.downloadCourseArchive(course.id);
         }
     }
 
