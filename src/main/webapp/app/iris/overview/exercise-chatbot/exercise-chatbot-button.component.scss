@@ -110,7 +110,6 @@
         align-items: center;
         position: relative;
         padding-right: 10px;
-        z-index: 0;
     }
 
     ::ng-deep .iris-citation {
@@ -129,7 +128,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         position: relative;
-        z-index: 2;
+        z-index: 1;
     }
 
     ::ng-deep .iris-citation__count {
@@ -142,7 +141,6 @@
         line-height: 1.2;
         background-color: var(--gray-500);
         color: var(--gray-300);
-        z-index: 0;
         pointer-events: none;
         margin-left: -7px;
     }
