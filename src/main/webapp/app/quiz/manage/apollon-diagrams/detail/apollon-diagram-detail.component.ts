@@ -58,12 +58,30 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     /** Whether to crop the downloaded image to the selection. */
     crop = true;
 
-    /** Whether some elements are interactive in the apollon editor. */
+    /**
+     * Whether some elements are interactive in the apollon editor.
+     * v3 format: model.interactive.elements/relationships (Record<id, boolean>)
+     * v4 format: model.nodes/edges are arrays - in v4 ALL elements are considered interactive
+     */
     get hasInteractive(): boolean {
-        return (
-            !!this.apollonEditor &&
-            (Object.entries(this.apollonEditor.model.nodes).some(([, selected]) => selected) || Object.entries(this.apollonEditor.model.edges).some(([, selected]) => selected))
-        );
+        if (!this.apollonEditor) {
+            return false;
+        }
+        const model = this.apollonEditor.model as any;
+
+        // v3 format: check interactive.elements/relationships
+        if (model.interactive) {
+            const elements = model.interactive.elements ?? {};
+            const relationships = model.interactive.relationships ?? {};
+            return Object.values(elements).some(Boolean) || Object.values(relationships).some(Boolean);
+        }
+
+        // v4 format: nodes and edges are ARRAYS - if there are any elements, they're interactive
+        if (Array.isArray(model.nodes)) {
+            return model.nodes.length > 0 || (model.edges?.length ?? 0) > 0;
+        }
+
+        return false;
     }
 
     /** Whether some elements are selected in the apollon editor. */
@@ -130,8 +148,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      */
     initializeApollonEditor(initialModel: UMLModel) {
         if (this.apollonEditor) {
-            // eslint-disable-next-line no-undef
-            console.log('DEBUG initializeApollonEditor destroy');
             this.apollonEditor.destroy();
         }
 

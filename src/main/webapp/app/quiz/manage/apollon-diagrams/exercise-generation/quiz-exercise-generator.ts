@@ -8,6 +8,68 @@ import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { round } from 'app/shared/util/utils';
 
+/**
+ * Helper to get interactive element selections from a model (supports both v3 and v4 formats).
+ * v3 format: model.interactive.elements and model.interactive.relationships (Record<id, boolean>)
+ * v4 format: model.nodes (ApollonNode[]) and model.edges (ApollonEdge[]) - arrays with id property
+ *
+ * In v4, there is no "interactive" concept - all elements are included by default.
+ * The caller should use exclude/include options in exportModelAsSvg to filter.
+ */
+function getInteractiveElements(model: UMLModel): string[] {
+    const modelAny = model as any;
+
+    // Check for v3 format first (interactive.elements/relationships)
+    if (modelAny.interactive) {
+        const elements = modelAny.interactive.elements ?? {};
+        const relationships = modelAny.interactive.relationships ?? {};
+        return [
+            ...Object.entries(elements)
+                .filter(([, include]) => include)
+                .map(([id]) => id),
+            ...Object.entries(relationships)
+                .filter(([, include]) => include)
+                .map(([id]) => id),
+        ];
+    }
+
+    // v4 format: nodes and edges are ARRAYS with id property (NOT Records!)
+    // In v4, we return all element IDs since there's no interactive selection concept
+    if (Array.isArray(modelAny.nodes)) {
+        const nodeIds = modelAny.nodes.map((n: { id: string }) => n.id);
+        const edgeIds = (modelAny.edges ?? []).map((e: { id: string }) => e.id);
+        return [...nodeIds, ...edgeIds];
+    }
+
+    return [];
+}
+
+/**
+ * Helper to get all elements (nodes + relationships/edges) from a model.
+ * Supports both v3 and v4 formats.
+ * v3: elements (Record) + relationships (Record)
+ * v4: nodes (array) + edges (array)
+ */
+function getModelElements(model: UMLModel): any[] {
+    const modelAny = model as any;
+
+    // v3 format: elements and relationships are Records
+    if (modelAny.elements && typeof modelAny.elements === 'object' && !Array.isArray(modelAny.elements)) {
+        const elements = Object.values(modelAny.elements);
+        const relationships = modelAny.relationships ? Object.values(modelAny.relationships) : [];
+        return [...elements, ...relationships];
+    }
+
+    // v4 format: nodes and edges are arrays
+    if (Array.isArray(modelAny.nodes)) {
+        const nodes = modelAny.nodes;
+        const edges = modelAny.edges ?? [];
+        return [...nodes, ...edges];
+    }
+
+    return [];
+}
+
 // Drop locations in quiz exercises are relatively positioned and sized using integers in the interval [0, 200]
 export const MAX_SIZE_UNIT = 200;
 
@@ -19,15 +81,8 @@ export const MAX_SIZE_UNIT = 200;
  * @param {UMLModel} model The complete UML model the quiz exercise is based on.
  */
 export async function generateDragAndDropQuizExercise(course: Course, title: string, model: UMLModel): Promise<DragAndDropQuestion> {
-    const interactiveElements = [
-        ...Object.entries(model.nodes)
-            .filter(([, include]) => include)
-            .map(([id]) => id),
-        ...Object.entries(model.edges)
-            .filter(([, include]) => include)
-            .map(([id]) => id),
-    ];
-    const elements = [...Object.values(model.nodes)];
+    const interactiveElements = getInteractiveElements(model);
+    const elements = getModelElements(model);
     // Render the diagram's background image and store it
     const renderedDiagram = await ApollonEditor.exportModelAsSvg(model, {
         keepOriginalSize: true,
@@ -170,7 +225,12 @@ export function computeDropLocation(
 function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: Map<string, DropLocation>, model: UMLModel): DragAndDropMapping[] {
     const textualElementTypes: DiagramNodeType[] = ['class', 'package'];
     const mappings = new Map<string, DragAndDropMapping[]>();
-    const textualElements = Object.values(model.nodes).filter((element) => textualElementTypes.includes(element.type));
+    const allElements = getModelElements(model);
+    // Helper to get parent ID (v3 uses 'owner', v4 uses 'parentId')
+    const getParentId = (element: any) => element.parentId ?? element.owner;
+    // Helper to get element name (v3 uses 'name', v4 uses 'data.name')
+    const getElementName = (element: any) => element.data?.name ?? element.name;
+    const textualElements = allElements.filter((element: any) => textualElementTypes.includes(element.type?.toLowerCase?.() ?? element.type));
 
     // Create all one-on-one mappings
     for (const [dragItemElementId, dragItem] of dragItems.entries()) {
@@ -184,11 +244,11 @@ function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: 
 
     // Create all mapping permutations for textual based elements within the same parent and same type
     for (const [dragItemElementId, dragItem] of dragItems.entries()) {
-        const dragElement = textualElements.find((element) => element.id === dragItemElementId);
-        if (!dragElement || !dragElement.parentId) {
+        const dragElement = textualElements.find((element: any) => element.id === dragItemElementId);
+        if (!dragElement || !getParentId(dragElement)) {
             continue;
         }
-        const dragElementSiblings = textualElements.filter((element) => element.parentId === dragElement.parentId && element.type === dragElement.type);
+        const dragElementSiblings = textualElements.filter((element: any) => getParentId(element) === getParentId(dragElement) && element.type === dragElement.type);
         for (const dragElementSibling of dragElementSiblings) {
             if (dragElementSibling.id === dragItemElementId) {
                 continue;
@@ -204,13 +264,18 @@ function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: 
 
     // Create all mapping permutations for textual based elements with the same name and different parents
     for (const [dragItemElementId, dragItem] of dragItems.entries()) {
-        const dragElement = textualElements.find((element) => element.id === dragItemElementId);
-        if (!dragElement || !dragElement.data.name) {
+        const dragElement = textualElements.find((element: any) => element.id === dragItemElementId);
+        if (!dragElement || !getElementName(dragElement)) {
             continue;
         }
         for (const [dropLocationElementId] of dropLocations.entries()) {
-            const dropElement = textualElements.find((element) => element.id === dropLocationElementId);
-            if (!dropElement || dropElement.id === dragElement.id || dropElement.parentId === dragElement.parentId || dropElement.data.name !== dragElement.data.name) {
+            const dropElement = textualElements.find((element: any) => element.id === dropLocationElementId);
+            if (
+                !dropElement ||
+                dropElement.id === dragElement.id ||
+                getParentId(dropElement) === getParentId(dragElement) ||
+                getElementName(dropElement) !== getElementName(dragElement)
+            ) {
                 continue;
             }
             if (intermediateMappings.has(dropLocationElementId)) {
