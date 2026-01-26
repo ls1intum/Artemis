@@ -50,7 +50,8 @@
                                  baseColumnNames="exercise_id"
                                  constraintName="fk_comment_thread_exercise"
                                  referencedTableName="exercise"
-                                 referencedColumnNames="id"/>
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
 
         <addForeignKeyConstraint baseTableName="comment_thread"
                                  baseColumnNames="initial_version_id"
@@ -115,7 +116,8 @@
                                  baseColumnNames="exercise_id"
                                  constraintName="fk_comment_thread_exercise"
                                  referencedTableName="exercise"
-                                 referencedColumnNames="id"/>
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
 
         <addForeignKeyConstraint baseTableName="comment_thread"
                                  baseColumnNames="initial_version_id"
@@ -179,7 +181,8 @@
                                  baseColumnNames="thread_id"
                                  constraintName="fk_comment_thread"
                                  referencedTableName="comment_thread"
-                                 referencedColumnNames="id"/>
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
 
         <addForeignKeyConstraint baseTableName="comment"
                                  baseColumnNames="author_id"
@@ -244,7 +247,8 @@
                                  baseColumnNames="thread_id"
                                  constraintName="fk_comment_thread"
                                  referencedTableName="comment_thread"
-                                 referencedColumnNames="id"/>
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
 
         <addForeignKeyConstraint baseTableName="comment"
                                  baseColumnNames="author_id"

@@ -27,6 +27,16 @@ In the following, the respective permissions illustrated. If a subordinated role
 
 While Super Admins have all the permissions of regular Admins, they have additional privileges in security-critical areas:
 
+### Admin User Management
+
+Only Super Admins can manage administrator accounts (both Admin and Super Admin users). This includes:
+- **Creating** new admin or super admin users
+- **Updating** existing admin or super admin users
+- **Activating/Deactivating** admin or super admin users
+- **Deleting** admin or super admin users
+
+Regular Admins can only manage users with roles below Admin (Instructor, Editor, Teaching Assistant, Student).
+
 ### Passkey Approval
 
 Super Admins have the exclusive privilege to approve passkey registrations for administrators.
@@ -35,21 +45,23 @@ This minimizes the attack surface for critical security operations by limiting p
 For detailed information about passkey authentication, configuration, and the approval process, see the [Passkey Authentication](/admin/production-setup/security#passkey-authentication) section in the Security Configuration documentation.
 
 <Callout variant={CalloutVariant.info}>
-    Super Admin privileges are only relevant when passkeys are activated and passkey enforcement for administrators is enabled.
-    In other configurations, Super Admins and Admins have identical permissions, except that Admins cannot modify the accounts of Super Admins.
+    Super Admin privileges ensure that only the most trusted users can manage administrator accounts and approve passkeys for administrators.
+    This minimizes the attack surface for critical security operations.
 </Callout>
 
 ## Navigation
 
-| Feature               | Super Admin | Admin | Instructor | Editor | Teaching Assistant | Student |
-|-----------------------|-------------|-------|------------|--------|--------------------|---------|
-| Course Overview       | ✔           | ✔     | ✔          | ✔      | ✔                  | ✔       |
-| Course Management     | ✔           | ✔     | ✔          | ✔      | ✔                  |         |
-| Edit Course           | ✔           | ✔     | ✔          |        |                    |         |
-| Create new course     | ✔           | ✔     |            |        |                    |         |
-| Delete Course         | ✔           | ✔     |            |        |                    |         |
-| Server Administration | ✔           | ✔     |            |        |                    |         |
-| Approve Passkeys      | ✔           |       |            |        |                    |         |
+| Feature                  | Super Admin | Admin | Instructor | Editor | Teaching Assistant | Student |
+|--------------------------|-------------|-------|------------|--------|--------------------|---------|
+| Course Overview          | ✔           | ✔     | ✔          | ✔      | ✔                  | ✔       |
+| Course Management        | ✔           | ✔     | ✔          | ✔      | ✔                  |         |
+| Edit Course              | ✔           | ✔     | ✔          |        |                    |         |
+| Create new course        | ✔           | ✔     |            |        |                    |         |
+| Delete Course            | ✔           | ✔     |            |        |                    |         |
+| Server Administration    | ✔           | ✔     |            |        |                    |         |
+| Manage Non-Admin Users   | ✔           | ✔     |            |        |                    |         |
+| Manage Admin Users       | ✔           |       |            |        |                    |         |
+| Approve Passkeys         | ✔           |       |            |        |                    |         |
 
 ## Course
 
