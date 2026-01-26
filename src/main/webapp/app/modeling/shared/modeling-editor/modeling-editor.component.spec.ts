@@ -46,6 +46,13 @@ describe('ModelingEditorComponent', () => {
     });
 
     afterEach(() => {
+        // Properly clean up the Apollon editor (React-based) before test environment teardown.
+        // This prevents "document global was defined when React was initialized" and
+        // "Should not already be working" React scheduler errors.
+        if (component) {
+            component.ngOnDestroy();
+        }
+        fixture?.destroy();
         vi.restoreAllMocks();
     });
 
