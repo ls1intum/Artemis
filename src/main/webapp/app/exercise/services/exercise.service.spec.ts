@@ -37,7 +37,7 @@ describe('Exercise Service', () => {
         id: 23,
         type: ExerciseType.MODELING,
         studentParticipations: [],
-        exampleSolutionModel: '{ "key": "value" }',
+        exampleSolutionModel: '{"version": "3.0.0", "elements": {}, "relationships": {}}',
         exampleSolutionExplanation: 'Solution<br>Explanation',
     } as unknown as ModelingExercise;
 

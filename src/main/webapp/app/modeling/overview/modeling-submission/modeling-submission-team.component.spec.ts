@@ -256,7 +256,7 @@ describe('ModelingSubmissionComponent', () => {
         createComponent();
 
         // Initialize submission
-        submission.model = '{"elements": {"1": {"id": 1}}}';
+        submission.model = '{"version": "3.0.0", "elements": {"1": {"id": 1}}, "relationships": {}}';
         vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
         // Initialize the component

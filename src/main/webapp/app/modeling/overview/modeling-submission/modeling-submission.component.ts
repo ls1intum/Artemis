@@ -323,7 +323,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.modelingParticipationHeader = modelingSubmission.participation as StudentParticipation;
         this.modelingParticipationHeader.submissions = [<ModelingSubmission>omit(modelingSubmission, 'participation')];
         this.modelingExerciseHeader = this.modelingParticipationHeader.exercise as ModelingExercise;
-        this.modelingExerciseHeader.studentParticipations = [this.participation];
+        if (this.modelingExerciseHeader) {
+            this.modelingExerciseHeader.studentParticipations = [this.participation];
+        }
 
         // If isFeedbackView is true and submissionId is present, we want to find the corresponding submission and not get the latest one
         if (this.isFeedbackView && this.submissionId && this.sortedSubmissionHistory) {
@@ -625,7 +627,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.submission.participation!.submissions = [this.submission];
                     this.participationWebsocketService.addParticipation(this.participation, this.modelingExercise);
                     this.modelingExercise.studentParticipations = [this.participation];
-                    this.modelingExerciseHeader.studentParticipations = [this.participation];
+                    if (this.modelingExerciseHeader) {
+                        this.modelingExerciseHeader.studentParticipations = [this.participation];
+                    }
                     this.result = getLatestSubmissionResult(this.submission);
                     this.retryStarted = false;
 

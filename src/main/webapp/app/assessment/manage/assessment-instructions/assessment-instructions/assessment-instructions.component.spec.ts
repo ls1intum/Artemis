@@ -92,7 +92,7 @@ describe('AssessmentInstructionsComponent', () => {
     it('should initialize exercise input for modeling exercise', () => {
         const modelingExercise = {
             id: 1,
-            exampleSolutionModel: '{"elements": [{"id": 1}]}',
+            exampleSolutionModel: '{"version": "3.0.0", "elements": {}, "relationships": {}}',
             diagramType: UMLDiagramType.ClassDiagram,
             exampleSolutionExplanation: 'explanation',
             type: ExerciseType.MODELING,
