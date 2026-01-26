@@ -206,14 +206,78 @@ export class IrisExerciseChatbotButtonComponent {
         }
         const citationMap = new Map<number, IrisCitationMetaDTO>(citationInfo.map((citation) => [citation.entityId, citation]));
         const citationRegex = /\[cite:[^\]]+\]/g;
-        return text.replace(citationRegex, (match) => {
-            const parsed = this.parseCitation(match);
+        const tokens: Array<{ type: 'text'; value: string } | { type: 'citation'; value: string }> = [];
+        let lastIndex = 0;
+        for (const match of text.matchAll(citationRegex)) {
+            const index = match.index ?? 0;
+            if (index > lastIndex) {
+                tokens.push({ type: 'text', value: text.slice(lastIndex, index) });
+            }
+            tokens.push({ type: 'citation', value: match[0] });
+            lastIndex = index + match[0].length;
+        }
+        if (lastIndex < text.length) {
+            tokens.push({ type: 'text', value: text.slice(lastIndex) });
+        }
+
+        const rendered: string[] = [];
+        let i = 0;
+        while (i < tokens.length) {
+            const token = tokens[i];
+            if (token.type === 'text') {
+                rendered.push(token.value);
+                i += 1;
+                continue;
+            }
+            const citationGroup: string[] = [token.value];
+            let j = i + 1;
+            let pendingWhitespace = '';
+            while (j < tokens.length) {
+                const nextToken = tokens[j];
+                if (nextToken.type === 'text' && /^\s*$/.test(nextToken.value)) {
+                    pendingWhitespace += nextToken.value;
+                    j += 1;
+                    continue;
+                }
+                if (nextToken.type === 'citation') {
+                    citationGroup.push(nextToken.value);
+                    pendingWhitespace = '';
+                    j += 1;
+                    continue;
+                }
+                break;
+            }
+
+            if (citationGroup.length > 1) {
+                const parsed = citationGroup.map((raw) => this.parseCitation(raw)).filter((value): value is IrisCitationParsed => Boolean(value));
+                if (parsed.length === 0) {
+                    rendered.push(citationGroup.join(''));
+                } else {
+                    const metas = parsed.map((entry) => (entry.type === 'L' ? citationMap.get(entry.entityId) : undefined));
+                    rendered.push(this.renderCitationGroupPreviewHtml(parsed, metas));
+                }
+                if (pendingWhitespace) {
+                    rendered.push(pendingWhitespace);
+                }
+                i = j;
+                continue;
+            }
+
+            const parsed = this.parseCitation(token.value);
             if (!parsed) {
-                return match;
+                rendered.push(token.value);
+                i = j;
+                continue;
             }
             const meta = parsed.type === 'L' ? citationMap.get(parsed.entityId) : undefined;
-            return this.renderCitationPreviewHtml(parsed, meta);
-        });
+            rendered.push(this.renderCitationPreviewHtml(parsed, meta));
+            if (pendingWhitespace) {
+                rendered.push(pendingWhitespace);
+            }
+            i = j;
+        }
+
+        return rendered.join('');
     }
 
     private parseCitation(raw: string): IrisCitationParsed | undefined {
@@ -260,6 +324,16 @@ export class IrisExerciseChatbotButtonComponent {
         const typeClass = this.resolveCitationTypeClass(parsed);
         const classes = ['iris-citation', typeClass].filter(Boolean).join(' ');
         return `<span class="${classes}"><span class="iris-citation__icon"></span><span class="iris-citation__text">${label}</span></span>`;
+    }
+
+    private renderCitationGroupPreviewHtml(parsed: IrisCitationParsed[], metas: Array<IrisCitationMetaDTO | undefined>): string {
+        const first = parsed[0];
+        const firstMeta = metas[0];
+        const label = this.formatCitationLabel(first, firstMeta);
+        const typeClass = this.resolveCitationTypeClass(first);
+        const classes = ['iris-citation-group', typeClass].filter(Boolean).join(' ');
+        const count = parsed.length - 1;
+        return `<span class="${classes}"><span class="iris-citation ${typeClass}"><span class="iris-citation__icon"></span><span class="iris-citation__text">${label}</span></span><span class="iris-citation__count">+${count}</span></span>`;
     }
 
     private formatCitationLabel(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
