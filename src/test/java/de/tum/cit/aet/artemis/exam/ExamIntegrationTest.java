@@ -16,6 +16,7 @@ import static org.springframework.http.HttpStatus.CREATED;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -527,6 +528,80 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
         // Test for bad request when course is null.
         request.post("/api/exam/courses/" + course1.getId() + "/exams", examB, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_failsWithExamMaxPointsTooHigh() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1, "examMaxPointsTest");
+        exam.setExamMaxPoints(10000); // Max allowed is 9999
+
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_failsWithGracePeriodTooHigh() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1, "examGracePeriodTest");
+        exam.setGracePeriod(3601); // Max allowed is 3600 seconds
+
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_failsWithNumberOfExercisesTooHigh() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1, "examNumberOfExercisesTest");
+        exam.setNumberOfExercisesInExam(101); // Max allowed is 100
+
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_failsWithWorkingTimeTooHigh() throws Exception {
+        // Test with a test exam where workingTime is directly validated
+        Exam exam = ExamFactory.generateExam(course1, "examWorkingTimeTest");
+        exam.setTestExam(true);
+        exam.setNumberOfCorrectionRoundsInExam(0);
+        exam.setWorkingTime(2592001); // Max allowed is 2592000 seconds (30 days)
+
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_failsWithExamMaxPointsTooHigh() throws Exception {
+        exam1.setExamMaxPoints(10000); // Max allowed is 9999
+
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", exam1, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_failsWithGracePeriodTooHigh() throws Exception {
+        exam1.setGracePeriod(3601); // Max allowed is 3600 seconds
+
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", exam1, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_failsWithNumberOfExercisesTooHigh() throws Exception {
+        exam1.setNumberOfExercisesInExam(101); // Max allowed is 100
+
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", exam1, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_failsWithWorkingTimeTooHigh() throws Exception {
+        // Test with a test exam where workingTime is directly validated
+        exam1.setTestExam(true);
+        exam1.setNumberOfCorrectionRoundsInExam(0);
+        exam1.setWorkingTime(2592001); // Max allowed is 2592000 seconds (30 days)
+
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", exam1, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -1142,7 +1217,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         request.put("/api/core/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
 
         final var courseId = course.getId();
-        await().until(() -> courseRepository.findById(courseId).orElseThrow().getCourseArchivePath() != null);
+        await().atMost(Duration.ofSeconds(30)).until(() -> courseRepository.findById(courseId).orElseThrow().getCourseArchivePath() != null);
 
         var updatedCourse = courseRepository.findById(courseId).orElseThrow();
         assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
@@ -1161,7 +1236,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         request.put("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/archive", null, HttpStatus.OK);
 
         final var examId = exam.getId();
-        await().until(() -> examRepository.findById(examId).orElseThrow().getExamArchivePath() != null);
+        await().atMost(Duration.ofSeconds(30)).until(() -> examRepository.findById(examId).orElseThrow().getExamArchivePath() != null);
 
         var updatedExam = examRepository.findById(examId).orElseThrow();
         assertThat(updatedExam.getExamArchivePath()).isNotEmpty();

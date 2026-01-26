@@ -16,6 +16,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -38,6 +39,7 @@ import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { By } from '@angular/platform-browser';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     template: '',
@@ -575,6 +577,79 @@ describe('ExamUpdateComponent', () => {
             fixture.changeDetectorRef.detectChanges();
             expect(component.exam.numberOfExercisesInExam).toBe(40);
             expect(component.isValidNumberOfExercises).toBeTrue();
+
+            // Test max limit of 100
+            examWithoutExercises.numberOfExercisesInExam = 100;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.numberOfExercisesInExam).toBe(100);
+            expect(component.isValidNumberOfExercises).toBeTrue();
+
+            examWithoutExercises.numberOfExercisesInExam = 101;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.numberOfExercisesInExam).toBe(101);
+            expect(component.isValidNumberOfExercises).toBeFalse();
+        });
+
+        it('should correctly validate max points with upper limit of 9999', () => {
+            fixture.detectChanges();
+
+            examWithoutExercises.examMaxPoints = 100;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.examMaxPoints).toBe(100);
+            expect(component.isValidMaxPoints).toBeTrue();
+
+            examWithoutExercises.examMaxPoints = 9999;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.examMaxPoints).toBe(9999);
+            expect(component.isValidMaxPoints).toBeTrue();
+
+            examWithoutExercises.examMaxPoints = 10000;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.examMaxPoints).toBe(10000);
+            expect(component.isValidMaxPoints).toBeFalse();
+        });
+
+        it('should correctly validate grace period with upper limit of 3600 seconds', () => {
+            fixture.detectChanges();
+
+            examWithoutExercises.gracePeriod = 180;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.gracePeriod).toBe(180);
+            expect(component.isValidGracePeriod).toBeTrue();
+
+            examWithoutExercises.gracePeriod = 3600;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.gracePeriod).toBe(3600);
+            expect(component.isValidGracePeriod).toBeTrue();
+
+            examWithoutExercises.gracePeriod = 3601;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.exam.gracePeriod).toBe(3601);
+            expect(component.isValidGracePeriod).toBeFalse();
+        });
+
+        it('should correctly validate working time with upper limit of 30 days (2592000 seconds)', () => {
+            fixture.detectChanges();
+
+            // Set up exam as a test exam with a long exam window
+            examWithoutExercises.testExam = true;
+            examWithoutExercises.startDate = dayjs().add(0, 'hours');
+            examWithoutExercises.endDate = dayjs().add(35, 'days'); // Long exam window
+
+            // Valid working time
+            examWithoutExercises.workingTime = 86400; // 1 day
+            expect(component.exam.workingTime).toBe(86400);
+            expect(component.validateWorkingTime).toBeTrue();
+
+            // Working time at limit (30 days = 2592000 seconds)
+            examWithoutExercises.workingTime = 2592000;
+            expect(component.exam.workingTime).toBe(2592000);
+            expect(component.validateWorkingTime).toBeTrue();
+
+            // Working time exceeds limit
+            examWithoutExercises.workingTime = 2592001;
+            expect(component.exam.workingTime).toBe(2592001);
+            expect(component.validateWorkingTime).toBeFalse();
         });
 
         it('should bind correct title into jhi-button and compute correct save title text', () => {
@@ -635,6 +710,161 @@ describe('ExamUpdateComponent', () => {
             button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
             expect(button.disabled).toBeTrue();
         }));
+
+        it('should open confirmation modal when dates changed for ongoing exam', fakeAsync(() => {
+            const modalService = TestBed.inject(NgbModal);
+            const mockModalRef = {
+                componentInstance: {
+                    title: '',
+                    text: '',
+                    contentRef: null,
+                    confirmDisabled: false,
+                },
+                result: new Promise<void>(() => {}),
+            } as any;
+
+            const modalSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+
+            // Set up an ongoing exam
+            examWithoutExercises.id = 1;
+            examWithoutExercises.title = 'Test Exam Title';
+            examWithoutExercises.startDate = dayjs().subtract(1, 'hours');
+            examWithoutExercises.endDate = dayjs().add(1, 'hours');
+            component['originalStartDate'] = dayjs().subtract(1, 'hours');
+            component['originalEndDate'] = dayjs().add(1, 'hours');
+
+            fixture.detectChanges();
+            tick();
+
+            // Change the dates
+            examWithoutExercises.startDate = dayjs().subtract(30, 'minutes');
+            examWithoutExercises.endDate = dayjs().add(2, 'hours');
+
+            component.handleSubmit();
+            tick();
+
+            expect(modalSpy).toHaveBeenCalledOnce();
+            expect(modalSpy).toHaveBeenCalledWith(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
+            expect(component['activeModalRef']).toBe(mockModalRef);
+            expect(component.confirmEntityNameValue()).toBe('');
+            expect(mockModalRef.componentInstance.confirmDisabled).toBeTrue();
+            expect(mockModalRef.componentInstance.title).toBe('artemisApp.examManagement.dateChange.title');
+        }));
+
+        it('should set confirmDisabled to true initially when opening modal', fakeAsync(() => {
+            const modalService = TestBed.inject(NgbModal);
+            const mockModalRef = {
+                componentInstance: {
+                    title: '',
+                    text: '',
+                    contentRef: null,
+                    confirmDisabled: false,
+                },
+                result: new Promise<void>(() => {}),
+            } as any;
+
+            jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+
+            // Set up an ongoing exam
+            examWithoutExercises.id = 1;
+            examWithoutExercises.title = 'My Exam';
+            examWithoutExercises.startDate = dayjs().subtract(1, 'hours');
+            examWithoutExercises.endDate = dayjs().add(1, 'hours');
+            component['originalStartDate'] = dayjs().subtract(1, 'hours');
+            component['originalEndDate'] = dayjs().add(1, 'hours');
+
+            fixture.detectChanges();
+            tick();
+
+            // Change the dates
+            examWithoutExercises.startDate = dayjs().subtract(30, 'minutes');
+
+            component.handleSubmit();
+            tick();
+
+            expect(mockModalRef.componentInstance.confirmDisabled).toBeTrue();
+        }));
+
+        it('should not open modal when dates have not changed', fakeAsync(() => {
+            const modalService = TestBed.inject(NgbModal);
+            const modalSpy = jest.spyOn(modalService, 'open');
+            const navigateSpy = jest.spyOn(router, 'navigate');
+            const saveSpy = jest.spyOn(examManagementService, 'update').mockReturnValue(
+                of(
+                    new HttpResponse<Exam>({
+                        body: {
+                            ...examWithoutExercises,
+                            id: 1,
+                        },
+                    }),
+                ),
+            );
+
+            // Set up an ongoing exam
+            examWithoutExercises.id = 1;
+            examWithoutExercises.title = 'Unchanged Exam';
+            examWithoutExercises.startDate = dayjs().subtract(1, 'hours');
+            examWithoutExercises.endDate = dayjs().add(1, 'hours');
+            component['originalStartDate'] = examWithoutExercises.startDate.clone();
+            component['originalEndDate'] = examWithoutExercises.endDate.clone();
+
+            fixture.detectChanges();
+            tick();
+
+            // Don't change the dates
+            component.handleSubmit();
+            tick();
+
+            expect(modalSpy).not.toHaveBeenCalled();
+            expect(saveSpy).toHaveBeenCalledOnce();
+            expect(navigateSpy).toHaveBeenCalledOnce();
+        }));
+
+        it('should enable confirm button when entered value matches exam title', () => {
+            examWithoutExercises.title = 'Exact Title Match';
+            fixture.detectChanges();
+
+            const mockModalRef = {
+                componentInstance: {
+                    confirmDisabled: true,
+                },
+            } as any;
+
+            component['activeModalRef'] = mockModalRef;
+
+            component.onConfirmNameChange('Exact Title Match');
+
+            expect(component.confirmEntityNameValue()).toBe('Exact Title Match');
+            expect(mockModalRef.componentInstance.confirmDisabled).toBeFalse();
+        });
+
+        it('should disable confirm button when entered value does not match exam title', () => {
+            examWithoutExercises.title = 'Correct Title';
+            fixture.detectChanges();
+
+            const mockModalRef = {
+                componentInstance: {
+                    confirmDisabled: false,
+                },
+            } as any;
+
+            component['activeModalRef'] = mockModalRef;
+
+            component.onConfirmNameChange('Wrong Title');
+
+            expect(component.confirmEntityNameValue()).toBe('Wrong Title');
+            expect(mockModalRef.componentInstance.confirmDisabled).toBeTrue();
+        });
+
+        it('should handle onConfirmNameChange when no modal is active', () => {
+            examWithoutExercises.title = 'Some Exam';
+            fixture.detectChanges();
+
+            component['activeModalRef'] = null;
+
+            expect(() => component.onConfirmNameChange('Some Value')).not.toThrow();
+            expect(component.confirmEntityNameValue()).toBe('Some Value');
+        });
     });
 
     describe('import exams', () => {
