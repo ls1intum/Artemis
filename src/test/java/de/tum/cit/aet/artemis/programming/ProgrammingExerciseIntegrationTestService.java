@@ -1294,8 +1294,8 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post("/api/programming/programming-exercises/import/" + programmingExercise.getId(), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    void importProgrammingExerciseMaxScoreNullBadRequest() throws Exception {
-        programmingExercise.setMaxPoints(null);
+    void importProgrammingExerciseMaxScoreInvalidBadRequest() throws Exception {
+        programmingExercise.setMaxPoints(0.0);
         request.post("/api/programming/programming-exercises/import/" + programmingExercise.getId(), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
