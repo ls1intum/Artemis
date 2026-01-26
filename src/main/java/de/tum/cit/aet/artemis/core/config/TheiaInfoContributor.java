@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.programming.theia.TheiaEnabled;
 @Lazy
 public class TheiaInfoContributor implements InfoContributor {
 
-    @Value("${theia.portal-url}")
+    @Value("${artemis.theia.portal-url}")
     private URL theiaPortalURL;
 
     @Override

@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.programming.theia.TheiaEnabled;
 @Conditional(TheiaEnabled.class)
 @Configuration
 @Lazy
-@ConfigurationProperties(prefix = "theia")
+@ConfigurationProperties(prefix = "artemis.theia")
 public class TheiaConfiguration {
 
     private Map<ProgrammingLanguage, Map<String, String>> images;
