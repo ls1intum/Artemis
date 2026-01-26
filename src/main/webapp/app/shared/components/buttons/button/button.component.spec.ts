@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
@@ -10,18 +10,20 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { MockInstance, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('ButtonComponent', () => {
+    setupTestBed({ zoneless: true });
     let comp: ButtonComponent;
     let fixture: ComponentFixture<ButtonComponent>;
     let debugElement: DebugElement;
 
-    let clickSpy: jest.SpyInstance;
+    let clickSpy: MockInstance;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip), FontAwesomeTestingModule],
-            declarations: [ButtonComponent, FeatureToggleDirective, TranslatePipeMock, MockDirective(TranslateDirective)],
+            imports: [MockDirective(NgbTooltip), FontAwesomeTestingModule, ButtonComponent, FeatureToggleDirective, TranslatePipeMock, MockDirective(TranslateDirective)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
         })
             .compileComponents()
@@ -30,7 +32,7 @@ describe('ButtonComponent', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
 
-                clickSpy = jest.spyOn(comp.onClick, 'emit');
+                clickSpy = vi.spyOn(comp.onClick, 'emit');
             });
     });
 
@@ -55,8 +57,8 @@ describe('ButtonComponent', () => {
     };
 
     it('should render button with icon and title', () => {
-        comp.title = 'artemisApp.title.test';
-        comp.icon = 'redo';
+        fixture.componentRef.setInput('title', 'artemisApp.title.test');
+        fixture.componentRef.setInput('icon', 'redo');
 
         fixture.detectChanges();
 
@@ -71,7 +73,7 @@ describe('ButtonComponent', () => {
     });
 
     it('should render button without icon and with title', () => {
-        comp.title = 'artemisApp.title.test';
+        fixture.componentRef.setInput('title', 'artemisApp.title.test');
 
         fixture.detectChanges();
 
@@ -86,7 +88,7 @@ describe('ButtonComponent', () => {
     });
 
     it('should render button with icon and without title', () => {
-        comp.icon = 'redo';
+        fixture.componentRef.setInput('icon', 'redo');
 
         fixture.detectChanges();
 
@@ -100,54 +102,51 @@ describe('ButtonComponent', () => {
         expect(loadingIcon).toBeNull();
     });
 
-    it('should disable complete button if disabled is set', fakeAsync(() => {
-        comp.title = 'artemisApp.title.test';
-        comp.icon = 'redo';
-        comp.disabled = true;
+    it('should disable complete button if disabled is set', () => {
+        fixture.componentRef.setInput('title', 'artemisApp.title.test');
+        fixture.componentRef.setInput('icon', 'redo');
+        fixture.componentRef.setInput('disabled', true);
 
         fixture.detectChanges();
 
         const button = getButton();
         expect(button).not.toBeNull();
-        expect(button.disabled).toBeTrue();
+        expect(button.disabled).toBeTruthy();
         button.click();
-        tick();
 
         expect(clickSpy).not.toHaveBeenCalled();
-    }));
+    });
 
-    it('should enable complete button if disabled is set to false', fakeAsync(() => {
-        comp.title = 'artemisApp.title.test';
-        comp.icon = 'redo';
-        comp.disabled = false;
+    it('should enable complete button if disabled is set to false', () => {
+        fixture.componentRef.setInput('title', 'artemisApp.title.test');
+        fixture.componentRef.setInput('icon', 'redo');
+        fixture.componentRef.setInput('disabled', false);
 
         fixture.detectChanges();
 
         const button = getButton();
         expect(button).not.toBeNull();
-        expect(button.disabled).toBeFalse();
+        expect(button.disabled).toBeFalsy();
         button.click();
-        tick();
 
         expect(clickSpy).toHaveBeenCalledOnce();
-    }));
+    });
 
-    it('should show loading indicator when loading is set', fakeAsync(() => {
-        comp.title = 'artemisApp.title.test';
-        comp.icon = 'redo';
-        comp.isLoading = true;
+    it('should show loading indicator when loading is set', () => {
+        fixture.componentRef.setInput('title', 'artemisApp.title.test');
+        fixture.componentRef.setInput('icon', 'redo');
+        fixture.componentRef.setInput('isLoading', true);
 
         fixture.detectChanges();
 
         const button = getButton();
         expect(button).not.toBeNull();
-        expect(button.disabled).toBeTrue();
+        expect(button.disabled).toBeTruthy();
         const loadingIcon = getLoading();
         expect(loadingIcon).not.toBeNull();
 
         button.click();
-        tick();
 
         expect(clickSpy).not.toHaveBeenCalled();
-    }));
+    });
 });

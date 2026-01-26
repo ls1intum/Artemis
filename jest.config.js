@@ -119,6 +119,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/lti/',               // lti module uses Vitest
         '<rootDir>/src/main/webapp/app/iris/',              // iris module uses Vitest
         '<rootDir>/src/main/webapp/app/core/course/manage/', // core course manage module uses Vitest
+        '<rootDir>/src/main/webapp/app/shared/components/buttons', // buttons module module uses Vitest
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
@@ -163,6 +164,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/lti/',           // lti module
         '<rootDir>/src/main/webapp/app/iris/',          // iris module
         '<rootDir>/src/main/webapp/app/core/course/manage/', // core course manage module
+        '<rootDir>/src/main/webapp/app/shared/components/buttons/', // shared/buttons components
     ],
     testTimeout: 3000,
     testMatch: [

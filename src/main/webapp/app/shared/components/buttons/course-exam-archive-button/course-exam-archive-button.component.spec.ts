@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -27,8 +27,12 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { DialogService } from 'primeng/dynamicdialog';
 
 describe('Course Exam Archive Button Component', () => {
+    setupTestBed({ zoneless: true });
     let comp: CourseExamArchiveButtonComponent;
     let fixture: ComponentFixture<CourseExamArchiveButtonComponent>;
     let courseManagementService: CourseManagementService;
@@ -37,7 +41,7 @@ describe('Course Exam Archive Button Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [
+            imports: [
                 CourseExamArchiveButtonComponent,
                 MockComponent(ImageComponent),
                 MockRouterLinkDirective,
@@ -52,6 +56,7 @@ describe('Course Exam Archive Button Component', () => {
                 LocalStorageService,
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useValue: { open: vi.fn(), close: vi.fn() } },
                 MockProvider(AlertService),
                 MockProvider(NgbModal),
                 provideHttpClient(),
@@ -69,224 +74,232 @@ describe('Course Exam Archive Button Component', () => {
 
     describe('onInit without required properties', () => {
         beforeEach(() => {
-            comp.archiveMode = 'Course';
+            fixture.componentRef.setInput('archiveMode', 'Course');
+            fixture.detectChanges();
         });
 
         afterEach(() => {
             // Otherwise ngOnDestroy crashes
-            comp.course = { id: 123 };
+            fixture.componentRef.setInput('course', { id: 123 });
+            fixture.detectChanges();
         });
 
-        it('should just return', fakeAsync(() => {
+        // since archiveButtonText doesnt depend on ngOnInit after signal migration, we test the behavior of
+        // what happens if nothing is set using a spy
+        it('should just return (no lang subscription) when not initialized', () => {
+            // Ensure inputs are absent so currentCourse/currentExam remain empty
+            fixture.componentRef.setInput('course', undefined);
+            fixture.componentRef.setInput('exam', undefined);
+            fixture.detectChanges();
+
+            const translate = TestBed.inject(TranslateService);
+            const subSpy = vi.spyOn(translate.onLangChange, 'subscribe');
+
             comp.ngOnInit();
-            tick();
-            expect(comp.archiveButtonText).toBe('');
-        }));
+
+            expect(subSpy).not.toHaveBeenCalled();
+        });
     });
 
     describe('onInit for not instructor', () => {
         const course = { id: 123, isAtLeastInstructor: false };
 
         beforeEach(() => {
-            comp.archiveMode = 'Course';
-            comp.course = course;
+            fixture.componentRef.setInput('archiveMode', 'Course');
+            fixture.componentRef.setInput('course', course);
+            fixture.detectChanges();
         });
 
-        it('should not display archiving and cleanup controls', fakeAsync(() => {
+        it('should not display archiving and cleanup controls', () => {
             comp.ngOnInit();
-            tick();
 
-            expect(comp.canArchive()).toBeFalse();
-            expect(comp.canCleanup()).toBeFalse();
-            expect(comp.canDownloadArchive()).toBeFalse();
-        }));
+            expect(comp.canArchive()).toBeFalsy();
+            expect(comp.canCleanup()).toBeFalsy();
+            expect(comp.canDownloadArchive()).toBeFalsy();
+        });
     });
 
-    describe('onInit for course that is not over', () => {
+    describe('onInit for course that is over', () => {
         const course = { id: 123, endDate: dayjs().subtract(5, 'minutes') };
 
         beforeEach(() => {
-            comp.archiveMode = 'Course';
-            comp.course = course;
+            fixture.componentRef.setInput('archiveMode', 'Course');
+            fixture.componentRef.setInput('course', course);
+            fixture.detectChanges();
         });
 
-        it('should not display archiving and cleanup controls', fakeAsync(() => {
-            jest.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(false);
+        it('should not display archiving and cleanup controls', () => {
+            vi.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(false);
 
             comp.ngOnInit();
-            tick();
 
-            expect(comp.canArchive()).toBeFalse();
-            expect(comp.canCleanup()).toBeFalse();
-            expect(comp.canDownloadArchive()).toBeFalse();
-        }));
+            expect(comp.canArchive()).toBeFalsy();
+            expect(comp.canCleanup()).toBeFalsy();
+            expect(comp.canDownloadArchive()).toBeFalsy();
+        });
     });
 
     describe('onInit for course that has no archive', () => {
         const course = { id: 123, isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes') };
 
         beforeEach(() => {
-            comp.archiveMode = 'Course';
-            comp.course = course;
+            fixture.componentRef.setInput('archiveMode', 'Course');
+            fixture.componentRef.setInput('course', course);
+            fixture.detectChanges();
         });
 
-        it('should not display an archive course button', fakeAsync(() => {
+        it('should not display an archive course button', () => {
             comp.ngOnInit();
-            tick();
 
-            expect(comp.canArchive()).toBeTrue();
-            expect(comp.canCleanup()).toBeFalse();
-            expect(comp.canDownloadArchive()).toBeFalse();
-        }));
+            expect(comp.canArchive()).toBeTruthy();
+            expect(comp.canCleanup()).toBeFalsy();
+            expect(comp.canDownloadArchive()).toBeFalsy();
+        });
     });
 
     describe('onInit for course that has an archive', () => {
         const course = { id: 123, isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
 
-        beforeEach(fakeAsync(() => {
-            comp.archiveMode = 'Course';
-            comp.course = course;
-
+        beforeEach(() => {
+            fixture.componentRef.setInput('archiveMode', 'Course');
+            fixture.componentRef.setInput('course', course);
+            fixture.detectChanges();
             comp.ngOnInit();
-            tick();
-        }));
-
-        afterEach(() => {
-            jest.restoreAllMocks();
         });
 
-        it('should not display an archive course button', fakeAsync(() => {
-            expect(comp.canArchive()).toBeTrue();
-            expect(comp.canCleanup()).toBeTrue();
-            expect(comp.canDownloadArchive()).toBeTrue();
-        }));
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
 
-        it('should cleanup archive for course', fakeAsync(() => {
+        it('should not display an archive course button', () => {
+            expect(comp.canArchive()).toBeTruthy();
+            expect(comp.canCleanup()).toBeTruthy();
+            expect(comp.canDownloadArchive()).toBeTruthy();
+        });
+
+        it('should cleanup archive for course', () => {
             const response: HttpResponse<void> = new HttpResponse({ status: 200 });
-            const cleanupStub = jest.spyOn(courseManagementService, 'cleanupCourse').mockReturnValue(of(response));
+            const cleanupStub = vi.spyOn(courseManagementService, 'cleanupCourse').mockReturnValue(of(response));
 
             const alertService = TestBed.inject(AlertService);
-            const alertServiceSpy = jest.spyOn(alertService, 'success');
+            const alertServiceSpy = vi.spyOn(alertService, 'success');
 
             comp.cleanup();
 
             expect(cleanupStub).toHaveBeenCalledOnce();
             expect(alertServiceSpy).toHaveBeenCalledOnce();
-        }));
+        });
 
-        it('should download archive for course', fakeAsync(() => {
-            const downloadStub = jest.spyOn(courseManagementService, 'downloadCourseArchive').mockImplementation(() => {});
+        it('should download archive for course', () => {
+            const downloadStub = vi.spyOn(courseManagementService, 'downloadCourseArchive').mockImplementation(() => {});
 
             comp.downloadArchive();
 
             expect(downloadStub).toHaveBeenCalledOnce();
-        }));
+        });
 
-        it('should archive course', fakeAsync(() => {
+        it('should archive course', () => {
             const response: HttpResponse<void> = new HttpResponse({ status: 200 });
-            const downloadStub = jest.spyOn(courseManagementService, 'archiveCourse').mockReturnValue(of(response));
+            const downloadStub = vi.spyOn(courseManagementService, 'archiveCourse').mockReturnValue(of(response));
 
             comp.archive();
 
             expect(downloadStub).toHaveBeenCalledOnce();
-        }));
+        });
 
-        it('should reload course on archive complete', fakeAsync(() => {
+        it('should reload course on archive complete', () => {
             const alertService = TestBed.inject(AlertService);
-            const alertServiceSpy = jest.spyOn(alertService, 'success');
+            const alertServiceSpy = vi.spyOn(alertService, 'success');
 
-            jest.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ status: 200, body: course })));
+            vi.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ status: 200, body: course })));
 
             const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED', message: '' };
             comp.handleArchiveStateChanges(archiveState);
 
-            expect(comp.isBeingArchived).toBeFalse();
-            expect(comp.archiveButtonText).toEqual(comp.getArchiveButtonText());
+            expect(comp.isBeingArchived()).toBeFalsy();
             expect(alertServiceSpy).toHaveBeenCalledOnce();
-            expect(comp.course).toBeDefined();
-        }));
+            expect(comp.course()).toBeDefined();
+        });
 
-        it('should display warning and reload course on archive complete with warnings', fakeAsync(() => {
+        it('should display warning and reload course on archive complete with warnings', () => {
             const modalService = TestBed.inject(NgbModal);
 
-            jest.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ status: 200, body: course })));
+            vi.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ status: 200, body: course })));
             const ngModalRef: NgbModalRef = { result: Promise.resolve('') } as any;
-            jest.spyOn(modalService, 'open').mockReturnValue(ngModalRef);
+            vi.spyOn(modalService, 'open').mockReturnValue(ngModalRef);
 
             const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED_WITH_WARNINGS', message: 'warning 1\nwarning 2' };
             comp.handleArchiveStateChanges(archiveState);
 
-            expect(comp.isBeingArchived).toBeFalse();
-            expect(comp.archiveButtonText).toEqual(comp.getArchiveButtonText());
-            expect(comp.archiveWarnings).toEqual(archiveState.message.split('\n'));
-            expect(comp.course).toBeDefined();
-        }));
+            expect(comp.isBeingArchived()).toBeFalsy();
+            expect(comp.archiveWarnings()).toEqual(archiveState.message.split('\n'));
+            expect(comp.course()).toBeDefined();
+        });
     });
 
     describe('onInit for exam that has an archive', () => {
         const course = { id: 123, isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes') };
         const exam: Exam = { id: 123, endDate: dayjs().subtract(5, 'minutes'), examArchivePath: 'some-path', course };
 
-        beforeEach(fakeAsync(() => {
-            comp.archiveMode = 'Exam';
-            comp.course = course;
-            comp.exam = exam;
-
+        beforeEach(() => {
+            fixture.componentRef.setInput('archiveMode', 'Exam');
+            fixture.componentRef.setInput('course', course);
+            fixture.componentRef.setInput('exam', exam);
+            fixture.detectChanges();
             comp.ngOnInit();
-            tick();
-        }));
-
-        afterEach(() => {
-            jest.restoreAllMocks();
         });
 
-        it('should display an archive and cleanup button', fakeAsync(() => {
-            expect(comp.canArchive()).toBeTrue();
-            expect(comp.canCleanup()).toBeTrue();
-            expect(comp.canDownloadArchive()).toBeTrue();
-        }));
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
 
-        it('should cleanup archive for exam', fakeAsync(() => {
+        it('should display an archive and cleanup button', () => {
+            expect(comp.canArchive()).toBeTruthy();
+            expect(comp.canCleanup()).toBeTruthy();
+            expect(comp.canDownloadArchive()).toBeTruthy();
+        });
+
+        it('should cleanup archive for exam', () => {
             const response: HttpResponse<void> = new HttpResponse({ status: 200 });
-            const cleanupStub = jest.spyOn(courseManagementService, 'cleanupCourse').mockReturnValue(of(response));
+            const cleanupStub = vi.spyOn(courseManagementService, 'cleanupCourse').mockReturnValue(of(response));
 
-            comp.archiveMode = 'Exam';
+            fixture.componentRef.setInput('archiveMode', 'Exam');
+            fixture.detectChanges();
             comp.cleanup();
 
             expect(cleanupStub).not.toHaveBeenCalled();
-            expect(comp.canCleanup()).toBeTrue();
-        }));
+            expect(comp.canCleanup()).toBeTruthy();
+        });
 
         it('should download archive for exam', () => {
-            const downloadStub = jest.spyOn(examManagementService, 'downloadExamArchive').mockImplementation(() => {});
+            const downloadStub = vi.spyOn(examManagementService, 'downloadExamArchive').mockImplementation(() => {});
 
             comp.downloadArchive();
 
             expect(downloadStub).toHaveBeenCalledOnce();
         });
 
-        it('should archive course', fakeAsync(() => {
+        it('should archive course', () => {
             const response: HttpResponse<void> = new HttpResponse({ status: 200 });
-            const downloadStub = jest.spyOn(examManagementService, 'archiveExam').mockReturnValue(of(response));
+            const downloadStub = vi.spyOn(examManagementService, 'archiveExam').mockReturnValue(of(response));
 
             comp.archive();
 
             expect(downloadStub).toHaveBeenCalledOnce();
-        }));
+        });
 
-        it('should reload exam on archive complete', fakeAsync(() => {
+        it('should reload exam on archive complete', () => {
             const alertService = TestBed.inject(AlertService);
-            const alertServiceSpy = jest.spyOn(alertService, 'success');
+            const alertServiceSpy = vi.spyOn(alertService, 'success');
 
-            jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ status: 200, body: exam })));
+            vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ status: 200, body: exam })));
 
             const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED', message: '' };
             comp.handleArchiveStateChanges(archiveState);
 
-            expect(comp.isBeingArchived).toBeFalse();
-            expect(comp.archiveButtonText).toEqual(comp.getArchiveButtonText());
+            expect(comp.isBeingArchived()).toBeFalsy();
             expect(alertServiceSpy).toHaveBeenCalledOnce();
-            expect(comp.exam).toBeDefined();
-        }));
+            expect(comp.exam()).toBeDefined();
+        });
     });
 });
