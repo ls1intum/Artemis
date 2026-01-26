@@ -291,11 +291,14 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
 
     applyRemoteFileContent(fileName: string, text: string) {
         this.isApplyingExternalUpdate = true;
-        this.updateFileContent(fileName, text, false);
-        if (this.selectedFile() === fileName) {
-            this.switchToSelectedFile(fileName, text);
+        try {
+            this.updateFileContent(fileName, text, false);
+            if (this.selectedFile() === fileName) {
+                this.switchToSelectedFile(fileName, text);
+            }
+        } finally {
+            this.isApplyingExternalUpdate = false;
         }
-        this.isApplyingExternalUpdate = false;
     }
 
     highlightLines(startLine: number, endLine: number) {

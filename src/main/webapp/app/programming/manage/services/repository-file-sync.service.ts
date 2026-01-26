@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
-import { DeleteFileChange, FileType, RenameFileChange, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { CommitState, DeleteFileChange, FileType, RenameFileChange, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
 import {
     ProgrammingExerciseEditorFileChangeType,
@@ -304,8 +304,12 @@ export class RepositoryFileSyncService {
      */
     private handleLocalFileRename(operation: FileRenameOperation, target: ProgrammingExerciseEditorSyncTarget, auxiliaryId?: number) {
         const baselineKey = this.getBaselineKey(target, operation.fileName, auxiliaryId);
-        const previousContent = this.baselines[baselineKey] ?? '';
 
+        // early return for edge case where a file is renamed before its baseline is registered (e.g., file was never opened AND no live edits were received yet)
+        if (operation.fileType === FileType.FILE && !operation.content && !this.baselines[baselineKey]) {
+            return;
+        }
+        const previousContent = this.baselines[baselineKey];
         // Keep the current content even if we never registered a baseline for the old path
         const renameContent = previousContent || operation.content;
         this.renameTrackingEntries(target, auxiliaryId, operation.fileName, operation.newFileName);
@@ -433,13 +437,13 @@ export class RepositoryFileSyncService {
                     fileType,
                 };
             }
-
-            const currentContent = this.baselines[baselineKey] ?? this.baselines[newKey] ?? filePatch.patch ?? '';
+            const currentContent = this.baselines[baselineKey] ?? filePatch.patch;
             delete this.baselines[baselineKey];
             delete this.lastProcessedTimestamps[baselineKey];
-
-            this.baselines[newKey] = currentContent;
-            this.lastProcessedTimestamps[newKey] = messageTimestamp;
+            if (currentContent) {
+                this.baselines[newKey] = currentContent;
+                this.lastProcessedTimestamps[newKey] = messageTimestamp;
+            }
             return {
                 type: ProgrammingExerciseEditorFileChangeType.RENAME,
                 fileName: filePatch.fileName,
@@ -521,17 +525,26 @@ export class RepositoryFileSyncService {
                 break;
             case ProgrammingExerciseEditorFileChangeType.CREATE:
                 this.applyRemoteCreate(operation.fileName, operation.content, codeEditorContainer, operation.fileType);
+                this.markRepositoryDirty(codeEditorContainer);
                 break;
             case ProgrammingExerciseEditorFileChangeType.RENAME:
                 if (operation.newFileName) {
                     this.applyRemoteRename(operation.fileName, operation.newFileName, operation.content, codeEditorContainer, operation.fileType);
+                    this.markRepositoryDirty(codeEditorContainer);
                 }
                 break;
             case ProgrammingExerciseEditorFileChangeType.DELETE:
                 this.applyRemoteDelete(operation.fileName, codeEditorContainer);
+                this.markRepositoryDirty(codeEditorContainer);
                 break;
         }
         this.refreshRepositoryTree(codeEditorContainer);
+    }
+
+    private markRepositoryDirty(codeEditorContainer: CodeEditorContainerComponent) {
+        if (codeEditorContainer.commitState !== CommitState.CONFLICT && codeEditorContainer.commitState !== CommitState.COMMITTING) {
+            codeEditorContainer.commitState = CommitState.UNCOMMITTED_CHANGES;
+        }
     }
 
     /**
@@ -611,7 +624,7 @@ export class RepositoryFileSyncService {
         if (codeEditorContainer.selectedFile) {
             codeEditorContainer.selectedFile = this.fileService.updateFileReference(codeEditorContainer.selectedFile, renameChange);
         }
-        if (fileType === FileType.FILE) {
+        if (fileType === FileType.FILE && !!content) {
             codeEditorContainer.applyRemoteFileContent(newFileName, content);
         }
         codeEditorContainer.onFileChanged.emit();

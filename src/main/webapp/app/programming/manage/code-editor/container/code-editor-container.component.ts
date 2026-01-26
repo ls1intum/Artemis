@@ -225,7 +225,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
             this.selectedFile = this.fileService.updateFileReference(this.selectedFile!, fileChange);
 
             if (fileChange instanceof RenameFileChange) {
-                const content = this.getFileContent(fileChange.newFileName) ?? '';
+                const content = this.getFileContent(fileChange.oldFileName) ?? '';
                 this.fileOperationSync.emit({
                     type: ProgrammingExerciseEditorFileChangeType.RENAME,
                     fileName: fileChange.oldFileName,
@@ -242,7 +242,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
             this.editorState = EditorState.CLEAN;
         }
         this.monacoEditor?.onFileChange(fileChange);
-
         this.onFileChanged.emit();
     }
 

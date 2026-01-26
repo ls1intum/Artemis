@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExercis
 
 class ProgrammingExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
-    private static final String TEST_PREFIX = "programmingexerciseeditorsyncservicetest";
+    private static final String TEST_PREFIX = "editorsyncservice";
 
     @Override
     protected String getTestPrefix() {
