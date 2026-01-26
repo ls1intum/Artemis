@@ -1,4 +1,6 @@
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExerciseImportButtonComponent } from './exercise-import-button.component';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseImportComponent } from 'app/exercise/import/exercise-import.component';
@@ -15,6 +17,7 @@ import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.servic
 import { Subject } from 'rxjs';
 
 describe('ExerciseImportButtonComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: ExerciseImportButtonComponent;
     let fixture: ComponentFixture<ExerciseImportButtonComponent>;
     let dialogService: DialogService;
@@ -51,9 +54,9 @@ describe('ExerciseImportButtonComponent', () => {
 
         const onCloseSubject = new Subject<Exercise | undefined>();
         const mockDialogRef = { onClose: onCloseSubject.asObservable() } as DynamicDialogRef;
-        const openSpy = jest.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
-        const routerSpy = jest.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
-        const beforeNavigateSpy = jest.spyOn(component.beforeNavigate, 'emit');
+        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
+        const routerSpy = vi.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
+        const beforeNavigateSpy = vi.spyOn(component.beforeNavigate, 'emit');
 
         component.openImportModal();
 
@@ -74,13 +77,15 @@ describe('ExerciseImportButtonComponent', () => {
         await fixture.whenStable();
 
         if (id && exerciseType === ExerciseType.PROGRAMMING) {
-            expect(routerSpy).toHaveBeenCalledExactlyOnceWith(['/course-management', 123, `${exerciseType}-exercises`, 'import', 2]);
+            expect(routerSpy).toHaveBeenCalledOnce();
+            expect(routerSpy).toHaveBeenCalledWith(['/course-management', 123, `${exerciseType}-exercises`, 'import', 2]);
         } else if (!id && exerciseType === ExerciseType.PROGRAMMING) {
             expect(routerSpy).toHaveBeenCalledWith(['/course-management', 123, 'programming-exercises', 'import-from-file'], {
                 state: { programmingExerciseForImportFromFile: { id: undefined, maxPoints: 1 } },
             });
         } else {
-            expect(routerSpy).toHaveBeenCalledExactlyOnceWith(['/course-management', 123, `${exerciseType}-exercises`, 2, 'import']);
+            expect(routerSpy).toHaveBeenCalledOnce();
+            expect(routerSpy).toHaveBeenCalledWith(['/course-management', 123, `${exerciseType}-exercises`, 2, 'import']);
         }
     });
 

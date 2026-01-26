@@ -1,4 +1,6 @@
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -29,6 +31,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ResultComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ResultComponent>;
     let component: ResultComponent;
 
@@ -62,9 +65,12 @@ describe('ResultComponent', () => {
     const textParticipation: StudentParticipation = { id: 6, type: ParticipationType.STUDENT, exercise: textExercise };
 
     beforeEach(() => {
+        TestBed.overrideComponent(ResultComponent, {
+            remove: { imports: [ArtemisDatePipe, ArtemisTimeAgoPipe, TranslateDirective, NgbTooltip] },
+            add: { imports: [MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe), MockDirective(TranslateDirective), MockDirective(NgbTooltip)] },
+        });
         TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip)],
-            declarations: [ResultComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisTimeAgoPipe), MockPipe(ArtemisDatePipe), MockDirective(TranslateDirective)],
+            imports: [MockPipe(ArtemisTranslatePipe), ResultComponent],
             providers: [LocalStorageService, SessionStorageService, { provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()
@@ -75,7 +81,7 @@ describe('ResultComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {

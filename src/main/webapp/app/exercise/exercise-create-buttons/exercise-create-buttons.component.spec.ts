@@ -1,4 +1,6 @@
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -8,6 +10,7 @@ import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.s
 import { ExerciseCreateButtonsComponent } from 'app/exercise/exercise-create-buttons/exercise-create-buttons.component';
 
 describe('Exercise Manage Buttons Component', () => {
+    setupTestBed({ zoneless: true });
     let comp: ExerciseCreateButtonsComponent;
     let fixture: ComponentFixture<ExerciseCreateButtonsComponent>;
 
@@ -16,6 +19,7 @@ describe('Exercise Manage Buttons Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [ExerciseCreateButtonsComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -29,7 +33,7 @@ describe('Exercise Manage Buttons Component', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {

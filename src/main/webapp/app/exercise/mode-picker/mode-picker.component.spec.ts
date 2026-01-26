@@ -1,10 +1,15 @@
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ModePickerComponent, ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { By } from '@angular/platform-browser';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('Mode Picker Component', () => {
+    setupTestBed({ zoneless: true });
     let comp: ModePickerComponent<string>;
     let fixture: ComponentFixture<ModePickerComponent<string>>;
 
@@ -23,8 +28,8 @@ describe('Mode Picker Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ModePickerComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [],
+            imports: [MockPipe(ArtemisTranslatePipe), ModePickerComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
@@ -34,13 +39,13 @@ describe('Mode Picker Component', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
         fixture.detectChanges();
 
-        expect(comp.disabled).toBeFalse();
+        expect(comp.disabled).toBe(false);
         expect(comp.valueChange).toBeDefined();
     });
 

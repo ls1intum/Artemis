@@ -1,10 +1,13 @@
+import { expect } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DifficultyLevelComponent } from 'app/exercise/difficulty-level/difficulty-level.component';
 
 describe('DifficultyLevelComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: DifficultyLevelComponent;
     let fixture: ComponentFixture<DifficultyLevelComponent>;
 

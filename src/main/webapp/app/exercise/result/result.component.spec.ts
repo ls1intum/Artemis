@@ -1,5 +1,7 @@
+import { Mock, expect, vi } from 'vitest';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MissingResultInformation, ResultTemplateStatus } from 'app/exercise/result/result.utils';
 import { SimpleChange } from '@angular/core';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
@@ -72,19 +74,20 @@ const preparedFeedback: FeedbackComponentPreparedParams = {
     showMissingAutomaticFeedbackInformation: true,
 };
 const participationServiceMock = {
-    downloadArtifact: jest.fn(),
+    downloadArtifact: vi.fn(),
 };
 
 describe('ResultComponent', () => {
+    setupTestBed({ zoneless: true });
     let comp: ResultComponent;
     let fixture: ComponentFixture<ResultComponent>;
     let modalService: NgbModal;
     let router: Router;
 
     beforeEach(async () => {
-        participationServiceMock.downloadArtifact = jest.fn() as jest.Mock;
-        global.URL.createObjectURL = jest.fn(() => 'blob:test-url');
-        global.URL.revokeObjectURL = jest.fn();
+        participationServiceMock.downloadArtifact = vi.fn() as Mock;
+        global.URL.createObjectURL = vi.fn(() => 'blob:test-url');
+        global.URL.revokeObjectURL = vi.fn();
 
         mockParticipation.submissions = [
             {
@@ -94,8 +97,13 @@ describe('ResultComponent', () => {
             },
         ];
 
+        TestBed.overrideComponent(ResultComponent, {
+            remove: { imports: [ArtemisDatePipe, ArtemisTimeAgoPipe, TranslateDirective] },
+            add: { imports: [MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe), MockDirective(TranslateDirective)] },
+        });
+
         await TestBed.configureTestingModule({
-            declarations: [ResultComponent, TranslatePipeMock, MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe), MockDirective(TranslateDirective)],
+            imports: [TranslatePipeMock, ResultComponent],
             providers: [
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: ParticipationService, useValue: participationServiceMock },
@@ -112,7 +120,7 @@ describe('ResultComponent', () => {
                 modalService = TestBed.inject(NgbModal);
                 router = TestBed.inject(Router);
 
-                participationServiceMock.downloadArtifact = jest.fn() as jest.Mock;
+                participationServiceMock.downloadArtifact = vi.fn() as Mock;
 
                 comp.badge = {
                     tooltip: 'Example Tooltip',
@@ -124,8 +132,8 @@ describe('ResultComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
-        global.URL.revokeObjectURL = jest.fn();
+        vi.restoreAllMocks();
+        global.URL.revokeObjectURL = vi.fn();
     });
 
     it('should set template status to BUILDING if isBuilding changes to true even though participation changes', () => {
@@ -175,9 +183,9 @@ describe('ResultComponent', () => {
             const mockModalRef: NgbModalRef = { componentInstance: {} } as NgbModalRef;
             const modalComponentInstance: FeedbackComponent = mockModalRef.componentInstance;
 
-            const showDetailsSpy = jest.spyOn(comp, 'showDetails');
-            const openModalSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
-            const prepareFeedbackSpy = jest.spyOn(utils, 'prepareFeedbackComponentParameters').mockReturnValue(preparedFeedback);
+            const showDetailsSpy = vi.spyOn(comp, 'showDetails');
+            const openModalSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+            const prepareFeedbackSpy = vi.spyOn(utils, 'prepareFeedbackComponentParameters').mockReturnValue(preparedFeedback);
 
             comp.exercise = preparedFeedback.exercise;
             comp.result = mockResult;
@@ -207,7 +215,7 @@ describe('ResultComponent', () => {
     it('should navigate to text exercise details when exercise type is TEXT', () => {
         comp.exercise = { ...mockExercise, type: ExerciseType.TEXT };
         comp.participation = mockParticipation;
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const navigateSpy = vi.spyOn(router, 'navigate');
         const courseId = 42;
         comp.showDetails(mockResult);
 
@@ -226,7 +234,7 @@ describe('ResultComponent', () => {
 
     it('should call showDetails only when isInSidebarCard is false', () => {
         comp.result = mockResult;
-        const detailsSpy = jest.spyOn(comp, 'showDetails');
+        const detailsSpy = vi.spyOn(comp, 'showDetails');
 
         comp.isInSidebarCard = false;
         comp.resultIconClass = faTimesCircle;
@@ -343,14 +351,14 @@ describe('ResultComponent', () => {
 
     describe('ResultComponent - Feedback Generation', () => {
         beforeEach(() => {
-            jest.useFakeTimers();
+            vi.useFakeTimers();
             comp.result = { ...mockResult, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined, completionDate: dayjs().add(1, 'minute') };
             comp.exercise = mockExercise;
             comp.participation = mockParticipation;
         });
 
         afterEach(() => {
-            jest.clearAllTimers();
+            vi.clearAllTimers();
         });
 
         it('should call evaluate again after the specified due time', () => {
@@ -359,7 +367,7 @@ describe('ResultComponent', () => {
             comp.evaluate();
 
             comp.result.completionDate = dayjs().subtract(2, 'seconds');
-            jest.runOnlyPendingTimers();
+            vi.runOnlyPendingTimers();
 
             expect(comp.templateStatus).not.toEqual(ResultTemplateStatus.IS_GENERATING_FEEDBACK);
         });
@@ -367,10 +375,10 @@ describe('ResultComponent', () => {
         it('should clear the timeout if the component is destroyed before the feedback generation is complete', () => {
             comp.templateStatus = ResultTemplateStatus.IS_GENERATING_FEEDBACK;
             comp.evaluate();
-            expect(jest.getTimerCount()).toBe(1);
+            expect(vi.getTimerCount()).toBe(1);
 
             comp.ngOnDestroy();
-            expect(jest.getTimerCount()).toBe(0);
+            expect(vi.getTimerCount()).toBe(0);
         });
     });
 
@@ -384,18 +392,18 @@ describe('ResultComponent', () => {
     });
 
     it('should trigger Interval creation on estimatedCompletionDate change', () => {
-        jest.useFakeTimers();
+        vi.useFakeTimers();
         comp.buildStartDate = dayjs().subtract(20, 'seconds');
         comp.estimatedCompletionDate = dayjs().add(20, 'seconds');
         comp.ngOnChanges({});
 
-        jest.advanceTimersByTime(1200);
+        vi.advanceTimersByTime(1200);
         expect(comp.estimatedDurationInterval).toBeDefined();
         expect(comp.estimatedRemaining).toBeGreaterThan(0);
         expect(comp.estimatedRemaining).toBeLessThan(40);
         expect(comp.estimatedDuration).toBe(40);
 
-        jest.clearAllTimers();
-        jest.useRealTimers();
+        vi.clearAllTimers();
+        vi.useRealTimers();
     });
 });

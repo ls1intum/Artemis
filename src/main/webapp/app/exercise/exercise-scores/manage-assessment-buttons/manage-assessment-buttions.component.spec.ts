@@ -1,4 +1,6 @@
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -17,6 +19,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ManageAssessmentButtonsComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ManageAssessmentButtonsComponent>;
     let component: ManageAssessmentButtonsComponent;
 
@@ -24,7 +27,7 @@ describe('ManageAssessmentButtonsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ManageAssessmentButtonsComponent, MockComponent(FaIconComponent), MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
+            imports: [MockComponent(FaIconComponent), MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), ManageAssessmentButtonsComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(ProgrammingAssessmentManualResultService),
@@ -40,7 +43,7 @@ describe('ManageAssessmentButtonsComponent', () => {
     });
 
     beforeEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it.each([
@@ -63,7 +66,7 @@ describe('ManageAssessmentButtonsComponent', () => {
 
             fixture.changeDetectorRef.detectChanges();
 
-            expect(component.newManualResultAllowed).toBeFalse();
+            expect(component.newManualResultAllowed).toBe(false);
         });
 
         it('should not allow new manual results for practice mode exercise', () => {
@@ -72,7 +75,7 @@ describe('ManageAssessmentButtonsComponent', () => {
 
             fixture.changeDetectorRef.detectChanges();
 
-            expect(component.newManualResultAllowed).toBeFalse();
+            expect(component.newManualResultAllowed).toBe(false);
         });
 
         it('should allow new manual results for exam test runs', () => {
@@ -82,7 +85,7 @@ describe('ManageAssessmentButtonsComponent', () => {
 
             fixture.changeDetectorRef.detectChanges();
 
-            expect(component.newManualResultAllowed).toBeTrue();
+            expect(component.newManualResultAllowed).toBe(true);
         });
 
         it('should allow new manual results for programming exercises with manual assessment', () => {
@@ -91,7 +94,7 @@ describe('ManageAssessmentButtonsComponent', () => {
 
             fixture.changeDetectorRef.detectChanges();
 
-            expect(component.newManualResultAllowed).toBeTrue();
+            expect(component.newManualResultAllowed).toBe(true);
         });
     });
 

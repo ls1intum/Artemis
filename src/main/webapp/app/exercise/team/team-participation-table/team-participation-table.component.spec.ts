@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { expect, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { TeamService } from 'app/exercise/team/team.service';
@@ -18,6 +20,7 @@ import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('TeamParticipationTableComponent', () => {
+    setupTestBed({ zoneless: true });
     let comp: TeamParticipationTableComponent;
     let fixture: ComponentFixture<TeamParticipationTableComponent>;
     let debugElement: DebugElement;
@@ -143,39 +146,39 @@ describe('TeamParticipationTableComponent', () => {
     course.exercises = [exercise1, exercise2, exercise3, exercise4, exercise5];
 
     let router: Router;
+    let routerMock: { navigate: ReturnType<typeof vi.fn> };
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        routerMock = { navigate: vi.fn().mockResolvedValue(true) };
+        await TestBed.configureTestingModule({
+            imports: [TeamParticipationTableComponent],
             providers: [
                 MockProvider(TranslateService),
+                { provide: Router, useValue: routerMock },
                 { provide: TeamService, useClass: MockTeamService },
                 LocalStorageService,
                 { provide: AccountService, useClass: MockAccountService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TeamParticipationTableComponent);
-                comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-                teamService = TestBed.inject(TeamService);
-                router = TestBed.inject(Router);
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(TeamParticipationTableComponent);
+        comp = fixture.componentInstance;
+        debugElement = fixture.debugElement;
+        teamService = TestBed.inject(TeamService);
+        router = TestBed.inject(Router);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    beforeEach(fakeAsync(() => {
-        jest.spyOn(teamService, 'findCourseWithExercisesAndParticipationsForTeam').mockReturnValue(of(new HttpResponse({ body: course })));
+    beforeEach(() => {
+        vi.spyOn(teamService, 'findCourseWithExercisesAndParticipationsForTeam').mockReturnValue(of(new HttpResponse({ body: course })));
         comp.course = course;
         comp.exercise = exercise4;
         comp.team = mockTeam;
-        jest.spyOn(router, 'navigate').mockImplementation();
         comp.ngOnInit();
-        tick();
-    }));
+    });
 
     it('Exercises for one team are loaded correctly', () => {
         // Make sure that all 3 exercises were received for exercise
@@ -201,10 +204,9 @@ describe('TeamParticipationTableComponent', () => {
         expect(expectedAssessmentAction).toBe('open');
     });
 
-    it('Navigate to assessment editor when opening exercise submission', fakeAsync(() => {
+    it('Navigate to assessment editor when opening exercise submission', async () => {
         const participation = exercise2.studentParticipations![0];
-        comp.openAssessmentEditor(exercise2, participation, 'new');
-        tick();
+        await comp.openAssessmentEditor(exercise2, participation, 'new');
         expect(router.navigate).toHaveBeenCalledOnce();
         expect(router.navigate).toHaveBeenCalledWith([
             '/course-management',
@@ -215,21 +217,21 @@ describe('TeamParticipationTableComponent', () => {
             'new',
             'assessment',
         ]);
-    }));
+    });
 
     it('Check enabled assessment button for exercises without due date', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(exercise2, submission2);
-        expect(expectedAssessmentActionButtonDisabled).toBeFalse();
+        expect(expectedAssessmentActionButtonDisabled).toBe(false);
     });
 
     it('Check enabled assessment button for exercises with submission and passed due date', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(exercise3, submission3);
-        expect(expectedAssessmentActionButtonDisabled).toBeFalse();
+        expect(expectedAssessmentActionButtonDisabled).toBe(false);
     });
 
     it('Check disabled assessment button for exercises without submission', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(exercise1, undefined);
-        expect(expectedAssessmentActionButtonDisabled).toBeTrue();
+        expect(expectedAssessmentActionButtonDisabled).toBe(true);
     });
 
     it('Check disabled assessment button for exercises before due date as tutor', () => {
@@ -240,7 +242,7 @@ describe('TeamParticipationTableComponent', () => {
             },
             submission4,
         );
-        expect(expectedAssessmentActionButtonDisabled).toBeTrue();
+        expect(expectedAssessmentActionButtonDisabled).toBe(true);
     });
 
     it('Check disabled assessment button for programming exercises before due date as instructor', () => {
@@ -251,7 +253,7 @@ describe('TeamParticipationTableComponent', () => {
             },
             submission4,
         );
-        expect(expectedAssessmentActionButtonDisabled).toBeTrue();
+        expect(expectedAssessmentActionButtonDisabled).toBe(true);
     });
 
     it('Check enabled assessment button for exercises before due date as instructor', () => {
@@ -262,6 +264,6 @@ describe('TeamParticipationTableComponent', () => {
             },
             submission5,
         );
-        expect(expectedAssessmentActionButtonDisabled).toBeFalse();
+        expect(expectedAssessmentActionButtonDisabled).toBe(false);
     });
 });

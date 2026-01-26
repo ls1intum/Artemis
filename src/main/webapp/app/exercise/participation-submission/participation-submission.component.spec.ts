@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { expect, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -48,6 +50,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('ParticipationSubmissionComponent', () => {
+    setupTestBed({ zoneless: true });
     let comp: ParticipationSubmissionComponent;
     let fixture: ComponentFixture<ParticipationSubmissionComponent>;
     let participationService: ParticipationService;
@@ -56,13 +59,13 @@ describe('ParticipationSubmissionComponent', () => {
     let fileUploadAssessmentService: FileUploadAssessmentService;
     let programmingAssessmentService: ProgrammingAssessmentManualResultService;
     let modelingAssessmentService: ModelingAssessmentService;
-    let deleteFileUploadAssessmentStub: jest.SpyInstance;
-    let deleteModelingAssessmentStub: jest.SpyInstance;
-    let deleteTextAssessmentStub: jest.SpyInstance;
-    let deleteProgrammingAssessmentStub: jest.SpyInstance;
+    let deleteFileUploadAssessmentStub: ReturnType<typeof vi.spyOn>;
+    let deleteModelingAssessmentStub: ReturnType<typeof vi.spyOn>;
+    let deleteTextAssessmentStub: ReturnType<typeof vi.spyOn>;
+    let deleteProgrammingAssessmentStub: ReturnType<typeof vi.spyOn>;
     let exerciseService: ExerciseService;
     let programmingExerciseService: ProgrammingExerciseService;
-    let findAllSubmissionsOfParticipationStub: jest.SpyInstance;
+    let findAllSubmissionsOfParticipationStub: ReturnType<typeof vi.spyOn>;
     let debugElement: DebugElement;
     let router: Router;
     const route = () => ({ params: of({ participationId: 1, exerciseId: 42 }) });
@@ -82,11 +85,9 @@ describe('ParticipationSubmissionComponent', () => {
     const fileUploadExercise = { id: 100, type: ExerciseType.FILE_UPLOAD } as Exercise;
     const textExercise = { id: 100, type: ExerciseType.TEXT } as Exercise;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
-            imports: [NgxDatatableModule, RouterModule.forRoot([]), FaIconComponent],
-            declarations: [
-                ParticipationSubmissionComponent,
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
                 MockComponent(UpdatingResultComponent),
                 MockComponent(UnreferencedFeedbackDetailComponent),
                 MockComponent(ComplaintsForTutorComponent),
@@ -96,6 +97,9 @@ describe('ParticipationSubmissionComponent', () => {
                 MockPipe(ArtemisTimeAgoPipe),
                 MockDirective(DeleteButtonDirective),
                 MockComponent(ResultComponent),
+                NgxDatatableModule,
+                RouterModule.forRoot([]),
+                FaIconComponent,
             ],
             providers: [
                 JhiLanguageHelper,
@@ -108,42 +112,40 @@ describe('ParticipationSubmissionComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ParticipationSubmissionComponent);
-                comp = fixture.componentInstance;
-                comp.participationId = 1;
-                debugElement = fixture.debugElement;
-                router = TestBed.inject(Router);
-                participationService = TestBed.inject(ParticipationService);
-                submissionService = TestBed.inject(SubmissionService);
-                textAssessmentService = TestBed.inject(TextAssessmentService);
-                modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
-                programmingAssessmentService = TestBed.inject(ProgrammingAssessmentManualResultService);
-                fileUploadAssessmentService = TestBed.inject(FileUploadAssessmentService);
+        }).compileComponents();
 
-                exerciseService = TestBed.inject(ExerciseService);
-                programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
-                findAllSubmissionsOfParticipationStub = jest.spyOn(submissionService, 'findAllSubmissionsOfParticipation');
+        fixture = TestBed.createComponent(ParticipationSubmissionComponent);
+        comp = fixture.componentInstance;
+        comp.participationId = 1;
+        debugElement = fixture.debugElement;
+        router = TestBed.inject(Router);
+        participationService = TestBed.inject(ParticipationService);
+        submissionService = TestBed.inject(SubmissionService);
+        textAssessmentService = TestBed.inject(TextAssessmentService);
+        modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
+        programmingAssessmentService = TestBed.inject(ProgrammingAssessmentManualResultService);
+        fileUploadAssessmentService = TestBed.inject(FileUploadAssessmentService);
 
-                deleteFileUploadAssessmentStub = jest.spyOn(fileUploadAssessmentService, 'deleteAssessment');
-                deleteProgrammingAssessmentStub = jest.spyOn(programmingAssessmentService, 'deleteAssessment');
-                deleteModelingAssessmentStub = jest.spyOn(modelingAssessmentService, 'deleteAssessment');
-                deleteTextAssessmentStub = jest.spyOn(textAssessmentService, 'deleteAssessment');
-                fixture.ngZone!.run(() => router.initialNavigation());
-            });
+        exerciseService = TestBed.inject(ExerciseService);
+        programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
+        findAllSubmissionsOfParticipationStub = vi.spyOn(submissionService, 'findAllSubmissionsOfParticipation');
+
+        deleteFileUploadAssessmentStub = vi.spyOn(fileUploadAssessmentService, 'deleteAssessment');
+        deleteProgrammingAssessmentStub = vi.spyOn(programmingAssessmentService, 'deleteAssessment');
+        deleteModelingAssessmentStub = vi.spyOn(modelingAssessmentService, 'deleteAssessment');
+        deleteTextAssessmentStub = vi.spyOn(textAssessmentService, 'deleteAssessment');
+        fixture.ngZone?.run(() => router.initialNavigation());
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('Submissions are correctly loaded from server', fakeAsync(() => {
+    it('Submissions are correctly loaded from server', () => {
         // set all attributes for comp
         const participation = new StudentParticipation();
         participation.id = 1;
-        jest.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation })));
+        vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation })));
         const submissions = [
             {
                 submissionExerciseType: SubmissionExerciseType.TEXT,
@@ -157,17 +159,16 @@ describe('ParticipationSubmissionComponent', () => {
         ] as TextSubmission[];
         const exercise = { type: ExerciseType.TEXT } as Exercise;
         exercise.isAtLeastInstructor = true;
-        jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+        vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
         findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: submissions }));
 
-        const getBuildJobIdsForResultsOfParticipationStub = jest.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation');
+        const getBuildJobIdsForResultsOfParticipationStub = vi.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation');
         getBuildJobIdsForResultsOfParticipationStub.mockReturnValue(of({ '4': '2' }));
 
         fixture.detectChanges();
-        tick();
         fixture.changeDetectorRef.detectChanges();
 
-        expect(comp.isLoading).toBeFalse();
+        expect(comp.isLoading).toBe(false);
         // check if findAllSubmissionsOfParticipationStub() is called and works
         expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalledOnce();
         expect(comp.participation).toEqual(participation);
@@ -179,10 +180,9 @@ describe('ParticipationSubmissionComponent', () => {
         expect(row.nativeElement.children).toHaveLength(1);
 
         fixture.destroy();
-        flush();
-    }));
+    });
 
-    it('Template Submission is correctly loaded', fakeAsync(() => {
+    it('Template Submission is correctly loaded', () => {
         TestBed.inject(ActivatedRoute).params = of({ participationId: 2, exerciseId: 42 });
         TestBed.inject(ActivatedRoute).queryParams = of({ isTmpOrSolutionProgrParticipation: 'true' });
         const templateParticipation = new TemplateProgrammingExerciseParticipation();
@@ -203,27 +203,25 @@ describe('ParticipationSubmissionComponent', () => {
             projectKey: 'SUBMISSION1',
             templateParticipation,
         } as ProgrammingExercise;
-        const findWithTemplateAndSolutionParticipationStub = jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
+        const findWithTemplateAndSolutionParticipationStub = vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
         findWithTemplateAndSolutionParticipationStub.mockReturnValue(of(new HttpResponse({ body: programmingExercise })));
 
-        const getBuildJobIdsForResultsOfParticipationStub = jest.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation');
+        const getBuildJobIdsForResultsOfParticipationStub = vi.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation');
         getBuildJobIdsForResultsOfParticipationStub.mockReturnValue(of({ '4': '2' }));
 
         fixture.detectChanges();
-        tick();
         fixture.changeDetectorRef.detectChanges();
 
-        expect(comp.isLoading).toBeFalse();
+        expect(comp.isLoading).toBe(false);
         expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
         expect(comp.exercise).toEqual(programmingExercise);
         expect(comp.participation).toEqual(templateParticipation);
         expect(comp.submissions).toEqual(templateParticipation.submissions);
 
         fixture.destroy();
-        flush();
-    }));
+    });
 
-    it('Solution Submission is correctly loaded', fakeAsync(() => {
+    it('Solution Submission is correctly loaded', () => {
         TestBed.inject(ActivatedRoute).params = of({ participationId: 3, exerciseId: 42 });
         TestBed.inject(ActivatedRoute).queryParams = of({ isTmpOrSolutionProgrParticipation: 'true' });
         const solutionParticipation = new SolutionProgrammingExerciseParticipation();
@@ -244,24 +242,22 @@ describe('ParticipationSubmissionComponent', () => {
             projectKey: 'SUBMISSION1',
             solutionParticipation,
         } as ProgrammingExercise;
-        const findWithTemplateAndSolutionParticipationStub = jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
+        const findWithTemplateAndSolutionParticipationStub = vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
         findWithTemplateAndSolutionParticipationStub.mockReturnValue(of(new HttpResponse({ body: programmingExercise })));
 
-        const getBuildJobIdsForResultsOfParticipationStub = jest.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation');
+        const getBuildJobIdsForResultsOfParticipationStub = vi.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation');
         getBuildJobIdsForResultsOfParticipationStub.mockReturnValue(of({ '4': '2' }));
 
         fixture.detectChanges();
-        tick();
         fixture.changeDetectorRef.detectChanges();
 
-        expect(comp.isLoading).toBeFalse();
+        expect(comp.isLoading).toBe(false);
         expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
         expect(comp.participation).toEqual(solutionParticipation);
         expect(comp.submissions).toEqual(solutionParticipation.submissions);
 
         fixture.destroy();
-        flush();
-    }));
+    });
 
     describe('should delete', () => {
         beforeEach(() => {
@@ -270,52 +266,46 @@ describe('ParticipationSubmissionComponent', () => {
             deleteModelingAssessmentStub.mockReturnValue(of({}));
             deleteProgrammingAssessmentStub.mockReturnValue(of({}));
             findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submissionWithTwoResults] }));
-            jest.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation1 })));
-            const getBuildJobIdsForResultsOfParticipationStub = jest.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation');
+            vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation1 })));
+            const getBuildJobIdsForResultsOfParticipationStub = vi.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation');
             getBuildJobIdsForResultsOfParticipationStub.mockReturnValue(of({ '4': '2' }));
         });
 
-        it('should delete result of fileUploadSubmission', fakeAsync(() => {
-            jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
+        it('should delete result of fileUploadSubmission', () => {
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
             deleteResult(submissionWithTwoResults, result2);
-            flush();
             expect(comp.submissions).toHaveLength(1);
             expect(comp.submissions![0].results).toHaveLength(1);
             expect(comp.submissions![0].results![0]).toEqual(result1);
-        }));
+        });
 
-        it('should delete result of modelingSubmission', fakeAsync(() => {
-            jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: modelingExercise })));
+        it('should delete result of modelingSubmission', () => {
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: modelingExercise })));
             deleteResult(submissionWithTwoResults, result2);
-            flush();
             expect(comp.submissions).toHaveLength(1);
             expect(comp.submissions![0].results).toHaveLength(1);
             expect(comp.submissions![0].results![0]).toEqual(result1);
-        }));
+        });
 
-        it('should delete result of programmingSubmission', fakeAsync(() => {
-            jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
+        it('should delete result of programmingSubmission', () => {
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
             deleteResult(submissionWithTwoResults, result2);
-            flush();
             expect(comp.submissions).toHaveLength(1);
             expect(comp.submissions![0].results).toHaveLength(1);
             expect(comp.submissions![0].results![0]).toEqual(result1);
-        }));
+        });
 
-        it('should delete result of textSubmission', fakeAsync(() => {
-            jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: textExercise })));
+        it('should delete result of textSubmission', () => {
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: textExercise })));
             fixture.changeDetectorRef.detectChanges();
-            tick();
             expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalledOnce();
             expect(comp.submissions![0].results![0].submission).toEqual(submissionWithTwoResults);
             comp.deleteResult(submissionWithTwoResults, result2);
-            tick();
             fixture.destroy();
-            flush();
             expect(comp.submissions).toHaveLength(1);
             expect(comp.submissions![0].results).toHaveLength(1);
             expect(comp.submissions![0].results![0]).toEqual(result1);
-        }));
+        });
     });
 
     describe('should handle failed delete', () => {
@@ -326,70 +316,61 @@ describe('ParticipationSubmissionComponent', () => {
             deleteModelingAssessmentStub.mockReturnValue(throwError(() => error));
             deleteTextAssessmentStub.mockReturnValue(throwError(() => error));
             findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submissionWithTwoResults2] }));
-            jest.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation1 })));
-            const getBuildJobIdsForResultsOfParticipationStub = jest.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation');
+            vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation1 })));
+            const getBuildJobIdsForResultsOfParticipationStub = vi.spyOn(participationService, 'getBuildJobIdsForResultsOfParticipation');
             getBuildJobIdsForResultsOfParticipationStub.mockReturnValue(of({ '4': '2' }));
         });
 
-        it('should not delete result of fileUploadSubmission because of server error', fakeAsync(() => {
+        it('should not delete result of fileUploadSubmission because of server error', () => {
             const error2 = { message: '403 error', error: { message: 'error.badAuthentication' } } as HttpErrorResponse;
             deleteFileUploadAssessmentStub.mockReturnValue(throwError(() => error2));
-            jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
             deleteResult(submissionWithTwoResults, result2);
-            flush();
             expect(comp.submissions).toHaveLength(1);
             expect(comp.submissions![0].results).toHaveLength(2);
             expect(comp.submissions![0].results![0]).toEqual(result1);
-        }));
+        });
 
-        it('should not delete result of fileUploadSubmission', fakeAsync(() => {
-            jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
+        it('should not delete result of fileUploadSubmission', () => {
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
             deleteResult(submissionWithTwoResults, result2);
-            flush();
             expect(comp.submissions).toHaveLength(1);
             expect(comp.submissions![0].results).toHaveLength(2);
             expect(comp.submissions![0].results![0]).toEqual(result1);
-        }));
+        });
 
-        it('should not delete result of modelingSubmission', fakeAsync(() => {
-            jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: modelingExercise })));
+        it('should not delete result of modelingSubmission', () => {
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: modelingExercise })));
             deleteResult(submissionWithTwoResults, result2);
-            flush();
             expect(comp.submissions).toHaveLength(1);
             expect(comp.submissions![0].results).toHaveLength(2);
             expect(comp.submissions![0].results![0]).toEqual(result1);
-        }));
+        });
 
-        it('should not delete result of programmingSubmission', fakeAsync(() => {
-            jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
+        it('should not delete result of programmingSubmission', () => {
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
             deleteResult(submissionWithTwoResults, result2);
-            flush();
             expect(comp.submissions).toHaveLength(1);
             expect(comp.submissions![0].results).toHaveLength(2);
             expect(comp.submissions![0].results![0]).toEqual(result1);
-        }));
+        });
 
-        it('should not delete result of textSubmission', fakeAsync(() => {
-            jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: textExercise })));
+        it('should not delete result of textSubmission', () => {
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: textExercise })));
             fixture.changeDetectorRef.detectChanges();
-            tick();
             expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalledOnce();
             expect(comp.submissions![0].results![0].submission).toEqual(submissionWithTwoResults2);
             comp.deleteResult(submissionWithTwoResults, result2);
-            tick();
             fixture.destroy();
-            flush();
             expect(comp.submissions).toHaveLength(1);
             expect(comp.submissions![0].results).toHaveLength(2);
             expect(comp.submissions![0].results![0]).toEqual(result1);
-        }));
+        });
     });
 
     function deleteResult(submission: Submission, resultToDelete: Result) {
         fixture.changeDetectorRef.detectChanges();
-        tick();
         comp.deleteResult(submission, resultToDelete);
-        tick();
         fixture.destroy();
     }
 });

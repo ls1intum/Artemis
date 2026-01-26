@@ -1,10 +1,13 @@
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DoughnutChartType } from 'app/core/course/manage/detail/course-detail.component';
 import { DoughnutChartComponent } from 'app/exercise/statistics/doughnut-chart/doughnut-chart.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Router } from '@angular/router';
 
 describe('DoughnutChartComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<DoughnutChartComponent>;
     let component: DoughnutChartComponent;
     let router: Router;
@@ -14,7 +17,9 @@ describe('DoughnutChartComponent', () => {
     const max = 100;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({})
+        TestBed.configureTestingModule({
+            imports: [DoughnutChartComponent],
+        })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(DoughnutChartComponent);
@@ -84,7 +89,7 @@ describe('DoughnutChartComponent', () => {
     });
 
     it('should open corresponding page', () => {
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const navigateSpy = vi.spyOn(router, 'navigate');
         component.contentType = DoughnutChartType.AVERAGE_EXERCISE_SCORE;
         component.ngOnInit();
         component.openCorrespondingPage();

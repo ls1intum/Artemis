@@ -1,5 +1,7 @@
+import { expect, vi } from 'vitest';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -22,6 +24,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('Course Management Service', () => {
+    setupTestBed({ zoneless: true });
     let service: CourseExerciseService;
     let httpMock: HttpTestingController;
     let exerciseId: number;
@@ -103,12 +106,12 @@ describe('Course Management Service', () => {
     });
 
     const expectDateConversionToBeDone = (exerciseToCheck: Exercise, withoutAssessmentDueDate?: boolean) => {
-        expect(dayjs.isDayjs(exerciseToCheck.releaseDate)).toBeTrue();
+        expect(dayjs.isDayjs(exerciseToCheck.releaseDate)).toBe(true);
         expect(exerciseToCheck.releaseDate?.toISOString()).toBe(releaseDateString);
-        expect(dayjs.isDayjs(exerciseToCheck.dueDate)).toBeTrue();
+        expect(dayjs.isDayjs(exerciseToCheck.dueDate)).toBe(true);
         expect(exerciseToCheck.dueDate?.toISOString()).toBe(dueDateString);
         if (!withoutAssessmentDueDate) {
-            expect(dayjs.isDayjs(exerciseToCheck.assessmentDueDate)).toBeTrue();
+            expect(dayjs.isDayjs(exerciseToCheck.assessmentDueDate)).toBe(true);
             expect(exerciseToCheck.assessmentDueDate?.toISOString()).toBe(assessmentDueDateString);
         }
     };
@@ -125,7 +128,7 @@ describe('Course Management Service', () => {
         expectDateConversionToBeDone(exerciseToCheck, withoutAssessmentDueDate);
     };
 
-    it('should find all programming exercises', fakeAsync(() => {
+    it('should find all programming exercises', () => {
         returnedFromService = [programmingExercise];
         service
             .findAllProgrammingExercisesForCourse(course.id!)
@@ -133,10 +136,9 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res.body).toEqual([programmingExercise]));
 
         requestAndExpectDateConversion('GET', `api/programming/courses/${course.id}/programming-exercises`, returnedFromService, programmingExercise);
-        tick();
-    }));
+    });
 
-    it('should find all modeling exercises', fakeAsync(() => {
+    it('should find all modeling exercises', () => {
         returnedFromService = [modelingExercise];
         service
             .findAllModelingExercisesForCourse(course.id!)
@@ -144,10 +146,9 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res.body).toEqual([modelingExercise]));
 
         requestAndExpectDateConversion('GET', `api/modeling/courses/${course.id}/modeling-exercises`, returnedFromService, modelingExercise);
-        tick();
-    }));
+    });
 
-    it('should find all text exercises', fakeAsync(() => {
+    it('should find all text exercises', () => {
         returnedFromService = [textExercise];
         service
             .findAllTextExercisesForCourse(course.id!)
@@ -155,10 +156,9 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res.body).toEqual([textExercise]));
 
         requestAndExpectDateConversion('GET', `api/text/courses/${course.id}/text-exercises`, returnedFromService, textExercise);
-        tick();
-    }));
+    });
 
-    it('should find all file upload exercises', fakeAsync(() => {
+    it('should find all file upload exercises', () => {
         returnedFromService = [fileUploadExercise];
         service
             .findAllFileUploadExercisesForCourse(course.id!)
@@ -166,10 +166,9 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res.body).toEqual([fileUploadExercise]));
 
         requestAndExpectDateConversion('GET', `api/fileupload/courses/${course.id}/file-upload-exercises`, returnedFromService, fileUploadExercise);
-        tick();
-    }));
+    });
 
-    it('should start exercise', fakeAsync(() => {
+    it('should start exercise', () => {
         const participationId = 12345;
         const participation = new StudentParticipation();
         participation.id = participationId;
@@ -181,7 +180,7 @@ describe('Course Management Service', () => {
             },
             participation,
         );
-        jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo);
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo);
 
         service
             .startExercise(exerciseId)
@@ -190,43 +189,9 @@ describe('Course Management Service', () => {
 
         requestAndExpectDateConversion('POST', `api/exercise/exercises/${exerciseId}/participations`, returnedFromService, participation.exercise, true);
         expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
-        tick();
-    }));
+    });
 
-    it.each([true, false])(
-        'should start practice',
-        fakeAsync((useGradedParticipation: boolean) => {
-            const participationId = 12345;
-            const participation = new StudentParticipation();
-            participation.id = participationId;
-            participation.exercise = programmingExercise;
-            returnedFromService = { ...participation };
-            const expected = Object.assign(
-                {
-                    initializationDate: undefined,
-                },
-                participation,
-            );
-            jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo);
-
-            service
-                .startPractice(exerciseId, useGradedParticipation)
-                .pipe(take(1))
-                .subscribe((res) => expect(res).toEqual(expected));
-
-            requestAndExpectDateConversion(
-                'POST',
-                `api/exercise/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`,
-                returnedFromService,
-                participation.exercise,
-                true,
-            );
-            expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
-            tick();
-        }),
-    );
-
-    it('should resume programming exercise', fakeAsync(() => {
+    it.each([true, false])('should start practice', (useGradedParticipation: boolean) => {
         const participationId = 12345;
         const participation = new StudentParticipation();
         participation.id = participationId;
@@ -238,7 +203,36 @@ describe('Course Management Service', () => {
             },
             participation,
         );
-        jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo);
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo);
+
+        service
+            .startPractice(exerciseId, useGradedParticipation)
+            .pipe(take(1))
+            .subscribe((res) => expect(res).toEqual(expected));
+
+        requestAndExpectDateConversion(
+            'POST',
+            `api/exercise/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`,
+            returnedFromService,
+            participation.exercise,
+            true,
+        );
+        expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
+    });
+
+    it('should resume programming exercise', () => {
+        const participationId = 12345;
+        const participation = new StudentParticipation();
+        participation.id = participationId;
+        participation.exercise = programmingExercise;
+        returnedFromService = { ...participation };
+        const expected = Object.assign(
+            {
+                initializationDate: undefined,
+            },
+            participation,
+        );
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo);
 
         service
             .resumeProgrammingExercise(exerciseId, participationId)
@@ -253,11 +247,10 @@ describe('Course Management Service', () => {
             true,
         );
         expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
-        tick();
-    }));
+    });
 
     afterEach(() => {
         httpMock.verify();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 });

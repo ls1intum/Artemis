@@ -1,6 +1,8 @@
+import { expect, vi } from 'vitest';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute } from '@angular/router';
 import { PROFILE_ATHENA } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -13,6 +15,7 @@ import { of } from 'rxjs';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: ExerciseFeedbackSuggestionOptionsComponent;
     let fixture: ComponentFixture<ExerciseFeedbackSuggestionOptionsComponent>;
     let athenaService: AthenaService;
@@ -22,6 +25,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [ExerciseFeedbackSuggestionOptionsComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '1' } } } },
                 {
@@ -45,7 +49,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
 
     it('should initialize with available modules', async () => {
         const modules = ['Module1', 'Module2'];
-        jest.spyOn(athenaService, 'getAvailableModules').mockReturnValue(of(modules));
+        vi.spyOn(athenaService, 'getAvailableModules').mockReturnValue(of(modules));
         component.exercise = { type: ExerciseType.TEXT, dueDate: futureDueDate, feedbackSuggestionModule: undefined } as Exercise;
 
         component.ngOnInit();
@@ -55,8 +59,8 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     });
 
     it('should set isAthenaEnabled$ with the result from athenaService', async () => {
-        jest.spyOn(athenaService, 'getAvailableModules').mockReturnValue(of());
-        jest.spyOn(profileService, 'isProfileActive').mockImplementation((profile) => profile === PROFILE_ATHENA);
+        vi.spyOn(athenaService, 'getAvailableModules').mockReturnValue(of());
+        vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile) => profile === PROFILE_ATHENA);
         component.exercise = { type: ExerciseType.TEXT, dueDate: futureDueDate, feedbackSuggestionModule: undefined } as Exercise;
 
         component.ngOnInit();

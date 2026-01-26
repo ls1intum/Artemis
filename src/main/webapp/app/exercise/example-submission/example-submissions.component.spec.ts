@@ -1,5 +1,7 @@
+import { expect, vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { of, throwError } from 'rxjs';
@@ -20,6 +22,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('Example Submission Component', () => {
+    setupTestBed({ zoneless: true });
     let component: ExampleSubmissionsComponent;
     let fixture: ComponentFixture<ExampleSubmissionsComponent>;
     let exampleSubmissionService: ExampleSubmissionService;
@@ -42,7 +45,7 @@ describe('Example Submission Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ExampleSubmissionsComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), MockComponent(ResultComponent)],
+            imports: [MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), MockComponent(ResultComponent), ExampleSubmissionsComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 {
@@ -67,7 +70,7 @@ describe('Example Submission Component', () => {
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should initialize the component', () => {
@@ -79,7 +82,7 @@ describe('Example Submission Component', () => {
     it('should delete an example submission', () => {
         // GIVEN
         component.exercise = exercise;
-        const deleteStub = jest.spyOn(exampleSubmissionService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        const deleteStub = vi.spyOn(exampleSubmissionService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
 
         // WHEN
         component.deleteExampleSubmission(0);
@@ -91,9 +94,9 @@ describe('Example Submission Component', () => {
 
     it('should catch an error on delete', () => {
         component.exercise = exercise;
-        jest.spyOn(exampleSubmissionService, 'delete').mockReturnValue(throwError(() => ({ status: 500 })));
+        vi.spyOn(exampleSubmissionService, 'delete').mockReturnValue(throwError(() => ({ status: 500 })));
 
-        const alertServiceSpy = jest.spyOn(alertService, 'error');
+        const alertServiceSpy = vi.spyOn(alertService, 'error');
         component.deleteExampleSubmission(0);
 
         expect(alertServiceSpy).toHaveBeenCalledOnce();
@@ -110,7 +113,7 @@ describe('Example Submission Component', () => {
         } as ExampleSubmission;
         exercise.exampleSubmissions = [exampleTextSubmission];
 
-        const getSubmissionSizeSpy = jest.spyOn(exampleSubmissionService, 'getSubmissionSize');
+        const getSubmissionSizeSpy = vi.spyOn(exampleSubmissionService, 'getSubmissionSize');
 
         component.exercise = exercise;
         component.ngOnInit();
@@ -123,8 +126,8 @@ describe('Example Submission Component', () => {
         component.exercise = exercise;
         const componentInstance = { exercise: Exercise };
         const result = new Promise((resolve) => resolve(true));
-        const modalServiceStub = jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance, result });
-        const importStub = jest.spyOn(exampleSubmissionService, 'import').mockReturnValue(throwError(() => ({ status: 500 })));
+        const modalServiceStub = vi.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance, result });
+        const importStub = vi.spyOn(exampleSubmissionService, 'import').mockReturnValue(throwError(() => ({ status: 500 })));
 
         component.openImportModal();
 
@@ -133,8 +136,8 @@ describe('Example Submission Component', () => {
     });
 
     it('should close open modals on component destroy', () => {
-        const modalServiceStub = jest.spyOn(modalService, 'hasOpenModals').mockReturnValue(true);
-        const modalServiceDismissSpy = jest.spyOn(modalService, 'dismissAll');
+        const modalServiceStub = vi.spyOn(modalService, 'hasOpenModals').mockReturnValue(true);
+        const modalServiceDismissSpy = vi.spyOn(modalService, 'dismissAll');
 
         component.ngOnDestroy();
 

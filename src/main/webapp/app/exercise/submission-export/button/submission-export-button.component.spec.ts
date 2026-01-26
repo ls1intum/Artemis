@@ -1,4 +1,6 @@
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
@@ -21,6 +23,7 @@ class MockNgbModalRef {
 }
 
 describe('Submission Export Button Component', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<SubmissionExportButtonComponent>;
     let component: SubmissionExportButtonComponent;
     let modalService: NgbModal;
@@ -31,7 +34,7 @@ describe('Submission Export Button Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [SubmissionExportDialogComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisTimeAgoPipe)],
+            imports: [SubmissionExportDialogComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisTimeAgoPipe), SubmissionExportButtonComponent],
             providers: [
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -54,12 +57,12 @@ describe('Submission Export Button Component', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should open export submission dialog', () => {
-        const mouseEventSpy = jest.spyOn(mouseEvent, 'stopPropagation');
-        const openSpy = jest.spyOn(modalService, 'open');
+        const mouseEventSpy = vi.spyOn(mouseEvent, 'stopPropagation');
+        const openSpy = vi.spyOn(modalService, 'open');
 
         component.openSubmissionExportDialog(mouseEvent);
 
@@ -70,7 +73,7 @@ describe('Submission Export Button Component', () => {
 
     it('should set input values for dialog', () => {
         const mockModalRef = new MockNgbModalRef();
-        modalService.open = jest.fn().mockReturnValue(mockModalRef);
+        modalService.open = vi.fn().mockReturnValue(mockModalRef);
 
         component.openSubmissionExportDialog(mouseEvent);
 

@@ -1,4 +1,6 @@
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExternalSubmissionDialogComponent } from 'app/exercise/external-submission/external-submission-dialog.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ExternalSubmissionButtonComponent } from 'app/exercise/external-submission/external-submission-button.component';
@@ -9,13 +11,15 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('External Submission Dialog', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ExternalSubmissionButtonComponent>;
     let component: ExternalSubmissionButtonComponent;
     let modalService: NgbModal;
 
     beforeEach(() => {
-        modalService = { open: jest.fn() } as any as NgbModal;
+        modalService = { open: vi.fn() } as any as NgbModal;
         TestBed.configureTestingModule({
+            imports: [ExternalSubmissionButtonComponent],
             providers: [{ provide: NgbModal, useValue: modalService }, { provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
         })
             .compileComponents()
@@ -26,14 +30,14 @@ describe('External Submission Dialog', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should open external submission dialog on click', () => {
         const exercise = { id: 1 } as Exercise;
         component.exercise = exercise;
         const modalRefMock = { componentInstance: {} } as NgbModalRef;
-        const openMock = jest.spyOn(modalService, 'open').mockReturnValue(modalRefMock);
+        const openMock = vi.spyOn(modalService, 'open').mockReturnValue(modalRefMock);
 
         fixture.changeDetectorRef.detectChanges();
         fixture.debugElement.query(By.css('.btn')).nativeElement.click();

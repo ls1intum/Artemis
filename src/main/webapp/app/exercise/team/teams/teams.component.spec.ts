@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { expect } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { TeamService } from 'app/exercise/team/team.service';
@@ -28,6 +30,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('TeamsComponent', () => {
+    setupTestBed({ zoneless: true });
     let comp: TeamsComponent;
     let fixture: ComponentFixture<TeamsComponent>;
     let debugElement: DebugElement;
@@ -37,11 +40,9 @@ describe('TeamsComponent', () => {
         snapshot: { queryParamMap: convertToParamMap({}) },
     } as any as ActivatedRoute;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [NgxDatatableModule],
-            declarations: [
-                TeamsComponent,
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
                 TranslatePipeMock,
                 MockComponent(TeamsExportButtonComponent),
                 MockComponent(TeamsImportButtonComponent),
@@ -50,6 +51,7 @@ describe('TeamsComponent', () => {
                 MockComponent(TeamStudentsListComponent),
                 MockRouterLinkDirective,
                 MockComponent(TeamDeleteButtonComponent),
+                NgxDatatableModule,
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
@@ -62,18 +64,15 @@ describe('TeamsComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TeamsComponent);
-                comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(TeamsComponent);
+        comp = fixture.componentInstance;
+        debugElement = fixture.debugElement;
     });
 
-    it('Teams are loaded correctly', fakeAsync(() => {
+    it('Teams are loaded correctly', () => {
         comp.ngOnInit();
-        tick();
 
         // Make sure that all 3 teams were received for exercise
         expect(comp.teams).toHaveLength(mockTeams.length);
@@ -81,5 +80,5 @@ describe('TeamsComponent', () => {
         // Check that ngx-datatable is present
         const datatable = debugElement.query(By.css('jhi-data-table'));
         expect(datatable).not.toBeNull();
-    }));
+    });
 });

@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { expect, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -9,16 +11,19 @@ import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('StandaloneFeedbackComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: StandaloneFeedbackComponent;
     let fixture: ComponentFixture<StandaloneFeedbackComponent>;
 
     let exerciseService: ExerciseService;
     let exerciseCacheService: ExerciseCacheService;
 
-    let getExerciseDetailsMock: jest.SpyInstance;
-    let getLatestDueDateMock: jest.SpyInstance;
+    let getExerciseDetailsMock: ReturnType<typeof vi.spyOn>;
+    let getLatestDueDateMock: ReturnType<typeof vi.spyOn>;
 
     const course = { id: 1 } as unknown as Course;
     const exercise = new ProgrammingExercise(course, undefined);
@@ -31,9 +36,17 @@ describe('StandaloneFeedbackComponent', () => {
             params: of({ exerciseId: '1', participationId: '2', resultId: '3', isTemplateStatusMissing: 'false' }),
         };
 
+        TestBed.overrideComponent(StandaloneFeedbackComponent, {
+            set: { imports: [MockComponent(FeedbackComponent)] },
+        });
         TestBed.configureTestingModule({
-            declarations: [StandaloneFeedbackComponent, MockComponent(FeedbackComponent)],
-            providers: [{ provide: ActivatedRoute, useValue: activatedRouteStub }, MockProvider(ExerciseService), MockProvider(ExerciseCacheService)],
+            imports: [StandaloneFeedbackComponent],
+            providers: [
+                { provide: ActivatedRoute, useValue: activatedRouteStub },
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(ExerciseService),
+                MockProvider(ExerciseCacheService),
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -42,7 +55,7 @@ describe('StandaloneFeedbackComponent', () => {
 
                 // mock exerciseService
                 exerciseService = TestBed.inject(ExerciseService);
-                getExerciseDetailsMock = jest.spyOn(exerciseService, 'getExerciseDetails');
+                getExerciseDetailsMock = vi.spyOn(exerciseService, 'getExerciseDetails');
                 participation.submissions = [{ results: [result] }];
                 exercise.studentParticipations = [participation];
                 course.exercises = [exercise];
@@ -50,25 +63,23 @@ describe('StandaloneFeedbackComponent', () => {
 
                 // mock exerciseCacheService
                 exerciseCacheService = TestBed.inject(ExerciseCacheService);
-                getLatestDueDateMock = jest.spyOn(exerciseCacheService, 'getLatestDueDate');
+                getLatestDueDateMock = vi.spyOn(exerciseCacheService, 'getLatestDueDate');
                 getLatestDueDateMock.mockReturnValue(of(latestDueDate));
             });
     });
 
-    it('should set exercise, result and latestDueDate correctly', fakeAsync(() => {
+    it('should set exercise, result and latestDueDate correctly', () => {
         fixture.detectChanges();
-        tick(500);
 
         expect(component.exercise).toBe(exercise);
         expect(component.result).toBe(result);
         expect(component.latestDueDate).toBe(latestDueDate);
-    }));
+    });
 
-    it('should set showMissingAutomaticFeedbackInformation and messageKey correctly', fakeAsync(() => {
+    it('should set showMissingAutomaticFeedbackInformation and messageKey correctly', () => {
         fixture.detectChanges();
-        tick(500);
 
-        expect(component.showMissingAutomaticFeedbackInformation).toBeFalse();
+        expect(component.showMissingAutomaticFeedbackInformation).toBe(false);
         expect(component.messageKey).toBeUndefined();
-    }));
+    });
 });

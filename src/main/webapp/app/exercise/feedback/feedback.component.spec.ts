@@ -1,6 +1,8 @@
+import { expect, vi } from 'vitest';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
@@ -27,6 +29,7 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 
 describe('FeedbackComponent', () => {
+    setupTestBed({ zoneless: true });
     let comp: FeedbackComponent;
     let fixture: ComponentFixture<FeedbackComponent>;
 
@@ -36,8 +39,8 @@ describe('FeedbackComponent', () => {
     let profileService: ProfileService;
     let feedbackItemService: ProgrammingFeedbackItemService;
 
-    let buildlogsStub: jest.SpyInstance;
-    let getFeedbackDetailsForResultStub: jest.SpyInstance;
+    let buildlogsStub: ReturnType<typeof vi.spyOn>;
+    let getFeedbackDetailsForResultStub: ReturnType<typeof vi.spyOn>;
 
     const feedbackReference = {
         id: 1,
@@ -177,6 +180,7 @@ describe('FeedbackComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
+            imports: [FeedbackComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -222,15 +226,15 @@ describe('FeedbackComponent', () => {
         resultService = TestBed.inject(ResultService);
         profileService = TestBed.inject(ProfileService);
         feedbackItemService = TestBed.inject(ProgrammingFeedbackItemService);
-        buildlogsStub = jest.spyOn(buildLogService, 'getBuildLogs').mockReturnValue(of([]));
-        getFeedbackDetailsForResultStub = jest.spyOn(resultService, 'getFeedbackDetailsForResult').mockReturnValue(of({ body: [] as Feedback[] } as HttpResponse<Feedback[]>));
+        buildlogsStub = vi.spyOn(buildLogService, 'getBuildLogs').mockReturnValue(of([]));
+        getFeedbackDetailsForResultStub = vi.spyOn(resultService, 'getFeedbackDetailsForResult').mockReturnValue(of({ body: [] as Feedback[] } as HttpResponse<Feedback[]>));
         // Set profile info
         const profileInfo = new ProfileInfo();
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should set the exercise from the participation if available', () => {
@@ -286,7 +290,7 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
-        expect(comp.isLoading).toBeFalse();
+        expect(comp.isLoading).toBe(false);
     });
 
     it('should try to retrieve the feedbacks from the server if provided result does not have feedbacks', () => {
@@ -298,7 +302,7 @@ describe('FeedbackComponent', () => {
 
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(55, comp.result);
-        expect(comp.isLoading).toBeFalse();
+        expect(comp.isLoading).toBe(false);
     });
 
     it('should try to retrieve build logs if the exercise type is PROGRAMMING and a submission was provided which was marked with build failed.', () => {
@@ -308,8 +312,8 @@ describe('FeedbackComponent', () => {
 
         expect(buildlogsStub).toHaveBeenCalledOnce();
         expect(buildlogsStub).toHaveBeenCalledWith(55, 89);
-        expect(comp.buildLogs).toBeArrayOfSize(0);
-        expect(comp.isLoading).toBeFalse();
+        expect(comp.buildLogs).toHaveLength(0);
+        expect(comp.isLoading).toBe(false);
     });
 
     it('should not try to retrieve build logs if the exercise type is not PROGRAMMING', () => {
@@ -320,7 +324,7 @@ describe('FeedbackComponent', () => {
 
         expect(buildlogsStub).not.toHaveBeenCalled();
         expect(comp.feedbackItemNodes).toBeUndefined();
-        expect(comp.isLoading).toBeFalse();
+        expect(comp.isLoading).toBe(false);
     });
 
     it('should not try to retrieve build logs if submission was not marked with build failed', () => {
@@ -331,7 +335,7 @@ describe('FeedbackComponent', () => {
 
         expect(buildlogsStub).not.toHaveBeenCalled();
         expect(comp.buildLogs).toBeUndefined();
-        expect(comp.isLoading).toBeFalse();
+        expect(comp.isLoading).toBe(false);
     });
 
     it('fetchBuildLogs should suppress 403 error', () => {
@@ -343,8 +347,8 @@ describe('FeedbackComponent', () => {
 
         expect(buildlogsStub).toHaveBeenCalledOnce();
         expect(buildlogsStub).toHaveBeenCalledWith(55, 89);
-        expect(comp.loadingFailed).toBeFalse();
-        expect(comp.isLoading).toBeFalse();
+        expect(comp.loadingFailed).toBe(false);
+        expect(comp.isLoading).toBe(false);
     });
 
     it('fetchBuildLogs should not suppress errors with status other than 403', () => {
@@ -355,12 +359,12 @@ describe('FeedbackComponent', () => {
 
         expect(buildlogsStub).toHaveBeenCalledOnce();
         expect(buildlogsStub).toHaveBeenCalledWith(55, 89);
-        expect(comp.loadingFailed).toBeTrue();
-        expect(comp.isLoading).toBeFalse();
+        expect(comp.loadingFailed).toBe(true);
+        expect(comp.isLoading).toBe(false);
     });
 
     it('should not show test details to students', () => {
-        const createSpy = jest.spyOn(feedbackItemService, 'create');
+        const createSpy = vi.spyOn(feedbackItemService, 'create');
         const { feedbacks } = generateFeedbacksAndExpectedItems();
         comp.exerciseType = ExerciseType.PROGRAMMING;
         comp.result.feedbacks = feedbacks;
@@ -371,7 +375,7 @@ describe('FeedbackComponent', () => {
     });
 
     it('should show test details to tutors', () => {
-        const createSpy = jest.spyOn(feedbackItemService, 'create');
+        const createSpy = vi.spyOn(feedbackItemService, 'create');
         const { feedbacks } = generateFeedbacksAndExpectedItems();
         comp.exerciseType = ExerciseType.PROGRAMMING;
         comp.result.feedbacks = feedbacks;
@@ -385,7 +389,7 @@ describe('FeedbackComponent', () => {
     });
 
     it('should show test details to students for programming exercises with show test names on', () => {
-        const createSpy = jest.spyOn(feedbackItemService, 'create');
+        const createSpy = vi.spyOn(feedbackItemService, 'create');
         const { feedbacks } = generateFeedbacksAndExpectedItems();
         comp.exerciseType = ExerciseType.PROGRAMMING;
         comp.result.feedbacks = feedbacks;
@@ -400,7 +404,7 @@ describe('FeedbackComponent', () => {
 
     it('should expand feedback when being printed', () => {
         // @ts-ignore method is private
-        const expandFeedbackItemGroupsSpy = jest.spyOn(comp, 'expandFeedbackItemGroups');
+        const expandFeedbackItemGroupsSpy = vi.spyOn(comp, 'expandFeedbackItemGroups');
 
         const feedbackItem = generateManualFeedbackPair(true, 'Positive', 'This is good', 4).item;
         const feedbackItem1 = generateManualFeedbackPair(true, 'Positive', 'This is good', 4).item;
@@ -420,7 +424,7 @@ describe('FeedbackComponent', () => {
         comp.ngOnChanges({ isPrinting: startPrinting });
 
         expect(expandFeedbackItemGroupsSpy).toHaveBeenCalledOnce();
-        expect(feedbackGroup.open).toBeTrue();
+        expect(feedbackGroup.open).toBe(true);
 
         // stop printing => collapse feedback (as it was collapsed before)
         const stopPrinting = new SimpleChange(true, false, false);
@@ -431,6 +435,6 @@ describe('FeedbackComponent', () => {
         /**
          * references were removed during saving old state => cannot use {@link feedbackGroup} for comparison anymore
          */
-        expect((comp.feedbackItemNodes[0] as unknown as FeedbackGroup).open).toBeFalse();
+        expect((comp.feedbackItemNodes[0] as unknown as FeedbackGroup).open).toBe(false);
     });
 });
