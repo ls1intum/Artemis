@@ -17,7 +17,8 @@ import {
     output,
     signal,
 } from '@angular/core';
-import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { MonacoEditorComponent, MonacoEditorMode } from 'app/shared/monaco-editor/monaco-editor.component';
+import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import {
     NgbDropdown,
     NgbDropdownMenu,
@@ -260,6 +261,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly consistencyIssues = input<ConsistencyIssue[]>([]);
 
     isButtonLoading = input<boolean>(false);
+    readonly isAiLoading = input<boolean>(false);
     isFormGroupValid = input<boolean>(false);
     isInCommunication = input<boolean>(false);
     showMarkdownInfoText = input<boolean>(true);
@@ -270,7 +272,18 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly fallbackConversationId = input<number>();
 
     showCloseButton = input<boolean>(false);
+    /** Whether the editor is read-only */
+    readOnly = input<boolean>(false);
+
+    /** Editor mode: 'normal' or 'diff' */
+    mode = input<MonacoEditorMode>('normal');
+
+    renderSideBySide = input<boolean>(true);
+
     closeEditor = output<void>();
+
+    /** Emits diff line change information when in diff mode */
+    diffLineChange = output<{ ready: boolean; lineChange: LineChange }>();
 
     @Output()
     markdownChange = new EventEmitter<string>();
@@ -293,12 +306,27 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @Output()
     onLeaveVisualTab = new EventEmitter<void>();
 
+    /** Emits when user selects lines in the editor (includes selectedText, position, and column info for inline refinement) */
+    readonly onSelectionChange = output<
+        | {
+              startLine: number;
+              endLine: number;
+              startColumn: number;
+              endColumn: number;
+              selectedText: string;
+              screenPosition: { top: number; left: number };
+          }
+        | undefined
+    >();
+
     defaultPreviewHtml: SafeHtml | undefined;
     inPreviewMode = false;
     inVisualMode = false;
     inEditMode = true;
     uniqueMarkdownEditorId: string;
     resizeObserver?: ResizeObserver;
+    /** Disposable for the selection change listener */
+    private selectionChangeDisposable?: { dispose: () => void };
     targetWrapperHeight?: number;
     minWrapperHeight?: number;
     constrainDragPositionFn?: (pointerPosition: Point) => Point;
@@ -313,6 +341,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         meta: [],
     };
 
+    /**
+     * Color mapping from hex codes to CSS class names.
+     */
     readonly colorToClassMap = new Map<string, string>([
         ['#ca2024', 'red'],
         ['#3ea119', 'green'],
@@ -460,6 +491,39 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.monacoEditor.applyOptionPreset(DEFAULT_MARKDOWN_EDITOR_OPTIONS);
         }
         this.renderConsistencyIssues();
+
+        // Set up selection change listener for inline comments/refinement
+        this.selectionChangeDisposable = this.monacoEditor.onSelectionChange((selection) => {
+            if (selection) {
+                // Get selected text and screen position for inline refinement
+                const model = this.monacoEditor.getModel();
+                const selectedText = model ? model.getValueInRange(selection) : '';
+
+                // Calculate screen position for floating button
+                let screenPosition = { top: 0, left: 0 };
+                const endPosition = { lineNumber: selection.endLineNumber, column: selection.endColumn };
+                const coords = this.monacoEditor.getScrolledVisiblePosition(endPosition);
+                const editorDom = this.monacoEditor.getDomNode();
+                if (coords && editorDom) {
+                    const editorRect = editorDom.getBoundingClientRect();
+                    screenPosition = {
+                        top: editorRect.top + coords.top + coords.height + 5,
+                        left: editorRect.left + coords.left,
+                    };
+                }
+
+                this.onSelectionChange.emit({
+                    startLine: selection.startLineNumber,
+                    endLine: selection.endLineNumber,
+                    startColumn: selection.startColumn,
+                    endColumn: selection.endColumn,
+                    selectedText,
+                    screenPosition,
+                });
+            } else {
+                this.onSelectionChange.emit(undefined);
+            }
+        });
     }
 
     /**
@@ -479,6 +543,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     ngOnDestroy(): void {
         this.resizeObserver?.disconnect();
+        this.selectionChangeDisposable?.dispose();
     }
 
     onTextChanged(event: { text: string; fileName: string }): void {
@@ -572,6 +637,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (event.activeId === this.TAB_EDIT || (event.activeId === this.TAB_VISUAL && this.inPreviewMode)) {
             this.parseMarkdown();
         }
+    }
+
+    onDiffChanged(event: { ready: boolean; lineChange: LineChange }): void {
+        this.diffLineChange.emit(event);
     }
 
     parseMarkdown(domainActionsToCheck: TextEditorDomainAction[] = this.domainActions): void {
@@ -718,5 +787,46 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     onCloseButtonClick(): void {
         this.closeEditor.emit();
+    }
+
+    /**
+     * Gets the current selection in the editor.
+     * @returns The current selection or null.
+     */
+    getSelection(): { startLine: number; endLine: number } | null {
+        const sel = this.monacoEditor.getSelection();
+        if (!sel) {
+            return null;
+        }
+        return {
+            startLine: sel.startLineNumber,
+            endLine: sel.endLineNumber,
+        };
+    }
+
+    /**
+     * Applies new content to the right (modified) side of the diff editor.
+     * In live-synced mode, changes sync immediately as the model is shared.
+     * @param content The new content to apply.
+     */
+    applyDiffContent(content: string): void {
+        this.monacoEditor?.applyDiffContent(content);
+    }
+
+    /**
+     * Applies the refined content to the editor in diff mode.
+     * Alias for applyDiffContent for semantic clarity in refinement workflows.
+     * @param refined The new content to show in the modified editor.
+     */
+    applyRefinedContent(refined: string): void {
+        this.applyDiffContent(refined);
+    }
+
+    /**
+     * Reverts all changes in the diff editor (both inline edits and the refinement itself)
+     * by restoring the snapshot taken when diff mode was entered.
+     */
+    revertAll(): void {
+        this.monacoEditor?.revertAll();
     }
 }

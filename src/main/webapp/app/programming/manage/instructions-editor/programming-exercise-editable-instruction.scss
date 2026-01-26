@@ -57,6 +57,7 @@
     .card-second-header {
         background-color: var(--markdown-preview-editor-background);
     }
+
     .card-second-header {
         padding: 10px 15px;
     }
@@ -72,7 +73,7 @@
 
     &__status {
         display: grid;
-        grid-template-columns: 1fr 2fr; /* left | right */
+        grid-template-columns: 1fr 2fr;
         align-items: center;
 
         .instructions-status {

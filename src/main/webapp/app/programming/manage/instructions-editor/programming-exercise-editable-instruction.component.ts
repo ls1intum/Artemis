@@ -14,6 +14,7 @@ import {
     computed,
     inject,
     input,
+    output,
     signal,
 } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -30,6 +31,8 @@ import { ProgrammingExerciseGradingService } from 'app/programming/manage/servic
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MonacoEditorMode } from 'app/shared/monaco-editor/monaco-editor.component';
+import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
 import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
@@ -50,6 +53,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { InlineRefinementButtonComponent } from 'app/shared/monaco-editor/inline-refinement-button/inline-refinement-button.component';
 import { editor } from 'monaco-editor';
 
 @Component({
@@ -66,6 +70,7 @@ import { editor } from 'monaco-editor';
         ProgrammingExerciseInstructionAnalysisComponent,
         ArtemisTranslatePipe,
         ProgrammingExerciseInstructionComponent,
+        InlineRefinementButtonComponent,
     ],
 })
 export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnChanges, OnDestroy, OnInit {
@@ -75,9 +80,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private testCaseService = inject(ProgrammingExerciseGradingService);
     private profileService = inject(ProfileService);
-    private artemisIntelligenceService = inject(ArtemisIntelligenceService);
+    protected artemisIntelligenceService = inject(ArtemisIntelligenceService);
 
-    participationValue: Participation;
+    participationValue: Participation | undefined;
     programmingExercise: ProgrammingExercise;
 
     exerciseTestCases: string[] = [];
@@ -104,6 +109,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         }
         return actions;
     });
+    protected readonly isAiLoading = this.artemisIntelligenceService.isLoading;
 
     savingInstructions = false;
     unsavedChangesValue = false;
@@ -132,23 +138,50 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     @Input() templateParticipation?: Participation;
     @Input() forceRender: Observable<void>;
     readonly consistencyIssues = input<ConsistencyIssue[]>([]);
+    /** Whether any refinement is in progress (makes editor read-only) */
+    readonly isRefining = input<boolean>(false);
+
+    /** Editor mode: 'normal' or 'diff' for showing diff view */
+    readonly mode = input<MonacoEditorMode>('normal');
+
+    /** Original content for diff mode */
+    readonly originalContent = input<string | undefined>(undefined);
+
+    /** Modified content for diff mode */
+    readonly modifiedContent = input<string | undefined>(undefined);
+
+    readonly renderSideBySide = input<boolean>(true);
 
     @Input()
     get exercise() {
         return this.programmingExercise;
     }
     @Input()
-    get participation() {
+    get participation(): Participation | undefined {
         return this.participationValue;
     }
 
-    @Output() participationChange = new EventEmitter<Participation>();
+    @Output() participationChange = new EventEmitter<Participation | undefined>();
     @Output() hasUnsavedChanges = new EventEmitter<boolean>();
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
     @Output() instructionChange = new EventEmitter<string>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
 
-    set participation(participation: Participation) {
+    inlineRefinementPosition = signal<{ top: number; left: number } | undefined>(undefined);
+    selectedTextForRefinement = signal('');
+    selectionPositionInfo = signal<{ startLine: number; endLine: number; startColumn: number; endColumn: number } | undefined>(undefined);
+    readonly onInlineRefinement = output<{
+        instruction: string;
+        startLine: number;
+        endLine: number;
+        startColumn: number;
+        endColumn: number;
+    }>();
+
+    /** Emits diff line change information when in diff mode */
+    readonly diffLineChange = output<{ ready: boolean; lineChange: LineChange }>();
+
+    set participation(participation: Participation | undefined) {
         this.participationValue = participation;
         this.participationChange.emit(this.participationValue);
     }
@@ -201,6 +234,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         if (this.forceRender) {
             this.forceRenderSubscription = this.forceRender.subscribe(() => this.generateHtml());
         }
+
         // Trigger initial preview render after view initialization.
         // This ensures the ProgrammingExerciseInstructionComponent renders when first shown.
         if (this.showPreview) {
@@ -328,6 +362,36 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     };
 
     /**
+     * Gets the current content from the editor.
+     * In diff mode, returns the modified (right) side content.
+     * In normal mode, returns the current editor content.
+     *
+     * @returns The current editor content, or undefined if editor is not available.
+     */
+    getCurrentContent(): string | undefined {
+        const monacoEditor = this.markdownEditorMonaco?.monacoEditor;
+        if (!monacoEditor) {
+            return undefined;
+        }
+        return monacoEditor.getText();
+    }
+
+    /**
+     * Sets the editor text directly.
+     * Use this to revert content in the editor.
+     *
+     * @param text The text to set in the editor.
+     */
+    setText(text: string): void {
+        const monacoEditor = this.markdownEditorMonaco?.monacoEditor;
+        if (!monacoEditor) {
+            return;
+        }
+
+        monacoEditor.setText(text);
+    }
+
+    /**
      * Scrolls the Monaco editor to the specified line immediately.
      *
      * @param {number} lineNumber
@@ -357,4 +421,72 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
         return annotations;
     };
+
+    /**
+     * Handles selection changes from the markdown editor.
+     * Shows floating refinement button when text is selected.
+     */
+    onEditorSelectionChange(
+        selection:
+            | {
+                  startLine: number;
+                  endLine: number;
+                  startColumn: number;
+                  endColumn: number;
+                  selectedText: string;
+                  screenPosition: { top: number; left: number };
+              }
+            | undefined,
+    ): void {
+        // Show/hide inline refinement button based on selection
+        if (selection && selection.selectedText && selection.selectedText.trim().length > 0 && this.hyperionEnabled && !this.isAiLoading()) {
+            this.inlineRefinementPosition.set(selection.screenPosition);
+            this.selectedTextForRefinement.set(selection.selectedText);
+            this.selectionPositionInfo.set({
+                startLine: selection.startLine,
+                endLine: selection.endLine,
+                startColumn: selection.startColumn,
+                endColumn: selection.endColumn,
+            });
+        } else {
+            this.hideInlineRefinementButton();
+        }
+    }
+
+    /**
+     * Hides the floating inline refinement button.
+     */
+    hideInlineRefinementButton(): void {
+        this.inlineRefinementPosition.set(undefined);
+        this.selectedTextForRefinement.set('');
+        this.selectionPositionInfo.set(undefined);
+    }
+
+    /**
+     * Handles inline refinement submission.
+     * Emits the event for parent to process the refinement.
+     */
+    onInlineRefine(event: { instruction: string; startLine: number; endLine: number; startColumn: number; endColumn: number }): void {
+        this.onInlineRefinement.emit(event);
+        this.hideInlineRefinementButton();
+    }
+
+    /**
+     * Applies the refined content to the editor in diff mode.
+     * @param refined The new content to show in the modified editor.
+     */
+    applyRefinedContent(refined: string): void {
+        this.markdownEditorMonaco?.applyRefinedContent(refined);
+        this.exercise.problemStatement = refined;
+        this.instructionChange.emit(refined);
+        this.generateHtmlSubject.next();
+    }
+
+    /**
+     * Reverts all changes in the diff editor (both inline edits and the refinement itself)
+     * by restoring the snapshot taken when diff mode was entered.
+     */
+    revertAll(): void {
+        this.markdownEditorMonaco?.revertAll();
+    }
 }

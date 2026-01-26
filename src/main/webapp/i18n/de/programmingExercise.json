@@ -240,11 +240,33 @@
                 "testCaseCommand": "Testfall einfügen",
                 "tasksOfExercise": "Teilaufgaben:",
                 "generationAssistance": "Entwurf der Problemstellung erstellen",
+                "refinementAssistance": "Problemstellung verfeinern",
                 "generateDraftDescription": "Verwende dieses Feld, um die Aufgabenbeschreibung zu entwerfen oder die aktuelle Formulierung zu verfeinern. Deine Eingaben steuern sowohl die Problemstellung als auch die Lernziele. Sei konkret zu Anforderungen, Konzepten und Randbedingungen.",
                 "yourRequirements": "Deine Anforderungen",
                 "examplePlaceholder": "Beispiel: Erstelle eine Java-Übung zur Implementierung eines binären Suchbaums mit Insert-, Delete- und Search-Operationen. Studierende sollen Verständnis für Baumtraversal und rekursive Algorithmen demonstrieren.",
                 "generationSuccess": "Aufgabenstellung wurde erfolgreich generiert.",
-                "generationError": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut."
+                "generationError": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut.",
+                "refinementSuccess": "Aufgabenstellung wurde erfolgreich verfeinert.",
+                "refinementError": "Fehler beim Verfeinern der Aufgabenstellung. Bitte versuche es erneut.",
+                "refinementFailed": "Aufgabenstellung konnte nicht verfeinert werden. Die ursprüngliche Aufgabenstellung wurde beibehalten.",
+                "reviewChanges": "Änderungen überprüfen",
+                "reviewChangesDescription": "Grüne Zeilen werden hinzugefügt, rote Zeilen werden entfernt.",
+                "changesAppliedLive": "Änderungen werden sofort angewendet. Klicke auf die Rückgängig-Buttons, um einzelne Änderungen rückgängig zu machen.",
+                "useRevertButtons": "Klicke auf Pfeile im Rand, um einzelne Änderungen rückgängig zu machen",
+                "revertAll": "Alles zurücksetzen",
+                "doneReviewing": "Fertig mit Überprüfung",
+                "changesApplied": "Änderungen wurden auf die Aufgabenstellung angewendet.",
+                "aiRefining": "KI aktualisiert die Aufgabenstellung...",
+                "inlineRefinement": {
+                    "triggerButton": "Mit KI aktualisieren",
+                    "placeholder": "Beschreibe, wie dieser Abschnitt verbessert werden soll...",
+                    "submitTooltip": "Verfeinerung anwenden"
+                },
+                "refine": "Verfeinern"
+            },
+            "inlineRefine": {
+                "success": "Abschnitt erfolgreich verfeinert.",
+                "error": "Abschnitt konnte nicht verfeinert werden. Bitte versuche es erneut."
             },
             "codeGeneration": {
                 "creationAssistance": "Erstellungsassistenz",
@@ -692,7 +714,6 @@
                 "lineStatBetweenSubmissionsCurrentSubmissionLabel": "Zeilen, die zwischen der aktuellen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ currentCommitHash }} </span>",
                 "lineStatBetweenSubmissionsPreviousSubmissionLabel": "und der vorherigen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ previousCommitHash }} </span> hinzugefügt/entfernt wurden",
                 "lineStatBetweenSubmissionsTemplateLabel": "und der Vorlage hinzugefügt/entfernt wurden",
-
                 "lineStatTooltipDetailPage": "Ungefilterte Zeilen, die beim Vergleich der Template- und Lösungs-Repositories hinzugefügt und entfernt wurden",
                 "lineStatTooltipExamTimeline": "Ungefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe hinzugefügt und entfernt wurden",
                 "lineStatTooltipFullReportExamTimeline": "Ungefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe hinzugefügt und entfernt wurden.",

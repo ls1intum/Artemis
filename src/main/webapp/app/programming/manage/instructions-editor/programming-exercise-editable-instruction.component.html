@@ -1,10 +1,18 @@
 <div class="editable-instruction-container">
+    <!-- AI Refinement in progress banner -->
+    @if (isRefining()) {
+        <div class="alert alert-info d-flex align-items-center mb-2 py-2">
+            <fa-icon [icon]="faCircleNotch" animation="spin" class="me-2" />
+            <span jhiTranslate="artemisApp.programmingExercise.problemStatement.aiRefining"></span>
+        </div>
+    }
     <!-- The position of the markdown-editor in the html should not be changed, as it is used for resizing!-->
     @if (exercise) {
         <!-- showPreview controls whether the preview tab is available in the markdown editor.
              Set to false when using an external preview component (e.g., in the code editor view). -->
         <jhi-markdown-editor-monaco
             class="overflow-hidden flex-grow-1"
+            [mode]="mode()"
             [domainActions]="domainActions"
             [artemisIntelligenceActions]="artemisIntelligenceActions()"
             [initialEditorHeight]="initialEditorHeight"
@@ -15,8 +23,13 @@
             [showDefaultPreview]="false"
             [showPreviewButton]="showPreview"
             [showEditButton]="showPreview"
+            [readOnly]="isRefining()"
+            [isAiLoading]="isAiLoading() || isRefining()"
+            [renderSideBySide]="renderSideBySide()"
             [consistencyIssues]="consistencyIssues()"
             (markdownChange)="updateProblemStatement($event)"
+            (diffLineChange)="diffLineChange.emit($event)"
+            (onSelectionChange)="onEditorSelectionChange($event)"
         >
             <!-- Custom preview using ProgrammingExerciseInstructionComponent for proper rendering
                  of programming-specific syntax (task markers, PlantUML, test case status, etc.).
@@ -35,16 +48,32 @@
                 }
             </div>
         </jhi-markdown-editor-monaco>
+
+        <!-- Floating inline refinement button - hidden during active refinement -->
+        @if (inlineRefinementPosition() && hyperionEnabled && !isRefining() && selectionPositionInfo()) {
+            <jhi-inline-refinement-button
+                [top]="inlineRefinementPosition()!.top"
+                [left]="inlineRefinementPosition()!.left"
+                [selectedText]="selectedTextForRefinement()"
+                [startLine]="selectionPositionInfo()!.startLine"
+                [endLine]="selectionPositionInfo()!.endLine"
+                [startColumn]="selectionPositionInfo()!.startColumn"
+                [endColumn]="selectionPositionInfo()!.endColumn"
+                [isLoading]="isRefining() || isAiLoading()"
+                (refine)="onInlineRefine($event)"
+                (closeRefinement)="hideInlineRefinementButton()"
+            />
+        }
     }
     @if (editMode) {
         <button
             id="save-instructions-button"
-            [disabled]="savingInstructions || !unsavedChangesValue"
+            [disabled]="savingInstructions || !unsavedChangesValue || mode() === 'diff'"
             (click)="saveInstructions($event)"
             class="btn editable-instruction-container__save"
             [ngClass]="{
-                'btn-light': savingInstructions || !unsavedChangesValue,
-                'btn-primary': !(savingInstructions || !unsavedChangesValue),
+                'btn-light': savingInstructions || !unsavedChangesValue || mode() === 'diff',
+                'btn-primary': !(savingInstructions || !unsavedChangesValue || mode() === 'diff'),
                 'btn-sm': externalHeight,
             }"
         >

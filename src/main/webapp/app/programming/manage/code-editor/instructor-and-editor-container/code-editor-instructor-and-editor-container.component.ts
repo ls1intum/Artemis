@@ -1,4 +1,6 @@
-import { Component, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, ViewChild, computed, inject, model, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { A11yModule } from '@angular/cdk/a11y';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
@@ -10,11 +12,15 @@ import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/ex
 import {
     faArrowLeft,
     faArrowRight,
+    faBan,
     faCircleExclamation,
     faCircleInfo,
     faCircleNotch,
+    faPaperPlane,
     faPlus,
+    faSave,
     faSpinner,
+    faTableColumns,
     faTimes,
     faTimesCircle,
     faTriangleExclamation,
@@ -35,7 +41,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
-import { Subscription, catchError, of, take } from 'rxjs';
+import { Subscription, catchError, finalize, of, take } from 'rxjs';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -44,8 +50,15 @@ import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actio
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
+import { ProblemStatementRefinementResponse } from 'app/openapi/model/problemStatementRefinementResponse';
+import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
+import { ProblemStatementGlobalRefinementRequest } from 'app/openapi/model/problemStatementGlobalRefinementRequest';
+import { ProblemStatementTargetedRefinementRequest } from 'app/openapi/model/problemStatementTargetedRefinementRequest';
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
 import { getRepoPath } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/buttons/button/button.component';
+import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
+import { LineChange } from 'app/programming/shared/utils/diff.utils';
 
 const SEVERITY_ORDER = {
     HIGH: 0,
@@ -74,11 +87,13 @@ const SEVERITY_ORDER = {
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
         ProgrammingExerciseEditableInstructionComponent,
         ProgrammingExerciseInstructionComponent,
-        NgbTooltip,
-        ArtemisTranslatePipe,
+        FormsModule,
+        A11yModule,
+        ButtonComponent,
+        GitDiffLineStatComponent,
     ],
 })
-export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent {
+export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy {
     @ViewChild(UpdatingResultComponent, { static: false }) resultComp: UpdatingResultComponent;
     @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
 
@@ -87,20 +102,30 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     readonly consistencyIssues = signal<ConsistencyIssue[]>([]);
     readonly sortedIssues = computed(() => [...this.consistencyIssues()].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]));
 
+    readonly allowSplitView = signal<boolean>(true);
+    readonly addedLineCount = signal<number>(0);
+    readonly removedLineCount = signal<number>(0);
+    readonly faTableColumns = faTableColumns;
+    readonly ButtonSize = ButtonSize;
+    readonly ButtonType = ButtonType;
+    readonly TooltipPlacement = TooltipPlacement;
+
     private consistencyCheckService = inject(ConsistencyCheckService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
     private profileService = inject(ProfileService);
+    private hyperionApiService = inject(HyperionProblemStatementApiService);
 
     lineJumpOnFileLoad: number | undefined = undefined;
     fileToJumpOn: string | undefined = undefined;
     selectedIssue: ConsistencyIssue | undefined = undefined;
     locationIndex: number = 0;
 
-    // Icons
     faPlus = faPlus;
     faTimes = faTimes;
     faCircleNotch = faCircleNotch;
     faTimesCircle = faTimesCircle;
+    faSave = faSave;
+    faBan = faBan;
     faArrowLeft = faArrowLeft;
     faArrowRight = faArrowRight;
     faCircleExclamation = faCircleExclamation;
@@ -162,14 +187,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 }
                 this.subscribeToJob(res.jobId);
             },
-            error: (err) => {
+            error: () => {
                 this.isGeneratingCode.set(false);
                 this.codeGenAlertService.addAlert({
                     type: AlertType.DANGER,
                     translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
                 });
             },
-            complete: () => {},
         });
     }
 
@@ -191,24 +215,15 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.jobSubscription = this.hyperionWs.subscribeToJob(jobId).subscribe({
             next: (event) => {
                 switch (event.type) {
-                    case 'STARTED':
-                        // spinner already on; just log
-                        break;
-
-                    case 'PROGRESS':
-                        break;
-
                     case 'FILE_UPDATED':
                     case 'NEW_FILE':
                         this.repoService
                             .pull()
                             .pipe(
                                 take(1),
-                                catchError(() => {
-                                    return of(void 0);
-                                }),
+                                catchError(() => of(void 0)),
                             )
-                            .subscribe(() => {});
+                            .subscribe();
                         break;
 
                     case 'DONE':
@@ -243,9 +258,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     translationParams: { repositoryType: this.selectedRepository },
                 });
             },
-            complete: () => {
-                // don't auto-stop spinner here; DONE/ERROR/timeout handle it
-            },
         });
 
         // Safety timeout (20 minutes)
@@ -258,6 +270,21 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 });
             }
         }, 1_200_000);
+    }
+
+    protected isInlineRefining = signal(false);
+    protected readonly isAiLoading = this.artemisIntelligenceService.isLoading;
+    private currentRefinementSubscription: Subscription | undefined;
+
+    showDiff = signal(false);
+
+    showRefinementPrompt = signal(false);
+    refinementPrompt = model('');
+    protected readonly faPaperPlane = faPaperPlane;
+
+    override ngOnDestroy(): void {
+        super.ngOnDestroy();
+        this.currentRefinementSubscription?.unsubscribe();
     }
 
     /**
@@ -314,10 +341,22 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     },
                 });
             },
-            error: (err) => {
+            error: () => {
                 this.alertService.error(this.translateService.instant('artemisApp.hyperion.consistencyCheck.checkFailedAlert'));
             },
         });
+    }
+
+    /**
+     * Accepts the refined problem statement and applies the changes.
+     * Gets the actual content from the editor (which may have been modified by the user in diff mode).
+     */
+    /**
+     * Accepts the refined problem statement and applies the changes.
+     * Gets the actual content from the editor (which may have been modified by the user in diff mode).
+     */
+    acceptRefinement(): void {
+        this.closeDiff();
     }
 
     /**
@@ -339,6 +378,117 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 return this.faCircleInfo;
             default:
                 return this.faCircleInfo;
+        }
+    }
+
+    /**
+     * Reverts all changes made during the refinement session and restores the original/snapshot state.
+     */
+    revertAllRefinement(): void {
+        this.editableInstructions.revertAll();
+    }
+
+    closeDiff(): void {
+        this.showDiff.set(false);
+    }
+
+    /**
+     * Handles inline refinement request from editor selection.
+     * Calls the Hyperion API with the selected text and instruction, then shows diff.
+     */
+    onInlineRefinement(event: { instruction: string; startLine: number; endLine: number; startColumn: number; endColumn: number }): void {
+        const courseId = this.exercise?.course?.id ?? this.exercise?.exerciseGroup?.exam?.course?.id;
+
+        if (!courseId || !this.exercise?.problemStatement?.trim()) {
+            this.alertService.error('artemisApp.programmingExercise.inlineComment.applyError');
+            return;
+        }
+
+        this.isInlineRefining.set(true);
+
+        const request: ProblemStatementTargetedRefinementRequest = {
+            problemStatementText: this.exercise.problemStatement,
+            startLine: event.startLine,
+            endLine: event.endLine,
+            startColumn: event.startColumn,
+            endColumn: event.endColumn,
+            instruction: event.instruction,
+        };
+
+        this.currentRefinementSubscription = this.hyperionApiService
+            .refineProblemStatementTargeted(courseId, request)
+            .pipe(
+                finalize(() => {
+                    this.isInlineRefining.set(false);
+                    this.currentRefinementSubscription = undefined;
+                }),
+            )
+            .subscribe({
+                next: (response) => this.handleRefinementResponse(response),
+                error: () => {
+                    this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
+                },
+            });
+    }
+
+    /**
+     * Toggles the refinement prompt visibility.
+     */
+    toggleRefinementPrompt(): void {
+        this.showRefinementPrompt.update((value) => !value);
+        if (!this.showRefinementPrompt()) {
+            this.refinementPrompt.set('');
+        }
+    }
+
+    /**
+     * Submits the full problem statement refinement.
+     * Uses the user prompt to refine the entire problem statement.
+     */
+    submitRefinement(): void {
+        const prompt = this.refinementPrompt().trim();
+        if (!prompt) return;
+
+        const courseId = this.exercise?.course?.id ?? this.exercise?.exerciseGroup?.exam?.course?.id;
+        if (!courseId || !this.exercise?.problemStatement?.trim()) {
+            this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
+            return;
+        }
+
+        this.isInlineRefining.set(true);
+        this.showRefinementPrompt.set(false);
+
+        const request: ProblemStatementGlobalRefinementRequest = {
+            problemStatementText: this.exercise.problemStatement,
+            userPrompt: prompt,
+        };
+
+        this.currentRefinementSubscription = this.hyperionApiService
+            .refineProblemStatementGlobally(courseId, request)
+            .pipe(
+                finalize(() => {
+                    this.isInlineRefining.set(false);
+                    this.refinementPrompt.set('');
+                    this.currentRefinementSubscription = undefined;
+                }),
+            )
+            .subscribe({
+                next: (response) => this.handleRefinementResponse(response),
+                error: () => {
+                    this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
+                },
+            });
+    }
+
+    private handleRefinementResponse(response: ProblemStatementRefinementResponse): void {
+        if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
+            this.showDiff.set(true);
+            setTimeout(() => {
+                this.editableInstructions.applyRefinedContent(response.refinedProblemStatement!);
+            }, 50);
+            this.alertService.success('artemisApp.programmingExercise.inlineRefine.success');
+        } else {
+            this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
         }
     }
 
@@ -372,7 +522,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      *
      * The method prepares the jump target (file + line), switches repositories if needed,
      * and triggers file loading. If the file is already open, the jump executes immediately;
-     * otherwise it runs after the editor’s file-load event.
+     * otherwise it runs after the editor's file-load event.
      *
      * @param {ConsistencyIssue} issue   The issue being navigated.
      * @param {1 | -1} deltaIndex        Direction of navigation (forward or backward).
@@ -454,5 +604,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             this.codeEditorContainer.jumpToLine(this.lineJumpOnFileLoad);
             this.lineJumpOnFileLoad = undefined;
         }
+    }
+
+    onDiffLineChange(event: { ready: boolean; lineChange: LineChange }): void {
+        this.addedLineCount.set(event.lineChange.addedLineCount);
+        this.removedLineCount.set(event.lineChange.removedLineCount);
     }
 }

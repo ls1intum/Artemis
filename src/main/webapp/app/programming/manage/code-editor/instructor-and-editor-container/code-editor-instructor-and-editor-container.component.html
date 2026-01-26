@@ -146,7 +146,7 @@
                                     <fa-icon [icon]="faSpinner" animation="spin" />
                                 </button>
                             } @else {
-                                <button class="btn btn-outline-primary" type="button" ngbDropdownToggle>
+                                <button class="btn btn-outline-primary" type="button" ngbDropdownToggle [disabled]="isInlineRefining() || isAiLoading()">
                                     <fa-icon [icon]="facArtemisIntelligence" />
                                     <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.codeGeneration.creationAssistance">Creation Assistance</span>
                                 </button>
@@ -165,9 +165,50 @@
                         </div>
                     }
                     @if (exercise.isAtLeastInstructor && hyperionEnabled) {
+                        <!-- Refine Problem Statement Button -->
+                        <div class="position-relative me-2">
+                            <button (click)="toggleRefinementPrompt()" class="btn btn-outline-primary" [disabled]="isInlineRefining() || isAiLoading()">
+                                @if (isInlineRefining() || isAiLoading()) {
+                                    <fa-icon [icon]="faCircleNotch" animation="spin" class="me-2" />
+                                } @else {
+                                    <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
+                                }
+                                <span jhiTranslate="artemisApp.programmingExercise.problemStatement.refinementAssistance"></span>
+                            </button>
+                            <!-- Refinement Prompt Popup -->
+                            @if (showRefinementPrompt()) {
+                                <!-- Backdrop for click-outside-to-close -->
+                                <div class="refinement-backdrop" (click)="toggleRefinementPrompt()"></div>
+                                <div class="refinement-prompt-popup" (keydown.escape)="toggleRefinementPrompt()">
+                                    <div class="refinement-prompt-header">
+                                        <span jhiTranslate="artemisApp.programmingExercise.problemStatement.refinementAssistance"></span>
+                                        <button type="button" class="btn-close" (click)="toggleRefinementPrompt()" aria-label="Close"></button>
+                                    </div>
+                                    <div class="refinement-prompt-body">
+                                        <textarea
+                                            [(ngModel)]="refinementPrompt"
+                                            class="form-control refinement-textarea"
+                                            rows="5"
+                                            cdkTrapFocus
+                                            cdkTrapFocusAutoCapture
+                                            [placeholder]="'artemisApp.programmingExercise.problemStatement.yourRequirements' | artemisTranslate"
+                                            [disabled]="isAiLoading()"
+                                        >
+                                        </textarea>
+                                    </div>
+                                    <div class="refinement-prompt-footer">
+                                        <button type="button" class="btn btn-primary btn-sm" [disabled]="!refinementPrompt().trim()" (click)="submitRefinement()">
+                                            <fa-icon [icon]="faPaperPlane" class="me-1" />
+                                            <span jhiTranslate="artemisApp.programmingExercise.problemStatement.refine"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <!-- Consistency Check with dropdown -->
                         <div ngbDropdown class="btn-group me-2" [autoClose]="false">
                             <!-- Main action: Check Consistency -->
-                            <button class="btn btn-primary" (click)="checkConsistencies(exercise)" [disabled]="isCheckingConsistency()">
+                            <button class="btn btn-primary" (click)="checkConsistencies(exercise)" [disabled]="isCheckingConsistency() || isInlineRefining() || isAiLoading()">
                                 @if (isCheckingConsistency()) {
                                     <fa-icon [icon]="faCircleNotch" animation="spin" class="text-white me-2" />
                                 } @else {
@@ -176,7 +217,11 @@
                                 <span jhiTranslate="artemisApp.hyperion.consistencyCheck.button"></span>
                             </button>
 
-                            <button class="btn btn-primary dropdown-toggle dropdown-toggle-split" ngbDropdownToggle [disabled]="!consistencyIssues().length"></button>
+                            <button
+                                class="btn btn-primary dropdown-toggle dropdown-toggle-split"
+                                ngbDropdownToggle
+                                [disabled]="!consistencyIssues().length || isCheckingConsistency() || isInlineRefining() || isAiLoading()"
+                            ></button>
 
                             <!-- Dropdown menu with issues -->
                             <div ngbDropdownMenu class="px-0 py-1">
@@ -233,19 +278,84 @@
                     <jhi-programming-exercise-student-trigger-build-button [exercise]="exercise" [participation]="selectedParticipation!" [btnSize]="ButtonSize.MEDIUM" />
                 }
             </div>
-            <jhi-programming-exercise-editable-instructions
-                editorCenter
-                [(exercise)]="exercise"
-                [(participation)]="selectedParticipation!"
-                [templateParticipation]="exercise.templateParticipation!"
-                [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
-                [externalHeight]="true"
-                [enableResize]="false"
-                [showPreview]="false"
-                [consistencyIssues]="consistencyIssues()"
-                class="instructions-wrapper__content card-body p-0"
-                (instructionChange)="onInstructionChanged($event)"
-            />
+            <!-- Editable instructions with diff support -->
+            <div editorCenter class="d-flex flex-column h-100 instructions-wrapper__content card-body p-0">
+                @if (showDiff()) {
+                    <!-- Diff review banner -->
+                    <div class="alert alert-info d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center">
+                            <span>
+                                <strong jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChanges"></strong>
+                                <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChangesDescription"></span>
+                            </span>
+                            <div class="d-flex flex-row gap-2 ms-4">
+                                <jhi-button
+                                    [btnType]="ButtonType.PRIMARY"
+                                    [btnSize]="ButtonSize.SMALL"
+                                    [icon]="faTableColumns"
+                                    tooltip="artemisApp.programmingExercise.diffReport.splitView.tooltip"
+                                    [tooltipPlacement]="TooltipPlacement.BOTTOM"
+                                    [title]="'artemisApp.programmingExercise.diffReport.splitView.' + (allowSplitView() ? 'disable' : 'enable')"
+                                    (onClick)="allowSplitView.set(!allowSplitView())"
+                                />
+                                <jhi-git-diff-line-stat
+                                    class="mt-1 fw-bold"
+                                    [addedLineCount]="addedLineCount()"
+                                    [removedLineCount]="removedLineCount()"
+                                    ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReport' | artemisTranslate }}"
+                                />
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2 align-items-center">
+                            <span class="text-muted small" jhiTranslate="artemisApp.programmingExercise.problemStatement.useRevertButtons"></span>
+                            <button
+                                class="btn btn-outline-danger btn-sm"
+                                type="button"
+                                (click)="revertAllRefinement()"
+                                [disabled]="isInlineRefining() || isAiLoading() || isGeneratingCode()"
+                            >
+                                <fa-icon [icon]="faBan" class="me-1" />
+                                <span jhiTranslate="artemisApp.programmingExercise.problemStatement.revertAll"></span>
+                            </button>
+                            <button
+                                class="btn btn-success btn-sm"
+                                type="button"
+                                (click)="acceptRefinement()"
+                                [disabled]="isInlineRefining() || isAiLoading() || isGeneratingCode()"
+                            >
+                                <fa-icon [icon]="faSave" class="me-1" />
+                                <span jhiTranslate="artemisApp.programmingExercise.problemStatement.doneReviewing"></span>
+                            </button>
+                        </div>
+                    </div>
+                }
+                @if (exercise.templateParticipation) {
+                    <jhi-programming-exercise-editable-instructions
+                        [(exercise)]="exercise"
+                        [(participation)]="selectedParticipation!"
+                        [templateParticipation]="exercise.templateParticipation"
+                        [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
+                        [externalHeight]="true"
+                        [enableResize]="false"
+                        [showPreview]="false"
+                        [consistencyIssues]="consistencyIssues()"
+                        [isRefining]="isInlineRefining()"
+                        [mode]="showDiff() ? 'diff' : 'normal'"
+                        [renderSideBySide]="allowSplitView()"
+                        (diffLineChange)="onDiffLineChange($event)"
+                        class="flex-grow-1 overflow-auto"
+                        (instructionChange)="onInstructionChanged($event)"
+                        (onInlineRefinement)="onInlineRefinement($event)"
+                    />
+                } @else {
+                    <!-- Loading state while waiting for templateParticipation -->
+                    <div class="d-flex justify-content-center align-items-center h-100">
+                        <fa-icon [icon]="faCircleNotch" animation="spin" class="me-2" />
+                        <span jhiTranslate="artemisApp.editor.fetchingParticipation"></span>
+                    </div>
+                }
+            </div>
             <!-- Preview-only component for right sidebar -->
             <jhi-programming-exercise-instructions
                 editorSidebar

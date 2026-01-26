@@ -1,6 +1,7 @@
 import 'zone.js';
 import 'zone.js/testing';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { Provider } from '@angular/core';
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { Subject, of, throwError } from 'rxjs';
 
@@ -30,12 +31,73 @@ import { MockProvider } from 'ng-mocks';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
+import { ProblemStatementRefinementResponse } from 'app/openapi/model/problemStatementRefinementResponse';
 import { ConsistencyCheckError, ErrorType } from 'app/programming/shared/entities/consistency-check-result.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
+import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+
+/**
+ * Creates a typed mock ProgrammingExercise for testing.
+ * @param overrides Partial properties to override the default values
+ */
+function createMockExercise(overrides: Partial<ProgrammingExercise> = {}): ProgrammingExercise {
+    const mockCourse = new Course();
+    mockCourse.id = 1;
+
+    const exercise = new ProgrammingExercise(mockCourse, undefined);
+    exercise.id = 42;
+    exercise.problemStatement = 'Test problem statement';
+
+    return Object.assign(exercise, overrides);
+}
+
+/**
+ * Creates base providers shared across all test suites.
+ * @param additionalProviders Optional providers to include with the base set
+ */
+function getBaseProviders(additionalProviders: Provider[] = []): Provider[] {
+    return [
+        { provide: AlertService, useClass: MockAlertService },
+        { provide: ProfileService, useClass: MockProfileService },
+        { provide: Router, useClass: MockRouter },
+        { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
+        { provide: CourseExerciseService, useClass: MockCourseExerciseService },
+        { provide: DomainService, useValue: { setDomain: jest.fn() } },
+        { provide: Location, useValue: { replaceState: jest.fn() } },
+        { provide: ParticipationService, useClass: MockParticipationService },
+        { provide: ActivatedRoute, useValue: { params: of({}) } },
+        { provide: HyperionCodeGenerationApiService, useValue: { generateCode: jest.fn() } },
+        { provide: NgbModal, useValue: { open: jest.fn(() => ({ componentInstance: {}, result: Promise.resolve() })) } },
+        { provide: HyperionWebsocketService, useValue: { subscribeToJob: jest.fn(), unsubscribeFromJob: jest.fn() } },
+        { provide: CodeEditorRepositoryService, useValue: { pull: jest.fn(() => of(void 0)) } },
+        { provide: CodeEditorRepositoryFileService, useValue: { getRepositoryContent: jest.fn(() => of({})) } },
+        { provide: TranslateService, useClass: MockTranslateService },
+        { provide: ConsistencyCheckService, useValue: { checkConsistencyForProgrammingExercise: jest.fn() } },
+        { provide: ArtemisIntelligenceService, useValue: { consistencyCheck: jest.fn(), isLoading: () => false } },
+        ...additionalProviders,
+    ];
+}
+
+/**
+ * Configures TestBed with the standard component setup.
+ * @param additionalProviders Optional providers to include with the base set
+ */
+async function configureTestBed(additionalProviders: Provider[] = []): Promise<void> {
+    await TestBed.configureTestingModule({
+        imports: [CodeEditorInstructorAndEditorContainerComponent],
+        providers: getBaseProviders(additionalProviders),
+    })
+        .overrideComponent(CodeEditorInstructorAndEditorContainerComponent, {
+            set: { template: '', imports: [] },
+        })
+        .compileComponents();
+}
 
 describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
@@ -56,39 +118,13 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
     });
 
     beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            imports: [CodeEditorInstructorAndEditorContainerComponent],
-            providers: [
-                { provide: AlertService, useClass: MockAlertService },
-                { provide: ProfileService, useClass: MockProfileService },
-                { provide: Router, useClass: MockRouter },
-                { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
-                { provide: CourseExerciseService, useClass: MockCourseExerciseService },
-                { provide: DomainService, useValue: { setDomain: jest.fn() } },
-                { provide: Location, useValue: { replaceState: jest.fn() } },
-                { provide: ParticipationService, useClass: MockParticipationService },
-                { provide: ActivatedRoute, useValue: { params: of({}) } },
-                { provide: HyperionCodeGenerationApiService, useValue: { generateCode: jest.fn() } },
-                { provide: NgbModal, useValue: { open: jest.fn(() => ({ componentInstance: {}, result: Promise.resolve() })) } },
-                { provide: HyperionWebsocketService, useValue: { subscribeToJob: jest.fn(), unsubscribeFromJob: jest.fn() } },
-                { provide: CodeEditorRepositoryService, useValue: { pull: jest.fn(() => of(void 0)) } },
-                { provide: CodeEditorRepositoryFileService, useValue: { getRepositoryContent: jest.fn(() => of({} as any)) } },
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ConsistencyCheckService, useValue: { checkConsistencyForProgrammingExercise: jest.fn() } },
-                { provide: ArtemisIntelligenceService, useValue: { consistencyCheck: jest.fn(), isLoading: () => false } },
-            ],
-        })
-            // Avoid rendering heavy template dependencies for these tests
-            .overrideComponent(CodeEditorInstructorAndEditorContainerComponent, {
-                set: { template: '', imports: [] as any },
-            })
-            .compileComponents();
+        await configureTestBed();
 
         alertService = TestBed.inject(AlertService);
-        codeGenerationApi = TestBed.inject(HyperionCodeGenerationApiService) as any;
-        ws = TestBed.inject(HyperionWebsocketService) as any;
+        codeGenerationApi = TestBed.inject(HyperionCodeGenerationApiService) as unknown as jest.Mocked<Pick<HyperionCodeGenerationApiService, 'generateCode'>>;
+        ws = TestBed.inject(HyperionWebsocketService) as unknown as jest.Mocked<Pick<HyperionWebsocketService, 'subscribeToJob' | 'unsubscribeFromJob'>>;
         profileService = TestBed.inject(ProfileService);
-        repoService = TestBed.inject(CodeEditorRepositoryService) as any;
+        repoService = TestBed.inject(CodeEditorRepositoryService);
 
         // Enable Hyperion by default so property initialization is deterministic
         jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
@@ -97,7 +133,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
         comp = fixture.componentInstance;
 
         // Minimal exercise setup used by generateCode
-        comp.exercise = { id: 42 } as any;
+        comp.exercise = createMockExercise();
     });
 
     afterEach(() => {
@@ -311,36 +347,23 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
     });
 
     it('should show timeout warning and cleanup when generation exceeds time limit', async () => {
+        jest.useFakeTimers();
         const addAlertSpy = jest.spyOn(alertService, 'addAlert');
         comp.selectedRepository = RepositoryType.SOLUTION;
         (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-7' }));
 
-        // Intercept setTimeout to capture the scheduled callback and invoke it immediately
-        const originalSetTimeout = window.setTimeout;
-        let timeoutCallback: (() => void) | undefined;
-        // @ts-ignore
-        window.setTimeout = ((fn: () => void, _delay?: number) => {
-            timeoutCallback = fn;
-            return 1 as any;
-        }) as any;
+        (ws.subscribeToJob as jest.Mock).mockReturnValue(new Subject<any>().asObservable());
+        comp.generateCode();
+        await Promise.resolve();
+        expect(comp.isGeneratingCode()).toBeTrue();
 
-        try {
-            (ws.subscribeToJob as jest.Mock).mockReturnValue(new Subject<any>().asObservable());
-            comp.generateCode();
-            await Promise.resolve();
-            expect(comp.isGeneratingCode()).toBeTrue();
+        jest.advanceTimersByTime(1_200_000); // 20 minutes - matches component timeout
 
-            // Simulate timeout
-            if (timeoutCallback) {
-                timeoutCallback();
-            }
+        expect(comp.isGeneratingCode()).toBeFalse();
+        expect(ws.unsubscribeFromJob).toHaveBeenCalledWith('job-7');
+        expect(addAlertSpy).toHaveBeenCalledWith(expect.objectContaining({ type: AlertType.WARNING, translationKey: 'artemisApp.programmingExercise.codeGeneration.timeout' }));
 
-            expect(comp.isGeneratingCode()).toBeFalse();
-            expect(ws.unsubscribeFromJob).toHaveBeenCalledWith('job-7');
-            expect(addAlertSpy).toHaveBeenCalledWith(expect.objectContaining({ type: AlertType.WARNING, translationKey: 'artemisApp.programmingExercise.codeGeneration.timeout' }));
-        } finally {
-            window.setTimeout = originalSetTimeout;
-        }
+        jest.useRealTimers();
     });
 });
 
@@ -434,5 +457,538 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Consistency Checks',
 
         (artemisIntelligenceService as any).isLoading = () => false;
         expect(comp.isCheckingConsistency()).toBeFalse();
+    });
+});
+
+describe('CodeEditorInstructorAndEditorContainerComponent - Diff Editor', () => {
+    let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
+    let comp: CodeEditorInstructorAndEditorContainerComponent;
+
+    beforeEach(async () => {
+        await configureTestBed();
+
+        fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+        comp = fixture.componentInstance;
+        comp.exercise = createMockExercise({ problemStatement: 'Original' });
+    });
+
+    afterEach(() => {
+        fixture?.destroy();
+        jest.clearAllMocks();
+    });
+
+    it('should accept refinement and update problem statement', () => {
+        // Simulate refinement setting up diff mode
+        comp.showDiff.set(true);
+
+        comp.closeDiff();
+
+        expect(comp.showDiff()).toBeFalse();
+    });
+
+    it('should revert refinement', () => {
+        comp.showDiff.set(true);
+        // Mock the internal editableInstructions to have a revertAll method
+        (comp as any).editableInstructions = { revertAll: jest.fn() };
+
+        comp.revertAllRefinement();
+
+        expect((comp as any).editableInstructions.revertAll).toHaveBeenCalled();
+        expect(comp.showDiff()).toBeTrue();
+    });
+
+    it('should close diff and reset public state', () => {
+        comp.showDiff.set(true);
+
+        comp.closeDiff();
+
+        // Verify observable behavior through public API
+        expect(comp.showDiff()).toBeFalse();
+    });
+});
+
+describe('CodeEditorInstructorAndEditorContainerComponent - Inline Refinement', () => {
+    let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
+    let comp: CodeEditorInstructorAndEditorContainerComponent;
+    let alertService: AlertService;
+    let hyperionApiService: jest.Mocked<Pick<HyperionProblemStatementApiService, 'refineProblemStatementTargeted'>>;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [CodeEditorInstructorAndEditorContainerComponent],
+            providers: [...getBaseProviders(), { provide: HyperionProblemStatementApiService, useValue: { refineProblemStatementTargeted: jest.fn() } }],
+        })
+            .overrideComponent(CodeEditorInstructorAndEditorContainerComponent, {
+                set: { template: '', imports: [] },
+            })
+            .compileComponents();
+
+        alertService = TestBed.inject(AlertService);
+        hyperionApiService = TestBed.inject(HyperionProblemStatementApiService) as unknown as jest.Mocked<
+            Pick<HyperionProblemStatementApiService, 'refineProblemStatementTargeted'>
+        >;
+
+        fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+        comp = fixture.componentInstance;
+        comp.exercise = createMockExercise({ problemStatement: 'Original problem statement' });
+    });
+
+    afterEach(() => {
+        fixture?.destroy();
+        jest.clearAllMocks();
+    });
+
+    it('should handle inline refinement successfully', () => {
+        const successSpy = jest.spyOn(alertService, 'success');
+        const mockResponse: ProblemStatementRefinementResponse = { refinedProblemStatement: 'Refined content' };
+        (hyperionApiService.refineProblemStatementTargeted as jest.Mock).mockReturnValue(of(mockResponse));
+
+        const event = {
+            instruction: 'Improve this section',
+            startLine: 1,
+            endLine: 2,
+            startColumn: 0,
+            endColumn: 10,
+        };
+
+        comp.onInlineRefinement(event);
+
+        expect(hyperionApiService.refineProblemStatementTargeted).toHaveBeenCalledWith(
+            1,
+            expect.objectContaining({
+                problemStatementText: 'Original problem statement',
+                instruction: 'Improve this section',
+                startLine: 1,
+                endLine: 2,
+                startColumn: 0,
+                endColumn: 10,
+            }),
+        );
+        expect(comp.showDiff()).toBeTrue();
+        expect(successSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.success');
+    });
+
+    it('should show error when inline refinement has no courseId', () => {
+        const errorSpy = jest.spyOn(alertService, 'error');
+        comp.exercise = createMockExercise({ problemStatement: 'Test' });
+        comp.exercise.course = undefined;
+
+        comp.onInlineRefinement({ instruction: 'Test', startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
+
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineComment.applyError');
+    });
+
+    it('should show error when inline refinement has empty problem statement', () => {
+        const errorSpy = jest.spyOn(alertService, 'error');
+        comp.exercise = createMockExercise({ problemStatement: '   ' });
+
+        comp.onInlineRefinement({ instruction: 'Test', startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
+
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineComment.applyError');
+    });
+
+    it('should handle inline refinement API error', () => {
+        const errorSpy = jest.spyOn(alertService, 'error');
+        (hyperionApiService.refineProblemStatementTargeted as jest.Mock).mockReturnValue(throwError(() => new Error('API error')));
+
+        comp.onInlineRefinement({ instruction: 'Test', startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
+
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
+    });
+
+    it('should handle inline refinement with empty response', () => {
+        const errorSpy = jest.spyOn(alertService, 'error');
+        const mockResponse: ProblemStatementRefinementResponse = { refinedProblemStatement: '' };
+        (hyperionApiService.refineProblemStatementTargeted as jest.Mock).mockReturnValue(of(mockResponse));
+
+        comp.onInlineRefinement({ instruction: 'Test', startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
+
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
+    });
+});
+
+describe('CodeEditorInstructorAndEditorContainerComponent - Full Refinement', () => {
+    let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
+    let comp: CodeEditorInstructorAndEditorContainerComponent;
+    let alertService: AlertService;
+    let hyperionApiService: jest.Mocked<Pick<HyperionProblemStatementApiService, 'refineProblemStatementGlobally'>>;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [CodeEditorInstructorAndEditorContainerComponent],
+            providers: [...getBaseProviders(), { provide: HyperionProblemStatementApiService, useValue: { refineProblemStatementGlobally: jest.fn() } }],
+        })
+            .overrideComponent(CodeEditorInstructorAndEditorContainerComponent, {
+                set: { template: '', imports: [] },
+            })
+            .compileComponents();
+
+        alertService = TestBed.inject(AlertService);
+        hyperionApiService = TestBed.inject(HyperionProblemStatementApiService) as unknown as jest.Mocked<
+            Pick<HyperionProblemStatementApiService, 'refineProblemStatementGlobally'>
+        >;
+
+        fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+        comp = fixture.componentInstance;
+        comp.exercise = createMockExercise({ problemStatement: 'Original problem statement' });
+    });
+
+    afterEach(() => {
+        fixture?.destroy();
+        jest.clearAllMocks();
+    });
+
+    it('should toggle refinement prompt visibility', () => {
+        expect(comp.showRefinementPrompt()).toBeFalse();
+
+        comp.toggleRefinementPrompt();
+        expect(comp.showRefinementPrompt()).toBeTrue();
+
+        comp.toggleRefinementPrompt();
+        expect(comp.showRefinementPrompt()).toBeFalse();
+    });
+
+    it('should clear refinement prompt when closing', () => {
+        comp.showRefinementPrompt.set(true);
+        comp.refinementPrompt.set('Some prompt');
+
+        comp.toggleRefinementPrompt();
+
+        expect(comp.showRefinementPrompt()).toBeFalse();
+        expect(comp.refinementPrompt()).toBe('');
+    });
+
+    it('should submit full refinement successfully', () => {
+        const successSpy = jest.spyOn(alertService, 'success');
+        const mockResponse: ProblemStatementRefinementResponse = { refinedProblemStatement: 'Refined content' };
+        (hyperionApiService.refineProblemStatementGlobally as jest.Mock).mockReturnValue(of(mockResponse));
+
+        comp.refinementPrompt.set('Improve clarity');
+        comp.submitRefinement();
+
+        expect(hyperionApiService.refineProblemStatementGlobally).toHaveBeenCalledWith(
+            1,
+            expect.objectContaining({
+                problemStatementText: 'Original problem statement',
+                userPrompt: 'Improve clarity',
+            }),
+        );
+        expect(comp.showDiff()).toBeTrue();
+        expect(successSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.success');
+    });
+
+    it('should not submit when prompt is empty', () => {
+        comp.refinementPrompt.set('');
+        comp.submitRefinement();
+
+        expect(hyperionApiService.refineProblemStatementGlobally).not.toHaveBeenCalled();
+    });
+
+    it('should not submit when prompt is whitespace only', () => {
+        comp.refinementPrompt.set('   ');
+        comp.submitRefinement();
+
+        expect(hyperionApiService.refineProblemStatementGlobally).not.toHaveBeenCalled();
+    });
+
+    it('should show error when no courseId for full refinement', () => {
+        const errorSpy = jest.spyOn(alertService, 'error');
+        comp.exercise = createMockExercise({ problemStatement: 'Test' });
+        comp.exercise.course = undefined;
+
+        comp.refinementPrompt.set('Improve');
+        comp.submitRefinement();
+
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
+    });
+
+    it('should handle full refinement API error', () => {
+        const errorSpy = jest.spyOn(alertService, 'error');
+        (hyperionApiService.refineProblemStatementGlobally as jest.Mock).mockReturnValue(throwError(() => new Error('API error')));
+
+        comp.refinementPrompt.set('Improve');
+        comp.submitRefinement();
+
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
+    });
+});
+
+describe('CodeEditorInstructorAndEditorContainerComponent - Severity Helpers', () => {
+    let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
+    let comp: CodeEditorInstructorAndEditorContainerComponent;
+
+    beforeEach(async () => {
+        await configureTestBed();
+        fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+        comp = fixture.componentInstance;
+    });
+
+    afterEach(() => {
+        fixture?.destroy();
+    });
+
+    it('should return correct icon for HIGH severity', () => {
+        expect(comp.getSeverityIcon('HIGH')).toBe(faCircleExclamation);
+    });
+
+    it('should return correct icon for MEDIUM severity', () => {
+        expect(comp.getSeverityIcon('MEDIUM')).toBe(faTriangleExclamation);
+    });
+
+    it('should return correct icon for LOW severity', () => {
+        expect(comp.getSeverityIcon('LOW')).toBe(faCircleInfo);
+    });
+
+    it('should return default icon for unknown severity', () => {
+        expect(comp.getSeverityIcon('UNKNOWN' as any)).toBe(faCircleInfo);
+    });
+
+    it('should return correct color for HIGH severity', () => {
+        expect(comp.getSeverityColor('HIGH')).toBe('text-danger');
+    });
+
+    it('should return correct color for MEDIUM severity', () => {
+        expect(comp.getSeverityColor('MEDIUM')).toBe('text-warning');
+    });
+
+    it('should return correct color for LOW severity', () => {
+        expect(comp.getSeverityColor('LOW')).toBe('text-info');
+    });
+
+    it('should return default color for unknown severity', () => {
+        expect(comp.getSeverityColor('UNKNOWN' as any)).toBe('text-secondary');
+    });
+
+    it('should sort issues by severity', () => {
+        const issues: ConsistencyIssue[] = [
+            {
+                severity: 'LOW',
+                description: 'Low issue',
+                relatedLocations: [],
+                category: 'METHOD_RETURN_TYPE_MISMATCH',
+                suggestedFix: '',
+            },
+            {
+                severity: 'HIGH',
+                description: 'High issue',
+                relatedLocations: [],
+                category: 'METHOD_RETURN_TYPE_MISMATCH',
+                suggestedFix: '',
+            },
+            {
+                severity: 'MEDIUM',
+                description: 'Medium issue',
+                relatedLocations: [],
+                category: 'METHOD_RETURN_TYPE_MISMATCH',
+                suggestedFix: '',
+            },
+        ];
+
+        comp.consistencyIssues.set(issues);
+
+        const sorted = comp.sortedIssues();
+        expect(sorted[0].severity).toBe('HIGH');
+        expect(sorted[1].severity).toBe('MEDIUM');
+        expect(sorted[2].severity).toBe('LOW');
+    });
+});
+
+describe('CodeEditorInstructorAndEditorContainerComponent - Issue Navigation', () => {
+    let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
+    let comp: CodeEditorInstructorAndEditorContainerComponent;
+    let alertService: AlertService;
+
+    beforeEach(async () => {
+        await configureTestBed();
+        alertService = TestBed.inject(AlertService);
+        fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+        comp = fixture.componentInstance;
+        comp.exercise = createMockExercise();
+    });
+
+    afterEach(() => {
+        fixture?.destroy();
+        jest.clearAllMocks();
+    });
+
+    it('should navigate to problem statement location', () => {
+        const issue: ConsistencyIssue = {
+            severity: 'HIGH',
+            description: 'Test issue',
+            relatedLocations: [{ type: 'PROBLEM_STATEMENT', startLine: 1, endLine: 5, filePath: '' }],
+            category: 'METHOD_RETURN_TYPE_MISMATCH',
+            suggestedFix: '',
+        };
+
+        const mockEditableInstructions = { jumpToLine: jest.fn() };
+        const mockCodeEditorContainer = {
+            selectedFile: '',
+            problemStatementIdentifier: 'problem-statement',
+        };
+
+        (comp as any).editableInstructions = mockEditableInstructions;
+        (comp as any).codeEditorContainer = mockCodeEditorContainer;
+
+        comp.onIssueNavigate(issue, 1, new Event('click'));
+
+        expect(mockCodeEditorContainer.selectedFile).toBe('problem-statement');
+        expect(mockEditableInstructions.jumpToLine).toHaveBeenCalledWith(5);
+    });
+
+    it('should set lineJumpOnFileLoad for template repository', () => {
+        const issue: ConsistencyIssue = {
+            severity: 'MEDIUM',
+            description: 'Test issue',
+            relatedLocations: [{ type: 'TEMPLATE_REPOSITORY', startLine: 1, endLine: 10, filePath: 'src/Main.java' }],
+            category: 'METHOD_RETURN_TYPE_MISMATCH',
+            suggestedFix: '',
+        };
+
+        const mockCodeEditorContainer = {
+            selectedRepository: jest.fn().mockReturnValue('SOLUTION'),
+        };
+        (comp as any).codeEditorContainer = mockCodeEditorContainer;
+
+        const selectTemplateSpy = jest.spyOn(comp, 'selectTemplateParticipation').mockImplementation();
+
+        comp.onIssueNavigate(issue, 1, new Event('click'));
+
+        expect(comp.lineJumpOnFileLoad).toBe(10);
+        expect(selectTemplateSpy).toHaveBeenCalled();
+    });
+
+    it('should set lineJumpOnFileLoad for solution repository', () => {
+        const issue: ConsistencyIssue = {
+            severity: 'MEDIUM',
+            description: 'Test issue',
+            relatedLocations: [{ type: 'SOLUTION_REPOSITORY', startLine: 1, endLine: 15, filePath: 'src/Main.java' }],
+            category: 'METHOD_RETURN_TYPE_MISMATCH',
+            suggestedFix: '',
+        };
+
+        const mockCodeEditorContainer = {
+            selectedRepository: jest.fn().mockReturnValue('TEMPLATE'),
+        };
+        (comp as any).codeEditorContainer = mockCodeEditorContainer;
+
+        const selectSolutionSpy = jest.spyOn(comp, 'selectSolutionParticipation').mockImplementation();
+
+        comp.onIssueNavigate(issue, 1, new Event('click'));
+
+        expect(comp.lineJumpOnFileLoad).toBe(15);
+        expect(selectSolutionSpy).toHaveBeenCalled();
+    });
+
+    it('should set lineJumpOnFileLoad for tests repository', () => {
+        const issue: ConsistencyIssue = {
+            severity: 'LOW',
+            description: 'Test issue',
+            relatedLocations: [{ type: 'TESTS_REPOSITORY', startLine: 1, endLine: 20, filePath: 'test/Test.java' }],
+            category: 'METHOD_RETURN_TYPE_MISMATCH',
+            suggestedFix: '',
+        };
+
+        const mockCodeEditorContainer = {
+            selectedRepository: jest.fn().mockReturnValue('TEMPLATE'),
+        };
+        (comp as any).codeEditorContainer = mockCodeEditorContainer;
+
+        const selectTestsSpy = jest.spyOn(comp, 'selectTestRepository').mockImplementation();
+
+        comp.onIssueNavigate(issue, 1, new Event('click'));
+
+        expect(comp.lineJumpOnFileLoad).toBe(20);
+        expect(selectTestsSpy).toHaveBeenCalled();
+    });
+
+    it('should navigate within same issue locations', () => {
+        const issue: ConsistencyIssue = {
+            severity: 'HIGH',
+            description: 'Test issue',
+            relatedLocations: [
+                { type: 'PROBLEM_STATEMENT', startLine: 1, endLine: 5, filePath: '' },
+                { type: 'PROBLEM_STATEMENT', startLine: 10, endLine: 15, filePath: '' },
+            ],
+            category: 'METHOD_RETURN_TYPE_MISMATCH',
+            suggestedFix: '',
+        };
+
+        const mockEditableInstructions = { jumpToLine: jest.fn() };
+        const mockCodeEditorContainer = {
+            selectedFile: '',
+            problemStatementIdentifier: 'problem-statement',
+        };
+
+        (comp as any).editableInstructions = mockEditableInstructions;
+        (comp as any).codeEditorContainer = mockCodeEditorContainer;
+
+        // First navigation
+        comp.onIssueNavigate(issue, 1, new Event('click'));
+        expect(comp.locationIndex).toBe(0);
+
+        // Navigate forward within same issue
+        comp.onIssueNavigate(issue, 1, new Event('click'));
+        expect(comp.locationIndex).toBe(1);
+
+        // Navigate backward
+        comp.onIssueNavigate(issue, -1, new Event('click'));
+        expect(comp.locationIndex).toBe(0);
+    });
+
+    it('should handle navigation error gracefully', () => {
+        const errorSpy = jest.spyOn(alertService, 'error');
+        const issue: ConsistencyIssue = {
+            severity: 'HIGH',
+            description: 'Test issue',
+            relatedLocations: [{ type: 'TEMPLATE_REPOSITORY', startLine: 1, endLine: 5, filePath: 'src/Main.java' }],
+            category: 'METHOD_RETURN_TYPE_MISMATCH',
+            suggestedFix: '',
+        };
+
+        const mockCodeEditorContainer = {
+            selectedRepository: jest.fn().mockReturnValue('SOLUTION'),
+        };
+        (comp as any).codeEditorContainer = mockCodeEditorContainer;
+
+        jest.spyOn(comp, 'selectTemplateParticipation').mockImplementation(() => {
+            throw new Error('Navigation failed');
+        });
+
+        comp.onIssueNavigate(issue, 1, new Event('click'));
+
+        expect(errorSpy).toHaveBeenCalled();
+        expect(comp.lineJumpOnFileLoad).toBeUndefined();
+        expect(comp.fileToJumpOn).toBeUndefined();
+    });
+
+    it('should call onFileLoad when file is already selected', () => {
+        const mockCodeEditorContainer = {
+            selectedFile: 'src/Main.java',
+            jumpToLine: jest.fn(),
+        };
+        (comp as any).codeEditorContainer = mockCodeEditorContainer;
+
+        comp.lineJumpOnFileLoad = 10;
+        comp.fileToJumpOn = 'src/Main.java';
+
+        comp.onEditorLoaded();
+        comp.onFileLoad('src/Main.java');
+
+        expect(mockCodeEditorContainer.jumpToLine).toHaveBeenCalledWith(10);
+        expect(comp.lineJumpOnFileLoad).toBeUndefined();
+    });
+
+    it('should not jump to line if file does not match', () => {
+        const mockCodeEditorContainer = {
+            jumpToLine: jest.fn(),
+        };
+        (comp as any).codeEditorContainer = mockCodeEditorContainer;
+
+        comp.lineJumpOnFileLoad = 10;
+        comp.fileToJumpOn = 'src/Main.java';
+
+        comp.onFileLoad('src/Other.java');
+
+        expect(mockCodeEditorContainer.jumpToLine).not.toHaveBeenCalled();
     });
 });
