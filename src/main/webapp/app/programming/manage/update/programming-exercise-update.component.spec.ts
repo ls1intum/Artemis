@@ -1112,9 +1112,10 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                     translateValues: {},
                 },
             ],
-        ])('%s', (description: string, profileInfo: ProfileInfo, expectedException: ValidationReason) => {
+        ])('%s', (description: string, profileInfo: Partial<ProfileInfo>, expectedException: ValidationReason) => {
             const newProfileInfo = new ProfileInfo();
-            newProfileInfo.activeProfiles = profileInfo.activeProfiles;
+            newProfileInfo.activeProfiles = profileInfo.activeProfiles ?? [];
+            newProfileInfo.activeModuleFeatures = profileInfo.activeModuleFeatures ?? [];
             jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(newProfileInfo);
 
             const route = TestBed.inject(ActivatedRoute);
