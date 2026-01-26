@@ -303,7 +303,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     private <T extends HasAnnotations<T>> ArchCondition<T> useJsonIncludeNonEmptyOrNonNull() {
-        return new ArchCondition<>("Use @JsonInclude(JsonInclude.Include.NON_EMPTY)") {
+        return new ArchCondition<>("Use @JsonInclude(JsonInclude.Include.NON_EMPTY) or `@JsonInclude`(JsonInclude.Include.NON_NULL)") {
 
             @Override
             public void check(T item, ConditionEvents events) {
@@ -315,7 +315,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 }
                 JavaEnumConstant value = (JavaEnumConstant) valueProperty.get();
                 if (!value.name().equals("NON_EMPTY") && !value.name().equals("NON_NULL")) {
-                    events.add(violated(item, item + " should be annotated with @JsonInclude(JsonInclude.Include.NON_EMPTY)" + "or @JsonInclude(JsonInclude.Include.NON_EMPTY)"));
+                    events.add(violated(item, item + " should be annotated with @JsonInclude(JsonInclude.Include.NON_EMPTY) or @JsonInclude(JsonInclude.Include.NON_EMPTY)"));
                 }
             }
         };
