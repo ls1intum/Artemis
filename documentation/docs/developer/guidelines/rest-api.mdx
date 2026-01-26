@@ -447,8 +447,8 @@ The course repository call throws a `404 Not Found` exception if no matching cou
 To enforce minimal access for external tools, Artemis provides `@AllowedTools`. This annotation restricts Tool Tokens to certain endpoints. A Tool Token is a JWT with the claim `"tools": "TOOLTYPE"`.
 
 **How it works:**
-* Requests without a tool claim (e.g., browser requests) can access all endpoints meeting role-based authorization rules
-* Requests with a tool claim (e.g., `{"tool": "SCORPIO"}`) can only access endpoints annotated with `@AllowedTools(ToolTokenType.__)`
+* Requests without a tool claim (e.g., browser requests) remain subject to role-based authorization rules
+* Requests with a tool claim (e.g., `{"tools": "SCORPIO"}`) can only access endpoints annotated with `@AllowedTools(ToolTokenType.__)`
 * If a tool tries to access an unannotated endpoint, it receives a `403 Forbidden` response
 
 **Example:**

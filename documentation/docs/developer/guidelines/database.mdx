@@ -288,7 +288,7 @@ When adding a new child entity to a parent's collection with `CascadeType.REMOVE
 2. Save the child entity via its repository: `childRepository.save(child)`
 3. Add to the parent's collection for in-memory consistency: `parent.addChild(child)`
 
-The foreign key is on the child side, so the parent does NOT need to be saved again after adding a child.
+The foreign key is on the child side, so the parent does NOT need to be saved again after adding a child (assuming the parent is managed in the current persistence context; otherwise merge/save it).
 
 ```java
 // Example: Adding a submission to a participation
