@@ -27,7 +27,7 @@ public record WeaviateConfigurationProperties(boolean enabled, String host, int 
     private static final String HTTPS_SCHEME = "https";
 
     /**
-     * Creates a new WeaviateConfigurationProperties with default values and validation.
+     * Creates a new WeaviateConfigurationProperties with default values.
      */
     public WeaviateConfigurationProperties {
         if (host == null || host.isBlank()) {
@@ -41,24 +41,6 @@ public record WeaviateConfigurationProperties(boolean enabled, String host, int 
         }
         if (scheme == null || scheme.isBlank()) {
             scheme = secure ? HTTPS_SCHEME : HTTP_SCHEME;
-        }
-
-        validateSchemeAndSecureConnectionConsistency(secure, scheme);
-    }
-
-    /**
-     * Validates that the scheme and secure connection flag are consistent.
-     *
-     * @param secure whether secure connections are enabled
-     * @param scheme the HTTP scheme (http/https)
-     * @throws IllegalArgumentException if scheme and secure flag are inconsistent
-     */
-    private static void validateSchemeAndSecureConnectionConsistency(boolean secure, String scheme) {
-        if (secure && HTTP_SCHEME.equals(scheme)) {
-            throw new IllegalArgumentException("Configuration inconsistency: secure=true but scheme=http. Use scheme=https for secure connections.");
-        }
-        if (!secure && HTTPS_SCHEME.equals(scheme)) {
-            throw new IllegalArgumentException("Configuration inconsistency: secure=false but scheme=https. Use scheme=http for non-secure connections or set secure=true.");
         }
     }
 

@@ -46,6 +46,10 @@ public class ConfigurationValidator {
 
     private static final int MAX_PORT = 65535;
 
+    private static final String HTTP_SCHEME = "http";
+
+    private static final String HTTPS_SCHEME = "https";
+
     private final Environment environment;
 
     private final ArtemisConfigHelper artemisConfigHelper;
@@ -64,12 +68,17 @@ public class ConfigurationValidator {
 
     private final int weaviateGrpcPort;
 
+    private final boolean weaviateSecure;
+
+    private final String weaviateScheme;
+
     public ConfigurationValidator(Environment environment,
             @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures,
             @Value("${artemis.user-management.internal-admin.username:#{null}}") String internalAdminUsername,
             @Value("${artemis.user-management.internal-admin.password:#{null}}") String internalAdminPassword, @Value("${artemis.weaviate.enabled:false}") boolean weaviateEnabled,
             @Value("${artemis.weaviate.host:#{null}}") String weaviateHost, @Value("${artemis.weaviate.port:8080}") int weaviatePort,
-            @Value("${artemis.weaviate.grpc-port:50051}") int weaviateGrpcPort) {
+            @Value("${artemis.weaviate.grpc-port:50051}") int weaviateGrpcPort, @Value("${artemis.weaviate.secure:false}") boolean weaviateSecure,
+            @Value("${artemis.weaviate.scheme:#{null}}") String weaviateScheme) {
         this.environment = environment;
         this.artemisConfigHelper = new ArtemisConfigHelper();
         this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
@@ -81,6 +90,8 @@ public class ConfigurationValidator {
         this.weaviateHost = weaviateHost;
         this.weaviatePort = weaviatePort;
         this.weaviateGrpcPort = weaviateGrpcPort;
+        this.weaviateSecure = weaviateSecure;
+        this.weaviateScheme = weaviateScheme;
     }
 
     /**
@@ -195,6 +206,14 @@ public class ConfigurationValidator {
             invalidProperties.add("artemis.weaviate.grpc-port (must be between " + MIN_PORT + " and " + MAX_PORT + ")");
         }
 
+        String effectiveScheme = weaviateScheme != null && !weaviateScheme.isBlank() ? weaviateScheme : (weaviateSecure ? HTTPS_SCHEME : HTTP_SCHEME);
+        if (weaviateSecure && HTTP_SCHEME.equals(effectiveScheme)) {
+            invalidProperties.add("artemis.weaviate.scheme (secure=true but scheme=http - use scheme=https for secure connections)");
+        }
+        if (!weaviateSecure && HTTPS_SCHEME.equals(effectiveScheme)) {
+            invalidProperties.add("artemis.weaviate.scheme (secure=false but scheme=https - use scheme=http for non-secure connections or set secure=true)");
+        }
+
         if (!invalidProperties.isEmpty()) {
             String errorMessage = "Invalid Weaviate configuration: Weaviate is enabled but the following properties are missing or invalid: "
                     + String.join(", ", invalidProperties);
@@ -202,7 +221,8 @@ public class ConfigurationValidator {
             throw new WeaviateConfigurationException(errorMessage, invalidProperties);
         }
 
-        log.info("Weaviate is enabled and configured with host: {}:{} (gRPC port: {})", weaviateHost, weaviatePort, weaviateGrpcPort);
+        log.info("Weaviate is enabled and configured with host: {}:{} (gRPC port: {}, secure: {}, scheme: {})", weaviateHost, weaviatePort, weaviateGrpcPort, weaviateSecure,
+                effectiveScheme);
     }
 
     private boolean isValidPort(int port) {
