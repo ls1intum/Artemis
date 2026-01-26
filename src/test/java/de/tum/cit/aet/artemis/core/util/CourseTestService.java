@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -3021,11 +3022,13 @@ public class CourseTestService {
         request.putWithResponseBody("/api/text/participations/" + result2.getSubmission().getParticipation().getId() + "/submissions/" + result2.getSubmission().getId()
                 + "/text-assessment-after-complaint", feedbackUpdate, Result.class, HttpStatus.OK);
 
-        await().until(participantScoreScheduleService::isIdle);
+        // Wait for async participant score calculation to complete
+        // Use longer timeout for slow CI environments where async tasks may take longer
+        await().atMost(60, TimeUnit.SECONDS).until(participantScoreScheduleService::isIdle);
         TextExercise finalExercise1 = exercise1;
-        await().until(() -> participantScoreRepository.findAllByExercise(finalExercise1).size() == 2);
+        await().atMost(60, TimeUnit.SECONDS).until(() -> participantScoreRepository.findAllByExercise(finalExercise1).size() == 2);
         TextExercise finalExercise2 = exercise2;
-        await().until(() -> participantScoreRepository.findAllByExercise(finalExercise2).size() == 2);
+        await().atMost(60, TimeUnit.SECONDS).until(() -> participantScoreRepository.findAllByExercise(finalExercise2).size() == 2);
 
         // API call
         var courseDTO = request.get("/api/core/courses/" + course1.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);

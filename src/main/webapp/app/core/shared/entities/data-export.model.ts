@@ -20,6 +20,7 @@ export enum DataExportState {
     DELETED = 'DELETED',
     DOWNLOADED_DELETED = 'DOWNLOADED_DELETED',
     FAILED = 'FAILED',
+    EMAIL_FAILED = 'EMAIL_FAILED',
 }
 
 /**
