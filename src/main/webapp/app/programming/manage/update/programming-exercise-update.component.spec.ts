@@ -1117,6 +1117,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             newProfileInfo.activeProfiles = profileInfo.activeProfiles ?? [];
             newProfileInfo.activeModuleFeatures = profileInfo.activeModuleFeatures ?? [];
             jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(newProfileInfo);
+            jest.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => {
+                return newProfileInfo.activeModuleFeatures?.includes(feature) ?? false;
+            });
 
             const route = TestBed.inject(ActivatedRoute);
             route.params = of({ courseId });
