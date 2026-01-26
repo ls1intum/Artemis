@@ -50,6 +50,8 @@ describe('RepositoryViewComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(RepositoryViewComponent);
                 component = fixture.componentInstance;
+                component.exercise = { id: 1 } as ProgrammingExercise;
+                component.participation = { id: 2 } as ProgrammingExerciseStudentParticipation;
                 fixture.detectChanges();
 
                 activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;

@@ -698,7 +698,7 @@ describe('ExamUpdateComponent', () => {
 
             expect(component.isValidConfiguration).toBeFalse();
             button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.disabled).toBeTrue();
+            expect(button.disabled()).toBeTrue();
 
             // Step 3: Test case where the configuration is valid again, but the form is invalid
             examWithoutExercises.startDate = now.add(2, 'hours');
