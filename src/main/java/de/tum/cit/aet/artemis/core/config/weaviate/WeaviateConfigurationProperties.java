@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.core.config.weaviate;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Lazy;
 
 /**
  * Configuration properties for Weaviate integration.
@@ -15,7 +14,6 @@ import org.springframework.context.annotation.Lazy;
  * @param scheme   the HTTP scheme (http/https) - must be consistent with secure flag
  */
 @ConfigurationProperties(prefix = "artemis.weaviate")
-@Lazy
 public record WeaviateConfigurationProperties(boolean enabled, String host, int port, int grpcPort, boolean secure, String scheme) {
 
     /**
