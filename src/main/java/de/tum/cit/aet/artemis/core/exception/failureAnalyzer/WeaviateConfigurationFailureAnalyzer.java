@@ -20,13 +20,13 @@ public class WeaviateConfigurationFailureAnalyzer extends AbstractFailureAnalyze
     }
 
     private String buildDescription(WeaviateConfigurationException cause) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Invalid Weaviate configuration detected:%n%n");
-        sb.append("Weaviate is enabled (artemis.weaviate.enabled=true) but the following properties are missing or invalid:%n");
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("Invalid Weaviate configuration detected:%n%n");
+        stringBuilder.append("Weaviate is enabled (artemis.weaviate.enabled=true) but the following properties are missing or invalid:%n");
         for (String property : cause.getMissingOrInvalidProperties()) {
-            sb.append("    - ").append(property).append("%n");
+            stringBuilder.append("    - ").append(property).append("%n");
         }
-        return String.format(sb.toString());
+        return String.format(stringBuilder.toString());
     }
 
     private String buildAction(WeaviateConfigurationException cause) {
