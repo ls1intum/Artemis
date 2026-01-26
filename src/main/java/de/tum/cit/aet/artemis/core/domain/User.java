@@ -503,7 +503,7 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.aiSelectionDecisionDate = aiSelectionDecisionDate;
     }
 
-    public boolean hasSelectedLLMUsage() {
+    public boolean hasOptedIntoLLMUsage() {
         return aiSelectionDecision != null && aiSelectionDecision != AiSelectionDecision.NO_AI;
     }
 
@@ -516,12 +516,12 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     /**
-     * Checks if the user has selected an AI usage preference.
+     * Checks if the user has selected to use AI.
      * If not, an {@link AccessForbiddenException} is thrown.
      */
-    public void hasSelectedLLMUsageElseThrow() {
-        if (aiSelectionDecision == null) {
-            throw new AccessForbiddenException("The user has not selected an AI usage preference yet.");
+    public void hasOptedIntoLLMUsageElseThrow() {
+        if (!hasOptedIntoLLMUsage()) {
+            throw new AccessForbiddenException("The user has not selected to use AI.");
         }
     }
 

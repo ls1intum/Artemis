@@ -65,4 +65,30 @@ class IrisCourseChatSessionServiceTest extends AbstractIrisIntegrationTest {
         assertThatThrownBy(() -> irisCourseChatSessionService.checkHasAccessTo(user, session)).isInstanceOf(AccessForbiddenException.class).extracting(Throwable::getMessage)
                 .asString().contains("Iris Session");
     }
+
+    @Test
+    void checkHasAccessTo_throwsWhenLlMAcceptanceMissing() {
+        user.setSelectedLLMUsage(null);
+        assertThatThrownBy(() -> irisCourseChatSessionService.checkHasAccessTo(user, session)).isInstanceOf(AccessForbiddenException.class).extracting(Throwable::getMessage)
+                .asString().contains("not selected to use AI");
+    }
+
+    @Test
+    void checkHasAccessTo_throwsWhenLlMAcceptanceNOAI() {
+        user.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        assertThatThrownBy(() -> irisCourseChatSessionService.checkHasAccessTo(user, session)).isInstanceOf(AccessForbiddenException.class).extracting(Throwable::getMessage)
+                .asString().contains("not selected to use AI");
+    }
+
+    @Test
+    void checkHasAccessTo_throwsWhenLlMAcceptanceLOCALAI() {
+        user.setSelectedLLMUsage(AiSelectionDecision.LOCAL_AI);
+        assertThatNoException().isThrownBy(() -> irisCourseChatSessionService.checkHasAccessTo(user, session));
+    }
+
+    @Test
+    void checkHasAccessTo_throwsWhenLlMAcceptanceCLOUDAI() {
+        user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+        assertThatNoException().isThrownBy(() -> irisCourseChatSessionService.checkHasAccessTo(user, session));
+    }
 }

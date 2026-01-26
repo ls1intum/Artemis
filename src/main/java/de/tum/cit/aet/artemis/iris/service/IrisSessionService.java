@@ -97,7 +97,7 @@ public class IrisSessionService {
         }
         var wrapper = getIrisSessionSubService(session);
         if (session.shouldSelectLLMUsage()) {
-            user.hasSelectedLLMUsageElseThrow();
+            user.hasOptedIntoLLMUsageElseThrow();
         }
         wrapper.irisSubFeatureInterface.checkHasAccessTo(user, wrapper.irisSession);
     }

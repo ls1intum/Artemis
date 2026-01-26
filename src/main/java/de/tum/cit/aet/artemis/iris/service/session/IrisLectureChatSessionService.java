@@ -105,7 +105,7 @@ public class IrisLectureChatSessionService extends AbstractIrisChatSessionServic
      */
     @Override
     public void checkHasAccessTo(User user, IrisLectureChatSession session) {
-        user.hasSelectedLLMUsageElseThrow();
+        user.hasOptedIntoLLMUsageElseThrow();
         if (session.getUserId() != user.getId()) {
             throw new AccessForbiddenException("Iris Lecture chat Session", session.getId());
         }
