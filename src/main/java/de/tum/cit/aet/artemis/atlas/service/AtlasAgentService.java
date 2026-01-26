@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentChatResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentHistoryMessageDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyPreviewDTO;
+import de.tum.cit.aet.artemis.atlas.repository.AtlasChatMemoryRepository;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService.CompetencyOperation;
 
 /**
@@ -74,6 +75,8 @@ public class AtlasAgentService {
     private final ToolCallbackProvider competencyExpertToolCallbackProvider;
 
     private final ChatMemory chatMemory;
+
+    private final AtlasChatMemoryRepository atlasChatMemoryRepository;
 
     private final String deploymentName;
 
@@ -140,14 +143,15 @@ public class AtlasAgentService {
 
     public AtlasAgentService(CacheManager cacheManager, @Autowired(required = false) ChatClient chatClient, AtlasPromptTemplateService templateService,
             @Autowired(required = false) ToolCallbackProvider mainAgentToolCallbackProvider, @Autowired(required = false) ToolCallbackProvider competencyExpertToolCallbackProvider,
-            @Autowired(required = false) ChatMemory chatMemory, @Value("${atlas.chat-model:gpt-4o}") String deploymentName,
-            @Value("${atlas.chat-temperature:0.2}") double temperature) {
+            @Autowired(required = false) ChatMemory chatMemory, @Autowired(required = false) AtlasChatMemoryRepository atlasChatMemoryRepository,
+            @Value("${atlas.chat-model:gpt-4o}") String deploymentName, @Value("${atlas.chat-temperature:0.2}") double temperature) {
         this.cacheManager = cacheManager;
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.mainAgentToolCallbackProvider = mainAgentToolCallbackProvider;
         this.competencyExpertToolCallbackProvider = competencyExpertToolCallbackProvider;
         this.chatMemory = chatMemory;
+        this.atlasChatMemoryRepository = atlasChatMemoryRepository;
         this.deploymentName = deploymentName;
         this.temperature = temperature;
     }
@@ -257,17 +261,19 @@ public class AtlasAgentService {
         // Append courseId to system prompt so that the Sub-Agents have course context (invisible to conversation history)
         String systemPromptWithContext = systemPrompt + "\n\nCONTEXT FOR THIS REQUEST:\nCourse ID: " + courseId;
 
-        // Build chat client with memory advisor for this specific session
         ChatClient.Builder clientBuilder = chatClient.mutate();
-        // Add memory advisor only for Atlas with conversation-specific session ID
         if (chatMemory != null) {
-            clientBuilder.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).conversationId(sessionId).build());
+            // Build chat client with memory advisor for this specific session
+            clientBuilder.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build());
         }
         ChatClient sessionClient = clientBuilder.build();
 
         ToolCallingChatOptions options = AzureOpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature).build();
 
-        ChatClientRequestSpec promptSpec = sessionClient.prompt().system(systemPromptWithContext).user(message).options(options);
+        // Pass the sessionId dynamically per request using advisors param
+        // This ensures proper memory isolation and allows clearSession() to work correctly
+        ChatClientRequestSpec promptSpec = sessionClient.prompt().system(systemPromptWithContext).user(message).options(options)
+                .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, sessionId).param("chat_memory_conversation_id", sessionId));
 
         if (agentType.equals(AgentType.MAIN_AGENT)) {
             if (mainAgentToolCallbackProvider != null) {
@@ -488,5 +494,16 @@ public class AtlasAgentService {
      * Result of extracting preview data from a message.
      */
     private record PreviewDataResult(String cleanedText, @Nullable List<CompetencyPreviewDTO> previews) {
+    }
+
+    /**
+     * Clear all session data including chat memory and caches.
+     * Called when user starts a new chat to reset the conversation.
+     *
+     * @param sessionId the session ID
+     */
+    public void clearSession(String sessionId) {
+        atlasChatMemoryRepository.deleteByConversationId(sessionId);
+        clearCachedPendingCompetencyOperations(sessionId);
     }
 }
