@@ -338,7 +338,7 @@ describe('QuizParticipationComponent - live mode', () => {
         vi.useRealTimers();
     });
 
-    it('should trigger a save on quiz end if the answers were not submitted', () => {
+    it('should auto-submit on quiz end if the answers were not submitted', () => {
         vi.useFakeTimers();
         fixture.detectChanges();
 
@@ -346,15 +346,16 @@ describe('QuizParticipationComponent - live mode', () => {
         component.quizExercise.quizMode = QuizMode.BATCHED;
         component.submission.submissionDate = dayjs();
         component.submission.submitted = false;
+        component.selectedAnswerOptions = new Map<number, AnswerOption[]>([[2, [{} as AnswerOption]]]);
 
-        const triggerSaveStub = vi.spyOn(component, 'triggerSave').mockImplementation(() => {});
+        const autoSubmitOnTimeout = vi.spyOn(component, 'autoSubmitOnTimeout').mockImplementation(() => {});
         const checkQuizEndSpy = vi.spyOn(component, 'checkForQuizEnd');
 
         vi.advanceTimersByTime(2000);
         // Don't call fixture.detectChanges() here - spies capture calls synchronously
 
         expect(checkQuizEndSpy).toHaveBeenCalledTimes(20);
-        expect(triggerSaveStub).toHaveBeenCalledOnce();
+        expect(autoSubmitOnTimeout).toHaveBeenCalledOnce();
         vi.useRealTimers();
     });
 
@@ -481,6 +482,73 @@ describe('QuizParticipationComponent - live mode', () => {
         component.updateParticipationFromServer(participation);
 
         expect(component.quizExercise).toEqual(quizExercise);
+    });
+
+    it('should return false if there is no answer in any question type', () => {
+        component.selectedAnswerOptions = new Map();
+        component.dragAndDropMappings = new Map();
+        component.shortAnswerSubmittedTexts = new Map();
+
+        expect(component.hasAnyAnswer()).toBe(false);
+    });
+
+    it('should return true if there is at least one multiple choice answer', () => {
+        component.selectedAnswerOptions = new Map<number, AnswerOption[]>([[question2.id!, question2.answerOptions!]]);
+        component.dragAndDropMappings = new Map();
+        component.shortAnswerSubmittedTexts = new Map();
+
+        expect(component.hasAnyAnswer()).toBe(true);
+    });
+
+    it('shouldTreatAsSubmittedForUi should be true when submission is submitted', () => {
+        component.submission.submitted = true;
+        component.remainingTimeSeconds = -100;
+
+        expect(component.shouldTreatAsSubmittedForUi).toBe(true);
+    });
+
+    it('shouldTreatAsSubmittedForUi should be true after timeout if there is any answer', () => {
+        component.submission.submitted = false;
+        component.remainingTimeSeconds = -1;
+
+        vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(true);
+
+        expect(component.shouldTreatAsSubmittedForUi).toBe(true);
+    });
+
+    it('shouldTreatAsSubmittedForUi should be false after timeout if there is no answer', () => {
+        component.submission.submitted = false;
+        component.remainingTimeSeconds = -1;
+
+        vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(false);
+
+        expect(component.shouldTreatAsSubmittedForUi).toBe(false);
+    });
+
+    it('autoSubmitOnTimeout should return early when already submitting', () => {
+        component.isSubmitting = true;
+        component.submission.submitted = false;
+
+        const applySelectionSpy = vi.spyOn(component, 'applySelection');
+        const saveSpy = vi.spyOn(TestBed.inject(QuizParticipationService), 'saveOrSubmitForLiveMode');
+
+        component.autoSubmitOnTimeout();
+
+        expect(applySelectionSpy).not.toHaveBeenCalled();
+        expect(saveSpy).not.toHaveBeenCalled();
+    });
+
+    it('autoSubmitOnTimeout should return early when already submitted', () => {
+        component.isSubmitting = false;
+        component.submission.submitted = true;
+
+        const applySelectionSpy = vi.spyOn(component, 'applySelection');
+        const saveSpy = vi.spyOn(TestBed.inject(QuizParticipationService), 'saveOrSubmitForLiveMode');
+
+        component.autoSubmitOnTimeout();
+
+        expect(applySelectionSpy).not.toHaveBeenCalled();
+        expect(saveSpy).not.toHaveBeenCalled();
     });
 });
 

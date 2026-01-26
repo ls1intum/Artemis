@@ -470,7 +470,10 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             // Rely on the grace period to store any unsaved changes at the end of the quiz
             if (!this.submission.submitted) {
                 this.stopAutoSave();
-                this.triggerSave();
+                // Unmodified or empty submissions should not be auto-submitted on timeout.
+                if (this.hasAnyAnswer()) {
+                    this.autoSubmitOnTimeout();
+                }
             }
         }
         this.previousRunning = running;
@@ -812,6 +815,46 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Finalizes the quiz submission when the working time expires.
+     *
+     * This method performs a final submit of the current answers to ensure that
+     * saved-but-unsubmitted quiz submissions do not remain in an intermediate
+     * state after the timeout.
+     */
+    autoSubmitOnTimeout(): void {
+        if (this.isSubmitting || this.submission.submitted) {
+            return;
+        }
+
+        this.isSubmitting = true;
+
+        this.applySelection();
+        this.submission.submissionDate = this.serverDateService.now();
+
+        const quizSubmission = new QuizSubmission();
+        quizSubmission.submittedAnswers = this.submission.submittedAnswers;
+
+        this.quizParticipationService
+            .saveOrSubmitForLiveMode(quizSubmission, this.quizId, true)
+            .pipe(take(1))
+            .subscribe({
+                next: (response: HttpResponse<QuizSubmission>) => {
+                    this.submission = response.body!;
+                    this.isSubmitting = false;
+                    this.unsavedChanges = false;
+                    this.updateSubmissionTime();
+                    this.applySubmission();
+                    // Show the same success banner as for a manual submit to keep the UI behavior
+                    // consistent after an automatic submission triggered by a timeout.
+                    if (this.quizExercise.quizMode !== QuizMode.SYNCHRONIZED) {
+                        this.alertService.success('artemisApp.quizExercise.submitSuccess');
+                    }
+                },
+                error: (error: HttpErrorResponse) => this.onSubmitError(error),
+            });
+    }
+
+    /**
      * update the value for adjustedSubmissionDate in submission
      */
     updateSubmissionTime() {
@@ -1039,5 +1082,42 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 });
             },
         });
+    }
+
+    /**
+     * Checks whether the current quiz submission contains any user-provided answers.
+     *
+     * This method inspects all supported answer types (multiple choice,
+     * drag-and-drop, and short answer) and returns `true` as soon as at least
+     * one answer entry is present.
+     *
+     * @returns `true` if at least one answer exists in the current submission;
+     *          `false` otherwise.
+     */
+    hasAnyAnswer(): boolean {
+        return (
+            Array.from(this.selectedAnswerOptions.values()).some((v) => v?.length) ||
+            Array.from(this.dragAndDropMappings.values()).some((v) => v?.length) ||
+            Array.from(this.shortAnswerSubmittedTexts.values()).some((v) => v?.length)
+        );
+    }
+
+    /**
+     * Indicates whether the submission should be treated as "effectively submitted"
+     * for UI purposes, even if it has not been finalized on the server yet.
+     *
+     * This is the case if either:
+     * <ul>
+     *   <li>the submission has already been marked as submitted by the server, or</li>
+     *   <li>the quiz working time has expired and the student has provided at least
+     *       one answer</li>
+     * </ul>
+     *
+     * @returns `true` if the submission should be considered submitted in the UI;
+     *          `false` otherwise.
+     */
+
+    get shouldTreatAsSubmittedForUi(): boolean {
+        return this.submission.submitted || (this.remainingTimeSeconds < 0 && this.hasAnyAnswer());
     }
 }
