@@ -118,8 +118,8 @@
                     "description": "Aktiviert Learning Tools Interoperability (LTI) für die Integration mit externen Lernmanagementsystemen."
                 },
                 "apollon": {
-                    "name": "Apollon (Modellierung)",
-                    "description": "Aktiviert den Apollon-UML-Modellierungseditor zum Erstellen und Bearbeiten von Diagrammen in Modellierungsaufgaben."
+                    "name": "Apollon PDF-Export",
+                    "description": "Aktiviert den PDF-Export von UML-Diagrammen über den externen Apollon-Konvertierungsdienst. Modellierungsaufgaben funktionieren ohne diese Option; nur der Export-Button ist betroffen."
                 },
                 "passkey": {
                     "name": "Passkey-Authentifizierung",
