@@ -216,8 +216,8 @@ class DeferredEagerBeanInitializerTest {
 
     @Test
     void testHazelcastMixedCaseComparison() {
-        // Setup - use mixed case
-        when(mockEnv.getProperty("artemis.continuous-integration.data-store", HAZELCAST)).thenReturn("Hazelcast");
+        // Setup - use mixed case to verify case-insensitive comparison
+        when(mockEnv.getProperty("artemis.continuous-integration.data-store", HAZELCAST)).thenReturn("HaZeLcAsT");
         when(mockBeanFactory.getBeanDefinitionNames()).thenReturn(new String[0]);
 
         HazelcastConnection mockHazelcast = mock(HazelcastConnection.class);
