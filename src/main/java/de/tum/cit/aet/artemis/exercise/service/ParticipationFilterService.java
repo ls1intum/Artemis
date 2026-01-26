@@ -73,7 +73,16 @@ public class ParticipationFilterService {
      * @param isStudent     used to determine if further filtering is needed.
      */
     public void filterParticipationForCourseDashboard(StudentParticipation participation, boolean isStudent) {
-        Optional<Submission> optionalSubmission = submissionFilterService.getLatestSubmissionWithResult(participation.getSubmissions(), false);
+        Optional<Submission> optionalSubmission = submissionFilterService.getLatestSubmissionWithResult(participation.getSubmissions(), true);
+        if (optionalSubmission.isPresent() && !ExerciseDateService.isAfterAssessmentDueDate(participation.getExercise())) {
+            for (Result result : optionalSubmission.get().getResults()) {
+                if (result != null) {
+                    result.setScore(0.0);
+                    result.setAssessor(null);
+                    result.setRated(true);
+                }
+            }
+        }
 
         Set<Result> results = Set.of();
 
