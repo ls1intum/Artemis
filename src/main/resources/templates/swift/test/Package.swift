@@ -1,14 +1,17 @@
-// swift-tools-version:5.2
+// swift-tools-version:6.0
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
 let package = Package(
     name: "${packageName}",
+    platforms: [
+        .macOS(.v13)
+    ],
     dependencies: [
-        // Dependencies declare other packages that this package depends on.
-        .package(name: "SwiftTestReporter", url: "https://github.com/allegro/swift-junit.git", from: "2.0.0"),
-        .package(url: "https://github.com/yanagiba/swift-ast.git", from: "0.19.9"),
+        // SwiftSyntax for structural code analysis (replaces unmaintained swift-ast)
+        // Version 602.x corresponds to Swift 6.2 (versioning: 600=6.0, 601=6.1, 602=6.2)
+        .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "602.0.0"),
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -20,8 +23,8 @@ let package = Package(
             name: "${packageName}Tests",
             dependencies: [
                 "${packageName}Lib",
-                "SwiftTestReporter",
-                .product(name: "SwiftAST+Tooling", package: "swift-ast")
+                .product(name: "SwiftSyntax", package: "swift-syntax"),
+                .product(name: "SwiftParser", package: "swift-syntax"),
             ]),
     ]
 )

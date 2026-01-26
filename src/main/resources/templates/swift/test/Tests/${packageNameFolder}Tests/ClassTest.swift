@@ -2,12 +2,6 @@ import XCTest
 
 class ClassTest: XCTestCase {
 
-    static var allTests = [
-        ("testClassContext", testClassContext),
-        ("testClassPolicy", testClassPolicy),
-        ("testClassSortStrategy", testClassSortStrategy),
-    ]
-
     /// This is the setUp() instance method. It is called before each test method begins.
     override func setUp() {
         super.setUp()
@@ -33,7 +27,7 @@ class ClassTest: XCTestCase {
     func testClassSortStrategy() {
         print("-> Testcase: testClassSortStrategy")
         let className = "SortStrategy"
-        if getClassSourceFileFor(className) == nil {
+        if !sourceFileExists(for: className) {
             XCTFailClassNotFoundFor(className)
         }
     }

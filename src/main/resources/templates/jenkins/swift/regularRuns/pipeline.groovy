@@ -44,18 +44,22 @@ private void test() {
         cp -R Tests assignment
         cp Package.swift assignment
 
-        # swift build
         cd assignment
-        swift build
 
-        # swift test
-        swift test || true
+        # Build the project
+        if swift build; then
+            # Run tests with native xUnit output
+            # Note: --parallel is required due to Swift 6 bug where --xunit-output
+            # does not work correctly without it
+            swift test --parallel --xunit-output tests.xml || true
+        fi
+        chmod -R 777 .
         '''
     }
 }
 
 private void staticCodeAnalysis() {
-    if (!staticCodeAnalysisEnabled) {
+    if (!isStaticCodeAnalysisEnabled) {
         return
     }
 
@@ -65,7 +69,7 @@ private void staticCodeAnalysis() {
         mkdir staticCodeAnalysisReports
         cp .swiftlint.yml assignment || true
         cd assignment
-        swiftlint staticCodeAnalysisReports/swiftlint-result.xml
+        swiftlint > staticCodeAnalysisReports/swiftlint-result.xml
         '''
     }
 }

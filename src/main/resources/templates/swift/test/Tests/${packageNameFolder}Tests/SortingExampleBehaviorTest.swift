@@ -6,11 +6,6 @@ class SortingExampleBehaviorTest: XCTestCase {
     var unorderedDates: [Date]!
     var orderedDates: [Date]!
 
-    static var allTests = [
-        ("testBubbleSort", testBubbleSort),
-        ("testMergeSort", testMergeSort),
-    ]
-
     private func createOrderedDatesList(_ amount: Int) -> [Date] {
         var list = [Date]()
         let dateFormat = DateFormatter()
