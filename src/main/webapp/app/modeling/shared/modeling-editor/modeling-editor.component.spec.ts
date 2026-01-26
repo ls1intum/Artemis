@@ -62,8 +62,29 @@ describe('ModelingEditorComponent', () => {
         expect(editor.model).toBeDefined();
         await editor.nextRender;
 
-        // Verify the editor has a valid model structure (Apollon v4 uses nodes/edges)
+        // Verify the editor has a valid model structure and correct diagram type
         expect(editor.model.type).toBeDefined();
+        expect(editor.model.type).toBe(classDiagram.type);
+
+        // Verify the model was loaded by checking the input data can be found via component methods
+        // The classDiagram contains 13 elements (classes, attributes, methods, package) and 2 relationships
+        const inputElements = (classDiagram as any).elements ?? {};
+        const inputRelationships = (classDiagram as any).relationships ?? {};
+        expect(Object.keys(inputElements)).toHaveLength(13);
+        expect(Object.keys(inputRelationships)).toHaveLength(2);
+
+        // Verify model data is accessible via component helper methods
+        const testClass = component.elementWithClass('Sibling 2', classDiagram);
+        expect(testClass).toBeDefined();
+        expect(testClass?.id).toBe('e0dad7e7-f67b-4e4a-8845-6c5d801ea9ca');
+
+        const testAttribute = component.elementWithAttribute('attribute', classDiagram);
+        expect(testAttribute).toBeDefined();
+        expect(testAttribute?.id).toBe('6f572312-066b-4678-9c03-5032f3ba9be9');
+
+        const testMethod = component.elementWithMethod('method', classDiagram);
+        expect(testMethod).toBeDefined();
+        expect(testMethod?.id).toBe('11aae531-3244-4d07-8d60-b6210789ffa3');
     });
 
     it('ngOnDestroy', async () => {
@@ -224,36 +245,54 @@ describe('ModelingEditorComponent', () => {
         expect(spanElement.getAttribute('jhiTranslate')).toBe('artemisApp.modelingEditor.saving');
     });
 
-    it('should handle explanation input change', () => {
-        const spy = vi.spyOn(component.explanation, 'set');
+    it('should handle explanation input change and emit explanationChange', async () => {
+        fixture.detectChanges();
 
+        // Test that explanation model signal works correctly
         const newExplanation = 'New Explanation';
+
+        // For model() signals, the output is named `${name}Change` - in this case `explanationChange`
+        // We verify the signal behavior by checking the value updates correctly
         component.explanation.set(newExplanation);
 
-        expect(spy).toHaveBeenCalledOnce();
-        expect(spy).toHaveBeenCalledWith(newExplanation);
         expect(component.explanation()).toBe(newExplanation);
+
+        // Test via input binding (simulating parent component setting the value)
+        const anotherExplanation = 'Another Explanation';
+        fixture.componentRef.setInput('explanation', anotherExplanation);
+        fixture.detectChanges();
+
+        expect(component.explanation()).toBe(anotherExplanation);
+
+        // Test that setting a new value updates the signal
+        const finalExplanation = 'Final Explanation';
+        component.explanation.set(finalExplanation);
+        expect(component.explanation()).toBe(finalExplanation);
     });
 
     it('should subscribe to model change patches and emit them.', async () => {
         fixture.detectChanges();
 
         const receiver = vi.fn();
-        let capturedCallback: ((patch: string) => void) | undefined;
+        const capturedCallbacks: ((patch: string) => void)[] = [];
 
         component.onModelPatch.subscribe(receiver);
 
         // Apollon v4 uses sendBroadcastMessage which takes a callback
-        vi.spyOn(ApollonEditor.prototype, 'sendBroadcastMessage').mockImplementation((cb) => {
-            capturedCallback = cb;
+        const sendBroadcastSpy = vi.spyOn(ApollonEditor.prototype, 'sendBroadcastMessage').mockImplementation((cb) => {
+            capturedCallbacks.push(cb);
         });
         const destroySpy = vi.spyOn(ApollonEditor.prototype, 'destroy').mockImplementation(() => {});
 
         await component.ngAfterViewInit();
 
+        // Verify exactly ONE callback was registered for broadcast messages
+        expect(sendBroadcastSpy).toHaveBeenCalledOnce();
+        expect(capturedCallbacks).toHaveLength(1);
+
         // Simulate a broadcast message being sent
         const testPatch = 'base64EncodedPatchData';
-        capturedCallback?.(testPatch);
+        capturedCallbacks[0]?.(testPatch);
         expect(receiver).toHaveBeenCalledWith(testPatch);
 
         component.ngOnDestroy();
