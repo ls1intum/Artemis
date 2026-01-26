@@ -138,7 +138,6 @@ export class AdminFeatureToggleComponent implements OnInit {
         [PROFILE_IRIS]: 'https://docs.artemis.tum.de/admin/extensions-setup#iris--pyris-setup-guide',
         [PROFILE_ATHENA]: 'https://docs.artemis.tum.de/admin/extensions-setup#athena-service',
         [PROFILE_APOLLON]: 'https://docs.artemis.tum.de/instructor/exercises/modeling-exercise',
-        [PROFILE_THEIA]: 'https://docs.artemis.tum.de/developer/setup#run-the-server-via-a-run-configuration-in-intellij',
         [PROFILE_LDAP]: 'https://docs.artemis.tum.de/admin/production-setup/security#ldap-authentication',
         [PROFILE_SAML2]: 'https://docs.artemis.tum.de/admin/saml2-login-registration',
         [PROFILE_LOCALCI]: 'https://docs.artemis.tum.de/developer/setup#integrated-code-lifecycle-setup',
