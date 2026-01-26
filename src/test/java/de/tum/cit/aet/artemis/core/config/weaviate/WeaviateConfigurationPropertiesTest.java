@@ -27,7 +27,7 @@ class WeaviateConfigurationPropertiesTest {
 
         assertThat(properties.enabled()).isFalse();
         assertThat(properties.host()).isEqualTo("localhost");
-        assertThat(properties.port()).isEqualTo(8080);
+        assertThat(properties.port()).isEqualTo(8001);
         assertThat(properties.grpcPort()).isEqualTo(50051);
         assertThat(properties.secure()).isFalse();
         assertThat(properties.scheme()).isEqualTo("http");
@@ -36,11 +36,11 @@ class WeaviateConfigurationPropertiesTest {
     @Test
     void testSchemeSecureValidation() {
         // Test valid combinations
-        assertThat(new WeaviateConfigurationProperties(false, "localhost", 8080, 50051, "http")).isNotNull();
+        assertThat(new WeaviateConfigurationProperties(false, "localhost", 8001, 50051, "http")).isNotNull();
         assertThat(new WeaviateConfigurationProperties(false, "localhost", 443, 50051, "https")).isNotNull();
 
         // Test scheme defaults
-        WeaviateConfigurationProperties httpDefault = new WeaviateConfigurationProperties(false, "localhost", 8080, 50051, null);
+        WeaviateConfigurationProperties httpDefault = new WeaviateConfigurationProperties(false, "localhost", 8001, 50051, null);
         assertThat(httpDefault.scheme()).isEqualTo("http");
         assertThat(httpDefault.secure()).isFalse();
 
@@ -52,14 +52,14 @@ class WeaviateConfigurationPropertiesTest {
     @Test
     void testSchemeValidation() {
         // Test valid schemes
-        WeaviateConfigurationProperties httpProps = new WeaviateConfigurationProperties(false, "localhost", 8080, 50051, "http");
+        WeaviateConfigurationProperties httpProps = new WeaviateConfigurationProperties(false, "localhost", 8001, 50051, "http");
         assertThat(httpProps.secure()).isFalse();
 
         WeaviateConfigurationProperties httpsProps = new WeaviateConfigurationProperties(false, "localhost", 443, 50051, "https");
         assertThat(httpsProps.secure()).isTrue();
 
         // Test that secure() method correctly derives from scheme
-        assertThat(new WeaviateConfigurationProperties(true, "localhost", 8080, 50051, "http").secure()).isFalse();
+        assertThat(new WeaviateConfigurationProperties(true, "localhost", 8001, 50051, "http").secure()).isFalse();
         assertThat(new WeaviateConfigurationProperties(true, "localhost", 443, 50051, "https").secure()).isTrue();
     }
 }

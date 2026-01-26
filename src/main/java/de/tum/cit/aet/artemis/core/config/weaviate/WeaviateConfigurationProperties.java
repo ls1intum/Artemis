@@ -21,7 +21,7 @@ public record WeaviateConfigurationProperties(boolean enabled, String host, int 
 
     private static final String DEFAULT_HOST = "localhost";
 
-    private static final int DEFAULT_HTTP_PORT = 8080;
+    private static final int DEFAULT_HTTP_PORT = 8001;
 
     private static final int DEFAULT_GRPC_PORT = 50051;
 
