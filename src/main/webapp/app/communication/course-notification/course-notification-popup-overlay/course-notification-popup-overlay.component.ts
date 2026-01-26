@@ -126,7 +126,7 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
             return true;
         }
 
-        const isAnnouncementOrPost = ['newPostNotification', 'newAnnouncementNotification'].includes(notification.notificationType);
+        const isAnnouncementOrPost = ['newPostNotification', 'newAnnouncementNotification'].includes(notification.notificationType ?? '');
         const isCorrespondingChannelOpen = 'channelId' in notificationParams && openConversationId == notificationParams['channelId'];
         if (isAnnouncementOrPost && isCorrespondingChannelOpen) {
             return false;
