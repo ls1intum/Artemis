@@ -65,7 +65,7 @@ artemis:
         secret: abcdef12345
         restricted-modules: module_text_test_restricted,module_programming_test_restricted
     apollon:
-        enabled: true # Set to true to enable Apollon PDF conversion for modeling diagrams
+        enabled: true # Enables PDF export of diagrams via external conversion service (modeling editor works without this)
         conversion-service-url: http://localhost:8080
     telemetry:
         enabled: false
