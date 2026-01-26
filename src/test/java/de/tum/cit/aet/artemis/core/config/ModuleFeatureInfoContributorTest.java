@@ -34,7 +34,8 @@ class ModuleFeatureInfoContributorTest {
         Constants.SHARING_ENABLED_PROPERTY_NAME,
         Constants.THEIA_ENABLED_PROPERTY_NAME,
         Constants.IRIS_ENABLED_PROPERTY_NAME,
-        Constants.LTI_ENABLED_PROPERTY_NAME
+        Constants.LTI_ENABLED_PROPERTY_NAME,
+        Constants.APOLLON_ENABLED_PROPERTY_NAME
     );
     // @formatter:on
 
@@ -54,7 +55,8 @@ class ModuleFeatureInfoContributorTest {
         Constants.MODULE_FEATURE_SHARING,
         Constants.MODULE_FEATURE_THEIA,
         Constants.MODULE_FEATURE_IRIS,
-        Constants.MODULE_FEATURE_LTI
+        Constants.MODULE_FEATURE_LTI,
+        Constants.MODULE_FEATURE_APOLLON
     );
     // @formatter:on
 
