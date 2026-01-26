@@ -116,18 +116,22 @@ docker compose -f weaviate.yml up -d
 
 ---
 
-## Integration with Pyris
+## Integration with Artemis
 
-When running Weaviate locally, configure the Weaviate connection in your `application.local.yml`:
+To enable Weaviate integration in Artemis, add the following to your `application-local.yml`:
 
 ```yaml
-weaviate:
-  host: "localhost"
-  port: "8001"
-  grpc_port: "50051"
+artemis:
+    weaviate:
+        enabled: true                     # Disabled by default; set to true to enable Weaviate integration
+        host: localhost                   # Weaviate server hostname
+        port: 8001                        # Weaviate HTTP port (avoid conflicts with main app)
+        grpc-port: 50051                  # Weaviate gRPC port for better performance
+        scheme: http                      # http scheme for development only, otherwise https should be used
 ```
 
-Ensure that Weaviate is running before starting Artemis. Artemis will connect to Weaviate to store and retrieve embeddings for global search functionality, e.g., retrieving lecture content.
+Ensure that Weaviate is running before starting Artemis.
+Artemis will connect to Weaviate to store and retrieve embeddings and metadata for global search functionality, e.g., retrieving lecture content.
 
 ---
 
