@@ -13,7 +13,7 @@ import { cloneDeep } from 'lodash-es';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FileService } from 'app/shared/service/file.service';
 
-interface LectureWithDetails {
+export interface LectureWithDetails {
     id: number;
     title: string;
     attachmentVideoUnits?: AttachmentVideoUnit[];
