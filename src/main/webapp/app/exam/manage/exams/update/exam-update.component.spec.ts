@@ -708,7 +708,7 @@ describe('ExamUpdateComponent', () => {
 
             expect(component.isValidConfiguration).toBeTrue();
             button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.disabled).toBeTrue();
+            expect(button.disabled()).toBeTrue();
         }));
 
         it('should open confirmation modal when dates changed for ongoing exam', fakeAsync(() => {

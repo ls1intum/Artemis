@@ -32,6 +32,7 @@ describe('RepositoryViewComponent', () => {
     beforeEach(async () => {
         mockDomainService = {
             setDomain: jest.fn(),
+            subscribeDomainChange: jest.fn().mockReturnValue(of(null)),
         };
 
         await TestBed.configureTestingModule({
