@@ -304,8 +304,9 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
 
     cleanup() {
         const exam = this.currentExam();
-        if (this.archiveMode() === 'Exam' && exam) {
-            this.examService.cleanupExam(this.currentCourse()?.id!, exam.id!).subscribe({
+        const course = this.currentCourse();
+        if (this.archiveMode() === 'Exam' && exam && course?.id) {
+            this.examService.cleanupExam(course.id, exam.id!).subscribe({
                 next: () => {
                     this.alertService.success('artemisApp.programmingExercise.cleanup.successMessageCleanup');
                     this.dialogErrorSource.next('');
@@ -314,8 +315,8 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
                     this.dialogErrorSource.next(error.error.title);
                 },
             });
-        } else {
-            this.courseService.cleanupCourse(this.currentCourse()?.id!).subscribe({
+        } else if (course?.id) {
+            this.courseService.cleanupCourse(course.id).subscribe({
                 next: () => {
                     this.alertService.success('artemisApp.programmingExercise.cleanup.successMessageCleanup');
                     this.dialogErrorSource.next('');
