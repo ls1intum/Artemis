@@ -43,6 +43,7 @@ import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model'
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -54,6 +55,7 @@ import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectio
         FaIconComponent,
         NgbTooltip,
         TranslateDirective,
+        ChatStatusBarComponent,
         FormsModule,
         ButtonComponent,
         ArtemisTranslatePipe,
