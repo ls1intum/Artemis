@@ -60,7 +60,7 @@
                                 [btnSize]="ButtonSize.SMALL"
                                 [btnType]="ButtonType.PRIMARY"
                                 [title]="shouldTreatAsSubmittedForUi ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit'"
-                                [disabled]="shouldTreatAsSubmittedForUi || waitingForQuizStart || isSubmitting || remainingTimeSeconds < 0"
+                                [disabled]="shouldTreatAsSubmittedForUi || isSubmitting || waitingForQuizStart || remainingTimeSeconds < 0"
                             />
                         </div>
                     } @else if (mode !== 'solution') {
