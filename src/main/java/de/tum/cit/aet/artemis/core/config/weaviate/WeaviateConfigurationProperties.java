@@ -16,29 +16,48 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "artemis.weaviate")
 public record WeaviateConfigurationProperties(boolean enabled, String host, int port, int grpcPort, boolean secure, String scheme) {
 
+    private static final String DEFAULT_HOST = "localhost";
+
+    private static final int DEFAULT_HTTP_PORT = 8080;
+
+    private static final int DEFAULT_GRPC_PORT = 50051;
+
+    private static final String HTTP_SCHEME = "http";
+
+    private static final String HTTPS_SCHEME = "https";
+
     /**
      * Creates a new WeaviateConfigurationProperties with default values and validation.
      */
     public WeaviateConfigurationProperties {
-        // Apply defaults
         if (host == null || host.isBlank()) {
-            host = "localhost";
+            host = DEFAULT_HOST;
         }
         if (port == 0) {
-            port = 8080;
+            port = DEFAULT_HTTP_PORT;
         }
         if (grpcPort == 0) {
-            grpcPort = 50051;
+            grpcPort = DEFAULT_GRPC_PORT;
         }
         if (scheme == null || scheme.isBlank()) {
-            scheme = secure ? "https" : "http";
+            scheme = secure ? HTTPS_SCHEME : HTTP_SCHEME;
         }
 
-        // Validate scheme/secure consistency
-        if (secure && "http".equals(scheme)) {
+        validateSchemeAndSecureConnectionConsistency(secure, scheme);
+    }
+
+    /**
+     * Validates that the scheme and secure connection flag are consistent.
+     *
+     * @param secure whether secure connections are enabled
+     * @param scheme the HTTP scheme (http/https)
+     * @throws IllegalArgumentException if scheme and secure flag are inconsistent
+     */
+    private static void validateSchemeAndSecureConnectionConsistency(boolean secure, String scheme) {
+        if (secure && HTTP_SCHEME.equals(scheme)) {
             throw new IllegalArgumentException("Configuration inconsistency: secure=true but scheme=http. Use scheme=https for secure connections.");
         }
-        if (!secure && "https".equals(scheme)) {
+        if (!secure && HTTPS_SCHEME.equals(scheme)) {
             throw new IllegalArgumentException("Configuration inconsistency: secure=false but scheme=https. Use scheme=http for non-secure connections or set secure=true.");
         }
     }
@@ -47,6 +66,6 @@ public record WeaviateConfigurationProperties(boolean enabled, String host, int 
      * Creates a new instance with default values.
      */
     public WeaviateConfigurationProperties() {
-        this(false, "localhost", 8080, 50051, false, "http");
+        this(false, DEFAULT_HOST, DEFAULT_HTTP_PORT, DEFAULT_GRPC_PORT, false, HTTP_SCHEME);
     }
 }
