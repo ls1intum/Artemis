@@ -1,0 +1,475 @@
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+# REST API Guidelines
+
+This document covers best practices for designing and implementing REST APIs in Artemis, with a focus on Data Transfer Objects (DTOs) and proper API design.
+
+## Data Transfer Objects (DTOs)
+
+<Callout variant={CalloutVariant.danger}>
+  <strong>Critical Rule:</strong> Entities annotated with <code>@Entity</code> must NEVER be used directly in REST API request or response bodies. Always use Data Transfer Objects (DTOs) instead. This is enforced by architecture tests.
+</Callout>
+
+### Why Entities Must Not Be Used in JSON Serialization
+
+Using JPA entities directly in REST controllers creates severe problems that compromise security, performance, and maintainability:
+
+#### 1. Security Vulnerabilities
+
+- **Mass Assignment Attacks:** When entities are deserialized from JSON, attackers can inject values for fields they should not control (e.g., `isAdmin`, `password`, internal IDs)
+- **Data Leakage:** Entities may contain sensitive fields (passwords, internal flags, audit data) that get accidentally exposed in API responses
+- **Circular Reference Exploitation:** Bidirectional relationships can be manipulated to cause infinite loops or expose related data
+
+#### 2. API Instability
+
+- **Breaking Changes:** Any change to the database schema (renaming a column, adding a field) automatically changes the API contract, breaking clients
+- **No Versioning Control:** Without DTOs, you cannot maintain multiple API versions or deprecate fields gracefully
+- **Tight Coupling:** Frontend and backend become tightly coupled to the database schema
+
+#### 3. Performance Problems
+
+- **N+1 Query Issues:** Lazy-loaded relationships get triggered during JSON serialization, causing unexpected database queries
+- **Over-fetching:** Entire entity graphs are loaded when only a few fields are needed
+- **Serialization Overhead:** Large entity hierarchies with bidirectional relationships are expensive to serialize
+
+#### 4. Hibernate Session Issues
+
+- **LazyInitializationException:** Accessing lazy relationships outside the Hibernate session causes runtime exceptions
+- **Detached Entity Problems:** Merging detached entities can overwrite data unexpectedly
+- **Proxy Object Serialization:** Hibernate proxies don't serialize correctly, causing `ClassCastException` or incomplete data
+
+#### 5. Circular References and JsonIgnore Problems
+
+Entities often have bidirectional relationships that create circular references during JSON serialization. While annotations like `@JsonIgnore` and `@JsonIgnoreProperties` can help, they introduce significant problems:
+
+- **Hard to Understand:** Developers must mentally track which fields are ignored in which direction across multiple entity classes
+- **Impossible to Debug:** When serialization behaves unexpectedly, tracing through `@JsonIgnore` annotations scattered across many files is extremely difficult
+- **Inconsistent Behavior:** The same entity might serialize differently depending on how it was loaded (with or without certain relationships)
+- **Fragile:** Adding a new relationship or changing an existing one requires careful updates to multiple `@JsonIgnore` annotations
+
+<Callout variant={CalloutVariant.warning}>
+  Using <code>@JsonIgnore</code> or <code>@JsonIgnoreProperties</code> to handle circular references is a workaround, not a solution. DTOs eliminate circular reference problems entirely because you explicitly define the data structure for each API response.
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+  <strong>Note:</strong> Entity classes still require <code>@JsonIgnoreProperties</code> annotations on bidirectional relationships to prevent infinite loops during internal operations (e.g., logging, caching). However, this is not a reason to expose entities via REST APIs. The annotations are a necessary safeguard for entities, but DTOs remain the correct approach for API responses.
+</Callout>
+
+#### 6. OpenAPI and API-Driven Development
+
+API-driven development using OpenAPI (Swagger) is only possible when using DTOs:
+
+- **Circular References Break OpenAPI:** Entities with bidirectional relationships cannot be properly represented in OpenAPI schemas, causing generation failures or infinite recursion
+- **Clean API Contracts:** DTOs provide clear, flat data structures that OpenAPI can document accurately
+- **Code Generation:** Client code generation from OpenAPI specs works reliably only with DTOs; entities produce broken or unusable generated code
+- **API-First Design:** DTOs enable true API-first development where the API contract is designed before implementation
+
+#### 7. Validation Complexity
+
+- **Mixed Concerns:** Entity validation rules (for persistence) differ from API validation rules (for input)
+- **Conditional Validation:** Different endpoints may require different validation rules for the same data
+
+### Benefits of Using DTOs
+
+DTOs provide essential separation between your API contract and your database schema:
+
+| Benefit | Description |
+|---------|-------------|
+| **Security** | Explicitly define which fields can be read/written, preventing mass assignment and data leakage |
+| **API Stability** | Database changes don't break the API; you control exactly what clients see |
+| **Performance** | Transfer only the data needed; avoid lazy loading issues and over-fetching |
+| **Network Efficiency** | Minimize data transfer over the network by including only required fields, reducing bandwidth and latency |
+| **Data Privacy** | Exclude sensitive or internal fields from API responses, ensuring clients only receive data they are authorized to see |
+| **Flexibility** | Create different views of the same entity for different use cases (list view, detail view, admin view) |
+| **Validation** | Apply endpoint-specific validation rules separate from persistence constraints |
+| **Documentation** | DTOs serve as clear API documentation; field names and types are explicit |
+| **Testing** | Easier to test API contracts independently from database schema |
+| **Versioning** | Support multiple API versions by creating versioned DTOs |
+| **OpenAPI Compatibility** | DTOs work seamlessly with OpenAPI for API documentation and code generation |
+| **No Circular References** | DTOs eliminate circular reference problems entirely by design |
+
+### DTO Design Guidelines
+
+#### Use Java Records for DTOs
+
+Java records are ideal for DTOs because they are immutable, concise, and automatically provide `equals()`, `hashCode()`, and `toString()`:
+
+```java
+// Good: Immutable record DTO
+public record UserDTO(
+    Long id,
+    String login,
+    String name,
+    String email
+) {
+    // Static factory method to create from entity
+    public static UserDTO of(User user) {
+        return new UserDTO(
+            user.getId(),
+            user.getLogin(),
+            user.getName(),
+            user.getEmail()
+        );
+    }
+}
+```
+
+#### Create Separate DTOs for Input and Output
+
+Different operations often need different data:
+
+```java
+// For creating a new exercise (input)
+public record CreateExerciseDTO(
+    String title,
+    Double maxPoints,
+    ZonedDateTime dueDate
+) {}
+
+// For updating an existing exercise (input)
+public record UpdateExerciseDTO(
+    Long id,  // Required for updates
+    String title,
+    Double maxPoints,
+    ZonedDateTime dueDate
+) {
+    // Method to apply changes to an existing entity
+    public void applyTo(Exercise exercise) {
+        exercise.setTitle(this.title);
+        exercise.setMaxPoints(this.maxPoints);
+        exercise.setDueDate(this.dueDate);
+    }
+}
+
+// For returning exercise data (output)
+public record ExerciseDTO(
+    Long id,
+    String title,
+    Double maxPoints,
+    ZonedDateTime dueDate,
+    String courseName  // Derived/computed field
+) {
+    public static ExerciseDTO of(Exercise exercise) {
+        return new ExerciseDTO(
+            exercise.getId(),
+            exercise.getTitle(),
+            exercise.getMaxPoints(),
+            exercise.getDueDate(),
+            exercise.getCourse().getName()
+        );
+    }
+}
+```
+
+#### REST Controller Example
+
+```java
+@RestController
+@RequestMapping("/api/exercises")
+public class ExerciseResource {
+
+    // CORRECT: Accept DTO, return DTO
+    @PostMapping
+    public ResponseEntity<ExerciseDTO> createExercise(@RequestBody @Valid CreateExerciseDTO dto) {
+        Exercise exercise = new Exercise();
+        exercise.setTitle(dto.title());
+        exercise.setMaxPoints(dto.maxPoints());
+        exercise.setDueDate(dto.dueDate());
+
+        exercise = exerciseRepository.save(exercise);
+        return ResponseEntity.ok(ExerciseDTO.of(exercise));
+    }
+
+    // WRONG: Never do this - accepting entity directly
+    // @PostMapping
+    // public ResponseEntity<Exercise> createExercise(@RequestBody Exercise exercise) {
+    //     return ResponseEntity.ok(exerciseRepository.save(exercise));
+    // }
+}
+```
+
+### DTO Design Rules
+
+<Callout variant={CalloutVariant.danger}>
+  <strong>Critical:</strong> DTOs must NEVER contain references to <code>@Entity</code> types as fields. This includes direct entity references, collections of entities (List, Set, Map), or any nested structure containing entities. Wrapping an entity inside a DTO defeats the entire purpose of using DTOs.
+</Callout>
+
+DTOs must be pure data containers with only:
+- Primitive types and their wrappers (String, Long, Integer, Boolean, etc.)
+- Date/time types (ZonedDateTime, Instant, LocalDate, etc.)
+- Enums
+- Other DTOs (for nested data structures)
+- Collections of the above types
+
+```java
+// WRONG: DTO wrapping an entity - defeats the purpose of DTOs!
+public record BadExerciseDTO(
+    Long id,
+    Exercise exercise  // NEVER do this - entity reference!
+) {}
+
+// WRONG: DTO containing a collection of entities
+public record BadCourseDTO(
+    Long id,
+    String name,
+    Set<User> students  // NEVER do this - entity collection!
+) {}
+
+// CORRECT: DTO with only primitive types and other DTOs
+public record ExerciseDTO(
+    Long id,
+    String title,
+    Double maxPoints,
+    ZonedDateTime dueDate,
+    CourseInfoDTO course  // Other DTO is fine
+) {
+    public static ExerciseDTO of(Exercise exercise) {
+        return new ExerciseDTO(
+            exercise.getId(),
+            exercise.getTitle(),
+            exercise.getMaxPoints(),
+            exercise.getDueDate(),
+            CourseInfoDTO.of(exercise.getCourse())
+        );
+    }
+}
+
+// CORRECT: Nested DTO for related data
+public record CourseInfoDTO(
+    Long id,
+    String name
+) {
+    public static CourseInfoDTO of(Course course) {
+        return new CourseInfoDTO(course.getId(), course.getName());
+    }
+}
+```
+
+### Architecture Test Enforcement
+
+We enforce DTO usage through architecture tests that verify:
+
+1. **No entity return types:** REST controllers must not return `@Entity` types directly
+2. **No entity input types:** `@RequestBody` and `@RequestPart` parameters must not be `@Entity` types
+3. **No entity fields in DTOs:** DTO classes must not contain fields that reference `@Entity` types (prevents lazy wrapper pattern)
+
+These tests run as part of CI and will fail if violations are introduced. Current violation counts are tracked per module with the goal of reducing them to zero.
+
+## REST Controller Best Practices
+
+### Keep Controllers Clean and Focused
+
+* RestControllers should be stateless
+* RestControllers are by default singletons
+* RestControllers should not execute business logic but rely on delegation to `@Service` classes
+* RestControllers should deal with the HTTP layer of the application: handle access control, input data validation, output data cleanup (if necessary), and error handling
+* RestControllers should be oriented around a use-case/business-capability
+* RestControllers must always return DTOs that are as small as possible (focus on data economy to improve performance and follow data privacy principles)
+
+### Route Naming Conventions
+
+* Always use kebab-case (e.g., `.../exampleAssessment` → `.../example-assessment`)
+* Routes should follow the general structure: `list-entity > entityId > sub-entity` (e.g., `exercises/{exerciseId}/participations`)
+* Use plural for list-entities (e.g., `exercises/...`), singular for singletons (e.g., `.../assessment`), and verbs for remote methods (e.g., `.../submit`)
+* Specify the key entity at the end of the route (e.g., `text-editor/participations/{participationId}` should be `participations/{participationId}/text-editor`)
+* Use consistent routes that start with `courses`, `exercises`, `participations`, `exams`, or `lectures` to simplify access control
+* When defining a new route, all subroutes should be addressable (e.g., if your new route is `exercises/{exerciseId}/statistics`, then both `exercises/{exerciseId}` and `exercises` should be addressable)
+* For alternative representations that send extra data (e.g., for assessment), specify the reason at the end of the route: `participations/{participationId}/for-assessment`
+
+### Controller Method Guidelines
+
+* The REST controller's route should end with a trailing "/" and not start with a "/" (e.g., `api/`); individual endpoint routes should not start or end with a "/" (e.g., `exercises/{exerciseId}`)
+* Use `...ElseThrow` alternatives of Repository and AuthorizationCheck calls for increased readability (e.g., `findByIdElseThrow(...)` instead of `findById(...)` and then checking for `null`)
+* POST should return a DTO representing the newly created resource
+* POST should be used to trigger remote methods (e.g., `.../{participationId}/submit`)
+* Never trust user input; always check if the passed data exists in the database
+* Verify consistency of user input (e.g., check if IDs in body and path match, compare course in `@RequestBody` with the one referenced by ID in the path)
+* Check for user input consistency first, then check authorization (mismatched course IDs could lead to unauthorized access)
+* Handle exceptions and errors with a standard response
+
+### Request Validation
+
+Always validate incoming DTOs using Bean Validation:
+
+```java
+public record CreateExerciseDTO(
+    @NotBlank @Size(max = 255)
+    String title,
+
+    @NotNull @Positive
+    Double maxPoints,
+
+    @NotNull @Future
+    ZonedDateTime dueDate
+) {}
+```
+
+### Response Codes
+
+Use appropriate HTTP status codes:
+
+| Code | Usage |
+|------|-------|
+| 200 OK | Successful GET, PUT, PATCH |
+| 201 Created | Successful POST that creates a resource |
+| 204 No Content | Successful DELETE |
+| 400 Bad Request | Invalid input / validation error |
+| 401 Unauthorized | Missing or invalid authentication |
+| 403 Forbidden | Authenticated but not authorized |
+| 404 Not Found | Resource doesn't exist |
+| 409 Conflict | Resource conflict (e.g., duplicate) |
+
+### Error Responses
+
+Return consistent error DTOs:
+
+```java
+public record ErrorDTO(
+    String title,
+    String message,
+    int status,
+    ZonedDateTime timestamp
+) {
+    public static ErrorDTO of(String title, String message, int status) {
+        return new ErrorDTO(title, message, status, ZonedDateTime.now());
+    }
+}
+```
+
+## Authorization
+
+To reject unauthorized requests as early as possible, Artemis employs two solutions:
+
+1. **Implicit pre- and post-authorization annotations:**
+   - `@AllowedTools(ToolTokenType.__)` ensures tool-based requests can only access specific endpoints following the Principle of Least Privilege
+   - `@EnforceRoleInResource` (e.g., `@EnforceAtLeastInstructorInCourse`) annotations block users with wrong or missing authorization roles without querying the database
+   - If necessary, these annotations check for access rights to individual resources via lightweight queries
+   - Currently available: `@EnforceRoleInCourse` and `@EnforceRoleInExercise`
+
+2. **Explicit authorization checks (two-step process):**
+   - `@EnforceAtLeastRole` (e.g., `@EnforceAtLeastInstructor`) blocks users with wrong or missing authorization roles without database queries
+   - The `AuthorizationCheckService` checks access rights to individual resources by querying the database (must be performed explicitly)
+
+<Callout variant={CalloutVariant.info}>
+  Because implicit pre- and post-authorization increases maintainability and is faster in most cases, always annotate your REST endpoints with the corresponding <code>@EnforceRoleInResource</code> annotation. Always use the annotation for the minimum role that has access.
+</Callout>
+
+### Role Hierarchy
+
+Artemis distinguishes between six different roles: ADMIN, INSTRUCTOR, EDITOR, TA (teaching assistant/tutor), USER, and ANONYMOUS. Each role has all the access rights of the roles following it (e.g., ANONYMOUS has almost no rights, while ADMIN users can access every page).
+
+| **Minimum Role** | **Endpoint Annotation**   | **Path Prefix**          | **Package**          |
+|------------------|---------------------------|--------------------------|----------------------|
+| ADMIN            | `@EnforceAdmin`           | `/api/{module}/admin/`   | `{module}.web.admin` |
+| INSTRUCTOR       | `@EnforceAtLeastInstructor` | `/api/{module}/`       | `{module}.web`       |
+| EDITOR           | `@EnforceAtLeastEditor`   | `/api/{module}/`         | `{module}.web`       |
+| TA               | `@EnforceAtLeastTutor`    | `/api/{module}/`         | `{module}.web`       |
+| USER             | `@EnforceAtLeastStudent`  | `/api/{module}/`         | `{module}.web`       |
+| ANONYMOUS        | `@EnforceNothing`         | `/api/{module}/public/`  | `{module}.web.open`  |
+
+If you need to deviate from these rules, use `@ManualConfig`. Use this annotation only if absolutely necessary as it will exclude the endpoint from automatic authorization tests.
+
+Use the `@Internal` annotation to mark methods or classes that should only be accessed from trusted internal networks. Access is restricted based on configured CIDR blocks in `InternalAccessConfiguration` (`artemis.security.internal.allowed-cidrs`).
+
+### Implicit Authorization (Preferred)
+
+The following example makes the call accessible only to ADMIN and INSTRUCTOR users and checks access rights to the course in the database:
+
+**Do not write:**
+```java
+@EnforceAtLeastInstructor
+public ResponseEntity<Void> enableLearningPathsForCourse(@PathVariable long courseId) {
+    var course = courseRepository.findById(courseId);
+    authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+    [...]
+    return ResponseEntity.ok().build();
+}
+```
+
+**Instead, use:**
+```java
+@EnforceAtLeastInstructorInCourse
+public ResponseEntity<Void> enableLearningPathsForCourse(@PathVariable long courseId) {
+    [...]
+    return ResponseEntity.ok().build();
+}
+```
+
+### Explicit Authorization
+
+<Callout variant={CalloutVariant.warning}>
+  Use explicit authorization only when:
+  <ol>
+    <li>You need to load user AND the resource anyway</li>
+    <li>No matching <code>@EnforceRoleInResource</code> annotation exists</li>
+  </ol>
+</Callout>
+
+Always annotate your REST endpoints with the annotation for the minimum role that has access:
+
+```java
+@EnforceAtLeastInstructor
+public ResponseEntity<Void> enableLearningPath(@PathVariable long courseId) {
+    var course = courseRepository.findById(courseId);
+    authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+    [...]
+    return ResponseEntity.ok().build();
+}
+```
+
+If a user passes pre-authorization, access to individual resources still needs to be checked. For example, a user can be a teaching assistant in one course but only a student in another:
+
+```java
+// Pass 'null' instead of a user - the service will fetch the user object
+// and check if the user has at least the given role and access to the resource
+authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+```
+
+Use the `AuthorizationCheckService` to reduce duplication:
+
+```java
+@GetMapping("courses/{courseId}/programming-exercises")
+@EnforceAtLeastTutor
+public ResponseEntity<List<ProgrammingExercise>> getActiveProgrammingExercisesForCourse(@PathVariable Long courseId) {
+    Course course = courseRepository.findByIdElseThrow(courseId);
+    authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+
+    List<ProgrammingExercise> exercises = programmingExerciseService.findActiveExercisesByCourseId(courseId);
+    return ResponseEntity.ok().body(exercises);
+}
+```
+
+The course repository call throws a `404 Not Found` exception if no matching course exists. The `AuthorizationCheckService` throws a `403 Forbidden` exception if the user is unauthorized.
+
+### Tool-Based Authorization
+
+To enforce minimal access for external tools, Artemis provides `@AllowedTools`. This annotation restricts Tool Tokens to certain endpoints. A Tool Token is a JWT with the claim `"tools": "TOOLTYPE"`.
+
+**How it works:**
+* Requests without a tool claim (e.g., browser requests) can access all endpoints meeting role-based authorization rules
+* Requests with a tool claim (e.g., `{"tool": "SCORPIO"}`) can only access endpoints annotated with `@AllowedTools(ToolTokenType.__)`
+* If a tool tries to access an unannotated endpoint, it receives a `403 Forbidden` response
+
+**Example:**
+```java
+@AllowedTools(ToolTokenType.SCORPIO)
+public ResponseEntity<CourseForDashboardDTO> getCourseForDashboard(@PathVariable long courseId) {
+    [...]
+    return ResponseEntity.ok(courseForDashboardDTO);
+}
+```
+
+**Best Practices:**
+* Requests without a tool claim are unrestricted
+* Tool-based requests must be explicitly allowed with `@AllowedTools`
+* Follow the Principle of Least Privilege; use tool tokens whenever possible
+* For multiple tools: `@AllowedTools({ToolTokenType.SCORPIO, ToolTokenType.ANDROID})`
+
+**How to Get Tool Tokens:**
+1. Verify the tool type is defined in `ToolTokenType.java`
+2. Send a POST request to `{{base_url}}/api/core/public/authenticate?tool=TOOLTYPE`
+
+## JSON Serialization
+
+Always use ObjectMapper (Jackson) for JSON serialization and deserialization. Do not use other libraries.
