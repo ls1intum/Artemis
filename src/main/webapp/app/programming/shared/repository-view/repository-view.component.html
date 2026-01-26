@@ -52,7 +52,7 @@
                     />
                 }
 
-                @if (exercise.id) {
+                @if (exercise?.id) {
                     @if (repositoryType === 'USER') {
                         <jhi-programming-exercise-student-repo-download [buttonSize]="ButtonSize.MEDIUM" [exerciseId]="exercise.id" [participationId]="participation.id!" />
                     } @else {

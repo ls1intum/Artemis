@@ -20,6 +20,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 
 describe('RepositoryViewComponent', () => {
     let component: RepositoryViewComponent;
@@ -32,8 +33,12 @@ describe('RepositoryViewComponent', () => {
     beforeEach(async () => {
         mockDomainService = {
             setDomain: jest.fn(),
-            subscribeDomainChange: jest.fn().mockReturnValue(of(null)),
+            subscribeDomainChange: jest.fn().mockReturnValue(of([DomainType.PARTICIPATION, { id: 1 }])),
         };
+        // Mock the ResizeObserver, which is not available in the test environment
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
 
         await TestBed.configureTestingModule({
             providers: [
@@ -50,10 +55,7 @@ describe('RepositoryViewComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(RepositoryViewComponent);
                 component = fixture.componentInstance;
-                component.exercise = { id: 1 } as ProgrammingExercise;
-                component.participation = { id: 2 } as ProgrammingExerciseStudentParticipation;
                 fixture.detectChanges();
-
                 activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
                 programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
                 programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
@@ -345,9 +347,9 @@ describe('RepositoryViewComponent', () => {
     });
 
     it('should handle error when loading exercise', () => {
-        // route to an exercise that does not exist
-        activatedRoute.setParameters({ exerciseId: 8 });
-
+        // route to an exercise that does not exist, but we need to specify a repository type
+        // in order to call the mocked findWithTemplateAndSolutionParticipationAndLatestResults
+        activatedRoute.setParameters({ exerciseId: 8, repositoryType: 'TEMPLATE' });
         // Mock the service to return an error
         jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
             new Observable((subscriber) => {
