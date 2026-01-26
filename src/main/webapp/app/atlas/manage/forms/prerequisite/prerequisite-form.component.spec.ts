@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import type { Mocked } from 'vitest';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -34,7 +35,9 @@ describe('PrerequisiteFormComponent', () => {
 
     let translateService: TranslateService;
     const prerequisiteServiceMock = { getAllForCourse: vi.fn() } as unknown as PrerequisiteService;
-    const courseCompetencyServiceMock = { getCourseCompetencyTitles: vi.fn() } as unknown as CourseCompetencyService;
+    const courseCompetencyServiceMock: Mocked<Pick<CourseCompetencyService, 'getCourseCompetencyTitles'>> = {
+        getCourseCompetencyTitles: vi.fn(),
+    };
 
     beforeEach(() => {
         courseCompetencyServiceMock.getCourseCompetencyTitles.mockReturnValue(of(new HttpResponse({ body: [] })));
