@@ -12,7 +12,7 @@ import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grad
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
+import { CompetencyExerciseLink, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ExerciseInfo } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
@@ -294,4 +294,13 @@ export function hasDueDatePassed(exercise: Exercise): boolean {
         return false;
     }
     return exercise.dueDate.isBefore(dayjs());
+}
+
+/**
+ * Extracts the competencies from an exercise's competency links.
+ * @param exercise the exercise to extract competencies from
+ * @return array of competencies linked to the exercise, empty array if none
+ */
+export function getExerciseCompetencies(exercise: Exercise): CourseCompetency[] {
+    return exercise.competencyLinks?.map((link) => link.competency).filter((competency): competency is CourseCompetency => competency !== undefined) ?? [];
 }
