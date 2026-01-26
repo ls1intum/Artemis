@@ -133,6 +133,11 @@ artemis:
 Ensure that Weaviate is running before starting Artemis.
 Artemis will connect to Weaviate to store and retrieve embeddings and metadata for global search functionality, e.g., retrieving lecture content.
 
+Alternatively, you can enable Weaviate via:
+
+- **Environment variable**: `ARTEMIS_WEAVIATE_ENABLED=true`
+- **Command line**: `--artemis.weaviate.enabled=true`
+
 ---
 
 ## Troubleshooting
