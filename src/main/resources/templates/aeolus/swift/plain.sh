@@ -10,12 +10,9 @@ build_and_test_the_code () {
   # In order to get the correct console output we need to execute the command within the ${studentParentWorkingDirectoryName} directory
   # swift build
   cd ${studentParentWorkingDirectoryName}
-  swift build || error=true
-
-  if [ ! $error ]
-  then
+  if swift build; then
       # swift test
-      swift test || true
+      swift test --parallel --xunit-output tests.xml || true
   fi
 
   # The used docker container is calling 'swift build' which creates files as root (e.g. tests.xml),

@@ -32,12 +32,17 @@ The `debug` configuration compiles much faster than `release`, but compiling a b
 Add `--configuration` release to your command to change the configuration to release, and execute it:  
 `swift run --configuration release`
 
-# Integrating With Xcode
-Now that your project is set up, you’re ready to generate an Xcode project.
-Execute the following command in Terminal to do so:  
-`swift package generate-xcodeproj`
+### Opening in Xcode
 
-This will download the dependencies and create an Xcode project — NAME.xcodeproj.S
+Starting with Swift 5.4+, you can open Swift packages directly in Xcode without generating a separate project:
+
+```bash
+open Package.swift
+```
+
+Xcode will automatically recognize the Swift package and provide full IDE support.
+
+**Note**: The `swift package generate-xcodeproj` command has been deprecated and is no longer available in Swift 6.
 
 # Unit Tests
 Running the unit tests:

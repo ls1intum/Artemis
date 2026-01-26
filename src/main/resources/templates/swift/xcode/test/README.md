@@ -5,12 +5,12 @@ This is the combined repo that will be produced on the build agent by cloning tw
 
 The tests can be executed as follows
 
-`xcodebuild -derivedDataPath DerivedData -workspace XpenseTest.xcworkspace -scheme 'XpenseTest' -destination 'platform=iOS Simulator,name=iPhone 12 Pro Max,OS=14.5' test | /usr/local/bin/xcpretty --report junit --output "tests.xml"`
+`xcodebuild -derivedDataPath DerivedData -workspace XpenseTest.xcworkspace -scheme 'XpenseTest' -destination 'platform=iOS Simulator,name=iPhone 12 Pro Max,OS=17.0' test | /usr/local/bin/xcpretty --report junit --output "tests.xml"`
 
 `fastlane test`
 
 
-`xcodebuild -derivedDataPath DerivedData -workspace XpenseTest.xcworkspace -scheme 'XpenseUITest' -destination 'platform=iOS Simulator,name=iPhone 12 Pro Max,OS=14.5' test | /usr/local/bin/xcpretty --report junit --output "testsui.xml"`
+`xcodebuild -derivedDataPath DerivedData -workspace XpenseTest.xcworkspace -scheme 'XpenseUITest' -destination 'platform=iOS Simulator,name=iPhone 12 Pro Max,OS=17.0' test | /usr/local/bin/xcpretty --report junit --output "testsui.xml"`
 
 `fastlane uitest`
 

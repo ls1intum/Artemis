@@ -1,5 +1,13 @@
 # Bamboo Setup
 
+> **Warning: LEGACY DOCUMENTATION**
+> This document describes the setup for Bamboo CI with Swift 5.x on Ubuntu 18.04.
+> For modern deployments, Artemis uses integrated build agents with Docker containers.
+> The Swift Docker image (`swift:6.2`) handles all dependencies automatically.
+> This document is retained for reference only.
+
+---
+
 # Docker Container
 Start the container by executing:  
 `docker exec --user="root" -it artemis_bamboo /bin/bash`  
