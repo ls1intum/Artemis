@@ -284,7 +284,7 @@ describe('ModelingSubmissionComponent', () => {
 
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).not.toBeNull();
-        expect(submitButton.componentInstance.disabled).toBe(false);
+        expect(submitButton.componentInstance.disabled()).toBe(false);
         expect(comp.isActive).toBe(true);
     });
 
@@ -300,7 +300,7 @@ describe('ModelingSubmissionComponent', () => {
 
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).not.toBeNull();
-        expect(submitButton.componentInstance.disabled).toBe(true);
+        expect(submitButton.componentInstance.disabled()).toBe(true);
     });
 
     it('should allow to submit after the due date if the initialization date is after the due date and not submitted', async () => {
@@ -332,7 +332,7 @@ describe('ModelingSubmissionComponent', () => {
 
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).not.toBeNull();
-        expect(submitButton.componentInstance.disabled).toBe(true);
+        expect(submitButton.componentInstance.disabled()).toBe(true);
     });
 
     it('should get inactive as soon as the due date passes the current date', async () => {

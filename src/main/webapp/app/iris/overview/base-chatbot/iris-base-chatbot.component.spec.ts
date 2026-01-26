@@ -436,7 +436,7 @@ describe('IrisBaseChatbotComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         const sendButton = fixture.debugElement.query(By.css('#irisSendButton')).componentInstance;
 
-        expect(sendButton.disabled).toBeFalsy();
+        expect(sendButton.disabled()).toBeFalsy();
     });
 
     it('should not disable submit button if isLoading is false and error is not fatal', () => {
@@ -446,7 +446,7 @@ describe('IrisBaseChatbotComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         const sendButton = fixture.debugElement.query(By.css('#irisSendButton')).componentInstance;
 
-        expect(sendButton.disabled).toBeFalsy();
+        expect(sendButton.disabled()).toBeFalsy();
     });
 
     it('should handle suggestion click correctly', () => {

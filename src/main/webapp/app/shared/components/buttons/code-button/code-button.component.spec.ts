@@ -53,11 +53,11 @@ describe('CodeButtonComponent', () => {
 
     let participation: ProgrammingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
 
-    beforeEach(() => {
+    beforeEach(async () => {
         router = new MockRouter();
         router.setUrl('a');
 
-        TestBed.configureTestingModule({
+        await TestBed.configureTestingModule({
             imports: [ExerciseActionButtonComponent],
             providers: [
                 MockProvider(AlertService),
@@ -87,14 +87,12 @@ describe('CodeButtonComponent', () => {
                 createVcsAccessTokenSpy = vi.spyOn(accountService, 'createVcsAccessToken');
 
                 participation = { id: 5 };
-                component.user = user;
 
                 getVcsAccessTokenSpy = vi.spyOn(accountService, 'getVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: vcsToken })));
                 getCachedSshKeysSpy = vi
                     .spyOn(sshUserSettingsService, 'getCachedSshKeys')
                     .mockImplementation(() => Promise.resolve([{ id: 99, publicKey: 'key' } as UserSshPublicKey]));
                 fixture.componentRef.setInput('repositoryUri', '');
-                fixture.detectChanges();
                 vi.spyOn(localStorageMock, 'retrieve').mockImplementation(() => {
                     return localStorageState;
                 });
@@ -108,9 +106,8 @@ describe('CodeButtonComponent', () => {
                 fixture.componentRef.setInput('participations', []);
                 fixture.componentRef.setInput('smallButtons', true);
                 fixture.componentRef.setInput('routerLinkForRepositoryView', []);
-                fixture.detectChanges();
-
                 stubServices();
+                fixture.detectChanges();
             });
     });
 
@@ -124,7 +121,7 @@ describe('CodeButtonComponent', () => {
 
         await component.ngOnInit();
         component.onClick();
-
+        fixture.detectChanges();
         expect(component.sshSettingsUrl).toBe(`${window.location.origin}/user-settings/ssh`);
         expect(component.sshTemplateUrl).toBe(info.sshCloneURLTemplate);
         expect(component.versionControlUrl).toBe(info.versionControlUrl);
@@ -136,6 +133,7 @@ describe('CodeButtonComponent', () => {
         fixture.componentRef.setInput('participations', [participation]);
         await component.ngOnInit();
         component.onClick();
+        fixture.detectChanges();
 
         expect(component.user.vcsAccessToken).toEqual(vcsToken);
         expect(getVcsAccessTokenSpy).not.toHaveBeenCalled();
@@ -148,7 +146,7 @@ describe('CodeButtonComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
         component.onClick();
-
+        fixture.detectChanges();
         expect(component.user.vcsAccessToken).toEqual(vcsToken);
         expect(getVcsAccessTokenSpy).toHaveBeenCalled();
         expect(createVcsAccessTokenSpy).not.toHaveBeenCalled();
@@ -161,7 +159,7 @@ describe('CodeButtonComponent', () => {
 
         component.authenticationMechanisms.set([RepositoryAuthenticationMethod.Token, RepositoryAuthenticationMethod.SSH]);
         component.onClick();
-
+        fixture.detectChanges();
         expect(component.selectedAuthenticationMechanism()).toEqual(RepositoryAuthenticationMethod.Token);
     });
 
@@ -175,7 +173,7 @@ describe('CodeButtonComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
         component.onClick();
-
+        fixture.detectChanges();
         expect(component.user.vcsAccessToken).toEqual(vcsToken);
         expect(getVcsAccessTokenSpy).toHaveBeenCalled();
         expect(createVcsAccessTokenSpy).toHaveBeenCalled();
@@ -188,7 +186,7 @@ describe('CodeButtonComponent', () => {
         component.sshTemplateUrl = 'ssh://git@artemis.tum.de:7999/';
         fixture.changeDetectorRef.detectChanges();
         component.onClick();
-
+        fixture.detectChanges();
         expect(component.getHttpOrSshRepositoryUri()).toBe('ssh://git@artemis.tum.de:7999/git/ITCPLEASE1/itcplease1-exercise.git');
 
         participation.team = undefined;
@@ -217,10 +215,11 @@ describe('CodeButtonComponent', () => {
 
         await component.ngOnInit();
         fixture.detectChanges();
+        fixture.detectChanges();
         await fixture.whenStable();
 
         component.onClick();
-
+        fixture.detectChanges();
         // Placeholder is shown
         let url = component.getHttpOrSshRepositoryUri();
         expect(url).toBe(`https://${component.user.login}:**********@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
@@ -292,7 +291,7 @@ describe('CodeButtonComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(component.isTeamParticipation()).toBeFalsy();
-        expect(component.getHttpOrSshRepositoryUri()).toBe('https://user1@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.solution.git');
+        expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.solution.git');
     });
 
     it('should set wasCopied to true and back to false after 3 seconds on successful copy', () => {
@@ -308,6 +307,7 @@ describe('CodeButtonComponent', () => {
     it('should not change wasCopied if copy is unsuccessful', () => {
         fixture.detectChanges();
         component.onCopyFinished(false);
+        fixture.detectChanges();
         expect(component.wasCopied()).toBeFalsy();
     });
 
@@ -503,7 +503,7 @@ describe('CodeButtonComponent', () => {
         const inputs = form.getElementsByTagName('input');
         const data: { [key: string]: string } = {
             appDef: 'theia-image',
-            gitUri: 'https://user1:token@repo.uri',
+            gitUri: 'https://edx_userLogin:token@repo.uri',
             gitToken: 'token',
         };
 
@@ -548,7 +548,7 @@ describe('CodeButtonComponent', () => {
 
         const gitUriTest = Array.from(inputs).find((input) => input.name === 'gitUri');
         expect(gitUriTest).toBeDefined();
-        expect(gitUriTest!.value).toBe('https://user1:token@repo.uri');
+        expect(gitUriTest!.value).toBe('https://edx_userLogin:token@repo.uri');
 
         windowOpenSpy.mockRestore();
         documentAppendChildSpy.mockRestore();
