@@ -627,8 +627,8 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructoralt1", roles = "INSTRUCTOR")
-    void importProgrammingExerciseMaxScoreNullBadRequest() throws Exception {
-        programmingExerciseIntegrationTestService.importProgrammingExerciseMaxScoreNullBadRequest();
+    void importProgrammingExerciseMaxScoreInvalidBadRequest() throws Exception {
+        programmingExerciseIntegrationTestService.importProgrammingExerciseMaxScoreInvalidBadRequest();
     }
 
     @Test

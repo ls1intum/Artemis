@@ -181,7 +181,9 @@ export class UserManagementUpdateComponent implements OnInit {
         });
         this.isJenkins = this.profileService.isProfileActive(PROFILE_JENKINS);
         this.userService.authorities().subscribe((authorities) => {
-            this.authorities.set(this.accountService.isSuperAdmin() ? authorities : authorities.filter((authority) => authority !== Authority.SUPER_ADMIN));
+            this.authorities.set(
+                this.accountService.isSuperAdmin() ? authorities : authorities.filter((authority) => authority !== Authority.SUPER_ADMIN && authority !== Authority.ADMIN),
+            );
         });
         this.languages = this.languageHelper.getAll();
         // Empty array for new user

@@ -15,7 +15,7 @@ jobs:
 
     steps:
       - name: Validate PR is ready to merge
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -36,10 +36,16 @@ jobs:
             const body = pr.body || '';
             const issues = [];
 
+            // Strip HTML comments and fenced code blocks before checking checkboxes
+            const bodyWithoutComments = body
+              .replace(/<!--[\s\S]*?-->/g, '')   // HTML comments
+              .replace(/```[\s\S]*?```/g, '')    // Fenced code blocks (backticks)
+              .replace(/~~~[\s\S]*?~~~/g, '');   // Fenced code blocks (tildes)
+
             // Check for unchecked checkboxes in the PR body
             // Match both "- [ ]" and "- [ ] text" patterns
             const checkboxRegex = /^[\s]*-\s*\[\s*\]\s+.+$/gm;
-            const uncheckedBoxes = body.match(checkboxRegex) || [];
+            const uncheckedBoxes = bodyWithoutComments.match(checkboxRegex) || [];
 
             if (uncheckedBoxes.length > 0) {
               issues.push({

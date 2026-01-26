@@ -354,27 +354,34 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository(), userTestRepository.getUserWithGroupsAndAuthorities());
 
-        await().until(() -> {
+        // Wait for build job to appear - on fast systems it might complete quickly
+        await().atMost(60, TimeUnit.SECONDS).pollInterval(500, TimeUnit.MILLISECONDS).until(() -> {
             Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
-            return buildJobOptional.isPresent() && buildJobOptional.get().getBuildStatus() == BuildStatus.QUEUED;
+            return buildJobOptional.isPresent();
         });
 
         BuildJob buildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId()).orElseThrow();
+        String originalBuildJobId = buildJob.getBuildJobId();
+
+        // Mark the job as MISSING so the retry service will pick it up
         buildJob.setBuildStatus(BuildStatus.MISSING);
         buildJob.setBuildSubmissionDate(ZonedDateTime.now().minusMinutes(10));
-        buildJobRepository.save(buildJob);
+        buildJobRepository.saveAndFlush(buildJob);
 
         localCIMissingJobService.retryMissingJobs();
 
-        // job for participation should be retried so retry count should be 1 and status QUEUED
-        await().until(() -> {
-            Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildJobIdDesc(buildJob.getParticipationId());
-            if (buildJobOptional.isEmpty()) {
-                return false;
-            }
-            BuildJob retriedBuildJob = buildJobOptional.get();
-            return (retriedBuildJob.getBuildStatus() == BuildStatus.QUEUED || retriedBuildJob.getBuildStatus() == BuildStatus.BUILDING) && retriedBuildJob.getRetryCount() == 1;
+        // Verify: The original job should now have retryCount incremented
+        BuildJob updatedOriginalJob = buildJobRepository.findByBuildJobId(originalBuildJobId).orElseThrow();
+        assertThat(updatedOriginalJob.getRetryCount()).isEqualTo(1);
+
+        // Verify: A new job should exist with retryCount=1
+        await().atMost(60, TimeUnit.SECONDS).pollInterval(500, TimeUnit.MILLISECONDS).until(() -> {
+            List<BuildJob> allJobsForParticipation = buildJobRepository.findAll().stream()
+                    .filter(j -> j.getParticipationId() != null && j.getParticipationId().equals(studentParticipation.getId())).toList();
+            // We should have at least 2 jobs: the original MISSING one and the new retried one
+            return allJobsForParticipation.size() >= 2 && allJobsForParticipation.stream().anyMatch(j -> j.getRetryCount() == 1 && !j.getBuildJobId().equals(originalBuildJobId));
         });
+
         processingJobs.clear();
         queuedJobs.clear();
     }

@@ -161,7 +161,7 @@ describe('CodeEditorContainerIntegration', () => {
         getBuildLogsStub.mockReturnValue(getBuildLogsSubject);
         getLatestPendingSubmissionStub.mockReturnValue(getLatestPendingSubmissionSubject);
 
-        container.participation = participation as any;
+        containerFixture.componentRef.setInput('participation', participation as any);
 
         // TODO: This should be replaced by testing with route params.
         domainService.setDomain([DomainType.PARTICIPATION, participation]);
@@ -185,8 +185,8 @@ describe('CodeEditorContainerIntegration', () => {
         // file browser
         expect(checkIfRepositoryIsCleanStub).toHaveBeenCalledOnce();
         expect(getRepositoryContentStub).toHaveBeenCalledOnce();
-        expect(container.fileBrowser.errorFiles).toEqual(extractedErrorFiles);
-        expect(container.fileBrowser.unsavedFiles).toHaveLength(0);
+        expect(container.fileBrowser.errorFiles()).toEqual(extractedErrorFiles);
+        expect(container.fileBrowser.unsavedFiles()).toHaveLength(0);
 
         // monaco editor
         expect(container.monacoEditor.loadingCount()).toBe(0);
@@ -216,8 +216,9 @@ describe('CodeEditorContainerIntegration', () => {
 
     const loadFile = async (fileName: string, fileContent: string) => {
         getFileStub.mockReturnValue(of({ fileContent }));
-        container.fileBrowser.selectedFile = fileName;
-        await container.monacoEditor.selectFileInEditor(fileName);
+        container.selectedFile = fileName;
+        containerFixture.detectChanges();
+        await containerFixture.whenStable();
     };
 
     it('should initialize all components correctly if all server calls are successful', fakeAsync(() => {
@@ -237,7 +238,7 @@ describe('CodeEditorContainerIntegration', () => {
         getFeedbackDetailsForResultStub.mockReturnValue(of([]));
         getBuildLogsStub.mockReturnValue(getBuildLogsSubject);
 
-        container.participation = participation;
+        containerFixture.componentRef.setInput('participation', participation);
 
         // TODO: This should be replaced by testing with route params.
         domainService.setDomain([DomainType.PARTICIPATION, participation]);
@@ -260,8 +261,8 @@ describe('CodeEditorContainerIntegration', () => {
         // file browser
         expect(checkIfRepositoryIsCleanStub).toHaveBeenCalledOnce();
         expect(getRepositoryContentStub).not.toHaveBeenCalled();
-        expect(container.fileBrowser.errorFiles).toEqual(extractedErrorFiles);
-        expect(container.fileBrowser.unsavedFiles).toHaveLength(0);
+        expect(container.fileBrowser.errorFiles()).toEqual(extractedErrorFiles);
+        expect(container.fileBrowser.unsavedFiles()).toHaveLength(0);
 
         // monaco editor
         expect(container.monacoEditor.loadingCount()).toBe(0);
@@ -326,7 +327,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(getFileStub).toHaveBeenCalledOnce();
         expect(getFileStub).toHaveBeenCalledWith(selectedFile);
         expect(container.unsavedFiles).toEqual({ [selectedFile]: newFileContent });
-        expect(container.fileBrowser.unsavedFiles).toEqual([selectedFile]);
+        expect(container.fileBrowser.unsavedFiles()).toEqual([selectedFile]);
         expect(container.editorState).toBe(EditorState.UNSAVED_CHANGES);
         expect(container.actions.editorState).toBe(EditorState.UNSAVED_CHANGES);
     });
@@ -357,7 +358,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.unsavedFiles).toStrictEqual({});
         expect(container.editorState).toBe(EditorState.CLEAN);
         expect(container.commitState).toBe(CommitState.UNCOMMITTED_CHANGES);
-        expect(container.fileBrowser.unsavedFiles).toHaveLength(0);
+        expect(container.fileBrowser.unsavedFiles()).toHaveLength(0);
         expect(container.actions.editorState).toBe(EditorState.CLEAN);
     });
 
@@ -425,7 +426,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         expect(container.buildOutput.isBuilding).toBeFalse();
         expect(container.buildOutput.rawBuildLogs).toEqual(expectedBuildLog);
-        expect(container.fileBrowser.errorFiles).toHaveLength(0);
+        expect(container.fileBrowser.errorFiles()).toHaveLength(0);
     });
 
     it('should first save unsaved files before triggering commit', async () => {
@@ -487,7 +488,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         expect(container.buildOutput.isBuilding).toBeFalse();
         expect(container.buildOutput.rawBuildLogs).toEqual(expectedBuildLog);
-        expect(container.fileBrowser.errorFiles).toHaveLength(0);
+        expect(container.fileBrowser.errorFiles()).toHaveLength(0);
 
         containerFixture.destroy();
     });
@@ -503,7 +504,7 @@ describe('CodeEditorContainerIntegration', () => {
         getFeedbackDetailsForResultStub.mockReturnValue(of(feedbacks));
         getRepositoryContentStub.mockReturnValue(of([]));
 
-        container.participation = participation;
+        containerFixture.componentRef.setInput('participation', participation);
         domainService.setDomain([DomainType.PARTICIPATION, participation]);
 
         containerFixture.detectChanges();
@@ -544,14 +545,18 @@ describe('CodeEditorContainerIntegration', () => {
     });
 
     it('should create file badges for feedback suggestions', () => {
-        container.feedbackSuggestions = [
+        const participation = { id: 1 } as Participation;
+        containerFixture.componentRef.setInput('participation', participation);
+        domainService.setDomain([DomainType.PARTICIPATION, participation]);
+        containerFixture.componentRef.setInput('feedbackSuggestions', [
             { reference: 'file:src/Test1.java_line:2' },
             { reference: 'file:src/Test2.java_line:2' },
             { reference: 'file:src/Test2.java_line:4' },
             { reference: 'file:src/Test3.java_line:4' },
             { reference: 'file:src/Test3.java_line:10' },
             { reference: 'file:src/Test3.java_line:11' },
-        ];
+        ]);
+        containerFixture.detectChanges();
         container.updateFileBadges();
         expect(container.fileBadges).toEqual({
             'src/Test1.java': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 1)],
