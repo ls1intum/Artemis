@@ -85,7 +85,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly MarkdownEditorHeight = MarkdownEditorHeight;
     readonly consistencyIssues = signal<ConsistencyIssue[]>([]);
-    readonly sortedIssues = computed(() => [...this.consistencyIssues()].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]));
+    readonly sortedIssues = computed(() =>
+        [...this.consistencyIssues()].sort(
+            (a, b) => SEVERITY_ORDER[a.severity || ConsistencyIssue.SeverityEnum.Low] - SEVERITY_ORDER[b.severity || ConsistencyIssue.SeverityEnum.Low],
+        ),
+    );
 
     private consistencyCheckService = inject(ConsistencyCheckService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
@@ -329,7 +333,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @returns
      *          A FontAwesome icon representing high, medium, or low severity.
      */
-    getSeverityIcon(severity: ConsistencyIssue.SeverityEnum) {
+    getSeverityIcon(severity?: ConsistencyIssue.SeverityEnum) {
         switch (severity) {
             case 'HIGH':
                 return this.faCircleExclamation;
@@ -351,7 +355,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @returns
      *          A text color class (`text-danger`, `text-warning`, `text-info`, or `text-secondary`).
      */
-    getSeverityColor(severity: ConsistencyIssue.SeverityEnum) {
+    getSeverityColor(severity?: ConsistencyIssue.SeverityEnum) {
         switch (severity) {
             case 'HIGH':
                 return 'text-danger';
@@ -379,35 +383,38 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param {Event} event              The originating UI event.
      */
     onIssueNavigate(issue: ConsistencyIssue, deltaIndex: 1 | -1, event: Event) {
+        const locations = issue.locations || [];
         if (issue === this.selectedIssue) {
             // Stay in bounds of the array
-            this.locationIndex = (this.locationIndex + this.selectedIssue.relatedLocations.length + deltaIndex) % this.selectedIssue.relatedLocations.length;
+            this.locationIndex = (this.locationIndex + locations.length + deltaIndex) % locations.length;
         } else {
             this.selectedIssue = issue;
-            this.locationIndex = deltaIndex === 1 ? 0 : issue.relatedLocations.length - 1;
+            this.locationIndex = deltaIndex === 1 ? 0 : locations.length - 1;
         }
 
+        const currentLocation = locations[this.locationIndex];
+
         // We can always jump to the problem statement
-        if (issue.relatedLocations[this.locationIndex].type === 'PROBLEM_STATEMENT') {
+        if (currentLocation.type === 'PROBLEM_STATEMENT') {
             this.codeEditorContainer.selectedFile = this.codeEditorContainer.problemStatementIdentifier;
-            this.editableInstructions.jumpToLine(issue.relatedLocations[this.locationIndex].endLine);
+            this.editableInstructions.jumpToLine(currentLocation.endLine);
             return;
         }
 
         // Set parameters for when fileLoad is called
-        this.lineJumpOnFileLoad = issue.relatedLocations[this.locationIndex].endLine;
-        this.fileToJumpOn = getRepoPath(issue.relatedLocations[this.locationIndex]);
+        this.lineJumpOnFileLoad = currentLocation.endLine;
+        this.fileToJumpOn = getRepoPath(currentLocation);
 
         // Jump to the right repo
         // This signals onEditorLoaded if successful
         try {
-            if (issue.relatedLocations[this.locationIndex].type === 'TEMPLATE_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TEMPLATE') {
+            if (currentLocation.type === 'TEMPLATE_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TEMPLATE') {
                 this.selectTemplateParticipation();
                 return;
-            } else if (issue.relatedLocations[this.locationIndex].type === 'SOLUTION_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'SOLUTION') {
+            } else if (currentLocation.type === 'SOLUTION_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'SOLUTION') {
                 this.selectSolutionParticipation();
                 return;
-            } else if (issue.relatedLocations[this.locationIndex].type === 'TESTS_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TESTS') {
+            } else if (currentLocation.type === 'TESTS_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TESTS') {
                 this.selectTestRepository();
                 return;
             }

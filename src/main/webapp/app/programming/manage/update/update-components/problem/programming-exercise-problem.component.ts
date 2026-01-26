@@ -27,6 +27,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ChecklistPanelComponent } from './checklist-panel/checklist-panel.component';
 
 @Component({
     selector: 'jhi-programming-exercise-problem',
@@ -44,6 +45,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
         ButtonModule,
         FaIconComponent,
         HelpIconComponent,
+        ChecklistPanelComponent,
     ],
 })
 export class ProgrammingExerciseProblemComponent implements OnDestroy {
@@ -88,6 +90,19 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
     }
 
     /**
+     * Handles problem statement changes from the editor
+     */
+    onProblemStatementChange(newProblemStatement: string): void {
+        const exercise = this.programmingExercise();
+        this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
+        if (exercise) {
+            exercise.problemStatement = newProblemStatement;
+            this.programmingExerciseChange.emit(exercise);
+        }
+        this.problemStatementChange.emit(newProblemStatement);
+    }
+
+    /**
      * Cancels the ongoing problem statement generation.
      * Preserves the user's prompt so they can retry or modify it.
      */
@@ -98,6 +113,7 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
         }
         this.isGenerating = false;
     }
+
     /**
      * Generates a draft problem statement using the user's prompt
      */

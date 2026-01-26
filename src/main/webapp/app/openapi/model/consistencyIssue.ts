@@ -10,30 +10,12 @@
 import { ArtifactLocation } from './artifactLocation';
 
 
-/**
- * Individual consistency issue details
- */
 export interface ConsistencyIssue { 
-    /**
-     * Severity of the issue
-     */
-    severity: ConsistencyIssue.SeverityEnum;
-    /**
-     * Category of the issue
-     */
-    category: ConsistencyIssue.CategoryEnum;
-    /**
-     * Detailed description of the issue
-     */
-    description: string;
-    /**
-     * Suggested fix for the issue
-     */
-    suggestedFix: string;
-    /**
-     * Related locations across artifacts
-     */
-    relatedLocations: Array<ArtifactLocation>;
+    severity?: ConsistencyIssue.SeverityEnum;
+    category?: ConsistencyIssue.CategoryEnum;
+    description?: string;
+    suggestedFix?: string;
+    locations?: Array<ArtifactLocation>;
 }
 export namespace ConsistencyIssue {
     export const SeverityEnum = {
@@ -48,7 +30,10 @@ export namespace ConsistencyIssue {
         ConstructorParameterMismatch: 'CONSTRUCTOR_PARAMETER_MISMATCH',
         AttributeTypeMismatch: 'ATTRIBUTE_TYPE_MISMATCH',
         VisibilityMismatch: 'VISIBILITY_MISMATCH',
-        IdentifierNamingInconsistency: 'IDENTIFIER_NAMING_INCONSISTENCY'
+        IdentifierNamingInconsistency: 'IDENTIFIER_NAMING_INCONSISTENCY',
+        Clarity: 'CLARITY',
+        Coherence: 'COHERENCE',
+        Completeness: 'COMPLETENESS'
     } as const;
     export type CategoryEnum = typeof CategoryEnum[keyof typeof CategoryEnum];
 }

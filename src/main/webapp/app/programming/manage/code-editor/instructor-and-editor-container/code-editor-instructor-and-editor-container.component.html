@@ -195,9 +195,9 @@
 
                                             <span class="text-primary small">
                                                 @if (selectedIssue === issue) {
-                                                    {{ locationIndex + 1 }}/{{ issue.relatedLocations.length }}
+                                                    {{ locationIndex + 1 }}/{{ issue.locations?.length || 0 }}
                                                 } @else {
-                                                    -/{{ issue.relatedLocations.length }}
+                                                    -/{{ issue.locations?.length || 0 }}
                                                 }
                                             </span>
 
