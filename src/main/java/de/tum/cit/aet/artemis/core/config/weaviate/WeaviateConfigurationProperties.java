@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.ConfigurationValidator.HTTPS_SC
 import static de.tum.cit.aet.artemis.core.config.ConfigurationValidator.HTTP_SCHEME;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.ConstructorBinding;
 
 /**
  * Configuration properties for Weaviate integration.
@@ -27,6 +28,7 @@ public record WeaviateConfigurationProperties(boolean enabled, String host, int 
     /**
      * Creates a new WeaviateConfigurationProperties with default values.
      */
+    @ConstructorBinding
     public WeaviateConfigurationProperties {
         if (host == null || host.isBlank()) {
             host = DEFAULT_HOST;
