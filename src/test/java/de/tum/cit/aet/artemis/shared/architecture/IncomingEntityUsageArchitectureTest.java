@@ -13,6 +13,7 @@ import java.util.Optional;
 
 import jakarta.persistence.Entity;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -31,11 +32,10 @@ class IncomingEntityUsageArchitectureTest {
 
     private static final String BASE_PACKAGE = "de.tum.cit.aet.artemis";
 
-    // TODO: This test is currently disabled because there are 54 existing violations where REST controllers
-    // accept entities directly in @RequestBody/@RequestPart parameters. These should be refactored to use DTOs.
-    // Re-enable this test once the violations are fixed.
-    // See: https://github.com/ls1intum/Artemis/issues/XXXX (create issue to track this work)
-    @org.junit.jupiter.api.Disabled("54 existing violations - use module-specific tests in each module's architecture package instead")
+    // This global test is disabled in favor of module-specific tests in each module's architecture package.
+    // Module-specific tests (e.g., CoreEntityUsageArchitectureTest) track violations per module with
+    // configurable thresholds, allowing gradual migration to DTOs. See AbstractModuleEntityUsageArchitectureTest.
+    @Disabled("Use module-specific tests in each module's architecture package instead")
     @Test
     void rest_controllers_must_not_accept_entities_in_request_body_or_part() {
         ArchRule rule = classes().that().areAnnotatedWith(RestController.class).should(notUseEntitiesAsRequestBodyOrPart());
@@ -43,11 +43,10 @@ class IncomingEntityUsageArchitectureTest {
         rule.check(new ClassFileImporter().withImportOption(new ImportOption.DoNotIncludeTests()).importPackages(BASE_PACKAGE));
     }
 
-    // TODO: This test is currently disabled because there are 710 existing violations where REST controllers
-    // return entities directly. These should be refactored to return DTOs instead.
-    // Re-enable this test once the violations are fixed.
-    // See: https://github.com/ls1intum/Artemis/issues/XXXX (create issue to track this work)
-    @org.junit.jupiter.api.Disabled("710 existing violations - use module-specific tests in each module's architecture package instead")
+    // This global test is disabled in favor of module-specific tests in each module's architecture package.
+    // Module-specific tests (e.g., CoreEntityUsageArchitectureTest) track violations per module with
+    // configurable thresholds, allowing gradual migration to DTOs. See AbstractModuleEntityUsageArchitectureTest.
+    @Disabled("Use module-specific tests in each module's architecture package instead")
     @Test
     void rest_controllers_must_not_return_entities() {
         ArchRule rule = classes().that().areAnnotatedWith(RestController.class).should(notReturnEntities());

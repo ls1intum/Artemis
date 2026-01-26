@@ -1,19 +1,12 @@
 package de.tum.cit.aet.artemis.plagiarism.architecture;
 
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-
 import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleEntityUsageArchitectureTest;
 
 /**
  * Architecture test to verify that REST controllers in the Plagiarism module
  * do not use @Entity types directly. Controllers should use DTOs instead.
  * <p>
- * Current violations:
- * <ul>
- * <li>Return types: 16</li>
- * <li>Request body/part inputs: 4</li>
- * </ul>
+ * TODO: Reduce violation counts to 0 by introducing DTOs for all endpoints.
  */
 class PlagiarismEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitectureTest {
 
@@ -22,17 +15,21 @@ class PlagiarismEntityUsageArchitectureTest extends AbstractModuleEntityUsageArc
         return ARTEMIS_PACKAGE + ".plagiarism";
     }
 
-    @Disabled("16 violations - controllers should return DTOs, not entities")
-    @Test
+    // TODO: Reduce this to 0 by returning DTOs instead of entities
     @Override
-    protected void restControllersMustNotReturnEntities() {
-        super.restControllersMustNotReturnEntities();
+    protected int getMaxEntityReturnViolations() {
+        return 13;
     }
 
-    @Disabled("4 violations - controllers should accept DTOs, not entities")
-    @Test
+    // TODO: Reduce this to 0 by accepting DTOs instead of entities in @RequestBody/@RequestPart
     @Override
-    protected void restControllersMustNotAcceptEntitiesInRequestBodyOrPart() {
-        super.restControllersMustNotAcceptEntitiesInRequestBodyOrPart();
+    protected int getMaxEntityInputViolations() {
+        return 4;
+    }
+
+    // TODO: Reduce this to 0 by removing entity references from DTOs
+    @Override
+    protected int getMaxDtoEntityFieldViolations() {
+        return 1;
     }
 }

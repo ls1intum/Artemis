@@ -1,19 +1,12 @@
 package de.tum.cit.aet.artemis.iris.architecture;
 
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-
 import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleEntityUsageArchitectureTest;
 
 /**
  * Architecture test to verify that REST controllers in the Iris module
  * do not use @Entity types directly. Controllers should use DTOs instead.
  * <p>
- * Current violations:
- * <ul>
- * <li>Return types: 38</li>
- * <li>Request body/part inputs: 0 (test enabled)</li>
- * </ul>
+ * TODO: Reduce violation counts to 0 by introducing DTOs for all endpoints.
  */
 class IrisEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitectureTest {
 
@@ -22,12 +15,21 @@ class IrisEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitect
         return ARTEMIS_PACKAGE + ".iris";
     }
 
-    @Disabled("38 violations - controllers should return DTOs, not entities")
-    @Test
+    // TODO: Reduce this to 0 by returning DTOs instead of entities
     @Override
-    protected void restControllersMustNotReturnEntities() {
-        super.restControllersMustNotReturnEntities();
+    protected int getMaxEntityReturnViolations() {
+        return 20;
     }
 
-    // Input test is enabled - no violations in this module
+    // This module is already compliant for input violations
+    @Override
+    protected int getMaxEntityInputViolations() {
+        return 0;
+    }
+
+    // TODO: Reduce this to 0 by removing entity references from DTOs
+    @Override
+    protected int getMaxDtoEntityFieldViolations() {
+        return 3;
+    }
 }
