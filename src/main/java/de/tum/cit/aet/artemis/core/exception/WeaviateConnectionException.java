@@ -30,18 +30,38 @@ public class WeaviateConnectionException extends RuntimeException {
         this.secure = secure;
     }
 
+    /**
+     * Gets the host where the connection failure occurred.
+     *
+     * @return the host name or IP address
+     */
     public String getHost() {
         return host;
     }
 
+    /**
+     * Gets the port where the connection failure occurred.
+     *
+     * @return the HTTP port number
+     */
     public int getPort() {
         return port;
     }
 
+    /**
+     * Gets the gRPC port where the connection failure occurred.
+     *
+     * @return the gRPC port number
+     */
     public int getGrpcPort() {
         return grpcPort;
     }
 
+    /**
+     * Gets whether the connection was configured for secure mode.
+     *
+     * @return true if secure mode was enabled, false otherwise
+     */
     public boolean isSecure() {
         return secure;
     }

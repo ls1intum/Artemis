@@ -38,25 +38,24 @@ public class WeaviateClientConfiguration {
     public WeaviateClient weaviateClient() {
         try {
             WeaviateClient client;
-            if (weaviateProperties.isSecure()) {
+            if (weaviateProperties.secure()) {
                 // Custom connection for HTTPS/secure connections
-                client = WeaviateClient.connectToCustom(config -> config.scheme(weaviateProperties.getScheme()).httpHost(weaviateProperties.getHost())
-                        .httpPort(weaviateProperties.getPort()).grpcHost(weaviateProperties.getHost()).grpcPort(weaviateProperties.getGrpcPort()));
+                client = WeaviateClient.connectToCustom(config -> config.scheme(weaviateProperties.scheme()).httpHost(weaviateProperties.host()).httpPort(weaviateProperties.port())
+                        .grpcHost(weaviateProperties.host()).grpcPort(weaviateProperties.grpcPort()));
             }
             else {
                 // Local connection for non-secure connections
-                client = WeaviateClient
-                        .connectToLocal(config -> config.host(weaviateProperties.getHost()).port(weaviateProperties.getPort()).grpcPort(weaviateProperties.getGrpcPort()));
+                client = WeaviateClient.connectToLocal(config -> config.host(weaviateProperties.host()).port(weaviateProperties.port()).grpcPort(weaviateProperties.grpcPort()));
             }
 
-            log.info("Connected to Weaviate at {}://{}:{}", weaviateProperties.getScheme(), weaviateProperties.getHost(), weaviateProperties.getPort());
+            log.info("Connected to Weaviate at {}://{}:{}", weaviateProperties.scheme(), weaviateProperties.host(), weaviateProperties.port());
             return client;
         }
         catch (Exception exception) {
-            log.error("Failed to connect to Weaviate at {}://{}:{} (gRPC port: {})", weaviateProperties.getScheme(), weaviateProperties.getHost(), weaviateProperties.getPort(),
-                    weaviateProperties.getGrpcPort(), exception);
-            throw new WeaviateConnectionException("Failed to connect to Weaviate", exception, weaviateProperties.getHost(), weaviateProperties.getPort(),
-                    weaviateProperties.getGrpcPort(), weaviateProperties.isSecure());
+            log.error("Failed to connect to Weaviate at {}://{}:{} (gRPC port: {})", weaviateProperties.scheme(), weaviateProperties.host(), weaviateProperties.port(),
+                    weaviateProperties.grpcPort(), exception);
+            throw new WeaviateConnectionException("Failed to connect to Weaviate", exception, weaviateProperties.host(), weaviateProperties.port(), weaviateProperties.grpcPort(),
+                    weaviateProperties.secure());
         }
     }
 }

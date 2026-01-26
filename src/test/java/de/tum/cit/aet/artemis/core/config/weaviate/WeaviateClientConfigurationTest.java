@@ -17,13 +17,7 @@ class WeaviateClientConfigurationTest {
 
     @Test
     void testWeaviateClientCreationSecure() {
-        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties();
-        properties.setEnabled(true);
-        properties.setHost("test-host");
-        properties.setPort(443);
-        properties.setGrpcPort(50051);
-        properties.setSecure(true);
-        properties.setScheme("https");
+        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "test-host", 443, 50051, true, "https");
 
         WeaviateClientConfiguration config = new WeaviateClientConfiguration(properties);
 
@@ -39,13 +33,7 @@ class WeaviateClientConfigurationTest {
 
     @Test
     void testWeaviateClientCreationNonSecure() {
-        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties();
-        properties.setEnabled(true);
-        properties.setHost("localhost");
-        properties.setPort(8080);
-        properties.setGrpcPort(50051);
-        properties.setSecure(false);
-        properties.setScheme("http");
+        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "localhost", 8080, 50051, false, "http");
 
         WeaviateClientConfiguration config = new WeaviateClientConfiguration(properties);
 
@@ -61,13 +49,7 @@ class WeaviateClientConfigurationTest {
 
     @Test
     void testWeaviateClientConnectionFailure() {
-        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties();
-        properties.setEnabled(true);
-        properties.setHost("invalid-host");
-        properties.setPort(8080);
-        properties.setGrpcPort(50051);
-        properties.setSecure(false);
-        properties.setScheme("http");
+        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "invalid-host", 8080, 50051, false, "http");
 
         WeaviateClientConfiguration config = new WeaviateClientConfiguration(properties);
 

@@ -22,6 +22,11 @@ public class WeaviateConfigurationException extends RuntimeException {
         this.missingOrInvalidProperties = missingOrInvalidProperties;
     }
 
+    /**
+     * Gets the list of missing or invalid configuration properties.
+     *
+     * @return a list of property names that are missing or have invalid values
+     */
     public List<String> getMissingOrInvalidProperties() {
         return missingOrInvalidProperties;
     }
