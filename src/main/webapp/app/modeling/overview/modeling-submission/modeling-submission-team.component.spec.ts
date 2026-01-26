@@ -317,7 +317,7 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.isLate).toBe(true);
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).not.toBeNull();
-        expect(submitButton.componentInstance.disabled).toBe(false);
+        expect(submitButton.componentInstance.disabled()).toBe(false);
         submission.submitted = true;
     });
 
