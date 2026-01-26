@@ -84,7 +84,7 @@ public class DataExportExerciseCreationService {
 
     private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
-    // we define the field as optional to allow the application to start even if the apollon profile is not active
+    // we define the field as optional to allow the application to start even if Apollon PDF export is not enabled
     private final Optional<ModelingApollonApi> modelingApollonApi;
 
     private final ComplaintRepository complaintRepository;

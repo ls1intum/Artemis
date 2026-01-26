@@ -7,8 +7,9 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 
 /**
- * Condition to check if the Apollon module is enabled.
- * Based on this condition, Spring components concerning Apollon functionality can be enabled or disabled.
+ * Condition to check if Apollon PDF export is enabled.
+ * This only controls the PDF export functionality via the external Apollon conversion service.
+ * The modeling editor itself (using the Apollon library) is controlled by {@link ModelingEnabled}.
  */
 public class ApollonEnabled implements Condition {
 
