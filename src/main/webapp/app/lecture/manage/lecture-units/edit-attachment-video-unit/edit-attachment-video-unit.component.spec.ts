@@ -251,7 +251,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
                 },
             };
 
-            updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
+            updateAttachmentVideoUnitSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 200 })));
             attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
             fixture.detectChanges();
 
@@ -275,7 +275,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
                 fileProperties: {},
             };
 
-            updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
+            updateAttachmentVideoUnitSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 200 })));
             attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
             fixture.detectChanges();
 
@@ -305,7 +305,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
                 },
             };
 
-            updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
+            updateAttachmentVideoUnitSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 200 })));
             attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
             fixture.detectChanges();
 
