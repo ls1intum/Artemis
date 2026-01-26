@@ -1,14 +1,12 @@
 package de.tum.cit.aet.artemis.lti.web.admin;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
-
 import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -24,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.dto.LtiPlatformConfigurationUpdateDTO;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
@@ -38,7 +37,7 @@ import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 @RestController
 @EnforceAdmin
 @RequestMapping("api/lti/admin/")
-@Profile(PROFILE_LTI)
+@Conditional(LtiEnabled.class)
 public class AdminLtiConfigurationResource {
 
     private static final String ENTITY_NAME = "lti-platform";

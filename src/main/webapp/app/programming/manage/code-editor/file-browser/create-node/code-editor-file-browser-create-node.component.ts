@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, ViewChild, input, output } from '@angular/core';
 import { faFile, faFolder } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
@@ -19,10 +19,10 @@ export class CodeEditorFileBrowserCreateNodeComponent implements AfterViewInit {
 
     @ViewChild('creatingInput', { static: false }) creatingInput: ElementRef;
 
-    @Input() createFileType: FileType;
-    @Input() folder: string;
-    @Output() onCreateFile = new EventEmitter<string>();
-    @Output() onClearCreatingFile = new EventEmitter<Event>();
+    createFileType = input.required<FileType>();
+    folder = input.required<string>();
+    onCreateFile = output<string>();
+    onClearCreatingFile = output<Event>();
 
     createFile(event: any) {
         if (!event.target.value) {

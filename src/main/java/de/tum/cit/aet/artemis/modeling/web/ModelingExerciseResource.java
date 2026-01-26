@@ -70,6 +70,7 @@ import de.tum.cit.aet.artemis.modeling.dto.UpdateModelingExerciseDTO;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseImportService;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseService;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 
 /**
  * REST controller for managing ModelingExercise.
@@ -182,6 +183,8 @@ public class ModelingExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(modelingExercise);
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+        // Validate plagiarism detection config
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(modelingExercise, ENTITY_NAME);
 
         // Extract competency links before first save - they require the exercise ID which doesn't exist yet
         var competencyLinks = exerciseService.extractCompetencyLinksForCreation(modelingExercise);
@@ -274,6 +277,9 @@ public class ModelingExerciseResource {
         updatedExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedExercise, originalExercise, ENTITY_NAME);
+
+        // Validate plagiarism detection config
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(updatedExercise, ENTITY_NAME);
 
         channelService.updateExerciseChannel(originalExercise, updatedExercise);
 
@@ -417,6 +423,8 @@ public class ModelingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalModelingExercise, user);
         // validates general settings: points, dates
         importedExercise.validateGeneralSettings();
+        // Validate plagiarism detection config
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(importedExercise, ENTITY_NAME);
 
         final var newModelingExercise = modelingExerciseImportService.importModelingExercise(originalModelingExercise, importedExercise);
         modelingExerciseRepository.save(newModelingExercise);

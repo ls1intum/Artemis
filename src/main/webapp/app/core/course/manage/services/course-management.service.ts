@@ -109,7 +109,7 @@ export class CourseManagementService {
 
     findAllOnlineCoursesWithRegistrationId(clientId: string): Observable<OnlineCourseDtoModel[]> {
         const params = new HttpParams().set('clientId', '' + clientId);
-        return this.http.get<OnlineCourseDtoModel[]>(`${this.resourceUrl}/for-lti-dashboard`, { params });
+        return this.http.get<OnlineCourseDtoModel[]>('api/lti/courses/for-lti-dashboard', { params });
     }
 
     /**

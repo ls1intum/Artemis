@@ -9,7 +9,7 @@ import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled, unsetCourseIcon } from 'app/core/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
-import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATLAS, PROFILE_ATHENA, PROFILE_LTI } from 'app/app.constants';
+import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI, PROFILE_ATHENA } from 'app/app.constants';
 import { ImageComponent } from 'app/shared/image/image.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import dayjs from 'dayjs/esm';
@@ -190,7 +190,7 @@ export class CourseUpdateComponent implements OnInit {
             }
         }
         this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
-        this.ltiEnabled = this.profileService.isProfileActive(PROFILE_LTI);
+        this.ltiEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI);
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
 
         this.communicationEnabled = isCommunicationEnabled(this.course);

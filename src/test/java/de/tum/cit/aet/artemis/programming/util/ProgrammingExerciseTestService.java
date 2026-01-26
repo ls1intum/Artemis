@@ -11,6 +11,7 @@ import static de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExpo
 import static de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService.EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -39,6 +40,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.zip.ZipFile;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -1652,6 +1654,8 @@ public class ProgrammingExerciseTestService {
         // Also check that the file has some content (at least 1000 bytes) to ensure it's not empty/corrupted
         await().atMost(30, TimeUnit.SECONDS).until(() -> zipFile.exists() && zipFile.length() > 1000);
         assertThat(zipFile).isNotNull();
+        waitForZipFileToBeCompleteElseFail(zipFile);
+
         String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
         String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
         // delete the files to not only make a test pass because a previous test run succeeded
@@ -1692,6 +1696,40 @@ public class ProgrammingExerciseTestService {
         FileUtils.delete(zipFile);
     }
 
+    /**
+     * Waits for a zip file to be fully written to disk by validating its structure.
+     * <b>This is critical for slow CI environments where the file might exist but still be in the process of being written.</b>
+     * The method validates the ZIP by attempting to open it, which checks for the End of Central Directory Record (EOCD)
+     * that is written last in ZIP files.
+     *
+     * @param zipFile the zip file to wait for
+     * @throws InterruptedException if the thread is interrupted while waiting
+     */
+    private void waitForZipFileToBeCompleteElseFail(File zipFile) throws InterruptedException {
+        final int maxAttempts = 20;
+        final int waitTimeMs = 500;
+
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            if (!zipFile.exists()) {
+                log.debug("Zip file does not exist yet, waiting... (attempt {}/{})", attempt, maxAttempts);
+                Thread.sleep(waitTimeMs);
+                continue;
+            }
+
+            // Try to open the ZIP file - this validates the complete structure including EOCD
+            try (var ignored = new ZipFile(zipFile)) {
+                log.info("Zip file is valid and complete after {} attempts (size: {} bytes)", attempt, zipFile.length());
+                return;
+            }
+            catch (IOException exception) {
+                log.debug("Zip file not yet valid (attempt {}/{}): {}", attempt, maxAttempts, exception.getMessage());
+                Thread.sleep(waitTimeMs);
+            }
+        }
+
+        fail("Zip file is not complete after " + maxAttempts + " attempts (final size: " + zipFile.length() + " bytes)");
+    }
+
     public void exportProgrammingExerciseInstructorMaterial_withTeamConfig() throws Exception {
         TeamAssignmentConfig teamAssignmentConfig = new TeamAssignmentConfig();
         teamAssignmentConfig.setExercise(exercise);
@@ -1705,6 +1743,8 @@ public class ProgrammingExerciseTestService {
         // Assure, that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
         await().until(zipFile::exists);
         assertThat(zipFile).isNotNull();
+
+        waitForZipFileToBeCompleteElseFail(zipFile);
 
         // Recursively unzip the exported file, to make sure there is no erroneous content
         Path extractedZipDir = zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
@@ -1731,6 +1771,7 @@ public class ProgrammingExerciseTestService {
         // Also check that the file has some content (at least 1000 bytes) to ensure it's not empty/corrupted
         await().atMost(30, TimeUnit.SECONDS).until(() -> zipFile.exists() && zipFile.length() > 1000);
         assertThat(zipFile).isNotNull();
+        waitForZipFileToBeCompleteElseFail(zipFile);
         Path extractedZipDir = zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
 
         // Check that the contents we created exist in the unzipped exported folder
@@ -1819,6 +1860,16 @@ public class ProgrammingExerciseTestService {
         createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
         createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
         createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
+
+        // Verify that the exercise has proper repository URIs before export
+        // This helps diagnose issues when exports fail
+        verifyExerciseRepositoryUrisAreSet();
+
+        // Wait for repositories to be fully clonable (not just exist on disk)
+        // This prevents 503 errors caused by Git operations failing on repos that
+        // aren't fully ready for cloning on slow CI systems
+        waitForRepositoriesToBeClonable();
+
         var url = "/api/programming/programming-exercises/" + exercise.getId() + "/export-instructor-exercise";
         var zipFile = request.getFile(url, expectedStatus, new LinkedMultiValueMap<>());
         if (zipFile != null) {
@@ -1827,13 +1878,132 @@ public class ProgrammingExerciseTestService {
         return zipFile;
     }
 
+    /**
+     * Waits for all exercise repositories (template, solution, tests) to be fully ready for cloning.
+     * This addresses race conditions where Git clone operations fail with 503 errors because
+     * the repositories aren't fully flushed to disk yet.
+     */
+    private void waitForRepositoriesToBeClonable() {
+        var freshExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
+
+        // Wait for each repository to be clonable
+        waitForSingleRepositoryToBeClonable(freshExercise.getTemplateRepositoryUri(), "template");
+        waitForSingleRepositoryToBeClonable(freshExercise.getSolutionRepositoryUri(), "solution");
+        waitForSingleRepositoryToBeClonable(freshExercise.getTestRepositoryUri(), "test");
+    }
+
+    /**
+     * Waits for a single repository to be fully ready for cloning operations.
+     *
+     * @param repositoryUri the URI of the repository
+     * @param repoType      the type of repository (for logging)
+     */
+    private void waitForSingleRepositoryToBeClonable(String repositoryUri, String repoType) {
+        try {
+            var localVcUri = new de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri(repositoryUri);
+            Path repoPath = localVcUri.getLocalRepositoryPath(localVCBasePath);
+
+            await().atMost(15, TimeUnit.SECONDS).pollInterval(200, TimeUnit.MILLISECONDS).until(() -> {
+                try {
+                    // Verify the repository can be opened and has valid refs
+                    try (Git git = Git.open(repoPath.toFile())) {
+                        var repo = git.getRepository();
+                        // Check HEAD exists and is valid
+                        var headRef = repo.resolve("HEAD");
+                        if (headRef == null) {
+                            return false;
+                        }
+                        // Try to parse the commit to ensure it's valid
+                        try (var revWalk = new org.eclipse.jgit.revwalk.RevWalk(repo)) {
+                            revWalk.parseCommit(headRef);
+                        }
+                        // Check that the default branch exists
+                        var branches = git.branchList().call();
+                        if (branches.isEmpty()) {
+                            return false;
+                        }
+                        return true;
+                    }
+                }
+                catch (Exception e) {
+                    log.debug("Repository {} not ready yet: {}", repoType, e.getMessage());
+                    return false;
+                }
+            });
+            log.debug("Repository {} at {} is ready for cloning", repoType, repoPath);
+        }
+        catch (Exception e) {
+            log.warn("Timeout waiting for {} repository to be clonable: {}", repoType, e.getMessage());
+        }
+    }
+
+    /**
+     * Verifies that the exercise has all repository URIs properly set and that the
+     * corresponding LocalVC repositories exist on disk. This helps catch configuration
+     * issues early and provides clear error messages for debugging.
+     */
+    private void verifyExerciseRepositoryUrisAreSet() {
+        // Reload exercise to get the latest state from DB
+        var freshExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
+
+        // Check that repository URIs are set on the exercise
+        assertThat(freshExercise.getTemplateRepositoryUri()).as("Template repository URI should be set").isNotNull().isNotBlank();
+        assertThat(freshExercise.getSolutionRepositoryUri()).as("Solution repository URI should be set").isNotNull().isNotBlank();
+        assertThat(freshExercise.getTestRepositoryUri()).as("Test repository URI should be set").isNotNull().isNotBlank();
+
+        // Verify that the LocalVC bare repositories exist on disk
+        verifyLocalVcRepositoryExists(freshExercise.getTemplateRepositoryUri(), "template");
+        verifyLocalVcRepositoryExists(freshExercise.getSolutionRepositoryUri(), "solution");
+        verifyLocalVcRepositoryExists(freshExercise.getTestRepositoryUri(), "test");
+
+        log.info("All repository URIs verified for exercise {}: template={}, solution={}, test={}", freshExercise.getId(), freshExercise.getTemplateRepositoryUri(),
+                freshExercise.getSolutionRepositoryUri(), freshExercise.getTestRepositoryUri());
+    }
+
+    /**
+     * Verifies that a LocalVC repository exists at the path derived from the given URI.
+     *
+     * @param repositoryUri the repository URI
+     * @param repoType      the type of repository (for error messages)
+     */
+    private void verifyLocalVcRepositoryExists(String repositoryUri, String repoType) {
+        try {
+            var localVcUri = new de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri(repositoryUri);
+            Path repoPath = localVcUri.getLocalRepositoryPath(localVCBasePath);
+            assertThat(Files.exists(repoPath)).as("LocalVC %s repository should exist at %s", repoType, repoPath).isTrue();
+            assertThat(Files.exists(repoPath.resolve("HEAD"))).as("LocalVC %s repository should have HEAD file", repoType).isTrue();
+        }
+        catch (Exception e) {
+            fail("Failed to verify %s repository URI %s: %s", repoType, repositoryUri, e.getMessage());
+        }
+    }
+
     private void generateProgrammingExerciseWithProblemStatementNullForExport() {
         exercise.setProblemStatement(null);
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
-        exercise = programmingExerciseRepository.save(exercise);
+        // Use saveAndFlush to ensure data is committed before the HTTP request
+        exercise = programmingExerciseRepository.saveAndFlush(exercise);
         exercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
+
+        // Explicitly set the repository URIs to match where setupRepositoryMocks created the bare repos.
+        // This ensures consistency between the participation URIs and the actual repo locations.
+        String projectKey = exercise.getProjectKey();
+        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
+        String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
+        String testsRepositorySlug = projectKey.toLowerCase() + "-tests";
+
+        var templateParticipation = exercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, templateRepositorySlug));
+        templateProgrammingExerciseParticipationRepository.saveAndFlush(templateParticipation);
+
+        var solutionParticipation = exercise.getSolutionParticipation();
+        solutionParticipation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, solutionRepositorySlug));
+        solutionProgrammingExerciseParticipationRepository.saveAndFlush(solutionParticipation);
+
+        exercise.setTestRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, testsRepositorySlug));
+        exercise = programmingExerciseRepository.saveAndFlush(exercise);
     }
 
     private void generateProgrammingExerciseForExport() throws IOException {
@@ -1855,7 +2025,8 @@ public class ProgrammingExerciseTestService {
                     FilePathConverter.getMarkdownFilePath().resolve(embeddedFileName2).toFile());
         }
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
-        exercise = programmingExerciseRepository.save(exercise);
+        // Use saveAndFlush to ensure data is committed before the HTTP request
+        exercise = programmingExerciseRepository.saveAndFlush(exercise);
         if (shouldIncludeBuildPlan) {
             buildPlanRepository.setBuildPlanForExercise("my build plan", exercise);
         }
@@ -1863,6 +2034,23 @@ public class ProgrammingExerciseTestService {
         exercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
 
+        // Explicitly set the repository URIs to match where setupRepositoryMocks created the bare repos.
+        // This ensures consistency between the participation URIs and the actual repo locations.
+        String projectKey = exercise.getProjectKey();
+        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
+        String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
+        String testsRepositorySlug = projectKey.toLowerCase() + "-tests";
+
+        var templateParticipation = exercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, templateRepositorySlug));
+        templateProgrammingExerciseParticipationRepository.saveAndFlush(templateParticipation);
+
+        var solutionParticipation = exercise.getSolutionParticipation();
+        solutionParticipation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, solutionRepositorySlug));
+        solutionProgrammingExerciseParticipationRepository.saveAndFlush(solutionParticipation);
+
+        exercise.setTestRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, testsRepositorySlug));
+        exercise = programmingExerciseRepository.saveAndFlush(exercise);
     }
 
     private void setupMockRepo(LocalRepository localRepo, RepositoryType repoType, String fileName) throws GitAPIException, IOException {
@@ -1892,6 +2080,9 @@ public class ProgrammingExerciseTestService {
         createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
         createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
         createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
+
+        // Verify that repository URIs are properly set before triggering archive
+        verifyExerciseRepositoryUrisAreSet();
 
         request.put("/api/core/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
         await().until(() -> courseRepository.findById(course.getId()).orElseThrow().getCourseArchivePath() != null);
@@ -1925,7 +2116,7 @@ public class ProgrammingExerciseTestService {
 
         course = courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
         List<String> errors = new ArrayList<>();
-        var optionalExportedCourse = courseExamExportService.exportCourse(course, courseArchivesDirPath, errors);
+        var optionalExportedCourse = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, errors, Collections.emptyMap());
         assertThat(optionalExportedCourse).isPresent();
 
         // Extract the archive
@@ -2035,6 +2226,44 @@ public class ProgrammingExerciseTestService {
         localRepository.workingCopyGitRepo.add().addFilepattern(file.getFileName().toString()).call();
         GitService.commit(localRepository.workingCopyGitRepo).setMessage("Added testfile").call();
         localRepository.workingCopyGitRepo.push().setRemote("origin").call();
+
+        // Wait for the bare repository to be fully ready for cloning
+        // This prevents race conditions on slow CI systems where the export service
+        // might try to clone the repo before it's fully written to disk
+        waitForBareRepositoryReady(localRepository);
+    }
+
+    /**
+     * Waits for a bare repository to be fully ready for cloning operations.
+     * This addresses flaky test failures caused by race conditions where the export service
+     * tries to clone a repository immediately after a push, but the repository files
+     * aren't fully flushed to disk yet on slow CI systems.
+     *
+     * @param localRepository the local repository whose bare repo should be verified
+     */
+    private void waitForBareRepositoryReady(LocalRepository localRepository) {
+        await().atMost(10, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+            try {
+                // Try to open the bare repository and resolve HEAD
+                // This verifies the repo is accessible and has a valid HEAD reference
+                try (Git git = Git.open(localRepository.remoteBareGitRepoFile)) {
+                    var headRef = git.getRepository().resolve("HEAD");
+                    if (headRef == null) {
+                        log.debug("Bare repository HEAD is null, waiting...");
+                        return false;
+                    }
+                    // Verify we can read the commit object
+                    try (var revWalk = new org.eclipse.jgit.revwalk.RevWalk(git.getRepository())) {
+                        revWalk.parseCommit(headRef);
+                    }
+                    return true;
+                }
+            }
+            catch (Exception e) {
+                log.debug("Bare repository not ready yet: {}", e.getMessage());
+                return false;
+            }
+        });
     }
 
     // Test
@@ -2449,6 +2678,57 @@ public class ProgrammingExerciseTestService {
 
         var result = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isCloseTo(exampleSolutionPublicationDate, within(1, ChronoUnit.MILLIS));
+    }
+
+    // TEST
+    public void createProgrammingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
+        exercise.setChannelName("test-programming-channel");
+
+        var config = new PlagiarismDetectionConfig();
+        config.setSimilarityThreshold(-1); // invalid: below 0
+        config.setMinimumScore(50);
+        config.setMinimumSize(50);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(7);
+        exercise.setPlagiarismDetectionConfig(config);
+
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+
+        // Test invalid minimumScore
+        config.setSimilarityThreshold(50);
+        config.setMinimumScore(101); // invalid: above 100
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+
+        // Test invalid minimumSize
+        config.setMinimumScore(50);
+        config.setMinimumSize(-1); // invalid: negative
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+
+        // Test invalid response period
+        config.setMinimumSize(50);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(32); // invalid: above 31
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    // TEST
+    public void updateProgrammingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
+        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
+        exercise = programmingExerciseRepository.save(exercise);
+
+        // Test updating with invalid plagiarism config
+        var config = new PlagiarismDetectionConfig();
+        config.setSimilarityThreshold(101); // invalid: above 100
+        config.setMinimumScore(50);
+        config.setMinimumSize(50);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(7);
+        exercise.setPlagiarismDetectionConfig(config);
+
+        request.putWithResponseBody("/api/programming/programming-exercises", exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+
+        // Test invalid response period lower bound
+        config.setSimilarityThreshold(50);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(6); // invalid: below 7
+        request.putWithResponseBody("/api/programming/programming-exercises", exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     // TEST
