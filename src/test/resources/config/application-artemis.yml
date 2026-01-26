@@ -69,6 +69,7 @@ artemis:
         url: http://iris.fake
         secret-token: secret-token
     apollon:
+        enabled: true # Set to true to enable Apollon PDF conversion for modeling diagrams
         conversion-service-url: http://localhost:8080
     telemetry:
         enabled: false
