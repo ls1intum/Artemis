@@ -3,20 +3,11 @@ package de.tum.cit.aet.artemis.core.config.weaviate;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
-
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
  * Tests for Weaviate configuration properties
  */
-@SpringBootTest
-@EnableConfigurationProperties(WeaviateConfigurationProperties.class)
-@TestPropertySource(properties = { "artemis.weaviate.enabled=true", "artemis.weaviate.host=test-host", "artemis.weaviate.port=9999", "artemis.weaviate.grpc-port=60051",
-        "artemis.weaviate.secure=true", "artemis.weaviate.scheme=https" })
-class WeaviateConfigurationPropertiesTest extends AbstractSpringIntegrationIndependentTest {
+class WeaviateConfigurationPropertiesTest {
 
     @Test
     void testConfigurationProperties() {
