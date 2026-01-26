@@ -64,7 +64,7 @@ export class ButtonComponent {
     /** You might need to set d-flex as well when using the button */
     fullWidth = input<boolean>(false);
     // Fa-icon name.
-    icon = input<IconProp | null>(null);
+    icon = input<IconProp | undefined>(undefined);
     // Translation placeholders, will be translated in the component.
     title = input<string>('');
     tooltip = input<string>('');
