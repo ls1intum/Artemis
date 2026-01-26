@@ -8,11 +8,11 @@ import urllib3
 import random
 import string
 from logging_config import logging
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Tuple
 from requests import Session
 
 
-def sanitize_exercise_name(exercise_name: str, short_name_index: int) -> str:
+def __sanitize_exercise_name(exercise_name: str, short_name_index: int) -> str:
     """
     Sanitizes the exercise name to create a valid short name.
 
@@ -28,7 +28,7 @@ def sanitize_exercise_name(exercise_name: str, short_name_index: int) -> str:
         valid_short_name = f"A{valid_short_name}"
     return f"{valid_short_name}{short_name_index}"
 
-def read_problem_statement(file_path: str) -> str:
+def __read_problem_statement(file_path: str) -> str:
     """
     Reads a markdown file and returns its content as a single string.
 
@@ -98,7 +98,7 @@ def convert_variant_to_zip(variant_path: str, course_id: int) -> bool:
     # Overwrite problem statement, exercise ID, course ID, title and shortName in the config file
     problem_statement_file_path = os.path.join(variant_path, "problem-statement.md")
     if os.path.exists(problem_statement_file_path):
-        problem_statement_content = read_problem_statement(problem_statement_file_path)
+        problem_statement_content = __read_problem_statement(problem_statement_file_path)
 
     config_file_path = os.path.join(variant_path, config_file)
     try:
@@ -123,7 +123,7 @@ def convert_variant_to_zip(variant_path: str, course_id: int) -> bool:
             exercise_name = exercise_details.get('title', 'Untitled')
             exercise_details['title'] = f"{variant_id} - {exercise_details.get('title', 'Untitled')}"
 
-            exercise_details['shortName'] = sanitize_exercise_name(exercise_name, int(variant_id))
+            exercise_details['shortName'] = __sanitize_exercise_name(exercise_name, int(variant_id))
             exercise_details["projectKey"] = f"{variant_id}{course_name}{exercise_details['shortName']}"
 
 
@@ -165,6 +165,48 @@ def convert_variant_to_zip(variant_path: str, course_id: int) -> bool:
             os.remove(temp_zip)
             logging.info(f"Removed temporary zip file: {os.path.basename(temp_zip)}")
     return True
+
+def process_single_variant_import(session: requests.Session,
+                                    server_url: str,
+                                    course_id: int,
+                                    exercise_name: str,
+                                    variant_id: str,
+                                    variant_id_path: str) -> Tuple[str, int]:
+    """
+    Worker function to zip and import a single variant.
+
+    :param requests.Session session: The authenticated session
+    :param str server_url: The server URL
+    :param int course_id: The course ID
+    :param str exercise_name: The name of the exercise
+    :param str variant_id: The variant ID
+    :param str variant_id_path: The path to the variant directory
+    :return: A tuple containing the exercise key and the exercise ID (or None on failure)
+    :rtype: Tuple[str, int]
+    """
+
+    dict_key = f"{exercise_name}:{variant_id}"
+
+    zip_created = convert_variant_to_zip(variant_id_path, course_id)
+    if not zip_created:
+        logging.error(f"Failed to create zip for {dict_key}. Skipping import.")
+        return (dict_key, None)
+
+    try:
+        response_data = import_programming_exercise_request(session = session,
+                                    course_id = course_id,
+                                    server_url = server_url,
+                                    variant_folder_path = variant_id_path
+                                    )
+        exercise_id = response_data.get("id") if response_data else None
+        if exercise_id is not None:
+            return (dict_key, exercise_id)
+        else:
+            logging.error(f"Failed to import programming exercise for {dict_key}. Moving to next variant.")
+            return (dict_key, None)
+    except Exception as e:
+        logging.exception(f"Exception during import of {dict_key}: {e}")
+        return (dict_key, None)
 
 def import_programming_exercise_request(session: Session, course_id: int, server_url: str, variant_folder_path: str) -> requests.Response:
     """
@@ -297,16 +339,15 @@ def consistency_check_variant_io(session: Session, server_url: str, exercise_var
         logging.exception(f"Failed to write file for {exercise_variant_local_id}: {e}")
         return f"[{exercise_variant_local_id}] error"
 
-def convert_base_exercise_to_zip(exercise_path: str, course_id: int) -> str:
+def convert_base_exercise_to_zip(exercise_path: str, course_id: int) -> None:
     """
     Converts a base programming exercise (no variants) into a ZIP file using a random unique ID.
     """
-    random_id = ''.join(random.choices(string.digits, k=3))
-
+    base_name = os.path.basename(exercise_path)
     repo_types: List[str] = ["solution", "template", "tests"]
     config_file: str = "exercise-details.json"
-    variant_id = random_id
-    exercise_zip_filename = f"{variant_id}-FullExercise.zip"
+    variant_id = 0
+    exercise_zip_filename = f"{base_name}-FullExercise.zip"
     exercise_zip_path = os.path.join(exercise_path, exercise_zip_filename)
 
     logging.info(f"Final zip file: {exercise_zip_filename} will be created at {exercise_zip_path}")
@@ -329,7 +370,7 @@ def convert_base_exercise_to_zip(exercise_path: str, course_id: int) -> str:
     problem_statement_file_path = os.path.join(exercise_path, "problem-statement.md")
     problem_statement_content = None
     if os.path.exists(problem_statement_file_path):
-        problem_statement_content = read_problem_statement(problem_statement_file_path)
+        problem_statement_content = __read_problem_statement(problem_statement_file_path)
 
     config_file_path = os.path.join(exercise_path, config_file)
     try:
@@ -344,7 +385,7 @@ def convert_base_exercise_to_zip(exercise_path: str, course_id: int) -> str:
                 course_name = exercise_details['course'].get('shortName', '')
             exercise_name = exercise_details.get('title', 'Untitled')
             exercise_details['title'] = f"{variant_id} - {exercise_name}"
-            exercise_details['shortName'] = sanitize_exercise_name(exercise_name, int(variant_id))
+            exercise_details['shortName'] = __sanitize_exercise_name(exercise_name, int(variant_id))
             exercise_details["projectKey"] = f"{variant_id}{course_name}{exercise_details['shortName']}"
         with open(config_file_path, 'w') as cf:
             json.dump(exercise_details, cf, indent=4)
@@ -367,5 +408,3 @@ def convert_base_exercise_to_zip(exercise_path: str, course_id: int) -> str:
     for temp_zip in zip_files:
         if temp_zip.endswith('.zip') and os.path.exists(temp_zip):
             os.remove(temp_zip)
-
-    return random_id

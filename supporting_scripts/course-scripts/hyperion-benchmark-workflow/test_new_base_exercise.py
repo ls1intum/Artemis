@@ -6,9 +6,16 @@ import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from logging_config import logging
 
-from manage_pecv_bench_course import get_pecv_bench_course_id_request, login_as_admin
+from manage_pecv_bench_course import create_pecv_bench_course_request, get_pecv_bench_course_id_request, login_as_admin
 from manage_programming_exercise import convert_base_exercise_to_zip, import_programming_exercise_request
 from utils import COURSE_EXERCISES, PECV_BENCH_REPO_URL, clone_pecv_bench, get_pecv_bench_dir, login_as_admin, SERVER_URL
+
+def create_empty_pecv_bench_course() -> None:
+    logging.info("Creating empty PECV Bench Course TEST")
+    session = requests.Session()
+    login_as_admin(session)
+    create_pecv_bench_course_request(session)
+
 
 def test_new_base_exercise():
     """
@@ -33,7 +40,7 @@ def test_new_base_exercise():
 
     # 3. Setup PECV-Bench Path
     pecv_bench_dir: str = get_pecv_bench_dir()
-    #clone_pecv_bench(PECV_BENCH_REPO_URL, pecv_bench_dir)
+    clone_pecv_bench(PECV_BENCH_REPO_URL, pecv_bench_dir)
 
     # Iterate through courses and exercises to create base zips
     for course_short_name, exercises in COURSE_EXERCISES.items():
@@ -49,4 +56,6 @@ def test_new_base_exercise():
     logging.info("Add New Exercises Script completed.")
 
 if __name__ == "__main__":
+    # create_empty_pecv_bench_course()  # Uncomment to create an empty PECV Bench Course for testing
+
     test_new_base_exercise()

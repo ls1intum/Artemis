@@ -154,10 +154,15 @@ def install_pecv_bench_dependencies(project_path: str) -> None:
 
     logging.info(f"Installing dependencies for pecv-bench from {project_path}...")
     try:
+        # Pydantic-core/PyO3 build fails on Python 3.14 without this flag
+        # as it thinks 3.14 is too new. We force it to use the stable ABI.
+        env = os.environ.copy()
+        env["PYO3_USE_ABI3_FORWARD_COMPATIBILITY"] = "1"
         subprocess.run(
             [sys.executable, "-m", "pip", "install", "-e", "."],
             check=True,
-            cwd=project_path
+            cwd=project_path,
+            env=env
         )
         logging.info("Successfully installed pecv-bench dependencies.")
     except subprocess.CalledProcessError as e:

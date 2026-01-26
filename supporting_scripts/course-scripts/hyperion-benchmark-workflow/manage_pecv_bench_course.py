@@ -10,7 +10,8 @@ import time
 from logging_config import logging
 from requests import Session
 from typing import Dict, Any, Union, List
-from utils import COURSE_EXERCISES, MAX_THREADS, PECV_BENCH_REPO_URL, SERVER_URL, clone_pecv_bench, create_exercise_variants, get_pecv_bench_dir, install_pecv_bench_dependencies, login_as_admin, process_single_variant_import
+from utils import COURSE_EXERCISES, MAX_THREADS, PECV_BENCH_REPO_URL, SERVER_URL, clone_pecv_bench, create_exercise_variants, get_pecv_bench_dir, install_pecv_bench_dependencies, login_as_admin
+from manage_programming_exercise import process_single_variant_import
 
 """
 DISCLAIMER: Execution Context Sensitivity
@@ -272,7 +273,7 @@ def __transform_exercise_json_keys(input_dict: Dict[str, int]) -> Dict[str, int]
     return transformed_dict
 
 
-def setup_pecv_bench_course():
+def setup_pecv_bench_course(session: Session) -> str:
     """
     Sets up the PECV-Bench environment and imports programming exercises.
 
@@ -285,7 +286,6 @@ def setup_pecv_bench_course():
 
     """
     logging.info("Starting PECV-Bench Course Setup Script...")
-    session = requests.Session()
     login_as_admin(session)
 
     # Clone pecv-bench repository
@@ -355,11 +355,5 @@ def setup_pecv_bench_course():
             except Exception as e:
                 logging.exception(f"Thread failed with error: {e}")
                 return
-
     logging.info(f"Imported {len(programming_exercises)} programming exercises into course ID {course_id}.")
-
-if __name__ == "__main__":
-    """
-    Main entry point for setting up the PECV-Bench course and importing programming exercises.
-    """
-    setup_pecv_bench_course()
+    return pecv_bench_dir
