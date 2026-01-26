@@ -56,7 +56,7 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
     createAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData): void {
         const { name, videoSource, description, releaseDate, competencyLinks } = attachmentVideoUnitFormData?.formProperties || {};
         const { file, fileName } = attachmentVideoUnitFormData?.fileProperties || {};
-        const { videoFile, videoFileName } = attachmentVideoUnitFormData.videoFileProperties ?? {};
+        const { videoFile, videoFileName } = attachmentVideoUnitFormData?.videoFileProperties ?? {};
 
         const lectureId = this.lectureId();
         if (!name || lectureId === undefined || (!(file && fileName) && !(videoFile && videoFileName) && !videoSource)) {

@@ -154,7 +154,6 @@ describe('AttachmentVideoUnitComponent', () => {
         ['odf', faFilePen],
         ['exotic', faFile],
     ])('should use correct icon for extension %s', async (extension: string, icon: IconDefinition) => {
-        const getAttachmentIconSpy = vi.spyOn(component, 'getAttachmentIcon');
         component.lectureUnit().attachment!.link = `/path/to/file/test.${extension}`;
         fixture.detectChanges();
 
@@ -432,7 +431,7 @@ describe('AttachmentVideoUnitComponent', () => {
             fixture.componentRef.setInput('lectureUnit', videoUnit);
             fixture.detectChanges();
 
-            expect(component.isUploadedVideoFile()).toBeTrue();
+            expect(component.isUploadedVideoFile()).toBe(true);
         });
 
         it('should not detect non-video file as video', () => {
@@ -451,7 +450,7 @@ describe('AttachmentVideoUnitComponent', () => {
             fixture.componentRef.setInput('lectureUnit', pdfUnit);
             fixture.detectChanges();
 
-            expect(component.isUploadedVideoFile()).toBeFalse();
+            expect(component.isUploadedVideoFile()).toBe(false);
         });
 
         it('should compute video URL for uploaded video file', () => {
@@ -514,7 +513,7 @@ describe('AttachmentVideoUnitComponent', () => {
                 fixture.componentRef.setInput('lectureUnit', videoUnit);
                 fixture.detectChanges();
 
-                expect(component.isUploadedVideoFile()).toBeTrue();
+                expect(component.isUploadedVideoFile()).toBe(true);
             });
         });
 
@@ -542,7 +541,7 @@ describe('AttachmentVideoUnitComponent', () => {
 
         it('should fall back to embedded source when no video file', () => {
             // Mock urlParser to recognize the YouTube URL
-            jest.spyOn(urlParser, 'parse').mockReturnValue({
+            vi.spyOn(urlParser, 'parse').mockReturnValue({
                 provider: 'youtube',
                 id: 'test',
                 mediaType: 'video',

@@ -612,7 +612,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
      */
     private MockMultipartFile createVideoFile(String filename, String contentType) {
         byte[] videoContent = "fake video content".getBytes();
-        return new MockMultipartFile("file", filename, contentType, videoContent);
+        return new MockMultipartFile("videoFile", filename, contentType, videoContent);
     }
 
     @Test

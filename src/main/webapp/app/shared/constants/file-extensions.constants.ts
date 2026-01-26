@@ -48,6 +48,7 @@ export const UPLOAD_FILE_EXTENSIONS = [
 /**
  * Video file extensions that are allowed to be uploaded.
  * Extensions must be lower-case without leading dots.
+ * NOTE: Has to be kept in sync with the server-side definitions in FileUtil.java
  */
 export const VIDEO_FILE_EXTENSIONS = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'flv', 'wmv', 'm4v'];
 

@@ -143,7 +143,7 @@ describe('CreateAttachmentVideoUnitComponent', () => {
     });
 
     describe('video file upload', () => {
-        it('should include video file in FormData when provided', fakeAsync(() => {
+        it('should include video file in FormData when provided', async () => {
             const router: Router = TestBed.inject(Router);
             const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
 
@@ -174,23 +174,22 @@ describe('CreateAttachmentVideoUnitComponent', () => {
                 status: 201,
             });
 
-            const createSpy = jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(attachmentVideoUnitResponse));
-            const navigateSpy = jest.spyOn(router, 'navigate');
+            const createSpy = vi.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(attachmentVideoUnitResponse));
+            const navigateSpy = vi.spyOn(router, 'navigate');
 
             createAttachmentVideoUnitComponentFixture.detectChanges();
 
             const attachmentVideoUnitFormComponent = createAttachmentVideoUnitComponentFixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
             attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
 
-            createAttachmentVideoUnitComponentFixture.whenStable().then(() => {
-                expect(createSpy).toHaveBeenCalledOnce();
-                const formDataArg = createSpy.mock.calls[0][0] as FormData;
-                expect(formDataArg.get('videoFile')).toBeTruthy();
-                expect(navigateSpy).toHaveBeenCalledOnce();
-            });
-        }));
+            await createAttachmentVideoUnitComponentFixture.whenStable();
+            expect(createSpy).toHaveBeenCalledOnce();
+            const formDataArg = createSpy.mock.calls[0][0] as FormData;
+            expect(formDataArg.get('videoFile')).toBeTruthy();
+            expect(navigateSpy).toHaveBeenCalledOnce();
+        });
 
-        it('should not include video file in FormData when not provided', fakeAsync(() => {
+        it('should not include video file in FormData when not provided', async () => {
             const router: Router = TestBed.inject(Router);
             const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
 
@@ -216,23 +215,22 @@ describe('CreateAttachmentVideoUnitComponent', () => {
                 status: 201,
             });
 
-            const createSpy = jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(attachmentVideoUnitResponse));
-            const navigateSpy = jest.spyOn(router, 'navigate');
+            const createSpy = vi.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(attachmentVideoUnitResponse));
+            const navigateSpy = vi.spyOn(router, 'navigate');
 
             createAttachmentVideoUnitComponentFixture.detectChanges();
 
             const attachmentVideoUnitFormComponent = createAttachmentVideoUnitComponentFixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
             attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
 
-            createAttachmentVideoUnitComponentFixture.whenStable().then(() => {
-                expect(createSpy).toHaveBeenCalledOnce();
-                const formDataArg = createSpy.mock.calls[0][0] as FormData;
-                expect(formDataArg.get('videoFile')).toBeNull();
-                expect(navigateSpy).toHaveBeenCalledOnce();
-            });
-        }));
+            await createAttachmentVideoUnitComponentFixture.whenStable();
+            expect(createSpy).toHaveBeenCalledOnce();
+            const formDataArg = createSpy.mock.calls[0][0] as FormData;
+            expect(formDataArg.get('videoFile')).toBeNull();
+            expect(navigateSpy).toHaveBeenCalledOnce();
+        });
 
-        it('should not include video file if videoFileName is missing', fakeAsync(() => {
+        it('should not include video file if videoFileName is missing', async () => {
             const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
 
             const pdfFile = new File(['pdf content'], 'Test-File.pdf', { type: 'application/pdf' });
@@ -261,19 +259,18 @@ describe('CreateAttachmentVideoUnitComponent', () => {
                 status: 201,
             });
 
-            const createSpy = jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(attachmentVideoUnitResponse));
+            const createSpy = vi.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(attachmentVideoUnitResponse));
 
             createAttachmentVideoUnitComponentFixture.detectChanges();
 
             const attachmentVideoUnitFormComponent = createAttachmentVideoUnitComponentFixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
             attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
 
-            createAttachmentVideoUnitComponentFixture.whenStable().then(() => {
-                expect(createSpy).toHaveBeenCalledOnce();
-                const formDataArg = createSpy.mock.calls[0][0] as FormData;
-                // videoFile should not be included because videoFileName is missing
-                expect(formDataArg.get('videoFile')).toBeNull();
-            });
-        }));
+            await createAttachmentVideoUnitComponentFixture.whenStable();
+            expect(createSpy).toHaveBeenCalledOnce();
+            const formDataArg = createSpy.mock.calls[0][0] as FormData;
+            // videoFile should not be included because videoFileName is missing
+            expect(formDataArg.get('videoFile')).toBeNull();
+        });
     });
 });

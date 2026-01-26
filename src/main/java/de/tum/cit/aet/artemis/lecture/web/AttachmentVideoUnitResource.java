@@ -160,9 +160,7 @@ public class AttachmentVideoUnitResource {
         FileUtil.validateFileSizeWithVideoLimit(videoFile, maxVideoFileSize);
 
         // Check if video upload is enabled when a video file is being uploaded
-        if (videoFile != null && videoFile.getOriginalFilename() != null && FileUtil.isVideoFile(videoFile.getOriginalFilename()) && !moduleFeatureService.isVideoUploadEnabled()) {
-            throw new BadRequestAlertException("Video file upload is not enabled on this server", ENTITY_NAME, "videoUploadDisabled");
-        }
+        validateVideoUploadEnabled(videoFile);
 
         AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.updateAttachmentVideoUnit(existingAttachmentVideoUnit, attachmentVideoUnit, attachment, file,
                 videoFile, keepFilename, hiddenPages, pageOrder);
@@ -212,9 +210,7 @@ public class AttachmentVideoUnitResource {
         FileUtil.validateFileSizeWithVideoLimit(videoFile, maxVideoFileSize);
 
         // Check if video upload is enabled when a video file is being uploaded
-        if (videoFile != null && videoFile.getOriginalFilename() != null && FileUtil.isVideoFile(videoFile.getOriginalFilename()) && !moduleFeatureService.isVideoUploadEnabled()) {
-            throw new BadRequestAlertException("Video file upload is not enabled on this server", ENTITY_NAME, "videoUploadDisabled");
-        }
+        validateVideoUploadEnabled(videoFile);
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
@@ -443,5 +439,17 @@ public class AttachmentVideoUnitResource {
             }
         }
         return true;
+    }
+
+    /**
+     * Validates that video file upload is enabled when a video file is being uploaded.
+     *
+     * @param videoFile the video file to validate
+     */
+    private void validateVideoUploadEnabled(MultipartFile videoFile) {
+        if (videoFile != null && videoFile.getOriginalFilename() != null && VideoFileUtil.isVideoFile(videoFile.getOriginalFilename())
+                && !moduleFeatureService.isVideoUploadEnabled()) {
+            throw new BadRequestAlertException("Video file upload is not enabled on this server", ENTITY_NAME, "videoUploadDisabled");
+        }
     }
 }
