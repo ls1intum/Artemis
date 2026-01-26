@@ -564,23 +564,28 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     private formatSummary(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
-        const summary = parsed.summary?.trim() ?? '';
-        const keyword = parsed.keyword?.trim() ?? '';
-        const lectureInfoParts: string[] = [];
+        const fallbackKeyword = parsed.type === 'F' ? 'FAQ' : 'Source';
+        const keywordValue = this.escapeHtml(parsed.keyword?.trim() || fallbackKeyword);
+        const summaryValue = parsed.summary?.trim() ? this.escapeHtml(parsed.summary!.trim()) : '';
+        const lines: string[] = [];
+
         if (parsed.type === 'L') {
-            lectureInfoParts.push(`Lecture: ${meta?.lectureTitle ?? 'n/a'}`);
-            lectureInfoParts.push(`Unit: ${meta?.lectureUnitTitle ?? 'n/a'}`);
+            lines.push(keywordValue);
+            if (summaryValue) {
+                lines.push(summaryValue);
+            }
+            const lectureTitle = this.escapeHtml(meta?.lectureTitle?.trim() ?? 'n/a');
+            const unitTitle = this.escapeHtml(meta?.lectureUnitTitle?.trim() ?? 'n/a');
+            lines.push(`Lecture: "${lectureTitle}"`);
+            lines.push(`Unit: "${unitTitle}"`);
+        } else {
+            lines.push(keywordValue);
+            if (summaryValue) {
+                lines.push(summaryValue);
+            }
         }
-        const summaryParts: string[] = [];
-        if (lectureInfoParts.length > 0) {
-            summaryParts.push(lectureInfoParts.join(' · '));
-        }
-        if (summary && keyword) {
-            summaryParts.push(`${keyword}: ${summary}`);
-        } else if (summary || keyword) {
-            summaryParts.push(summary || keyword);
-        }
-        return this.escapeHtml(summaryParts.join(' · '));
+
+        return lines.filter(Boolean).join('<br />');
     }
 
     private resolveCitationTypeClass(parsed: IrisCitationParsed): string {
