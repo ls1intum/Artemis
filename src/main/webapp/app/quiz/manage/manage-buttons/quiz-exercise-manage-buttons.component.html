@@ -91,8 +91,8 @@
                 entitySummaryTitle="artemisApp.exercise.delete.summary.title"
                 [fetchEntitySummary]="fetchExerciseDeletionSummary(quizExercise().id!)"
                 [translateValues]="{
-                    courseTitle: course().title,
-                    courseType: course().testCourse ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate) : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
+                    courseTitle: course()?.title,
+                    courseType: course()?.testCourse ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate) : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
                 }"
                 (delete)="deleteQuizExercise()"
                 [dialogError]="dialogError$"

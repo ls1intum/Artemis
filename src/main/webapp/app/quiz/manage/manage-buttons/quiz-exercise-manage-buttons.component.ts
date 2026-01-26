@@ -1,8 +1,8 @@
-import { Component, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnInit, computed, inject, input, output } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -15,12 +15,12 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 @Component({
     selector: 'jhi-quiz-exercise-manage-buttons',
     templateUrl: './quiz-exercise-manage-buttons.component.html',
-    imports: [RouterLink, FaIconComponent, TranslateDirective, ButtonComponent, DeleteButtonDirective, ArtemisTranslatePipe],
+    imports: [FaIconComponent, TranslateDirective, ButtonComponent, DeleteButtonDirective, ArtemisTranslatePipe],
 })
 export class QuizExerciseManageButtonsComponent implements OnInit {
     private quizExerciseService = inject(QuizExerciseService);
@@ -57,7 +57,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     isDetailPage = input(false);
 
     quizExercise = input.required<QuizExercise>();
-    course = input.required<Course>();
+    course = computed(() => getCourseFromExercise(this.quizExercise()));
 
     loadQuizExercises = output<void>();
 
@@ -99,7 +99,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
                 });
                 this.dialogErrorSource.next('');
                 if (this.isDetailPage()) {
-                    this.router.navigate(['course-management', this.quizExercise().course!.id, 'exercises']);
+                    this.router.navigate(['course-management', this.course()?.id, 'exercises']);
                 }
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),

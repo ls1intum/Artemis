@@ -7,7 +7,7 @@
                     <jhi-documentation-button [type]="documentationType" />
                 </div>
                 <hr />
-                <jhi-quiz-exercise-manage-buttons [quizExercise]="quizExercise" [course]="quizExercise.course!" [isDetailPage]="true" (loadQuizExercises)="load()" />
+                <jhi-quiz-exercise-manage-buttons [quizExercise]="quizExercise" [isDetailPage]="true" (loadQuizExercises)="load()" />
                 <hr />
                 @if (!isExamMode) {
                     <jhi-quiz-exercise-lifecycle-buttons [quizExercise]="quizExercise" (loadOne)="load()" (handleNewQuizExercise)="load()" />
