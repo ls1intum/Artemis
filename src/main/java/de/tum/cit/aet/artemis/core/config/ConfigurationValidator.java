@@ -13,14 +13,12 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import de.tum.cit.aet.artemis.core.config.weaviate.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.core.exception.ConflictingPasskeyConfigurationException;
 import de.tum.cit.aet.artemis.core.exception.InvalidAdminConfigurationException;
 import de.tum.cit.aet.artemis.core.exception.WeaviateConfigurationException;
@@ -40,7 +38,6 @@ import de.tum.cit.aet.artemis.core.exception.WeaviateConfigurationException;
 @Component
 @Profile(PROFILE_CORE)
 @Lazy(false)
-@EnableConfigurationProperties(WeaviateConfigurationProperties.class)
 public class ConfigurationValidator {
 
     private static final Logger log = LoggerFactory.getLogger(ConfigurationValidator.class);
@@ -59,12 +56,20 @@ public class ConfigurationValidator {
 
     private final String internalAdminPassword;
 
-    private final WeaviateConfigurationProperties weaviateProperties;
+    private final boolean weaviateEnabled;
+
+    private final String weaviateHost;
+
+    private final int weaviatePort;
+
+    private final int weaviateGrpcPort;
 
     public ConfigurationValidator(Environment environment,
             @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures,
             @Value("${artemis.user-management.internal-admin.username:#{null}}") String internalAdminUsername,
-            @Value("${artemis.user-management.internal-admin.password:#{null}}") String internalAdminPassword, WeaviateConfigurationProperties weaviateProperties) {
+            @Value("${artemis.user-management.internal-admin.password:#{null}}") String internalAdminPassword, @Value("${artemis.weaviate.enabled:false}") boolean weaviateEnabled,
+            @Value("${artemis.weaviate.host:#{null}}") String weaviateHost, @Value("${artemis.weaviate.port:8080}") int weaviatePort,
+            @Value("${artemis.weaviate.grpc-port:50051}") int weaviateGrpcPort) {
         this.environment = environment;
         this.artemisConfigHelper = new ArtemisConfigHelper();
         this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
@@ -72,7 +77,10 @@ public class ConfigurationValidator {
         this.internalAdminUsername = internalAdminUsername;
         this.internalAdminPassword = internalAdminPassword;
 
-        this.weaviateProperties = weaviateProperties;
+        this.weaviateEnabled = weaviateEnabled;
+        this.weaviateHost = weaviateHost;
+        this.weaviatePort = weaviatePort;
+        this.weaviateGrpcPort = weaviateGrpcPort;
     }
 
     /**
@@ -169,21 +177,21 @@ public class ConfigurationValidator {
      * Throws a {@link WeaviateConfigurationException} if required properties are missing or invalid.
      */
     private void validateWeaviateConfiguration() {
-        if (!weaviateProperties.isEnabled()) {
+        if (!weaviateEnabled) {
             return;
         }
 
         List<String> invalidProperties = new ArrayList<>();
 
-        if (weaviateProperties.getHost() == null || weaviateProperties.getHost().isBlank()) {
+        if (weaviateHost == null || weaviateHost.isBlank()) {
             invalidProperties.add("artemis.weaviate.host (must not be empty)");
         }
 
-        if (!isValidPort(weaviateProperties.getPort())) {
+        if (!isValidPort(weaviatePort)) {
             invalidProperties.add("artemis.weaviate.port (must be between " + MIN_PORT + " and " + MAX_PORT + ")");
         }
 
-        if (!isValidPort(weaviateProperties.getGrpcPort())) {
+        if (!isValidPort(weaviateGrpcPort)) {
             invalidProperties.add("artemis.weaviate.grpc-port (must be between " + MIN_PORT + " and " + MAX_PORT + ")");
         }
 
@@ -194,8 +202,7 @@ public class ConfigurationValidator {
             throw new WeaviateConfigurationException(errorMessage, invalidProperties);
         }
 
-        log.info("Weaviate is enabled and configured with host: {}:{} (gRPC port: {})", weaviateProperties.getHost(), weaviateProperties.getPort(),
-                weaviateProperties.getGrpcPort());
+        log.info("Weaviate is enabled and configured with host: {}:{} (gRPC port: {})", weaviateHost, weaviatePort, weaviateGrpcPort);
     }
 
     private boolean isValidPort(int port) {
