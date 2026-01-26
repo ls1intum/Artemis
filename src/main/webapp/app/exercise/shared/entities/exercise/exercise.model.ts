@@ -302,5 +302,5 @@ export function hasDueDatePassed(exercise: Exercise): boolean {
  * @return array of competencies linked to the exercise, empty array if none
  */
 export function getExerciseCompetencies(exercise: Exercise): CourseCompetency[] {
-    return exercise.competencyLinks?.map((link) => link.competency).filter((competency): competency is CourseCompetency => competency !== undefined) ?? [];
+    return exercise.competencyLinks?.map((link) => link.competency).filter((competency): competency is CourseCompetency => competency != null) ?? [];
 }

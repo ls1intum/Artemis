@@ -255,7 +255,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.shortBaseResource = `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
             this.teamBaseResource =
                 `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}` +
-                `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/exercises/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
+                `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/exercises/${exerciseId}/`;
         }
 
         this.templateAndSolutionParticipationSubscription = this.programmingExerciseService
