@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.core.config.weaviate;
 
+import static de.tum.cit.aet.artemis.core.config.ConfigurationValidator.HTTPS_SCHEME;
+import static de.tum.cit.aet.artemis.core.config.ConfigurationValidator.HTTP_SCHEME;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -20,10 +23,6 @@ public record WeaviateConfigurationProperties(boolean enabled, String host, int 
     private static final int DEFAULT_HTTP_PORT = 8080;
 
     private static final int DEFAULT_GRPC_PORT = 50051;
-
-    private static final String HTTP_SCHEME = "http";
-
-    private static final String HTTPS_SCHEME = "https";
 
     /**
      * Creates a new WeaviateConfigurationProperties with default values.

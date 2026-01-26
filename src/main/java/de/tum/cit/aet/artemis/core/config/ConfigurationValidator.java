@@ -46,9 +46,9 @@ public class ConfigurationValidator {
 
     private static final int MAX_PORT = 65535;
 
-    private static final String HTTP_SCHEME = "http";
+    public static final String HTTP_SCHEME = "http";
 
-    private static final String HTTPS_SCHEME = "https";
+    public static final String HTTPS_SCHEME = "https";
 
     private final Environment environment;
 
