@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
@@ -199,7 +200,10 @@ public class TextExerciseCreationUpdateResource {
         // Check that the user is authorized to update the exercise
         var user = userRepository.getUserWithGroupsAndAuthorities();
         // Important: use the original exercise for permission check and as the base for updates
-        final TextExercise textExerciseBeforeUpdate = textExerciseRepository.findWithEagerCompetenciesAndCategoriesByIdElseThrow(textExerciseDTO.id());
+        // Must fetch plagiarismDetectionConfig to validate it without LazyInitializationException
+        final TextExercise textExerciseBeforeUpdate = textExerciseRepository
+                .findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(textExerciseDTO.id())
+                .orElseThrow(() -> new EntityNotFoundException("TextExercise", textExerciseDTO.id()));
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExerciseBeforeUpdate, user);
 
         // Validate courseId and exerciseGroupId exclusivity from the DTO
