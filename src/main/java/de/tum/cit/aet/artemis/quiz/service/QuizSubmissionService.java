@@ -136,6 +136,8 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         quizSubmission.setSubmissionDate(ZonedDateTime.now());
         // calculate scores
         quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
+        // Set participation BEFORE saving (participation_id is NOT NULL)
+        quizSubmission.setParticipation(participation);
         // save parent submission object
         quizSubmission = quizSubmissionRepository.save(quizSubmission);
 
@@ -145,15 +147,14 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         result.setRated(false);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setCompletionDate(ZonedDateTime.now());
+        result.setCorrectionRound(0);
+        // setup result - submission relation before saving (submission_id is NOT NULL)
+        result.setSubmission(quizSubmission);
         // save result
         result = resultRepository.save(result);
-
-        // setup result - submission relation
-        result.setSubmission(quizSubmission);
         // calculate score and update result accordingly
         result.evaluateQuizSubmission(quizExercise);
         quizSubmission.addResult(result);
-        quizSubmission.setParticipation(participation);
 
         // save submission to set result index column
         quizSubmissionRepository.save(quizSubmission);
@@ -208,6 +209,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             result.setAssessmentType(AssessmentType.AUTOMATIC);
             result.setCompletionDate(quizSubmission.getSubmissionDate());
             result.setSubmission(quizSubmission);
+            result.setCorrectionRound(0);
 
             quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
             result.evaluateQuizSubmission(quizExercise);
@@ -215,7 +217,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             quizSubmissionRepository.save(quizSubmission);
             resultRepository.save(result);
             studentParticipationRepository.save(participation);
-            quizSubmission.setResults(List.of(result));
+            quizSubmission.setResults(Set.of(result));
 
             sendQuizResultToUser(quizExerciseId, participation);
         });

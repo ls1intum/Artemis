@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
@@ -112,7 +113,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testCreateTestExam_asInstructor() throws Exception {
         // Test the creation of a test exam
         Exam examA = ExamFactory.generateTestExam(course1);
-        URI examUri = request.post("/api/exam/courses/" + course1.getId() + "/exams", examA, HttpStatus.CREATED);
+        URI examUri = request.post("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(examA), HttpStatus.CREATED);
         Exam savedExam = request.get(String.valueOf(examUri), HttpStatus.OK, Exam.class);
 
         verify(examAccessService).checkCourseAccessForInstructorElseThrow(course1.getId());
@@ -126,7 +127,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // Test the creation of a test exam, where visibleDate equals StartDate
         Exam examB = ExamFactory.generateTestExam(course1);
         examB.setVisibleDate(examB.getStartDate());
-        request.post("/api/exam/courses/" + course1.getId() + "/exams", examB, HttpStatus.CREATED);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(examB), HttpStatus.CREATED);
 
         verify(examAccessService).checkCourseAccessForInstructorElseThrow(course1.getId());
     }
@@ -137,7 +138,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // Test for bad request, where workingTime is greater than difference between StartDate and EndDate
         Exam examC = ExamFactory.generateTestExam(course1);
         examC.setWorkingTime(5000);
-        request.post("/api/exam/courses/" + course1.getId() + "/exams", examC, HttpStatus.BAD_REQUEST);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(examC), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -146,7 +147,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // Test for bad request, if the working time is 0
         Exam examD = ExamFactory.generateTestExam(course1);
         examD.setWorkingTime(0);
-        request.post("/api/exam/courses/" + course1.getId() + "/exams", examD, HttpStatus.BAD_REQUEST);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(examD), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -155,7 +156,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // Test for bad request if the attendance check is turned on
         Exam examD = ExamFactory.generateTestExam(course1);
         examD.setExamWithAttendanceCheck(true);
-        request.post("/api/exam/courses/" + course1.getId() + "/exams", examD, HttpStatus.BAD_REQUEST);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(examD), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -163,7 +164,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testCreateTestExam_asInstructor_testExam_CorrectionRoundViolation() throws Exception {
         Exam exam = ExamFactory.generateTestExam(course1);
         exam.setNumberOfCorrectionRoundsInExam(1);
-        request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -171,10 +172,10 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testCreateTestExam_asInstructor_realExam_CorrectionRoundViolation() throws Exception {
         Exam exam = ExamFactory.generateExam(course1);
         exam.setNumberOfCorrectionRoundsInExam(0);
-        request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.BAD_REQUEST);
 
         exam.setNumberOfCorrectionRoundsInExam(3);
-        request.post("/api/exam/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -183,20 +184,20 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // The Exam-Mode should not be changeable with a PUT / update operation, a CONFLICT should be returned instead
         // Case 1: test exam should be updated to real exam
         Exam examA = ExamFactory.generateTestExam(course1);
-        Exam createdExamA = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", examA, Exam.class, HttpStatus.CREATED);
+        Exam createdExamA = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(examA), Exam.class, HttpStatus.CREATED);
         createdExamA.setNumberOfCorrectionRoundsInExam(1);
         createdExamA.setTestExam(false);
-        request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", createdExamA, Exam.class, HttpStatus.CONFLICT);
+        request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(createdExamA), Exam.class, HttpStatus.CONFLICT);
 
         // Case 2: real exam should be updated to test exam
         Exam examB = ExamFactory.generateTestExam(course1);
         examB.setNumberOfCorrectionRoundsInExam(1);
         examB.setTestExam(false);
         examB.setChannelName("examB");
-        Exam createdExamB = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", examB, Exam.class, HttpStatus.CREATED);
+        Exam createdExamB = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(examB), Exam.class, HttpStatus.CREATED);
         createdExamB.setTestExam(true);
         createdExamB.setNumberOfCorrectionRoundsInExam(0);
-        request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", createdExamB, Exam.class, HttpStatus.CONFLICT);
+        request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(createdExamB), Exam.class, HttpStatus.CONFLICT);
     }
 
     @Test

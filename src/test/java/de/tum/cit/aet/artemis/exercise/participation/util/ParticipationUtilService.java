@@ -15,6 +15,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -33,7 +34,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.ExampleParticipation;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
@@ -42,7 +43,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
-import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.ExampleParticipationTestRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -141,7 +142,7 @@ public class ParticipationUtilService {
     private ProgrammingSubmissionTestRepository programmingSubmissionRepo;
 
     @Autowired
-    private ExampleSubmissionTestRepository exampleSubmissionRepo;
+    private ExampleParticipationTestRepository exampleParticipationRepo;
 
     @Autowired
     private ParticipationService participationService;
@@ -453,9 +454,14 @@ public class ParticipationUtilService {
      * @return The created Result
      */
     public Result addResultToSubmission(AssessmentType assessmentType, ZonedDateTime completionDate, Submission submission, String assessorLogin, List<Feedback> feedbacks) {
-        Result result = new Result().submission(submission).assessmentType(assessmentType).completionDate(completionDate).feedbacks(feedbacks);
+        Result result = new Result().submission(submission).assessmentType(assessmentType).completionDate(completionDate);
         result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
         result.setExerciseId(submission.getParticipation().getExercise().getId());
+        // Set result reference on each feedback before save (feedback.result_id is NOT NULL)
+        for (Feedback feedback : feedbacks) {
+            feedback.setResult(result);
+        }
+        result.setFeedbacks(new HashSet<>(feedbacks));
         return resultRepo.save(result);
     }
 
@@ -483,8 +489,8 @@ public class ParticipationUtilService {
      * @return The updated Result
      */
     public Result addSampleFeedbackToResults(Result result) {
-        Feedback feedback1 = feedbackRepo.save(new Feedback().detailText("detail1"));
-        Feedback feedback2 = feedbackRepo.save(new Feedback().detailText("detail2"));
+        Feedback feedback1 = new Feedback().detailText("detail1");
+        Feedback feedback2 = new Feedback().detailText("detail2");
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(feedback1);
         feedbacks.add(feedback2);
@@ -502,12 +508,12 @@ public class ParticipationUtilService {
     // @formatter:off
     public Result addVariousFeedbackTypeFeedbacksToResult(Result result) {
         // The order of declaration here should be the same order as in FeedbackType for each enum type
-        List<Feedback> feedbacks = feedbackRepo.saveAll(Arrays.asList(
+        List<Feedback> feedbacks = Arrays.asList(
             new Feedback().detailText("manual").type(FeedbackType.MANUAL),
             new Feedback().detailText("manual_unreferenced").type(FeedbackType.MANUAL_UNREFERENCED),
             new Feedback().detailText("automatic_adapted").type(FeedbackType.AUTOMATIC_ADAPTED),
             new Feedback().detailText("automatic").type(FeedbackType.AUTOMATIC)
-        ));
+        );
 
         result.addFeedbacks(feedbacks);
         return resultRepo.save(result);
@@ -521,11 +527,11 @@ public class ParticipationUtilService {
      * @return The updated Result
      */
     public Result addVariousVisibilityFeedbackToResult(Result result) {
-        List<Feedback> feedbacks = feedbackRepo.saveAll(Arrays.asList(
+        List<Feedback> feedbacks = Arrays.asList(
             new Feedback().detailText("afterDueDate1").visibility(Visibility.AFTER_DUE_DATE),
             new Feedback().detailText("never1").visibility(Visibility.NEVER),
             new Feedback().detailText("always1").visibility(Visibility.ALWAYS)
-        ));
+        );
 
         result.addFeedbacks(feedbacks);
         return resultRepo.save(result);
@@ -533,28 +539,30 @@ public class ParticipationUtilService {
     // @formatter:on
 
     /**
-     * Saves the given Feedback and adds it to the given Result.
+     * Adds the given Feedback to the given Result and saves.
+     * Reloads the result from the database first to ensure we have the latest version
+     * with properly managed feedbacks.
      *
-     * @param feedback The Feedback to save
+     * @param feedback The Feedback to add
      * @param result   The Result the Feedback belongs to
-     * @return The updated Result
+     * @return The updated Result with the feedback properly saved
      */
     public Result addFeedbackToResult(Feedback feedback, Result result) {
-        feedbackRepo.save(feedback);
-        result.addFeedback(feedback);
-        return resultRepo.save(result);
+        // Reload result from database to get fresh managed entity with existing feedbacks
+        Result managedResult = resultRepo.findByIdWithEagerFeedbacks(result.getId()).orElse(result);
+        managedResult.addFeedback(feedback);
+        return resultRepo.save(managedResult);
     }
 
     /**
-     * Creates and saves 5 SCA Feedbacks (1p each) and 3 Feedbacks (2p, 1p and -1p) for the given Result.
+     * Creates 5 SCA Feedbacks (1p each) and 3 Feedbacks (2p, 1p and -1p) for the given Result.
      *
      * @param result The Result the Feedbacks belong to
      * @return The updated Result
      */
     public Result addFeedbackToResults(Result result) {
-        List<Feedback> feedback = ParticipationFactory.generateStaticCodeAnalysisFeedbackList(5);
+        List<Feedback> feedback = new ArrayList<>(ParticipationFactory.generateStaticCodeAnalysisFeedbackList(5));
         feedback.addAll(ParticipationFactory.generateFeedback());
-        feedback = feedbackRepo.saveAll(feedback);
         result.addFeedbacks(feedback);
         return resultRepo.save(result);
     }
@@ -576,10 +584,19 @@ public class ParticipationUtilService {
 
     public Submission addResultToSubmission(final Submission submission, AssessmentType assessmentType, User user, Double score, boolean rated, ZonedDateTime completionDate,
             long exerciseId) {
+        return addResultToSubmission(submission, assessmentType, user, score, rated, completionDate, exerciseId, 0);
+    }
+
+    public Submission addResultToSubmission(final Submission submission, AssessmentType assessmentType, User user, Double score, boolean rated, ZonedDateTime completionDate,
+            long exerciseId, int correctionRound) {
         Result result = new Result().submission(submission).assessmentType(assessmentType).score(score).rated(rated).completionDate(completionDate);
         result.setAssessor(user);
         result.setSubmission(submission);
         result.setExerciseId(exerciseId);
+        // Set correction round for manual and semi-automatic assessments
+        if (assessmentType == AssessmentType.MANUAL || assessmentType == AssessmentType.SEMI_AUTOMATIC) {
+            result.setCorrectionRound(correctionRound);
+        }
         result = resultRepo.save(result);
         submission.addResult(result);
         var savedSubmission = submissionRepository.save(submission);
@@ -625,6 +642,21 @@ public class ParticipationUtilService {
      */
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, User user, Double score, boolean rated) {
         return addResultToSubmission(submission, assessmentType, user, score, rated, ZonedDateTime.now());
+    }
+
+    /**
+     * Creates and saves a Result for the given Submission with the specified correction round. The Result's completionDate is set to now.
+     *
+     * @param submission      The Submission the Result belongs to
+     * @param assessmentType  The AssessmentType of the Result
+     * @param user            The assessor of the Result
+     * @param score           The score of the Result
+     * @param rated           True, if the Result is rated
+     * @param correctionRound The correction round for the Result
+     * @return The updated Submission with eagerly loaded results and assessor
+     */
+    public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, User user, Double score, boolean rated, int correctionRound) {
+        return addResultToSubmission(submission, assessmentType, user, score, rated, ZonedDateTime.now(), submission.getParticipation().getExercise().getId(), correctionRound);
     }
 
     /**
@@ -765,13 +797,37 @@ public class ParticipationUtilService {
 
     public Submission addSubmissionWithTwoFinishedResultsWithAssessor(Exercise exercise, Submission submission, String login, String assessorLogin) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
-        submission = addSubmissionWithFinishedResultsWithAssessor(participation, submission, assessorLogin);
-        submission = addSubmissionWithFinishedResultsWithAssessor(participation, submission, assessorLogin);
+        submission = addSubmissionWithFinishedResultsWithAssessor(participation, submission, assessorLogin, 0);
+        submission = addSubmissionWithFinishedResultsWithAssessor(participation, submission, assessorLogin, 1);
         return submission;
     }
 
     /**
      * Creates and saves a Result. Updates the Submission by adding the result to it and updates the StudentParticipation by adding the result to it.
+     *
+     * @param participation   The StudentParticipation the Result belongs to
+     * @param submission      The Submission the Result belongs to
+     * @param assessorLogin   The login of the assessor of the Result
+     * @param correctionRound The correction round for the Result (for exam exercises with multiple correction rounds)
+     * @return The updated Submission
+     */
+    public Submission addSubmissionWithFinishedResultsWithAssessor(StudentParticipation participation, Submission submission, String assessorLogin, int correctionRound) {
+        Result result = new Result();
+        result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
+        result.setCompletionDate(ZonedDateTime.now());
+        result.setSubmission(submission);
+        result.setExerciseId(participation.getExercise().getId());
+        result.setCorrectionRound(correctionRound);
+        submission.setParticipation(participation);
+        submission.addResult(result);
+        submission = saveSubmissionToRepo(submission);
+        studentParticipationRepo.save(participation);
+        return submission;
+    }
+
+    /**
+     * Creates and saves a Result. Updates the Submission by adding the result to it and updates the StudentParticipation by adding the result to it.
+     * Uses correction round 0 by default.
      *
      * @param participation The StudentParticipation the Result belongs to
      * @param submission    The Submission the Result belongs to
@@ -779,16 +835,7 @@ public class ParticipationUtilService {
      * @return The updated Submission
      */
     public Submission addSubmissionWithFinishedResultsWithAssessor(StudentParticipation participation, Submission submission, String assessorLogin) {
-        Result result = new Result();
-        result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
-        result.setCompletionDate(ZonedDateTime.now());
-        result.setSubmission(submission);
-        result.setExerciseId(participation.getExercise().getId());
-        submission.setParticipation(participation);
-        submission.addResult(result);
-        submission = saveSubmissionToRepo(submission);
-        studentParticipationRepo.save(participation);
-        return submission;
+        return addSubmissionWithFinishedResultsWithAssessor(participation, submission, assessorLogin, 0);
     }
 
     /**
@@ -811,21 +858,25 @@ public class ParticipationUtilService {
     }
 
     /**
-     * Saves the given ExampleSubmission to the corresponding repository.
+     * Saves the given ExampleParticipation to the corresponding repository.
+     * Then saves the associated Submission (either modeling or text) to the corresponding repository.
      *
-     * @param exampleSubmission The ExampleSubmission to save
-     * @return The saved ExampleSubmission
+     * @param exampleParticipation The ExampleParticipation to save
+     * @return The saved ExampleParticipation
      */
-    public ExampleSubmission addExampleSubmission(ExampleSubmission exampleSubmission) {
-        Submission submission;
-        if (exampleSubmission.getSubmission() instanceof ModelingSubmission) {
-            submission = modelingSubmissionRepo.save((ModelingSubmission) exampleSubmission.getSubmission());
+    public ExampleParticipation saveExampleParticipation(ExampleParticipation exampleParticipation) {
+        exampleParticipation = exampleParticipationRepo.save(exampleParticipation);
+        Submission submission = exampleParticipation.getSubmission();
+        exampleParticipation.addSubmission(submission);
+        // Set participation BEFORE saving (participation_id is NOT NULL)
+        submission.setParticipation(exampleParticipation);
+        if (exampleParticipation.getSubmission() instanceof ModelingSubmission) {
+            modelingSubmissionRepo.save((ModelingSubmission) submission);
         }
         else {
-            submission = textSubmissionRepo.save((TextSubmission) exampleSubmission.getSubmission());
+            textSubmissionRepo.save((TextSubmission) submission);
         }
-        exampleSubmission.setSubmission(submission);
-        return exampleSubmissionRepo.save(exampleSubmission);
+        return exampleParticipation;
     }
 
     /**
@@ -841,39 +892,42 @@ public class ParticipationUtilService {
     }
 
     /**
-     * Generates an ExampleSubmission for a given model or Text and the corresponding Modeling- or TextExercise. Creates and saves a TextSubmission for the ExampleSubmission if
+     * Generates an ExampleParticipation for a given model or Text and the corresponding Modeling- or TextExercise. Creates and saves a TextSubmission for the ExampleParticipation
+     * if
      * the Exercise is a TextExercise.
      *
-     * @param modelOrText             The uml model or text for the ExampleSubmission
-     * @param exercise                The Exercise for which the ExampleSubmission is created
-     * @param flagAsExampleSubmission True, if the submission is an ExampleSubmission
-     * @return The generated ExampleSubmission
+     * @param modelOrText             The uml model or text for the ExampleParticipation
+     * @param exercise                The Exercise for which the ExampleParticipation is created
+     * @param flagAsExampleSubmission True, if the submission is an example submission
+     * @return The generated ExampleParticipation
      */
-    public ExampleSubmission generateExampleSubmission(String modelOrText, Exercise exercise, boolean flagAsExampleSubmission) {
-        return generateExampleSubmission(modelOrText, exercise, flagAsExampleSubmission, false);
+    public ExampleParticipation generateExampleParticipation(String modelOrText, Exercise exercise, boolean flagAsExampleSubmission) {
+        return generateExampleParticipation(modelOrText, exercise, flagAsExampleSubmission, false);
     }
 
     /**
-     * Generates an ExampleSubmission for a given model or Text and the corresponding Modeling- or TextExercise. Creates and saves a TextSubmission for the ExampleSubmission if
+     * Generates an ExampleParticipation for a given model or Text and the corresponding Modeling- or TextExercise. Creates and saves a TextSubmission for the ExampleParticipation
+     * if
      * the Exercise is a TextExercise.
      *
-     * @param modelOrText             The uml model for the ExampleSubmission
-     * @param exercise                The Exercise for which the ExampleSubmission is created
-     * @param flagAsExampleSubmission True, if the submission is an ExampleSubmission
-     * @param usedForTutorial         True, if the ExampleSubmission is used for a tutorial
-     * @return The generated ExampleSubmission
+     * @param modelOrText             The uml model for the ExampleParticipation
+     * @param exercise                The Exercise for which the ExampleParticipation is created
+     * @param flagAsExampleSubmission True, if the submission is an example submission
+     * @param usedForTutorial         True, if the ExampleParticipation is used for a tutorial
+     * @return The generated ExampleParticipation
      */
-    public ExampleSubmission generateExampleSubmission(String modelOrText, Exercise exercise, boolean flagAsExampleSubmission, boolean usedForTutorial) {
+    public ExampleParticipation generateExampleParticipation(String modelOrText, Exercise exercise, boolean flagAsExampleSubmission, boolean usedForTutorial) {
         Submission submission;
         if (exercise instanceof ModelingExercise) {
             submission = ParticipationFactory.generateModelingSubmission(modelOrText, false);
         }
         else {
+            // Don't save the submission here - it will be saved after associating with participation
+            // because participation_id is NOT NULL
             submission = ParticipationFactory.generateTextSubmission(modelOrText, Language.ENGLISH, false);
-            submission = saveSubmissionToRepo(submission);
         }
         submission.setExampleSubmission(flagAsExampleSubmission);
-        return ParticipationFactory.generateExampleSubmission(submission, exercise, usedForTutorial);
+        return ParticipationFactory.generateExampleParticipation(submission, exercise, usedForTutorial);
     }
 
     /**
@@ -887,8 +941,8 @@ public class ParticipationUtilService {
         assertThat(sentFeedback).as("contains the same amount of feedback").hasSize(storedFeedback.size());
         Result storedFeedbackResult = new Result();
         Result sentFeedbackResult = new Result();
-        storedFeedbackResult.setFeedbacks(storedFeedback);
-        sentFeedbackResult.setFeedbacks(sentFeedback);
+        storedFeedbackResult.setFeedbacks(new HashSet<>(storedFeedback));
+        sentFeedbackResult.setFeedbacks(new HashSet<>(sentFeedback));
 
         Course course = new Course();
         course.setAccuracyOfScores(1);
@@ -944,10 +998,13 @@ public class ParticipationUtilService {
         assertThat(exercise.getGradingCriteria()).allMatch(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions() != null);
 
         // add feedback which is associated with structured grading instructions
+        // Keep the reference to the instruction from exercise.getGradingCriteria() to maintain object identity
         GradingInstruction anyInstruction = GradingCriterionUtil.findAnyInstructionWhere(exercise.getGradingCriteria(), gradingInstruction -> true).orElseThrow();
         Feedback feedback = new Feedback();
         feedback.setGradingInstruction(anyInstruction);
-        addFeedbackToResult(feedback, result);
+        // Add feedback to result and save, maintaining object identity with grading instructions
+        result.addFeedback(feedback);
+        resultRepo.save(result);
 
         return studentParticipation;
     }

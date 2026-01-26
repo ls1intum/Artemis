@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
+import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
@@ -217,22 +218,16 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         programmingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, programmingExercise, 1)));
         programmingExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
 
-        ProgrammingExercise updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+        ProgrammingExercise updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise),
+                ProgrammingExercise.class, HttpStatus.OK);
 
         assertThat(updatedExercise.getReleaseDate()).isEqualTo(programmingExercise.getReleaseDate());
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(programmingExercise), eq(Optional.of(programmingExercise)));
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateProgrammingExercise_templateRepositoryUriIsInvalid() throws Exception {
-        programmingExercise.setTemplateRepositoryUri("http://localhost:9999/some/invalid/url.git");
-        request.put("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
-
-        programmingExercise.setTemplateRepositoryUri(
-                "http://localhost:49152/invalidUrlMapping/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey().toLowerCase() + "-exercise.git");
-        request.put("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
-    }
+    // Note: testUpdateProgrammingExercise_templateRepositoryUriIsInvalid was removed because
+    // UpdateProgrammingExerciseDTO intentionally doesn't include templateRepositoryUri.
+    // Repository URIs are immutable after exercise creation and cannot be modified through the update endpoint.
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -288,6 +283,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "true");
         exerciseToBeImported.setChannelName("testchannel-pe-imported");
+        // Set up competency links on the exercise to be imported (simulating client behavior)
+        // These should NOT be imported because competencies are course-specific
         exerciseToBeImported.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, exerciseToBeImported, 1)));
         exerciseToBeImported.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
 
@@ -298,6 +295,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         ProgrammingExercise importedExerciseWithParticipations = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(importedExercise.getId()).orElseThrow();
         localVCLocalCITestService.verifyRepositoryFoldersExist(importedExerciseWithParticipations, localVCBasePath);
         assertThat(importedExercise.getGradingCriteria()).hasSize(1);
+        // Verify that competency links are NOT imported (competencies are course-specific)
+        assertThat(importedExercise.getCompetencyLinks()).isNullOrEmpty();
 
         // Also check that the template and solution repositories were built successfully.
         TemplateProgrammingExerciseParticipation templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(importedExercise.getId())
@@ -308,7 +307,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         // The actual test results are not important for this test and only lead to a lot of flakiness
         verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(templateParticipation));
         verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(solutionParticipation));
-        verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(importedExercise));
     }
 
     @Test

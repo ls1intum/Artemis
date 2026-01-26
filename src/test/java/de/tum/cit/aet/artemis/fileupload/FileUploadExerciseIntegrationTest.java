@@ -276,9 +276,17 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
+
+        // Create a proper participation -> submission -> result -> feedback chain
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(fileUploadExercise, TEST_PREFIX + "student1");
+        FileUploadSubmission submission = ParticipationFactory.generateFileUploadSubmission(true);
+        submission = fileUploadExerciseUtilService.addFileUploadSubmission(fileUploadExercise, submission, TEST_PREFIX + "student1");
+        Result result = participationUtilService.addResultToSubmission(participation, submission);
+
         Feedback feedback = new Feedback();
         feedback.setGradingInstruction(GradingCriterionUtil.findAnyInstructionWhere(gradingCriteria, instruction -> true).orElseThrow());
-        feedbackRepository.save(feedback);
+        result.addFeedback(feedback);
+        resultRepository.save(result);
 
         conversationUtilService.addChannelToExercise(fileUploadExercise);
 
@@ -313,11 +321,47 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteFileUploadExerciseWithCompetency() throws Exception {
+        // Save the exercise first to get an ID (exercises from createFileUploadExercisesWithCourse are not persisted)
         fileUploadExercise = fileUploadExerciseRepository.save(fileUploadExercise);
-        competencyExerciseLinkRepository.save(new CompetencyExerciseLink(competency, fileUploadExercise, 1));
+        // Now add competency links and save again
+        fileUploadExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, fileUploadExercise, 1)));
+        fileUploadExercise = fileUploadExerciseRepository.save(fileUploadExercise);
         request.delete("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
 
         verify(competencyProgressApi).updateProgressByCompetencyAsync(eq(competency));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateFileUploadExerciseWithCompetency() throws Exception {
+        courseUtilService.enableMessagingForCourse(course);
+
+        // Create a new file upload exercise (not yet persisted)
+        FileUploadExercise newFileUploadExercise = new FileUploadExercise();
+        newFileUploadExercise.setCourse(course);
+        newFileUploadExercise.setTitle("New FileUpload Exercise With Competency");
+        newFileUploadExercise.setFilePattern(creationFilePattern);
+        newFileUploadExercise.setMaxPoints(10.0);
+        newFileUploadExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
+
+        // Set competency link on the exercise before creation
+        // Note: Set course to null on competency to avoid circular reference during JSON serialization
+        newFileUploadExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, newFileUploadExercise, 0.5)));
+        newFileUploadExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
+
+        // Create the exercise via POST request
+        FileUploadExercise createdExercise = request.postWithResponseBody("/api/fileupload/file-upload-exercises", newFileUploadExercise, FileUploadExercise.class,
+                HttpStatus.CREATED);
+
+        // Verify the exercise was created with the competency link
+        assertThat(createdExercise).isNotNull();
+        assertThat(createdExercise.getId()).isNotNull();
+        assertThat(createdExercise.getCompetencyLinks()).hasSize(1);
+
+        // Verify the competency link details
+        CompetencyExerciseLink link = createdExercise.getCompetencyLinks().iterator().next();
+        assertThat(link.getCompetency().getId()).isEqualTo(competency.getId());
+        assertThat(link.getWeight()).isEqualTo(0.5);
     }
 
     @Test
@@ -577,7 +621,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         assertThat(GradingCriterionUtil.findAnyInstructionWhere(gradingCriteria, instruction -> instruction.getId().equals(usedInstruction.getId())).orElseThrow().getCredits())
                 .isEqualTo(3);
         assertThat(updatedResults.getFirst().getScore()).isEqualTo(60);
-        assertThat(updatedResults.getFirst().getFeedbacks().getFirst().getCredits()).isEqualTo(3);
+        assertThat(updatedResults.getFirst().getFeedbacks().iterator().next().getCredits()).isEqualTo(3);
     }
 
     @Test

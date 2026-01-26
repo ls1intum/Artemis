@@ -551,31 +551,44 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestPendingSubmissionIfExists_student() throws Exception {
+        // Submission without result is pending and should be returned
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
-        request.get(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, ProgrammingSubmission.class);
+        ProgrammingSubmission returnedSubmission = request.get(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
+                ProgrammingSubmission.class);
+        assertThat(returnedSubmission.getId()).isEqualTo(submission.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetLatestPendingSubmissionIfExists_ta() throws Exception {
+        // Submission without result is pending and should be returned
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
-        request.get(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, ProgrammingSubmission.class);
+        ProgrammingSubmission returnedSubmission = request.get(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
+                ProgrammingSubmission.class);
+        assertThat(returnedSubmission.getId()).isEqualTo(submission.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetLatestPendingSubmissionIfExists_instructor() throws Exception {
+        // Submission without result is pending and should be returned
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
-        request.get(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK, ProgrammingSubmission.class);
+        ProgrammingSubmission returnedSubmission = request.get(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
+                ProgrammingSubmission.class);
+        assertThat(returnedSubmission.getId()).isEqualTo(submission.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetLatestPendingSubmission_notProgrammingParticipation() throws Exception {
+        // Create a text exercise to have a non-programming participation (exercise_id is NOT NULL)
+        var textExercise = textExerciseUtilService.createIndividualTextExercise(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), ZonedDateTime.now().minusDays(1),
+                ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2));
         StudentParticipation studentParticipation = new StudentParticipation();
+        studentParticipation.setExercise(textExercise);
         studentParticipation = participationRepository.save(studentParticipation);
         request.get(participationsBaseUrl + studentParticipation.getId() + "/latest-pending-submission", HttpStatus.NOT_FOUND, ProgrammingSubmission.class);
     }
@@ -583,47 +596,58 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestPendingSubmissionIfNotExists_student() throws Exception {
-        // Submission has a result, therefore not considered pending.
+        // Submission has a result, therefore not considered pending - endpoint returns null
+        ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
+        submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
 
         Result result = new Result();
         result.setExerciseId(programmingExercise.getId());
+        // Set submission before saving (submission_id is NOT NULL)
+        result.setSubmission(submission);
         result = resultRepository.save(result);
-        ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
-        submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
         submission.addResult(result);
         Submission returnedSubmission = request.getNullable(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
                 ProgrammingSubmission.class);
-        assertThat(returnedSubmission).isEqualTo(submission);
+        // No pending submission exists because it already has a result
+        assertThat(returnedSubmission).isNull();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetLatestPendingSubmissionIfNotExists_ta() throws Exception {
-        // Submission has a result, therefore not considered pending.
-        Result result = new Result();
-        result.setExerciseId(programmingExercise.getId());
-        result = resultRepository.save(result);
+        // Submission has a result, therefore not considered pending - endpoint returns null
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
+
+        Result result = new Result();
+        result.setExerciseId(programmingExercise.getId());
+        // Set submission before saving (submission_id is NOT NULL)
+        result.setSubmission(submission);
+        result = resultRepository.save(result);
         submission.addResult(result);
         Submission returnedSubmission = request.getNullable(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
                 ProgrammingSubmission.class);
-        assertThat(returnedSubmission).isEqualTo(submission);
+        // No pending submission exists because it already has a result
+        assertThat(returnedSubmission).isNull();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetLatestPendingSubmissionIfNotExists_instructor() throws Exception {
-        // Submission has a result, therefore not considered pending.
-        Result result = new Result();
-        result.setExerciseId(programmingExercise.getId());
-        result = resultRepository.save(result);
+        // Submission has a result, therefore not considered pending - endpoint returns null
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
+
+        Result result = new Result();
+        result.setExerciseId(programmingExercise.getId());
+        // Set submission before saving (submission_id is NOT NULL)
+        result.setSubmission(submission);
+        result = resultRepository.save(result);
         submission.addResult(result);
         Submission returnedSubmission = request.getNullable(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
                 ProgrammingSubmission.class);
-        assertThat(returnedSubmission).isEqualTo(submission);
+        // No pending submission exists because it already has a result
+        assertThat(returnedSubmission).isNull();
     }
 
     @Test

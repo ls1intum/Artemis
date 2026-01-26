@@ -30,8 +30,8 @@ public class TextExerciseImportApi extends AbstractTextApi {
         return textExerciseRepository.findUniqueWithCompetenciesByTitleAndCourseId(title, courseId);
     }
 
-    public TextExercise findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow(long exerciseId) {
-        return textExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow(exerciseId);
+    public TextExercise findWithTeamAssignmentConfigAndGradingCriteriaByIdElseThrow(long exerciseId) {
+        return textExerciseRepository.findWithTeamAssignmentConfigAndGradingCriteriaByIdElseThrow(exerciseId);
     }
 
     public TextExercise importTextExercise(final TextExercise templateExercise, TextExercise importedExercise) {
@@ -39,7 +39,7 @@ public class TextExerciseImportApi extends AbstractTextApi {
     }
 
     public Optional<TextExercise> importTextExercise(final long templateExerciseId, final TextExercise exerciseToCopy) {
-        final Optional<TextExercise> optionalOriginalTextExercise = textExerciseRepository.findWithExampleSubmissionsAndResultsById(templateExerciseId);
+        final Optional<TextExercise> optionalOriginalTextExercise = textExerciseRepository.findWithTeamAssignmentConfigById(templateExerciseId);
         return optionalOriginalTextExercise.map(textExercise -> textExerciseImportService.importTextExercise(textExercise, exerciseToCopy));
     }
 }

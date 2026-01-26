@@ -3,7 +3,9 @@ package de.tum.cit.aet.artemis.assessment.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -111,8 +113,10 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
         Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousFeedbackTypeFeedbacksToResult(result);
 
-        // The ordering should be the same as is declared in addVariousFeedbackTypeFeedbacksToResult()
-        assertThat(resultService.filterFeedbackForClient(result)).isEqualTo(result.getFeedbacks());
+        // The returned list should be sorted by FeedbackType enum order (MANUAL first, then AUTOMATIC last)
+        List<Feedback> expectedSortedFeedbacks = result.getFeedbacks().stream()
+                .sorted(Comparator.comparing(feedback -> Objects.requireNonNullElse(feedback.getType(), FeedbackType.AUTOMATIC))).toList();
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyElementsOf(expectedSortedFeedbacks);
     }
 
     @Test

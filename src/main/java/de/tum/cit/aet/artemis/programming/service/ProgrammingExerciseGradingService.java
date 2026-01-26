@@ -315,11 +315,9 @@ public class ProgrammingExerciseGradingService {
             }
         }
 
-        // Finally, save the new result once and make sure the order column between submission and result is maintained
-        // workaround to avoid scheduling the participant score update twice. The update will only run when a submission is present.
-        processedResult.setSubmission(null);
+        // Save the new result and then the submission to maintain the bidirectional relationship.
+        // Note: The ParticipantScoreScheduleService handles duplicate score update scheduling via deduplication.
         processedResult = resultRepository.save(processedResult);
-        processedResult.setSubmission(programmingSubmission);
         programmingSubmission.addResult(processedResult);
         programmingSubmissionRepository.save(programmingSubmission);
 
@@ -573,10 +571,10 @@ public class ProgrammingExerciseGradingService {
      * @param weightSum                  the sum of all weights of test cases that are visible
      */
     private record ScoreCalculationData(ProgrammingExercise exercise, Result result, Set<ProgrammingExerciseTestCase> testCases,
-            Set<ProgrammingExerciseTestCase> successfulTestCases, List<Feedback> staticCodeAnalysisFeedback, double weightSum) {
+            Set<ProgrammingExerciseTestCase> successfulTestCases, Set<Feedback> staticCodeAnalysisFeedback, double weightSum) {
 
         ScoreCalculationData(ProgrammingExercise exercise, Result result, Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> successfulTestCases,
-                List<Feedback> staticCodeAnalysisFeedback) {
+                Set<Feedback> staticCodeAnalysisFeedback) {
             this(exercise, result, testCases, successfulTestCases, staticCodeAnalysisFeedback, calculateWeightSum(testCases));
         }
 
@@ -602,7 +600,7 @@ public class ProgrammingExerciseGradingService {
     private Result calculateScoreForResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> relevantTestCases, @NonNull Result result,
             ProgrammingExercise exercise, boolean applySubmissionPolicy) {
         List<Feedback> automaticFeedbacks = result.getFeedbacks().stream().filter(feedback -> FeedbackType.AUTOMATIC.equals(feedback.getType())).toList();
-        List<Feedback> staticCodeAnalysisFeedback = new ArrayList<>();
+        Set<Feedback> staticCodeAnalysisFeedback = new HashSet<>();
         List<Feedback> testCaseFeedback = new ArrayList<>();
 
         for (Feedback automaticFeedback : automaticFeedbacks) {
@@ -671,7 +669,7 @@ public class ProgrammingExerciseGradingService {
      * @param exercise                   to which the result belongs to.
      * @param staticCodeAnalysisFeedback that has been created for this result.
      */
-    private void addFeedbackTestsNotExecuted(final Result result, final ProgrammingExercise exercise, final List<Feedback> staticCodeAnalysisFeedback) {
+    private void addFeedbackTestsNotExecuted(final Result result, final ProgrammingExercise exercise, final Set<Feedback> staticCodeAnalysisFeedback) {
         removeAllTestCaseFeedbackAndSetScoreToZero(result, staticCodeAnalysisFeedback);
 
         createFeedbacksForDuplicateTests(result, exercise);
@@ -835,7 +833,7 @@ public class ProgrammingExerciseGradingService {
      */
     private void setCreditsForTestCaseFeedback(double credits, final ProgrammingExerciseTestCase testCase, final Result result) {
         // We need to compare testcases ignoring the case, because the testcaseRepository is case-insensitive
-        result.getFeedbacks().stream().filter(fb -> FeedbackType.AUTOMATIC.equals(fb.getType()) && fb.getTestCase().equals(testCase)).findFirst()
+        result.getFeedbacks().stream().filter(fb -> FeedbackType.AUTOMATIC.equals(fb.getType()) && fb.getTestCase() != null && fb.getTestCase().equals(testCase)).findFirst()
                 .ifPresent(feedback -> feedback.setCredits(credits));
     }
 
@@ -898,11 +896,11 @@ public class ProgrammingExerciseGradingService {
      * Also updates the credits of each SCA feedback item as a side effect.
      * This allows other parts of Artemis a more simplified score calculation by just summing up all feedback points.
      *
-     * @param staticCodeAnalysisFeedback The list of static code analysis feedback
+     * @param staticCodeAnalysisFeedback The set of static code analysis feedback
      * @param programmingExercise        The current exercise
      * @return The sum of all penalties, capped at the maximum allowed penalty
      */
-    private double calculateStaticCodeAnalysisPenalty(final List<Feedback> staticCodeAnalysisFeedback, final ProgrammingExercise programmingExercise) {
+    private double calculateStaticCodeAnalysisPenalty(final Set<Feedback> staticCodeAnalysisFeedback, final ProgrammingExercise programmingExercise) {
         final var feedbackByCategory = staticCodeAnalysisFeedback.stream().collect(Collectors.groupingBy(Feedback::getStaticCodeAnalysisCategory));
         final double maxExercisePenaltyPoints = Objects.requireNonNullElse(programmingExercise.getMaxStaticCodeAnalysisPenalty(), 100) / 100.0 * programmingExercise.getMaxPoints();
         double overallPenaltyPoints = 0;
@@ -947,7 +945,7 @@ public class ProgrammingExerciseGradingService {
      * @param result                     Result containing all feedback
      * @param staticCodeAnalysisFeedback Static code analysis feedback to keep
      */
-    private void removeAllTestCaseFeedbackAndSetScoreToZero(Result result, List<Feedback> staticCodeAnalysisFeedback) {
+    private void removeAllTestCaseFeedbackAndSetScoreToZero(Result result, Set<Feedback> staticCodeAnalysisFeedback) {
         result.setFeedbacks(staticCodeAnalysisFeedback);
         result.setScore(0D);
         result.setTestCaseCount(0);
@@ -1030,7 +1028,7 @@ public class ProgrammingExerciseGradingService {
                         // The key in the resulting map is the category name
                         categoryName -> categoryName,
                         // The initial value for each key is 1, representing the first occurrence
-                        categoryName -> 1,
+                        _ -> 1,
                         // If the key already exists, sum the existing value with the new value (i.e., increment the count)
                         Integer::sum));
     }
@@ -1084,7 +1082,7 @@ public class ProgrammingExerciseGradingService {
                     // Update the entry for the test case in the testCaseStatsMap, incrementing the passed and failed counts
                     testCaseStatsMap.computeIfPresent(testName,
                             // Create a new TestCaseStats object with the updated counts and replace the existing entry
-                            (key, stats) -> new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(stats.numPassed() + (int) numPassed, stats.numFailed() + (int) numFailed));
+                            (_, stats) -> new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(stats.numPassed() + (int) numPassed, stats.numFailed() + (int) numFailed));
                 });
     }
 

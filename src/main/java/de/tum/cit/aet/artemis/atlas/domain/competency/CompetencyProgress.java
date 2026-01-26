@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.domain.competency;
 
-import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
@@ -42,7 +41,7 @@ public class CompetencyProgress implements Serializable {
      */
     @EmbeddedId
     @JsonIgnore
-    private CompetencyUserId id = new CompetencyUserId();
+    private CompetencyUserId id;
 
     @ManyToOne
     @MapsId("userId")
@@ -79,6 +78,7 @@ public class CompetencyProgress implements Serializable {
 
     public void setUser(User user) {
         this.user = user;
+        updateEmbeddedId();
     }
 
     public CourseCompetency getCompetency() {
@@ -87,6 +87,17 @@ public class CompetencyProgress implements Serializable {
 
     public void setCompetency(CourseCompetency competency) {
         this.competency = competency;
+        updateEmbeddedId();
+    }
+
+    /**
+     * Pre-populates the embedded ID to avoid Hibernate trying to derive it from associations
+     * which can cause cascade issues with detached entities.
+     */
+    private void updateEmbeddedId() {
+        if (this.user != null && this.user.getId() != null && this.competency != null && this.competency.getId() != null) {
+            this.id = new CompetencyUserId(this.user.getId(), this.competency.getId());
+        }
     }
 
     public Double getProgress() {
@@ -144,42 +155,7 @@ public class CompetencyProgress implements Serializable {
      * See also <a href="https://www.baeldung.com/spring-jpa-embedded-method-parameters">...</a>
      */
     @Embeddable
-    public static class CompetencyUserId implements Serializable {
+    public record CompetencyUserId(Long userId, Long competencyId) {
 
-        @Serial
-        private static final long serialVersionUID = 1L;
-
-        private Long userId;
-
-        private Long competencyId;
-
-        public CompetencyUserId() {
-            // Empty constructor for Spring
-        }
-
-        public CompetencyUserId(Long userId, Long competencyId) {
-            this.userId = userId;
-            this.competencyId = competencyId;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null || getClass() != obj.getClass()) {
-                return false;
-            }
-            CompetencyUserId that = (CompetencyUserId) obj;
-            if (userId == null || that.userId == null) {
-                return false;
-            }
-            return userId.equals(that.userId) && competencyId.equals(that.competencyId);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(userId, competencyId);
-        }
     }
 }

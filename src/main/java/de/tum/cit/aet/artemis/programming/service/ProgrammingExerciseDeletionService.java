@@ -18,6 +18,9 @@ import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
@@ -48,6 +51,10 @@ public class ProgrammingExerciseDeletionService {
 
     private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
+    private final ParticipationRepository participationRepository;
+
     private final BuildJobRepository buildJobRepository;
 
     private final ChannelRepository channelRepository;
@@ -59,14 +66,16 @@ public class ProgrammingExerciseDeletionService {
     public ProgrammingExerciseDeletionService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseRepository programmingExerciseRepository, ParticipationDeletionService participationDeletionService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, InstanceMessageSendService instanceMessageSendService,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, BuildJobRepository buildJobRepository, ChannelRepository channelRepository,
-            PostRepository postRepository, AnswerPostRepository answerPostRepository) {
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ExerciseRepository exerciseRepository, ParticipationRepository participationRepository,
+            BuildJobRepository buildJobRepository, ChannelRepository channelRepository, PostRepository postRepository, AnswerPostRepository answerPostRepository) {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationDeletionService = participationDeletionService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
+        this.exerciseRepository = exerciseRepository;
+        this.participationRepository = participationRepository;
         this.buildJobRepository = buildJobRepository;
         this.channelRepository = channelRepository;
         this.postRepository = postRepository;
@@ -80,6 +89,7 @@ public class ProgrammingExerciseDeletionService {
      * @param deleteBaseReposBuildPlans if true will also delete build plans and projects.
      */
     public void delete(Long programmingExerciseId, boolean deleteBaseReposBuildPlans) {
+        log.debug("Deleting programming exercise with id: {} with BaseReposBuildPlans {}", programmingExerciseId, deleteBaseReposBuildPlans);
         // Note: This method does not accept a programming exercise to solve issues with nested Transactions.
         // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
         final var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
@@ -98,6 +108,7 @@ public class ProgrammingExerciseDeletionService {
 
         SolutionProgrammingExerciseParticipation solutionProgrammingExerciseParticipation = programmingExercise.getSolutionParticipation();
         TemplateProgrammingExerciseParticipation templateProgrammingExerciseParticipation = programmingExercise.getTemplateParticipation();
+        // Delete results and submissions of template and solution participations first
         if (solutionProgrammingExerciseParticipation != null) {
             participationDeletionService.deleteResultsAndSubmissionsOfParticipation(solutionProgrammingExerciseParticipation.getId(), true);
         }
@@ -105,11 +116,41 @@ public class ProgrammingExerciseDeletionService {
             participationDeletionService.deleteResultsAndSubmissionsOfParticipation(templateProgrammingExerciseParticipation.getId(), true);
         }
 
-        // Note: we fetch the programming exercise again here with student participations to avoid Hibernate issues during the delete operation below
-        var programmingExerciseWithStudentParticipations = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(programmingExerciseId);
-        log.debug("Delete programming exercises with student participations: {}", programmingExerciseWithStudentParticipations.getStudentParticipations());
-        // This will also delete the template & solution participation: we explicitly use deleteById to avoid potential Hibernate issues during deletion
-        programmingExerciseRepository.deleteById(programmingExerciseId);
+        // Note: We explicitly delete template and solution participations because they have a complex
+        // inheritance situation that prevents orphanRemoval from working correctly with NOT NULL FKs.
+        // See the comments in ProgrammingExercise.java for details.
+        // Clear references on the exercise side to break FK relationships
+        programmingExercise.setTemplateParticipation(null);
+        programmingExercise.setSolutionParticipation(null);
+        programmingExerciseRepository.save(programmingExercise);
+
+        // Now delete the participations explicitly by ID
+        if (templateProgrammingExerciseParticipation != null) {
+            participationDeletionService.deleteParticipationById(templateProgrammingExerciseParticipation.getId());
+        }
+        if (solutionProgrammingExerciseParticipation != null) {
+            participationDeletionService.deleteParticipationById(solutionProgrammingExerciseParticipation.getId());
+        }
+
+        // Safety check: Delete any remaining participations that still reference this exercise.
+        // This handles edge cases where participations exist but aren't properly linked from the exercise side
+        // (e.g., template/solution participations where the exercise's FK reference is NULL but the participation
+        // still has exercise_id pointing to this exercise).
+        List<Participation> remainingParticipations = participationRepository.findAllByExerciseId(programmingExerciseId);
+        if (!remainingParticipations.isEmpty()) {
+            log.warn("Found {} remaining participations for exercise {} that weren't deleted through normal flow. Deleting them now.", remainingParticipations.size(),
+                    programmingExerciseId);
+            for (Participation participation : remainingParticipations) {
+                participationDeletionService.deleteParticipationById(participation.getId());
+            }
+        }
+
+        // Fetch the exercise fresh with studentParticipations to ensure L2 cache has correct data.
+        // All participations should now be deleted.
+        var exerciseToDelete = exerciseRepository.findByIdWithStudentParticipationsElseThrow(programmingExerciseId);
+
+        // Delete the programming exercise
+        exerciseRepository.delete(exerciseToDelete);
     }
 
     private void deleteBuildPlans(ProgrammingExercise programmingExercise) {

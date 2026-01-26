@@ -41,13 +41,13 @@ import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-resp
 import { AlertService } from 'app/shared/service/alert.service';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
-import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { ExampleParticipationService } from 'app/assessment/shared/services/example-participation.service';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
+import { ExampleParticipation } from 'app/exercise/shared/entities/participation/example-participation.model';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -70,7 +70,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     let fixture: ComponentFixture<TextSubmissionAssessmentComponent>;
     let textAssessmentService: TextAssessmentService;
     let submissionService: SubmissionService;
-    let exampleSubmissionService: ExampleSubmissionService;
+    let exampleParticipationService: ExampleParticipationService;
     let athenaService: AthenaService;
     let router: Router;
 
@@ -121,6 +121,7 @@ describe('TextSubmissionAssessmentComponent', () => {
                 score: 8,
                 rated: true,
                 hasComplaint: true,
+                correctionRound: 0,
                 submission,
                 participation,
             } as unknown as Result,
@@ -199,7 +200,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         fixture = TestBed.createComponent(TextSubmissionAssessmentComponent);
         component = fixture.componentInstance;
         submissionService = TestBed.inject(SubmissionService);
-        exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
+        exampleParticipationService = TestBed.inject(ExampleParticipationService);
         textAssessmentService = TestBed.inject(TextAssessmentService);
         athenaService = TestBed.inject(AthenaService);
         router = TestBed.inject(Router);
@@ -390,8 +391,8 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.submission = submission;
         component.exercise = exercise;
 
-        const importStub = vi.spyOn(exampleSubmissionService, 'import');
-        importStub.mockReturnValue(of(new HttpResponse({ body: new ExampleSubmission() })));
+        const importStub = vi.spyOn(exampleParticipationService, 'import');
+        importStub.mockReturnValue(of(new HttpResponse({ body: new ExampleParticipation() })));
 
         component.useStudentSubmissionAsExampleSubmission();
 
@@ -679,7 +680,8 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should not load feedback suggestions if there already are assessments', async () => {
-        // preparation already added an assessment
+        // Set up component with existing assessments
+        component['setPropertiesFromServerResponse'](participation);
         const athenaServiceFeedbackSuggestionsSpy = vi.spyOn(athenaService, 'getTextFeedbackSuggestions');
         component.loadFeedbackSuggestions();
         fixture.detectChanges();
@@ -688,18 +690,23 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should validate assessments on component init', async () => {
+        component['setPropertiesFromServerResponse'](participation);
         component.assessmentsAreValid = false;
         await component.ngOnInit();
         expect(component.assessmentsAreValid).toBe(true);
     });
 
     it('should allow overriding directly after submitting', async () => {
+        component['setPropertiesFromServerResponse'](participation);
         component.isAssessor = true;
         component.submit();
         expect(component.canOverride).toBe(true);
     });
 
     it('should not invalidate assessment after saving', async () => {
+        component['setPropertiesFromServerResponse'](participation);
+        component.validateFeedback();
+        vi.spyOn(textAssessmentService, 'save').mockReturnValue(of({ body: { id: 1 } as Result } as HttpResponse<Result>));
         component.save();
         expect(component.assessmentsAreValid).toBe(true);
     });

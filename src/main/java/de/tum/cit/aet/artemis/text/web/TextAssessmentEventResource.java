@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.dto.TextAssessmentEventInputDTO;
 import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 
 /**
@@ -78,14 +79,15 @@ public class TextAssessmentEventResource {
     /**
      * POST event-insights/text-assessment/events : Adds an assessment event into the text_assessment_event table.
      *
-     * @param event to be added
+     * @param dto the DTO containing the event data to be added
      * @return the status of the finished request
      */
     @PostMapping("event-insights/text-assessment/events")
     @EnforceAtLeastTutor
-    public ResponseEntity<Void> addAssessmentEvent(@RequestBody TextAssessmentEvent event) throws URISyntaxException {
-        log.debug("REST request to save assessmentEvent : {}", event);
+    public ResponseEntity<Void> addAssessmentEvent(@RequestBody TextAssessmentEventInputDTO dto) throws URISyntaxException {
+        log.debug("REST request to save assessmentEvent : {}", dto);
 
+        TextAssessmentEvent event = dto.toEntity();
         // Check if the text assessment analytics feature is enabled
         // Save the event if it is valid. All other requests are considered bad requests.
         if (isTextAssessmentAnalyticsEnabled() && validateEvent(event)) {
@@ -128,9 +130,10 @@ public class TextAssessmentEventResource {
         // avoid access from tutor if they are not part of the course
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        // make sure that the received event doesn't already have an ID
-        // reject if the logged-in user id and received event user id do not match
-        // make sure that the event submission id is not null
+        // The ID check is defense-in-depth: the DTO doesn't have an ID field, so client-specified IDs
+        // are silently ignored during JSON deserialization. This check guards against future changes.
+        // Also reject if the logged-in user id and received event user id do not match,
+        // or if the event submission id is null.
         if (event.getId() != null || !user.getId().equals(event.getUserId()) || event.getSubmissionId() == null) {
             return false;
         }

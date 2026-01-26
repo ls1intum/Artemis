@@ -42,6 +42,7 @@ describe('TextAssessment Service', () => {
                 results: [
                     {
                         id: 6,
+                        correctionRound: 0,
                         feedbacks: [
                             {
                                 id: 6,

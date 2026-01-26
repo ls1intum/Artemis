@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.text.service;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -119,7 +119,7 @@ public class TextSubmissionService extends SubmissionService {
             studentParticipationRepository.save(participation);
         }
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-        textSubmission.setResults(new ArrayList<>());
+        textSubmission.setResults(new HashSet<>());
         textSubmission = textSubmissionRepository.save(textSubmission);
 
         // versioning of submission

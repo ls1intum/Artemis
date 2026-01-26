@@ -317,7 +317,7 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
         if (shouldFilterForStudents()) {
             // results are never relevant before quiz has ended => clear all results
             participation.getSubmissions().forEach(submission -> {
-                List<Result> results = submission.getResults();
+                Set<Result> results = submission.getResults();
                 if (results != null) {
                     results.clear();
                 }

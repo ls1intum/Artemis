@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ExampleParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 
 public abstract class ExerciseImportService {
 
-    protected final ExampleSubmissionRepository exampleSubmissionRepository;
+    protected final ExampleParticipationRepository exampleParticipationRepository;
 
     protected final SubmissionRepository submissionRepository;
 
@@ -31,9 +31,9 @@ public abstract class ExerciseImportService {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseImportService.class);
 
-    protected ExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
+    protected ExerciseImportService(ExampleParticipationRepository exampleParticipationRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             FeedbackService feedbackService) {
-        this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.exampleParticipationRepository = exampleParticipationRepository;
         this.submissionRepository = submissionRepository;
         this.resultRepository = resultRepository;
         this.feedbackService = feedbackService;
@@ -63,7 +63,9 @@ public abstract class ExerciseImportService {
         newExercise.setDifficulty(importedExercise.getDifficulty());
         newExercise.setGradingInstructions(importedExercise.getGradingInstructions());
         newExercise.setGradingCriteria(importedExercise.copyGradingCriteria(gradingInstructionCopyTracker));
-        newExercise.setCompetencyLinks(importedExercise.getCompetencyLinks());
+        // Competency links are NOT imported because competencies are course-specific.
+        // The imported exercise goes to a different course, and the source course's competencies don't exist there.
+        newExercise.setCompetencyLinks(new java.util.HashSet<>());
 
         if (importedExercise.getPlagiarismDetectionConfig() != null) {
             newExercise.setPlagiarismDetectionConfig(new PlagiarismDetectionConfig(importedExercise.getPlagiarismDetectionConfig()));
@@ -99,15 +101,13 @@ public abstract class ExerciseImportService {
         newResult.setExerciseId(originalResult.getExerciseId());
         newResult.setRated(true);
         newResult.setScore(originalResult.getScore());
+        newResult.setCorrectionRound(originalResult.getCorrectionRound() != null ? originalResult.getCorrectionRound() : 0);
         newResult.copyProgrammingExerciseCounters(originalResult);
         newResult.setFeedbacks(copyFeedback(originalResult.getFeedbacks(), newResult, gradingInstructionCopyTracker));
-        // Cut relationship to parent because result is an ordered collection
-        newResult.setSubmission(null);
+        // Set the submission on the result - required for NOT NULL constraint on result.submission_id
+        newResult.setSubmission(newSubmission);
 
         newResult = resultRepository.save(newResult);
-
-        // Restore relationship to parent.
-        newResult.setSubmission(newSubmission);
 
         return newResult;
     }
@@ -115,13 +115,13 @@ public abstract class ExerciseImportService {
     /**
      * This helper functions does a hard copy of the feedbacks.
      *
-     * @param originalFeedbacks             The original list of feedbacks to be copied
+     * @param originalFeedbacks             The original set of feedbacks to be copied
      * @param newResult                     The result in which we link the new feedback
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
-     * @return The cloned list of feedback
+     * @return The cloned set of feedback
      */
-    private List<Feedback> copyFeedback(List<Feedback> originalFeedbacks, Result newResult, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
-        List<Feedback> newFeedbacks = new ArrayList<>();
+    private Set<Feedback> copyFeedback(Set<Feedback> originalFeedbacks, Result newResult, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+        Set<Feedback> newFeedbacks = new HashSet<>();
         for (final var originalFeedback : originalFeedbacks) {
             final Feedback newFeedback = feedbackService.copyFeedback(originalFeedback);
             newFeedback.setResult(newResult);

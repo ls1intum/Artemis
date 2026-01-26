@@ -11,7 +11,7 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
-import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
+import { ExampleParticipation } from 'app/exercise/shared/entities/participation/example-participation.model';
 import { Feedback, FeedbackCorrectionErrorType } from 'app/assessment/shared/entities/feedback.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -43,7 +43,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 import { TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
-import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { ExampleParticipationService } from 'app/assessment/shared/services/example-participation.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
@@ -53,7 +53,7 @@ describe('ExampleTextSubmissionComponent', () => {
     let debugElement: DebugElement;
     let comp: ExampleTextSubmissionComponent;
     let exerciseService: ExerciseService;
-    let exampleSubmissionService: ExampleSubmissionService;
+    let exampleParticipationService: ExampleParticipationService;
     let assessmentsService: TextAssessmentService;
     let alertService: AlertService;
 
@@ -61,7 +61,7 @@ describe('ExampleTextSubmissionComponent', () => {
     const EXAMPLE_SUBMISSION_ID = 2;
     const SUBMISSION_ID = 3;
     let exercise: TextExercise;
-    let exampleSubmission: ExampleSubmission;
+    let exampleParticipation: ExampleParticipation;
     let result: Result;
     let submission: TextSubmission;
     let activatedRouteSnapshot: ActivatedRouteSnapshot;
@@ -139,16 +139,17 @@ describe('ExampleTextSubmissionComponent', () => {
         debugElement = fixture.debugElement;
         activatedRouteSnapshot = TestBed.inject(ActivatedRoute).snapshot;
         exerciseService = TestBed.inject(ExerciseService);
-        exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
+        exampleParticipationService = TestBed.inject(ExampleParticipationService);
         assessmentsService = TestBed.inject(TextAssessmentService);
         alertService = TestBed.inject(AlertService);
         exercise = new TextExercise(undefined, undefined);
         exercise.id = EXERCISE_ID;
         exercise.title = 'Test case exercise';
-        exampleSubmission = new ExampleSubmission();
-        exampleSubmission.id = EXAMPLE_SUBMISSION_ID;
+        exampleParticipation = new ExampleParticipation();
+        exampleParticipation.id = EXAMPLE_SUBMISSION_ID;
         result = new Result();
-        submission = result.submission = exampleSubmission.submission = new TextSubmission();
+        submission = result.submission = new TextSubmission();
+        exampleParticipation.submissions = [submission];
         submission.id = SUBMISSION_ID;
     });
 
@@ -161,10 +162,10 @@ describe('ExampleTextSubmissionComponent', () => {
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = {
             exerciseId: EXERCISE_ID,
-            exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
+            exampleParticipationId: EXAMPLE_SUBMISSION_ID,
         };
         vi.spyOn(exerciseService, 'find').mockReturnValue(httpResponse(exercise));
-        vi.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+        vi.spyOn(exampleParticipationService, 'get').mockReturnValue(httpResponse(exampleParticipation));
         vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
 
         // WHEN
@@ -172,7 +173,7 @@ describe('ExampleTextSubmissionComponent', () => {
 
         // THEN
         expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
-        expect(exampleSubmissionService.get).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID);
+        expect(exampleParticipationService.get).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID);
         expect(assessmentsService.getExampleResult).toHaveBeenCalledWith(EXERCISE_ID, SUBMISSION_ID);
         expect(comp.state.constructor.name).toBe('EditState');
     });
@@ -182,12 +183,12 @@ describe('ExampleTextSubmissionComponent', () => {
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = {
             exerciseId: EXERCISE_ID,
-            exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
+            exampleParticipationId: EXAMPLE_SUBMISSION_ID,
         };
         // @ts-ignore
         activatedRouteSnapshot.queryParamMap.params = { toComplete: true };
         vi.spyOn(exerciseService, 'find').mockReturnValue(httpResponse(exercise));
-        vi.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+        vi.spyOn(exampleParticipationService, 'get').mockReturnValue(httpResponse(exampleParticipation));
         const textBlock1 = new TextBlock();
         textBlock1.startIndex = 0;
         textBlock1.endIndex = 4;
@@ -229,7 +230,7 @@ describe('ExampleTextSubmissionComponent', () => {
         // GIVEN
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { toComplete: 'true' };
-        vi.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+        vi.spyOn(exampleParticipationService, 'get').mockReturnValue(httpResponse(exampleParticipation));
         // @ts-ignore
         vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(null));
 
@@ -244,36 +245,36 @@ describe('ExampleTextSubmissionComponent', () => {
     it('should only fetch exercise for new example submission and stay in new state', async () => {
         // GIVEN
         // @ts-ignore
-        activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: 'new' };
+        activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleParticipationId: 'new' };
         vi.spyOn(exerciseService, 'find').mockReturnValue(httpResponse(exercise));
-        vi.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
-        vi.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
+        vi.spyOn(exampleParticipationService, 'get').mockImplementation(() => httpResponse(exampleParticipation));
+        vi.spyOn(assessmentsService, 'getExampleResult').mockImplementation(() => of(result));
 
         // WHEN
         await comp.ngOnInit();
 
         // THEN
         expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
-        expect(exampleSubmissionService.get).not.toHaveBeenCalled();
+        expect(exampleParticipationService.get).not.toHaveBeenCalled();
         expect(assessmentsService.getExampleResult).not.toHaveBeenCalled();
         expect(comp.state.constructor.name).toBe('NewState');
     });
 
     it('should switch state when starting assessment', async () => {
         // GIVEN
-        vi.spyOn(exampleSubmissionService, 'prepareForAssessment').mockReturnValue(httpResponse({}));
-        vi.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+        vi.spyOn(exampleParticipationService, 'prepareForAssessment').mockReturnValue(httpResponse({}));
+        vi.spyOn(exampleParticipationService, 'get').mockReturnValue(httpResponse(exampleParticipation));
 
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = {
             exerciseId: EXERCISE_ID,
-            exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
+            exampleParticipationId: EXAMPLE_SUBMISSION_ID,
         };
         await comp.ngOnInit();
 
         comp.exercise = exercise;
         comp.exercise!.isAtLeastInstructor = true;
-        comp.exampleSubmission = exampleSubmission;
+        comp.exampleParticipation = exampleParticipation;
         comp.submission = submission;
 
         // WHEN
@@ -288,13 +289,13 @@ describe('ExampleTextSubmissionComponent', () => {
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = {
             exerciseId: EXERCISE_ID,
-            exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
+            exampleParticipationId: EXAMPLE_SUBMISSION_ID,
         };
         await comp.ngOnInit();
 
         comp.exercise = exercise;
         comp.exercise!.isAtLeastEditor = true;
-        comp.exampleSubmission = exampleSubmission;
+        comp.exampleParticipation = exampleParticipation;
         comp.submission = submission;
         const textBlock1 = new TextBlock();
         textBlock1.startIndex = 0;
@@ -334,7 +335,7 @@ describe('ExampleTextSubmissionComponent', () => {
         // GIVEN
         comp.exercise = exercise;
         comp.exercise!.isAtLeastEditor = true;
-        comp.exampleSubmission = exampleSubmission;
+        comp.exampleParticipation = exampleParticipation;
         comp.submission = submission;
         const textBlock1 = new TextBlock();
         textBlock1.startIndex = 0;
@@ -376,12 +377,12 @@ describe('ExampleTextSubmissionComponent', () => {
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = {
             exerciseId: EXERCISE_ID,
-            exampleSubmissionId: EXAMPLE_SUBMISSION_ID,
+            exampleParticipationId: EXAMPLE_SUBMISSION_ID,
         };
         // @ts-ignore
         activatedRouteSnapshot.queryParamMap.params = { toComplete: true };
         vi.spyOn(exerciseService, 'find').mockReturnValue(httpResponse(exercise));
-        vi.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+        vi.spyOn(exampleParticipationService, 'get').mockReturnValue(httpResponse(exampleParticipation));
         const textBlock1 = new TextBlock();
         textBlock1.startIndex = 0;
         textBlock1.endIndex = 4;
@@ -400,7 +401,7 @@ describe('ExampleTextSubmissionComponent', () => {
         comp.textBlockRefs[0].feedback!.credits = 2;
         comp.validateFeedback();
         const tutorParticipationService = TestBed.inject(TutorParticipationService);
-        vi.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(httpResponse(null));
+        vi.spyOn(tutorParticipationService, 'assessExampleParticipation').mockReturnValue(httpResponse(null));
 
         // WHEN
         fixture.detectChanges();
@@ -408,9 +409,9 @@ describe('ExampleTextSubmissionComponent', () => {
 
         // THEN
         expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
-        expect(exampleSubmissionService.get).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID);
+        expect(exampleParticipationService.get).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID);
         expect(assessmentsService.getExampleResult).toHaveBeenCalledWith(EXERCISE_ID, SUBMISSION_ID);
-        expect(tutorParticipationService.assessExampleSubmission).toHaveBeenCalledOnce();
+        expect(tutorParticipationService.assessExampleParticipation).toHaveBeenCalledOnce();
     });
 
     it('should not check the assessment when it is invalid', () => {
@@ -450,7 +451,7 @@ describe('ExampleTextSubmissionComponent', () => {
             status: 400,
         });
 
-        vi.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(throwError(() => errorResponse));
+        vi.spyOn(tutorParticipationService, 'assessExampleParticipation').mockReturnValue(throwError(() => errorResponse));
 
         // WHEN
         await comp.ngOnInit();
@@ -467,7 +468,7 @@ describe('ExampleTextSubmissionComponent', () => {
     it('should create new example submission', async () => {
         comp.submission = submission;
         comp.exercise = exercise;
-        const createStub = vi.spyOn(exampleSubmissionService, 'create').mockReturnValue(httpResponse(exampleSubmission));
+        const createStub = vi.spyOn(exampleParticipationService, 'create').mockReturnValue(httpResponse(exampleParticipation));
         const alertSuccessSpy = vi.spyOn(alertService, 'success');
         // Mock the navigation util to avoid window.location.href regex matching issues
         vi.spyOn(comp['navigationUtilService'], 'replaceNewWithIdInUrl').mockImplementation(() => {});
@@ -482,7 +483,7 @@ describe('ExampleTextSubmissionComponent', () => {
     it('should not create example submission', async () => {
         comp.submission = submission;
         comp.exercise = exercise;
-        const createStub = vi.spyOn(exampleSubmissionService, 'create').mockReturnValue(throwError(() => ({ status: 404 })));
+        const createStub = vi.spyOn(exampleParticipationService, 'create').mockReturnValue(throwError(() => ({ status: 404 })));
         const alertErrorSpy = vi.spyOn(alertService, 'error');
 
         comp.createNewExampleTextSubmission();
@@ -501,13 +502,13 @@ describe('ExampleTextSubmissionComponent', () => {
             tutorId: 3,
             status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
         };
-        vi.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(of(new HttpResponse({ body: dto })));
+        vi.spyOn(tutorParticipationService, 'assessExampleParticipation').mockReturnValue(of(new HttpResponse({ body: dto })));
         const alertSpy = vi.spyOn(alertService, 'success');
 
         const router = TestBed.inject(Router);
         const routerSpy = vi.spyOn(router, 'navigate');
         comp.exercise = exercise;
-        comp.exampleSubmission = exampleSubmission;
+        comp.exampleParticipation = exampleParticipation;
 
         // WHEN
         fixture.detectChanges();
@@ -567,16 +568,16 @@ describe('ExampleTextSubmissionComponent', () => {
     it('should update example text submission', () => {
         // GIVEN
         const alertSuccessSpy = vi.spyOn(alertService, 'success');
-        const exampleSubmissionServiceSpy = vi.spyOn(exampleSubmissionService, 'update');
-        exampleSubmissionServiceSpy.mockReturnValue(httpResponse(exampleSubmission));
+        const exampleParticipationServiceSpy = vi.spyOn(exampleParticipationService, 'update');
+        exampleParticipationServiceSpy.mockReturnValue(httpResponse(exampleParticipation));
         comp.unsavedSubmissionChanges = true;
 
         // WHEN
         comp.updateExampleTextSubmission();
 
         // THEN
-        expect(exampleSubmissionServiceSpy).toHaveBeenCalledOnce();
-        expect(comp.exampleSubmission).toEqual(exampleSubmission);
+        expect(exampleParticipationServiceSpy).toHaveBeenCalledOnce();
+        expect(comp.exampleParticipation).toEqual(exampleParticipation);
         expect(comp.unsavedSubmissionChanges).toBe(false);
         expect(alertSuccessSpy).toHaveBeenCalledOnce();
         expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.exampleSubmission.saveSuccessful');

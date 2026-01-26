@@ -489,9 +489,7 @@ public class CourseScoreCalculationService {
             return emptyResult;
         }
 
-        var resultsList = new ArrayList<>(resultsSet);
-
-        List<Result> ratedResultsWithCompletionDate = resultsList.stream().filter(result -> result.isRated() && result.getCompletionDate() != null).toList();
+        List<Result> ratedResultsWithCompletionDate = resultsSet.stream().filter(result -> result.isRated() && result.getCompletionDate() != null).toList();
 
         if (ratedResultsWithCompletionDate.isEmpty()) {
             return emptyResult;
@@ -501,16 +499,17 @@ public class CourseScoreCalculationService {
             return ratedResultsWithCompletionDate.getFirst();
         }
 
-        // Sort the list in descending order to have the latest result at the beginning.
-        resultsList.sort(Comparator.comparing(Result::getCompletionDate).reversed());
+        // Sort the rated results list in descending order to have the latest result at the beginning.
+        var sortedRatedResults = new ArrayList<>(ratedResultsWithCompletionDate);
+        sortedRatedResults.sort(Comparator.comparing(Result::getCompletionDate).reversed());
 
         if (dueDate == null) {
-            // If the due date is null, you can always submit something, and it will always ge graded. Just take the latest graded result.
-            return resultsList.getFirst();
+            // If the due date is null, you can always submit something, and it will always get graded. Just take the latest graded result.
+            return sortedRatedResults.getFirst();
         }
 
         // The due date is set and we need to find the latest result that was completed before the due date.
-        Optional<Result> latestResultBeforeDueDate = resultsList.stream().filter(result -> result.getCompletionDate().isBefore(dueDate)).findFirst();
+        Optional<Result> latestResultBeforeDueDate = sortedRatedResults.stream().filter(result -> result.getCompletionDate().isBefore(dueDate)).findFirst();
 
         return latestResultBeforeDueDate.orElse(emptyResult);
     }

@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Repository
 public interface RatingCleanupRepository extends ArtemisJpaRepository<Rating, Long> {
 
+    // TODO: remove the part "s.exampleSubmission IS FALSE" when examples submissions are migrated to example participations
     /**
      * Deletes {@link Rating} entries where the associated {@link Result} has no submission
      * or its submission has no participation.
@@ -38,11 +39,12 @@ public interface RatingCleanupRepository extends ArtemisJpaRepository<Rating, Lo
                         LEFT JOIN r.submission s
                         LEFT JOIN s.participation p
                     WHERE s IS NULL
-                        OR p IS NULL
+                        OR (s.exampleSubmission IS FALSE AND p IS NULL)
             )
             """)
     int deleteOrphanRating();
 
+    // TODO: remove the part "s.exampleSubmission IS FALSE" when examples submissions are migrated to example participations
     /**
      * Counts {@link Rating} entries where the associated {@link Result} has no submission
      * or its submission has no participation.
@@ -58,7 +60,7 @@ public interface RatingCleanupRepository extends ArtemisJpaRepository<Rating, Lo
                         LEFT JOIN r.submission     s
                         LEFT JOIN s.participation  p
                     WHERE s IS NULL
-                        OR p IS NULL
+                        OR (s.exampleSubmission IS FALSE AND p IS NULL)
             )
             """)
     int countOrphanRating();

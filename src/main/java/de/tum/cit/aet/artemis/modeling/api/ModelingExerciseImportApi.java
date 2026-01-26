@@ -35,13 +35,14 @@ public class ModelingExerciseImportApi extends AbstractModelingApi {
 
     /**
      * Imports a modeling exercise from the source exercise.
+     * Note: Example participations are now handled separately by ModelingExerciseImportService.
      *
      * @param sourceExerciseId the id of the source exercise to import from
      * @param targetExercise   the target exercise to import into
      * @return the imported exercise, or empty if the source exercise was not found
      */
     public Optional<ModelingExercise> importModelingExercise(long sourceExerciseId, @NonNull ModelingExercise targetExercise) {
-        Optional<ModelingExercise> optionalOriginal = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(sourceExerciseId);
+        Optional<ModelingExercise> optionalOriginal = modelingExerciseRepository.findByIdWithGradingCriteria(sourceExerciseId);
         return optionalOriginal.map(modelingExercise -> modelingExerciseImportService.importModelingExercise(modelingExercise, targetExercise));
     }
 
@@ -69,13 +70,14 @@ public class ModelingExerciseImportApi extends AbstractModelingApi {
     }
 
     /**
-     * Finds a modeling exercise by id with example submissions and results, throwing an exception if not found.
+     * Finds a modeling exercise by id with grading criteria, throwing an exception if not found.
+     * Note: Example participations are now fetched separately via ExampleParticipationRepository.
      *
      * @param exerciseId the id of the exercise
      * @return the found exercise
      */
-    public ModelingExercise findByIdWithExampleSubmissionsAndResultsElseThrow(long exerciseId) {
-        return modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(exerciseId);
+    public ModelingExercise findByIdWithGradingCriteriaElseThrow(long exerciseId) {
+        return modelingExerciseRepository.findByIdWithGradingCriteriaElseThrow(exerciseId);
     }
 
     /**
@@ -83,9 +85,11 @@ public class ModelingExerciseImportApi extends AbstractModelingApi {
      *
      * @param originalSubmission            the original submission to copy
      * @param gradingInstructionCopyTracker mapping from original GradingInstruction IDs to new instances
+     * @param targetParticipation           the target example participation for the new submission
      * @return the copied submission
      */
-    public Submission copySubmission(Submission originalSubmission, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
-        return modelingExerciseImportService.copySubmission(originalSubmission, gradingInstructionCopyTracker);
+    public Submission copySubmission(Submission originalSubmission, Map<Long, GradingInstruction> gradingInstructionCopyTracker,
+            de.tum.cit.aet.artemis.assessment.domain.ExampleParticipation targetParticipation) {
+        return modelingExerciseImportService.copySubmission(originalSubmission, gradingInstructionCopyTracker, targetParticipation);
     }
 }

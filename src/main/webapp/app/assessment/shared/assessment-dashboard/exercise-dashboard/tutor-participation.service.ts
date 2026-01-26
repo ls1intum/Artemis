@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
+import { ExampleParticipation } from 'app/exercise/shared/entities/participation/example-participation.model';
 import { TutorParticipation, TutorParticipationDTO } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 
 export type EntityResponseType = HttpResponse<TutorParticipationDTO>;
@@ -26,14 +26,14 @@ export class TutorParticipationService {
     }
 
     /**
-     * Add an example submission to the tutor participation of the given exercise. If it is just for review (not used for tutorial),
+     * Add an example participation to the tutor participation of the given exercise. If it is just for review (not used for tutorial),
      * the method just records that the tutor has read it. If it is a tutorial, the method checks if the assessment given by the tutor is close enough to the instructor one. If
      * yes, then it returns the participation, if not, it returns an error
      *
-     * @param exampleSubmission The to be added example submission
+     * @param exampleParticipation The to be added example participation
      * @param exerciseId The ID of the exercise of the tutor participation
      */
-    assessExampleSubmission(exampleSubmission: ExampleSubmission, exerciseId: number): Observable<EntityResponseType> {
-        return this.http.post<TutorParticipationDTO>(`${this.resourceUrl}/${exerciseId}/assess-example-submission`, exampleSubmission, { observe: 'response' });
+    assessExampleParticipation(exampleParticipation: ExampleParticipation, exerciseId: number): Observable<EntityResponseType> {
+        return this.http.post<TutorParticipationDTO>(`${this.resourceUrl}/${exerciseId}/assess-example-participation`, exampleParticipation, { observe: 'response' });
     }
 }

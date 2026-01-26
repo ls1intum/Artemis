@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.dto.exercise;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -66,8 +67,9 @@ public record QuizExerciseCreateDTO(@NotEmpty String title, ZonedDateTime releas
         quizExercise.setDifficulty(difficulty);
         quizExercise.setMode(mode);
         quizExercise.setIncludedInOverallScore(includedInOverallScore);
-        quizExercise.setCompetencyLinks(competencyLinks == null ? Set.of() : competencyLinks);
-        quizExercise.setCategories(categories == null ? Set.of() : categories);
+        // NOTE: Competency links are not set here because they require the exercise ID.
+        // They are handled separately in the service after the exercise is saved.
+        quizExercise.setCategories(categories == null ? new HashSet<>() : new HashSet<>(categories));
         quizExercise.setChannelName(channelName);
         quizExercise.setRandomizeQuestionOrder(randomizeQuestionOrder != null ? randomizeQuestionOrder : Boolean.FALSE);
         quizExercise.setQuizMode(quizMode);

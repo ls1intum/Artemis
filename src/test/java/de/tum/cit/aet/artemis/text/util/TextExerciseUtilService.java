@@ -287,9 +287,11 @@ public class TextExerciseUtilService {
         StudentParticipation participation = Optional.ofNullable(studentLogin).map(login -> participationUtilService.createAndSaveParticipationForExercise(exercise, login))
                 .orElseGet(() -> participationUtilService.addTeamParticipationForExercise(exercise, teamId));
 
+        // Set participation BEFORE saving (participation_id is NOT NULL)
+        submission.setParticipation(participation);
+        participation.addSubmission(submission);
         submissionRepository.save(submission);
 
-        participation.addSubmission(submission);
         Result result = new Result();
         result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
         result.setScore(100D);
@@ -301,8 +303,8 @@ public class TextExerciseUtilService {
         }
         result.setSubmission(submission);
         result.setExerciseId(exercise.getId());
+        result.setCorrectionRound(0);
         result = resultRepo.save(result);
-        submission.setParticipation(participation);
         submission.addResult(result);
         submission = textSubmissionRepo.save(submission);
         resultRepo.save(result);
@@ -325,9 +327,11 @@ public class TextExerciseUtilService {
         StudentParticipation participation = Optional.ofNullable(studentLogin).map(login -> participationUtilService.createAndSaveParticipationForExercise(exercise, login))
                 .orElseGet(() -> participationUtilService.addTeamParticipationForExercise(exercise, teamId));
 
+        // Set participation BEFORE saving (participation_id is NOT NULL)
+        submission.setParticipation(participation);
+        participation.addSubmission(submission);
         submissionRepository.save(submission);
 
-        participation.addSubmission(submission);
         Result result = new Result();
         result.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         result.setScore(100D);
@@ -342,7 +346,6 @@ public class TextExerciseUtilService {
         result.setSubmission(submission);
         result.setExerciseId(exercise.getId());
         result = resultRepo.save(result);
-        submission.setParticipation(participation);
         submission.addResult(result);
         submission = textSubmissionRepo.save(submission);
         resultRepo.save(result);
@@ -407,17 +410,10 @@ public class TextExerciseUtilService {
         submission = saveTextSubmissionWithResultAndAssessor(exercise, submission, studentLogin, null, assessorLogin);
         Result result = submission.getLatestResult();
         for (Feedback feedback : feedbacks) {
-            // Important note to prevent 'JpaSystemException: null index column for collection':
-            // 1) save the child entity (without connection to the parent entity) and make sure to re-assign the return value
-            feedback = feedbackRepo.save(feedback);
-            // this also invokes feedback.setResult(result)
-            // Important note to prevent 'JpaSystemException: null index column for collection':
-            // 2) connect child and parent entity
+            // addFeedback sets feedback.setResult(result) which is required for the NOT NULL constraint
             result.addFeedback(feedback);
         }
         // this automatically saves the feedback because of the CascadeType.All annotation
-        // Important note to prevent 'JpaSystemException: null index column for collection':
-        // 3) save the parent entity and make sure to re-assign the return value
         resultRepo.save(result);
 
         return submission;
@@ -451,11 +447,12 @@ public class TextExerciseUtilService {
      */
     public TextSubmission createSubmissionForTextExercise(TextExercise textExercise, Participant participant, String text) {
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission(text, Language.ENGLISH, true);
-        textSubmission = textSubmissionRepo.save(textSubmission);
 
+        // Create and save participation FIRST (participation_id is NOT NULL for submissions)
         StudentParticipation studentParticipation;
         if (participant instanceof User user) {
             studentParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, user);
+            studentParticipation = studentParticipationRepo.save(studentParticipation);
         }
         else if (participant instanceof Team team) {
             studentParticipation = participationUtilService.addTeamParticipationForExercise(textExercise, team.getId());
@@ -463,10 +460,11 @@ public class TextExerciseUtilService {
         else {
             throw new RuntimeException("Unsupported participant!");
         }
-        studentParticipation.addSubmission(textSubmission);
 
-        studentParticipationRepo.save(studentParticipation);
-        textSubmissionRepo.save(textSubmission);
+        // Set participation on submission before saving
+        textSubmission.setParticipation(studentParticipation);
+        studentParticipation.addSubmission(textSubmission);
+        textSubmission = textSubmissionRepo.save(textSubmission);
         return textSubmission;
     }
 

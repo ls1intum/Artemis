@@ -20,7 +20,7 @@ export class TextExerciseExampleSubmissionCreationPage {
     }
 
     async clickCreateNewExampleSubmission() {
-        const responsePromise = this.page.waitForResponse(`api/assessment/exercises/*/example-submissions`);
+        const responsePromise = this.page.waitForResponse(`api/assessment/exercises/*/example-participations`);
         await this.page.locator('#create-example-submission').click();
         return responsePromise;
     }

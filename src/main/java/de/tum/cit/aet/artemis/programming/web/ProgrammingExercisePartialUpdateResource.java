@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
@@ -76,21 +77,21 @@ public class ProgrammingExercisePartialUpdateResource {
     /**
      * PUT /programming-exercises/timeline : Updates the timeline attributes of a given exercise
      *
-     * @param updatedProgrammingExercise containing the changes that have to be saved
-     * @param notificationText           an optional text to notify the student group about the update on the programming exercise
+     * @param timelineUpdateDTO containing the timeline changes that have to be saved
+     * @param notificationText  an optional text to notify the student group about the update on the programming exercise
      * @return the ResponseEntity with status 200 (OK) with the updated ProgrammingExercise, or with status 403 (Forbidden)
      *         if the user is not allowed to update the exercise or with 404 (Not Found) if the updated ProgrammingExercise couldn't be found in the database
      */
     @PutMapping("programming-exercises/timeline")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExercise> updateProgrammingExerciseTimeline(@RequestBody ProgrammingExercise updatedProgrammingExercise,
+    public ResponseEntity<ProgrammingExercise> updateProgrammingExerciseTimeline(@RequestBody ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
-        log.debug("REST request to update the timeline of ProgrammingExercise : {}", updatedProgrammingExercise);
-        var existingProgrammingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
+        log.debug("REST request to update the timeline of ProgrammingExercise : {}", timelineUpdateDTO.id());
+        var existingProgrammingExercise = programmingExerciseRepository.findByIdElseThrow(timelineUpdateDTO.id());
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, existingProgrammingExercise, user);
-        updatedProgrammingExercise = programmingExerciseCreationUpdateService.updateTimeline(updatedProgrammingExercise, notificationText);
+        var updatedProgrammingExercise = programmingExerciseCreationUpdateService.updateTimeline(timelineUpdateDTO, notificationText);
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseVersionService.createExerciseVersion(updatedProgrammingExercise, user);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))

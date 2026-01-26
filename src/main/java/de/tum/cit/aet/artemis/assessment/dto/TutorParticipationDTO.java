@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TutorParticipationDTO(long id, long exerciseId, long tutorId, @NotNull TutorParticipationStatus status,
-        @NotNull Set<ExampleSubmissionDTO> trainedExampleSubmissions) {
+        @NotNull Set<ExampleParticipationDTO> trainedExampleParticipations) {
 
     /**
      * Convert a TutorParticipation entity to a TutorParticipationDTO.
@@ -21,8 +21,8 @@ public record TutorParticipationDTO(long id, long exerciseId, long tutorId, @Not
      * @param tutorParticipation the TutorParticipation to convert
      */
     public static TutorParticipationDTO of(TutorParticipation tutorParticipation) {
-        Set<ExampleSubmissionDTO> trained = tutorParticipation.getTrainedExampleSubmissions() == null ? Set.of()
-                : tutorParticipation.getTrainedExampleSubmissions().stream().filter(Objects::nonNull).map(ExampleSubmissionDTO::of).collect(Collectors.toSet());
+        Set<ExampleParticipationDTO> trained = tutorParticipation.getTrainedExampleParticipations() == null ? Set.of()
+                : tutorParticipation.getTrainedExampleParticipations().stream().filter(Objects::nonNull).map(ExampleParticipationDTO::of).collect(Collectors.toSet());
         return new TutorParticipationDTO(tutorParticipation.getId(), tutorParticipation.getAssessedExercise().getId(), tutorParticipation.getTutor().getId(),
                 tutorParticipation.getStatus(), trained);
     }

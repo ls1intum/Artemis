@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -172,14 +173,14 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         this.examRepository.save(exam);
 
         Result result = ParticipationFactory.generateResult(true, 200D).submission(modelingSubmission);
-        List<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here"))
-                .collect(Collectors.toCollection(ArrayList::new));
+        Set<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here"))
+                .collect(Collectors.toCollection(HashSet::new));
         result.setFeedbacks(feedbacks);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
         Result result2 = ParticipationFactory.generateResult(true, 200D).submission(programmingSubmission);
-        List<Feedback> feedbacks2 = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here"))
-                .collect(Collectors.toCollection(ArrayList::new));
+        Set<Feedback> feedbacks2 = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here"))
+                .collect(Collectors.toCollection(HashSet::new));
         result2.setFeedbacks(feedbacks2);
         result2.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
@@ -198,7 +199,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         List<Feedback> feedbacks = request.getList(
                 "/api/assessment/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
 
-        assertThat(feedbacks).isEqualTo(result.getFeedbacks());
+        assertThat(feedbacks).containsExactlyInAnyOrderElementsOf(result.getFeedbacks());
     }
 
     @Test
@@ -416,31 +417,37 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
                 if (result.getScore() == 10.0) {
                     final Feedback feedback1 = new Feedback().credits(2.0);
                     feedback1.setGradingInstruction(instruction1a);
+                    feedback1.setResult(result);
                     feedbackRepository.save(feedback1);
                     participationUtilService.addFeedbackToResult(feedback1, result);
 
                     final Feedback feedback2 = new Feedback().credits(3.0);
                     feedback2.setGradingInstruction(instruction1b);
+                    feedback2.setResult(result);
                     feedbackRepository.save(feedback2);
                     participationUtilService.addFeedbackToResult(feedback2, result);
 
                     // one feedback without grading instruction should be included in total score calculation
                     final Feedback feedback3 = new Feedback().credits(1.111);
+                    feedback3.setResult(result);
                     feedbackRepository.save(feedback3);
                     participationUtilService.addFeedbackToResult(feedback3, result);
                 }
                 else {
                     final Feedback feedback1 = new Feedback().credits(1.0);
                     feedback1.setGradingInstruction(instruction1a);
+                    feedback1.setResult(result);
                     feedbackRepository.save(feedback1);
                     participationUtilService.addFeedbackToResult(feedback1, result);
 
                     final Feedback feedback2 = new Feedback().credits(3.0);
                     feedback2.setGradingInstruction(instruction2);
+                    feedback2.setResult(result);
                     feedbackRepository.save(feedback2);
                     participationUtilService.addFeedbackToResult(feedback2, result);
 
                     final Feedback feedback3 = new Feedback().credits(10.0);
+                    feedback3.setResult(result);
                     feedbackRepository.save(feedback3);
                     participationUtilService.addFeedbackToResult(feedback3, result);
                 }
@@ -866,6 +873,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         feedback.setPositive(false);
         feedback.setDetailText("The AttributeTest test can only run if the structural oracle (test.json) is present. If you do not provide it, delete AttributeTest.java!");
         feedback.setTestCase(testCase);
+        feedback.setResult(result);
         feedback = feedbackRepository.saveAndFlush(feedback);
 
         participationUtilService.addFeedbackToResult(feedback, result);

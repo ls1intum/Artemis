@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.programming;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -277,6 +277,25 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
 
     @Test
     void testDeletionOfStaticCodeAnalysisCategoriesOnExerciseDeletion() {
+        // Save IDs before unlinking to use for deletion
+        var templateParticipation = programmingExerciseSCAEnabled.getTemplateParticipation();
+        var solutionParticipation = programmingExerciseSCAEnabled.getSolutionParticipation();
+        Long templateParticipationId = templateParticipation != null ? templateParticipation.getId() : null;
+        Long solutionParticipationId = solutionParticipation != null ? solutionParticipation.getId() : null;
+
+        // Unlink participations before deletion (participations have FK constraint on exercise)
+        programmingExerciseSCAEnabled.setTemplateParticipation(null);
+        programmingExerciseSCAEnabled.setSolutionParticipation(null);
+        programmingExerciseRepository.save(programmingExerciseSCAEnabled);
+
+        // Delete participations by ID
+        if (templateParticipationId != null) {
+            templateProgrammingExerciseParticipationRepository.deleteById(templateParticipationId);
+        }
+        if (solutionParticipationId != null) {
+            solutionProgrammingExerciseParticipationRepository.deleteById(solutionParticipationId);
+        }
+
         programmingExerciseRepository.delete(programmingExerciseSCAEnabled);
         var categories = staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExerciseSCAEnabled.getId());
         assertThat(categories).isEmpty();
@@ -287,7 +306,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
         var result = new Result();
         var feedbackForInactiveCategory = ProgrammingExerciseFactory.createSCAFeedbackWithInactiveCategory(result);
         result.addFeedback(feedbackForInactiveCategory);
-        var feedbacks = new ArrayList<>(List.of(feedbackForInactiveCategory));
+        var feedbacks = new HashSet<>(Set.of(feedbackForInactiveCategory));
         feedbackCreationService.categorizeScaFeedback(result, feedbacks, programmingExerciseSCAEnabled);
         assertThat(feedbacks).isEmpty();
         assertThat(result.getFeedbacks()).isEmpty();
@@ -299,12 +318,13 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
         var feedback = new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("SPOTBUGS").detailText("{\"category\": \"BAD_PRACTICE\"}")
                 .type(FeedbackType.AUTOMATIC).positive(false);
         result.addFeedback(feedback);
-        var feedbacks = new ArrayList<>(List.of(feedback));
+        var feedbacks = new HashSet<>(Set.of(feedback));
         feedbackCreationService.categorizeScaFeedback(result, feedbacks, programmingExerciseSCAEnabled);
         assertThat(feedbacks).hasSize(1);
         assertThat(result.getFeedbacks()).containsExactlyInAnyOrderElementsOf(feedbacks);
-        assertThat(result.getFeedbacks().getFirst().getStaticCodeAnalysisCategory()).isEqualTo("Bad Practice");
-        assertThat(new ObjectMapper().readValue(result.getFeedbacks().getFirst().getDetailText(), StaticCodeAnalysisIssue.class).penalty()).isEqualTo(3.0);
+        var resultFeedback = result.getFeedbacks().iterator().next();
+        assertThat(resultFeedback.getStaticCodeAnalysisCategory()).isEqualTo("Bad Practice");
+        assertThat(new ObjectMapper().readValue(resultFeedback.getDetailText(), StaticCodeAnalysisIssue.class).penalty()).isEqualTo(3.0);
     }
 
     @Test

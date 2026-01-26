@@ -6,6 +6,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import type { ExampleParticipation } from 'app/exercise/shared/entities/participation/example-participation.model';
 
 export enum InitializationState {
     /**
@@ -29,6 +30,7 @@ export enum ParticipationType {
     PROGRAMMING = 'programming',
     TEMPLATE = 'template',
     SOLUTION = 'solution',
+    EXAMPLE = 'example',
 }
 
 export abstract class Participation implements BaseEntity {
@@ -70,6 +72,8 @@ export const getExercise = (participation: Participation): Exercise | undefined 
                 return (participation as SolutionProgrammingExerciseParticipation).programmingExercise ?? (participation as SolutionProgrammingExerciseParticipation).exercise;
             case ParticipationType.TEMPLATE: // it could be stored in both programmingExercise or exercise
                 return (participation as TemplateProgrammingExerciseParticipation).programmingExercise ?? (participation as TemplateProgrammingExerciseParticipation).exercise;
+            case ParticipationType.EXAMPLE:
+                return (participation as ExampleParticipation).exercise;
         }
     }
 };

@@ -25,7 +25,7 @@ import { Submission, getSubmissionResultByCorrectionRound, getSubmissionResultBy
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
 import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
-import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { ExampleParticipationService } from 'app/assessment/shared/services/example-participation.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
@@ -68,7 +68,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private complaintService = inject(ComplaintService);
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     private submissionService = inject(SubmissionService);
-    private exampleSubmissionService = inject(ExampleSubmissionService);
+    private exampleParticipationService = inject(ExampleParticipationService);
     private athenaService = inject(AthenaService);
 
     totalScore = 0;
@@ -640,7 +640,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      */
     useStudentSubmissionAsExampleSubmission(): void {
         if (this.submission && this.modelingExercise) {
-            this.exampleSubmissionService.import(this.submission.id!, this.modelingExercise.id!).subscribe({
+            this.exampleParticipationService.import(this.submission.id!, this.modelingExercise.id!).subscribe({
                 next: () => this.alertService.success('artemisApp.exampleSubmission.submitSuccessful'),
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });

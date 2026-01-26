@@ -29,7 +29,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.ExampleParticipation;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.ExampleParticipationTestRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.TutorParticipationTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
@@ -97,6 +98,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private GradingCriterionRepository gradingCriterionRepository;
+
+    @Autowired
+    private ExampleParticipationTestRepository exampleParticipationRepository;
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
@@ -173,8 +177,15 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void testGetModelingExercise_setGradingInstructionFeedbackUsed() throws Exception {
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(classExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
+
+        // Create a submission and result before creating feedback
+        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission("model", true);
+        submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
+        Result result = participationUtilService.addResultToSubmission(submission.getParticipation(), submission);
+
         Feedback feedback = new Feedback();
         feedback.setGradingInstruction(GradingCriterionUtil.findAnyInstructionWhere(gradingCriteria, instruction -> true).orElseThrow());
+        feedback.setResult(result);
         feedbackRepository.save(feedback);
 
         conversationUtilService.addChannelToExercise(classExercise);
@@ -234,8 +245,6 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ModelingExercise modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         courseUtilService.enableMessagingForCourse(modelingExercise.getCourseViaExerciseGroupOrCourseMember());
         modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
-        modelingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, modelingExercise, 1)));
-        modelingExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
 
         ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(modelingExercise);
@@ -431,6 +440,33 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateModelingExerciseWithCompetency() throws Exception {
+        // Create a new modeling exercise (not yet persisted)
+        ModelingExercise modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        modelingExercise.setTitle("New Modeling Exercise With Competency");
+        modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
+
+        // Set competency link on the exercise before creation
+        // Note: Set course to null on competency to avoid circular reference during JSON serialization
+        modelingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, modelingExercise, 0.5)));
+        modelingExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
+
+        // Create the exercise via POST request
+        ModelingExercise createdExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+
+        // Verify the exercise was created with the competency link
+        assertThat(createdExercise).isNotNull();
+        assertThat(createdExercise.getId()).isNotNull();
+        assertThat(createdExercise.getCompetencyLinks()).hasSize(1);
+
+        // Verify the competency link details
+        CompetencyExerciseLink link = createdExercise.getCompetencyLinks().iterator().next();
+        assertThat(link.getCompetency().getId()).isEqualTo(competency.getId());
+        assertThat(link.getWeight()).isEqualTo(0.5);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteModelingExerciseWithChannel() throws Exception {
         Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
         ModelingExercise modelingExercise = modelingExerciseTestRepository.findByCourseIdWithCategories(course.getId()).getFirst();
@@ -449,9 +485,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
                 .status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS).assessedExercise(classExercise);
 
         String validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        ExampleSubmission exampleSubmission = participationUtilService.generateExampleSubmission(validModel, classExercise, true);
-        exampleSubmission.addTutorParticipations(tutorParticipation);
-        participationUtilService.addExampleSubmission(exampleSubmission);
+        ExampleParticipation exampleSubmission = participationUtilService.generateExampleParticipation(validModel, classExercise, true);
+        exampleSubmission.addTutorParticipation(tutorParticipation);
+        participationUtilService.saveExampleParticipation(exampleSubmission);
         tutorParticipationRepository.save(tutorParticipation);
 
         assertThat(tutorParticipationRepository.findByAssessedExercise(classExercise)).isNotEmpty();
@@ -513,8 +549,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         exerciseUtilService.addGradingInstructionsToExercise(modelingExercise);
 
         // Create example submission
-        var exampleSubmission = participationUtilService.generateExampleSubmission("model", modelingExercise, true);
-        exampleSubmission = participationUtilService.addExampleSubmission(exampleSubmission);
+        var exampleSubmission = participationUtilService.generateExampleParticipation("model", modelingExercise, true);
+        exampleSubmission = participationUtilService.saveExampleParticipation(exampleSubmission);
         participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL, modelingExercise.getId());
         var submission = submissionRepository.findWithEagerResultAndFeedbackAndAssessmentNoteById(exampleSubmission.getSubmission().getId()).orElseThrow();
         participationUtilService.addFeedbackToResult(ParticipationFactory.generateFeedback().stream().findFirst().orElseThrow(),
@@ -526,10 +562,11 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
                 HttpStatus.CREATED);
 
         assertThat(modelingExerciseTestRepository.findById(importedModelingExercise.getId())).isPresent();
-        importedModelingExercise = modelingExerciseTestRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(modelingExercise.getId()).orElseThrow();
-        var importedExampleSubmission = importedModelingExercise.getExampleSubmissions().stream().findFirst().orElseThrow();
-        assertThat(importedExampleSubmission.getId()).isEqualTo(exampleSubmission.getId());
-        assertThat(importedExampleSubmission.getSubmission().getLatestResult()).isEqualTo(submission.getLatestResult());
+        importedModelingExercise = modelingExerciseTestRepository.findByIdWithGradingCriteria(modelingExercise.getId()).orElseThrow();
+        var exampleParticipations = exampleParticipationRepository.findAllWithSubmissionsAndResultsByExerciseId(modelingExercise.getId());
+        var importedExampleParticipation = exampleParticipations.stream().findFirst().orElseThrow();
+        assertThat(importedExampleParticipation.getId()).isEqualTo(exampleSubmission.getId());
+        assertThat(importedExampleParticipation.getSubmission().getLatestResult()).isEqualTo(submission.getLatestResult());
     }
 
     @Test
@@ -898,7 +935,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         List<Result> updatedResults = participationUtilService.getResultsForExercise(updatedModelingExercise);
         assertThat(GradingCriterionUtil.findAnyInstructionWhere(updatedModelingExercise.getGradingCriteria(), instruction -> instruction.getCredits() == 3)).isPresent();
         assertThat(updatedResults.getFirst().getScore()).isEqualTo(60);
-        assertThat(updatedResults.getFirst().getFeedbacks().getFirst().getCredits()).isEqualTo(3);
+        assertThat(updatedResults.getFirst().getFeedbacks().iterator().next().getCredits()).isEqualTo(3);
     }
 
     @Test
@@ -1162,8 +1199,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         GradingInstruction gradingInstruction = GradingCriterionUtil.findAnyInstructionWhere(gradingCriteria, instruction -> instruction.getFeedback() != null).orElseThrow();
 
         // Create example submission
-        var exampleSubmission = participationUtilService.generateExampleSubmission("model", modelingExercise, true);
-        exampleSubmission = participationUtilService.addExampleSubmission(exampleSubmission);
+        var exampleSubmission = participationUtilService.generateExampleParticipation("model", modelingExercise, true);
+        exampleSubmission = participationUtilService.saveExampleParticipation(exampleSubmission);
         participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL, modelingExercise.getId());
         var submission = submissionRepository.findWithEagerResultAndFeedbackAndAssessmentNoteById(exampleSubmission.getSubmission().getId()).orElseThrow();
 
@@ -1177,23 +1214,28 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         assertThat(modelingExerciseTestRepository.findById(importedModelingExercise.getId())).isPresent();
 
-        var importedExampleSubmission = importedModelingExercise.getExampleSubmissions().stream().findFirst().orElseThrow();
-        GradingInstruction importedFeedbackGradingInstruction = importedExampleSubmission.getSubmission().getLatestResult().getFeedbacks().getFirst().getGradingInstruction();
+        var importedExampleParticipations = exampleParticipationRepository
+                .findAllWithSubmissionsResultsFeedbacksAndGradingInstructionsByExerciseId(importedModelingExercise.getId());
+        var importedExampleParticipation = importedExampleParticipations.stream().findFirst().orElseThrow();
+        GradingInstruction importedFeedbackGradingInstruction = importedExampleParticipation.getSubmission().getLatestResult().getFeedbacks().iterator().next()
+                .getGradingInstruction();
         assertThat(importedFeedbackGradingInstruction).isNotNull();
 
         // Copy and original should have the same data but not the same ids.
         assertThat(importedFeedbackGradingInstruction.getId()).isNotEqualTo(gradingInstruction.getId());
-        assertThat(importedFeedbackGradingInstruction.getGradingCriterion()).isNull(); // To avoid infinite recursion when serializing to JSON.
+        // Grading criterion should be set and have a different ID than the original
+        assertThat(importedFeedbackGradingInstruction.getGradingCriterion().getId()).isNotNull();
         assertThat(importedFeedbackGradingInstruction.getFeedback()).isEqualTo(gradingInstruction.getFeedback());
         assertThat(importedFeedbackGradingInstruction.getGradingScale()).isEqualTo(gradingInstruction.getGradingScale());
         assertThat(importedFeedbackGradingInstruction.getInstructionDescription()).isEqualTo(gradingInstruction.getInstructionDescription());
         assertThat(importedFeedbackGradingInstruction.getCredits()).isEqualTo(gradingInstruction.getCredits());
         assertThat(importedFeedbackGradingInstruction.getUsageCount()).isEqualTo(gradingInstruction.getUsageCount());
 
-        var importedModelingExerciseFromDb = modelingExerciseTestRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(importedModelingExercise.getId())
-                .orElseThrow();
-        var importedFeedbackGradingInstructionFromDb = importedModelingExerciseFromDb.getExampleSubmissions().stream().findFirst().orElseThrow().getSubmission().getLatestResult()
-                .getFeedbacks().getFirst().getGradingInstruction();
+        var importedModelingExerciseFromDb = modelingExerciseTestRepository.findByIdWithGradingCriteria(importedModelingExercise.getId()).orElseThrow();
+        var importedExampleParticipationsFromDb = exampleParticipationRepository
+                .findAllWithSubmissionsResultsFeedbacksAndGradingInstructionsByExerciseId(importedModelingExercise.getId());
+        var importedFeedbackGradingInstructionFromDb = importedExampleParticipationsFromDb.stream().findFirst().orElseThrow().getSubmission().getLatestResult().getFeedbacks()
+                .iterator().next().getGradingInstruction();
 
         assertThat(importedFeedbackGradingInstructionFromDb.getGradingCriterion().getId()).isNotEqualTo(gradingInstruction.getGradingCriterion().getId());
 

@@ -6,7 +6,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Optional;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -140,6 +140,8 @@ public class FileUploadSubmissionService extends SubmissionService {
     public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, MultipartFile file, StudentParticipation participation, FileUploadExercise exercise)
             throws IOException, EmptyFileException {
 
+        // Set participation BEFORE storeFile which may save the submission (participation_id is NOT NULL)
+        fileUploadSubmission.setParticipation(participation);
         URI newFilePath = storeFile(fileUploadSubmission, participation, file, exercise);
 
         // update submission properties
@@ -153,7 +155,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         }
 
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-        fileUploadSubmission.setResults(new ArrayList<>());
+        fileUploadSubmission.setResults(new HashSet<>());
 
         // Note: we save before the new file path is set to potentially remove the old file on the file system
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);

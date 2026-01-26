@@ -46,8 +46,8 @@ public record CourseCreateDTO(
         boolean testCourse, Boolean onlineCourse, Language language, ProgrammingLanguage defaultProgrammingLanguage,
 
         // Complaint settings
-        Integer maxComplaints, Integer maxTeamComplaints, int maxComplaintTimeDays, int maxRequestMoreFeedbackTimeDays, int maxComplaintTextLimit,
-        int maxComplaintResponseTextLimit,
+        Integer maxComplaints, Integer maxTeamComplaints, Integer maxComplaintTimeDays, Integer maxRequestMoreFeedbackTimeDays, Integer maxComplaintTextLimit,
+        Integer maxComplaintResponseTextLimit,
 
         // UI settings
         String color, Boolean enrollmentEnabled, @Size(max = 2000) String enrollmentConfirmationMessage, boolean unenrollmentEnabled,
@@ -97,13 +97,25 @@ public record CourseCreateDTO(
         course.setLanguage(language);
         course.setDefaultProgrammingLanguage(defaultProgrammingLanguage);
 
-        // Complaint settings
-        course.setMaxComplaints(maxComplaints);
-        course.setMaxTeamComplaints(maxTeamComplaints);
-        course.setMaxComplaintTimeDays(maxComplaintTimeDays);
-        course.setMaxRequestMoreFeedbackTimeDays(maxRequestMoreFeedbackTimeDays);
-        course.setMaxComplaintTextLimit(maxComplaintTextLimit);
-        course.setMaxComplaintResponseTextLimit(maxComplaintResponseTextLimit);
+        // Complaint settings - only override defaults if values are explicitly provided (non-null)
+        if (maxComplaints != null) {
+            course.setMaxComplaints(maxComplaints);
+        }
+        if (maxTeamComplaints != null) {
+            course.setMaxTeamComplaints(maxTeamComplaints);
+        }
+        if (maxComplaintTimeDays != null) {
+            course.setMaxComplaintTimeDays(maxComplaintTimeDays);
+        }
+        if (maxRequestMoreFeedbackTimeDays != null) {
+            course.setMaxRequestMoreFeedbackTimeDays(maxRequestMoreFeedbackTimeDays);
+        }
+        if (maxComplaintTextLimit != null) {
+            course.setMaxComplaintTextLimit(maxComplaintTextLimit);
+        }
+        if (maxComplaintResponseTextLimit != null) {
+            course.setMaxComplaintResponseTextLimit(maxComplaintResponseTextLimit);
+        }
 
         // UI settings
         course.setColor(color);

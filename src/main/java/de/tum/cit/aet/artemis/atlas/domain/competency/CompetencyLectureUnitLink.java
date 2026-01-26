@@ -1,10 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.domain.competency;
 
-import java.io.Serial;
-import java.io.Serializable;
-import java.util.Objects;
-
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
@@ -27,16 +22,24 @@ public class CompetencyLectureUnitLink extends CompetencyLearningObjectLink {
 
     @EmbeddedId
     @JsonIgnore
-    protected CompetencyLectureUnitId id = new CompetencyLectureUnitId();
+    protected CompetencyLectureUnitId id;
 
+    // Note: We intentionally do NOT use CascadeType.PERSIST here because lecture units
+    // are always saved before being linked to competencies. Using cascade would cause
+    // issues when the cascade chain goes back through LectureUnit.competencyLinks.
     @JsonIgnoreProperties("competencyLinks")
-    @ManyToOne(optional = false, cascade = CascadeType.PERSIST)
+    @ManyToOne(optional = false)
     @MapsId("lectureUnitId")
     private LectureUnit lectureUnit;
 
     public CompetencyLectureUnitLink(CourseCompetency competency, LectureUnit lectureUnit, double weight) {
         super(competency, weight);
         this.lectureUnit = lectureUnit;
+        // Pre-populate the embedded ID to avoid Hibernate trying to derive it from associations
+        // which can cause cascade issues with detached entities
+        if (competency != null && competency.getId() != null && lectureUnit != null && lectureUnit.getId() != null) {
+            this.id = new CompetencyLectureUnitId(lectureUnit.getId(), competency.getId());
+        }
     }
 
     public CompetencyLectureUnitLink() {
@@ -61,43 +64,7 @@ public class CompetencyLectureUnitLink extends CompetencyLearningObjectLink {
     }
 
     @Embeddable
-    public static class CompetencyLectureUnitId implements Serializable {
+    public record CompetencyLectureUnitId(long lectureUnitId, long competencyId) {
 
-        @Serial
-        private static final long serialVersionUID = 1L;
-
-        private long lectureUnitId;
-
-        private long competencyId;
-
-        public CompetencyLectureUnitId() {
-            // Empty constructor for Spring
-        }
-
-        public CompetencyLectureUnitId(long lectureUnitId, long competencyId) {
-            this.lectureUnitId = lectureUnitId;
-            this.competencyId = competencyId;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (!(o instanceof CompetencyLectureUnitId that)) {
-                return false;
-            }
-            return lectureUnitId == that.lectureUnitId && competencyId == that.competencyId;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(lectureUnitId, competencyId);
-        }
-
-        @Override
-        public String toString() {
-            return "CompetencyLectureUnitId{" + "lectureUnitId=" + lectureUnitId + ", competencyId=" + competencyId + '}';
-        }
     }
 }

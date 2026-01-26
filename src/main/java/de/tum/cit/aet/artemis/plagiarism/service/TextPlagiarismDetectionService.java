@@ -4,7 +4,7 @@ import static de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService.hasMin
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -118,7 +118,7 @@ public class TextPlagiarismDetectionService {
             textSubmissions.forEach(submission -> {
                 var progressMessage = "Getting submission: " + processedSubmissionCount + "/" + textSubmissions.size();
                 plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
-                submission.setResults(new ArrayList<>());
+                submission.setResults(new HashSet<>());
 
                 StudentParticipation participation = (StudentParticipation) submission.getParticipation();
                 participation.setExercise(null);

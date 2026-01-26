@@ -14,7 +14,6 @@ import static org.mockito.Mockito.verify;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -34,14 +33,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.ExampleParticipation;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
-import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.ExampleParticipationTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.connector.AtlasMLRequestMockProvider;
@@ -82,6 +81,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
@@ -101,7 +101,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private TextSubmissionTestRepository textSubmissionRepository;
 
     @Autowired
-    private ExampleSubmissionTestRepository exampleSubmissionRepo;
+    private ExampleParticipationTestRepository exampleParticipationRepository;
 
     @Autowired
     private TeamRepository teamRepository;
@@ -209,6 +209,36 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
 
         verify(competencyProgressApi).updateProgressByCompetencyAsync(eq(competency));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateTextExerciseWithCompetency() throws Exception {
+        courseUtilService.enableMessagingForCourse(course);
+
+        // Create a new text exercise (not yet persisted)
+        TextExercise newTextExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2),
+                course);
+        newTextExercise.setTitle("New Text Exercise With Competency");
+        newTextExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
+
+        // Set competency link on the exercise before creation
+        // Note: Set course to null on competency to avoid circular reference during JSON serialization
+        newTextExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, newTextExercise, 0.5)));
+        newTextExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
+
+        // Create the exercise via POST request
+        TextExercise createdExercise = request.postWithResponseBody("/api/text/text-exercises", newTextExercise, TextExercise.class, HttpStatus.CREATED);
+
+        // Verify the exercise was created with the competency link
+        assertThat(createdExercise).isNotNull();
+        assertThat(createdExercise.getId()).isNotNull();
+        assertThat(createdExercise.getCompetencyLinks()).hasSize(1);
+
+        // Verify the competency link details
+        CompetencyExerciseLink link = createdExercise.getCompetencyLinks().iterator().next();
+        assertThat(link.getCompetency().getId()).isEqualTo(competency.getId());
+        assertThat(link.getWeight()).isEqualTo(0.5);
     }
 
     @Test
@@ -345,7 +375,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         // Update
         textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         textExercise.setTitle("AtlasML Update");
-        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.OK);
 
         // Delete
         request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
@@ -435,7 +465,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateTextExercise_InvalidMaxScore() throws Exception {
         textExercise.setMaxPoints(0.0);
-        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -444,7 +474,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(1.0);
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
-        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -453,7 +483,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(1.0);
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
-        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -471,7 +501,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         criterion.addStructuredGradingInstruction(gradingInstruction);
         textExercise.setGradingCriteria(Set.of(criterion));
-        TextExercise actualExercise = request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
+        // Use re-evaluate endpoint for grading criteria updates (the main PUT endpoint doesn't support grading criteria in DTO)
+        TextExercise actualExercise = request.putWithResponseBody("/api/text/text-exercises/" + textExercise.getId() + "/re-evaluate?deleteFeedback=false", textExercise,
+                TextExercise.class, HttpStatus.OK);
 
         assertThat(actualExercise.getGradingCriteria()).hasSize(1);
         GradingCriterion testCriterion = GradingCriterionUtil.findGradingCriterionByTitle(actualExercise, "Test");
@@ -484,7 +516,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateTextExercise() throws Exception {
-        textExercise = textExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(textExercise.getId());
+        textExercise = textExerciseRepository.findByIdElseThrow(textExercise.getId());
 
         // update certain attributes of text exercise
         String title = "Updated Text Exercise";
@@ -495,18 +527,18 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         // update problem statement
         textExercise.setProblemStatement("New problem statement");
 
-        // add example submission to exercise
+        // add example participation to exercise
+        ExampleParticipation exampleParticipation = new ExampleParticipation();
+        exampleParticipation.setExercise(textExercise);
+        exampleParticipationRepository.save(exampleParticipation);
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Lorem Ipsum Foo Bar", Language.ENGLISH, true);
+        textSubmission.setParticipation(exampleParticipation);
         textSubmissionRepository.save(textSubmission);
-        ExampleSubmission exampleSubmission = new ExampleSubmission();
-        exampleSubmission.setSubmission(textSubmission);
-        exampleSubmission.setExercise(textExercise);
-        exampleSubmissionRepo.save(exampleSubmission);
-        textExercise.addExampleSubmission(exampleSubmission);
+        exampleParticipation.addSubmission(textSubmission);
         textExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, textExercise, 1)));
         textExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
 
-        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
+        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.OK);
 
         assertThat(updatedTextExercise.getTitle()).as("text exercise title was correctly updated").isEqualTo(title);
         assertThat(updatedTextExercise.getDifficulty()).as("text exercise difficulty was correctly updated").isEqualTo(difficulty);
@@ -537,7 +569,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         }
 
         textExercise.setDueDate(ZonedDateTime.now().plusHours(12));
-        request.put("/api/text/text-exercises", textExercise, HttpStatus.OK);
+        request.put("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), HttpStatus.OK);
 
         {
             final var participations = studentParticipationRepository.findByExerciseId(textExercise.getId());
@@ -552,10 +584,10 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateTextExercise_setExerciseIdNull_created() throws Exception {
+    void updateTextExercise_setExerciseIdNull_badRequest() throws Exception {
         textExercise.setId(null);
         textExercise.setChannelName("test" + UUID.randomUUID().toString().substring(0, 8));
-        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
+        request.putWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -571,7 +603,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         existingTextExercise.setCourse(newCourse);
 
         // Text exercise update with the new course should fail.
-        TextExercise returnedTextExercise = request.putWithResponseBody("/api/text/text-exercises", existingTextExercise, TextExercise.class, HttpStatus.CONFLICT);
+        TextExercise returnedTextExercise = request.putWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(existingTextExercise), TextExercise.class,
+                HttpStatus.CONFLICT);
         assertThat(returnedTextExercise).isNull();
     }
 
@@ -581,7 +614,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course.setInstructorGroupName("test");
         courseRepository.save(course);
 
-        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -600,7 +633,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         // update problem statement
         textExercise.setProblemStatement("New problem statement");
 
-        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
+        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.OK);
 
         assertThat(updatedTextExercise.getTitle()).as("text exercise title was correctly updated").isEqualTo(updateTitle);
         assertThat(updatedTextExercise.getDifficulty()).as("text exercise difficulty was correctly updated").isEqualTo(updateDifficulty);
@@ -619,24 +652,39 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         textExerciseRepository.save(textExercise);
 
-        request.putWithResponseBody("/api/text/text-exercises", invalidDates.applyTo(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(invalidDates.applyTo(textExercise)), TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateTextExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
-        textExercise.setExerciseGroup(exerciseGroup);
+        // Create a DTO with both courseId and exerciseGroupId set (invalid)
+        UpdateTextExerciseDTO dto = new UpdateTextExerciseDTO(textExercise.getId(), textExercise.getTitle(), textExercise.getShortName(), textExercise.getMaxPoints(),
+                textExercise.getBonusPoints(), textExercise.getAssessmentType(), textExercise.getReleaseDate(), textExercise.getStartDate(), textExercise.getDueDate(),
+                textExercise.getAssessmentDueDate(), textExercise.getExampleSolutionPublicationDate(), textExercise.getDifficulty(), textExercise.getMode(),
+                textExercise.getIncludedInOverallScore(), textExercise.getProblemStatement(), textExercise.getGradingInstructions(), textExercise.getCategories(),
+                textExercise.getPresentationScoreEnabled(), textExercise.getSecondCorrectionEnabled(), textExercise.getFeedbackSuggestionModule(),
+                textExercise.getAllowComplaintsForAutomaticAssessments(), textExercise.getAllowFeedbackRequests(), textExercise.getChannelName(), null, course.getId(), // courseId
+                exerciseGroup.getId(), // exerciseGroupId - both set is invalid
+                textExercise.getExampleSolution());
 
-        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", dto, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateTextExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
-        textExercise.setCourse(null);
+        // Create a DTO with neither courseId nor exerciseGroupId set (invalid)
+        UpdateTextExerciseDTO dto = new UpdateTextExerciseDTO(textExercise.getId(), textExercise.getTitle(), textExercise.getShortName(), textExercise.getMaxPoints(),
+                textExercise.getBonusPoints(), textExercise.getAssessmentType(), textExercise.getReleaseDate(), textExercise.getStartDate(), textExercise.getDueDate(),
+                textExercise.getAssessmentDueDate(), textExercise.getExampleSolutionPublicationDate(), textExercise.getDifficulty(), textExercise.getMode(),
+                textExercise.getIncludedInOverallScore(), textExercise.getProblemStatement(), textExercise.getGradingInstructions(), textExercise.getCategories(),
+                textExercise.getPresentationScoreEnabled(), textExercise.getSecondCorrectionEnabled(), textExercise.getFeedbackSuggestionModule(),
+                textExercise.getAllowComplaintsForAutomaticAssessments(), textExercise.getAllowFeedbackRequests(), textExercise.getChannelName(), null, null, // neither set
+                null, textExercise.getExampleSolution());
 
-        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", dto, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -644,21 +692,38 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void updateTextExercise_convertFromCourseToExamExercise_badRequest() throws Exception {
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
 
-        textExercise.setExerciseGroup(exerciseGroup);
+        // Create a DTO that tries to convert a course exercise to an exam exercise
+        UpdateTextExerciseDTO dto = new UpdateTextExerciseDTO(textExercise.getId(), textExercise.getTitle(), textExercise.getShortName(), textExercise.getMaxPoints(),
+                textExercise.getBonusPoints(), textExercise.getAssessmentType(), textExercise.getReleaseDate(), textExercise.getStartDate(), textExercise.getDueDate(),
+                textExercise.getAssessmentDueDate(), textExercise.getExampleSolutionPublicationDate(), textExercise.getDifficulty(), textExercise.getMode(),
+                textExercise.getIncludedInOverallScore(), textExercise.getProblemStatement(), textExercise.getGradingInstructions(), textExercise.getCategories(),
+                textExercise.getPresentationScoreEnabled(), textExercise.getSecondCorrectionEnabled(), textExercise.getFeedbackSuggestionModule(),
+                textExercise.getAllowComplaintsForAutomaticAssessments(), textExercise.getAllowFeedbackRequests(), textExercise.getChannelName(), null, null, // no courseId
+                exerciseGroup.getId(), // exerciseGroupId - trying to convert to exam exercise
+                textExercise.getExampleSolution());
 
-        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", dto, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateTextExercise_convertFromExamToCourseExercise_badRequest() throws Exception {
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
-        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
-        textExerciseRepository.save(textExercise);
+        TextExercise examTextExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
+        textExerciseRepository.save(examTextExercise);
 
-        textExercise.setExerciseGroup(null);
+        // Create a DTO that tries to convert an exam exercise to a course exercise
+        UpdateTextExerciseDTO dto = new UpdateTextExerciseDTO(examTextExercise.getId(), examTextExercise.getTitle(), examTextExercise.getShortName(),
+                examTextExercise.getMaxPoints(), examTextExercise.getBonusPoints(), examTextExercise.getAssessmentType(), examTextExercise.getReleaseDate(),
+                examTextExercise.getStartDate(), examTextExercise.getDueDate(), examTextExercise.getAssessmentDueDate(), examTextExercise.getExampleSolutionPublicationDate(),
+                examTextExercise.getDifficulty(), examTextExercise.getMode(), examTextExercise.getIncludedInOverallScore(), examTextExercise.getProblemStatement(),
+                examTextExercise.getGradingInstructions(), examTextExercise.getCategories(), examTextExercise.getPresentationScoreEnabled(),
+                examTextExercise.getSecondCorrectionEnabled(), examTextExercise.getFeedbackSuggestionModule(), examTextExercise.getAllowComplaintsForAutomaticAssessments(),
+                examTextExercise.getAllowFeedbackRequests(), examTextExercise.getChannelName(), null, course.getId(), // courseId - trying to convert to course exercise
+                null, // no exerciseGroupId
+                examTextExercise.getExampleSolution());
 
-        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", dto, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -690,8 +755,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise = textExerciseRepository.save(textExercise);
         textExercise.setChannelName("testchannel" + textExercise.getId());
         // Create example submission
-        var exampleSubmission = participationUtilService.generateExampleSubmission("Lorem Ipsum", textExercise, true);
-        exampleSubmission = participationUtilService.addExampleSubmission(exampleSubmission);
+        var exampleSubmission = participationUtilService.generateExampleParticipation("Lorem Ipsum", textExercise, true);
+        exampleSubmission = participationUtilService.saveExampleParticipation(exampleSubmission);
 
         var automaticTextBlock = TextExerciseFactory.generateTextBlock(1, 4, "orem");
         automaticTextBlock.automatic();
@@ -704,9 +769,10 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL, textExercise.getId());
         TextExercise newTextExercise = request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class,
                 HttpStatus.CREATED);
-        assertThat(newTextExercise.getExampleSubmissions()).hasSize(1);
-        ExampleSubmission newExampleSubmission = newTextExercise.getExampleSubmissions().iterator().next();
-        var textBlocks = ((TextSubmission) newExampleSubmission.getSubmission()).getBlocks();
+        var exampleParticipations = exampleParticipationRepository.findAllWithSubmissionsResultsFeedbacksAndTextBlocksByExerciseId(newTextExercise.getId());
+        assertThat(exampleParticipations).hasSize(1);
+        ExampleParticipation newExampleParticipation = exampleParticipations.iterator().next();
+        var textBlocks = ((TextSubmission) newExampleParticipation.getSubmission()).getBlocks();
         assertThat(textBlocks).hasSize(2);
 
         TextBlock manualTextBlockFromImport = textBlocks.stream().filter(tb -> tb.getText().equals(manualTextBlock.getText())).findFirst().orElseThrow();
@@ -914,8 +980,15 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         channelRepository.save(channel);
         Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(textExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
+
+        // Create a submission with a result to associate the feedback with
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Test submission", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
+        Result result = participationUtilService.addResultToSubmission(textSubmission.getParticipation(), textSubmission);
+
         Feedback feedback = new Feedback();
         feedback.setGradingInstruction(GradingCriterionUtil.findAnyInstructionWhere(gradingCriteria, instruction -> true).orElseThrow());
+        feedback.setResult(result);
         feedbackRepository.save(feedback);
 
         TextExercise receivedTextExercise = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExercise.class);
@@ -1266,7 +1339,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         List<Result> updatedResults = participationUtilService.getResultsForExercise(updatedTextExercise);
         assertThat(GradingCriterionUtil.findAnyInstructionWhere(updatedTextExercise.getGradingCriteria(), instruction -> instruction.getCredits() == 3)).isPresent();
         assertThat(updatedResults.getFirst().getScore()).isEqualTo(60);
-        assertThat(updatedResults.getFirst().getFeedbacks().getFirst().getCredits()).isEqualTo(3);
+        assertThat(updatedResults.getFirst().getFeedbacks().iterator().next().getCredits()).isEqualTo(3);
     }
 
     @Test
@@ -1276,19 +1349,16 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         gradingCriterionRepository.saveAll(gradingCriteria);
         textExercise.setGradingCriteria(gradingCriteria);
 
-        // Create example submission
-        Set<ExampleSubmission> exampleSubmissionSet = new HashSet<>();
-        var exampleSubmission = participationUtilService.generateExampleSubmission("text", textExercise, true);
-        exampleSubmission = participationUtilService.addExampleSubmission(exampleSubmission);
-        TextSubmission textSubmission = (TextSubmission) participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL,
+        // Create example participation
+        var exampleParticipation = participationUtilService.generateExampleParticipation("text", textExercise, true);
+        exampleParticipation = participationUtilService.saveExampleParticipation(exampleParticipation);
+        TextSubmission textSubmission = (TextSubmission) participationUtilService.addResultToSubmission(exampleParticipation.getSubmission(), AssessmentType.MANUAL,
                 textExercise.getId());
         textSubmission.setExampleSubmission(true);
         Result result = textSubmission.getLatestResult();
         result.setExampleResult(true);
         textSubmission.addResult(result);
         textSubmissionRepository.save(textSubmission);
-        exampleSubmissionSet.add(exampleSubmission);
-        textExercise.setExampleSubmissions(exampleSubmissionSet);
 
         request.putWithResponseBody("/api/text/text-exercises/" + textExercise.getId() + "/re-evaluate" + "?deleteFeedback=false", textExercise, TextExercise.class, HttpStatus.OK);
     }
@@ -1411,8 +1481,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         GradingInstruction gradingInstruction = GradingCriterionUtil.findAnyInstructionWhere(gradingCriteria, instruction -> instruction.getFeedback() != null).orElseThrow();
 
         // Create example submission
-        var exampleSubmission = participationUtilService.generateExampleSubmission("text", textExercise, true);
-        exampleSubmission = participationUtilService.addExampleSubmission(exampleSubmission);
+        var exampleSubmission = participationUtilService.generateExampleParticipation("text", textExercise, true);
+        exampleSubmission = participationUtilService.saveExampleParticipation(exampleSubmission);
         participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL, textExercise.getId());
         var submission = textSubmissionRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(exampleSubmission.getSubmission().getId());
 
@@ -1426,22 +1496,26 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         assertThat(textExerciseRepository.findById(importedTextExercise.getId())).isPresent();
 
-        var importedExampleSubmission = importedTextExercise.getExampleSubmissions().stream().findFirst().orElseThrow();
-        GradingInstruction importedFeedbackGradingInstruction = importedExampleSubmission.getSubmission().getLatestResult().getFeedbacks().getFirst().getGradingInstruction();
+        var importedExampleParticipations = exampleParticipationRepository.findAllWithSubmissionsResultsFeedbacksAndGradingInstructionsByExerciseId(importedTextExercise.getId());
+        var importedExampleParticipation = importedExampleParticipations.stream().findFirst().orElseThrow();
+        GradingInstruction importedFeedbackGradingInstruction = importedExampleParticipation.getSubmission().getLatestResult().getFeedbacks().iterator().next()
+                .getGradingInstruction();
         assertThat(importedFeedbackGradingInstruction).isNotNull();
 
         // Copy and original should have the same data but not the same ids.
         assertThat(importedFeedbackGradingInstruction.getId()).isNotEqualTo(gradingInstruction.getId());
-        assertThat(importedFeedbackGradingInstruction.getGradingCriterion()).isNull(); // To avoid infinite recursion when serializing to JSON.
+        // Grading criterion should be set and have a different ID than the original
+        assertThat(importedFeedbackGradingInstruction.getGradingCriterion().getId()).isNotNull();
         assertThat(importedFeedbackGradingInstruction.getFeedback()).isEqualTo(gradingInstruction.getFeedback());
         assertThat(importedFeedbackGradingInstruction.getGradingScale()).isEqualTo(gradingInstruction.getGradingScale());
         assertThat(importedFeedbackGradingInstruction.getInstructionDescription()).isEqualTo(gradingInstruction.getInstructionDescription());
         assertThat(importedFeedbackGradingInstruction.getCredits()).isEqualTo(gradingInstruction.getCredits());
         assertThat(importedFeedbackGradingInstruction.getUsageCount()).isEqualTo(gradingInstruction.getUsageCount());
 
-        var importedTextExerciseFromDB = textExerciseRepository.findWithExampleSubmissionsAndResultsById(importedTextExercise.getId()).orElseThrow();
-        var importedFeedbackGradingInstructionFromDb = importedTextExerciseFromDB.getExampleSubmissions().stream().findFirst().orElseThrow().getSubmission().getLatestResult()
-                .getFeedbacks().getFirst().getGradingInstruction();
+        var importedExampleParticipationsFromDb = exampleParticipationRepository
+                .findAllWithSubmissionsResultsFeedbacksAndGradingInstructionsByExerciseId(importedTextExercise.getId());
+        var importedFeedbackGradingInstructionFromDb = importedExampleParticipationsFromDb.stream().findFirst().orElseThrow().getSubmission().getLatestResult().getFeedbacks()
+                .iterator().next().getGradingInstruction();
 
         assertThat(importedFeedbackGradingInstructionFromDb.getGradingCriterion().getId()).isNotEqualTo(gradingInstruction.getGradingCriterion().getId());
 

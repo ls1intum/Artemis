@@ -203,13 +203,13 @@ public class LearningObjectImportService {
             }
             case ModelingExercise modelingExercise -> {
                 var api = modelingExerciseImportApi.orElseThrow(() -> new ModelingApiNotPresentException(ModelingExerciseImportApi.class));
-                yield importOrLoadExercise(modelingExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId, api::findByIdWithExampleSubmissionsAndResultsElseThrow,
+                yield importOrLoadExercise(modelingExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId, api::findByIdWithGradingCriteriaElseThrow,
                         api::importModelingExercise);
             }
             case TextExercise textExercise -> {
                 var api = textExerciseImportApi.orElseThrow(() -> new TextApiNotPresentException(TextExerciseImportApi.class));
                 yield importOrLoadExercise(textExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId,
-                        api::findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow, api::importTextExercise);
+                        api::findWithTeamAssignmentConfigAndGradingCriteriaByIdElseThrow, api::importTextExercise);
             }
             case QuizExercise quizExercise -> importOrLoadExercise(quizExercise, course, quizExerciseRepository::findUniqueWithCompetenciesByTitleAndCourseId,
                     quizExerciseRepository::findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow, (exercise, templateExercise) -> {
@@ -268,7 +268,6 @@ public class LearningObjectImportService {
         programmingExercise.setGradingCriteria(new HashSet<>());
         programmingExercise.setStudentParticipations(new HashSet<>());
         programmingExercise.setTutorParticipations(new HashSet<>());
-        programmingExercise.setExampleSubmissions(new HashSet<>());
         programmingExercise.setAttachments(new HashSet<>());
         programmingExercise.setPlagiarismCases(new HashSet<>());
         programmingExercise.setCompetencyLinks(new HashSet<>());
@@ -293,8 +292,10 @@ public class LearningObjectImportService {
         }
         else {
             exercise = loadForImport.apply(exercise.getId());
+            // Note: We keep the original ID on exercise so that import functions can use it
+            // to fetch related data (e.g., example participations). The import function creates
+            // a NEW exercise object, so the original ID won't be persisted.
             exercise.setCourse(course);
-            exercise.setId(null);
             exercise.setCompetencyLinks(new HashSet<>());
 
             return importFunction.apply(exercise, exercise);

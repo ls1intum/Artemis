@@ -93,7 +93,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = "auxiliaryRepositories")
     Optional<ProgrammingExercise> findWithAuxiliaryRepositoriesById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "auxiliaryRepositories", "competencyLinks.competency", "buildConfig", "categories" })
+    @EntityGraph(type = LOAD, attributePaths = { "auxiliaryRepositories", "competencyLinks.competency", "buildConfig", "categories", "templateParticipation",
+            "solutionParticipation", "plagiarismDetectionConfig" })
     Optional<ProgrammingExercise> findForUpdateById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
@@ -1059,7 +1060,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         CompetencyLinks(ProgrammingExercise_.COMPETENCY_LINKS),
         Teams(ProgrammingExercise_.TEAMS),
         TutorParticipations(ProgrammingExercise_.TUTOR_PARTICIPATIONS),
-        ExampleSubmissions(ProgrammingExercise_.EXAMPLE_SUBMISSIONS),
         Attachments(ProgrammingExercise_.ATTACHMENTS),
         PlagiarismCases(ProgrammingExercise_.PLAGIARISM_CASES),
         PlagiarismDetectionConfig(ProgrammingExercise_.PLAGIARISM_DETECTION_CONFIG);

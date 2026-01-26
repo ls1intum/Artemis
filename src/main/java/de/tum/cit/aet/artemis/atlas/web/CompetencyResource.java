@@ -341,7 +341,7 @@ public class CompetencyResource {
         competencyForAtlasMl.setId(competency.getId());
         notifyAtlasML(List.of(competencyForAtlasMl), OperationTypeDTO.DELETE, "competency deletion");
 
-        courseCompetencyService.deleteCourseCompetency(competency, course);
+        courseCompetencyService.deleteCourseCompetency(competency);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, competency.getTitle())).build();
     }

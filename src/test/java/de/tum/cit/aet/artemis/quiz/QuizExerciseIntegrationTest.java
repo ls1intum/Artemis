@@ -1114,7 +1114,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         var newResult = resultRepository.findDistinctBySubmissionId(submission.getId());
         assertThat(newResult).isPresent();
-        assertThat(newResult.get()).isEqualTo(submission.getResults().getFirst());
+        assertThat(newResult.get()).isEqualTo(submission.getResults().iterator().next());
     }
 
     @Test
@@ -1491,9 +1491,31 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         assertThat(link.getWeight()).isEqualTo(0.25);
 
         Competency fakeCompetency = new Competency();
-        fakeCompetency.setId(999L);
+        fakeCompetency.setId(Long.MAX_VALUE);  // Use MAX_VALUE to ensure this ID never exists in test database
         quizExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(fakeCompetency, quizExercise, 0.25)));
         updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateQuizWithCompetency() throws Exception {
+        // create a quiz exercise (not yet persisted)
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.INDIVIDUAL);
+        Course course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
+
+        // Create a simple course competency
+        Competency competency = new Competency();
+        competency.setTitle("Test Competency");
+        competency.setDescription("This is a test competency");
+        competency.setCourse(course);
+        competency.setMasteryThreshold(1);
+        competency = request.postWithResponseBody("/api/atlas/courses/" + course.getId() + "/competencies", competency, Competency.class, HttpStatus.CREATED);
+
+        quizExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, quizExercise, 0.2)));
+        QuizExercise created = createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, true);
+
+        assertThat(created).isNotNull();
+        assertThat(created.getCompetencyLinks()).hasSize(1);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

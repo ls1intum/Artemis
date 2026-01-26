@@ -226,9 +226,11 @@ public class FileUploadExerciseUtilService {
             String assessorLogin, List<Feedback> feedbacks) {
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
 
+        // Set participation BEFORE saving (participation_id is NOT NULL)
+        fileUploadSubmission.setParticipation(participation);
+        participation.addSubmission(fileUploadSubmission);
         submissionRepository.save(fileUploadSubmission);
 
-        participation.addSubmission(fileUploadSubmission);
         Result result = new Result();
         result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
         result.setScore(100D);
@@ -238,7 +240,7 @@ public class FileUploadExerciseUtilService {
         else { // exam exercises do not have a release date
             result.setCompletionDate(ZonedDateTime.now());
         }
-        result.setFeedbacks(feedbacks);
+        result.setFeedbacks(new HashSet<>(feedbacks));
         result.setSubmission(fileUploadSubmission);
         result.setExerciseId(exercise.getId());
         result = resultRepo.save(result);
@@ -246,7 +248,6 @@ public class FileUploadExerciseUtilService {
             feedback.setResult(result);
         }
         result = resultRepo.save(result);
-        fileUploadSubmission.setParticipation(participation);
         fileUploadSubmission.addResult(result);
         fileUploadSubmission = fileUploadSubmissionRepo.save(fileUploadSubmission);
         studentParticipationRepo.save(participation);

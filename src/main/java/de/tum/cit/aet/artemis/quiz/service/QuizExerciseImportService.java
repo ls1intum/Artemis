@@ -23,7 +23,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ExampleParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
@@ -60,9 +60,10 @@ public class QuizExerciseImportService extends ExerciseImportService {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    public QuizExerciseImportService(QuizExerciseService quizExerciseService, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository,
-            ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService, Optional<CompetencyProgressApi> competencyProgressApi) {
-        super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
+    public QuizExerciseImportService(QuizExerciseService quizExerciseService, ExampleParticipationRepository exampleParticipationRepository,
+            SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService,
+            Optional<CompetencyProgressApi> competencyProgressApi) {
+        super(exampleParticipationRepository, submissionRepository, resultRepository, feedbackService);
         this.quizExerciseService = quizExerciseService;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;

@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -1149,7 +1150,7 @@ public class CourseStudentDataExportService {
                 .orElse(null);
     }
 
-    private String formatFeedbacks(List<Feedback> feedbacks) {
+    private String formatFeedbacks(Collection<Feedback> feedbacks) {
         return feedbacks.stream().map(f -> {
             String text = f.getDetailText() != null ? f.getDetailText() : (f.getText() != null ? f.getText() : "");
             String credits = f.getCredits() != null ? " (" + f.getCredits() + " pts)" : "";

@@ -48,31 +48,19 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
     @Query("""
             SELECT t
             FROM TextExercise t
-                LEFT JOIN FETCH t.exampleSubmissions e
-                LEFT JOIN FETCH e.submission s
-                LEFT JOIN FETCH s.results r
-                LEFT JOIN FETCH r.feedbacks
-                LEFT JOIN FETCH s.blocks
-                LEFT JOIN FETCH r.assessor
                 LEFT JOIN FETCH t.teamAssignmentConfig
             WHERE t.id = :exerciseId
             """)
-    Optional<TextExercise> findWithExampleSubmissionsAndResultsById(@Param("exerciseId") long exerciseId);
+    Optional<TextExercise> findWithTeamAssignmentConfigById(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT textExercise
             FROM TextExercise textExercise
-                LEFT JOIN FETCH textExercise.exampleSubmissions exampleSubmissions
-                LEFT JOIN FETCH exampleSubmissions.submission submission
-                LEFT JOIN FETCH submission.results result
-                LEFT JOIN FETCH result.feedbacks
-                LEFT JOIN FETCH submission.blocks
-                LEFT JOIN FETCH result.assessor
                 LEFT JOIN FETCH textExercise.teamAssignmentConfig
                 LEFT JOIN FETCH textExercise.gradingCriteria
             WHERE textExercise.id = :exerciseId
             """)
-    Optional<TextExercise> findWithExampleSubmissionsAndResultsAndGradingCriteriaById(@Param("exerciseId") long exerciseId);
+    Optional<TextExercise> findWithTeamAssignmentConfigAndGradingCriteriaById(@Param("exerciseId") long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
     Optional<TextExercise> findWithStudentParticipationsAndSubmissionsById(long exerciseId);
@@ -128,13 +116,13 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
     }
 
     @NonNull
-    default TextExercise findByIdWithExampleSubmissionsAndResultsElseThrow(long exerciseId) {
-        return getValueElseThrow(findWithExampleSubmissionsAndResultsById(exerciseId), exerciseId);
+    default TextExercise findWithTeamAssignmentConfigByIdElseThrow(long exerciseId) {
+        return getValueElseThrow(findWithTeamAssignmentConfigById(exerciseId), exerciseId);
     }
 
     @NonNull
-    default TextExercise findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow(long exerciseId) {
-        return getValueElseThrow(findWithExampleSubmissionsAndResultsAndGradingCriteriaById(exerciseId), exerciseId);
+    default TextExercise findWithTeamAssignmentConfigAndGradingCriteriaByIdElseThrow(long exerciseId) {
+        return getValueElseThrow(findWithTeamAssignmentConfigAndGradingCriteriaById(exerciseId), exerciseId);
     }
 
     @NonNull

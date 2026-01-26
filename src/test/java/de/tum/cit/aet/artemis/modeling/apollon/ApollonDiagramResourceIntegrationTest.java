@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.modeling.domain.ApollonDiagram;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
+import de.tum.cit.aet.artemis.modeling.dto.ApollonDiagramUpdateDTO;
 import de.tum.cit.aet.artemis.modeling.repository.ApollonDiagramRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -81,11 +82,12 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testUpdateApollonDiagram_OK() throws Exception {
+        apollonDiagram.setCourseId(course1.getId());
         apollonDiagram = apollonDiagramRepository.save(apollonDiagram);
         apollonDiagram.setTitle("updated title");
         apollonDiagram.setDiagramType(DiagramType.ClassDiagram);
-        apollonDiagram.setCourseId(course1.getId());
-        ApollonDiagram response = request.putWithResponseBody("/api/modeling/course/" + course1.getId() + "/apollon-diagrams", apollonDiagram, ApollonDiagram.class, HttpStatus.OK);
+        ApollonDiagram response = request.putWithResponseBody("/api/modeling/course/" + course1.getId() + "/apollon-diagrams", ApollonDiagramUpdateDTO.of(apollonDiagram),
+                ApollonDiagram.class, HttpStatus.OK);
 
         assertThat(response.getDiagramType()).as("diagram type updated").isEqualByComparingTo(DiagramType.ClassDiagram);
         assertThat(response.getTitle()).as("title updated").isEqualTo("updated title");
@@ -93,19 +95,21 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testUpdateApollonDiagram_CREATED() throws Exception {
+    void testUpdateApollonDiagram_BAD_REQUEST_noId() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
-        request.put("/api/modeling/course/" + course1.getId() + "/apollon-diagrams", apollonDiagram, HttpStatus.CREATED);
+        // ID is null, should return BAD_REQUEST
+        request.put("/api/modeling/course/" + course1.getId() + "/apollon-diagrams", ApollonDiagramUpdateDTO.of(apollonDiagram), HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void testUpdateApollonDiagram_AccessForbidden() throws Exception {
+        apollonDiagram.setCourseId(course1.getId());
         apollonDiagram = apollonDiagramRepository.save(apollonDiagram);
         apollonDiagram.setTitle("updated title");
         apollonDiagram.setDiagramType(DiagramType.ClassDiagram);
-        apollonDiagram.setCourseId(course1.getId());
-        request.putWithResponseBody("/api/modeling/course/" + course1.getId() + "/apollon-diagrams", apollonDiagram, ApollonDiagram.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/modeling/course/" + course1.getId() + "/apollon-diagrams", ApollonDiagramUpdateDTO.of(apollonDiagram), ApollonDiagram.class,
+                HttpStatus.FORBIDDEN);
     }
 
     @Test

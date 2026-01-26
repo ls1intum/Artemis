@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -345,6 +346,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         resultWithLock.setAssessor(tutor1);
         resultWithLock.setAssessmentType(AssessmentType.MANUAL);
         resultWithLock.setExerciseId(examTextExercise.getId());
+        resultWithLock.setCorrectionRound(0);
         resultRepository.save(resultWithLock);
 
         // checks
@@ -371,8 +373,8 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         // setup
         queryTestingBasics(this.examTextExercise);
 
-        participationUtilService.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true);
-        participationUtilService.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor2, 20D, true);
+        participationUtilService.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true, 0);
+        participationUtilService.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor2, 20D, true, 1);
 
         // checks
         getQueryResults(examTextExercise);
@@ -401,7 +403,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         // setup
         queryTestingBasics(this.examTextExercise);
 
-        participationUtilService.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true);
+        participationUtilService.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true, 0);
 
         Result resultForSecondCorrectionWithLock;
 
@@ -409,6 +411,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         resultForSecondCorrectionWithLock.setAssessor(tutor2);
         resultForSecondCorrectionWithLock.setAssessmentType(AssessmentType.MANUAL);
         resultForSecondCorrectionWithLock.setExerciseId(examTextExercise.getId());
+        resultForSecondCorrectionWithLock.setCorrectionRound(1);
         resultRepository.save(resultForSecondCorrectionWithLock);
 
         // checks
@@ -501,6 +504,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         resultWithLock.setAssessor(tutor1);
         resultWithLock.setAssessmentType(AssessmentType.MANUAL);
         resultWithLock.setExerciseId(examModelingExercise.getId());
+        resultWithLock.setCorrectionRound(0);
         resultRepository.save(resultWithLock);
 
         // checks
@@ -527,8 +531,8 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         // setup
         queryTestingBasics(this.examModelingExercise);
 
-        participationUtilService.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true);
-        participationUtilService.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor2, 20D, true);
+        participationUtilService.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true, 0);
+        participationUtilService.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor2, 20D, true, 1);
 
         // checks
         getQueryResults(examModelingExercise);
@@ -557,12 +561,13 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         // setup
         queryTestingBasics(this.examModelingExercise);
 
-        participationUtilService.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true);
+        participationUtilService.addResultToSubmission(submission1, AssessmentType.MANUAL, tutor1, 10D, true, 0);
 
         Result resultForSecondCorrectionWithLock = submissionService.saveNewEmptyResult(submission1);
         resultForSecondCorrectionWithLock.setAssessor(tutor2);
         resultForSecondCorrectionWithLock.setAssessmentType(AssessmentType.MANUAL);
         resultForSecondCorrectionWithLock.setExerciseId(examModelingExercise.getId());
+        resultForSecondCorrectionWithLock.setCorrectionRound(1);
         resultRepository.save(resultForSecondCorrectionWithLock);
 
         // checks
@@ -683,7 +688,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testCopyFeedbackSetValues() {
-        List<Feedback> oldFeedbacks = List.of(new Feedback().text("Feedback 1").credits(1.), // should get positive = true
+        Set<Feedback> oldFeedbacks = Set.of(new Feedback().text("Feedback 1").credits(1.), // should get positive = true
                 new Feedback().type(FeedbackType.AUTOMATIC).credits(0.).positive(true), // should stay positive
                 new Feedback().detailText("test"), // no credits, should get credits = 0 and positive = true
                 new Feedback().credits(-2.5) // should get positive = false
@@ -695,13 +700,19 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         Result newResult = new Result();
         newResult.setExerciseId(examTextExercise.getId());
 
-        List<Feedback> newFeedbacks = submissionService.copyFeedbackToNewResult(newResult, oldResult);
+        Set<Feedback> copiedFeedbacks = submissionService.copyFeedbackToNewResult(newResult, oldResult);
 
-        assertThat(newFeedbacks).isEqualTo(newResult.getFeedbacks()).hasSameSizeAs(oldFeedbacks);
-        assertThat(newFeedbacks.getFirst().isPositive()).isTrue();
-        assertThat(newFeedbacks.get(1).isPositive()).isTrue();
-        assertThat(newFeedbacks.get(2).isPositive()).isTrue();
-        assertThat(newFeedbacks.get(2).getCredits()).isZero();
-        assertThat(newFeedbacks.get(3).isPositive()).isFalse();
+        assertThat(copiedFeedbacks).containsExactlyInAnyOrderElementsOf(newResult.getFeedbacks()).hasSameSizeAs(oldFeedbacks);
+        // Check that positive values are correctly set based on credits
+        assertThat(copiedFeedbacks).allSatisfy(feedback -> {
+            if (feedback.getCredits() != null && feedback.getCredits() < 0) {
+                assertThat(feedback.isPositive()).isFalse();
+            }
+            else {
+                assertThat(feedback.isPositive()).isTrue();
+            }
+        });
+        // Check that the feedback with no credits has credits set to 0
+        assertThat(copiedFeedbacks.stream().filter(f -> "test".equals(f.getDetailText())).findFirst().orElseThrow().getCredits()).isZero();
     }
 }

@@ -81,20 +81,19 @@ public class ExamQuizService {
                 if (quizSubmission.getLatestResult() == null) {
                     result = new Result();
                     result.setAssessmentType(AssessmentType.AUTOMATIC);
-                    // set submission to calculate scores
+                    result.setCorrectionRound(0);
+                    // set submission to calculate scores (submission_id is NOT NULL)
                     result.setSubmission(quizSubmission);
                     // calculate scores and update result and submission accordingly
                     quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
                     result.evaluateQuizSubmission(quizExercise);
                     result.setExerciseId(quizExercise.getId());
-                    // remove submission to follow save order for ordered collections
-                    result.setSubmission(null);
                     if (studentExam.isTestExam()) {
                         result.rated(true);
                     }
+                    // save result with submission set (submission_id is NOT NULL)
                     result = resultRepository.save(result);
                     studentParticipationRepository.save(participation);
-                    result.setSubmission(quizSubmission);
                     quizSubmission.addResult(result);
                 }
                 else {

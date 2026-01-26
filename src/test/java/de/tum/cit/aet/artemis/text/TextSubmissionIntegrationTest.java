@@ -94,6 +94,8 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     private StudentParticipation lateParticipation;
 
+    private StudentParticipation releasedParticipation;
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
@@ -104,7 +106,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         lateParticipation = participationUtilService.createAndSaveParticipationForExercise(finishedTextExercise, TEST_PREFIX + "student1");
         lateParticipation.setInitializationDate(ZonedDateTime.now().minusDays(2));
         participationRepository.save(lateParticipation);
-        participationUtilService.createAndSaveParticipationForExercise(releasedTextExercise, TEST_PREFIX + "student1");
+        releasedParticipation = participationUtilService.createAndSaveParticipationForExercise(releasedTextExercise, TEST_PREFIX + "student1");
 
         textSubmission = ParticipationFactory.generateTextSubmission("example text", Language.ENGLISH, true);
         lateTextSubmission = ParticipationFactory.generateLateTextSubmission("example text 2", Language.ENGLISH);
@@ -463,6 +465,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void submitExercise_submissionIsAlreadyCreated_badRequest() throws Exception {
+        textSubmission.setParticipation(releasedParticipation);
         textSubmission = testSubmissionTestRepository.save(textSubmission);
         request.post("/api/text/exercises/" + releasedTextExercise.getId() + "/text-submissions", textSubmission, HttpStatus.BAD_REQUEST);
     }

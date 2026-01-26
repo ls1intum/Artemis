@@ -7,10 +7,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 
+import de.tum.cit.aet.artemis.assessment.domain.ExampleParticipation;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ExampleParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -42,18 +43,18 @@ public abstract class AssessmentResource {
 
     protected final ResultRepository resultRepository;
 
-    protected final ExampleSubmissionRepository exampleSubmissionRepository;
+    protected final ExampleParticipationRepository exampleParticipationRepository;
 
     protected final SubmissionRepository submissionRepository;
 
     public AssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository, AssessmentService assessmentService,
-            ResultRepository resultRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
+            ResultRepository resultRepository, ExampleParticipationRepository exampleParticipationRepository, SubmissionRepository submissionRepository) {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.assessmentService = assessmentService;
         this.resultRepository = resultRepository;
-        this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.exampleParticipationRepository = exampleParticipationRepository;
         this.submissionRepository = submissionRepository;
     }
 
@@ -125,15 +126,15 @@ public abstract class AssessmentResource {
     }
 
     /**
-     * @param exampleSubmissionId id of the example submission
-     * @param feedbacks           list of feedbacks
+     * @param exampleParticipationId id of the example participation
+     * @param feedbacks              list of feedbacks
      * @return result after saving example assessment
      */
-    protected Result saveExampleAssessment(long exampleSubmissionId, List<Feedback> feedbacks) {
+    protected Result saveExampleAssessment(long exampleParticipationId, List<Feedback> feedbacks) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        final var exampleSubmission = exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmissionId);
-        Submission submission = exampleSubmission.getSubmission();
-        Exercise exercise = exampleSubmission.getExercise();
+        final ExampleParticipation exampleParticipation = exampleParticipationRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleParticipationId);
+        Submission submission = exampleParticipation.getSubmission();
+        Exercise exercise = exampleParticipation.getExercise();
         checkAuthorization(exercise, user);
         // as parameter resultId is not set, we use the latest Result, if no latest Result exists, we use null
         Result result;
@@ -147,27 +148,27 @@ public abstract class AssessmentResource {
     }
 
     /**
-     * Retrieve the result for an example submission, only if the user is an instructor or if the example submission is not used for tutorial purposes.
+     * Retrieve the result for an example participation, only if the user is an instructor or if the example participation is not used for tutorial purposes.
      *
      * @param exerciseId   the id of the exercise
-     * @param submissionId the id of the example submission
-     * @return the result linked to the example submission
+     * @param submissionId the id of the submission in the example participation
+     * @return the result linked to the example participation
      */
     protected ResponseEntity<Result> getExampleAssessment(long exerciseId, long submissionId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        final var exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
+        final ExampleParticipation exampleParticipation = exampleParticipationRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var isAtLeastEditor = authCheckService.isAtLeastEditorForExercise(exercise, user);
         var isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
         // It is allowed to get the example assessment, if the user is at least an editor or
-        // if the user is a tutor and the submission is not used for tutorial in the assessment dashboard
-        // The reason is that example submissions with isTutorial = false should be shown immediately (with the assessment) to the tutor and
-        // for example submission with isTutorial = true, the assessment should not be shown to the tutor. Instead, the tutor should try to assess it him/herself
+        // if the user is a tutor and the participation is not used for tutorial in the assessment dashboard
+        // The reason is that example participations with isTutorial = false should be shown immediately (with the assessment) to the tutor and
+        // for example participations with isTutorial = true, the assessment should not be shown to the tutor. Instead, the tutor should try to assess it him/herself
         // Therefore we send a result with only the references included, which is needed to tell the tutor which elements he missed to assess
         Result result = assessmentService.getExampleAssessment(submissionId);
 
-        if (result != null && !(isAtLeastEditor || (isAtLeastTutor && !exampleSubmission.isUsedForTutorial()))) {
+        if (result != null && !(isAtLeastEditor || (isAtLeastTutor && !Boolean.TRUE.equals(exampleParticipation.getUsedForTutorial())))) {
             Result freshResult = new Result();
             freshResult.setId(result.getId());
             if (result.getFeedbacks() != null) {

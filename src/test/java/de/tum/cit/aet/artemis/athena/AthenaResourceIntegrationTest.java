@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.jspecify.annotations.NonNull;
@@ -389,7 +390,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         var feedback = new Feedback();
         feedback.setCredits(1.0);
         feedback.setResult(result);
-        result.setFeedbacks(List.of(feedback));
+        result.setFeedbacks(Set.of(feedback));
 
         result = resultRepository.save(result);
         feedbackRepository.save(feedback);

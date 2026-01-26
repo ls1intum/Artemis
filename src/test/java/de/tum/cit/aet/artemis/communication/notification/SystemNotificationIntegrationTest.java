@@ -14,6 +14,7 @@ import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.communication.domain.notification.SystemNotification;
+import de.tum.cit.aet.artemis.communication.dto.SystemNotificationUpdateDTO;
 import de.tum.cit.aet.artemis.communication.repository.SystemNotificationRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -116,7 +117,8 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
         systemNotificationRepo.save(systemNotification);
         String updatedText = "updated text";
         systemNotification.setText(updatedText);
-        SystemNotification response = request.putWithResponseBody("/api/communication/admin/system-notifications", systemNotification, SystemNotification.class, HttpStatus.OK);
+        SystemNotification response = request.putWithResponseBody("/api/communication/admin/system-notifications", SystemNotificationUpdateDTO.of(systemNotification),
+                SystemNotification.class, HttpStatus.OK);
         assertThat(response.getText()).as("response has updated text").isEqualTo(updatedText);
         assertThat(systemNotificationRepo.findById(systemNotification.getId())).get().as("repository contains updated notification").isEqualTo(response);
     }
@@ -126,14 +128,15 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
     void testUpdateSystemNotification_asInstructor_Forbidden() throws Exception {
         systemNotificationRepo.save(systemNotification);
         systemNotification.setText("updated text");
-        request.put("/api/communication/admin/system-notifications", systemNotification, HttpStatus.FORBIDDEN);
+        request.put("/api/communication/admin/system-notifications", SystemNotificationUpdateDTO.of(systemNotification), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "admin1", roles = "ADMIN")
     void testUpdateSystemNotification_BadRequest() throws Exception {
+        // ID is null, should return BAD_REQUEST
         SystemNotification systemNotification = generateSystemNotification(ZonedDateTime.now().minusDays(3), ZonedDateTime.now().plusDays(3));
-        request.put("/api/communication/admin/system-notifications", systemNotification, HttpStatus.BAD_REQUEST);
+        request.put("/api/communication/admin/system-notifications", SystemNotificationUpdateDTO.of(systemNotification), HttpStatus.BAD_REQUEST);
     }
 
     @Test

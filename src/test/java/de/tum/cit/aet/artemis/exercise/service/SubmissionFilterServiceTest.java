@@ -3,9 +3,7 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -104,7 +102,7 @@ class SubmissionFilterServiceTest extends AbstractSpringIntegrationIndependentTe
         var submission = getSubmissionBasedOnExerciseType(exerciseType);
         submission.setSubmissionDate(ZonedDateTime.now());
         submission.setParticipation(participation);
-        submission.setResults(List.of(new Result().rated(false)));
+        submission.setResults(Set.of(new Result().rated(false)));
 
         var optionalSubmission = submissionFilterService.getLatestSubmissionWithResult(Set.of(submission), true);
 
@@ -120,7 +118,7 @@ class SubmissionFilterServiceTest extends AbstractSpringIntegrationIndependentTe
         var submission = getSubmissionBasedOnExerciseType(exerciseType);
         submission.setSubmissionDate(ZonedDateTime.now());
         submission.setParticipation(participation);
-        submission.setResults(List.of(new Result().rated(true)));
+        submission.setResults(Set.of(new Result().rated(true)));
 
         var optionalSubmission = submissionFilterService.getLatestSubmissionWithResult(Set.of(submission), false);
 
@@ -139,7 +137,7 @@ class SubmissionFilterServiceTest extends AbstractSpringIntegrationIndependentTe
         var submission = getSubmissionBasedOnExerciseType(exerciseType);
         submission.setSubmissionDate(ZonedDateTime.now());
         submission.setParticipation(participation);
-        submission.setResults(List.of(new Result().rated(true).completionDate(ZonedDateTime.now())));
+        submission.setResults(Set.of(new Result().rated(true).completionDate(ZonedDateTime.now())));
 
         var optionalSubmission = submissionFilterService.getLatestSubmissionWithResult(Set.of(submission), false);
 
@@ -155,7 +153,7 @@ class SubmissionFilterServiceTest extends AbstractSpringIntegrationIndependentTe
         var submission = getSubmissionBasedOnExerciseType(exerciseType);
         submission.setSubmissionDate(ZonedDateTime.now());
         submission.setParticipation(participation);
-        submission.setResults(List.of(new Result().rated(true)));
+        submission.setResults(Set.of(new Result().rated(true)));
 
         var optionalSubmission = submissionFilterService.getLatestSubmissionWithResult(Set.of(submission), true);
 
@@ -181,7 +179,7 @@ class SubmissionFilterServiceTest extends AbstractSpringIntegrationIndependentTe
             // ids in the order of submission date
             submission.setId(2L - i);
             submission.setParticipation(participation);
-            submission.setResults(List.of(new Result().rated(true).completionDate(ZonedDateTime.now().minusDays(i + 1))));
+            submission.setResults(Set.of(new Result().rated(true).completionDate(ZonedDateTime.now().minusDays(i + 1))));
             submissions.add(submission);
             if (i == 0) {
                 expectedLatestSubmission = submission;
@@ -229,7 +227,7 @@ class SubmissionFilterServiceTest extends AbstractSpringIntegrationIndependentTe
         var exercise = exerciseByType.get(ExerciseType.PROGRAMMING);
         var result = new Result().rated(isRated);
         var submission = new ProgrammingSubmission().submissionDate(ZonedDateTime.now().plusDays(1));
-        submission.setResults(List.of(result));
+        submission.setResults(Set.of(result));
         var participation = new StudentParticipation().exercise(exercise);
         participation.setSubmissions(Set.of(submission));
         submission.setParticipation(participation);
@@ -249,7 +247,7 @@ class SubmissionFilterServiceTest extends AbstractSpringIntegrationIndependentTe
         exercise.setAssessmentDueDate(ZonedDateTime.now().minusHours(1));
         var result = new Result().rated(true).assessmentType(assessmentType).completionDate(ZonedDateTime.now().minusHours(1));
         var submission = new ProgrammingSubmission().submissionDate(ZonedDateTime.now().plusDays(1));
-        submission.setResults(List.of(result));
+        submission.setResults(Set.of(result));
         var participation = new StudentParticipation().exercise(exercise);
         participation.setSubmissions(Set.of(submission));
         submission.setParticipation(participation);
@@ -275,14 +273,14 @@ class SubmissionFilterServiceTest extends AbstractSpringIntegrationIndependentTe
         var secondResultWithManualAssessment = new Result().score(2.0).rated(true).completionDate(ZonedDateTime.now().plusHours(2)).assessmentType(AssessmentType.SEMI_AUTOMATIC);
         secondResultWithManualAssessment.setId(4L);
 
-        submissionWithoutManualAssessment.setResults(List.of(firstResult));
-        submissionWithManualAssessment.setResults(List.of(secondResult, retriggeredSecondResult, secondResultWithManualAssessment));
+        submissionWithoutManualAssessment.setResults(Set.of(firstResult));
+        submissionWithManualAssessment.setResults(Set.of(secondResult, retriggeredSecondResult, secondResultWithManualAssessment));
         Set<Submission> submissions = Set.of(submissionWithoutManualAssessment, submissionWithManualAssessment);
         submissions.forEach(s -> s.setParticipation(new StudentParticipation().exercise(programmingExercise)));
         var submission = submissionFilterService.getLatestSubmissionWithResult(submissions, false);
         assertThat(submission).isPresent().get().isEqualTo(submissionWithManualAssessment);
         assertThat(submission.get().getResults()).hasSize(1);
-        assertThat(submission.get().getResults().getFirst()).isEqualTo(retriggeredSecondResult);
+        assertThat(submission.get().getResults().iterator().next()).isEqualTo(retriggeredSecondResult);
     }
 
     @Test
@@ -299,15 +297,13 @@ class SubmissionFilterServiceTest extends AbstractSpringIntegrationIndependentTe
         var secondResultWithManualAssessment = new Result().score(2.0).rated(true).completionDate(ZonedDateTime.now().plusHours(2)).assessmentType(AssessmentType.SEMI_AUTOMATIC);
         secondResultWithManualAssessment.setId(4L);
 
-        Result[] resultsArray = new Result[] { firstResult, secondResult, null, secondResultWithManualAssessment };
-
-        submissionWithManualAssessment.setResults(Arrays.asList(resultsArray));
+        submissionWithManualAssessment.setResults(Set.of(firstResult, secondResult, secondResultWithManualAssessment));
         Set<Submission> submissions = Set.of(submissionWithManualAssessment);
         submissions.forEach(s -> s.setParticipation(new StudentParticipation().exercise(programmingExercise)));
         var submission = submissionFilterService.getLatestSubmissionWithResult(submissions, false);
         assertThat(submission).isPresent().get().isEqualTo(submissionWithManualAssessment);
         assertThat(submission.get().getResults()).hasSize(1);
-        assertThat(submission.get().getResults().getFirst()).isEqualTo(secondResult);
+        assertThat(submission.get().getResults().iterator().next()).isEqualTo(secondResult);
     }
 
     @Test
@@ -319,7 +315,7 @@ class SubmissionFilterServiceTest extends AbstractSpringIntegrationIndependentTe
         submissionWithManualAssessment.setId(2L);
         var secondResultWithManualAssessment = new Result().score(2.0).rated(true).completionDate(ZonedDateTime.now().plusHours(2)).assessmentType(AssessmentType.SEMI_AUTOMATIC);
 
-        submissionWithManualAssessment.setResults(List.of(secondResultWithManualAssessment));
+        submissionWithManualAssessment.setResults(Set.of(secondResultWithManualAssessment));
         Set<Submission> submissions = Set.of(submissionWithManualAssessment);
         submissions.forEach(s -> s.setParticipation(new StudentParticipation().exercise(programmingExercise)));
         var submission = submissionFilterService.getLatestSubmissionWithResult(submissions, false);
@@ -348,7 +344,7 @@ class SubmissionFilterServiceTest extends AbstractSpringIntegrationIndependentTe
         var participation = new StudentParticipation().exercise(quizExercise);
         var submission = new QuizSubmission();
         submission.setParticipation(participation);
-        submission.setResults(List.of(new Result()));
+        submission.setResults(Set.of(new Result()));
         var optionalSubmission = submissionFilterService.getLatestSubmissionWithResult(Set.of(submission), false);
         assertThat(optionalSubmission).isEmpty();
     }

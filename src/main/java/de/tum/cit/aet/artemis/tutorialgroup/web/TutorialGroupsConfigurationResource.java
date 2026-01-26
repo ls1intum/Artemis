@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupsConfigurationDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
 
@@ -78,16 +79,15 @@ public class TutorialGroupsConfigurationResource {
     /**
      * POST /courses/:courseId/tutorial-groups-configuration : creates a new tutorial group configuration for the specified course and sets the timeZone on the course.
      *
-     * @param courseId                    the id of the course to which the tutorial group configuration should be added
-     * @param tutorialGroupsConfiguration the tutorial group configuration to create
+     * @param courseId the id of the course to which the tutorial group configuration should be added
+     * @param dto      the tutorial group configuration DTO containing the values for the new configuration
      * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group configuration
      */
     @PostMapping("courses/{courseId}/tutorial-groups-configuration")
     @EnforceAtLeastInstructor
-    public ResponseEntity<TutorialGroupsConfiguration> create(@PathVariable Long courseId, @RequestBody @Valid TutorialGroupsConfiguration tutorialGroupsConfiguration)
-            throws URISyntaxException {
-        log.debug("REST request to create TutorialGroupsConfiguration: {} for course: {}", tutorialGroupsConfiguration, courseId);
-        if (tutorialGroupsConfiguration.getId() != null) {
+    public ResponseEntity<TutorialGroupsConfiguration> create(@PathVariable Long courseId, @RequestBody @Valid TutorialGroupsConfigurationDTO dto) throws URISyntaxException {
+        log.debug("REST request to create TutorialGroupsConfiguration: {} for course: {}", dto, courseId);
+        if (dto.id() != null) {
             throw new BadRequestException("A new tutorial group configuration cannot already have an ID");
         }
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -95,6 +95,9 @@ public class TutorialGroupsConfigurationResource {
         if (tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(course.getId()).isPresent()) {
             throw new BadRequestException("A tutorial group configuration already exists for this course");
         }
+
+        // Create entity from DTO
+        TutorialGroupsConfiguration tutorialGroupsConfiguration = dto.toEntity();
         isValidTutorialGroupConfiguration(tutorialGroupsConfiguration);
         tutorialGroupsConfiguration.setCourse(course);
         var persistedConfiguration = tutorialGroupsConfigurationRepository.save(tutorialGroupsConfiguration);
@@ -105,31 +108,36 @@ public class TutorialGroupsConfigurationResource {
             tutorialGroupChannelManagementService.createTutorialGroupsChannelsForAllTutorialGroupsOfCourse(course);
         }
 
-        return ResponseEntity.created(new URI("/api/tutorialgroup/courses/" + courseId + "tutorial-groups-configuration/" + tutorialGroupsConfiguration.getId()))
+        return ResponseEntity.created(new URI("/api/tutorialgroup/courses/" + courseId + "tutorial-groups-configuration/" + persistedConfiguration.getId()))
                 .body(persistedConfiguration);
     }
 
     /**
      * PUT /courses/:courseId/tutorial-groups-configurations/:tutorialGroupsConfigurationId : Update tutorial groups configuration.
      *
-     * @param courseId                          the id of the course to which the tutorial groups configuration belongs
-     * @param tutorialGroupsConfigurationId     the id of the tutorial groups configuration to update
-     * @param updatedTutorialGroupConfiguration the configuration to update
+     * @param courseId                      the id of the course to which the tutorial groups configuration belongs
+     * @param tutorialGroupsConfigurationId the id of the tutorial groups configuration to update
+     * @param dto                           the DTO containing the updated configuration values
      * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group configuration
      */
     @PutMapping("courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<TutorialGroupsConfiguration> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
-            @RequestBody @Valid TutorialGroupsConfiguration updatedTutorialGroupConfiguration) {
-        log.debug("REST request to update TutorialGroupsConfiguration: {} of course: {}", updatedTutorialGroupConfiguration, courseId);
-        if (updatedTutorialGroupConfiguration.getId() == null) {
+            @RequestBody @Valid TutorialGroupsConfigurationDTO dto) {
+        log.debug("REST request to update TutorialGroupsConfiguration: {} of course: {}", dto, courseId);
+        if (dto.id() == null) {
             throw new BadRequestException("A tutorial group cannot be updated without an id");
         }
-        isValidTutorialGroupConfiguration(updatedTutorialGroupConfiguration);
-        var configurationFromDatabase = this.tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(updatedTutorialGroupConfiguration.getId());
+        if (!dto.id().equals(tutorialGroupsConfigurationId)) {
+            throw new BadRequestAlertException("The id in the path does not match the id in the request body", ENTITY_NAME, "idMismatch");
+        }
 
-        var useTutorialGroupChannelSettingChanged = configurationFromDatabase.getUseTutorialGroupChannels() != updatedTutorialGroupConfiguration.getUseTutorialGroupChannels();
-        var usePublicChannelSettingChanged = configurationFromDatabase.getUsePublicTutorialGroupChannels() != updatedTutorialGroupConfiguration.getUsePublicTutorialGroupChannels();
+        // Load existing configuration from database (managed entity)
+        var configurationFromDatabase = this.tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(dto.id());
+
+        // Track setting changes before applying updates
+        var useTutorialGroupChannelSettingChanged = !configurationFromDatabase.getUseTutorialGroupChannels().equals(dto.useTutorialGroupChannels());
+        var usePublicChannelSettingChanged = !configurationFromDatabase.getUsePublicTutorialGroupChannels().equals(dto.usePublicTutorialGroupChannels());
 
         if (configurationFromDatabase.getCourse().getTimeZone() == null) {
             throw new BadRequestException("The course has no time zone");
@@ -137,10 +145,11 @@ public class TutorialGroupsConfigurationResource {
         checkEntityIdMatchesPathIds(configurationFromDatabase, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configurationFromDatabase.getCourse(), null);
 
-        configurationFromDatabase.setTutorialPeriodEndInclusive(updatedTutorialGroupConfiguration.getTutorialPeriodEndInclusive());
-        configurationFromDatabase.setTutorialPeriodStartInclusive(updatedTutorialGroupConfiguration.getTutorialPeriodStartInclusive());
-        configurationFromDatabase.setUseTutorialGroupChannels(updatedTutorialGroupConfiguration.getUseTutorialGroupChannels());
-        configurationFromDatabase.setUsePublicTutorialGroupChannels(updatedTutorialGroupConfiguration.getUsePublicTutorialGroupChannels());
+        // Apply DTO values to the managed entity
+        dto.applyTo(configurationFromDatabase);
+
+        // Validate the updated configuration
+        isValidTutorialGroupConfiguration(configurationFromDatabase);
 
         var persistedConfiguration = tutorialGroupsConfigurationRepository.save(configurationFromDatabase);
 
@@ -155,7 +164,7 @@ public class TutorialGroupsConfigurationResource {
         }
         if (usePublicChannelSettingChanged) {
             log.debug("Tutorial group channel public setting changed, updating tutorial group channels for course: {}", configurationFromDatabase.getCourse().getId());
-            if (updatedTutorialGroupConfiguration.getUseTutorialGroupChannels()) {
+            if (dto.useTutorialGroupChannels()) {
                 tutorialGroupChannelManagementService.changeChannelModeForCourse(configurationFromDatabase.getCourse(), persistedConfiguration.getUsePublicTutorialGroupChannels());
             }
         }

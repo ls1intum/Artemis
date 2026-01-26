@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,12 +114,12 @@ public class SubmissionResource {
         }
 
         checkAccessPermissionAtInstructor(submission.get());
-        List<Result> results = submission.get().getResults();
+        Set<Result> results = submission.get().getResults();
         for (Result result : results) {
             resultService.deleteResult(result, true);
         }
-        // We have to set the results to an empty list because otherwise clearing the build log entries does not work correctly
-        submission.get().setResults(Collections.emptyList());
+        // We have to set the results to an empty set because otherwise clearing the build log entries does not work correctly
+        submission.get().setResults(Collections.emptySet());
         if (submission.get() instanceof ProgrammingSubmission programmingSubmission) {
             buildLogEntryService.deleteBuildLogEntriesForProgrammingSubmission(programmingSubmission);
         }

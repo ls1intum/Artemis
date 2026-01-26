@@ -78,8 +78,7 @@ public class ComplaintResponseService {
         if (blockedByLock(complaintResponseRepresentingLock, user)) {
             throw new ComplaintResponseLockedException(complaintResponseRepresentingLock);
         }
-        complaintResponseRepresentingLock = disassociateComplaintAndComplaintResponse(complaint, complaintResponseRepresentingLock);
-        complaintResponseRepository.deleteById(complaintResponseRepresentingLock.getId());
+        deleteComplaintResponse(complaint);
         log.debug("Removed empty complaint and thus lock for complaint with id : {}", complaint.getId());
     }
 
@@ -126,25 +125,29 @@ public class ComplaintResponseService {
             throw new ComplaintResponseLockedException(complaintResponseRepresentingLock);
         }
 
-        complaintResponseRepresentingLock = disassociateComplaintAndComplaintResponse(complaint, complaintResponseRepresentingLock);
-        complaintResponseRepository.deleteById(complaintResponseRepresentingLock.getId());
+        // First delete the old response via orphanRemoval
+        deleteComplaintResponse(complaint);
 
+        // Then create a new complaint response
         ComplaintResponse refreshedEmptyComplaintResponse = new ComplaintResponse();
         refreshedEmptyComplaintResponse.setReviewer(user); // owner of the lock
         refreshedEmptyComplaintResponse.setComplaint(complaint);
-        ComplaintResponse persistedComplaintResponse = complaintResponseRepository.save(refreshedEmptyComplaintResponse);
+        complaint.setComplaintResponse(refreshedEmptyComplaintResponse);
+        complaintRepository.save(complaint);
         log.debug("Refreshed empty complaint and thus lock for complaint with id : {}", complaint.getId());
-        return persistedComplaintResponse;
+        return refreshedEmptyComplaintResponse;
     }
 
-    private ComplaintResponse disassociateComplaintAndComplaintResponse(Complaint complaint, ComplaintResponse complaintResponseRepresentingLock) {
-        // we need to remove the relationship between the complaint and the complaint response as we otherwise cannot delete the ComplaintResponse
-        // we need the save method calls to make the PersistenceContext aware of the changes
+    /**
+     * Removes the ComplaintResponse from the Complaint. Thanks to orphanRemoval=true on
+     * Complaint.complaintResponse, the ComplaintResponse will be automatically deleted
+     * when the Complaint is saved without the response.
+     *
+     * @param complaint the complaint to remove the response from
+     */
+    private void deleteComplaintResponse(Complaint complaint) {
         complaint.setComplaintResponse(null);
         complaintRepository.save(complaint);
-        complaintResponseRepresentingLock.setComplaint(null);
-        complaintResponseRepresentingLock = complaintResponseRepository.save(complaintResponseRepresentingLock);
-        return complaintResponseRepresentingLock;
     }
 
     /**

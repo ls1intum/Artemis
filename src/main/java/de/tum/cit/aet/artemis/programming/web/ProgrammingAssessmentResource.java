@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
-import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ExampleParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.web.AssessmentResource;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -64,8 +64,9 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingAssessmentService programmingAssessmentService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
-            StudentParticipationRepository studentParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
-        super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
+            StudentParticipationRepository studentParticipationRepository, ExampleParticipationRepository exampleParticipationRepository,
+            SubmissionRepository submissionRepository) {
+        super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, exampleParticipationRepository, submissionRepository);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.studentParticipationRepository = studentParticipationRepository;

@@ -2,8 +2,9 @@ package de.tum.cit.aet.artemis.assessment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
@@ -72,7 +73,7 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     void evaluateFeedback() {
         double maxPoints = 7.0;
-        result.setFeedbacks(feedbackList);
+        result.setFeedbacks(new HashSet<>(feedbackList));
 
         double calculatedPoints = resultRepository.calculateTotalPoints(feedbackList);
         double totalPoints = resultRepository.constrainToRange(calculatedPoints, maxPoints);
@@ -83,7 +84,7 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void evaluateFeedback_totalScoreGreaterMaxScore() {
-        result.setFeedbacks(feedbackList);
+        result.setFeedbacks(new HashSet<>(feedbackList));
 
         double calculatePoints = resultRepository.calculateTotalPoints(feedbackList);
         double totalPoints = resultRepository.constrainToRange(calculatePoints, 4.0);
@@ -101,7 +102,7 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
         Feedback feedback3 = new Feedback();
         feedback3.setCredits(1.567);
         feedbackList = List.of(feedback1, feedback2, feedback3);
-        result.setFeedbacks(feedbackList);
+        result.setFeedbacks(new HashSet<>(feedbackList));
 
         double calculatePoints = resultRepository.calculateTotalPoints(feedbackList);
         double totalPoints = resultRepository.constrainToRange(calculatePoints, 7.0);
@@ -115,10 +116,10 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
         Feedback feedback1 = new Feedback().visibility(Visibility.ALWAYS);
         Feedback feedback2 = new Feedback().visibility(Visibility.AFTER_DUE_DATE);
         Feedback feedback3 = new Feedback().visibility(Visibility.NEVER);
-        result.setFeedbacks(new ArrayList<>(List.of(feedback1, feedback2, feedback3)));
+        result.setFeedbacks(new HashSet<>(Set.of(feedback1, feedback2, feedback3)));
 
         result.filterSensitiveFeedbacks(false);
-        assertThat(result.getFeedbacks()).isEqualTo(List.of(feedback1, feedback2));
+        assertThat(result.getFeedbacks()).containsExactlyInAnyOrder(feedback1, feedback2);
     }
 
     @Test
@@ -126,10 +127,10 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
         Feedback feedback1 = new Feedback().visibility(Visibility.ALWAYS);
         Feedback feedback2 = new Feedback().visibility(Visibility.AFTER_DUE_DATE);
         Feedback feedback3 = new Feedback().visibility(Visibility.NEVER);
-        result.setFeedbacks(new ArrayList<>(List.of(feedback1, feedback2, feedback3)));
+        result.setFeedbacks(new HashSet<>(Set.of(feedback1, feedback2, feedback3)));
 
         result.filterSensitiveFeedbacks(true);
-        assertThat(result.getFeedbacks()).isEqualTo(List.of(feedback1));
+        assertThat(result.getFeedbacks()).containsExactlyInAnyOrder(feedback1);
     }
 
     @Test
@@ -144,7 +145,7 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
         var submission = ParticipationFactory.generateProgrammingSubmission(true);
         submission.setParticipation(participation);
         result.setSubmission(submission);
-        result.setFeedbacks(new ArrayList<>(List.of(tst1, tst2)));
+        result.setFeedbacks(new HashSet<>(Set.of(tst1, tst2)));
 
         result.filterSensitiveFeedbacks(true);
         assertThat(result.getFeedbacks()).hasSize(2).allMatch(feedback -> feedback.getTestCase().getTestName() == null);
@@ -162,7 +163,7 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
         Feedback tst1 = new Feedback().positive(true).type(FeedbackType.AUTOMATIC).testCase(tests.getFirst());
         Feedback tst2 = new Feedback().positive(false).type(FeedbackType.AUTOMATIC).testCase(tests.get(1)).detailText("This is wrong.");
 
-        result.setFeedbacks(new ArrayList<>(List.of(tst1, tst2)));
+        result.setFeedbacks(new HashSet<>(Set.of(tst1, tst2)));
 
         result.filterSensitiveFeedbacks(true);
 

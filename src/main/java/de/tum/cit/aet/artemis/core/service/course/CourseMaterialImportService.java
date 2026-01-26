@@ -320,7 +320,7 @@ public class CourseMaterialImportService {
         if (modelingRepositoryApi.isEmpty() || modelingExerciseImportApi.isEmpty()) {
             return Optional.empty();
         }
-        var optionalOriginal = modelingRepositoryApi.get().findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(exercise.getId());
+        var optionalOriginal = modelingRepositoryApi.get().findByIdWithCompetenciesAndGradingCriteria(exercise.getId());
         if (optionalOriginal.isEmpty()) {
             return Optional.empty();
         }

@@ -15,8 +15,8 @@ import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ExampleModelingSubmissionComponent } from 'app/modeling/manage/example-modeling/example-modeling-submission.component';
-import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
-import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
+import { ExampleParticipationService } from 'app/assessment/shared/services/example-participation.service';
+import { ExampleParticipation } from 'app/exercise/shared/entities/participation/example-participation.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -85,7 +85,7 @@ describe('Example Modeling Submission Component', () => {
 
     let comp: ExampleModelingSubmissionComponent;
     let fixture: ComponentFixture<ExampleModelingSubmissionComponent>;
-    let service: ExampleSubmissionService;
+    let service: ExampleParticipationService;
     let alertService: AlertService;
     let router: Router;
     let route: ActivatedRoute;
@@ -96,9 +96,9 @@ describe('Example Modeling Submission Component', () => {
     const submission = { id: 20, submitted: true, participation } as ModelingSubmission;
     const EXERCISE_ID = 22;
 
-    const exampleSubmission: ExampleSubmission = {
-        submission,
-    };
+    const exampleParticipation: ExampleParticipation = {
+        submissions: [submission],
+    } as ExampleParticipation;
 
     const exercise = {
         id: EXERCISE_ID,
@@ -137,7 +137,7 @@ describe('Example Modeling Submission Component', () => {
         routeQueryParam.toComplete = 0;
         route = {
             snapshot: {
-                paramMap: convertToParamMap({ exerciseId: '22', exampleSubmissionId: '35' }),
+                paramMap: convertToParamMap({ exerciseId: '22', exampleParticipationId: '35' }),
                 queryParamMap: convertToParamMap(routeQueryParam),
             },
         } as ActivatedRoute;
@@ -177,7 +177,7 @@ describe('Example Modeling Submission Component', () => {
 
         fixture = TestBed.createComponent(ExampleModelingSubmissionComponent);
         comp = fixture.componentInstance;
-        service = TestBed.inject(ExampleSubmissionService);
+        service = TestBed.inject(ExampleParticipationService);
         alertService = TestBed.inject(AlertService);
         router = TestBed.inject(Router);
     });
@@ -188,7 +188,7 @@ describe('Example Modeling Submission Component', () => {
 
     it('should initialize', () => {
         // GIVEN
-        vi.spyOn(service, 'get').mockReturnValue(of(new HttpResponse({ body: exampleSubmission })));
+        vi.spyOn(service, 'get').mockReturnValue(of(new HttpResponse({ body: exampleParticipation })));
         const exerciseService = TestBed.inject(ExerciseService);
         vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
 
@@ -202,7 +202,7 @@ describe('Example Modeling Submission Component', () => {
     it('should handle a new submission', () => {
         route.snapshot = {
             ...route.snapshot,
-            paramMap: convertToParamMap({ exerciseId: '22', exampleSubmissionId: 'new' }),
+            paramMap: convertToParamMap({ exerciseId: '22', exampleParticipationId: 'new' }),
         } as ActivatedRouteSnapshot;
 
         // WHEN
@@ -210,7 +210,7 @@ describe('Example Modeling Submission Component', () => {
 
         // THEN
         expect(comp.isNewSubmission).toBe(true);
-        expect(comp.exampleSubmission).toEqual(new ExampleSubmission());
+        expect(comp.exampleParticipation).toEqual(new ExampleParticipation());
     });
 
     it('should upsert a new modeling submission', () => {
@@ -233,7 +233,7 @@ describe('Example Modeling Submission Component', () => {
 
     it('should upsert an existing modeling submission', async () => {
         // GIVEN
-        vi.spyOn(service, 'get').mockReturnValue(of(new HttpResponse({ body: exampleSubmission })));
+        vi.spyOn(service, 'get').mockReturnValue(of(new HttpResponse({ body: exampleParticipation })));
         const alertSpy = vi.spyOn(alertService, 'success');
         const serviceSpy = vi.spyOn(service, 'update').mockImplementation((updatedExampleSubmission) => of(new HttpResponse({ body: updatedExampleSubmission })));
 
@@ -242,7 +242,7 @@ describe('Example Modeling Submission Component', () => {
 
         comp.isNewSubmission = false;
         comp.exercise = exercise;
-        comp.exampleSubmission = exampleSubmission;
+        comp.exampleParticipation = exampleParticipation;
 
         // WHEN
         fixture.detectChanges();
@@ -262,9 +262,9 @@ describe('Example Modeling Submission Component', () => {
     it('should check assessment', () => {
         // GIVEN
         const tutorParticipationService = TestBed.inject(TutorParticipationService);
-        const assessExampleSubmissionSpy = vi.spyOn(tutorParticipationService, 'assessExampleSubmission');
+        const assessExampleParticipationSpy = vi.spyOn(tutorParticipationService, 'assessExampleParticipation');
         const exerciseId = 5;
-        comp.exampleSubmission = exampleSubmission;
+        comp.exampleParticipation = exampleParticipation;
         comp.exerciseId = exerciseId;
 
         // WHEN
@@ -272,14 +272,20 @@ describe('Example Modeling Submission Component', () => {
 
         // THEN
         expect(comp.assessmentsAreValid).toBe(true);
-        expect(assessExampleSubmissionSpy).toHaveBeenCalledOnce();
-        expect(assessExampleSubmissionSpy).toHaveBeenCalledWith(exampleSubmission, exerciseId);
+        expect(assessExampleParticipationSpy).toHaveBeenCalledOnce();
+        // The component creates a modified copy with submissions and results, so we verify the essential properties
+        expect(assessExampleParticipationSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                usedForTutorial: exampleParticipation.usedForTutorial,
+            }),
+            exerciseId,
+        );
     });
 
     it('should check invalid assessment', () => {
         // GIVEN
         const alertSpy = vi.spyOn(alertService, 'error');
-        comp.exampleSubmission = exampleSubmission;
+        comp.exampleParticipation = exampleParticipation;
 
         // WHEN
         comp.onReferencedFeedbackChanged([mockFeedbackInvalid]);
@@ -299,11 +305,11 @@ describe('Example Modeling Submission Component', () => {
             tutorId: 3,
             status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
         };
-        vi.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(of(new HttpResponse({ body: dto })));
+        vi.spyOn(tutorParticipationService, 'assessExampleParticipation').mockReturnValue(of(new HttpResponse({ body: dto })));
         const alertSpy = vi.spyOn(alertService, 'success');
         const routerSpy = vi.spyOn(router, 'navigate');
         comp.exercise = exercise;
-        comp.exampleSubmission = exampleSubmission;
+        comp.exampleParticipation = exampleParticipation;
 
         // WHEN
         fixture.detectChanges();
@@ -311,7 +317,7 @@ describe('Example Modeling Submission Component', () => {
 
         // THEN
         expect(alertSpy).toHaveBeenCalledOnce();
-        expect(alertSpy).toHaveBeenCalledWith('artemisApp.exampleSubmission.readSuccessfully');
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.exampleParticipation.readSuccessfully');
         expect(routerSpy).toHaveBeenCalledOnce();
     });
 
@@ -347,7 +353,7 @@ describe('Example Modeling Submission Component', () => {
         // GIVEN
         const feedbacks = [mockFeedbackWithReference];
         comp.exercise = exercise;
-        comp.exampleSubmission = exampleSubmission;
+        comp.exampleParticipation = exampleParticipation;
 
         // WHEN
         comp.onReferencedFeedbackChanged(feedbacks);
@@ -363,7 +369,7 @@ describe('Example Modeling Submission Component', () => {
         // GIVEN
         const alertSpy = vi.spyOn(alertService, 'error');
         comp.exercise = exercise;
-        comp.exampleSubmission = exampleSubmission;
+        comp.exampleParticipation = exampleParticipation;
         comp.referencedFeedback.set([mockFeedbackInvalid]);
 
         // WHEN
@@ -377,7 +383,7 @@ describe('Example Modeling Submission Component', () => {
     it('should update assessment explanation and example assessment', () => {
         // GIVEN
         comp.exercise = exercise;
-        comp.exampleSubmission = { ...exampleSubmission, assessmentExplanation: 'Explanation of the assessment' };
+        comp.exampleParticipation = { ...exampleParticipation, assessmentExplanation: 'Explanation of the assessment' };
         comp.referencedFeedback.set([mockFeedbackWithReference]);
         comp.unreferencedFeedback.set([mockFeedbackWithoutReference]);
 
@@ -399,7 +405,7 @@ describe('Example Modeling Submission Component', () => {
     it('should update assessment explanation but create error message on example assessment update failure', () => {
         // GIVEN
         comp.exercise = exercise;
-        comp.exampleSubmission = { ...exampleSubmission, assessmentExplanation: 'Explanation of the assessment' };
+        comp.exampleParticipation = { ...exampleParticipation, assessmentExplanation: 'Explanation of the assessment' };
         comp.referencedFeedback.set([mockFeedbackWithReference, mockFeedbackWithoutReference]);
 
         const alertSpy = vi.spyOn(alertService, 'error');
@@ -419,7 +425,7 @@ describe('Example Modeling Submission Component', () => {
     it('should mark all feedback correct', () => {
         // GIVEN
         comp.exercise = exercise;
-        comp.exampleSubmission = exampleSubmission;
+        comp.exampleParticipation = exampleParticipation;
         comp.referencedFeedback.set([mockFeedbackInvalid]);
         comp.assessmentMode = true;
 
@@ -433,7 +439,7 @@ describe('Example Modeling Submission Component', () => {
     it('should mark all feedback wrong', () => {
         // GIVEN
         comp.exercise = exercise;
-        comp.exampleSubmission = exampleSubmission;
+        comp.exampleParticipation = exampleParticipation;
         comp.referencedFeedback.set([mockFeedbackInvalid]);
         comp.assessmentMode = true;
 
@@ -452,7 +458,7 @@ describe('Example Modeling Submission Component', () => {
         const alertSpy = vi.spyOn(alertService, 'success');
 
         comp.exercise = exercise;
-        comp.exampleSubmission = exampleSubmission;
+        comp.exampleParticipation = exampleParticipation;
         comp.referencedFeedback.set([mockFeedbackWithReference]);
 
         // WHEN
@@ -471,7 +477,7 @@ describe('Example Modeling Submission Component', () => {
         const alertSpy = vi.spyOn(alertService, 'error');
 
         comp.exercise = exercise;
-        comp.exampleSubmission = exampleSubmission;
+        comp.exampleParticipation = exampleParticipation;
         comp.referencedFeedback.set([mockFeedbackWithReference]);
 
         // WHEN
@@ -497,12 +503,12 @@ describe('Example Modeling Submission Component', () => {
         // GIVEN
         const result = { id: 1, feedbacks: [] } as Result;
 
-        vi.spyOn(service, 'get').mockReturnValue(of(new HttpResponse({ body: exampleSubmission })));
+        vi.spyOn(service, 'get').mockReturnValue(of(new HttpResponse({ body: exampleParticipation })));
         const modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
         const assessmentSpy = vi.spyOn(modelingAssessmentService, 'getExampleAssessment').mockReturnValue(of(result));
 
         comp.exercise = exercise;
-        comp.exampleSubmission = exampleSubmission;
+        comp.exampleParticipation = exampleParticipation;
 
         // WHEN
         fixture.detectChanges();
@@ -527,7 +533,7 @@ describe('Example Modeling Submission Component', () => {
         const feedbackTwo = { id: 2, type: FeedbackType.MANUAL } as Feedback;
         result.feedbacks = [feedbackOne, feedbackTwo];
 
-        vi.spyOn(service, 'get').mockReturnValue(of(new HttpResponse({ body: exampleSubmission })));
+        vi.spyOn(service, 'get').mockReturnValue(of(new HttpResponse({ body: exampleParticipation })));
         const modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
         const assessmentSpy = vi.spyOn(modelingAssessmentService, 'getExampleAssessment').mockReturnValue(of(result));
 

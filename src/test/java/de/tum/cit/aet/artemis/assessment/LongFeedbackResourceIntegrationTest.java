@@ -78,9 +78,10 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationIndep
     void notFoundIfOnlyShortFeedback() throws Exception {
         final Feedback feedback = new Feedback();
         feedback.setDetailText("short text");
-        participationUtilService.addFeedbackToResult(feedback, resultStudent1);
+        Result savedResult = participationUtilService.addFeedbackToResult(feedback, resultStudent1);
+        Feedback savedFeedback = savedResult.getFeedbacks().stream().reduce((first, second) -> second).orElseThrow();
 
-        final String longFeedbackText = request.get(getUrl(feedback.getId()), HttpStatus.NOT_FOUND, String.class);
+        final String longFeedbackText = request.get(getUrl(savedFeedback.getId()), HttpStatus.NOT_FOUND, String.class);
         assertThat(longFeedbackText).isNull();
     }
 
@@ -101,8 +102,9 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationIndep
         final Feedback feedback = new Feedback();
         feedback.setDetailText(LONG_FEEDBACK);
 
-        participationUtilService.addFeedbackToResult(feedback, result);
+        Result savedResult = participationUtilService.addFeedbackToResult(feedback, result);
 
-        return feedback;
+        // Return the saved feedback from the result to ensure it has an ID
+        return savedResult.getFeedbacks().stream().reduce((first, second) -> second).orElseThrow();
     }
 }

@@ -225,7 +225,6 @@ public class ProgrammingExerciseFactory {
         toBeImported.setTutorParticipations(null);
         toBeImported.setStudentParticipations(null);
         toBeImported.setNumberOfSubmissions(template.getNumberOfSubmissions());
-        toBeImported.setExampleSubmissions(null);
         toBeImported.setTestRepositoryUri(template.getTestRepositoryUri());
         toBeImported.setProgrammingLanguage(template.getProgrammingLanguage());
         toBeImported.setProjectType(template.getProjectType());

@@ -9,7 +9,7 @@ import java.util.List;
 
 import org.jspecify.annotations.NonNull;
 
-import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.ExampleParticipation;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
@@ -183,19 +183,19 @@ public class ParticipationFactory {
     }
 
     /**
-     * Generates an ExampleSubmission for the given Submission and Exercise.
+     * Generates an ExampleParticipation for the given Submission and Exercise.
      *
-     * @param submission      The Submission the ExampleSubmission belongs to
-     * @param exercise        The Exercise the ExampleSubmission belongs to
-     * @param usedForTutorial True, if the ExampleSubmission is used for a tutorial
-     * @return The generated ExampleSubmission
+     * @param submission      The Submission the ExampleParticipation belongs to
+     * @param exercise        The Exercise the ExampleParticipation belongs to
+     * @param usedForTutorial True, if the ExampleParticipation is used for a tutorial
+     * @return The generated ExampleParticipation
      */
-    public static ExampleSubmission generateExampleSubmission(Submission submission, Exercise exercise, boolean usedForTutorial) {
-        ExampleSubmission exampleSubmission = new ExampleSubmission();
-        exampleSubmission.setSubmission(submission);
-        exampleSubmission.setExercise(exercise);
-        exampleSubmission.setUsedForTutorial(usedForTutorial);
-        return exampleSubmission;
+    public static ExampleParticipation generateExampleParticipation(Submission submission, Exercise exercise, boolean usedForTutorial) {
+        ExampleParticipation exampleParticipation = new ExampleParticipation();
+        exampleParticipation.addSubmission(submission);
+        exampleParticipation.setExercise(exercise);
+        exampleParticipation.setUsedForTutorial(usedForTutorial);
+        return exampleParticipation;
     }
 
     /**

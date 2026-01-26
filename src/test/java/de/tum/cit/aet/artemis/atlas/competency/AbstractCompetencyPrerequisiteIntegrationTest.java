@@ -8,7 +8,6 @@ import static org.mockito.Mockito.verify;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -97,19 +96,22 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
     }
 
     void creatingLectureUnitsOfLecture(CourseCompetency competency) {
+        // Fetch a fresh reference to the competency to ensure it's managed in the current persistence context
+        CourseCompetency managedCompetency = courseCompetencyRepository.findByIdElseThrow(competency.getId());
+
         // creating lecture units for lecture one
         textUnitOfLectureOne = new TextUnit();
         textUnitOfLectureOne.setName("TextUnitOfLectureOne");
         textUnitOfLectureOne.setLecture(lecture);
         textUnitOfLectureOne = lectureUnitRepository.save(textUnitOfLectureOne);
-        CompetencyLectureUnitLink link = new CompetencyLectureUnitLink(competency, textUnitOfLectureOne, 1);
+        CompetencyLectureUnitLink link = new CompetencyLectureUnitLink(managedCompetency, textUnitOfLectureOne, 1);
         link = competencyLectureUnitLinkRepository.save(link);
         textUnitOfLectureOne = (TextUnit) link.getLectureUnit();
 
         attachmentVideoUnitOfLectureOne = lectureUtilService.createAttachmentVideoUnit(lecture, true);
         attachmentVideoUnitOfLectureOne.setName("AttachmentVideoUnitOfLectureOne");
 
-        link = new CompetencyLectureUnitLink(competency, attachmentVideoUnitOfLectureOne, 1);
+        link = new CompetencyLectureUnitLink(managedCompetency, attachmentVideoUnitOfLectureOne, 1);
         link = competencyLectureUnitLinkRepository.save(link);
         attachmentVideoUnitOfLectureOne = (AttachmentVideoUnit) link.getLectureUnit();
 
@@ -156,7 +158,9 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         }
         textExercise = exerciseRepository.save(textExercise);
 
-        CompetencyExerciseLink link = new CompetencyExerciseLink(competency, textExercise, 1);
+        // Fetch a fresh reference to the competency to ensure it's managed in the current persistence context
+        CourseCompetency managedCompetency = courseCompetencyRepository.findByIdElseThrow(competency.getId());
+        CompetencyExerciseLink link = new CompetencyExerciseLink(managedCompetency, textExercise, 1);
         return (TextExercise) competencyExerciseLinkRepository.save(link).getExercise();
     }
 
@@ -165,7 +169,9 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         programmingExercise = exerciseRepository.save(programmingExercise);
 
-        CompetencyExerciseLink link = new CompetencyExerciseLink(courseCompetency, programmingExercise, 1);
+        // Fetch a fresh reference to the competency to ensure it's managed in the current persistence context
+        CourseCompetency managedCompetency = courseCompetencyRepository.findByIdElseThrow(courseCompetency.getId());
+        CompetencyExerciseLink link = new CompetencyExerciseLink(managedCompetency, programmingExercise, 1);
         competencyExerciseLinkRepository.save(link);
         return (ProgrammingExercise) link.getExercise();
     }
@@ -223,15 +229,17 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         newCompetency.setTitle("Title");
         newCompetency.setDescription("Description");
         newCompetency.setCourse(course);
-        courseCompetencyRepository.save(newCompetency);
+        CourseCompetency savedCompetency = courseCompetencyRepository.save(newCompetency);
 
-        newCompetency.setLectureUnitLinks(new HashSet<>(List.of(new CompetencyLectureUnitLink(newCompetency, unreleasedLectureUnit, 1))));
-        courseCompetencyRepository.save(newCompetency);
+        // Fetch fresh reference and save link separately to avoid detached entity issues
+        CourseCompetency managedCompetency = courseCompetencyRepository.findByIdElseThrow(savedCompetency.getId());
+        CompetencyLectureUnitLink link = new CompetencyLectureUnitLink(managedCompetency, unreleasedLectureUnit, 1);
+        competencyLectureUnitLinkRepository.save(link);
 
         List<? extends CourseCompetency> competenciesOfCourse = getAllCall(course.getId(), HttpStatus.OK);
 
         assertThat(competenciesOfCourse).anyMatch(c -> c.getId().equals(courseCompetency.getId()));
-        assertThat(competenciesOfCourse.stream().filter(l -> l.getId().equals(newCompetency.getId())).findFirst().orElseThrow().getLectureUnitLinks()).isEmpty();
+        assertThat(competenciesOfCourse.stream().filter(l -> l.getId().equals(savedCompetency.getId())).findFirst().orElseThrow().getLectureUnitLinks()).isEmpty();
     }
 
     abstract List<? extends CourseCompetency> getAllFilteredCall(long courseId, HttpStatus expectedStatus) throws Exception;
@@ -334,7 +342,10 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         TextExercise exercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
         exercise.setMaxPoints(1.0);
         exercise.setIncludedInOverallScore(includedInOverallScore);
-        CompetencyExerciseLink link = new CompetencyExerciseLink(newCompetency, exercise, 1);
+        exercise = exerciseRepository.save(exercise);
+        // Fetch fresh reference to ensure competency is managed
+        CourseCompetency managedCompetency = courseCompetencyRepository.findByIdElseThrow(newCompetency.getId());
+        CompetencyExerciseLink link = new CompetencyExerciseLink(managedCompetency, exercise, 1);
         competencyExerciseLinkRepository.save(link);
 
         newCompetency.setOptional(true);

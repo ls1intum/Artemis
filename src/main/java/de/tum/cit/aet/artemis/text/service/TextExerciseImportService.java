@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.text.service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -16,11 +17,11 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.ExampleParticipation;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ExampleParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
@@ -61,11 +62,11 @@ public class TextExerciseImportService extends ExerciseImportService {
 
     private final ExerciseService exerciseService;
 
-    public TextExerciseImportService(TextExerciseRepository textExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
+    public TextExerciseImportService(TextExerciseRepository textExerciseRepository, ExampleParticipationRepository exampleParticipationRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository, FeedbackRepository feedbackRepository,
             TextSubmissionRepository textSubmissionRepository, ChannelService channelService, FeedbackService feedbackService,
             Optional<CompetencyProgressApi> competencyProgressApi, ExerciseService exerciseService) {
-        super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
+        super(exampleParticipationRepository, submissionRepository, resultRepository, feedbackService);
         this.textBlockRepository = textBlockRepository;
         this.textExerciseRepository = textExerciseRepository;
         this.feedbackRepository = feedbackRepository;
@@ -79,7 +80,7 @@ public class TextExerciseImportService extends ExerciseImportService {
      * Imports a text exercise creating a new entity, copying all basic values and saving it in the database.
      * All basic include everything except Student-, Tutor participations, and student questions. <br>
      * This method calls {@link #copyTextExerciseBasis(TextExercise, Map)} to set up the basis of the exercise
-     * {@link #copyExampleSubmission(Exercise, Exercise, Map)} for a hard copy of the example submissions.
+     * {@link #copyExampleParticipations(Exercise, Exercise, Map)} for a hard copy of the example participations.
      *
      * @param templateExercise The template exercise which should get imported
      * @param importedExercise The new exercise already containing values which should not get copied, i.e. overwritten
@@ -88,6 +89,9 @@ public class TextExerciseImportService extends ExerciseImportService {
     @NonNull
     public TextExercise importTextExercise(final TextExercise templateExercise, TextExercise importedExercise) {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
+        // Get the template exercise ID from templateExercise (which always has it)
+        // Note: importedExercise might not have an ID if called from REST API
+        Long templateExerciseId = templateExercise.getId();
         Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
         TextExercise newExercise = copyTextExerciseBasis(importedExercise, gradingInstructionCopyTracker);
         if (newExercise.isExamExercise()) {
@@ -95,14 +99,14 @@ public class TextExerciseImportService extends ExerciseImportService {
             newExercise.setFeedbackSuggestionModule(null);
         }
 
-        TextExercise newTextExercise = exerciseService.saveWithCompetencyLinks(newExercise, textExerciseRepository::save);
+        TextExercise newTextExercise = textExerciseRepository.save(newExercise);
 
         channelService.createExerciseChannel(newTextExercise, Optional.ofNullable(importedExercise.getChannelName()));
-        newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
+        copyExampleParticipations(templateExerciseId, newTextExercise, gradingInstructionCopyTracker);
 
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(newTextExercise));
 
-        return newExercise;
+        return newTextExercise;
     }
 
     /**
@@ -155,30 +159,34 @@ public class TextExerciseImportService extends ExerciseImportService {
     }
 
     /**
-     * This functions does a hard copy of the example submissions contained in {@code templateExercise}.
+     * This functions does a hard copy of the example participations contained in the template exercise.
      * To copy the corresponding Submission entity this function calls {@link #copySubmission(Submission, Map)}}
      *
-     * @param templateExercise              {TextExercise} The original exercise from which to fetch the example submissions
-     * @param newExercise                   The new exercise in which we will insert the example submissions
+     * @param templateExerciseId            The ID of the original exercise from which to fetch the example participations
+     * @param newExercise                   The new exercise in which we will insert the example participations
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
-     * @return The cloned set of example submissions
      */
-    private Set<ExampleSubmission> copyExampleSubmission(Exercise templateExercise, Exercise newExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
-        log.debug("Copying the ExampleSubmissions to new Exercise: {}", newExercise);
-        Set<ExampleSubmission> newExampleSubmissions = new HashSet<>();
-        for (ExampleSubmission originalExampleSubmission : templateExercise.getExampleSubmissions()) {
-            TextSubmission originalSubmission = (TextSubmission) originalExampleSubmission.getSubmission();
-            TextSubmission newSubmission = copySubmission(originalSubmission, gradingInstructionCopyTracker);
+    private void copyExampleParticipations(Long templateExerciseId, Exercise newExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+        log.debug("Copying the ExampleParticipations to new Exercise: {}", newExercise);
+        // Use the query that fetches text blocks and feedbacks for text submissions
+        Set<ExampleParticipation> templateExampleParticipations = exampleParticipationRepository
+                .findAllWithSubmissionsResultsFeedbacksAndTextBlocksByExerciseId(templateExerciseId);
+        for (ExampleParticipation originalExampleParticipation : templateExampleParticipations) {
+            // First create and save the new ExampleParticipation to get an ID
+            ExampleParticipation newExampleParticipation = new ExampleParticipation();
+            newExampleParticipation.setExercise(newExercise);
+            newExampleParticipation.setUsedForTutorial(originalExampleParticipation.isUsedForTutorial());
+            newExampleParticipation.setAssessmentExplanation(originalExampleParticipation.getAssessmentExplanation());
+            ExampleParticipation savedParticipation = exampleParticipationRepository.save(newExampleParticipation);
 
-            ExampleSubmission newExampleSubmission = new ExampleSubmission();
-            newExampleSubmission.setExercise(newExercise);
-            newExampleSubmission.setSubmission(newSubmission);
-            newExampleSubmission.setAssessmentExplanation(originalExampleSubmission.getAssessmentExplanation());
+            // Now copy the submission with the correct participation
+            TextSubmission originalSubmission = (TextSubmission) originalExampleParticipation.getSubmission();
+            TextSubmission newSubmission = copySubmission(originalSubmission, gradingInstructionCopyTracker, savedParticipation);
 
-            exampleSubmissionRepository.save(newExampleSubmission);
-            newExampleSubmissions.add(newExampleSubmission);
+            if (newSubmission != null) {
+                savedParticipation.addSubmission(newSubmission);
+            }
         }
-        return newExampleSubmissions;
     }
 
     /**
@@ -188,9 +196,11 @@ public class TextExerciseImportService extends ExerciseImportService {
      *
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @param originalSubmission            The original submission to be copied.
+     * @param targetParticipation           The participation to associate with the new submission (required, cannot be null).
      * @return The cloned submission
      */
-    public TextSubmission copySubmission(final Submission originalSubmission, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+    public TextSubmission copySubmission(final Submission originalSubmission, Map<Long, GradingInstruction> gradingInstructionCopyTracker,
+            ExampleParticipation targetParticipation) {
         TextSubmission newSubmission = new TextSubmission();
         if (originalSubmission != null) {
             log.debug("Copying the Submission to new ExampleSubmission: {}", newSubmission);
@@ -198,7 +208,7 @@ public class TextExerciseImportService extends ExerciseImportService {
             newSubmission.setSubmissionDate(originalSubmission.getSubmissionDate());
             newSubmission.setLanguage(((TextSubmission) originalSubmission).getLanguage());
             newSubmission.setType(originalSubmission.getType());
-            newSubmission.setParticipation(originalSubmission.getParticipation());
+            newSubmission.setParticipation(targetParticipation);
             newSubmission.setText(((TextSubmission) originalSubmission).getText());
             newSubmission = submissionRepository.saveAndFlush(newSubmission);
             newSubmission.setBlocks(copyTextBlocks(((TextSubmission) originalSubmission).getBlocks(), newSubmission));
@@ -221,7 +231,7 @@ public class TextExerciseImportService extends ExerciseImportService {
      */
     private void updateFeedbackReferencesWithNewTextBlockIds(Set<TextBlock> originalTextBlocks, TextSubmission newSubmission) {
         Result newResult = newSubmission.getLatestResult();
-        List<Feedback> newFeedbackList = newResult.getFeedbacks();
+        Set<Feedback> newFeedbackList = newResult.getFeedbacks();
         Set<TextBlock> newSubmissionTextBlocks = newSubmission.getBlocks();
 
         // first collect original text blocks as <startIndex, TextBlock> map, startIndex will help to match newly created text block with original text block
@@ -252,7 +262,7 @@ public class TextExerciseImportService extends ExerciseImportService {
         }
 
         // save the feedback (that is not yet in the database) to prevent null index exception
-        List<Feedback> savedFeedback = feedbackRepository.saveFeedbacks(newFeedbackList);
+        List<Feedback> savedFeedback = feedbackRepository.saveFeedbacks(new ArrayList<>(newFeedbackList));
         newResult.updateAllFeedbackItems(savedFeedback, false);
         resultRepository.save(newResult);
     }

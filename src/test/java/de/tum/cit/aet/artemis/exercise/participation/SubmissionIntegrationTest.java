@@ -63,16 +63,19 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
     void addMultipleResultsToOneSubmission() {
         AssessmentType assessmentType = AssessmentType.MANUAL;
 
+        // Create participation first (participation_id is NOT NULL for submissions)
+        var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
         Submission submission = new TextSubmission();
+        submission.setParticipation(participation);
         submission = submissionRepository.save(submission);
 
         Result result1 = new Result().assessmentType(assessmentType).score(100D).rated(true).exerciseId(textExercise.getId());
-        result1 = resultRepository.save(result1);
         result1.setSubmission(submission);
+        result1 = resultRepository.save(result1);
 
         Result result2 = new Result().assessmentType(assessmentType).score(200D).rated(true).exerciseId(textExercise.getId());
-        result2 = resultRepository.save(result2);
         result2.setSubmission(submission);
+        result2 = resultRepository.save(result2);
 
         submission.addResult(result1);
         submission.addResult(result2);
@@ -91,19 +94,22 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
     void addMultipleResultsToOneSubmissionSavedSequentially() {
         AssessmentType assessmentType = AssessmentType.MANUAL;
 
+        // Create participation first (participation_id is NOT NULL for submissions)
+        var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
         Submission submission = new TextSubmission();
+        submission.setParticipation(participation);
         submission = submissionRepository.save(submission);
 
         Result result1 = new Result().assessmentType(assessmentType).score(100D).rated(true).exerciseId(textExercise.getId());
-        result1 = resultRepository.save(result1);
         result1.setSubmission(submission);
+        result1 = resultRepository.save(result1);
 
         submission.addResult(result1);
         submission = submissionRepository.save(submission);
 
         Result result2 = new Result().assessmentType(assessmentType).score(200D).rated(true).exerciseId(textExercise.getId());
-        result2 = resultRepository.save(result2);
         result2.setSubmission(submission);
+        result2 = resultRepository.save(result2);
 
         submission.addResult(result2);
         submission = submissionRepository.save(submission);
@@ -121,19 +127,22 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
     void updateMultipleResultsFromOneSubmission() {
         AssessmentType assessmentType = AssessmentType.MANUAL;
 
+        // Create participation first (participation_id is NOT NULL for submissions)
+        var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
         Submission submission = new TextSubmission();
+        submission.setParticipation(participation);
         submission = submissionRepository.save(submission);
 
         Result result1 = new Result().assessmentType(assessmentType).score(100D).rated(true).exerciseId(textExercise.getId());
-        result1 = resultRepository.save(result1);
         result1.setSubmission(submission);
+        result1 = resultRepository.save(result1);
 
         submission.addResult(result1);
         submission = submissionRepository.save(submission);
 
         Result result2 = new Result().assessmentType(assessmentType).score(200D).rated(true).exerciseId(textExercise.getId());
-        result2 = resultRepository.save(result2);
         result2.setSubmission(submission);
+        result2 = resultRepository.save(result2);
 
         submission.addResult(result2);
         submission = submissionRepository.save(submission);
@@ -197,8 +206,8 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
         Course course = courseUtilService.addCourseWithModelingAndTextExercise();
         TextExercise textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         TextSubmission submission = ParticipationFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
-        submission = submissionRepository.save(submission);
-        participationUtilService.addSubmission(textExercise, submission, TEST_PREFIX + "student1");
+        // Use addSubmission which creates participation and saves submission properly
+        submission = (TextSubmission) participationUtilService.addSubmission(textExercise, submission, TEST_PREFIX + "student1");
         course.setInstructorGroupName("test");
         courseRepository.save(course);
         request.getList("/api/exercise/submissions/" + submission.getId() + "/versions", HttpStatus.FORBIDDEN, Submission.class);
@@ -211,12 +220,12 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         TextExercise textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         TextSubmission submission = ParticipationFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
-        submission = submissionRepository.save(submission);
+        // Use addSubmission which creates participation and saves submission properly
+        submission = (TextSubmission) participationUtilService.addSubmission(textExercise, submission, TEST_PREFIX + "student1");
         SubmissionVersion submissionVersion1 = ParticipationFactory.generateSubmissionVersion("test1", submission, student);
         submissionVersion1 = submissionVersionRepository.save(submissionVersion1);
         SubmissionVersion submissionVersion2 = ParticipationFactory.generateSubmissionVersion("test2", submission, student);
         submissionVersion2 = submissionVersionRepository.save(submissionVersion2);
-        participationUtilService.addSubmission(textExercise, submission, TEST_PREFIX + "student1");
         var expected1 = SubmissionVersionDTO.of(submissionVersion1);
         var expected2 = SubmissionVersionDTO.of(submissionVersion2);
         List<SubmissionVersionDTO> versions = request.getList("/api/exercise/submissions/" + submission.getId() + "/versions", HttpStatus.OK, SubmissionVersionDTO.class);

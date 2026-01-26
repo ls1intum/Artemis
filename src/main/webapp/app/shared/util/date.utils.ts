@@ -5,6 +5,7 @@ import dayjs from 'dayjs/esm';
  * @param date the date either as proper date or string representation
  * @return the json representation of the date or the current representation if the date is not a dayjs date
  */
+// TODO: rename to convertToString
 export function convertDateFromClient(date?: dayjs.Dayjs): string | undefined {
     if (!dayjs(date).isValid()) {
         return undefined;
@@ -17,6 +18,7 @@ export function convertDateFromClient(date?: dayjs.Dayjs): string | undefined {
  * @param date the date sent by the server
  * @return the date as dayjs object if it is defined
  */
+// TODO: rename to convertToDate
 export function convertDateFromServer(date?: dayjs.Dayjs): dayjs.Dayjs | undefined {
     return date ? dayjs(date) : undefined;
 }

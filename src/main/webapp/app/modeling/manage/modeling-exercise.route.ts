@@ -76,7 +76,7 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'modeling-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
+        path: 'modeling-exercises/:exerciseId/example-submissions/:exampleParticipationId',
         loadComponent: () => import('app/modeling/manage/example-modeling/example-modeling-submission.component').then((m) => m.ExampleModelingSubmissionComponent),
         data: {
             authorities: IS_AT_LEAST_TUTOR,

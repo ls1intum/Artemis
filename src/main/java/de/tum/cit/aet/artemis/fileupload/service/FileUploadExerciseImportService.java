@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ExampleParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
@@ -37,10 +37,10 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
 
     private final ExerciseService exerciseService;
 
-    public FileUploadExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
-            FileUploadExerciseRepository fileUploadExerciseRepository, ChannelService channelService, FeedbackService feedbackService,
+    public FileUploadExerciseImportService(ExampleParticipationRepository exampleParticipationRepository, SubmissionRepository submissionRepository,
+            ResultRepository resultRepository, FileUploadExerciseRepository fileUploadExerciseRepository, ChannelService channelService, FeedbackService feedbackService,
             Optional<CompetencyProgressApi> competencyProgressApi, ExerciseService exerciseService) {
-        super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
+        super(exampleParticipationRepository, submissionRepository, resultRepository, feedbackService);
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
@@ -61,7 +61,7 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         FileUploadExercise newExercise = copyFileUploadExerciseBasis(importedExercise);
 
-        FileUploadExercise newFileUploadExercise = exerciseService.saveWithCompetencyLinks(newExercise, fileUploadExerciseRepository::save);
+        FileUploadExercise newFileUploadExercise = fileUploadExerciseRepository.save(newExercise);
 
         channelService.createExerciseChannel(newFileUploadExercise, Optional.ofNullable(importedExercise.getChannelName()));
 

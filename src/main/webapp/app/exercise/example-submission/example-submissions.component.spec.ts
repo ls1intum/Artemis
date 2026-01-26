@@ -4,9 +4,9 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { of, throwError } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
+import { ExampleParticipation } from 'app/exercise/shared/entities/participation/example-participation.model';
 import { ExampleSubmissionsComponent } from 'app/exercise/example-submission/example-submissions.component';
-import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { ExampleParticipationService } from 'app/assessment/shared/services/example-participation.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -22,12 +22,12 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 describe('Example Submission Component', () => {
     let component: ExampleSubmissionsComponent;
     let fixture: ComponentFixture<ExampleSubmissionsComponent>;
-    let exampleSubmissionService: ExampleSubmissionService;
+    let exampleParticipationService: ExampleParticipationService;
     let modalService: NgbModal;
     let alertService: AlertService;
 
-    const exampleSubmission1 = { id: 1 } as ExampleSubmission;
-    const exampleSubmission2 = { id: 2 } as ExampleSubmission;
+    const exampleParticipation1 = { id: 1 } as ExampleParticipation;
+    const exampleParticipation2 = { id: 2 } as ExampleParticipation;
 
     const exercise: Exercise = {
         id: 1,
@@ -35,7 +35,7 @@ describe('Example Submission Component', () => {
         numberOfAssessmentsOfCorrectionRounds: [],
         secondCorrectionEnabled: false,
         studentAssignedTeamIdComputed: false,
-        exampleSubmissions: [exampleSubmission1, exampleSubmission2],
+        exampleParticipations: [exampleParticipation1, exampleParticipation2],
     };
 
     const route = { data: of({ exercise }), children: [] } as any as ActivatedRoute;
@@ -60,7 +60,7 @@ describe('Example Submission Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExampleSubmissionsComponent);
                 component = fixture.componentInstance;
-                exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
+                exampleParticipationService = TestBed.inject(ExampleParticipationService);
                 modalService = TestBed.inject(NgbModal);
                 alertService = TestBed.inject(AlertService);
             });
@@ -76,25 +76,25 @@ describe('Example Submission Component', () => {
         expect(component.exercise).toBeDefined();
     });
 
-    it('should delete an example submission', () => {
+    it('should delete an example participation', () => {
         // GIVEN
         component.exercise = exercise;
-        const deleteStub = jest.spyOn(exampleSubmissionService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        const deleteStub = jest.spyOn(exampleParticipationService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
 
         // WHEN
-        component.deleteExampleSubmission(0);
+        component.deleteExampleParticipation(0);
 
         // THEN
         expect(deleteStub).toHaveBeenCalledOnce();
-        expect(exercise.exampleSubmissions).toHaveLength(1);
+        expect(exercise.exampleParticipations).toHaveLength(1);
     });
 
     it('should catch an error on delete', () => {
         component.exercise = exercise;
-        jest.spyOn(exampleSubmissionService, 'delete').mockReturnValue(throwError(() => ({ status: 500 })));
+        jest.spyOn(exampleParticipationService, 'delete').mockReturnValue(throwError(() => ({ status: 500 })));
 
         const alertServiceSpy = jest.spyOn(alertService, 'error');
-        component.deleteExampleSubmission(0);
+        component.deleteExampleParticipation(0);
 
         expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
@@ -104,18 +104,18 @@ describe('Example Submission Component', () => {
             id: 2,
             text: 'test text',
         } as TextSubmission;
-        const exampleTextSubmission = {
+        const exampleTextParticipation = {
             id: 1,
-            submission: textSubmission,
-        } as ExampleSubmission;
-        exercise.exampleSubmissions = [exampleTextSubmission];
+            submissions: [textSubmission],
+        } as ExampleParticipation;
+        exercise.exampleParticipations = [exampleTextParticipation];
 
-        const getSubmissionSizeSpy = jest.spyOn(exampleSubmissionService, 'getSubmissionSize');
+        const getSubmissionSizeSpy = jest.spyOn(exampleParticipationService, 'getSubmissionSize');
 
         component.exercise = exercise;
         component.ngOnInit();
-        expect(component.exercise.exampleSubmissions).toBeDefined();
-        expect(component.exercise.exampleSubmissions![0].submission?.submissionSize).toBe(2);
+        expect(component.exercise.exampleParticipations).toBeDefined();
+        expect(component.getSubmission(component.exercise.exampleParticipations![0])?.submissionSize).toBe(2);
         expect(getSubmissionSizeSpy).toHaveBeenCalledOnce();
     });
 
@@ -124,7 +124,7 @@ describe('Example Submission Component', () => {
         const componentInstance = { exercise: Exercise };
         const result = new Promise((resolve) => resolve(true));
         const modalServiceStub = jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance, result });
-        const importStub = jest.spyOn(exampleSubmissionService, 'import').mockReturnValue(throwError(() => ({ status: 500 })));
+        const importStub = jest.spyOn(exampleParticipationService, 'import').mockReturnValue(throwError(() => ({ status: 500 })));
 
         component.openImportModal();
 

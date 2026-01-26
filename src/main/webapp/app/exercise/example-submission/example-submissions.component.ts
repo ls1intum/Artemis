@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { ExampleParticipationService } from 'app/assessment/shared/services/example-participation.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ExampleSubmissionImportComponent } from 'app/exercise/example-submission/example-submission-import/example-submission-import.component';
@@ -14,6 +14,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ResultComponent } from '../result/result.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ExampleParticipation } from 'app/exercise/shared/entities/participation/example-participation.model';
 
 @Component({
     templateUrl: 'example-submissions.component.html',
@@ -21,7 +22,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 })
 export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
-    private exampleSubmissionService = inject(ExampleSubmissionService);
+    private exampleParticipationService = inject(ExampleParticipationService);
     private activatedRoute = inject(ActivatedRoute);
     private modalService = inject(NgbModal);
     private accountService = inject(AccountService);
@@ -48,13 +49,23 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
             this.exercise = exercise;
 
             this.createdExampleAssessment =
-                this.exercise.exampleSubmissions?.map((exampleSubmission) => exampleSubmission.submission?.results?.some((result) => result.exampleResult) ?? false) ?? [];
+                this.exercise.exampleParticipations?.map(
+                    (exampleParticipation) => this.getSubmission(exampleParticipation)?.results?.some((result) => result.exampleResult) ?? false,
+                ) ?? [];
         });
-        this.exercise?.exampleSubmissions?.forEach((exampleSubmission) => {
-            if (exampleSubmission.submission) {
-                exampleSubmission.submission.submissionSize = this.exampleSubmissionService.getSubmissionSize(exampleSubmission.submission, this.exercise);
+        this.exercise?.exampleParticipations?.forEach((exampleParticipation) => {
+            const submission = this.getSubmission(exampleParticipation);
+            if (submission) {
+                submission.submissionSize = this.exampleParticipationService.getSubmissionSize(submission, this.exercise);
             }
         });
+    }
+
+    /**
+     * Gets the first submission from an example participation.
+     */
+    getSubmission(exampleParticipation: ExampleParticipation): Submission | undefined {
+        return this.exampleParticipationService.getSubmission(exampleParticipation);
     }
 
     /**
@@ -67,14 +78,14 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Deletes example submission
-     * @param index in the example submissions array
+     * Deletes example participation
+     * @param index in the example participations array
      */
-    deleteExampleSubmission(index: number) {
-        const submissionId = this.exercise.exampleSubmissions![index].id!;
-        this.exampleSubmissionService.delete(submissionId).subscribe({
+    deleteExampleParticipation(index: number) {
+        const participationId = this.exercise.exampleParticipations![index].id!;
+        this.exampleParticipationService.delete(participationId).subscribe({
             next: () => {
-                this.exercise.exampleSubmissions!.splice(index, 1);
+                this.exercise.exampleParticipations!.splice(index, 1);
                 this.createdExampleAssessment.splice(index, 1);
             },
             error: (error: HttpErrorResponse) => {
@@ -85,11 +96,11 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
 
     /**
      * Navigates to the detail view of the example submission
-     * @param exampleSubmissionId id of the submission or new for a new submission
+     * @param exampleParticipationId id of the participation or new for a new one
      */
-    getLinkToExampleSubmission(exampleSubmissionId: number | 'new') {
+    getLinkToExampleSubmission(exampleParticipationId: number | 'new') {
         if (!this.exercise.exerciseGroup) {
-            return ['/course-management', this.exercise.course!.id, this.exercise.type + '-exercises', this.exercise.id, 'example-submissions', exampleSubmissionId];
+            return ['/course-management', this.exercise.course!.id, this.exercise.type + '-exercises', this.exercise.id, 'example-submissions', exampleParticipationId];
         } else {
             return [
                 '/course-management',
@@ -101,7 +112,7 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
                 this.exercise.type + '-exercises',
                 this.exercise.id,
                 'example-submissions',
-                exampleSubmissionId,
+                exampleParticipationId,
             ];
         }
     }
@@ -117,7 +128,7 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
         });
         exampleSubmissionImportModalRef.componentInstance.exercise = this.exercise;
         exampleSubmissionImportModalRef.result.then((selectedSubmission: Submission) => {
-            this.exampleSubmissionService.import(selectedSubmission.id!, this.exercise.id!).subscribe({
+            this.exampleParticipationService.import(selectedSubmission.id!, this.exercise.id!).subscribe({
                 next: () => {
                     this.alertService.success('artemisApp.exampleSubmission.submitSuccessful');
                     location.reload();

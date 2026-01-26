@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.atlas.domain.competency;
 
 import java.io.Serializable;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MappedSuperclass;
@@ -11,7 +10,11 @@ import jakarta.persistence.MapsId;
 @MappedSuperclass
 public abstract class CompetencyLearningObjectLink implements Serializable {
 
-    @ManyToOne(optional = false, cascade = CascadeType.PERSIST)
+    // Note: We intentionally do NOT use CascadeType.PERSIST here because competencies
+    // are always saved before being linked to exercises/lecture units. Using cascade
+    // would cause "detached entity passed to persist" errors when saving links with
+    // already-persisted competencies.
+    @ManyToOne(optional = false)
     @MapsId("competencyId")
     protected CourseCompetency competency;
 

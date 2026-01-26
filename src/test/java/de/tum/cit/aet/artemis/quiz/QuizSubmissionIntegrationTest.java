@@ -742,7 +742,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
         QuizExerciseReEvaluateDTO dto = QuizExerciseReEvaluateDTO.of(quizExercise);
-        quizExerciseService.reEvaluate(dto, quizExercise, generateMultipartFilesFromQuizExercise(quizExercise));
+        // No files needed since we're re-evaluating with unchanged paths (all paths are in oldPaths)
+        quizExerciseService.reEvaluate(dto, quizExercise, List.of());
         assertThat(quizSubmissionTestRepository.findByQuizExerciseId(quizExercise.getId())).isPresent();
 
         List<Result> results = resultRepository.findByExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
@@ -785,7 +786,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
         QuizExerciseReEvaluateDTO dto = QuizExerciseReEvaluateDTO.of(quizExercise);
-        quizExerciseService.reEvaluate(dto, quizExercise, generateMultipartFilesFromQuizExercise(quizExercise));
+        // No files needed since we're re-evaluating with unchanged paths (all paths are in oldPaths)
+        quizExerciseService.reEvaluate(dto, quizExercise, List.of());
         assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isEqualTo(1);
 
         List<Result> results = resultRepository.findByExerciseIdOrderByCompletionDateAsc(quizExercise.getId());

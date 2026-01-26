@@ -24,8 +24,15 @@ public class ModelingRepositoryApi extends AbstractModelingApi {
         this.modelingExerciseRepository = modelingExerciseRepository;
     }
 
-    public Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(long exerciseId) {
-        return modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(exerciseId);
+    /**
+     * Finds a modeling exercise by id with competencies and grading criteria.
+     * Note: Example participations are now fetched separately via ExampleParticipationRepository.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the found exercise, or empty if not found
+     */
+    public Optional<ModelingExercise> findByIdWithCompetenciesAndGradingCriteria(long exerciseId) {
+        return modelingExerciseRepository.findByIdWithCompetenciesAndGradingCriteria(exerciseId);
     }
 
     public Optional<ModelingExercise> findForVersioningById(long exerciseId) {

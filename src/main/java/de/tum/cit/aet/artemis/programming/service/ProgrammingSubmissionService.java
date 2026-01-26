@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.SETUP_COMMIT_MESSAGE;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -502,6 +503,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
         Result newResult = saveNewEmptyResult(existingSubmission);
         newResult.setAssessor(userRepository.getUser());
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        // Set the correction round for exam exercises with multiple correction rounds
+        newResult.setCorrectionRound(correctionRound);
 
         // Copy automatic feedbacks into the manual result
         List<Feedback> automaticFeedbacks = new ArrayList<>();
@@ -509,13 +512,14 @@ public class ProgrammingSubmissionService extends SubmissionService {
             Result existingResult = optionalExistingResult.get();
             automaticFeedbacks = existingResult.getFeedbacks().stream().map(feedbackService::copyFeedback).collect(Collectors.toCollection(ArrayList::new));
             for (Feedback feedback : automaticFeedbacks) {
-                feedback = feedbackRepository.save(feedback);
+                // Set result before saving (feedback.result_id is NOT NULL)
                 feedback.setResult(newResult);
+                feedback = feedbackRepository.save(feedback);
             }
 
             newResult.copyProgrammingExerciseCounters(existingResult);
         }
-        newResult.setFeedbacks(automaticFeedbacks);
+        newResult.setFeedbacks(new HashSet<>(automaticFeedbacks));
 
         // Workaround to prevent the assessor turning into a proxy object after saving
         var assessor = newResult.getAssessor();

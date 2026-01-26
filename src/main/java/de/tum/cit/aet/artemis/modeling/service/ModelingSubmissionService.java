@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.modeling.service;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -138,7 +138,7 @@ public class ModelingSubmissionService extends SubmissionService {
         }
 
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-        modelingSubmission.setResults(new ArrayList<>());
+        modelingSubmission.setResults(new HashSet<>());
         modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
 
         // versioning of submission

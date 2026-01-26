@@ -345,12 +345,13 @@ public class ProgrammingSubmissionResource {
         programmingSubmissionService.hideDetails(programmingSubmission, user);
 
         // remove automatic results before sending to client
-        var manualResults = programmingSubmission.getManualResults();
-        if (correctionRound >= manualResults.size()) {
-            programmingSubmission.setResults(Collections.emptyList());
+        // Get the result for the specified correction round using the correctionRound field
+        Result resultForCorrectionRound = programmingSubmission.getResultForCorrectionRound(correctionRound);
+        if (resultForCorrectionRound == null) {
+            programmingSubmission.setResults(Collections.emptySet());
         }
         else {
-            programmingSubmission.setResults(Collections.singletonList(manualResults.get(correctionRound)));
+            programmingSubmission.setResults(Set.of(resultForCorrectionRound));
         }
 
         return ResponseEntity.ok(programmingSubmission);

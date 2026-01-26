@@ -417,8 +417,8 @@ public class ModelingExerciseUtilService {
      * @return The created Result
      */
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String login, boolean submit) {
-        Feedback feedback1 = feedbackRepo.save(new Feedback().detailText("detail1"));
-        Feedback feedback2 = feedbackRepo.save(new Feedback().detailText("detail2"));
+        Feedback feedback1 = new Feedback().detailText("detail1");
+        Feedback feedback2 = new Feedback().detailText("detail2");
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(feedback1);
         feedbacks.add(feedback2);

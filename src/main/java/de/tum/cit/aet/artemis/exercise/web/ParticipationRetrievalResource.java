@@ -126,6 +126,17 @@ public class ParticipationRetrievalResource {
         StudentParticipation participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
+        // Filter results to only include the latest result for each submission
+        for (Submission submission : participation.getSubmissions()) {
+            Result latestResult = submission.getLatestResult();
+            if (latestResult != null) {
+                submission.setResults(Set.of(latestResult));
+            }
+            else {
+                submission.setResults(Set.of());
+            }
+        }
+
         return new ResponseEntity<>(participation, HttpStatus.OK);
     }
 

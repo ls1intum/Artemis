@@ -46,7 +46,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.ExampleParticipation;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -151,20 +151,20 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<GradingCriterion> gradingCriteria = new HashSet<>();
 
+    // Note: orphanRemoval works correctly with NOT NULL FK on participation.exercise_id because:
+    // 1. Participation.exercise has @ManyToOne(optional = false) and @JoinColumn(nullable = false)
+    // 2. When a participation is removed from this collection, orphanRemoval causes DELETE at flush time
+    // 3. Hibernate won't try to UPDATE exercise_id = NULL before the DELETE
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exercise")
     private Set<StudentParticipation> studentParticipations = new HashSet<>();
 
+    // Note: orphanRemoval works correctly with NOT NULL FK on participation.exercise_id (via TutorParticipation.assessedExercise)
     @OneToMany(mappedBy = "assessedExercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("assessedExercise")
     private Set<TutorParticipation> tutorParticipations = new HashSet<>();
-
-    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties("exercise")
-    private Set<ExampleSubmission> exampleSubmissions = new HashSet<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -229,6 +229,13 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      */
     @Transient
     private String channelNameTransient;
+
+    /**
+     * Transient field to store example participations when needed for serialization.
+     * ExampleParticipations are queried separately via ExampleParticipationRepository.
+     */
+    @Transient
+    private Set<ExampleParticipation> exampleParticipationsTransient = new HashSet<>();
 
     @Override
     public Optional<ZonedDateTime> getCompletionDate(User user) {
@@ -308,6 +315,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     public void removeParticipation(StudentParticipation participation) {
         this.studentParticipations.remove(participation);
+        // Setting exercise to null is OK because orphanRemoval causes DELETE at flush time, not UPDATE to NULL.
+        // With orphanRemoval=true and @ManyToOne(optional=false) + @JoinColumn(nullable=false) on the child,
+        // Hibernate will correctly DELETE the orphaned participation.
         participation.setExercise(null);
     }
 
@@ -394,25 +404,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             return this.getExerciseGroup().getExam();
         }
         return null;
-    }
-
-    public Set<ExampleSubmission> getExampleSubmissions() {
-        return exampleSubmissions;
-    }
-
-    public Exercise addExampleSubmission(ExampleSubmission exampleSubmission) {
-        this.exampleSubmissions.add(exampleSubmission);
-        exampleSubmission.setExercise(this);
-        return this;
-    }
-
-    public void removeExampleSubmission(ExampleSubmission exampleSubmission) {
-        this.exampleSubmissions.remove(exampleSubmission);
-        exampleSubmission.setExercise(null);
-    }
-
-    public void setExampleSubmissions(Set<ExampleSubmission> exampleSubmissions) {
-        this.exampleSubmissions = exampleSubmissions;
     }
 
     public Set<Attachment> getAttachments() {
@@ -509,7 +500,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
 
         participation.getSubmissions().forEach(submission -> {
-            List<Result> results = submission.getResults();
+            Set<Result> results = submission.getResults();
             if (results != null && !results.isEmpty()) {
                 if (!isAssessmentOver) {
                     // For assessment that's not over yet
@@ -653,6 +644,16 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     public void setChannelName(String channelNameTransient) {
         this.channelNameTransient = channelNameTransient;
+    }
+
+    @JsonProperty("exampleParticipations")
+    public Set<ExampleParticipation> getExampleParticipations() {
+        return exampleParticipationsTransient;
+    }
+
+    @JsonProperty("exampleParticipations")
+    public void setExampleParticipations(Set<ExampleParticipation> exampleParticipations) {
+        this.exampleParticipationsTransient = exampleParticipations;
     }
 
     @Nullable
@@ -913,8 +914,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * Just setting the collections to {@code null} breaks the automatic orphan removal and change detection in the database.
      */
     public void disconnectRelatedEntities() {
-        Stream.of(teams, gradingCriteria, studentParticipations, tutorParticipations, exampleSubmissions, attachments, plagiarismCases).filter(Objects::nonNull)
-                .forEach(Collection::clear);
+        Stream.of(teams, gradingCriteria, studentParticipations, tutorParticipations, attachments, plagiarismCases).filter(Objects::nonNull).forEach(Collection::clear);
     }
 
     /**

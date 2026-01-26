@@ -2,7 +2,8 @@ package de.tum.cit.aet.artemis.text.web;
 
 import static java.util.stream.Collectors.toSet;
 
-import java.util.Collections;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,12 +30,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.ExampleParticipation;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ExampleParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
@@ -93,7 +94,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
-    private final ExampleSubmissionRepository exampleSubmissionRepository;
+    private final ExampleParticipationRepository exampleParticipationRepository;
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
@@ -106,9 +107,9 @@ public class TextAssessmentResource extends AssessmentResource {
     public TextAssessmentResource(AuthorizationCheckService authCheckService, TextAssessmentService textAssessmentService, TextBlockService textBlockService,
             TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository, UserRepository userRepository,
             TextSubmissionService textSubmissionService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
-            GradingCriterionRepository gradingCriterionRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository,
+            GradingCriterionRepository gradingCriterionRepository, ExampleParticipationRepository exampleParticipationRepository, SubmissionRepository submissionRepository,
             FeedbackRepository feedbackRepository, ResultService resultService, Optional<AthenaFeedbackApi> athenaFeedbackApi) {
-        super(authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
+        super(authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, exampleParticipationRepository, submissionRepository);
 
         this.textAssessmentService = textAssessmentService;
         this.textBlockService = textBlockService;
@@ -117,7 +118,7 @@ public class TextAssessmentResource extends AssessmentResource {
         this.textSubmissionService = textSubmissionService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.feedbackRepository = feedbackRepository;
-        this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.exampleParticipationRepository = exampleParticipationRepository;
         this.resultService = resultService;
         this.athenaFeedbackApi = athenaFeedbackApi;
     }
@@ -165,50 +166,52 @@ public class TextAssessmentResource extends AssessmentResource {
      * @return result after saving example text assessment
      */
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping("exercises/{exerciseId}/example-submissions/{exampleSubmissionId}/example-text-assessment")
+    @PutMapping("exercises/{exerciseId}/example-participations/{exampleParticipationId}/example-text-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<Result> saveTextExampleAssessment(@PathVariable long exerciseId, @PathVariable long exampleSubmissionId, @RequestBody TextAssessmentDTO textAssessment) {
-        log.debug("REST request to save text example assessment : {}", exampleSubmissionId);
-        Optional<ExampleSubmission> optionalExampleSubmission = exampleSubmissionRepository.findById(exampleSubmissionId);
-        if (optionalExampleSubmission.isPresent()) {
-            ExampleSubmission exampleSubmission = optionalExampleSubmission.get();
-            if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
-                throw new BadRequestAlertException("exerciseId in ExampleSubmission of exampleSubmissionId " + exampleSubmissionId + " doesn't match the paths exerciseId!",
-                        "exerciseId", "exerciseIdMismatch");
+    public ResponseEntity<Result> saveTextExampleAssessment(@PathVariable long exerciseId, @PathVariable long exampleParticipationId,
+            @RequestBody TextAssessmentDTO textAssessment) {
+        log.debug("REST request to save text example assessment : {}", exampleParticipationId);
+        Optional<ExampleParticipation> optionalExampleParticipation = exampleParticipationRepository.findById(exampleParticipationId);
+        if (optionalExampleParticipation.isPresent()) {
+            ExampleParticipation exampleParticipation = optionalExampleParticipation.get();
+            if (!exampleParticipation.getExercise().getId().equals(exerciseId)) {
+                throw new BadRequestAlertException(
+                        "exerciseId in ExampleParticipation of exampleParticipationId " + exampleParticipationId + " doesn't match the paths exerciseId!", "exerciseId",
+                        "exerciseIdMismatch");
             }
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exampleSubmission.getExercise(), null);
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exampleParticipation.getExercise(), null);
         }
         else {
             TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
         }
-        final Result result = super.saveExampleAssessment(exampleSubmissionId, textAssessment.getFeedbacks());
+        final Result result = super.saveExampleAssessment(exampleParticipationId, textAssessment.getFeedbacks());
         final Submission submission = result.getSubmission();
         final TextSubmission textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submission.getId());
-        final List<Feedback> feedbacksWithIds = result.getFeedbacks();
+        final Set<Feedback> feedbacksWithIds = result.getFeedbacks();
         saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, feedbacksWithIds);
         return ResponseEntity.ok(result);
     }
 
     /**
-     * DELETE exercises/:exerciseId/example-submissions/:exampleSubmissionId/example-assessment/feedback : delete feedback for example submission.
+     * DELETE exercises/:exerciseId/example-participations/:exampleParticipationId/example-text-assessment/feedback : delete feedback for example participation.
      *
-     * @param exerciseId          the id of the exercise the exampleSubmission belongs to
-     * @param exampleSubmissionId id of the submission
+     * @param exerciseId             the id of the exercise the exampleParticipation belongs to
+     * @param exampleParticipationId id of the example participation
      * @return 204 No Content
      */
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @DeleteMapping("exercises/{exerciseId}/example-submissions/{exampleSubmissionId}/example-text-assessment/feedback")
+    @DeleteMapping("exercises/{exerciseId}/example-participations/{exampleParticipationId}/example-text-assessment/feedback")
     @EnforceAtLeastTutor
-    public ResponseEntity<Void> deleteTextExampleAssessment(@PathVariable long exerciseId, @PathVariable long exampleSubmissionId) {
-        log.debug("REST request to delete text example assessment : {}", exampleSubmissionId);
+    public ResponseEntity<Void> deleteTextExampleAssessment(@PathVariable long exerciseId, @PathVariable long exampleParticipationId) {
+        log.debug("REST request to delete text example assessment : {}", exampleParticipationId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        final var exampleSubmission = exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmissionId);
-        Submission submission = exampleSubmission.getSubmission();
-        Exercise exercise = exampleSubmission.getExercise();
+        final ExampleParticipation exampleParticipation = exampleParticipationRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleParticipationId);
+        Submission submission = exampleParticipation.getSubmission();
+        Exercise exercise = exampleParticipation.getExercise();
         checkAuthorization(exercise, user);
         if (!exercise.getId().equals(exerciseId)) {
-            throw new BadRequestAlertException("exerciseId in ExampleSubmission of exampleSubmissionId " + exampleSubmissionId + " doesn't match the paths exerciseId!",
+            throw new BadRequestAlertException("exerciseId in ExampleParticipation of exampleParticipationId " + exampleParticipationId + " doesn't match the paths exerciseId!",
                     "exerciseId", "exerciseIdMismatch");
         }
 
@@ -224,7 +227,7 @@ public class TextAssessmentResource extends AssessmentResource {
         if (latestResult != null) {
             latestResult.getFeedbacks().clear();
             resultService.deleteResult(latestResult, true);
-            submission.setResults(List.of());
+            submission.setResults(Set.of());
             submissionRepository.save(submission);
         }
 
@@ -412,7 +415,7 @@ public class TextAssessmentResource extends AssessmentResource {
         // set result again as it was changed
         if (resultId != null) {
             result = textSubmission.getManualResultsById(resultId);
-            textSubmission.setResults(Collections.singletonList(result));
+            textSubmission.setResults(Set.of(result));
         }
         else {
             textSubmission.getResultForCorrectionRound(correctionRound);
@@ -435,8 +438,8 @@ public class TextAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> getExampleResultForTutor(@PathVariable long exerciseId, @PathVariable long submissionId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
-        final ExampleSubmission exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
-        final var textExercise = exampleSubmission.getExercise();
+        final ExampleParticipation exampleParticipation = exampleParticipationRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
+        final var textExercise = exampleParticipation.getExercise();
         if (!textExercise.getId().equals(exerciseId)) {
             throw new BadRequestAlertException("Exercise to submission with submissionId " + submissionId + " doesn't have the exerciseId " + exerciseId + " !", "exerciseId",
                     "exerciseIdMismatch");
@@ -445,7 +448,7 @@ public class TextAssessmentResource extends AssessmentResource {
         // If the user is not at least a tutor for this exercise, return error
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, textExercise, user);
 
-        Submission submission = exampleSubmission.getSubmission();
+        Submission submission = exampleParticipation.getSubmission();
 
         if (!(submission instanceof final TextSubmission textSubmission)) {
             return ResponseEntity.badRequest().body(null);
@@ -459,10 +462,10 @@ public class TextAssessmentResource extends AssessmentResource {
 
         var result = textSubmission.getLatestResult();
         if (result != null) {
-            final List<Feedback> assessments = feedbackRepository.findByResult(result);
+            final Set<Feedback> assessments = new HashSet<>(feedbackRepository.findByResult(result));
             result.setFeedbacks(assessments);
 
-            if (Boolean.TRUE.equals(exampleSubmission.isUsedForTutorial()) && !authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
+            if (Boolean.TRUE.equals(exampleParticipation.getUsedForTutorial()) && !authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
                 Result freshResult = new Result();
                 // set the id to null to make sure that the client does know it is a restricted result and treat it accordingly
                 result.setId(null);
@@ -493,13 +496,14 @@ public class TextAssessmentResource extends AssessmentResource {
      * @param textSubmission to associate blocks with
      * @param feedbacks      the feedbacks to associate with the blocks
      */
-    private void saveTextBlocks(final Set<TextBlock> textBlocks, final TextSubmission textSubmission, final List<Feedback> feedbacks) {
+    private void saveTextBlocks(final Set<TextBlock> textBlocks, final TextSubmission textSubmission, final Collection<Feedback> feedbacks) {
         if (textBlocks == null) {
             return;
         }
 
         List<Feedback> nonGeneralFeedbacks = feedbacks.stream().filter(feedback -> feedback.getReference() != null).toList();
-        Map<String, Feedback> feedbackMap = nonGeneralFeedbacks.stream().collect(Collectors.toMap(Feedback::getReference, Function.identity()));
+        // Use merge function to handle potential duplicate references from EntityGraph loading with Cartesian products
+        Map<String, Feedback> feedbackMap = nonGeneralFeedbacks.stream().collect(Collectors.toMap(Feedback::getReference, Function.identity(), (f1, f2) -> f1));
         final Set<String> existingTextBlockIds = textSubmission.getBlocks().stream().map(TextBlock::getId).collect(toSet());
         final var updatedTextBlocks = textBlocks.stream().filter(tb -> !existingTextBlockIds.contains(tb.getId())).peek(tb -> {
             tb.setSubmission(textSubmission);
@@ -521,7 +525,7 @@ public class TextAssessmentResource extends AssessmentResource {
     /**
      * Send feedback to Athena (if enabled for both the Artemis instance and the exercise).
      */
-    private void sendFeedbackToAthena(final TextExercise exercise, final TextSubmission textSubmission, final List<Feedback> feedbacks) {
+    private void sendFeedbackToAthena(final TextExercise exercise, final TextSubmission textSubmission, final Collection<Feedback> feedbacks) {
         if (athenaFeedbackApi.isPresent() && exercise.areFeedbackSuggestionsEnabled()) {
             athenaFeedbackApi.get().sendFeedback(exercise, textSubmission, feedbacks);
         }

@@ -4,7 +4,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -33,10 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
-import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
@@ -130,15 +126,12 @@ public class ModelingExerciseResource {
 
     private final Optional<AtlasMLApi> atlasMLApi;
 
-    private final Optional<CompetencyApi> competencyApi;
-
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, ModelingExerciseImportService modelingExerciseImportService,
             SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService, GroupNotificationScheduleService groupNotificationScheduleService,
             GradingCriterionRepository gradingCriterionRepository, ChannelService channelService, ChannelRepository channelRepository,
-            ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi,
-            Optional<CompetencyApi> competencyApi) {
+            ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -152,7 +145,6 @@ public class ModelingExerciseResource {
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.exerciseService = exerciseService;
         this.gradingCriterionRepository = gradingCriterionRepository;
-        this.competencyApi = competencyApi;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.exerciseVersionService = exerciseVersionService;
@@ -172,7 +164,6 @@ public class ModelingExerciseResource {
      *         modelingExercise has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    // TODO: we should add courses/{courseId} here
     @PostMapping("modeling-exercises")
     @EnforceAtLeastEditor
     public ResponseEntity<ModelingExercise> createModelingExercise(@RequestBody ModelingExercise modelingExercise) throws URISyntaxException {
@@ -195,24 +186,34 @@ public class ModelingExerciseResource {
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(modelingExercise, ENTITY_NAME);
 
-        ModelingExercise result = exerciseService.saveWithCompetencyLinks(modelingExercise, modelingExerciseRepository::save);
+        // Extract competency links before first save - they require the exercise ID which doesn't exist yet
+        var competencyLinks = exerciseService.extractCompetencyLinksForCreation(modelingExercise);
 
-        channelService.createExerciseChannel(result, Optional.ofNullable(modelingExercise.getChannelName()));
+        ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
+
+        // Restore competency links with proper exercise reference and save again
+        if (!competencyLinks.isEmpty()) {
+            exerciseService.addCompetencyLinksForCreation(result, competencyLinks);
+            result = modelingExerciseRepository.save(result);
+        }
+
+        ModelingExercise savedExercise = result;
+        channelService.createExerciseChannel(savedExercise, Optional.ofNullable(modelingExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(modelingExercise);
-        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(savedExercise));
 
         // Notify AtlasML about the new modeling exercise
         atlasMLApi.ifPresent(api -> {
             try {
-                api.saveExerciseWithCompetencies(result, OperationTypeDTO.UPDATE);
+                api.saveExerciseWithCompetencies(savedExercise, OperationTypeDTO.UPDATE);
             }
             catch (Exception e) {
                 log.warn("Failed to notify AtlasML about modeling exercise creation: {}", e.getMessage());
             }
         });
-        exerciseVersionService.createExerciseVersion(result);
+        exerciseVersionService.createExerciseVersion(savedExercise);
 
-        return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId())).body(result);
+        return ResponseEntity.created(new URI("/api/modeling-exercises/" + savedExercise.getId())).body(savedExercise);
     }
 
     /**
@@ -249,8 +250,7 @@ public class ModelingExerciseResource {
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ModelingExercise : {}", updateModelingExerciseDTO);
 
-        final ModelingExercise originalExercise = modelingExerciseRepository
-                .findByIdWithExampleSubmissionsResultsCompetenciesAndGradingCriteriaElseThrow(updateModelingExerciseDTO.id());
+        final ModelingExercise originalExercise = modelingExerciseRepository.findByIdWithCompetenciesAndGradingCriteriaElseThrow(updateModelingExerciseDTO.id());
 
         // Check that the user is authorized to update the exercise
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -283,13 +283,13 @@ public class ModelingExerciseResource {
 
         channelService.updateExerciseChannel(originalExercise, updatedExercise);
 
-        ModelingExercise persistedExercise = exerciseService.saveWithCompetencyLinks(updatedExercise, modelingExerciseRepository::save);
+        ModelingExercise persistedExercise = modelingExerciseRepository.save(updatedExercise);
 
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(oldMaxPoints, oldBonusPoints, persistedExercise);
 
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(persistedExercise, oldDueDate);
-        exerciseService.checkExampleSubmissions(persistedExercise);
+        exerciseService.checkExampleParticipations(persistedExercise);
 
         exerciseService.notifyAboutExerciseChanges(oldReleaseDate, oldAssessmentDueDate, oldProblemStatement, persistedExercise, notificationText);
         slideApi.ifPresent(api -> api.handleDueDateChange(oldDueDate, persistedExercise));
@@ -343,7 +343,8 @@ public class ModelingExerciseResource {
     @EnforceAtLeastTutor
     public ResponseEntity<ModelingExercise> getModelingExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ModelingExercise : {}", exerciseId);
-        var modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(exerciseId);
+        var modelingExercise = modelingExerciseRepository.findWithEagerCompetenciesByIdElseThrow(exerciseId);
+        exerciseService.checkExampleParticipations(modelingExercise);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
         Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         modelingExercise.setGradingCriteria(gradingCriteria);
@@ -417,7 +418,7 @@ public class ModelingExerciseResource {
         }
         importedExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         final var user = userRepository.getUserWithGroupsAndAuthorities();
-        final var originalModelingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(sourceExerciseId);
+        final var originalModelingExercise = modelingExerciseRepository.findByIdWithGradingCriteriaElseThrow(sourceExerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, importedExercise, user);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalModelingExercise, user);
         // validates general settings: points, dates
@@ -477,7 +478,7 @@ public class ModelingExerciseResource {
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate ModelingExercise : {}", updateModelingExerciseDTO);
 
-        final ModelingExercise existingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsResultsCompetenciesAndGradingCriteriaElseThrow(exerciseId);
+        final ModelingExercise existingExercise = modelingExerciseRepository.findByIdWithCompetenciesAndGradingCriteriaElseThrow(exerciseId);
         authCheckService.checkGivenExerciseIdSameForExerciseRequestBodyIdElseThrow(exerciseId, updateModelingExerciseDTO.id());
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -525,61 +526,6 @@ public class ModelingExerciseResource {
 
         managedCriteria.clear();
         managedCriteria.addAll(updated);
-    }
-
-    /**
-     * Replaces the competency links of the given exercise according to PUT semantics.
-     * <p>
-     * If {@code dto.competencyLinks()} is {@code null} or empty, all existing links are removed (if initialized).
-     * Otherwise, weights are updated for existing links and missing links are created using managed competency references.
-     *
-     * <p>
-     * <b>Hibernate note:</b> Uses {@code competencyRepository.getReferenceById(...)} to avoid creating detached entities
-     * and to keep associations consistent with the persistence context.
-     *
-     * @param dto      the update DTO containing competency link updates
-     * @param exercise the exercise to mutate
-     * @throws BadRequestAlertException if a competency does not belong to the exercise's course
-     */
-    private void updateCompetencyLinks(UpdateModelingExerciseDTO dto, ModelingExercise exercise) {
-        if (dto.competencyLinks() == null || dto.competencyLinks().isEmpty()) {
-            clearInitializedCollection(exercise.getCompetencyLinks());
-            return;
-        }
-        CompetencyApi api = competencyApi.orElseThrow(() -> new BadRequestAlertException("Competency links require Atlas to be enabled.", "CourseCompetency", "atlasDisabled"));
-
-        Set<CompetencyExerciseLink> managedLinks = exercise.ensureCompetencyLinksSet();
-
-        Map<Long, CompetencyExerciseLink> existingByCompetencyId = managedLinks.stream().filter(link -> link.getCompetency() != null && link.getCompetency().getId() != null)
-                .collect(Collectors.toMap(link -> link.getCompetency().getId(), link -> link, (a, b) -> a));
-
-        Long exerciseCourseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
-
-        Set<CompetencyExerciseLink> updated = new HashSet<>();
-        for (var linkDto : dto.competencyLinks()) {
-
-            if (exerciseCourseId != null && linkDto.courseId() != null && !Objects.equals(exerciseCourseId, linkDto.courseId())) {
-                throw new BadRequestAlertException("The competency does not belong to the exercise's course.", "CourseCompetency", "wrongCourse");
-            }
-
-            var competencyDto = linkDto.courseCompetencyDTO();
-            Long competencyId = competencyDto.id();
-
-            CompetencyExerciseLink link = existingByCompetencyId.get(competencyId);
-            if (link == null) {
-                Competency competencyRef = api.loadCompetency(competencyId);
-                competencyRef.validateCompetencyBelongsToExerciseCourse(exerciseCourseId);
-                link = new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
-            }
-            else {
-                link.setWeight(linkDto.weight());
-            }
-
-            updated.add(link);
-        }
-
-        managedLinks.clear();
-        managedLinks.addAll(updated);
     }
 
     /**
@@ -663,7 +609,7 @@ public class ModelingExerciseResource {
         exercise.setExampleSolutionExplanation(updateModelingExerciseDTO.exampleSolutionExplanation());
 
         updateGradingCriteria(updateModelingExerciseDTO, exercise);
-        updateCompetencyLinks(updateModelingExerciseDTO, exercise);
+        exerciseService.updateCompetencyLinks(updateModelingExerciseDTO, exercise);
 
         return exercise;
     }

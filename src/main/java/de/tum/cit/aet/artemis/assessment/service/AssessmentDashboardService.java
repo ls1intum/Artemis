@@ -14,10 +14,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.ExampleParticipation;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO;
-import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ExampleParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
@@ -47,15 +47,15 @@ public class AssessmentDashboardService {
 
     private final ResultRepository resultRepository;
 
-    private final ExampleSubmissionRepository exampleSubmissionRepository;
+    private final ExampleParticipationRepository exampleParticipationRepository;
 
     public AssessmentDashboardService(ComplaintService complaintService, ProgrammingExerciseRepository programmingExerciseRepository, SubmissionRepository submissionRepository,
-            ResultRepository resultRepository, ExampleSubmissionRepository exampleSubmissionRepository, RatingService ratingService) {
+            ResultRepository resultRepository, ExampleParticipationRepository exampleParticipationRepository, RatingService ratingService) {
         this.complaintService = complaintService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionRepository = submissionRepository;
         this.resultRepository = resultRepository;
-        this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.exampleParticipationRepository = exampleParticipationRepository;
         this.ratingService = ratingService;
     }
 
@@ -123,14 +123,15 @@ public class AssessmentDashboardService {
             }
 
             start = System.nanoTime();
-            Set<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllWithResultByExerciseId(exercise.getId());
+            Set<ExampleParticipation> exampleParticipations = exampleParticipationRepository.findAllWithSubmissionsAndResultsByExerciseId(exercise.getId());
 
-            log.debug("Finished >> exampleSubmissionRepository.findAllWithResultByExerciseId << call for course {} in {}", exercise.getId(), TimeLogUtil.formatDurationFrom(start));
+            log.debug("Finished >> exampleParticipationRepository.findAllWithSubmissionsAndResultsByExerciseId << call for course {} in {}", exercise.getId(),
+                    TimeLogUtil.formatDurationFrom(start));
             start = System.nanoTime();
 
-            // Do not provide example submissions without any assessment
-            exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission() == null || exampleSubmission.getSubmission().getLatestResult() == null);
-            exercise.setExampleSubmissions(exampleSubmissions);
+            // Do not provide example participations without any assessment
+            exampleParticipations.removeIf(exampleParticipation -> exampleParticipation.getSubmission() == null || exampleParticipation.getSubmission().getLatestResult() == null);
+            exercise.setExampleParticipations(exampleParticipations);
 
             TutorParticipation tutorParticipation = tutorParticipations.stream().filter(participation -> participation.getAssessedExercise().getId().equals(exercise.getId()))
                     .findFirst().orElseGet(() -> {

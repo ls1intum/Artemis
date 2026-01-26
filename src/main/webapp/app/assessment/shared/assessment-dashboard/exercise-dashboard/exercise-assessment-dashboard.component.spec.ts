@@ -102,8 +102,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     let submissionService: SubmissionService;
 
-    const result1 = { id: 11 } as Result;
-    const result2 = { id: 12 } as Result;
+    const result1 = { id: 11, correctionRound: 0 } as Result;
+    const result2 = { id: 12, correctionRound: 1 } as Result;
     const exam = { id: 13, numberOfCorrectionRoundsInExam: 2 } as Exam;
     const exerciseGroup = { id: 14, exam } as ExerciseGroup;
 
@@ -143,7 +143,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         type: ExerciseType.TEXT,
         tutorParticipations: [{ status: TutorParticipationStatus.TRAINED }],
         secondCorrectionEnabled: false,
-        exampleSubmissions: [
+        exampleParticipations: [
             { id: 1, usedForTutorial: false },
             { id: 2, usedForTutorial: true },
         ],
@@ -455,7 +455,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('should call hasBeenCompletedByTutor', () => {
-        comp.exampleSubmissionsCompletedByTutor = [{ id: 1 }, { id: 2 }];
+        comp.exampleParticipationsCompletedByTutor = [{ id: 1 }, { id: 2 }];
         expect(comp.hasBeenCompletedByTutor(1)).toBe(true);
     });
 
@@ -510,11 +510,11 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             expect(textSubmissionStubWithoutAssessment).toHaveBeenCalledTimes(2);
             expect(textSubmissionStubWithAssessment).toHaveBeenCalledTimes(2);
 
-            expect(comp.exampleSubmissionsToReview).toHaveLength(1);
-            expect(comp.exampleSubmissionsToReview[0]).toEqual(textExercise.exampleSubmissions![0]);
+            expect(comp.exampleParticipationsToReview).toHaveLength(1);
+            expect(comp.exampleParticipationsToReview[0]).toEqual(textExercise.exampleParticipations![0]);
 
-            expect(comp.exampleSubmissionsToAssess).toHaveLength(1);
-            expect(comp.exampleSubmissionsToAssess[0]).toEqual(textExercise.exampleSubmissions![1]);
+            expect(comp.exampleParticipationsToAssess).toHaveLength(1);
+            expect(comp.exampleParticipationsToAssess[0]).toEqual(textExercise.exampleParticipations![1]);
         });
 
         it('programmingSubmission', () => {

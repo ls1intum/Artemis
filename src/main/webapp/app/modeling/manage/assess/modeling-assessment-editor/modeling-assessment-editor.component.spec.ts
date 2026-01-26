@@ -36,8 +36,8 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
-import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
-import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
+import { ExampleParticipationService } from 'app/assessment/shared/services/example-participation.service';
+import { ExampleParticipation } from 'app/exercise/shared/entities/participation/example-participation.model';
 import dayjs from 'dayjs/esm';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -62,7 +62,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     let complaintSpy: ReturnType<typeof vi.spyOn>;
     let router: Router;
     let submissionService: SubmissionService;
-    let exampleSubmissionService: ExampleSubmissionService;
+    let exampleParticipationService: ExampleParticipationService;
     let paramMapSubject: BehaviorSubject<ParamMap>;
 
     beforeEach(() => {
@@ -113,7 +113,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         complaintService = TestBed.inject(ComplaintService);
         submissionService = TestBed.inject(SubmissionService);
         mockAuth = TestBed.inject(AccountService) as any as MockAccountService;
-        exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
+        exampleParticipationService = TestBed.inject(ExampleParticipationService);
         mockAuth.hasAnyAuthorityDirect([]);
         mockAuth.identity();
         fixture.detectChanges();
@@ -152,6 +152,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                     score: 8,
                     rated: true,
                     hasComplaint: true,
+                    correctionRound: 0,
                     feedbacks: [
                         {
                             id: 2,
@@ -564,7 +565,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             text: 'Test\n\nTest\n\nTest',
         } as ModelingSubmission;
 
-        const importSpy = vi.spyOn(exampleSubmissionService, 'import').mockReturnValue(of(new HttpResponse({ body: new ExampleSubmission() })));
+        const importSpy = vi.spyOn(exampleParticipationService, 'import').mockReturnValue(of(new HttpResponse({ body: new ExampleParticipation() })));
 
         component.useStudentSubmissionAsExampleSubmission();
 

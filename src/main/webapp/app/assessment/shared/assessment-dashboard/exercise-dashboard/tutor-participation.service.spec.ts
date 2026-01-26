@@ -4,7 +4,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
-import { ExampleSubmissionDTO } from 'app/assessment/shared/entities/example-submission.model';
+import { ExampleParticipationDTO } from 'app/exercise/shared/entities/participation/example-participation.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { provideHttpClient } from '@angular/common/http';
@@ -47,16 +47,12 @@ describe('Tutor Participation Service', () => {
         req.flush(dtoReviewed);
     });
 
-    it('should assess ExampleSubmission for an exercise', () => {
+    it('should assess ExampleParticipation for an exercise', () => {
         const dtoTrained = new TutorParticipationDTO(2, EXERCISE_ID, TutorParticipationStatus.TRAINED, TUTOR_ID);
-        const exampleDto: ExampleSubmissionDTO = {
-            id: 9,
-            usedForTutorial: true,
-            submissionId: 7,
-        };
+        const exampleDto = new ExampleParticipationDTO(9, true, 7);
 
         service
-            .assessExampleSubmission(exampleDto, EXERCISE_ID)
+            .assessExampleParticipation(exampleDto, EXERCISE_ID)
             .pipe(take(1))
             .subscribe((resp) => {
                 expect(resp.body).toMatchObject({
