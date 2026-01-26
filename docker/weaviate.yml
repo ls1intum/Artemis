@@ -1,6 +1,7 @@
 ---
 services:
   weaviate:
+    container_name: artemis-weaviate
     command:
       - --host
       - 0.0.0.0
