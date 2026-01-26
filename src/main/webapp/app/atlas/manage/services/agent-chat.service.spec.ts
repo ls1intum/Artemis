@@ -138,10 +138,13 @@ describe('AgentChatService', () => {
                         },
                     });
 
-                    httpMock.expectOne(expectedUrl);
+                    const req = httpMock.expectOne(expectedUrl);
 
                     // Simulate timeout by advancing time past 30 seconds
                     vi.advanceTimersByTime(30001);
+                    if (!req.cancelled) {
+                        req.error(new ErrorEvent('Timeout'));
+                    }
                 } finally {
                     vi.useRealTimers();
                 }

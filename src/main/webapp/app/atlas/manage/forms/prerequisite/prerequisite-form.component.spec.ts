@@ -38,8 +38,10 @@ describe('PrerequisiteFormComponent', () => {
     const courseCompetencyServiceMock: Mocked<Pick<CourseCompetencyService, 'getCourseCompetencyTitles'>> = {
         getCourseCompetencyTitles: vi.fn(),
     };
+    let originalResizeObserver: typeof ResizeObserver | undefined;
 
     beforeEach(() => {
+        originalResizeObserver = globalThis.ResizeObserver;
         courseCompetencyServiceMock.getCourseCompetencyTitles.mockReturnValue(of(new HttpResponse({ body: [] })));
 
         TestBed.configureTestingModule({
@@ -63,6 +65,7 @@ describe('PrerequisiteFormComponent', () => {
     });
 
     afterEach(() => {
+        globalThis.ResizeObserver = originalResizeObserver as typeof ResizeObserver;
         vi.restoreAllMocks();
     });
 
