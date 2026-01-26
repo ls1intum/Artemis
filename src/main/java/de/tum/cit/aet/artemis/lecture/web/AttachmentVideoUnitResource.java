@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
-import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.core.util.VideoFileUtil;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -156,8 +156,8 @@ public class AttachmentVideoUnitResource {
 
         // Validate file sizes - use configurable max size for video files
         long maxVideoFileSize = moduleFeatureService.getVideoUploadMaxFileSize();
-        FileUtil.validateFileSizeWithVideoLimit(file, maxVideoFileSize);
-        FileUtil.validateFileSizeWithVideoLimit(videoFile, maxVideoFileSize);
+        VideoFileUtil.validateFileSizeWithVideoLimit(file, maxVideoFileSize);
+        VideoFileUtil.validateFileSizeWithVideoLimit(videoFile, maxVideoFileSize);
 
         // Check if video upload is enabled when a video file is being uploaded
         validateVideoUploadEnabled(videoFile);
@@ -206,8 +206,8 @@ public class AttachmentVideoUnitResource {
 
         // Validate file sizes - use configurable max size for video files
         long maxVideoFileSize = moduleFeatureService.getVideoUploadMaxFileSize();
-        FileUtil.validateFileSizeWithVideoLimit(file, maxVideoFileSize);
-        FileUtil.validateFileSizeWithVideoLimit(videoFile, maxVideoFileSize);
+        VideoFileUtil.validateFileSizeWithVideoLimit(file, maxVideoFileSize);
+        VideoFileUtil.validateFileSizeWithVideoLimit(videoFile, maxVideoFileSize);
 
         // Check if video upload is enabled when a video file is being uploaded
         validateVideoUploadEnabled(videoFile);
@@ -250,7 +250,7 @@ public class AttachmentVideoUnitResource {
         log.debug("REST request to upload file: {}", originalFilename);
 
         // Validate file size (PDF files, not videos)
-        FileUtil.validateFileSize(file, Constants.MAX_FILE_SIZE);
+        VideoFileUtil.validateFileSize(file, Constants.MAX_FILE_SIZE);
 
         checkLectureElseThrow(lectureId);
         if (!Objects.equals(FilenameUtils.getExtension(originalFilename), "pdf")) {
@@ -366,7 +366,7 @@ public class AttachmentVideoUnitResource {
             @RequestParam("studentVersion") MultipartFile studentVersionFile) {
 
         // Validate file size (PDF files, not videos)
-        FileUtil.validateFileSize(studentVersionFile, Constants.MAX_FILE_SIZE);
+        VideoFileUtil.validateFileSize(studentVersionFile, Constants.MAX_FILE_SIZE);
 
         AttachmentVideoUnit existingAttachmentUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentVideoUnitId);
         checkAttachmentVideoUnitCourseAndLecture(existingAttachmentUnit, lectureId);

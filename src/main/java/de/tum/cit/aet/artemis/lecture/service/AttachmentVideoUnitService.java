@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.core.util.VideoFileUtil;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -237,7 +238,7 @@ public class AttachmentVideoUnitService {
         if (videoFile != null && !videoFile.isEmpty()) {
             // Delete old video file if it exists and is a file path (not a URL)
             String existingVideoSource = attachmentVideoUnit.getVideoSource();
-            if (existingVideoSource != null && existingVideoSource.startsWith("/api/files/")) {
+            if (existingVideoSource != null && existingVideoSource.startsWith("attachments/")) {
                 URI oldVideoPath = URI.create(existingVideoSource);
                 Path localPath = FilePathConverter.fileSystemPathForExternalUri(oldVideoPath, FilePathType.ATTACHMENT_UNIT);
                 fileService.schedulePathForDeletion(localPath, 0);
@@ -245,7 +246,7 @@ public class AttachmentVideoUnitService {
             }
 
             Path basePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnit.getId().toString());
-            Path savePath = FileUtil.saveVideoFile(videoFile, basePath, FilePathType.ATTACHMENT_UNIT, keepFilename);
+            Path savePath = VideoFileUtil.saveVideoFile(videoFile, basePath, FilePathType.ATTACHMENT_UNIT, keepFilename);
             String videoFilePath = FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.ATTACHMENT_UNIT, attachmentVideoUnit.getId()).toString();
             attachmentVideoUnit.setVideoSource(videoFilePath);
             attachmentVideoUnitRepository.saveAndFlush(attachmentVideoUnit);
