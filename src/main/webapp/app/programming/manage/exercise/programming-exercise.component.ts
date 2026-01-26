@@ -221,6 +221,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     }
 
     fetchExerciseDeletionSummary(exerciseId: number): Observable<EntitySummary> {
-        return this.programmingExerciseService.getDeletionSummary(exerciseId);
+        return this.exerciseService.getDeletionSummary(exerciseId);
     }
 }

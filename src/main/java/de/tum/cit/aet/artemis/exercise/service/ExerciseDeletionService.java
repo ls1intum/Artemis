@@ -14,21 +14,29 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
+import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismResultApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDeletionService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
@@ -69,11 +77,24 @@ public class ExerciseDeletionService {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
+    private final ChannelRepository channelRepository;
+
+    private final PostRepository postRepository;
+
+    private final AnswerPostRepository answerPostRepository;
+
+    private final ResultRepository resultRepository;
+
+    private final BuildJobRepository buildJobRepository;
+
+    private final StudentParticipationRepository studentParticipationRepository;
+
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ParticipationDeletionService participationDeletionService,
             ProgrammingExerciseDeletionService programmingExerciseDeletionService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, Optional<StudentExamApi> studentExamApi,
             Optional<LectureUnitApi> lectureUnitApi, Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelService channelService,
-            Optional<CompetencyProgressApi> competencyProgressApi) {
+            Optional<CompetencyProgressApi> competencyProgressApi, ChannelRepository channelRepository, PostRepository postRepository, AnswerPostRepository answerPostRepository,
+            ResultRepository resultRepository, BuildJobRepository buildJobRepository, StudentParticipationRepository studentParticipationRepository) {
         this.exerciseRepository = exerciseRepository;
         this.participationDeletionService = participationDeletionService;
         this.programmingExerciseDeletionService = programmingExerciseDeletionService;
@@ -86,6 +107,41 @@ public class ExerciseDeletionService {
         this.textApi = textApi;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
+        this.channelRepository = channelRepository;
+        this.postRepository = postRepository;
+        this.answerPostRepository = answerPostRepository;
+        this.resultRepository = resultRepository;
+        this.buildJobRepository = buildJobRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
+    }
+
+    /**
+     * Get a summary for the deletion of an exercise.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the summary of the deletion of the exercise
+     */
+    public ExerciseDeletionSummaryDTO getDeletionSummary(long exerciseId) {
+        final Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+
+        final long numberOfStudentParticipations = studentParticipationRepository.countByExerciseId(exerciseId);
+
+        final boolean hasBuilds = exercise instanceof ProgrammingExercise;
+        final Long numberOfBuilds = hasBuilds ? buildJobRepository.countBuildJobsByExerciseIds(Set.of(exerciseId)) : null;
+
+        final boolean hasAssessments = !(exercise instanceof ProgrammingExercise || exercise instanceof QuizExercise);
+        final Long numberOfAssessments = hasAssessments ? resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId) : null;
+
+        long numberOfCommunicationPosts = 0;
+        long numberOfAnswerPosts = 0;
+        final Channel channel = channelRepository.findChannelByExerciseId(exerciseId);
+        if (channel != null) {
+            long conversationId = channel.getId();
+            numberOfCommunicationPosts = postRepository.countByConversationId(conversationId);
+            numberOfAnswerPosts = answerPostRepository.countByConversationId(conversationId);
+        }
+
+        return new ExerciseDeletionSummaryDTO(numberOfStudentParticipations, numberOfBuilds, numberOfAssessments, numberOfCommunicationPosts, numberOfAnswerPosts);
     }
 
     /**

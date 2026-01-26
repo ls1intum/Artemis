@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
@@ -18,6 +18,8 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
+import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 
 @Component({
     selector: 'jhi-non-programming-exercise-detail-common-actions',
@@ -28,6 +30,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     private textExerciseService = inject(TextExerciseService);
     private fileUploadExerciseService = inject(FileUploadExerciseService);
     private modelingExerciseService = inject(ModelingExerciseService);
+    private exerciseService = inject(ExerciseService);
     private profileService = inject(ProfileService);
     private eventManager = inject(EventManager);
     private router = inject(Router);
@@ -135,5 +138,9 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
         } else {
             this.router.navigateByUrl(`/course-management/${this.course.id}/exams/${this.exercise.exerciseGroup?.exam?.id}/exercise-groups`);
         }
+    }
+
+    fetchExerciseDeletionSummary(exerciseId: number): Observable<EntitySummary> {
+        return this.exerciseService.getDeletionSummary(exerciseId);
     }
 }

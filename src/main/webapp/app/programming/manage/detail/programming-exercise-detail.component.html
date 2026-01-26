@@ -123,14 +123,14 @@
                             <button
                                 jhiDeleteButton
                                 [entityTitle]="programmingExercise.title || ''"
-                                entitySummaryTitle="artemisApp.programmingExercise.delete.summary.title"
+                                entitySummaryTitle="artemisApp.exercise.delete.summary.title"
                                 [fetchEntitySummary]="fetchExerciseDeletionSummary()"
                                 deleteQuestion="artemisApp.programmingExercise.delete.questionLocalVC.single"
                                 [translateValues]="{
                                     courseTitle: programmingExercise.course!.title,
                                     courseType: programmingExercise.course!.testCourse
-                                        ? ('artemisApp.programmingExercise.delete.testCourse' | artemisTranslate)
-                                        : ('artemisApp.programmingExercise.delete.realCourse' | artemisTranslate),
+                                        ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
+                                        : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
                                 }"
                                 (delete)="deleteProgrammingExercise($event)"
                                 [dialogError]="dialogError$"
