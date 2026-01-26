@@ -44,7 +44,6 @@ describe('CodeButtonComponent', () => {
     let getCachedSshKeysSpy: MockInstance;
     const vcsToken: string = 'vcpat-xlhBs26D4F2CGlkCM59KVU8aaV9bYdX5Mg4IK6T8W3aT';
 
-    const user = { login: 'user1', internal: true, vcsAccessToken: 'token' };
     const route = { snapshot: { url: of('courses') } } as any as ActivatedRoute;
 
     let localStorageState: RepositoryAuthenticationMethod = RepositoryAuthenticationMethod.SSH;
