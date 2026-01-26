@@ -29,14 +29,15 @@ public class HyperionProblemStatementRewriteService {
 
     private final HyperionPromptTemplateService templateService;
 
+    private final ObservationRegistry observationRegistry;
+
     /**
      * Creates a new ProblemStatementRewriteService.
      *
-     * @param chatClient      the AI chat client (optional)
-     * @param templateService prompt template service
+     * @param chatClient          the AI chat client (optional)
+     * @param templateService     prompt template service
+     * @param observationRegistry the observation registry for metrics
      */
-    private final ObservationRegistry observationRegistry;
-
     public HyperionProblemStatementRewriteService(ChatClient chatClient, HyperionPromptTemplateService templateService, ObservationRegistry observationRegistry) {
         this.chatClient = chatClient;
         this.templateService = templateService;
