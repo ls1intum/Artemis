@@ -11,7 +11,7 @@ const sidebars: SidebarsConfig = {
             label: 'Production Setup',
             link: {
                 type: 'doc',
-                id: 'production-setup/index'
+                id: 'production-setup/index',
             },
             items: [
                 'production-setup/security',
@@ -20,8 +20,9 @@ const sidebars: SidebarsConfig = {
                 'production-setup/legal-documents',
                 'production-setup/additional-tips',
                 'production-setup/programming-exercise-adjustments',
+                'production-setup/jenkins-localvc',
                 'production-setup/multiple-artemis-instances',
-            ]
+            ],
         },
         'hyperion',
         'adaptive-learning',
