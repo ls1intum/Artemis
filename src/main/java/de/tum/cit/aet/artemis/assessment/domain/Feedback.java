@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -397,6 +398,17 @@ public class Feedback extends DomainObject {
     @JsonIgnore
     public boolean isStaticCodeAnalysisFeedback() {
         return this.text != null && this.text.startsWith(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER) && this.type == FeedbackType.AUTOMATIC;
+    }
+
+    /**
+     * Checks whether the feedback contains any build or make failed messages
+     *
+     * @return true if the feedback contains a build failed message else false
+     */
+    @JsonIgnore
+    public boolean isBuildFailedFeedback() {
+        return this.detailText != null && Pattern.compile("make .* failed|build .* failed", Pattern.CASE_INSENSITIVE).matcher(this.detailText).find()
+                && this.type == FeedbackType.AUTOMATIC;
     }
 
     /**
