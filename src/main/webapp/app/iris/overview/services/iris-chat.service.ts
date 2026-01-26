@@ -528,7 +528,7 @@ export class IrisChatService implements OnDestroy {
      * Switches to a chat mode for the given entity.
      * @param mode The chat mode to switch to
      * @param id The entity ID (course, lecture, or exercise)
-     * @param forceNew If true, always creates a new session instead of reusing an existing one
+     * @param forceNew If true, creates a new session when switching to a different context instead of reusing an existing one.
      */
     switchTo(mode: ChatServiceMode, id?: number, forceNew = false): void {
         const modeUrl = chatModeToUrlComponent(mode);
