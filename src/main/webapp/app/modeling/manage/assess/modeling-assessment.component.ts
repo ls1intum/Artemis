@@ -50,6 +50,9 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     firstCorrectionRoundColor = '#3e8acc';
     secondCorrectionRoundColor = '#ffa561';
 
+    private modelChangeSubscription?: number;
+    private assessmentSelectionSubscription?: number;
+
     constructor() {
         super();
         effect(() => {
@@ -83,8 +86,13 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 return;
             }
 
-            this.apollonEditor.model = model;
-            this.handleFeedback();
+            try {
+                this.apollonEditor.model = model;
+                this.handleFeedback();
+            } catch (err) {
+                // Editor may not be fully initialized yet or already destroyed
+                captureException(err);
+            }
         });
     }
 
@@ -111,6 +119,12 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
     ngOnDestroy() {
         if (this.apollonEditor) {
+            if (this.modelChangeSubscription !== undefined) {
+                this.apollonEditor.unsubscribe(this.modelChangeSubscription);
+            }
+            if (this.assessmentSelectionSubscription !== undefined) {
+                this.apollonEditor.unsubscribe(this.assessmentSelectionSubscription);
+            }
             this.apollonEditor.destroy();
         }
     }
@@ -139,7 +153,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             enablePopups: this.enablePopups(),
         });
 
-        this.apollonEditor.subscribeToModelChange((state) => {
+        this.modelChangeSubscription = this.apollonEditor.subscribeToModelChange((state) => {
             if (!this.readOnly()) {
                 const assessmentsArray = Object.values(state.assessments);
                 this.referencedFeedbacks = this.generateFeedbackFromAssessment(assessmentsArray);
@@ -148,7 +162,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         });
 
         if (this.readOnly()) {
-            this.apollonEditor.subscribeToAssessmentSelection((selections) => this.selectedElementIdsChanged.emit(selections));
+            this.assessmentSelectionSubscription = this.apollonEditor.subscribeToAssessmentSelection((selections) => this.selectedElementIdsChanged.emit(selections));
         }
     }
 

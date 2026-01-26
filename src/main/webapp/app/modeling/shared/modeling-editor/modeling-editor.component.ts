@@ -84,8 +84,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         this.initializeApollonEditor();
         if (this.readOnly()) {
             if (this.apollonEditor) {
-                await ApollonEditor.exportModelAsSvg(this.apollonEditor?.model);
-                this.readonlyApollonDiagram = await this.apollonEditor?.exportAsSVG();
+                this.readonlyApollonDiagram = await this.apollonEditor.exportAsSVG();
                 if (this.readonlyApollonDiagram?.svg) {
                     this.readOnlySVG = this.sanitizer.bypassSecurityTrustHtml(this.readonlyApollonDiagram.svg);
                 }
@@ -193,6 +192,39 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      */
     get isFullScreen() {
         return isFullScreen();
+    }
+
+    /**
+     * Return the UMLModelElement of the type Class with the @param name
+     * @param name the name of the UML class
+     * @param umlModel the UML model to search in
+     */
+    elementWithClass(name: string, umlModel: UMLModel) {
+        // Support both Apollon v4 (nodes) and v3 (elements) formats
+        const elements = umlModel.nodes ?? (umlModel as any).elements ?? {};
+        return Object.values(elements).find((element: any) => element.name?.trim() === name && element.type === 'Class');
+    }
+
+    /**
+     * Return the UMLModelElement of the type ClassAttribute with the @param attribute
+     * @param attribute the name of the attribute
+     * @param umlModel the UML model to search in
+     */
+    elementWithAttribute(attribute: string, umlModel: UMLModel) {
+        // Support both Apollon v4 (nodes) and v3 (elements) formats
+        const elements = umlModel.nodes ?? (umlModel as any).elements ?? {};
+        return Object.values(elements).find((element: any) => element.name?.includes(attribute) && element.type === 'ClassAttribute');
+    }
+
+    /**
+     * Return the UMLModelElement of the type ClassMethod with the @param method
+     * @param method the name of the method
+     * @param umlModel the UML model to search in
+     */
+    elementWithMethod(method: string, umlModel: UMLModel) {
+        // Support both Apollon v4 (nodes) and v3 (elements) formats
+        const elements = umlModel.nodes ?? (umlModel as any).elements ?? {};
+        return Object.values(elements).find((element: any) => element.name?.includes(method) && element.type === 'ClassMethod');
     }
 
     /**
