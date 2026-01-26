@@ -557,17 +557,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     private formatCitationLabel(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
-        const parts: string[] = [];
-        if (parsed.type === 'L') {
-            if (meta?.lectureTitle) {
-                parts.push(meta.lectureTitle);
-            }
-            if (meta?.lectureUnitTitle) {
-                parts.push(meta.lectureUnitTitle);
-            }
-        }
-        const fallback = parsed.keyword?.trim() || (parsed.type === 'F' ? 'FAQ' : 'Source');
-        const label = parts.length > 0 ? parts.join(' - ') : fallback;
+        const keyword = parsed.keyword?.trim();
+        const fallback = parsed.type === 'F' ? 'FAQ' : 'Source';
+        const label = keyword || fallback;
         return this.escapeHtml(label);
     }
 
