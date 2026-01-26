@@ -67,16 +67,11 @@ public class HyperionFaqRewriteService {
      * @return the rewrite result including inconsistencies, improvement, and suggestions
      */
     public RewriteFaqResponseDTO rewriteFaq(long courseId, String faqText) {
-        if (faqText == null || faqText.isBlank()) {
-            throw new IllegalArgumentException("You need to provide a text to rewrite");
-        }
-
         var observation = Observation.createNotStarted("hyperion.faq.rewrite", observationRegistry).lowCardinalityKeyValue("course.id", String.valueOf(courseId)).start();
 
         Map<String, String> input = Map.of("rewritten_text", faqText.trim());
         String systemPrompt = templateService.render(PROMPT_REWRITE_SYSTEM, Map.of());
         String userPrompt = templateService.render(PROMPT_REWRITE_USER, input);
-        // String prompt = templateService.render(PROMPT_REWRITE, input);
 
         try (var scope = observation.openScope()) {
             // @formatter:off
@@ -141,8 +136,9 @@ public class HyperionFaqRewriteService {
     }
 
     private List<String> parseInconsistencies(List<ConsistencyIssue.Faq> faqs) {
-        if (faqs == null)
+        if (faqs == null) {
             return List.of();
+        }
         return faqs.stream().map(f -> String.format("FAQ ID: %s, Title: %s, Answer: %s", f.id(), f.title(), f.answer())).toList();
     }
 }

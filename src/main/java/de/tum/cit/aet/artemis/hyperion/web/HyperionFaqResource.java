@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -43,7 +45,7 @@ public class HyperionFaqResource {
      */
     @EnforceAtLeastTutorInCourse
     @PostMapping("courses/{courseId}/faq/rewrite")
-    public ResponseEntity<RewriteFaqResponseDTO> rewriteFaq(@PathVariable long courseId, @RequestBody RewriteFaqRequestDTO request) {
+    public ResponseEntity<RewriteFaqResponseDTO> rewriteFaq(@PathVariable long courseId, @Valid @RequestBody RewriteFaqRequestDTO request) {
         log.debug("REST request to Hyperion FAQ for course [{}]", courseId);
         var response = hyperionFaqRewriteService.rewriteFaq(courseId, request.faqText());
         return ResponseEntity.ok(response);
