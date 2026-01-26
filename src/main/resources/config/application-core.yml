@@ -31,6 +31,7 @@ artemis:
         enabled: true
     lti:
         enabled: false
+    # Apollon PDF export service - only affects PDF export button, not the modeling editor itself
     apollon:
         enabled: false
     user-management:

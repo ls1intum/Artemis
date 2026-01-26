@@ -84,7 +84,7 @@ interface GradingCriteriaDetail extends DetailBase {
 
 interface ModelingEditorDetail extends DetailBase {
     type: DetailType.ModelingEditor;
-    data: { isApollonProfileActive?: boolean; umlModel?: UMLModel; diagramType?: UMLDiagramType; title?: string };
+    data: { isApollonEnabled?: boolean; umlModel?: UMLModel; diagramType?: UMLDiagramType; title?: string };
 }
 
 export interface ProgrammingRepositoryButtonsDetail extends DetailBase {

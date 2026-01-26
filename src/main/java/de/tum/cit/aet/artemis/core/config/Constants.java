@@ -316,11 +316,6 @@ public final class Constants {
     public static final String PROFILE_ATHENA = "athena";
 
     /**
-     * The name of the Spring profile used for Athena functionality.
-     */
-    public static final String PROFILE_APOLLON = "apollon";
-
-    /**
      * The name of the Spring profile used for the external Aeolus system.
      */
     public static final String PROFILE_AEOLUS = "aeolus";
