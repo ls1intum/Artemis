@@ -1217,8 +1217,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         request.put("/api/core/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
 
         final var courseId = course.getId();
-        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100)).pollDelay(Duration.ofMillis(10))
-                .until(() -> courseRepository.findById(courseId).orElseThrow().getCourseArchivePath() != null);
+        await().atMost(Duration.ofSeconds(30)).until(() -> courseRepository.findById(courseId).orElseThrow().getCourseArchivePath() != null);
 
         var updatedCourse = courseRepository.findById(courseId).orElseThrow();
         assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
@@ -1237,8 +1236,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         request.put("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/archive", null, HttpStatus.OK);
 
         final var examId = exam.getId();
-        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(100)).pollDelay(Duration.ofMillis(10))
-                .until(() -> examRepository.findById(examId).orElseThrow().getExamArchivePath() != null);
+        await().atMost(Duration.ofSeconds(30)).until(() -> examRepository.findById(examId).orElseThrow().getExamArchivePath() != null);
 
         var updatedExam = examRepository.findById(examId).orElseThrow();
         assertThat(updatedExam.getExamArchivePath()).isNotEmpty();
