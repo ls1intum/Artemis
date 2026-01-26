@@ -65,6 +65,7 @@ artemis:
         secret: abcdef12345
         restricted-modules: module_text_test_restricted,module_programming_test_restricted
     apollon:
+        enabled: true # Set to true to enable Apollon PDF conversion for modeling diagrams
         conversion-service-url: http://localhost:8080
     telemetry:
         enabled: false
