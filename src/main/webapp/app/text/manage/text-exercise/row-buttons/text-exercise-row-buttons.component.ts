@@ -25,6 +25,7 @@ export class TextExerciseRowButtonsComponent {
     private textExerciseService = inject(TextExerciseService);
     private exerciseService = inject(ExerciseService);
 
+    courseId = input.required<number>();
     course = input.required<Course>();
     exercise = input.required<TextExercise>();
     private dialogErrorSource = new Subject<string>();
