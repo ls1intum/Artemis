@@ -48,11 +48,11 @@ public class HyperionProblemStatementRewriteService {
     /**
      * Creates a new ProblemStatementRewriteService.
      *
-     * @param chatClient          the AI chat client (optional)
-     * @param templateService     prompt template service
-     * @param observationRegistry the observation registry for metrics
-     * @param llmTokeUsageService persist token usage in DB
-     * @param userRepository      Spring Data JPA repository for the User entity
+     * @param chatClient           the AI chat client (optional)
+     * @param templateService      prompt template service
+     * @param observationRegistry  the observation registry for metrics
+     * @param llmTokenUsageService persist token usage in DB
+     * @param userRepository       Spring Data JPA repository for the User entity
      */
     public HyperionProblemStatementRewriteService(ChatClient chatClient, HyperionPromptTemplateService templateService, ObservationRegistry observationRegistry,
             LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
