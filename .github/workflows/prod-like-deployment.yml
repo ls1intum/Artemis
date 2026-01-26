@@ -140,7 +140,7 @@ jobs:
           export VAULT_TOKEN=$(cat ~/.vault-token)
 
       - name: Download artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: Artemis.war
           path: /tmp/artifact
