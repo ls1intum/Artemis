@@ -13,7 +13,7 @@ import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/butto
 export class ConfirmAutofocusButtonComponent {
     private modalService = inject(NgbModal);
 
-    icon = input<IconProp | null>(null);
+    icon = input<IconProp | undefined>(undefined);
     title = input<string>('');
     tooltip = input<string>('');
     disabled = input(false);

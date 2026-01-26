@@ -119,7 +119,7 @@
             jhiDeleteButton
             [buttonSize]="ButtonSize.SMALL"
             [actionType]="ActionType.Cleanup"
-            [entityTitle]="currentCourse().title!"
+            [entityTitle]="currentCourse()?.title!"
             deleteQuestion="artemisApp.course.cleanup.question"
             (delete)="cleanup()"
             [dialogError]="dialogError$"
@@ -136,7 +136,7 @@
             jhiDeleteButton
             [buttonSize]="ButtonSize.SMALL"
             [actionType]="ActionType.Cleanup"
-            [entityTitle]="currentExam().title!"
+            [entityTitle]="currentExam()?.title!"
             deleteQuestion="artemisApp.exam.cleanup.question"
             (delete)="cleanup()"
             [dialogError]="dialogError$"
