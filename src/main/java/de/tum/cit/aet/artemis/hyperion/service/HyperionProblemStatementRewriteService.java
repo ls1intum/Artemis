@@ -52,7 +52,7 @@ public class HyperionProblemStatementRewriteService {
      * @param templateService     prompt template service
      * @param observationRegistry the observation registry for metrics
      * @param llmTokeUsageService persist token usage in DB
-     * @param userRepository
+     * @param userRepository      Spring Data JPA repository for the User entity
      */
     public HyperionProblemStatementRewriteService(ChatClient chatClient, HyperionPromptTemplateService templateService, ObservationRegistry observationRegistry,
             LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
