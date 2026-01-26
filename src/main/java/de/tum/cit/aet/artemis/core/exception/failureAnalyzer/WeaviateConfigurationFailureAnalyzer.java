@@ -30,9 +30,21 @@ public class WeaviateConfigurationFailureAnalyzer extends AbstractFailureAnalyze
     }
 
     private String buildAction(WeaviateConfigurationException cause) {
-        return String.format("Update your application configuration (e.g., environment variables, application-dev.yml or application-local.yml):%n%n"
-                + "Option 1: Provide valid Weaviate configuration:%n" + "    artemis:%n" + "      weaviate:%n" + "        enabled: true%n" + "        host: your-weaviate-host%n"
-                + "        port: 8080%n" + "        grpc-port: 50051%n%n" + "Option 2: Disable Weaviate if not needed:%n" + "    artemis:%n" + "      weaviate:%n"
-                + "        enabled: false%n");
+        return """
+                Update your application configuration (e.g., environment variables, application-dev.yml or application-local.yml):
+
+                Option 1: Provide valid Weaviate configuration:
+                    artemis:
+                      weaviate:
+                        enabled: true
+                        host: your-weaviate-host
+                        port: 8080
+                        grpc-port: 50051
+
+                Option 2: Disable Weaviate if not needed:
+                    artemis:
+                      weaviate:
+                        enabled: false
+                """;
     }
 }
