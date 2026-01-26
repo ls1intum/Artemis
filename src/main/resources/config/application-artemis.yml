@@ -77,6 +77,10 @@ artemis:
   git:
     name: Artemis
     email: artemis@xcit.tum.de
+  rate-limiting:
+    enabled: false
+    account-management-requests-per-minute: 5
+    authentication-requests-per-minute: 30
   athena:
     url: http://localhost:5100
     secret: abcdef12345
@@ -93,6 +97,7 @@ artemis:
     data-export-creation-time: 0 0 4 * * * # every day at 4am
     programming-exercises-retrigger-submission-without-result-time: 0 0 2 * * * # every day at 2am
     continuous-plagiarism-control-trigger-time: 0 0 5 * * * # every day at 5am
+    vulnerability-scan-time: 0 0 8 * * MON # every Monday at 8am
 
   data-export:
     days-between-data-exports: 14
