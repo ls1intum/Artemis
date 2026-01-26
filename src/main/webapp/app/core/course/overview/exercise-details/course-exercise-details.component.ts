@@ -1,8 +1,8 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Subscription, combineLatest } from 'rxjs';
-import { filter, skip } from 'rxjs/operators';
+import { Subject, Subscription, combineLatest, of } from 'rxjs';
+import { catchError, debounceTime, filter, retry, skip, switchMap, take, tap } from 'rxjs/operators';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -110,6 +110,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private readonly cdr = inject(ChangeDetectorRef);
     private readonly scienceService = inject(ScienceService);
     private irisSettingsService = inject(IrisSettingsService);
+    private reloadExerciseSubscription?: Subscription;
+    private readonly reloadExercise$ = new Subject<{ participationId: number; resultId: number }>();
+    private readonly lastReloadedResultIdByParticipationId = new Map<number, number>();
 
     readonly AssessmentType = AssessmentType;
     readonly PlagiarismVerdict = PlagiarismVerdict;
@@ -171,6 +174,29 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     ngOnInit() {
         const courseIdParams$ = this.route.parent?.parent?.params;
         const exerciseIdParams$ = this.route.params;
+        this.reloadExerciseSubscription = this.reloadExercise$
+            .pipe(
+                debounceTime(500),
+                switchMap(({ participationId, resultId }) =>
+                    this.exerciseService.getExerciseDetails(this.exerciseId).pipe(
+                        take(1),
+                        retry({ count: 2, delay: 1000 }),
+                        tap((res) => {
+                            if (res.body) {
+                                this.lastReloadedResultIdByParticipationId.set(participationId, resultId);
+                            }
+                        }),
+                        catchError((_) => of(null)),
+                    ),
+                ),
+            )
+            .subscribe((res) => {
+                if (!res || !res.body) {
+                    return;
+                }
+                this.handleNewExercise(res.body);
+                this.loadComplaintAndLatestRatedResult();
+            });
         if (courseIdParams$) {
             this.paramsSubscription = combineLatest([courseIdParams$, exerciseIdParams$]).subscribe(([courseIdParams, exerciseIdParams]) => {
                 const didExerciseChange = this.exerciseId !== parseInt(exerciseIdParams.exerciseId, 10);
@@ -182,6 +208,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     this.courseId = parseInt(courseIdParams.courseId, 10);
                 }
                 if (didExerciseChange || didCourseChange) {
+                    this.lastReloadedResultIdByParticipationId.clear();
                     this.loadExercise();
                 }
 
@@ -221,6 +248,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
             this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
             if (this.irisEnabled && !this.exercise.exerciseGroup && this.courseId) {
+                this.irisSettingsSubscription?.unsubscribe();
                 this.irisSettingsSubscription = this.irisSettingsService.getCourseSettingsWithRateLimit(this.courseId).subscribe((response) => {
                     this.irisChatEnabled = response?.settings?.enabled ?? false;
                 });
@@ -348,8 +376,20 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     } else {
                         this.exercise.studentParticipations = [...this.studentParticipations, changedParticipation];
                     }
-                    this.updateStudentParticipations();
                     this.mergeResultsAndSubmissionsForParticipations();
+
+                    const lastResult = getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last();
+                    const participationId = changedParticipation.id;
+                    const resultId = lastResult?.id;
+                    if (participationId && resultId) {
+                        const lastReloadedId = this.lastReloadedResultIdByParticipationId.get(participationId);
+                        const isNewResult = lastReloadedId !== resultId;
+                        const isNowCompleted = lastResult.completionDate !== undefined && lastReloadedId === resultId;
+
+                        if (isNewResult || isNowCompleted) {
+                            this.reloadExercise$.next({ participationId, resultId });
+                        }
+                    }
                 }
             });
     }
@@ -364,6 +404,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * Receives team assignment changes and applies them if they belong to this exercise
      */
     async subscribeToTeamAssignmentUpdates() {
+        this.teamAssignmentUpdateListener?.unsubscribe();
         this.teamAssignmentUpdateListener = (await this.teamService.teamAssignmentUpdates)
             .pipe(filter(({ exerciseId }: TeamAssignmentPayload) => exerciseId === this.exercise?.id))
             .subscribe((teamAssignment) => {
@@ -552,6 +593,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             }
         });
 
+        this.reloadExerciseSubscription?.unsubscribe();
         this.teamAssignmentUpdateListener?.unsubscribe();
         this.submissionSubscription?.unsubscribe();
         this.paramsSubscription?.unsubscribe();
