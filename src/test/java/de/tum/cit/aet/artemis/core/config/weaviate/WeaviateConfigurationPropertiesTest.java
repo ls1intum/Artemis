@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.core.config.weaviate;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +11,7 @@ class WeaviateConfigurationPropertiesTest {
 
     @Test
     void testConfigurationProperties() {
-        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "test-host", 9999, 60051, true, "https");
+        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "test-host", 9999, 60051, "https");
 
         assertThat(properties.enabled()).isTrue();
         assertThat(properties.host()).isEqualTo("test-host");
@@ -37,25 +36,30 @@ class WeaviateConfigurationPropertiesTest {
     @Test
     void testSchemeSecureValidation() {
         // Test valid combinations
-        assertThat(new WeaviateConfigurationProperties(false, "localhost", 8080, 50051, false, "http")).isNotNull();
-        assertThat(new WeaviateConfigurationProperties(false, "localhost", 443, 50051, true, "https")).isNotNull();
+        assertThat(new WeaviateConfigurationProperties(false, "localhost", 8080, 50051, "http")).isNotNull();
+        assertThat(new WeaviateConfigurationProperties(false, "localhost", 443, 50051, "https")).isNotNull();
 
-        // Test scheme defaults based on secure flag
-        WeaviateConfigurationProperties secureDefault = new WeaviateConfigurationProperties(false, "localhost", 443, 50051, true, null);
-        assertThat(secureDefault.scheme()).isEqualTo("https");
+        // Test scheme defaults
+        WeaviateConfigurationProperties httpDefault = new WeaviateConfigurationProperties(false, "localhost", 8080, 50051, null);
+        assertThat(httpDefault.scheme()).isEqualTo("http");
+        assertThat(httpDefault.secure()).isFalse();
 
-        WeaviateConfigurationProperties nonSecureDefault = new WeaviateConfigurationProperties(false, "localhost", 8080, 50051, false, null);
-        assertThat(nonSecureDefault.scheme()).isEqualTo("http");
+        WeaviateConfigurationProperties httpsExplicit = new WeaviateConfigurationProperties(false, "localhost", 443, 50051, "https");
+        assertThat(httpsExplicit.scheme()).isEqualTo("https");
+        assertThat(httpsExplicit.secure()).isTrue();
     }
 
     @Test
-    void testSchemeSecureInconsistency() {
-        // Test secure=true but scheme=http (invalid)
-        assertThatThrownBy(() -> new WeaviateConfigurationProperties(false, "localhost", 443, 50051, true, "http")).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("secure=true but scheme=http");
+    void testSchemeValidation() {
+        // Test valid schemes
+        WeaviateConfigurationProperties httpProps = new WeaviateConfigurationProperties(false, "localhost", 8080, 50051, "http");
+        assertThat(httpProps.secure()).isFalse();
 
-        // Test secure=false but scheme=https (invalid)
-        assertThatThrownBy(() -> new WeaviateConfigurationProperties(false, "localhost", 8080, 50051, false, "https")).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("secure=false but scheme=https");
+        WeaviateConfigurationProperties httpsProps = new WeaviateConfigurationProperties(false, "localhost", 443, 50051, "https");
+        assertThat(httpsProps.secure()).isTrue();
+
+        // Test that secure() method correctly derives from scheme
+        assertThat(new WeaviateConfigurationProperties(true, "localhost", 8080, 50051, "http").secure()).isFalse();
+        assertThat(new WeaviateConfigurationProperties(true, "localhost", 443, 50051, "https").secure()).isTrue();
     }
 }

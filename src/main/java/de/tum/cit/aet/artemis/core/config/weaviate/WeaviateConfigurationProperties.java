@@ -10,11 +10,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @param host     the Weaviate server host
  * @param port     the Weaviate HTTP port
  * @param grpcPort the Weaviate gRPC port
- * @param secure   whether to use secure connections (HTTPS/secure gRPC)
- * @param scheme   the HTTP scheme (http/https) - must be consistent with secure flag
+ * @param scheme   the HTTP scheme (http/https) - determines secure connection type
  */
 @ConfigurationProperties(prefix = "artemis.weaviate")
-public record WeaviateConfigurationProperties(boolean enabled, String host, int port, int grpcPort, boolean secure, String scheme) {
+public record WeaviateConfigurationProperties(boolean enabled, String host, int port, int grpcPort, String scheme) {
 
     private static final String DEFAULT_HOST = "localhost";
 
@@ -40,7 +39,7 @@ public record WeaviateConfigurationProperties(boolean enabled, String host, int 
             grpcPort = DEFAULT_GRPC_PORT;
         }
         if (scheme == null || scheme.isBlank()) {
-            scheme = secure ? HTTPS_SCHEME : HTTP_SCHEME;
+            scheme = HTTP_SCHEME;
         }
     }
 
@@ -48,6 +47,15 @@ public record WeaviateConfigurationProperties(boolean enabled, String host, int 
      * Creates a new instance with default values.
      */
     public WeaviateConfigurationProperties() {
-        this(false, DEFAULT_HOST, DEFAULT_HTTP_PORT, DEFAULT_GRPC_PORT, false, HTTP_SCHEME);
+        this(false, DEFAULT_HOST, DEFAULT_HTTP_PORT, DEFAULT_GRPC_PORT, HTTP_SCHEME);
+    }
+
+    /**
+     * Returns whether secure connections should be used based on the scheme.
+     *
+     * @return true if scheme is "https", false otherwise
+     */
+    public boolean secure() {
+        return HTTPS_SCHEME.equals(scheme);
     }
 }
