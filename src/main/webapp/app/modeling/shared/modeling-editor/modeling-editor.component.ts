@@ -12,6 +12,7 @@ import { NgClass, NgStyle } from '@angular/common';
 import { ModelingExplanationEditorComponent } from '../modeling-explanation-editor/modeling-explanation-editor.component';
 import { captureException } from '@sentry/angular';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { getModelNodes } from 'app/modeling/shared/apollon-model.util';
 
 @Component({
     selector: 'jhi-modeling-editor',
@@ -200,9 +201,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      * @param umlModel the UML model to search in
      */
     elementWithClass(name: string, umlModel: UMLModel) {
-        // Support both Apollon v4 (nodes) and v3 (elements) formats
-        const elements = umlModel.nodes ?? (umlModel as any).elements ?? {};
-        return Object.values(elements).find((element: any) => element.name?.trim() === name && element.type === 'Class');
+        return getModelNodes(umlModel).find((element: any) => element.name?.trim() === name && element.type === 'Class');
     }
 
     /**
@@ -211,9 +210,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      * @param umlModel the UML model to search in
      */
     elementWithAttribute(attribute: string, umlModel: UMLModel) {
-        // Support both Apollon v4 (nodes) and v3 (elements) formats
-        const elements = umlModel.nodes ?? (umlModel as any).elements ?? {};
-        return Object.values(elements).find((element: any) => element.name?.includes(attribute) && element.type === 'ClassAttribute');
+        return getModelNodes(umlModel).find((element: any) => element.name?.includes(attribute) && element.type === 'ClassAttribute');
     }
 
     /**
@@ -222,9 +219,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      * @param umlModel the UML model to search in
      */
     elementWithMethod(method: string, umlModel: UMLModel) {
-        // Support both Apollon v4 (nodes) and v3 (elements) formats
-        const elements = umlModel.nodes ?? (umlModel as any).elements ?? {};
-        return Object.values(elements).find((element: any) => element.name?.includes(method) && element.type === 'ClassMethod');
+        return getModelNodes(umlModel).find((element: any) => element.name?.includes(method) && element.type === 'ClassMethod');
     }
 
     /**
