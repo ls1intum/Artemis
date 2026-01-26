@@ -6,8 +6,11 @@ import { CourseNotificationWebsocketService } from 'app/communication/course-not
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { CourseNotificationViewingStatus } from 'app/communication/shared/entities/course-notification/course-notification-viewing-status';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
+import { CourseNotificationCategory } from 'app/communication/shared/entities/course-notification/course-notification-category';
 
 /**
  * Component that displays real-time notification popups.
@@ -26,6 +29,9 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
     private readonly courseNotificationWebsocketService = inject(CourseNotificationWebsocketService);
     private readonly courseNotificationService = inject(CourseNotificationService);
 
+    private readonly route = inject(ActivatedRoute);
+    private readonly communicationState = inject(ConversationSelectionState);
+
     protected notifications: CourseNotification[] = [];
     protected isExpanded: boolean = false;
 
@@ -38,6 +44,12 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
     ngOnInit(): void {
         this.courseNotificationWebsocketSubscription = this.courseNotificationWebsocketService.websocketNotification$.subscribe((notification) => {
             if (this.notifications.findIndex((existingNotification) => existingNotification.notificationId === notification.notificationId) !== -1) {
+                return;
+            }
+
+            if (!this.shouldShowNotification(notification)) {
+                // Calling closeClicked ensures the notification gets marked as seen
+                this.closeClicked(notification);
                 return;
             }
 
@@ -83,6 +95,51 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
         this.courseNotificationService.setNotificationStatusInMap(notification.courseId!, [notification.notificationId!], CourseNotificationViewingStatus.SEEN);
         this.courseNotificationService.decreaseNotificationCountBy(notification.courseId!, 1);
         this.removeNotification(notification.notificationId!);
+    }
+
+    /**
+     * Checks whether it makes sense to show a notification to the user in the current context, e.g. when a conversation is open.
+     *
+     * @param notification - The notification to potentially show
+     * @returns shouldShow - Whether the notification should be shown
+     */
+    shouldShowNotification(notification: CourseNotification): boolean {
+        const courseId = this.route.firstChild?.firstChild?.snapshot.paramMap.get('courseId');
+
+        // Course is not open
+        if (!courseId || Number(courseId) !== notification.courseId) {
+            return true;
+        }
+
+        const routeParams = this.route.snapshot.queryParamMap;
+        const notificationParams = notification.parameters;
+        if (!notificationParams) {
+            // No filtering possible without parameters
+            return true;
+        }
+
+        // Communication
+        const isCommunicationNotification = notification.category == CourseNotificationCategory.COMMUNICATION;
+        const openConversationId = routeParams.get('conversationId');
+        const isCommunicationOpen = openConversationId != null;
+        if (isCommunicationNotification && !isCommunicationOpen) {
+            return true;
+        }
+
+        const isAnnouncementOrPost = ['newPostNotification', 'newAnnouncementNotification'].includes(notification.notificationType ?? '');
+        const isCorrespondingChannelOpen = 'channelId' in notificationParams && openConversationId == notificationParams['channelId'];
+        if (isAnnouncementOrPost && isCorrespondingChannelOpen) {
+            return false;
+        }
+
+        const threadId = this.communicationState.openPostId();
+        const isAnswerNotification = notification.notificationType === 'newAnswerNotification';
+        const isCorrespondingThreadOpen = 'postId' in notificationParams && threadId == notificationParams['postId'];
+        if (isAnswerNotification && isCorrespondingThreadOpen) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
