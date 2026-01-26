@@ -210,6 +210,30 @@ describe('ProgrammingFeedbackItemService', () => {
         expect(feedbackInGroup).toEqual(feedbacks[0]);
     });
 
+    it('should use feedback.text as fallback when testCase is not available (initialization errors)', () => {
+        // Initialization errors don't have a linked testCase entity but have the test name in feedback.text
+        const feedback = {
+            id: 1,
+            type: FeedbackType.AUTOMATIC,
+            text: 'AttributeTest.initializationError',
+            detailText: 'java.lang.RuntimeException: error',
+            positive: false,
+            credits: 0,
+        };
+
+        const expected = {
+            name: 'artemisApp.result.detail.test.name',
+            title: 'artemisApp.result.detail.test.failed',
+            text: 'java.lang.RuntimeException: error',
+            type: 'Test',
+            positive: false,
+            credits: 0,
+            feedbackReference: feedback,
+        };
+
+        expect(service.create([feedback], true)).toEqual([expected]);
+    });
+
     const createSCAFeedback = (): Feedback => {
         const scaIssue = {
             rule: 'rule',
