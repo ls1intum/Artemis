@@ -15,6 +15,7 @@ const sidebars: SidebarsConfig = {
             },
             items: [
                 'production-setup/security',
+                'production-setup/integrated-code-lifecycle-setup',
                 'production-setup/customization',
                 'production-setup/legal-documents',
                 'production-setup/additional-tips',
