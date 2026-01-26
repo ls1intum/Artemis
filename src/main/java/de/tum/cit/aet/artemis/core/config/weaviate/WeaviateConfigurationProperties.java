@@ -1,11 +1,13 @@
 package de.tum.cit.aet.artemis.core.config.weaviate;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Lazy;
 
 /**
  * Configuration properties for Weaviate integration
  */
 @ConfigurationProperties(prefix = "artemis.weaviate")
+@Lazy
 public class WeaviateConfigurationProperties {
 
     private boolean enabled = false;
