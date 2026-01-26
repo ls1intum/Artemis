@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismResultApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -87,14 +87,14 @@ public class ExerciseDeletionService {
 
     private final BuildJobRepository buildJobRepository;
 
-    private final ParticipationRepository participationRepository;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ParticipationDeletionService participationDeletionService,
             ProgrammingExerciseDeletionService programmingExerciseDeletionService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, Optional<StudentExamApi> studentExamApi,
             Optional<LectureUnitApi> lectureUnitApi, Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelService channelService,
             Optional<CompetencyProgressApi> competencyProgressApi, ChannelRepository channelRepository, PostRepository postRepository, AnswerPostRepository answerPostRepository,
-            ResultRepository resultRepository, BuildJobRepository buildJobRepository, ParticipationRepository participationRepository) {
+            ResultRepository resultRepository, BuildJobRepository buildJobRepository, StudentParticipationRepository studentParticipationRepository) {
         this.exerciseRepository = exerciseRepository;
         this.participationDeletionService = participationDeletionService;
         this.programmingExerciseDeletionService = programmingExerciseDeletionService;
@@ -112,7 +112,7 @@ public class ExerciseDeletionService {
         this.answerPostRepository = answerPostRepository;
         this.resultRepository = resultRepository;
         this.buildJobRepository = buildJobRepository;
-        this.participationRepository = participationRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -124,7 +124,7 @@ public class ExerciseDeletionService {
     public ExerciseDeletionSummaryDTO getDeletionSummary(long exerciseId) {
         final Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
-        final long numberOfStudentParticipations = participationRepository.countByExerciseId(exerciseId);
+        final long numberOfStudentParticipations = studentParticipationRepository.countByExerciseId(exerciseId);
 
         final boolean hasBuilds = exercise instanceof ProgrammingExercise;
         final Long numberOfBuilds = hasBuilds ? buildJobRepository.countBuildJobsByExerciseIds(Set.of(exerciseId)) : null;

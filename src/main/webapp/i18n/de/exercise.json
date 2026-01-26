@@ -27,7 +27,7 @@
                 "testCourse": "Testkurses",
                 "realCourse": "echten Kurses",
                 "summary": {
-                    "title": "Aufaben-Zusammenfassung",
+                    "title": "Aufgaben-Zusammenfassung",
                     "numberOfStudentParticipations": "Anzahl der Studierendenteilnahmen",
                     "numberOfAssessments": "Anzahl der Bewertungen",
                     "numberOfCommunicationPosts": "Anzahl der Kommunikationsbeiträge",

@@ -74,7 +74,7 @@
             </jhi-feature-overlay>
         }
         <!-- Delete exercise -->
-        @if (exercise.isAtLeastInstructor) {
+        @if (course && exercise.isAtLeastInstructor) {
             <button
                 jhiDeleteButton
                 [entityTitle]="exercise.title || ''"
