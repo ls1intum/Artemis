@@ -43,3 +43,9 @@ export interface MemirisMemoryWithRelationsDTO {
     learnings: MemirisLearningDTO[];
     connections: MemirisMemoryConnectionDTO[];
 }
+
+export interface MemirisMemoryDataDTO {
+    memories: MemirisMemory[];
+    learnings: MemirisLearningDTO[];
+    connections: MemirisMemoryConnectionDTO[];
+}

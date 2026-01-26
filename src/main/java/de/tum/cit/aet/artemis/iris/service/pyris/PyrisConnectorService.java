@@ -4,8 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Collections;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -28,7 +27,7 @@ import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.dto.IngestionStateResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.MemirisLearningDTO;
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryConnectionDTO;
-import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDTO;
+import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDataDTO;
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryWithRelationsDTO;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
@@ -81,13 +80,13 @@ public class PyrisConnectorService {
      * @param userId the Artemis user id
      * @return list of memories (can be empty)
      */
-    public List<MemirisMemoryDTO> listMemirisMemories(long userId) {
+    public MemirisMemoryDataDTO listMemirisMemoryData(long userId) {
         try {
-            var response = restTemplate.getForEntity(pyrisUrl + "/api/v1/memiris/user/" + userId, MemirisMemoryDTO[].class);
+            var response = restTemplate.getForEntity(pyrisUrl + "/api/v2/memiris/user/" + userId, MemirisMemoryDataDTO.class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody() || response.getBody() == null) {
-                return List.of();
+                return new MemirisMemoryDataDTO(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
             }
-            return Arrays.asList(response.getBody());
+            return response.getBody();
         }
         catch (HttpStatusCodeException e) {
             if (e.getStatusCode().value() == 404) {
@@ -96,7 +95,7 @@ public class PyrisConnectorService {
             throw toIrisException(e);
         }
         catch (RestClientException | IllegalArgumentException e) {
-            log.error("Failed to list Memiris memories for user {}", userId, e);
+            log.error("Failed to list Memiris memory data for user {}", userId, e);
             throw new PyrisConnectorException("Could not fetch memories from Pyris");
         }
     }
