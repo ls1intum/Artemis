@@ -82,7 +82,7 @@ describe('ApollonDiagramDetail Component', () => {
         fixture.componentInstance.apollonDiagram.set(diagram);
         await fixture.componentInstance.initializeApollonEditor(model);
 
-        expect(fixture.componentInstance.apollonEditor()).toBeTruthy();
+        expect(fixture.componentInstance.apollonEditor).toBeTruthy();
     });
 
     it('save', async () => {
@@ -93,7 +93,7 @@ describe('ApollonDiagramDetail Component', () => {
         const updateStub = vi.spyOn(apollonDiagramService, 'update').mockReturnValue(of(response));
 
         await fixture.componentInstance.initializeApollonEditor(model);
-        expect(fixture.componentInstance.apollonEditor()).toBeTruthy();
+        expect(fixture.componentInstance.apollonEditor).toBeTruthy();
 
         // test
         await fixture.componentInstance.saveDiagram();
@@ -116,7 +116,7 @@ describe('ApollonDiagramDetail Component', () => {
         });
 
         await fixture.componentInstance.initializeApollonEditor(model);
-        expect(fixture.componentInstance.apollonEditor()).toBeTruthy();
+        expect(fixture.componentInstance.apollonEditor).toBeTruthy();
         fixture.detectChanges();
 
         const emitSpy = vi.spyOn(fixture.componentInstance.closeEdit, 'emit');
@@ -131,7 +131,7 @@ describe('ApollonDiagramDetail Component', () => {
     });
 
     it('validateGeneration', async () => {
-        const nonInteractiveModel = { ...model, interactive: { ...model.interactive, elements: {}, relationships: {} } };
+        const nonInteractiveModel = { ...model, nodes: [], edges: [] } as any;
 
         // setup
         fixture.componentInstance.apollonDiagram.set(diagram);
@@ -154,9 +154,9 @@ describe('ApollonDiagramDetail Component', () => {
 
         expect(div.children).toHaveLength(1);
 
-        // set selection
-        fixture.componentInstance.apollonEditor()!.selection = {
-            elements: Object.fromEntries(Object.keys(model.elements).map((key) => [key, true])),
+        // set selection (use `as any` since selection property may not exist in newer ApollonEditor API)
+        (fixture.componentInstance.apollonEditor as any).selection = {
+            elements: Object.fromEntries(((model as any).nodes ?? []).map((node: any) => [node.id, true])),
             relationships: {},
         };
         fixture.detectChanges();

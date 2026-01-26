@@ -7,7 +7,7 @@ import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { UMLDiagramType, UMLElement, UMLModel } from '@tumaet/apollon';
+import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { TranslateService } from '@ngx-translate/core';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -243,11 +243,13 @@ describe('ModelingSubmissionComponent', () => {
 
         // Call onModelPatch directly (this simulates the template output binding)
         // The component's onModelPatch method emits to submissionPatchObservable when teamMode is true
-        comp.onModelPatch([{ value: 'test', op: 'add', path: '/test' }]);
+        // In Apollon v4, patch is now a base64 encoded string
+        comp.onModelPatch(btoa(JSON.stringify({ test: 'value' })));
 
         // We have got it?
         expect(receiverMock).toHaveBeenCalled();
-        expect(receiverMock.mock.lastCall![0].patch[0].path).toBe('/test');
+        // The patch is now a base64 encoded string
+        expect(receiverMock.mock.lastCall![0].patch).toBe(btoa(JSON.stringify({ test: 'value' })));
     });
 
     it('should update the submission when a patch is received.', () => {
@@ -261,23 +263,13 @@ describe('ModelingSubmissionComponent', () => {
         comp.ngOnInit();
 
         const editorImportSpy = vi.spyOn(mockModelingEditor, 'importPatch');
-        const submissionPatch = new SubmissionPatch([
-            {
-                op: 'replace',
-                path: '/elements/1/name',
-                value: 'john',
-            },
-        ]);
+        // SubmissionPatch now contains a base64 encoded string of the whole diagram
+        const patchData = btoa(JSON.stringify({ elements: { '1': { id: 1, name: 'john' } } }));
+        const submissionPatch = new SubmissionPatch(patchData);
         comp.onReceiveSubmissionPatchFromTeam(submissionPatch);
 
         // We have got it?
-        expect(editorImportSpy).toHaveBeenCalledWith([
-            {
-                op: 'replace',
-                path: '/elements/1/name',
-                value: 'john',
-            },
-        ]);
+        expect(editorImportSpy).toHaveBeenCalledWith(patchData);
     });
 
     it('should allow to submit when exercise due date not set', async () => {
@@ -546,7 +538,10 @@ describe('ModelingSubmissionComponent', () => {
         createComponent();
 
         const model = <UMLModel>(<unknown>{
-            elements: [<UMLElement>(<unknown>{ owner: 'ownerId1', id: 'elementId1' }), <UMLElement>(<unknown>{ owner: 'ownerId2', id: 'elementId2' })],
+            elements: [
+                { owner: 'ownerId1', id: 'elementId1' },
+                { owner: 'ownerId2', id: 'elementId2' },
+            ],
         });
         (mockModelingEditor.getCurrentModel as ReturnType<typeof vi.fn>).mockReturnValue(model as UMLModel);
         comp.explanation = 'Explanation Test';
@@ -587,11 +582,14 @@ describe('ModelingSubmissionComponent', () => {
         createComponent();
 
         const currentModel = <UMLModel>(<unknown>{
-            elements: [<UMLElement>(<unknown>{ owner: 'ownerId1', id: 'elementId1' }), <UMLElement>(<unknown>{ owner: 'ownerId2', id: 'elementId2' })],
+            elements: [
+                { owner: 'ownerId1', id: 'elementId1' },
+                { owner: 'ownerId2', id: 'elementId2' },
+            ],
             version: 'version',
         });
         const unsavedModel = <UMLModel>(<unknown>{
-            elements: [<UMLElement>(<unknown>{ owner: 'ownerId1', id: 'elementId1' })],
+            elements: [{ owner: 'ownerId1', id: 'elementId1' }],
             version: 'version',
         });
 

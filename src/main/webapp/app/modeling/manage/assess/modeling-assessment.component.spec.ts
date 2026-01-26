@@ -76,7 +76,7 @@ describe('ModelingAssessmentComponent', () => {
     const ELEMENT_ID_2 = '2f67120e-b491-4222-beb1-79e87c2cf54d'; // Connected Class
     const RELATIONSHIP_ID = '5a9a4eb3-8281-4de4-b0f2-3e2f164574bd'; // First relationship
 
-    const makeMockModel = () => cloneDeep(testClassDiagram as UMLModel);
+    const makeMockModel = () => cloneDeep(testClassDiagram as unknown as UMLModel);
 
     const mockFeedbackWithReference: Feedback = {
         text: 'FeedbackWithReference',
@@ -235,7 +235,7 @@ describe('ModelingAssessmentComponent', () => {
         expect(spy).toHaveBeenCalledWith('artemisApp.assessment.messages.removeAssessmentInstructionLink');
         expect(spy).toHaveBeenCalledWith('artemisApp.exercise.assessmentInstruction');
         expect(spy).toHaveBeenCalledWith('artemisApp.assessment.feedbackHint');
-        expect(Object.values(mockModel.assessments)[0].dropInfo.instruction).toBe(mockFeedbackWithGradingInstruction.gradingInstruction);
+        expect((Object.values(mockModel.assessments)[0] as any).dropInfo.instruction).toBe(mockFeedbackWithGradingInstruction.gradingInstruction);
 
         // toHaveBeenCalledTimes(5): 2 from calculateLabel() + 3 from calculateDropInfo()
         expect(spy).toHaveBeenCalledTimes(5);
@@ -282,12 +282,12 @@ describe('ModelingAssessmentComponent', () => {
 
         // Verify the assessmentNote was actually set on the nodes with the translated text
         const updatedModel = getCapturedModel();
-        expect(updatedModel.nodes[ELEMENT_ID_1].data.assessmentNote).toBe('Warning: 5 other submissions');
-        expect(updatedModel.nodes[ELEMENT_ID_2].data.assessmentNote).toBe('Warning: 3 other submissions');
+        expect((updatedModel.nodes as any)[ELEMENT_ID_1].data.assessmentNote).toBe('Warning: 5 other submissions');
+        expect((updatedModel.nodes as any)[ELEMENT_ID_2].data.assessmentNote).toBe('Warning: 3 other submissions');
 
         // Verify nodes not in elementCounts don't have assessmentNote set
         const otherNodeId = 'ccac14e5-c828-4afb-ab97-0fb2a67e77d6'; // Class In Package
-        expect(updatedModel.nodes[otherNodeId].data.assessmentNote).toBeUndefined();
+        expect((updatedModel.nodes as any)[otherNodeId].data.assessmentNote).toBeUndefined();
     });
 
     it('should generate feedback from assessment', () => {
@@ -325,11 +325,11 @@ describe('ModelingAssessmentComponent', () => {
 
         // Verify the highlight property was actually set on the model elements
         const updatedModel = getCapturedModel();
-        expect((updatedModel.nodes[ELEMENT_ID_1] as any).highlight).toBe('red');
-        expect((updatedModel.edges[RELATIONSHIP_ID] as any).highlight).toBe('blue');
+        expect((updatedModel.nodes as any)[ELEMENT_ID_1].highlight).toBe('red');
+        expect((updatedModel.edges as any)[RELATIONSHIP_ID].highlight).toBe('blue');
 
         // Verify elements not in highlightedElements don't have highlight set
-        expect((updatedModel.nodes[ELEMENT_ID_2] as any).highlight).toBeUndefined();
+        expect((updatedModel.nodes as any)[ELEMENT_ID_2].highlight).toBeUndefined();
     });
 
     it('should update model', async () => {
@@ -338,7 +338,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.componentRef.setInput('umlModel', initialModel);
         fixture.detectChanges();
         await comp.ngAfterViewInit();
-        await comp.apollonEditor!.nextRender;
+        await new Promise((r) => setTimeout(r, 0));
         expect(comp.apollonEditor).not.toBeNull();
 
         // Verify initial model was set
@@ -350,7 +350,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.componentRef.setInput('umlModel', newModel);
         fixture.detectChanges();
         await fixture.whenStable();
-        await comp.apollonEditor!.nextRender;
+        await new Promise((r) => setTimeout(r, 0));
 
         // Verify the component's input was updated
         expect(comp.umlModel()).toBe(newModel);
@@ -384,8 +384,8 @@ describe('ModelingAssessmentComponent', () => {
         await (comp as any).updateHighlightedElements(initialHighlights);
 
         let updatedModel = getCapturedModel();
-        expect((updatedModel.nodes[ELEMENT_ID_1] as any).highlight).toBe('red');
-        expect((updatedModel.nodes[ELEMENT_ID_2] as any).highlight).toBe('blue');
+        expect((updatedModel.nodes as any)[ELEMENT_ID_1].highlight).toBe('red');
+        expect((updatedModel.nodes as any)[ELEMENT_ID_2].highlight).toBe('blue');
 
         // Now update with different highlights - only ELEMENT_ID_2 should be green
         const newHighlights = new Map<string, string>();
@@ -395,9 +395,9 @@ describe('ModelingAssessmentComponent', () => {
 
         updatedModel = getCapturedModel();
         // ELEMENT_ID_1 should now have undefined highlight (removed)
-        expect((updatedModel.nodes[ELEMENT_ID_1] as any).highlight).toBeUndefined();
+        expect((updatedModel.nodes as any)[ELEMENT_ID_1].highlight).toBeUndefined();
         // ELEMENT_ID_2 should have green highlight (updated)
-        expect((updatedModel.nodes[ELEMENT_ID_2] as any).highlight).toBe('green');
+        expect((updatedModel.nodes as any)[ELEMENT_ID_2].highlight).toBe('green');
     });
 
     it('should update highlighted assessments first round', async () => {
@@ -409,7 +409,7 @@ describe('ModelingAssessmentComponent', () => {
 
         fixture.detectChanges();
         await comp.ngAfterViewInit();
-        await comp.apollonEditor!.nextRender;
+        await new Promise((r) => setTimeout(r, 0));
 
         expect(comp.apollonEditor).toBeDefined();
 
@@ -431,7 +431,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
 
         await fixture.whenStable();
-        await comp.apollonEditor!.nextRender;
+        await new Promise((r) => setTimeout(r, 0));
 
         expect(comp.apollonEditor).not.toBeNull();
 

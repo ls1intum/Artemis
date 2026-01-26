@@ -60,7 +60,6 @@ describe('ModelingEditorComponent', () => {
         // Check that editor exists and is properly initialized
         expect(editor).toBeDefined();
         expect(editor.model).toBeDefined();
-        await editor.nextRender;
 
         // Verify the editor has a valid model structure and correct diagram type
         expect(editor.model.type).toBeDefined();
@@ -113,10 +112,8 @@ describe('ModelingEditorComponent', () => {
         // note: using cloneDeep a default value exists, which would prevent the comparison below to pass, therefore we need to remove it here
         changedModel.default = undefined;
         // test
-        await component.apollonEditor?.nextRender;
         fixture.componentRef.setInput('umlModel', changedModel);
         fixture.detectChanges();
-        await component.apollonEditor?.nextRender;
         const componentModel = component['apollonEditor']!.model as UMLModel;
         // Compare structure - Apollon may return empty arrays or objects, both represent "empty"
         const normalizeEmpty = (val: any) => (Array.isArray(val) && val.length === 0) || (typeof val === 'object' && Object.keys(val || {}).length === 0);

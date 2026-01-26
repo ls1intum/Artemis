@@ -52,14 +52,14 @@ class StubModelingEditorComponent {
 
     getCurrentModel(): UMLModel {
         return {
-            elements: {},
-            relationships: {},
-            version: '3.0.0',
+            version: '4.0.0',
+            id: 'test-id',
+            title: 'Test Model',
             type: 'ClassDiagram',
-            size: { width: 0, height: 0 },
-            interactive: { elements: {}, relationships: {} },
+            nodes: [],
+            edges: [],
             assessments: {},
-        } as UMLModel;
+        } as any as UMLModel;
     }
 }
 

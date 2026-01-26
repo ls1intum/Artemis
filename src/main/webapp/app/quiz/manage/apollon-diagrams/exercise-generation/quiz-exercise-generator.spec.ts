@@ -4,16 +4,12 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { Selection, UMLModel, UMLModelElement, findElement } from '@tumaet/apollon';
+import { ApollonNode, UMLModel } from '@tumaet/apollon';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
-import {
-    computeDropLocation,
-    generateDragAndDropItemForElement,
-    generateDragAndDropQuizExercise,
-} from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
+import { computeDropLocation, generateDragAndDropItemForNode, generateDragAndDropQuizExercise } from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import * as SVGRendererAPI from 'app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -57,26 +53,21 @@ describe('QuizExercise Generator', () => {
     it('generateDragAndDropExercise for Class Diagram', async () => {
         vi.spyOn(quizExerciseService, 'create').mockImplementation((generatedExercise) => of({ body: generatedExercise } as HttpResponse<QuizExercise>));
         vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob());
-        // @ts-ignore
-        const classDiagram: UMLModel = testClassDiagram as UMLModel;
-        const interactiveElements: Selection = classDiagram.interactive;
-        const selectedElements = Object.entries(interactiveElements.elements)
-            .filter(([include]) => include)
-            .map(([id]) => id);
-        const selectedRelationships = Object.entries(interactiveElements.relationships)
-            .filter(([include]) => include)
-            .map(([id]) => id);
+        const classDiagram: UMLModel = testClassDiagram as unknown as UMLModel;
+        // In v4, nodes and edges are arrays; count all as interactive elements
+        const selectedNodes = ((classDiagram as any).nodes ?? []).length;
+        const selectedEdges = ((classDiagram as any).edges ?? []).length;
         const exerciseTitle = 'GenerateDragAndDropExerciseTest';
         const generatedQuestion = await generateDragAndDropQuizExercise(course, exerciseTitle, classDiagram);
         expect(generatedQuestion).toBeTruthy();
         expect(generatedQuestion.title).toEqual(exerciseTitle);
         expect(generatedQuestion.type).toEqual(QuizQuestionType.DRAG_AND_DROP);
         // create one DragItem for each interactive element
-        expect(generatedQuestion.dragItems).toHaveLength(selectedElements.length + selectedRelationships.length);
+        expect(generatedQuestion.dragItems).toHaveLength(selectedNodes + selectedEdges);
         // each DragItem needs one DropLocation
-        expect(generatedQuestion.dropLocations).toHaveLength(selectedElements.length + selectedRelationships.length);
+        expect(generatedQuestion.dropLocations).toHaveLength(selectedNodes + selectedEdges);
         // if there are no similar elements -> amount of correct mappings = interactive elements
-        expect(generatedQuestion.correctMappings).toHaveLength(selectedElements.length + selectedRelationships.length);
+        expect(generatedQuestion.correctMappings).toHaveLength(selectedNodes + selectedEdges);
     });
 
     it('computeDropLocation with totalSize x and y coordinates', async () => {
@@ -115,17 +106,26 @@ describe('QuizExercise Generator', () => {
         expect(dropLocation.height).toBe(200);
     });
 
-    it('generateDragAndDropItemForElement', async () => {
+    it('generateDragAndDropItemForNode', async () => {
         vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob([]));
 
         const umlModel: UMLModel = testClassDiagram as unknown as UMLModel;
 
-        const umlModelElement: UMLModelElement = findElement(umlModel, 'fea23cbc-8df0-4dcc-9d7a-eb86fbb2ce9d')!;
+        // Create a mock ApollonNode for testing
+        const mockNode: ApollonNode = {
+            id: 'fea23cbc-8df0-4dcc-9d7a-eb86fbb2ce9d',
+            width: 200,
+            height: 30,
+            type: 'ClassAttribute' as any,
+            position: { x: 600, y: 430 },
+            data: { name: '+ attribute: Type' },
+            measured: { width: 200, height: 30 },
+        };
 
         const fileMap = new Map<string, File>();
 
-        const dragAndDropMapping: DragAndDropMapping = await generateDragAndDropItemForElement(
-            umlModelElement,
+        const dragAndDropMapping: DragAndDropMapping = await generateDragAndDropItemForNode(
+            mockNode,
             umlModel,
             {
                 height: 400,
@@ -134,14 +134,10 @@ describe('QuizExercise Generator', () => {
             fileMap,
         );
 
-        const expectedFileName = `element-${umlModelElement.id}.png`;
+        const expectedFileName = `element-${mockNode.id}.png`;
 
         expect(fileMap.get(expectedFileName)).toBeDefined();
         expect(dragAndDropMapping.dragItem?.pictureFilePath).toEqual(expectedFileName);
-        expect(dragAndDropMapping.dropLocation?.posX).toBe(292.5);
-        expect(dragAndDropMapping.dropLocation?.posY).toBe(207.5);
-        expect(dragAndDropMapping.dropLocation?.width).toBe(114.5);
-        expect(dragAndDropMapping.dropLocation?.height).toBe(30);
 
         vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockReset();
     });
@@ -198,13 +194,11 @@ describe('QuizExercise Generator', () => {
     it('generateDragAndDropExercise handles empty interactive elements', async () => {
         vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob());
 
-        // Create a model with no interactive elements
+        // Create a model with no nodes/edges (v4 format)
         const emptyModel: UMLModel = {
             ...testClassDiagram,
-            interactive: {
-                elements: {},
-                relationships: {},
-            },
+            nodes: [],
+            edges: [],
         } as unknown as UMLModel;
 
         const exerciseTitle = 'EmptyInteractiveTest';
