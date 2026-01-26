@@ -30,6 +30,7 @@
                     "EMAIL_SENT": "Bereit",
                     "DOWNLOADED": "Heruntergeladen",
                     "FAILED": "Fehlgeschlagen",
+                    "EMAIL_FAILED": "E-Mail-Benachrichtigung fehlgeschlagen",
                     "DELETED": "Gelöscht",
                     "DOWNLOADED_DELETED": "Gelöscht"
                 }

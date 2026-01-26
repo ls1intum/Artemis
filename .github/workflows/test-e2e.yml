@@ -59,7 +59,7 @@ jobs:
           cat workflow-context.txt
 
       - name: Upload workflow context
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: workflow-context
           path: workflow-context.txt
@@ -75,7 +75,7 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_branch }}
       - name: Download Docker tag
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: docker-tag
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -115,7 +115,7 @@ jobs:
 
       - name: Upload JUnit Test Results
         if: success() || failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: JUnit Test Results
           if-no-files-found: error
@@ -123,7 +123,7 @@ jobs:
 
       - name: Upload Client Test Coverage Report
         if: success() || failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: E2E Client Coverage Report
           path: src/test/playwright/test-reports/client-coverage
@@ -132,7 +132,7 @@ jobs:
         run: .ci/E2E-tests/cleanup.sh
 
       - name: Test Report
-        uses: mikepenz/action-junit-report@v5.6.2
+        uses: mikepenz/action-junit-report@v6
         id: test-reporter
         if: always()
         env:
