@@ -140,7 +140,7 @@ def clone_pecv_bench(pecv_bench_url: str, pecv_bench_dir: str) -> None:
             logging.error(f"Stderr: {e.stderr}")
             sys.exit(1)
 
-def install_pecv_bench_dependencies(project_path: str):
+def install_pecv_bench_dependencies(project_path: str) -> None:
     """
     Installs the pecv-bench project in editable mode to get all dependencies.
 
@@ -165,7 +165,7 @@ def install_pecv_bench_dependencies(project_path: str):
         logging.error(f"Pip install stderr: {e.stderr}")
         sys.exit(1)
 
-def create_all_variants(course, exercise):
+def create_exercise_variants(course, exercise) -> None:
     """
     Imports VariantManager and ExerciseIdentifier from pecv-bench and creates all variants with materialize_variant func.
 

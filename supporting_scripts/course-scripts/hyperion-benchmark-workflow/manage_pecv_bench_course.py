@@ -1,3 +1,6 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import os
+import sys
 import requests
 import configparser
 import json
@@ -7,6 +10,7 @@ import time
 from logging_config import logging
 from requests import Session
 from typing import Dict, Any, Union, List
+from utils import COURSE_EXERCISES, MAX_THREADS, PECV_BENCH_REPO_URL, SERVER_URL, clone_pecv_bench, create_exercise_variants, get_pecv_bench_dir, install_pecv_bench_dependencies, login_as_admin, process_single_variant_import
 
 """
 DISCLAIMER: Execution Context Sensitivity
@@ -24,57 +28,8 @@ IS_LOCAL_COURSE: bool = config.get('CourseSettings', 'is_local_course').lower() 
 COURSE_NAME: str = config.get('CourseSettings', 'course_name')
 SPECIAL_CHARACTERS_REGEX: str = config.get('CourseSettings', 'special_character_regex')
 
-# =======================from utils.py =======================
-CLIENT_URL: str = config.get('Settings', 'client_url')
-SERVER_URL: str = config.get('Settings', 'server_url')
-ADMIN_USER: str = config.get('Settings', 'admin_user')
-ADMIN_PASSWORD: str = config.get('Settings', 'admin_password')
 
-def login_as_admin(session: requests.Session) -> None:
-    """
-    Authenticate as an admin using the provided session.
-
-    POST /core/public/authenticate
-
-    :param requests.Session session: The session to authenticate.
-    :return: None
-    """
-    authenticate_user(ADMIN_USER, ADMIN_PASSWORD, session)
-
-def authenticate_user(username: str, password: str, session: requests.Session) -> requests.Response:
-    """
-    Authenticate a user and return the session response.
-
-    :param str username: The username for authentication.
-    :param str password: The password for authentication.
-    :param requests.Session session: The session object to use for the request.
-    :return: The response object from the authentication request.
-    :rtype: requests.Response
-    :raises Exception: If authentication fails (status code other than 200).
-    """
-    url: str = f"{SERVER_URL}/core/public/authenticate"
-    headers: Dict[str, str] = {
-        "Content-Type": "application/json"
-    }
-
-    payload: Dict[str, Any] = {
-        "username": username,
-        "password": password,
-        "rememberMe": True
-    }
-
-    response: requests.Response = session.post(url, json=payload, headers=headers)
-
-    if response.status_code == 200:
-        logging.info(f"Authentication successful for user {username}")
-    else:
-        raise Exception(
-            f"Authentication failed for user {username}. Status code: {response.status_code}\n Response content: {response.text}")
-
-    return response
-# ========================================================
-
-def parse_course_name_to_short_name() -> str:
+def __parse_course_name_to_short_name() -> str:
     """
     Parse course name to create a short name, removing special characters.
 
@@ -101,7 +56,7 @@ def create_pecv_bench_course_request(session: Session) -> requests.Response:
     :raises Exception: If course creation fails or if the course cannot be deleted before recreation.
     """
     url = f"{SERVER_URL}/core/admin/courses"
-    course_short_name = parse_course_name_to_short_name()
+    course_short_name = __parse_course_name_to_short_name()
 
     default_course = {
         "id": None,
@@ -198,16 +153,7 @@ def delete_pecv_bench_course_request(session: Session, course_short_name: str, m
 
     logging.info(f"Attempting to delete course with shortName {course_short_name}")
 
-    courseResponse: requests.Response = session.get(f"{SERVER_URL}/core/courses")
-    courses = courseResponse.json()
-    course_id = None
-    for course in courses:
-        if course["shortName"] == course_short_name:
-            course_id = course["id"]
-            break
-    if course_id is None:
-        logging.error(f"Course with shortName {course_short_name} not found")
-        return False
+    course_id = get_pecv_bench_course_id_request(session)
 
     delete_url = f"{SERVER_URL}/core/admin/courses/{course_id}"
     logging.info(f"Deleting course with ID {course_id} at URL {delete_url}")
@@ -244,7 +190,7 @@ def get_pecv_bench_course_id_request(session: Session) -> int:
     :rtype: int
     :raises Exception: If the course with the generated short name is not found.
     """
-    course_short_name = parse_course_name_to_short_name()
+    course_short_name = __parse_course_name_to_short_name()
     courseResponse: requests.Response = session.get(f"{SERVER_URL}/core/courses")
     courses = courseResponse.json()
     for course in courses:
@@ -278,7 +224,7 @@ def get_exercise_ids_from_pecv_bench_request(session: Session, course_id: int) -
 
             if title is not None and ex_id is not None:
                 exercises_map[title] = ex_id
-        return transform_exercise_json_keys(exercises_map)
+        return __transform_exercise_json_keys(exercises_map)
 
     except requests.exceptions.RequestException as e:
         print(f"Error fetching data: {e}")
@@ -287,7 +233,7 @@ def get_exercise_ids_from_pecv_bench_request(session: Session, course_id: int) -
         print(f"Error parsing JSON: {e}")
         return {}
 
-def transform_exercise_json_keys(input_dict: Dict[str, int]) -> Dict[str, int]:
+def __transform_exercise_json_keys(input_dict: Dict[str, int]) -> Dict[str, int]:
     """
     Transforms the keys of the input dictionary into a new format.
 
@@ -324,3 +270,96 @@ def transform_exercise_json_keys(input_dict: Dict[str, int]) -> Dict[str, int]:
             transformed_dict[original_key] = value
 
     return transformed_dict
+
+
+def setup_pecv_bench_course():
+    """
+    Sets up the PECV-Bench environment and imports programming exercises.
+
+    This function performs the following steps:
+    1. Clones the pecv-bench repository if it does not exist or pulls the latest changes.
+    2. Installs necessary pecv-bench dependencies.
+    3. Creates all exercise variants based on the configuration.
+    4. Creates a new course in Artemis for the benchmark.
+    5. Imports each exercise variant as a programming exercise into the course using multiple threads.
+
+    """
+    logging.info("Starting PECV-Bench Course Setup Script...")
+    session = requests.Session()
+    login_as_admin(session)
+
+    # Clone pecv-bench repository
+    pecv_bench_dir = get_pecv_bench_dir()
+    clone_pecv_bench(PECV_BENCH_REPO_URL, pecv_bench_dir)
+
+    # Install pecv-bench dependencies
+    install_pecv_bench_dependencies(pecv_bench_dir)
+
+    # Import necessary modules from pecv-bench and create variants
+    if pecv_bench_dir not in sys.path:
+        sys.path.insert(0, pecv_bench_dir)
+    try:
+        for COURSE, EXERCISES in COURSE_EXERCISES.items():
+            for EXERCISE in EXERCISES:
+                create_exercise_variants(COURSE, EXERCISE)
+    except ImportError as e:
+        logging.error(f"Failed to import dependencies from pecv-bench. Error: {e}")
+        sys.exit(1)
+
+    # Create PECV Bench Course
+    response_data = create_pecv_bench_course_request(session)
+
+    course_id = response_data.get("id")
+
+    # Store variant_id to exercise_id mapping, create zip files and import programming exercises
+    programming_exercises: Dict[str, int] = {} # {'<NAME>:001': 92, <VARIANT_ID>: <exercise_id>, ...}
+    logging.info(f"Preparing to import variants for {sum(len(ex) for ex in COURSE_EXERCISES.values())} exercises across {len(COURSE_EXERCISES)} courses using {MAX_THREADS} threads")
+    with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
+        futures = []
+
+        # submit all tasks
+        for COURSE, EXERCISES in COURSE_EXERCISES.items():
+            for EXERCISE in EXERCISES:
+                variants_folder_path: str = f"{pecv_bench_dir}/data/{COURSE}/{EXERCISE}/variants"
+
+                if not os.path.exists(variants_folder_path):
+                    logging.warning(f"Variants folder not found: {variants_folder_path}")
+                    continue
+
+                list_of_variants = sorted(os.listdir(variants_folder_path))
+
+                for variant_id in list_of_variants:
+                    if not os.path.isdir(os.path.join(variants_folder_path, variant_id)):
+                        continue
+                    variant_id_path = os.path.join(variants_folder_path, variant_id)
+                    #exercise_name = EXERCISE.split('-')[0].strip()
+                    futures.append(executor.submit(
+                        process_single_variant_import,
+                        session,
+                        SERVER_URL,
+                        course_id,
+                        EXERCISE,
+                        variant_id,
+                        variant_id_path
+                    ))
+
+        # collect results as they finish and thread-safe dictionary update
+        for future in as_completed(futures):
+            try:
+                key, exercise_server_id = future.result()
+                if exercise_server_id is not None:
+                    programming_exercises[key] = exercise_server_id
+                    logging.info(f"Imported variant {key} with exercise ID {exercise_server_id}.")
+                else:
+                    logging.error(f"Failed to import variant {key}.")
+            except Exception as e:
+                logging.exception(f"Thread failed with error: {e}")
+                return
+
+    logging.info(f"Imported {len(programming_exercises)} programming exercises into course ID {course_id}.")
+
+if __name__ == "__main__":
+    """
+    Main entry point for setting up the PECV-Bench course and importing programming exercises.
+    """
+    setup_pecv_bench_course()
