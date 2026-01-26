@@ -3,8 +3,10 @@ import {
     ContentChild,
     ElementRef,
     EventEmitter,
+    HostListener,
     Input,
     OnChanges,
+    OnDestroy,
     OnInit,
     Output,
     SimpleChanges,
@@ -15,7 +17,7 @@ import {
 } from '@angular/core';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs';
+import { Observable, Subject, Subscription } from 'rxjs';
 import { flatten, get, isNumber } from 'lodash-es';
 import { BaseEntity, StringBaseEntity } from 'app/shared/model/base-entity';
 import { SortService } from 'app/shared/service/sort.service';
@@ -77,9 +79,10 @@ type PagingValue = number | 'all';
         ArtemisTranslatePipe,
     ],
 })
-export class DataTableComponent implements OnInit, OnChanges {
+export class DataTableComponent implements OnInit, OnChanges, OnDestroy {
     private sortService = inject(SortService);
     private localStorageService = inject(LocalStorageService);
+    private elementRef = inject(ElementRef);
 
     /**
      * @property templateRef Ref to the content child of this component (which is ngx-datatable)
@@ -196,6 +199,9 @@ export class DataTableComponent implements OnInit, OnChanges {
         // so that they can be used from child components
         this.onSort = this.onSort.bind(this);
         this.iconForSortPropField = this.iconForSortPropField.bind(this);
+
+        // Initialize the debounced resize subscription
+        this.initResizeSubscription();
     }
 
     /**
@@ -207,6 +213,105 @@ export class DataTableComponent implements OnInit, OnChanges {
         if (changes.allEntities || changes.customFilterKey) {
             this.updateEntities();
         }
+    }
+
+    /**
+     * Flag to prevent infinite resize event loops when we dispatch our own resize event.
+     */
+    private isDispatchingResize = false;
+
+    /**
+     * Subject for emitting resize events to be debounced.
+     */
+    private resize$ = new Subject<void>();
+
+    /**
+     * Subscription for the debounced resize stream.
+     */
+    private resizeSubscription?: Subscription;
+
+    /**
+     * Internal selectors from ngx-datatable that require inline style clearing.
+     * Note: These are internal implementation details of @siemens/ngx-datatable v25.0.0.
+     * If upgrading ngx-datatable, verify these selectors still exist.
+     */
+    private static readonly DATATABLE_SELECTORS = [
+        'datatable-header',
+        'datatable-body',
+        'datatable-body-row',
+        'datatable-row-wrapper',
+        'datatable-selection',
+        '.datatable-header-inner',
+        '.datatable-scroll',
+        '.datatable-scroller',
+        '.datatable-row-center',
+        '.datatable-row-group',
+    ];
+
+    /**
+     * Initializes the debounced resize subscription.
+     */
+    private initResizeSubscription(): void {
+        // 300ms debounce gives Safari enough time to stabilize layout
+        this.resizeSubscription = this.resize$.pipe(debounceTime(300)).subscribe(() => {
+            this.resetDatatableLayout();
+        });
+    }
+
+    /**
+     * Handles window resize events.
+     * Emits to the resize$ subject which is debounced to avoid excessive recalculations.
+     */
+    @HostListener('window:resize')
+    onWindowResize(): void {
+        // Prevent infinite loop from our dispatched event
+        if (this.isDispatchingResize) {
+            this.isDispatchingResize = false;
+            return;
+        }
+
+        this.resize$.next();
+    }
+
+    /**
+     * Cleanup subscriptions on component destroy.
+     */
+    ngOnDestroy(): void {
+        this.resizeSubscription?.unsubscribe();
+        this.resize$.complete();
+    }
+
+    /**
+     * Resets the datatable layout by clearing inline styles and triggering recalculation.
+     * This fixes the issue where columns don't resize properly when resizing from small to large.
+     *
+     * Note: ngx-datatable's public recalculate() API alone doesn't fix this issue because
+     * the library doesn't clear stale inline width styles before recalculating.
+     */
+    private resetDatatableLayout(): void {
+        const nativeElement = this.elementRef.nativeElement;
+
+        // Clear inline width styles from container elements (scoped to this component)
+        DataTableComponent.DATATABLE_SELECTORS.forEach((selector) => {
+            const elements = nativeElement.querySelectorAll(selector);
+            elements.forEach((el: Element) => {
+                (el as HTMLElement).style.width = '';
+            });
+        });
+
+        // Force a reflow to ensure styles are applied before recalculation
+        // This is critical for Safari which may defer layout updates
+        void nativeElement.offsetHeight;
+
+        // Use requestAnimationFrame to wait for the next paint cycle
+        // This ensures the DOM has fully updated before triggering recalculation
+        this.isDispatchingResize = true;
+        requestAnimationFrame(() => {
+            // Double RAF ensures we wait for both layout and paint phases
+            requestAnimationFrame(() => {
+                window.dispatchEvent(new Event('resize'));
+            });
+        });
     }
 
     /**
