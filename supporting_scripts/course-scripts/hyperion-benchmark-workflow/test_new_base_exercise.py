@@ -6,26 +6,11 @@ import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from logging_config import logging
 
-from manage_pecv_bench_course import create_pecv_bench_course_request, get_exercise_ids_from_pecv_bench_request, get_pecv_bench_course_id_request, login_as_admin, SERVER_URL
-from manage_programming_exercise import convert_variant_to_zip, import_programming_exercise_request, consistency_check_variant_io, convert_base_exercise_to_zip
+from manage_pecv_bench_course import get_pecv_bench_course_id_request, login_as_admin
+from manage_programming_exercise import convert_base_exercise_to_zip, import_programming_exercise_request
+from utils import COURSE_EXERCISES, PECV_BENCH_REPO_URL, clone_pecv_bench, get_pecv_bench_dir, login_as_admin, SERVER_URL
 
-from run_pecv_bench_in_artemis import (
-    clone_pecv_bench,
-    get_pecv_bench_dir,
-    PECV_BENCH_REPO_URL
-)
-
-# Load configuration
-config = configparser.ConfigParser()
-config.read(['config.ini'])
-
-# Get settings
-MAX_THREADS: int = int(config.get('Settings', 'max_threads', fallback="5"))
-course_exercises_raw = config.get('PECVBenchSettings', 'course_exercises', fallback='{}')
-
-COURSE_EXERCISES = json.loads(course_exercises_raw)
-
-def main():
+def test_new_base_exercise():
     """
     Main entry point for adding new exercises.
 
@@ -34,6 +19,7 @@ def main():
     2. Retrieves the target course ID.
     3. Sets up the pecv-bench environment.
     4. Iterates through the configured courses and exercises and imports them as base exercises.
+    5. Import the programming exercises into Artemis.
     """
     logging.info("Starting Add New Exercises Script (Base Exercises Flow)...")
 
@@ -47,7 +33,7 @@ def main():
 
     # 3. Setup PECV-Bench Path
     pecv_bench_dir: str = get_pecv_bench_dir()
-    clone_pecv_bench(PECV_BENCH_REPO_URL, pecv_bench_dir)
+    #clone_pecv_bench(PECV_BENCH_REPO_URL, pecv_bench_dir)
 
     # Iterate through courses and exercises to create base zips
     for course_short_name, exercises in COURSE_EXERCISES.items():
@@ -56,10 +42,11 @@ def main():
             if os.path.exists(exercise_path) and os.path.isdir(exercise_path):
                 logging.info(f"Creating base zip for exercise: {exercise_name} in course {course_short_name}")
                 convert_base_exercise_to_zip(exercise_path, course_id)
+                import_programming_exercise_request(session, course_id, SERVER_URL, exercise_path)
             else:
                 logging.warning(f"Exercise directory not found: {exercise_path}")
 
     logging.info("Add New Exercises Script completed.")
 
 if __name__ == "__main__":
-    main()
+    test_new_base_exercise()
