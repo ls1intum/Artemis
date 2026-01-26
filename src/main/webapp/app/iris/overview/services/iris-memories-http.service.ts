@@ -16,7 +16,7 @@ export class IrisMemoriesHttpService {
      * Returns the flat memories along with learnings and connections in a single payload.
      */
     getUserMemoryData(): Observable<MemirisMemoryDataDTO> {
-        return this.http.get<MemirisMemoryDataDTO>(`${this.apiPrefix}/memoryData`);
+        return this.http.get<MemirisMemoryDataDTO>(`${this.apiPrefix}/memory-data`);
     }
 
     /**

@@ -39,11 +39,11 @@ public class IrisMemoryResource {
     }
 
     /**
-     * GET iris/user/memoryData: Retrieve aggregated Memiris memory data for the current user.
+     * GET iris/user/memory-data: Retrieve aggregated Memiris memory data for the current user.
      *
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and body the aggregated memory data
      */
-    @GetMapping("user/memoryData")
+    @GetMapping("user/memory-data")
     @EnforceAtLeastStudent
     public ResponseEntity<MemirisMemoryDataDTO> listMemoryData() {
         var user = userRepository.getUser();

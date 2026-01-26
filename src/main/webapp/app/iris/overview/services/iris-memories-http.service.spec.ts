@@ -41,7 +41,7 @@ describe('IrisMemoriesHttpService', () => {
         let result: MemirisMemoryDataDTO | undefined;
         service.getUserMemoryData().subscribe((data) => (result = data));
 
-        const req = httpMock.expectOne('api/iris/user/memoryData');
+        const req = httpMock.expectOne('api/iris/user/memory-data');
         expect(req.request.method).toBe('GET');
         req.flush(returnedFromService);
         await vi.waitFor(() => expect(result).toBeDefined());

@@ -54,7 +54,7 @@ class IrisMemoryResourceIntegrationTest extends AbstractIrisIntegrationTest {
         var connections = List.of(new MemirisMemoryConnectionDTO("C1", "related", List.of("B"), "desc", 0.8));
         irisRequestMockProvider.mockListMemoryData(user.getId(), new MemirisMemoryDataDTO(memories, learnings, connections));
 
-        var response = request.get("/api/iris/user/memoryData", HttpStatus.OK, MemirisMemoryDataDTO.class);
+        var response = request.get("/api/iris/user/memory-data", HttpStatus.OK, MemirisMemoryDataDTO.class);
         assertThat(response.memories()).hasSize(2);
         assertThat(response.memories().getFirst().id()).isEqualTo("A");
         assertThat(response.memories().get(1).slept_on()).isTrue();
@@ -67,7 +67,7 @@ class IrisMemoryResourceIntegrationTest extends AbstractIrisIntegrationTest {
     void getMemories_shouldReturnEmptyList() throws Exception {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         irisRequestMockProvider.mockListMemoryData(user.getId(), new MemirisMemoryDataDTO(List.of(), List.of(), List.of()));
-        var response = request.get("/api/iris/user/memoryData", HttpStatus.OK, MemirisMemoryDataDTO.class);
+        var response = request.get("/api/iris/user/memory-data", HttpStatus.OK, MemirisMemoryDataDTO.class);
         assertThat(response.memories()).isNullOrEmpty();
         assertThat(response.learnings()).isNullOrEmpty();
         assertThat(response.connections()).isNullOrEmpty();
@@ -78,7 +78,7 @@ class IrisMemoryResourceIntegrationTest extends AbstractIrisIntegrationTest {
     void getMemories_whenPyrisFails_shouldReturnInternalServerError() throws Exception {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         irisRequestMockProvider.mockListMemoryDataError(user.getId(), HttpStatus.INTERNAL_SERVER_ERROR);
-        request.get("/api/iris/user/memoryData", HttpStatus.INTERNAL_SERVER_ERROR, MemirisMemoryDataDTO.class);
+        request.get("/api/iris/user/memory-data", HttpStatus.INTERNAL_SERVER_ERROR, MemirisMemoryDataDTO.class);
     }
 
     @Test
