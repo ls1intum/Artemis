@@ -6,7 +6,6 @@ import static de.tum.cit.aet.artemis.core.util.FileUtil.generateTargetFilenameBa
 import static de.tum.cit.aet.artemis.core.util.FileUtil.saveFile;
 
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.io.FilenameUtils;
@@ -95,17 +94,6 @@ public class VideoFileUtil {
 
     /**
      * Validates the file size based on whether it's a video file or not.
-     * Video files are allowed up to MAX_VIDEO_FILE_SIZE, other files up to MAX_FILE_SIZE.
-     *
-     * @param file the file to validate
-     * @throws ResponseStatusException if the file size exceeds the maximum allowed size
-     */
-    public static void validateFileSize(MultipartFile file) {
-        validateFileSizeWithVideoLimit(file, Constants.MAX_VIDEO_FILE_SIZE);
-    }
-
-    /**
-     * Validates the file size based on whether it's a video file or not.
      * Video files are allowed up to the specified maxVideoFileSize, other files up to MAX_FILE_SIZE.
      *
      * @param file             the file to validate
@@ -120,21 +108,5 @@ public class VideoFileUtil {
         // If filename is missing, default to the stricter non-video limit.
         long maxSize = (originalFilename != null && isVideoFile(originalFilename)) ? maxVideoFileSize : Constants.MAX_FILE_SIZE;
         validateFileSize(file, maxSize);
-    }
-
-    /**
-     * Validates the file size for each file in a list.
-     *
-     * @param files       the files to validate
-     * @param maxFileSize the maximum allowed file size in bytes
-     * @throws ResponseStatusException if any file size exceeds the maximum allowed size
-     */
-    public static void validateFileSize(List<MultipartFile> files, long maxFileSize) {
-        if (files == null) {
-            return;
-        }
-        for (MultipartFile file : files) {
-            validateFileSize(file, maxFileSize);
-        }
     }
 }
