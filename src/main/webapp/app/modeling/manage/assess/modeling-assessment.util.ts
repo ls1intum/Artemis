@@ -1,6 +1,7 @@
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { UMLModel, getAssessmentNameForArtemis } from '@tumaet/apollon';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { getModelElementIds } from '../../shared/apollon-model.util';
 
 export type AssessmentNamesForModelId = { [modelId: string]: { type: string; name: string } | undefined };
 
@@ -36,13 +37,6 @@ export function filterInvalidFeedback(feedbacks: Feedback[], umlModel: UMLModel 
         return [];
     }
 
-    const nodeCollection = (umlModel as any).nodes ?? (umlModel as any).elements ?? [];
-    const edgeCollection = (umlModel as any).edges ?? (umlModel as any).relationships ?? [];
-
-    const nodeIds = Array.isArray(nodeCollection) ? nodeCollection.map((node: any) => node.id) : Object.values(nodeCollection).map((node: any) => node.id);
-    const edgeIds = Array.isArray(edgeCollection) ? edgeCollection.map((edge: any) => edge.id) : Object.values(edgeCollection).map((edge: any) => edge.id);
-
-    const availableIds = new Set<string | undefined>([...nodeIds, ...edgeIds]);
-
+    const availableIds = getModelElementIds(umlModel);
     return feedbacks.filter((feedback) => feedback.referenceId && availableIds.has(feedback.referenceId));
 }

@@ -53,6 +53,7 @@ import { Subject, Subscription, TeardownLogic, of } from 'rxjs';
 import { catchError, filter, skip, switchMap, tap } from 'rxjs/operators';
 import { ModelingAssessmentComponent } from '../../manage/assess/modeling-assessment.component';
 import { AssessmentNamesForModelId, getNamesForAssessments } from '../../manage/assess/modeling-assessment.util';
+import { countModelElements, hasModelElements, isModelEmpty as isApollonModelEmpty } from '../../shared/apollon-model.util';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
@@ -390,8 +391,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private updateModelAndExplanation(): void {
         if (this.submission.model) {
             this.umlModel = importDiagram(JSON.parse(this.submission.model));
-            const nodes = this.umlModel.nodes ?? {};
-            this.hasElements = Array.isArray(nodes) ? nodes.length !== 0 : Object.values(nodes).length !== 0;
+            this.hasElements = hasModelElements(this.umlModel);
         }
         this.explanation = this.submission.explanationText ?? '';
     }
@@ -427,8 +427,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.submission = submission;
                     if (this.submission.model) {
                         this.umlModel = importDiagram(JSON.parse(this.submission.model));
-                        const nodes = this.umlModel.nodes ?? {};
-                        this.hasElements = Array.isArray(nodes) ? nodes.length !== 0 : Object.values(nodes).length !== 0;
+                        this.hasElements = hasModelElements(this.umlModel);
                     }
                     const latestResult = getLatestSubmissionResult(this.submission);
                     if (latestResult && latestResult.completionDate && (this.isAfterAssessmentDueDate || latestResult.assessmentType === AssessmentType.AUTOMATIC_ATHENA)) {
@@ -616,8 +615,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.submission = response.body!;
                     if (this.submission.model) {
                         this.umlModel = importDiagram(JSON.parse(this.submission.model));
-                        const nodes = this.umlModel.nodes ?? {};
-                        this.hasElements = Array.isArray(nodes) ? nodes.length !== 0 : Object.values(nodes).length !== 0;
+                        this.hasElements = hasModelElements(this.umlModel);
                     }
                     this.submissionChange.next(this.submission);
                     this.participation = this.submission.participation as StudentParticipation;
@@ -691,14 +689,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     private isModelEmpty(model?: string): boolean {
-        const umlModel: UMLModel = model ? JSON.parse(model) : undefined;
-        if (!umlModel) {
+        if (!model) {
             return true;
         }
-        // Support both Apollon v4 (nodes) and v3 (elements) formats
-        const nodeCollection = (umlModel as any).nodes ?? (umlModel as any).elements ?? {};
-        const count = Array.isArray(nodeCollection) ? nodeCollection.length : Object.values(nodeCollection).length;
-        return count === 0;
+        const umlModel = JSON.parse(model);
+        return isApollonModelEmpty(umlModel);
     }
 
     ngOnDestroy(): void {
@@ -754,9 +749,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             return;
         }
         const umlModel = modelingEditor.getCurrentModel();
-        // Support both Apollon v4 (nodes) and v3 (elements) formats
-        const nodeCollection = (umlModel as any).nodes ?? (umlModel as any).elements ?? {};
-        this.hasElements = Array.isArray(nodeCollection) ? nodeCollection.length !== 0 : Object.values(nodeCollection).length !== 0;
+        this.hasElements = hasModelElements(umlModel);
         const diagramJson = JSON.stringify(umlModel);
         if (this.submission && diagramJson) {
             this.submission.model = diagramJson;
@@ -854,12 +847,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     calculateNumberOfModelElements(): number {
         if (this.submission && this.submission.model) {
             const umlModel = JSON.parse(this.submission.model);
-            // Apollon v4 uses nodes/edges, v3 used elements/relationships
-            const nodeCollection = umlModel.nodes ?? umlModel.elements ?? {};
-            const edgeCollection = umlModel.edges ?? umlModel.relationships ?? {};
-            const nodeCount = Array.isArray(nodeCollection) ? nodeCollection.length : Object.values(nodeCollection).length;
-            const edgeCount = Array.isArray(edgeCollection) ? edgeCollection.length : Object.values(edgeCollection).length;
-            return nodeCount + edgeCount;
+            return countModelElements(umlModel);
         }
         return 0;
     }
