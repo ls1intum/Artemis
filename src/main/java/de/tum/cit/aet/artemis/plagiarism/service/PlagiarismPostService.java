@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.communication.service.PostingService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -52,13 +53,13 @@ public class PlagiarismPostService extends PostingService {
     }
 
     /**
-     * Checks course, user and post validity,
+     * Checks course, user, and post-validity,
      * determines the post's author, persists the post,
      * and sends a notification to affected user groups
      *
-     * @param courseId id of the course the post belongs to
+     * @param courseId id of course the post belongs to
      * @param post     post to create
-     * @return created post that was persisted
+     * @return created a post that was persisted
      */
     public Post createPost(Long courseId, Post post) {
         // checks
@@ -72,6 +73,9 @@ public class PlagiarismPostService extends PostingService {
 
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
+        if (course.getCourseInformationSharingConfiguration() == CourseInformationSharingConfiguration.DISABLED) {
+            throw new BadRequestAlertException("Posting is disabled for this course.", METIS_POST_ENTITY_NAME, "courseInformationSharingDisabled");
+        }
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
 
@@ -89,7 +93,7 @@ public class PlagiarismPostService extends PostingService {
     }
 
     /**
-     * Persists the continuous plagiarism control plagiarism case post,
+     * Persists the continuous plagiarism control plagiarism case post
      * and sends a notification to affected user groups
      *
      * @param post post to create
@@ -100,11 +104,11 @@ public class PlagiarismPostService extends PostingService {
     }
 
     /**
-     * Checks course, user and post validity,
+     * Checks course, user, and post-validity,
      * updates non-restricted field of the post, persists the post,
      * and ensures that sensitive information is filtered out
      *
-     * @param courseId id of the course the post belongs to
+     * @param courseId id of course the post belongs to
      * @param postId   id of the post to update
      * @param post     post to update
      * @return updated post that was persisted
@@ -122,12 +126,12 @@ public class PlagiarismPostService extends PostingService {
 
         parseUserMentions(course, post.getContent());
 
-        boolean hasContentChanged = !existingPost.getContent().equals(post.getContent());
+        boolean hasContentChanged = !Objects.equals(existingPost.getContent(), post.getContent());
         if (hasContentChanged) {
             existingPost.setUpdatedDate(ZonedDateTime.now());
         }
 
-        // update: allow overwriting of values only for depicted fields if user is at least student
+        // update: allow overwriting of values only for depicted fields if the user is at least a student
         existingPost.setTitle(post.getTitle());
         existingPost.setContent(post.getContent());
 
@@ -139,7 +143,7 @@ public class PlagiarismPostService extends PostingService {
     }
 
     /**
-     * Checks course, user and post validity,
+     * Checks course, user, and post-validity,
      * retrieves and filters posts for a plagiarism case by its id
      * and ensures that sensitive information is filtered out
      *
@@ -149,7 +153,7 @@ public class PlagiarismPostService extends PostingService {
     public List<Post> getAllPlagiarismCasePosts(PostContextFilterDTO postContextFilter) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         final Course course = courseRepository.findByIdElseThrow(postContextFilter.courseId());
-        // user has to be at least student in the course
+        // the user has to be at least a student in the course
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         final PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdElseThrow(postContextFilter.plagiarismCaseId());
 
@@ -170,10 +174,10 @@ public class PlagiarismPostService extends PostingService {
     }
 
     /**
-     * Checks course, user and post validity,
-     * determines authority to delete post and deletes the post
+     * Checks course, user, and post-validity,
+     * determines authority to delete a post, and deletes the post
      *
-     * @param courseId id of the course the post belongs to
+     * @param courseId id of course the post belongs to
      * @param postId   id of the post to delete
      */
     public void deletePostById(Long courseId, Long postId) {
@@ -198,7 +202,7 @@ public class PlagiarismPostService extends PostingService {
     }
 
     /**
-     * Retrieve post from database by id
+     * Retrieve post from the database by id
      *
      * @param postId id of requested post
      * @return retrieved post
@@ -208,7 +212,7 @@ public class PlagiarismPostService extends PostingService {
     }
 
     /**
-     * Retrieve post or message post from database by id
+     * Retrieve post or message post from the database by id
      *
      * @param postOrMessageId ID of requested post or message
      * @return retrieved post
