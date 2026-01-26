@@ -656,7 +656,7 @@ describe('ExamUpdateComponent', () => {
             fixture.detectChanges();
             expect(component.saveTitle).toBe('entity.action.save');
             const button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.title).toBe('entity.action.save');
+            expect(button.title()).toBe('entity.action.save');
         });
 
         it('should bind isSaving into jhi-button isLoading', () => {
@@ -666,13 +666,13 @@ describe('ExamUpdateComponent', () => {
             fixture.changeDetectorRef.detectChanges();
 
             let button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.isLoading).toBeTrue();
+            expect(button.isLoading()).toBeTrue();
 
             component.isSaving = false;
             fixture.changeDetectorRef.detectChanges();
 
             button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.isLoading).toBeFalse();
+            expect(button.isLoading()).toBeFalse();
         });
 
         it('should toggle save button disabled state based on form validity and configuration validity', fakeAsync(() => {
@@ -690,7 +690,7 @@ describe('ExamUpdateComponent', () => {
             //Step 1: Test case where the configuration and the form are valid
             expect(component.isValidConfiguration).toBeTrue();
             let button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.disabled).toBeFalse();
+            expect(button.disabled()).toBeFalse();
 
             // Step 2: Test case where the configuration is invalid
             examWithoutExercises.startDate = now.add(5, 'hours');
@@ -1144,7 +1144,7 @@ describe('ExamUpdateComponent', () => {
             fixture.detectChanges();
             expect(component.saveTitle).toBe('entity.action.import');
             const button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
-            expect(button.title).toBe('entity.action.import');
+            expect(button.title()).toBe('entity.action.import');
         });
     });
 });

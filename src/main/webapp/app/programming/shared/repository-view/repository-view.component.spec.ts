@@ -18,6 +18,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('RepositoryViewComponent', () => {
     let component: RepositoryViewComponent;
@@ -40,6 +42,7 @@ describe('RepositoryViewComponent', () => {
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()
