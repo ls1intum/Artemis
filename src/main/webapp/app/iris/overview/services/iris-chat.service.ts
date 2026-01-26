@@ -537,7 +537,9 @@ export class IrisChatService implements OnDestroy {
         this.sessionCreationIdentifier = newIdentifier;
         if (isDifferent) {
             this.close();
-            this.start(forceNew);
+            if (this.sessionCreationIdentifier) {
+                this.start(forceNew);
+            }
         }
     }
 
