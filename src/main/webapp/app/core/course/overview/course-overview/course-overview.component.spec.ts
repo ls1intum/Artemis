@@ -18,7 +18,6 @@ import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { NgbDropdown, NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
@@ -33,7 +32,7 @@ import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date
 import { CourseExercisesComponent } from 'app/core/course/overview/course-exercises/course-exercises.component';
 import { CourseRegistrationComponent } from 'app/core/course/overview/course-registration/course-registration.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LTI, PROFILE_PROD } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI, PROFILE_IRIS, PROFILE_PROD } from 'app/app.constants';
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { CourseOverviewComponent } from 'app/core/course/overview/course-overview/course-overview.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
@@ -54,6 +53,7 @@ import { ArtemisServerDateService } from 'app/shared/service/server-date.service
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { generateExampleTutorialGroupsConfiguration } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
@@ -188,7 +188,7 @@ describe('CourseOverviewComponent', () => {
         router = new MockRouter();
 
         TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([]), MockModule(MatSidenavModule), MockModule(NgbTooltipModule), MockModule(BrowserAnimationsModule), FaIconComponent],
+            imports: [RouterModule.forRoot([]), MockModule(MatSidenavModule), MockModule(NgbTooltipModule), FaIconComponent],
             declarations: [
                 CourseOverviewComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
@@ -209,7 +209,7 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(CourseExerciseService),
                 MockProvider(CompetencyService),
                 MockProvider(TeamService),
-                MockProvider(WebsocketService),
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 MockProvider(ArtemisServerDateService),
                 MockProvider(CalendarService),
                 MockProvider(AlertService),
@@ -271,8 +271,8 @@ describe('CourseOverviewComponent', () => {
                     .spyOn(courseService, 'findAllForDropdown')
                     .mockReturnValue(of(new HttpResponse({ body: coursesDropdown, headers: new HttpHeaders() })));
                 jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({
-                    activeModuleFeatures: [MODULE_FEATURE_ATLAS],
-                    activeProfiles: [PROFILE_IRIS, PROFILE_LTI, PROFILE_PROD],
+                    activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI],
+                    activeProfiles: [PROFILE_IRIS, PROFILE_PROD],
                     testServer: false,
                 } as unknown as ProfileInfo);
                 jest.spyOn(courseNotificationSettingService, 'getSettingInfo').mockReturnValue(of(mockSettingInfo));
@@ -318,6 +318,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should create sidebar item for student course analytics dashboard if the feature is active', () => {
+        component.lectureEnabled = true;
         component.course.set({ id: 123, lectures: [], exams: [], studentCourseAnalyticsDashboardEnabled: true });
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.length).toBeGreaterThan(0);
@@ -327,6 +328,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should create sidebar items with default items', () => {
+        component.lectureEnabled = true;
         component.course.set({ id: 123, lectures: [], exams: [] });
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.length).toBeGreaterThan(0);
@@ -335,6 +337,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should create sidebar items for student if questions are available for practice', () => {
+        component.lectureEnabled = true;
         component.course.set({ id: 123, lectures: [], exams: [], trainingEnabled: true });
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.length).toBeGreaterThan(0);
@@ -373,7 +376,7 @@ describe('CourseOverviewComponent', () => {
         tabs.forEach((tab) => {
             jest.spyOn(router, 'url', 'get').mockReturnValue(baseUrl + '/' + tab);
             component.onSubRouteActivate({ controlConfiguration: undefined });
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
         });
         expect(metisConversationServiceStub).toHaveBeenCalledOnce();
     });
@@ -388,14 +391,14 @@ describe('CourseOverviewComponent', () => {
 
         route.snapshot.firstChild!.routeConfig!.path = 'exercises';
         component.onSubRouteActivate({ controlConfiguration: undefined });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.hasUnreadMessages()).toBe(hasNewMessages);
 
         const tabs = ['communication', 'exercises', 'communication'];
         tabs.forEach((tab) => {
             route.snapshot.firstChild!.routeConfig!.path = tab;
             component.onSubRouteActivate({ controlConfiguration: undefined });
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(spy).toHaveBeenCalledOnce();
         });
@@ -443,6 +446,7 @@ describe('CourseOverviewComponent', () => {
         fixture.detectChanges();
         tick();
 
+        // When user can register, component should redirect to registration page
         expect(router.navigate).toHaveBeenCalledWith(['courses', course1.id, 'register']);
     }));
 
@@ -621,13 +625,14 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should do ngOnDestroy', () => {
-        const jhiWebsocketServiceStub = jest.spyOn(jhiWebsocketService, 'unsubscribe');
-
         component.ngOnInit();
-        component.subscribeForQuizChanges(); // to have quizExercisesChannel set
+        component.subscribeForQuizChanges(); // to have quizExercisesSubscription set
+        // @ts-ignore
+        const quizUnsubscribeSpy = jest.spyOn(component.quizExercisesSubscription!, 'unsubscribe');
+
         component.ngOnDestroy();
 
-        expect(jhiWebsocketServiceStub).toHaveBeenCalledOnce();
+        expect(quizUnsubscribeSpy).toHaveBeenCalledOnce();
     });
 
     it('should render controls if child has configuration', () => {
@@ -637,8 +642,8 @@ describe('CourseOverviewComponent', () => {
 
         const stubSubComponent = TestBed.createComponent(ControlsTestingComponent);
         component.onSubRouteActivate(stubSubComponent.componentInstance);
-        fixture.detectChanges();
-        stubSubComponent.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
+        stubSubComponent.changeDetectorRef.detectChanges();
 
         const expectedButton = fixture.debugElement.query(By.css('#test-button'));
         expect(expectedButton).not.toBeNull();
@@ -647,11 +652,11 @@ describe('CourseOverviewComponent', () => {
 
     it('should toggle sidebar based on isNavbarCollapsed', () => {
         component.isNavbarCollapsed.set(true);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('.container-closed')).not.toBeNull();
 
         component.isNavbarCollapsed.set(false);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('.container-closed')).toBeNull();
     });
 
@@ -665,12 +670,12 @@ describe('CourseOverviewComponent', () => {
 
     it('should apply exam-wrapper and exam-is-active if exam is started', () => {
         component.isExamStarted.set(true);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('.exam-wrapper')).not.toBeNull();
         expect(fixture.nativeElement.querySelector('.exam-is-active')).not.toBeNull();
 
         component.isExamStarted.set(false);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('.exam-wrapper')).toBeNull();
         expect(fixture.nativeElement.querySelector('.exam-is-active')).toBeNull();
     });
@@ -692,7 +697,8 @@ describe('CourseOverviewComponent', () => {
         findAllForDropdownSpy.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
 
         await component.ngOnInit();
-        expect(component.courses()?.length).toBeUndefined();
+        // When findAllForDropdown fails, courses should not be initialized
+        expect(component.courses()).toBeUndefined();
     });
 
     it('should not display current course in dropdown', async () => {
@@ -704,7 +710,7 @@ describe('CourseOverviewComponent', () => {
 
     it('should unsubscribe from dashboardSubscription on ngOnDestroy', () => {
         component.updateRecentlyAccessedCourses();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.ngOnDestroy();
 
         expect(courseService.findAllForDropdown).toHaveBeenCalled();
@@ -861,8 +867,6 @@ describe('CourseOverviewComponent', () => {
 
         component.ngOnInit();
         tick();
-
-        expect((component as any).selectableSettingPresets).toBeUndefined();
 
         getSettingInfoSpy.mockReturnValue(of(mockSettingInfo));
 

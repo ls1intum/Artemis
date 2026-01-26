@@ -7,12 +7,13 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGE
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_INDEPENDENT;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -159,6 +160,8 @@ public class CacheConfiguration {
             testConfig.getMapConfigs().put("default", initializeDefaultMapConfig(jHipsterProperties));
             testConfig.getMapConfigs().put("files", initializeFilesMapConfig(jHipsterProperties));
             testConfig.getMapConfigs().put("de.tum.cit.aet.artemis.*.domain.*", initializeDomainMapConfig(jHipsterProperties));
+            testConfig.getMapConfigs().put("rate-limit-buckets", initializeRateLimitBucketsMapConfig(jHipsterProperties));
+            testConfig.getMapConfigs().put("atlas-session-pending-operations", initializeAtlasSessionMapConfig(jHipsterProperties));
 
             testConfig.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
 
@@ -171,7 +174,7 @@ public class CacheConfiguration {
             networkConfig.getJoin().getEurekaConfig().setEnabled(false);
 
             // Ensure the instance is a local-only, lite member to prevent connections
-            networkConfig.setPort(15701 + new Random().nextInt(1000)); // Randomize port to prevent conflicts
+            networkConfig.setPort(findAvailablePort()); // Find an available port to prevent conflicts
             networkConfig.setPortAutoIncrement(false);
             testConfig.setProperty("hazelcast.local.localAddress", "127.0.0.1");
 
@@ -252,6 +255,10 @@ public class CacheConfiguration {
         config.getMapConfigs().put("default", initializeDefaultMapConfig(jHipsterProperties));
         config.getMapConfigs().put("files", initializeFilesMapConfig(jHipsterProperties));
         config.getMapConfigs().put("de.tum.cit.aet.artemis.*.domain.*", initializeDomainMapConfig(jHipsterProperties));
+        config.getMapConfigs().put("rate-limit-buckets", initializeRateLimitBucketsMapConfig(jHipsterProperties));
+
+        // Atlas Agent session cache for pending competency operations with 2-hour TTL
+        config.getMapConfigs().put("atlas-session-pending-operations", initializeAtlasSessionMapConfig(jHipsterProperties));
 
         // Configure split brain protection if the cluster was split at some point
         var splitBrainProtectionConfig = new SplitBrainProtectionConfig();
@@ -362,5 +369,33 @@ public class CacheConfiguration {
     // config for all domain object, i.e. entities such as Course, Exercise, etc.
     private MapConfig initializeDomainMapConfig(JHipsterProperties jHipsterProperties) {
         return new MapConfig().setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
+    }
+
+    private MapConfig initializeRateLimitBucketsMapConfig(JHipsterProperties jHipsterProperties) {
+        return new MapConfig().setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount())
+                .setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
+    }
+
+    // config for Atlas Agent session caches with 2-hour TTL
+    private MapConfig initializeAtlasSessionMapConfig(JHipsterProperties jHipsterProperties) {
+        return new MapConfig().setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount())
+                .setEvictionConfig(new EvictionConfig().setEvictionPolicy(EvictionPolicy.LRU).setMaxSizePolicy(MaxSizePolicy.PER_NODE)).setTimeToLiveSeconds(2 * 60 * 60); // 2
+                                                                                                                                                                           // hours
+    }
+
+    /**
+     * Finds an available TCP port by opening a server socket on port 0 (which lets the OS assign an available port)
+     * and then closing it. This approach prevents port conflicts when multiple test contexts run in parallel.
+     *
+     * @return an available TCP port number
+     */
+    private static int findAvailablePort() {
+        try (ServerSocket socket = new ServerSocket(0)) {
+            socket.setReuseAddress(true);
+            return socket.getLocalPort();
+        }
+        catch (IOException e) {
+            throw new IllegalStateException("Could not find an available TCP port for Hazelcast", e);
+        }
     }
 }

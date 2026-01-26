@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.text.web;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -38,8 +37,8 @@ import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
-import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
@@ -73,8 +72,6 @@ public class TextExerciseCreationUpdateResource {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    private final Optional<IrisSettingsApi> irisSettingsApi;
-
     private final Optional<SlideApi> slideApi;
 
     private final Optional<AtlasMLApi> atlasMLApi;
@@ -90,9 +87,7 @@ public class TextExerciseCreationUpdateResource {
     public TextExerciseCreationUpdateResource(TextExerciseRepository textExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ParticipationRepository participationRepository, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, InstanceMessageSendService instanceMessageSendService, ChannelService channelService,
-            ExerciseVersionService exerciseVersionService, Optional<AthenaApi> athenaApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<IrisSettingsApi> irisSettingsApi, Optional<SlideApi> slideApi,
-
+            ExerciseVersionService exerciseVersionService, Optional<AthenaApi> athenaApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi,
             Optional<AtlasMLApi> atlasMLApi) {
         this.textExerciseRepository = textExerciseRepository;
         this.userRepository = userRepository;
@@ -106,7 +101,6 @@ public class TextExerciseCreationUpdateResource {
         this.exerciseVersionService = exerciseVersionService;
         this.athenaApi = athenaApi;
         this.competencyProgressApi = competencyProgressApi;
-        this.irisSettingsApi = irisSettingsApi;
         this.slideApi = slideApi;
         this.atlasMLApi = atlasMLApi;
     }
@@ -141,6 +135,9 @@ public class TextExerciseCreationUpdateResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
+        // Validate plagiarism detection config
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(textExercise, ENTITY_NAME);
+
         // Check that only allowed athena modules are used
         athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
 
@@ -150,8 +147,6 @@ public class TextExerciseCreationUpdateResource {
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(textExercise);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
-
-        irisSettingsApi.ifPresent(api -> api.setEnabledForExerciseByCategories(result, new HashSet<>()));
 
         // Notify AtlasML about the new text exercise
         notifyAtlasML(result, OperationTypeDTO.UPDATE, "text exercise creation");
@@ -194,6 +189,9 @@ public class TextExerciseCreationUpdateResource {
         final TextExercise textExerciseBeforeUpdate = textExerciseRepository.findWithEagerCompetenciesAndCategoriesByIdElseThrow(textExercise.getId());
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExerciseBeforeUpdate, user);
 
+        // Validate plagiarism detection config
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(textExercise, ENTITY_NAME);
+
         // Forbid changing the course the exercise belongs to.
         if (!Objects.equals(textExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId(), textExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
             throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
@@ -222,7 +220,6 @@ public class TextExerciseCreationUpdateResource {
 
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(textExerciseBeforeUpdate, Optional.of(textExercise)));
 
-        irisSettingsApi.ifPresent(api -> api.setEnabledForExerciseByCategories(textExercise, textExerciseBeforeUpdate.getCategories()));
         exerciseVersionService.createExerciseVersion(updatedTextExercise);
         return ResponseEntity.ok(updatedTextExercise);
     }

@@ -38,13 +38,14 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.LoginAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsException;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
@@ -104,6 +105,7 @@ public class PublicAccountResource {
      */
     @PostMapping("register")
     @EnforceNothing
+    @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
     public ResponseEntity<Void> registerAccount(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException {
 
         if (accountService.isRegistrationDisabled()) {
@@ -132,7 +134,7 @@ public class PublicAccountResource {
      *
      * @param key the activation key.
      * @return ResponseEntity with status 200 (OK)
-     * @throws RuntimeException {@code 500 (Internal Server Error)} if the user couldn't be activated.
+     * @throws BadRequestAlertException {@code 400 (Bad Request)} if the activation key is invalid or expired.
      */
     @GetMapping("activate")
     @EnforceNothing
@@ -142,7 +144,7 @@ public class PublicAccountResource {
         }
         Optional<User> user = userService.activateRegistration(key);
         if (user.isEmpty()) {
-            throw new InternalServerErrorException("No user was found for this activation key");
+            throw new BadRequestAlertException("The activation key is invalid", "user", "invalidActivationKey");
         }
         return ResponseEntity.ok().build();
     }
@@ -243,6 +245,7 @@ public class PublicAccountResource {
      */
     @PostMapping("account/reset-password/init")
     @EnforceNothing
+    @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
     public ResponseEntity<Void> requestPasswordReset(@RequestBody String mailUsername) {
         List<User> users = userRepository.findAllByEmailOrUsernameIgnoreCase(mailUsername);
         if (!users.isEmpty()) {
@@ -276,6 +279,7 @@ public class PublicAccountResource {
      */
     @PostMapping("account/reset-password/finish")
     @EnforceNothing
+    @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
     public ResponseEntity<Void> finishPasswordReset(@RequestBody KeyAndPasswordVM keyAndPassword) {
         if (accountService.isPasswordLengthInvalid(keyAndPassword.getNewPassword())) {
             throw new PasswordViolatesRequirementsException();

@@ -21,6 +21,9 @@ import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { CheckoutDirectoriesDto } from 'app/programming/shared/entities/checkout-directories-dto';
 import { ProgrammingExerciseTheiaConfig } from 'app/programming/shared/entities/programming-exercise-theia.config';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { ProgrammingExerciseDeletionSummaryDTO } from 'app/programming/shared/entities/programming-exercise-deletion-summary.model';
+import { createProgrammingExerciseEntitySummary } from 'app/programming/shared/utils/programming-exercise.utils';
+import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -185,7 +188,7 @@ export class ProgrammingExerciseService {
     updateProblemStatement(programmingExerciseId: number, problemStatement: string | undefined, req?: any) {
         const options = createRequestOption(req);
         // Send a single space for empty problem statements to avoid Spring Boot empty body rejection
-        // The backend will trim it and convert to null
+        // The server will trim it and convert to null
         const body = problemStatement?.trim() || ' ';
         return this.http
             .patch<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/problem-statement`, body, {
@@ -242,9 +245,8 @@ export class ProgrammingExerciseService {
                         this.reconnectSubmissionAndResult(templateSubmissions);
                         const solutionSubmissions = res.body.solutionParticipation?.submissions;
                         this.reconnectSubmissionAndResult(solutionSubmissions);
-
-                        this.processProgrammingExerciseEntityResponse(res);
                     }
+                    this.processProgrammingExerciseEntityResponse(res);
                     return res;
                 }),
             );
@@ -357,13 +359,13 @@ export class ProgrammingExerciseService {
      * @param deleteStudentReposBuildPlans indicates if the StudentReposBuildPlans should be also deleted or not
      * @param deleteBaseReposBuildPlans indicates if the BaseReposBuildPlans should be also deleted or not
      */
-    delete(programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean): Observable<HttpResponse<any>> {
+    delete(programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean): Observable<HttpResponse<void>> {
         let params = new HttpParams();
         if (deleteBaseReposBuildPlans != undefined && deleteStudentReposBuildPlans != undefined) {
             params = params.set('deleteStudentReposBuildPlans', deleteStudentReposBuildPlans.toString());
             params = params.set('deleteBaseReposBuildPlans', deleteBaseReposBuildPlans.toString());
         }
-        return this.http.delete(`${this.resourceUrl}/${programmingExerciseId}`, { params, observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/${programmingExerciseId}`, { params, observe: 'response' });
     }
 
     /**
@@ -547,5 +549,18 @@ export class ProgrammingExerciseService {
                 checkoutSolution: checkoutSolution,
             },
         });
+    }
+
+    /**
+     * Get a summary of the deletion of a programming exercise.
+     * @param exerciseId the id of the programming exercise
+     */
+    getDeletionSummary(exerciseId: number): Observable<EntitySummary> {
+        return this.http.get<ProgrammingExerciseDeletionSummaryDTO>(`${this.resourceUrl}/${exerciseId}/deletion-summary`, { observe: 'response' }).pipe(
+            map((response) => {
+                const summary = response.body;
+                return summary ? createProgrammingExerciseEntitySummary(summary) : {};
+            }),
+        );
     }
 }

@@ -1,5 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -8,24 +10,28 @@ import { UMLDiagramType } from '@tumaet/apollon';
 const resourceUrl = 'api/modeling';
 
 describe('ApollonDiagramService', () => {
+    setupTestBed({ zoneless: true });
+
     let courseId: number;
     let apollonDiagram: ApollonDiagram;
     let apollonDiagramService: ApollonDiagramService;
     let httpTestingController: HttpTestingController;
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [provideHttpClient(), provideHttpClientTesting(), ApollonDiagramService],
-        })
-            .compileComponents()
-            .then(() => {
-                apollonDiagramService = TestBed.inject(ApollonDiagramService);
-                httpTestingController = TestBed.inject(HttpTestingController);
-            });
+        }).compileComponents();
+
+        apollonDiagramService = TestBed.inject(ApollonDiagramService);
+        httpTestingController = TestBed.inject(HttpTestingController);
         courseId = 1;
         apollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, courseId);
     });
 
-    it('should create a diagram', fakeAsync(() => {
+    afterEach(() => {
+        httpTestingController.verify();
+    });
+
+    it('should create a diagram', () => {
         // Set up
         const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
         const responseObject = apollonDiagram;
@@ -39,14 +45,12 @@ describe('ApollonDiagramService', () => {
         const requestWrapper = httpTestingController.expectOne({ url });
         requestWrapper.flush(responseObject);
 
-        tick();
-
         expect(requestWrapper.request.method).toBe('POST');
         expect(response!.body).toEqual(responseObject);
         expect(response!.status).toBe(200);
-    }));
+    });
 
-    it('should update a diagram', fakeAsync(() => {
+    it('should update a diagram', () => {
         // Set up
         const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
         const responseObject = apollonDiagram;
@@ -60,14 +64,12 @@ describe('ApollonDiagramService', () => {
         const requestWrapper = httpTestingController.expectOne({ url });
         requestWrapper.flush(responseObject);
 
-        tick();
-
         expect(requestWrapper.request.method).toBe('PUT');
         expect(response!.body).toEqual(responseObject);
         expect(response!.status).toBe(200);
-    }));
+    });
 
-    it('should find a diagram', fakeAsync(() => {
+    it('should find a diagram', () => {
         // Set up
         const diagramId = 1;
         const url = `${resourceUrl}/course/${courseId}/apollon-diagrams/${diagramId}`;
@@ -82,14 +84,12 @@ describe('ApollonDiagramService', () => {
         const requestWrapper = httpTestingController.expectOne({ url });
         requestWrapper.flush(responseObject);
 
-        tick();
-
         expect(requestWrapper.request.method).toBe('GET');
         expect(response!.body).toEqual(responseObject);
         expect(response!.status).toBe(200);
-    }));
+    });
 
-    it('should delete a diagram', fakeAsync(() => {
+    it('should delete a diagram', () => {
         // Set up
         const diagramId = 1;
         const url = `${resourceUrl}/course/${courseId}/apollon-diagrams/${diagramId}`;
@@ -104,14 +104,12 @@ describe('ApollonDiagramService', () => {
         const requestWrapper = httpTestingController.expectOne({ url });
         requestWrapper.flush(responseObject);
 
-        tick();
-
         expect(requestWrapper.request.method).toBe('DELETE');
         expect(response!.body).toEqual(responseObject);
         expect(response!.status).toBe(200);
-    }));
+    });
 
-    it('should get diagrams by course', fakeAsync(() => {
+    it('should get diagrams by course', () => {
         // Set up
         const url = `${resourceUrl}/course/${courseId}/apollon-diagrams`;
         const responseObject = [apollonDiagram];
@@ -125,10 +123,8 @@ describe('ApollonDiagramService', () => {
         const requestWrapper = httpTestingController.expectOne({ url });
         requestWrapper.flush(responseObject);
 
-        tick();
-
         expect(requestWrapper.request.method).toBe('GET');
         expect(response!.body).toEqual(responseObject);
         expect(response!.status).toBe(200);
-    }));
+    });
 });

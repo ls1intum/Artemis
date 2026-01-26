@@ -36,7 +36,7 @@
                 "text": "<a href = {{ notificationsURL }}>Notifications:</a> Customizable for web and email. Users can enable and disable different notification types."
             },
             "teamExercises": {
-                "text": "<a href={{ teamExercisesUrl }}>Team exercises</a> with real time collaboration and dedicated tutors per team."
+                "text": "<a href={{ teamExercisesUrl }}>Team exercises</a> with real-time collaboration and dedicated tutors per team."
             },
             "lectures": {
                 "text": "<a href={{ lecturesUrl }}>Lectures:</a> Upload lecture slides for multiple units, integrate video streams, lecture recordings, and exercises into lectures, and define competencies."
@@ -72,6 +72,7 @@
                 "text": "<a href={{ openSourceUrl }}>Open-source:</a> Free to use with a large community and many active maintainers."
             },
             "getInTouch": "Get in touch",
+            "courseRequests": "Request a new course",
             "contributors": "Individual contributors",
             "website": "Website",
             "roles": {

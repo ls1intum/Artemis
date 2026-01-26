@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { type MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -26,20 +28,21 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CreateExerciseUnitComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let createExerciseUnitComponentFixture: ComponentFixture<CreateExerciseUnitComponent>;
     let createExerciseUnitComponent: CreateExerciseUnitComponent;
 
-    let courseManagementService;
-    let findWithExercisesStub: jest.SpyInstance;
+    let courseManagementService: CourseManagementService;
+    let findWithExercisesStub: MockInstance<CourseManagementService['findWithExercises']>;
 
-    let exerciseUnitService;
-    let findAllByLectureIdStub: jest.SpyInstance;
-    let createStub: jest.SpyInstance;
+    let exerciseUnitService: ExerciseUnitService;
+    let findAllByLectureIdStub: MockInstance<ExerciseUnitService['findAllByLectureId']>;
+    let createStub: MockInstance<ExerciseUnitService['create']>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [FaIconComponent],
-            declarations: [CreateExerciseUnitComponent, MockPipe(ArtemisTranslatePipe), MockDirective(SortDirective), MockDirective(SortByDirective)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [FaIconComponent, CreateExerciseUnitComponent, MockPipe(ArtemisTranslatePipe), MockDirective(SortDirective), MockDirective(SortByDirective)],
             providers: [
                 MockProvider(CourseManagementService),
                 MockProvider(AlertService),
@@ -75,21 +78,19 @@ describe('CreateExerciseUnitComponent', () => {
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                createExerciseUnitComponentFixture = TestBed.createComponent(CreateExerciseUnitComponent);
-                createExerciseUnitComponent = createExerciseUnitComponentFixture.componentInstance;
-                courseManagementService = TestBed.inject(CourseManagementService);
-                findWithExercisesStub = jest.spyOn(courseManagementService, 'findWithExercises');
-                exerciseUnitService = TestBed.inject(ExerciseUnitService);
-                findAllByLectureIdStub = jest.spyOn(exerciseUnitService, 'findAllByLectureId');
-                createStub = jest.spyOn(exerciseUnitService, 'create');
-            });
+        }).compileComponents();
+
+        createExerciseUnitComponentFixture = TestBed.createComponent(CreateExerciseUnitComponent);
+        createExerciseUnitComponent = createExerciseUnitComponentFixture.componentInstance;
+        courseManagementService = TestBed.inject(CourseManagementService);
+        findWithExercisesStub = vi.spyOn(courseManagementService, 'findWithExercises');
+        exerciseUnitService = TestBed.inject(ExerciseUnitService);
+        findAllByLectureIdStub = vi.spyOn(exerciseUnitService, 'findAllByLectureId');
+        createStub = vi.spyOn(exerciseUnitService, 'create');
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -97,7 +98,7 @@ describe('CreateExerciseUnitComponent', () => {
         expect(createExerciseUnitComponent).not.toBeNull();
     });
 
-    it('should send POST requests for selected course exercises', fakeAsync(() => {
+    it('should send POST requests for selected course exercises', async () => {
         const course = new Course();
         const textExercise = new TextExercise(course, undefined);
         textExercise.id = 1;
@@ -139,25 +140,24 @@ describe('CreateExerciseUnitComponent', () => {
         );
 
         createExerciseUnitComponentFixture.detectChanges();
-        expect(createExerciseUnitComponent.exercisesAvailableForUnitCreation).toHaveLength(5);
+        expect(createExerciseUnitComponent.exercisesAvailableForUnitCreation()).toHaveLength(5);
 
         const tableRows = createExerciseUnitComponentFixture.debugElement.queryAll(By.css('tbody > tr'));
         expect(tableRows).toHaveLength(5);
         tableRows[0].nativeElement.click(); // textExercise
         tableRows[1].nativeElement.click(); // programmingExercise
         tableRows[2].nativeElement.click(); // quizExercise
-        expect(createExerciseUnitComponent.exercisesToCreateUnitFor).toHaveLength(3);
-        expect(createExerciseUnitComponent.exercisesAvailableForUnitCreation[0].id).toEqual(textExercise.id);
-        expect(createExerciseUnitComponent.exercisesAvailableForUnitCreation[1].id).toEqual(programmingExercise.id);
-        expect(createExerciseUnitComponent.exercisesAvailableForUnitCreation[2].id).toEqual(quizExercise.id);
+        expect(createExerciseUnitComponent.exercisesToCreateUnitFor()).toHaveLength(3);
+        expect(createExerciseUnitComponent.exercisesAvailableForUnitCreation()[0].id).toEqual(textExercise.id);
+        expect(createExerciseUnitComponent.exercisesAvailableForUnitCreation()[1].id).toEqual(programmingExercise.id);
+        expect(createExerciseUnitComponent.exercisesAvailableForUnitCreation()[2].id).toEqual(quizExercise.id);
 
         const createButton = createExerciseUnitComponentFixture.debugElement.nativeElement.querySelector('#createButton');
 
         createExerciseUnitComponentFixture.detectChanges();
         createButton.click();
 
-        createExerciseUnitComponentFixture.whenStable().then(() => {
-            expect(createStub).toHaveBeenCalledTimes(3);
-        });
-    }));
+        await createExerciseUnitComponentFixture.whenStable();
+        expect(createStub).toHaveBeenCalledTimes(3);
+    });
 });

@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ModelingExerciseResolver } from 'app/modeling/manage/services/modeling-exercise-resolver.service';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
@@ -14,6 +16,8 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { Course } from 'app/core/course/shared/entities/course.model';
 
 describe('ModelingExerciseResolver', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ModelingExerciseResolver;
     let currentRoute: ActivatedRouteSnapshot;
 
@@ -36,7 +40,7 @@ describe('ModelingExerciseResolver', () => {
     it('should resolve a ModelingExercise when exerciseId is provided', () => {
         const dummyExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
         const modelingExerciseService = TestBed.inject(ModelingExerciseService);
-        jest.spyOn(modelingExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: dummyExercise })));
+        vi.spyOn(modelingExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: dummyExercise })));
 
         currentRoute.params = { exerciseId: '123' };
 
@@ -50,7 +54,7 @@ describe('ModelingExerciseResolver', () => {
     it('should resolve a ModelingExercise for a course and exercise group', () => {
         const dummyExerciseGroup = { id: 3 } as ExerciseGroup;
         const exerciseGroupService = TestBed.inject(ExerciseGroupService);
-        jest.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: dummyExerciseGroup })));
+        vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: dummyExerciseGroup })));
 
         currentRoute.params = { courseId: '1', examId: '2', exerciseGroupId: '3' };
 
@@ -69,7 +73,7 @@ describe('ModelingExerciseResolver', () => {
     it('should resolve a ModelingExercise for a course without an exercise group', () => {
         const dummyCourse = { id: 1 } as Course;
         const courseService = TestBed.inject(CourseManagementService);
-        jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: dummyCourse })));
+        vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: dummyCourse })));
 
         currentRoute.params = { courseId: '1' };
 

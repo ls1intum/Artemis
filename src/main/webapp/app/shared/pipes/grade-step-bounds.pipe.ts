@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
-import { GradeEditMode } from 'app/assessment/manage/grading-system/base-grading-system/base-grading-system.component';
+import { GradeEditMode } from 'app/assessment/manage/grading/grading.component';
 import { round } from 'app/shared/util/utils';
 
 @Pipe({

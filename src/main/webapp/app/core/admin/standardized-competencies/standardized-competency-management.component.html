@@ -1,19 +1,17 @@
 <div class="container">
-    <div class="d-flex flex-wrap">
-        <div class="d-flex align-items-center">
-            <h2 jhiTranslate="artemisApp.standardizedCompetency.manage.title"></h2>
-            <jhi-documentation-button [type]="documentationType" />
-        </div>
-        <div class="ms-auto justify-content-end">
-            <a class="btn btn-primary" [routerLink]="['/admin', 'standardized-competencies', 'import']">
-                <fa-icon [icon]="faFileImport" />
-                <span jhiTranslate="artemisApp.standardizedCompetency.manage.importButton"></span>
-            </a>
-            <a class="btn btn-primary" (click)="exportStandardizedCompetencyCatalog()">
-                <fa-icon [icon]="faFileExport" />
-                <span jhiTranslate="artemisApp.standardizedCompetency.manage.exportButton"></span>
-            </a>
-        </div>
+    <div class="d-flex align-items-center">
+        <h5 *adminTitleBarTitle id="standardized-competency-heading" class="mb-0" jhiTranslate="artemisApp.standardizedCompetency.manage.title"></h5>
+        <jhi-documentation-button [type]="documentationType" />
+    </div>
+    <div *adminTitleBarActions>
+        <a class="btn btn-primary btn-sm" [routerLink]="['/admin', 'standardized-competencies', 'import']">
+            <fa-icon [icon]="faFileImport" />
+            <span jhiTranslate="artemisApp.standardizedCompetency.manage.importButton"></span>
+        </a>
+        <a class="btn btn-primary btn-sm" (click)="exportStandardizedCompetencyCatalog()">
+            <fa-icon [icon]="faFileExport" />
+            <span jhiTranslate="artemisApp.standardizedCompetency.manage.exportButton"></span>
+        </a>
     </div>
     <jhi-standardized-competency-filter
         [knowledgeAreasForSelect]="knowledgeAreasForSelect"
@@ -35,14 +33,14 @@
             class="me-1"
             [btnSize]="ButtonSize.SMALL"
             [icon]="faMinimize"
-            (onClick)="treeControl.collapseAll()"
+            (onClick)="tree?.collapseAll()"
             tooltip="artemisApp.standardizedCompetency.manage.collapseButtonTooltip"
         />
-        <jhi-button [btnSize]="ButtonSize.SMALL" [icon]="faMaximize" (onClick)="treeControl.expandAll()" tooltip="artemisApp.standardizedCompetency.manage.expandButtonTooltip" />
+        <jhi-button [btnSize]="ButtonSize.SMALL" [icon]="faMaximize" (onClick)="tree?.expandAll()" tooltip="artemisApp.standardizedCompetency.manage.expandButtonTooltip" />
     </div>
     @if (dataSource.data?.length) {
         <div class="d-flex">
-            <jhi-knowledge-area-tree class="d-flex flex-grow-1 h-100 w-50" [dataSource]="dataSource" [treeControl]="treeControl">
+            <jhi-knowledge-area-tree class="d-flex flex-grow-1 h-100 w-50" [dataSource]="dataSource">
                 <ng-template let-knowledgeArea="knowledgeArea" #knowledgeAreaTemplate>
                     <div class="d-flex align-items-center">
                         <fa-icon
@@ -67,25 +65,27 @@
                     </div>
                 </ng-template>
             </jhi-knowledge-area-tree>
-            @if (selectedCompetency) {
+            @if (selectedCompetency(); as competency) {
                 <div class="card light-background d-flex flex-grow-1 w-100 h-100 p-3 ms-1">
                     <jhi-standardized-competency-edit
-                        [competency]="selectedCompetency"
+                        [competency]="competency"
                         [knowledgeAreas]="knowledgeAreasForSelect"
-                        [sources]="sourcesForSelect"
-                        [(isEditing)]="isEditing"
+                        [sources]="sourcesForSelect()"
+                        [isEditing]="isEditing()"
+                        (isEditingChange)="isEditing.set($event)"
                         (onSave)="saveCompetency($event)"
                         (onDelete)="deleteCompetency($event)"
                         (onClose)="closeCompetency()"
                         [dialogError]="dialogError"
                     />
                 </div>
-            } @else if (selectedKnowledgeArea) {
+            } @else if (selectedKnowledgeArea(); as knowledgeArea) {
                 <div class="card light-background d-flex flex-grow-1 w-100 h-100 p-3 ms-1">
                     <jhi-knowledge-area-edit
-                        [knowledgeArea]="selectedKnowledgeArea"
+                        [knowledgeArea]="knowledgeArea"
                         [knowledgeAreas]="knowledgeAreasForSelect"
-                        [(isEditing)]="isEditing"
+                        [isEditing]="isEditing()"
+                        (isEditingChange)="isEditing.set($event)"
                         (onSave)="saveKnowledgeArea($event)"
                         (onDelete)="deleteKnowledgeArea($event)"
                         (onOpenNewCompetency)="openNewCompetency($event)"
@@ -96,7 +96,7 @@
                 </div>
             }
         </div>
-    } @else if (isLoading) {
+    } @else if (isLoading()) {
         <div class="d-flex justify-content-center">
             <div class="spinner-border" role="status">
                 <span class="visually-hidden" jhiTranslate="loading"></span>

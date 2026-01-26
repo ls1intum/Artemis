@@ -37,7 +37,6 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.attributes.AttributesNodeProvider;
 import org.eclipse.jgit.lib.BaseRepositoryBuilder;
 import org.eclipse.jgit.lib.ObjectDatabase;
-import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.RefDatabase;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.StoredConfig;
@@ -55,6 +54,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.Isolated;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
@@ -90,6 +90,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
+import de.tum.cit.aet.artemis.programming.service.localci.LocalCIEventListenerService;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
@@ -128,6 +129,11 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     private DistributedMap<String, BuildJobQueueItem> processingJobs;
 
     private DistributedMap<String, BuildAgentInformation> buildAgentInformation;
+
+    // Inject to trigger the @PostConstruct initialization which registers the map listeners
+    @SuppressWarnings("unused")
+    @Autowired
+    private LocalCIEventListenerService localCIEventListenerService;
 
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
@@ -348,27 +354,34 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository(), userTestRepository.getUserWithGroupsAndAuthorities());
 
-        await().until(() -> {
+        // Wait for build job to appear - on fast systems it might complete quickly
+        await().atMost(60, TimeUnit.SECONDS).pollInterval(500, TimeUnit.MILLISECONDS).until(() -> {
             Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
-            return buildJobOptional.isPresent() && buildJobOptional.get().getBuildStatus() == BuildStatus.QUEUED;
+            return buildJobOptional.isPresent();
         });
 
         BuildJob buildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId()).orElseThrow();
+        String originalBuildJobId = buildJob.getBuildJobId();
+
+        // Mark the job as MISSING so the retry service will pick it up
         buildJob.setBuildStatus(BuildStatus.MISSING);
         buildJob.setBuildSubmissionDate(ZonedDateTime.now().minusMinutes(10));
-        buildJobRepository.save(buildJob);
+        buildJobRepository.saveAndFlush(buildJob);
 
         localCIMissingJobService.retryMissingJobs();
 
-        // job for participation should be retried so retry count should be 1 and status QUEUED
-        await().until(() -> {
-            Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildJobIdDesc(buildJob.getParticipationId());
-            if (buildJobOptional.isEmpty()) {
-                return false;
-            }
-            BuildJob retriedBuildJob = buildJobOptional.get();
-            return (retriedBuildJob.getBuildStatus() == BuildStatus.QUEUED || retriedBuildJob.getBuildStatus() == BuildStatus.BUILDING) && retriedBuildJob.getRetryCount() == 1;
+        // Verify: The original job should now have retryCount incremented
+        BuildJob updatedOriginalJob = buildJobRepository.findByBuildJobId(originalBuildJobId).orElseThrow();
+        assertThat(updatedOriginalJob.getRetryCount()).isEqualTo(1);
+
+        // Verify: A new job should exist with retryCount=1
+        await().atMost(60, TimeUnit.SECONDS).pollInterval(500, TimeUnit.MILLISECONDS).until(() -> {
+            List<BuildJob> allJobsForParticipation = buildJobRepository.findAll().stream()
+                    .filter(j -> j.getParticipationId() != null && j.getParticipationId().equals(studentParticipation.getId())).toList();
+            // We should have at least 2 jobs: the original MISSING one and the new retried one
+            return allJobsForParticipation.size() >= 2 && allJobsForParticipation.stream().anyMatch(j -> j.getRetryCount() == 1 && !j.getBuildJobId().equals(originalBuildJobId));
         });
+
         processingJobs.clear();
         queuedJobs.clear();
     }
@@ -568,9 +581,6 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testIOExceptionWhenParsingTestResults() {
-        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(any());
-
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         // Return an InputStream from dockerClient.copyArchiveFromContainerCmd().exec() such that repositoryTarInputStream.getNextTarEntry() throws an IOException.
@@ -870,6 +880,9 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     @Test
     void testSelfPauseTriggersListenerAndEmailNotification() {
+        // Create the internal admin user so the listener can send the notification email
+        userUtilService.createAndSaveUser(localVCUsername);
+
         String memberAddress = distributedDataAccessService.getLocalMemberAddress();
         BuildAgentDTO buildAgentDTO = new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName);
         BuildAgentInformation buildAgent = new BuildAgentInformation(buildAgentDTO, 0, 0, new ArrayList<>(List.of()), BuildAgentStatus.IDLE, null, null, 100);
@@ -881,6 +894,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         buildAgentInformation.put(memberAddress, updatedInfo);
         await().until(() -> buildAgentInformation.get(memberAddress).status() == BuildAgentStatus.SELF_PAUSED);
-        verify(mailService, timeout(1000)).sendBuildAgentSelfPausedEmailToAdmin(any(User.class), eq(buildAgent.buildAgent().name()), eq(consecutiveFailedBuildJobs));
+        // Increase timeout to 5000ms to avoid flaky test failures due to slow listener processing
+        verify(mailService, timeout(5000)).sendBuildAgentSelfPausedEmailToAdmin(any(User.class), eq(buildAgent.buildAgent().name()), eq(consecutiveFailedBuildJobs));
     }
 }

@@ -1,4 +1,7 @@
 <div #fullElement class="h-100">
+    @if (showMarkdownInfoText()) {
+        <div class="pb-1 text-muted small" jhiTranslate="artemisApp.markdownEditor.infoText"></div>
+    }
     <div
         #wrapper
         class="markdown-editor-wrapper"
@@ -18,6 +21,7 @@
                             class="h-100"
                             [shrinkToFit]="false"
                             [stickyScroll]="false"
+                            [textChangedEmitDelay]="200"
                             (textChanged)="onTextChanged($event)"
                             (contentHeightChanged)="onContentHeightChanged($event)"
                             (drop)="onFileDrop($event)"
@@ -26,6 +30,7 @@
                         @if (enableFileUpload) {
                             <div class="d-flex align-items-center border-top" #fileUploadFooter>
                                 <input
+                                    #fileUploadInput
                                     [id]="'file-upload ' + uniqueMarkdownEditorId"
                                     class="file-upload-footer-input"
                                     type="file"
@@ -47,9 +52,11 @@
                                         ></span>
                                     </div>
                                 </label>
-                                <a class="col-auto mx-1" href="https://markdown-it.github.io/">
-                                    <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
-                                </a>
+                                @if (!showMarkdownInfoText()) {
+                                    <a class="col-auto mx-1" href="https://markdown-it.github.io/">
+                                        <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
+                                    </a>
+                                }
                                 @if (editType() !== EditType.UPDATE && isInCommunication()) {
                                     <ng-container [ngTemplateOutlet]="irisButton" [ngTemplateOutletContext]="{ extraClass: 'ms-1 col-auto' }" />
                                     <ng-container [ngTemplateOutlet]="sendButton" [ngTemplateOutletContext]="{ extraClass: 'ms-1 col-auto', testId: 'save' }" />
@@ -75,7 +82,7 @@
                 }
                 <ng-template ngbNavContent>
                     <div class="mt-1 mb-2 mx-2 overflow-auto">
-                        <ng-content class="overflow-auto p-1" select="[#previewMonaco]">
+                        <ng-content class="overflow-auto p-1" select="#previewMonaco">
                             @if (showDefaultPreview) {
                                 <div class="p-0 m-0 background-editor-high markdown-preview" [innerHTML]="defaultPreviewHtml"></div>
                             }

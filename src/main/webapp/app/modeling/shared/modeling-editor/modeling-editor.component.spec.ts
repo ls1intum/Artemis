@@ -2,55 +2,56 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { By } from '@angular/platform-browser';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ApollonEditor, UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
+import { ApollonEditor, Patch, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import * as testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
+import testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
 import { cloneDeep } from 'lodash-es';
-import { SimpleChange } from '@angular/core';
-import { MockComponent } from 'ng-mocks';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ModelingEditorComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ModelingEditorComponent>;
     let component: ModelingEditorComponent;
     const course = { id: 123 } as Course;
     const diagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!);
     // @ts-ignore
-    const classDiagram = cloneDeep(importDiagram({ id: 'diagram', title: 'Diagram', model: testClassDiagram } as { id: string; title: string; model: UMLModel })); // note: clone is needed to prevent weird errors with setters, because testClassDiagram is not an actual object
+    const classDiagram = cloneDeep(testClassDiagram as UMLModel); // note: clone is needed to prevent weird errors with setters, because testClassDiagram is not an actual object
     const route = { params: of({ id: 1, courseId: 123 }), snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
+
     beforeEach(() => {
         diagram.id = 1;
         diagram.jsonRepresentation = JSON.stringify(classDiagram);
 
         TestBed.configureTestingModule({
-            declarations: [ModelingEditorComponent, MockComponent(ModelingExplanationEditorComponent)],
+            imports: [ModelingEditorComponent, ModelingExplanationEditorComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ModelingEditorComponent);
-                component = fixture.componentInstance;
-            });
+        });
+
+        fixture = TestBed.createComponent(ModelingEditorComponent);
+        component = fixture.componentInstance;
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('ngAfterViewInit', async () => {
-        jest.spyOn(console, 'error').mockImplementation(); // prevent: findDOMNode is deprecated and will be removed in the next major release
-        component.umlModel = classDiagram;
+        vi.spyOn(console, 'error').mockImplementation(() => {}); // prevent: findDOMNode is deprecated and will be removed in the next major release
+        fixture.componentRef.setInput('umlModel', classDiagram);
         fixture.detectChanges();
 
         // test
@@ -58,16 +59,15 @@ describe('ModelingEditorComponent', () => {
         const editor: ApollonEditor = component['apollonEditor'] as ApollonEditor;
         // Check that editor exists
         expect(editor).toBeDefined();
-        await (editor as any).nextRender;
+        await editor.nextRender;
 
-        expect(editor.model.nodes).toHaveLength(classDiagram.nodes.length);
-        expect(editor.model.edges).toHaveLength(classDiagram.edges.length);
+        expect(Object.keys(editor.model.elements)).toEqual(Object.keys(classDiagram.elements));
     });
 
-    it('ngOnDestroy', () => {
-        component.umlModel = classDiagram;
+    it('ngOnDestroy', async () => {
+        fixture.componentRef.setInput('umlModel', classDiagram);
         fixture.detectChanges();
-        component.ngAfterViewInit();
+        await component.ngAfterViewInit();
 
         component.ngOnDestroy();
         // verify teardown
@@ -77,37 +77,36 @@ describe('ModelingEditorComponent', () => {
     it('ngOnChanges', async () => {
         // @ts-ignore
         const model = classDiagram;
-        component.umlModel = model;
+        fixture.componentRef.setInput('umlModel', classDiagram);
         fixture.detectChanges();
         await component.ngAfterViewInit();
 
         const changedModel = cloneDeep(model) as any;
-        changedModel.nodes = [];
-        changedModel.edges = [];
-        changedModel.assessments = {};
+        changedModel.elements = {};
+        changedModel.relationships = {};
+        changedModel.interactive = { elements: {}, relationships: {} };
+        changedModel.size = { height: 0, width: 0 };
+        // note: using cloneDeep a default value exists, which would prevent the comparison below to pass, therefore we need to remove it here
+        changedModel.default = undefined;
         // test
-        await (component.apollonEditor as any)?.nextRender;
-        component.ngOnChanges({
-            umlModel: {
-                currentValue: changedModel,
-                previousValue: model,
-            } as SimpleChange,
-        });
-        await (component.apollonEditor as any)?.nextRender;
-        expect(component.umlModel).toEqual(changedModel);
-        expect(component['apollonEditor']!.model.assessments).toEqual({});
+        await component.apollonEditor?.nextRender;
+        fixture.componentRef.setInput('umlModel', changedModel);
+        fixture.detectChanges();
+        await component.apollonEditor?.nextRender;
+        const componentModel = component['apollonEditor']!.model as UMLModel;
+        expect(componentModel).toEqual(changedModel);
     });
 
     it('isFullScreen false', () => {
         // test
         const fullScreen = component.isFullScreen;
-        expect(fullScreen).toBeFalse();
+        expect(fullScreen).toBe(false);
     });
 
-    it('getCurrentModel', () => {
-        component.umlModel = classDiagram;
+    it('getCurrentModel', async () => {
+        fixture.componentRef.setInput('umlModel', classDiagram);
         fixture.detectChanges();
-        component.ngAfterViewInit();
+        await component.ngAfterViewInit();
 
         // test
         // const model = component.getCurrentModel();
@@ -115,40 +114,71 @@ describe('ModelingEditorComponent', () => {
         // expect(model).toEqual(testClassDiagram);
     });
 
-    it('should not show save indicator without savedStatus set', () => {
-        component.savedStatus = undefined;
-        component.readOnly = true;
+    it('elementWithClass', async () => {
+        const model = classDiagram;
+        fixture.componentRef.setInput('umlModel', classDiagram);
         fixture.detectChanges();
-        component.ngAfterViewInit();
+        await component.ngAfterViewInit();
+
+        // test
+        const umlElement = component.elementWithClass('Sibling 2', model);
+        expect(umlElement?.id).toBe('e0dad7e7-f67b-4e4a-8845-6c5d801ea9ca');
+    });
+
+    it('elementWithAttribute', async () => {
+        const model = classDiagram;
+        fixture.componentRef.setInput('umlModel', classDiagram);
+        fixture.detectChanges();
+        await component.ngAfterViewInit();
+
+        // test
+        const umlElement = component.elementWithAttribute('attribute', model);
+        expect(umlElement?.id).toBe('6f572312-066b-4678-9c03-5032f3ba9be9');
+    });
+
+    it('elementWithMethod', async () => {
+        const model = classDiagram;
+        fixture.componentRef.setInput('umlModel', classDiagram);
+        fixture.detectChanges();
+        await component.ngAfterViewInit();
+
+        // test
+        const umlElement = component.elementWithMethod('method', model);
+        expect(umlElement?.id).toBe('11aae531-3244-4d07-8d60-b6210789ffa3');
+    });
+
+    it('should not show save indicator without savedStatus set', async () => {
+        fixture.componentRef.setInput('savedStatus', undefined);
+        fixture.componentRef.setInput('readOnly', true);
+        fixture.componentRef.setInput('umlModel', classDiagram);
+        fixture.detectChanges();
+        await component.ngAfterViewInit();
 
         const statusHint = fixture.debugElement.query(By.css('.status-hint'));
         expect(statusHint).toBeNull();
     });
 
     it('should not show save indicator in read only mode', () => {
-        component.savedStatus = { isSaving: false, isChanged: false };
-        component.readOnly = true;
+        fixture.componentRef.setInput('savedStatus', { isSaving: false, isChanged: false });
+        fixture.componentRef.setInput('readOnly', true);
         fixture.detectChanges();
-        component.ngAfterViewInit();
 
         const statusHint = fixture.debugElement.query(By.css('.status-hint'));
         expect(statusHint).toBeNull();
     });
 
     it('should not show save indicator in fullscreen mode', () => {
-        component.savedStatus = { isSaving: false, isChanged: false };
-        jest.spyOn(component, 'isFullScreen', 'get').mockReturnValue(true);
+        fixture.componentRef.setInput('savedStatus', { isSaving: false, isChanged: false });
+        vi.spyOn(component, 'isFullScreen', 'get').mockReturnValue(true);
         fixture.detectChanges();
-        component.ngAfterViewInit();
 
         const statusHint = fixture.debugElement.query(By.css('.status-hint'));
         expect(statusHint).toBeNull();
     });
 
     it('should show green checkmark save indicator if everything is saved', () => {
-        component.savedStatus = { isSaving: false, isChanged: false };
+        fixture.componentRef.setInput('savedStatus', { isSaving: false, isChanged: false });
         fixture.detectChanges();
-        component.ngAfterViewInit();
 
         const statusHint = fixture.debugElement.query(By.css('.status-hint.text-success'));
         expect(statusHint).not.toBeNull();
@@ -161,9 +191,8 @@ describe('ModelingEditorComponent', () => {
     });
 
     it('should show yellow times save indicator if something is unsaved', () => {
-        component.savedStatus = { isSaving: false, isChanged: true };
+        fixture.componentRef.setInput('savedStatus', { isSaving: false, isChanged: true });
         fixture.detectChanges();
-        component.ngAfterViewInit();
 
         const statusHint = fixture.debugElement.query(By.css('.status-hint.text-warning'));
         expect(statusHint).not.toBeNull();
@@ -176,9 +205,8 @@ describe('ModelingEditorComponent', () => {
     });
 
     it('should show saving indicator if it is currently saving', () => {
-        component.savedStatus = { isSaving: true, isChanged: true };
+        fixture.componentRef.setInput('savedStatus', { isSaving: true, isChanged: true });
         fixture.detectChanges();
-        component.ngAfterViewInit();
 
         const statusHint = fixture.debugElement.query(By.css('.status-hint.text-info'));
         expect(statusHint).not.toBeNull();
@@ -191,32 +219,36 @@ describe('ModelingEditorComponent', () => {
     });
 
     it('should handle explanation input change', () => {
-        const spy = jest.spyOn(component.explanationChange, 'emit');
+        const spy = vi.spyOn(component.explanation, 'set');
 
         const newExplanation = 'New Explanation';
-        component.onExplanationInput(newExplanation);
+        component.explanation.set(newExplanation);
 
         expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(newExplanation);
-        expect(component.explanation).toBe(newExplanation);
+        expect(component.explanation()).toBe(newExplanation);
     });
 
-    it('should subscribe to broadcast messages and emit them.', () => {
+    it('should subscribe to model change patches and emit them.', async () => {
         fixture.detectChanges();
 
-        const receiver = jest.fn();
+        const receiver = vi.fn();
 
         component.onModelPatch.subscribe(receiver);
-        const callbacks: Array<(message: string) => void> = [];
+        const mockEmitter = new Subject<Patch>();
 
-        jest.spyOn(ApollonEditor.prototype, 'sendBroadcastMessage').mockImplementation((cb) => {
-            callbacks.push(cb);
+        vi.spyOn(ApollonEditor.prototype, 'subscribeToModelChangePatches').mockImplementation((cb) => {
+            mockEmitter.subscribe(cb);
+            return 42;
         });
+        const cleanupSpy = vi.spyOn(ApollonEditor.prototype, 'unsubscribeFromModelChangePatches').mockImplementation(() => {});
 
-        component.ngAfterViewInit();
+        await component.ngAfterViewInit();
 
-        expect(callbacks).toHaveLength(1);
-        callbacks[0]('encoded-patch');
-        expect(receiver).toHaveBeenCalledWith('encoded-patch');
+        mockEmitter.next([{ op: 'add', path: '/elements', value: { id: '1', type: 'class' } }]);
+        expect(receiver).toHaveBeenCalledWith([{ op: 'add', path: '/elements', value: { id: '1', type: 'class' } }]);
+
+        component.ngOnDestroy();
+        expect(cleanupSpy).toHaveBeenCalledWith(42);
     });
 });

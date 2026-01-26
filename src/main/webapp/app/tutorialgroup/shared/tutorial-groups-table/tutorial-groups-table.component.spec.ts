@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -8,7 +10,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
-import { Component, SimpleChange, input, viewChild, viewChildren } from '@angular/core';
+import { Component, input, viewChild, viewChildren } from '@angular/core';
 import { TutorialGroupRowStubComponent } from 'test/helpers/stubs/tutorialgroup/tutorial-groups-table-stub.component';
 import { Course, Language } from 'app/core/course/shared/entities/course.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -47,6 +49,8 @@ class MockWrapperComponent {
 }
 
 describe('TutorialGroupTableWrapperTest', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<MockWrapperComponent>;
     let component: MockWrapperComponent;
     let tableInstance: TutorialGroupsTableComponent;
@@ -60,8 +64,8 @@ describe('TutorialGroupTableWrapperTest', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [FaIconComponent],
-            declarations: [
+            imports: [
+                FaIconComponent,
                 TutorialGroupsTableComponent,
                 TutorialGroupRowStubComponent,
                 MockWrapperComponent,
@@ -96,7 +100,7 @@ describe('TutorialGroupTableWrapperTest', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should pass the tutorialGroup to the headers', () => {
@@ -111,6 +115,8 @@ describe('TutorialGroupTableWrapperTest', () => {
 });
 
 describe('TutorialGroupsTableComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<TutorialGroupsTableComponent>;
     let component: TutorialGroupsTableComponent;
 
@@ -139,7 +145,7 @@ describe('TutorialGroupsTableComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -151,7 +157,7 @@ describe('TutorialGroupsTableComponent', () => {
         tutorialGroupTwo.language = Language.GERMAN;
 
         fixture.componentRef.setInput('tutorialGroups', [tutorialGroupOne, tutorialGroupTwo]);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(fixture.nativeElement.querySelector('#language-column')).not.toBeNull();
 
@@ -159,41 +165,49 @@ describe('TutorialGroupsTableComponent', () => {
         tutorialGroupTwo.language = Language.ENGLISH;
 
         fixture.componentRef.setInput('tutorialGroups', [tutorialGroupOne, tutorialGroupTwo]);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('#language-column')).toBeNull();
     });
 
-    it('should show the language column if multiple formats are present', () => {
-        tutorialGroupOne.isOnline = true;
-        tutorialGroupTwo.isOnline = false;
+    it('should show the online column if multiple formats are present', async () => {
+        // Create new objects to trigger signal change detection
+        const groupOnlineOne = { ...tutorialGroupOne, isOnline: true };
+        const groupOnlineTwo = { ...tutorialGroupTwo, isOnline: false };
 
-        component.ngOnChanges({ tutorialGroups: new SimpleChange([], [tutorialGroupOne, tutorialGroupTwo], true) });
-        runOnPushChangeDetection(fixture);
+        fixture.componentRef.setInput('tutorialGroups', [groupOnlineOne, groupOnlineTwo]);
+        TestBed.tick();
+        await runOnPushChangeDetection(fixture);
 
         expect(fixture.nativeElement.querySelector('#online-column')).not.toBeNull();
 
-        tutorialGroupOne.isOnline = true;
-        tutorialGroupTwo.isOnline = true;
+        // Both online - should not show column
+        const groupBothOnlineOne = { ...tutorialGroupOne, isOnline: true };
+        const groupBothOnlineTwo = { ...tutorialGroupTwo, isOnline: true };
 
-        component.ngOnChanges({ tutorialGroups: new SimpleChange([], [tutorialGroupOne, tutorialGroupTwo], true) });
-        runOnPushChangeDetection(fixture);
+        fixture.componentRef.setInput('tutorialGroups', [groupBothOnlineOne, groupBothOnlineTwo]);
+        TestBed.tick();
+        await runOnPushChangeDetection(fixture);
         expect(fixture.nativeElement.querySelector('#online-column')).toBeNull();
     });
 
-    it('should show the language column if multiple campuses are present', () => {
-        tutorialGroupOne.campus = 'Garching';
-        tutorialGroupTwo.campus = 'Munich';
+    it('should show the campus column if multiple campuses are present', async () => {
+        // Create new objects to trigger signal change detection
+        const groupCampusOne = { ...tutorialGroupOne, campus: 'Garching' };
+        const groupCampusTwo = { ...tutorialGroupTwo, campus: 'Munich' };
 
-        component.ngOnChanges({ tutorialGroups: new SimpleChange([], [tutorialGroupOne, tutorialGroupTwo], true) });
-        runOnPushChangeDetection(fixture);
+        fixture.componentRef.setInput('tutorialGroups', [groupCampusOne, groupCampusTwo]);
+        TestBed.tick();
+        await runOnPushChangeDetection(fixture);
 
         expect(fixture.nativeElement.querySelector('#campus-column')).not.toBeNull();
 
-        tutorialGroupOne.campus = 'Garching';
-        tutorialGroupTwo.campus = 'Garching';
+        // Same campus - should not show column
+        const groupSameCampusOne = { ...tutorialGroupOne, campus: 'Garching' };
+        const groupSameCampusTwo = { ...tutorialGroupTwo, campus: 'Garching' };
 
-        component.ngOnChanges({ tutorialGroups: new SimpleChange([], [tutorialGroupOne, tutorialGroupTwo], true) });
-        runOnPushChangeDetection(fixture);
+        fixture.componentRef.setInput('tutorialGroups', [groupSameCampusOne, groupSameCampusTwo]);
+        TestBed.tick();
+        await runOnPushChangeDetection(fixture);
         expect(fixture.nativeElement.querySelector('#campus-column')).toBeNull();
     });
 
@@ -202,7 +216,7 @@ describe('TutorialGroupsTableComponent', () => {
         component.ascending = false;
 
         const sortService = fixture.debugElement.injector.get(SortService);
-        const sortServiceSpy = jest.spyOn(sortService, 'sortByProperty');
+        const sortServiceSpy = vi.spyOn(sortService, 'sortByProperty');
 
         component.sortRows();
         expect(sortServiceSpy).toHaveBeenCalledWith([tutorialGroupOne, tutorialGroupTwo], 'id', false);
@@ -214,7 +228,7 @@ describe('TutorialGroupsTableComponent', () => {
         component.ascending = false;
 
         const sortService = fixture.debugElement.injector.get(SortService);
-        const sortServiceSpy = jest.spyOn(sortService, 'sortByMultipleProperties');
+        const sortServiceSpy = vi.spyOn(sortService, 'sortByMultipleProperties');
 
         component.sortRows();
         expect(sortServiceSpy).toHaveBeenCalledWith([tutorialGroupOne, tutorialGroupTwo], ['tutorialGroupSchedule.dayOfWeek', 'tutorialGroupSchedule.startTime'], false);
@@ -226,7 +240,7 @@ describe('TutorialGroupsTableComponent', () => {
         component.ascending = false;
 
         const sortService = fixture.debugElement.injector.get(SortService);
-        const sortServiceSpy = jest.spyOn(sortService, 'sortByMultipleProperties');
+        const sortServiceSpy = vi.spyOn(sortService, 'sortByMultipleProperties');
 
         component.sortRows();
         expect(sortServiceSpy).toHaveBeenCalledWith([tutorialGroupOne, tutorialGroupTwo], ['capacity', 'numberOfRegisteredUsers'], false);

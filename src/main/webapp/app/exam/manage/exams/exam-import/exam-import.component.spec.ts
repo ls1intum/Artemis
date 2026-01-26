@@ -1,7 +1,7 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
@@ -18,7 +18,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -30,7 +30,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 describe('Exam Import Component', () => {
     let component: ExamImportComponent;
     let fixture: ComponentFixture<ExamImportComponent>;
-    let activeModal: NgbActiveModal;
+    let dialogRef: DynamicDialogRef;
+    let dialogRefCloseSpy: jest.SpyInstance;
     let examManagementService: ExamManagementService;
     let alertService: AlertService;
     let profileService: ProfileService;
@@ -47,6 +48,12 @@ describe('Exam Import Component', () => {
     const exam1WithExercises = { id: 1, exerciseGroups: [exerciseGroup1] } as Exam;
 
     beforeEach(() => {
+        dialogRefCloseSpy = jest.fn();
+        dialogRef = {
+            close: dialogRefCloseSpy,
+            onClose: new Subject<any>(),
+        } as unknown as DynamicDialogRef;
+
         TestBed.configureTestingModule({
             imports: [FormsModule, FaIconComponent],
             declarations: [
@@ -62,7 +69,7 @@ describe('Exam Import Component', () => {
             providers: [
                 MockProvider(SortService),
                 MockProvider(ExamImportPagingService),
-                MockProvider(NgbActiveModal),
+                { provide: DynamicDialogRef, useValue: dialogRef },
                 MockProvider(ExamManagementService),
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -73,7 +80,6 @@ describe('Exam Import Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExamImportComponent);
                 component = fixture.componentInstance;
-                activeModal = TestBed.inject(NgbActiveModal);
                 examManagementService = TestBed.inject(ExamManagementService);
                 alertService = TestBed.inject(AlertService);
 
@@ -108,8 +114,6 @@ describe('Exam Import Component', () => {
     it('should only perform input of exercise groups if prerequisites are met', () => {
         const importSpy = jest.spyOn(examManagementService, 'importExerciseGroup');
         const alertSpy = jest.spyOn(alertService, 'error');
-        const modalSpy = jest.spyOn(activeModal, 'close');
-
         component.subsequentExerciseGroupSelection.set(false);
         component.performImportOfExerciseGroups();
 
@@ -127,7 +131,7 @@ describe('Exam Import Component', () => {
 
         expect(importSpy).not.toHaveBeenCalled();
         expect(alertSpy).not.toHaveBeenCalled();
-        expect(modalSpy).not.toHaveBeenCalled();
+        expect(dialogRefCloseSpy).not.toHaveBeenCalled();
     });
 
     it('should perform import of exercise groups successfully', () => {
@@ -140,12 +144,11 @@ describe('Exam Import Component', () => {
             ),
         );
         const alertSpy = jest.spyOn(alertService, 'error');
-        const modalSpy = jest.spyOn(activeModal, 'close');
 
         performImport(importSpy);
         expect(alertSpy).not.toHaveBeenCalled();
-        expect(modalSpy).toHaveBeenCalledOnce();
-        expect(modalSpy).toHaveBeenCalledWith([exerciseGroup1]);
+        expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
+        expect(dialogRefCloseSpy).toHaveBeenCalledWith([exerciseGroup1]);
     });
 
     it('should trigger an alarm for a wrong user input', () => {
@@ -158,7 +161,6 @@ describe('Exam Import Component', () => {
             ),
         );
         const alertSpy = jest.spyOn(alertService, 'error');
-        const modalSpy = jest.spyOn(activeModal, 'close');
 
         component.subsequentExerciseGroupSelection.set(true);
         const exerciseGroup2 = { title: 'exerciseGroup2' } as ExerciseGroup;
@@ -172,7 +174,7 @@ describe('Exam Import Component', () => {
         component.performImportOfExerciseGroups();
         expect(importSpy).not.toHaveBeenCalled();
         expect(alertSpy).toHaveBeenCalledOnce();
-        expect(modalSpy).not.toHaveBeenCalled();
+        expect(dialogRefCloseSpy).not.toHaveBeenCalled();
     });
 
     it.each(['duplicatedProgrammingExerciseShortName', 'duplicatedProgrammingExerciseTitle', 'invalidKey'])(
@@ -184,7 +186,6 @@ describe('Exam Import Component', () => {
             });
             const importSpy = jest.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(throwError(() => preCheckError));
             const alertSpy = jest.spyOn(alertService, 'error');
-            const modalSpy = jest.spyOn(activeModal, 'close');
 
             performImport(importSpy);
             if (errorKey == 'invalidKey') {
@@ -192,7 +193,7 @@ describe('Exam Import Component', () => {
             } else {
                 expect(alertSpy).toHaveBeenCalledWith('artemisApp.examManagement.exerciseGroup.importModal.' + errorKey);
             }
-            expect(modalSpy).not.toHaveBeenCalled();
+            expect(dialogRefCloseSpy).not.toHaveBeenCalled();
         },
     );
 
@@ -202,11 +203,10 @@ describe('Exam Import Component', () => {
         });
         const importSpy = jest.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(throwError(() => error));
         const alertSpy = jest.spyOn(alertService, 'error');
-        const modalSpy = jest.spyOn(activeModal, 'close');
         performImport(importSpy);
 
         expect(alertSpy).toHaveBeenCalledOnce();
-        expect(modalSpy).not.toHaveBeenCalled();
+        expect(dialogRefCloseSpy).not.toHaveBeenCalled();
     });
 
     function performImport(importSpy: jest.SpyInstance): void {

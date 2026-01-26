@@ -9,6 +9,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { DatePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { PlagiarismAndTutorEffortDirective } from 'app/plagiarism/manage/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
 import { PlagiarismInspectorService } from 'app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.service';
 import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
@@ -23,7 +24,7 @@ interface SimilarityRangeComparisonStateDTO {
     selector: 'jhi-plagiarism-run-details',
     styleUrls: ['./plagiarism-run-details.component.scss', '../../../shared/chart/vertical-bar-chart.scss'],
     templateUrl: './plagiarism-run-details.component.html',
-    imports: [TranslateDirective, HelpIconComponent, BarChartModule, DatePipe, ArtemisTranslatePipe],
+    imports: [TranslateDirective, HelpIconComponent, BarChartModule, DatePipe, ArtemisTranslatePipe, ArtemisDatePipe],
 })
 export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirective implements OnChanges {
     private inspectorService = inject(PlagiarismInspectorService);

@@ -1,5 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DebugElement, ElementRef, signal } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -7,7 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
-import { of } from 'rxjs';
+import { EMPTY, of } from 'rxjs';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
@@ -45,8 +47,12 @@ import { NgbCollapse, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap'
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { FileService } from 'app/shared/service/file.service';
 import { InformationBoxComponent } from 'app/shared/information-box/information-box.component';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 
 describe('CourseLectureDetailsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
     let courseLecturesDetailsComponent: CourseLectureDetailsComponent;
     let lecture: Lecture;
@@ -95,8 +101,11 @@ describe('CourseLectureDetailsComponent', () => {
         const response = of(new HttpResponse({ body: lecture, headers, status: 200 }));
 
         await TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip), MockDirective(NgbCollapse), MockDirective(NgbPopover), FaIconComponent],
-            declarations: [
+            imports: [
+                MockDirective(NgbTooltip),
+                MockDirective(NgbCollapse),
+                MockDirective(NgbPopover),
+                FaIconComponent,
                 CourseLectureDetailsComponent,
                 MockComponent(AttachmentVideoUnitComponent),
                 MockComponent(ExerciseUnitComponent),
@@ -129,7 +138,10 @@ describe('CourseLectureDetailsComponent', () => {
                         return response;
                     },
                 }),
-                MockProvider(LectureUnitService),
+                MockProvider(LectureUnitService, {
+                    setCompletion: (_lectureUnitId: number, _lectureId: number, _completed: boolean) => EMPTY,
+                    completeLectureUnit: vi.fn(),
+                }),
                 MockProvider(AlertService),
                 { provide: FileService, useClass: MockFileService },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -138,21 +150,24 @@ describe('CourseLectureDetailsComponent', () => {
                     provide: ActivatedRoute,
                     useValue: {
                         params: of({ lectureId: '1' }),
+                        queryParams: of({}),
                         parent: {
                             parent: {
                                 params: of({ courseId: '1' }),
+                                queryParams: of({}),
                             },
                         },
                     },
                 },
                 MockProvider(Router),
                 MockProvider(ScienceService),
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
         }).compileComponents();
 
         lectureService = TestBed.inject(LectureService);
-        jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(response);
-        jest.spyOn(lectureService, 'find').mockReturnValue(response);
+        vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(response);
+        vi.spyOn(lectureService, 'find').mockReturnValue(response);
 
         fixture = TestBed.createComponent(CourseLectureDetailsComponent);
         courseLecturesDetailsComponent = fixture.componentInstance;
@@ -160,96 +175,110 @@ describe('CourseLectureDetailsComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(courseLecturesDetailsComponent).not.toBeNull();
         courseLecturesDetailsComponent.ngOnDestroy();
     });
 
-    it('should render information boxes for lecture start/end date', fakeAsync(() => {
-        fixture.detectChanges();
+    it('should render information boxes for lecture start/end date', async () => {
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
 
         const boxes = debugElement.queryAll(By.css('jhi-information-box'));
         expect(boxes).toHaveLength(2);
-    }));
+    });
 
-    it('should display all three lecture units: 2 attachment video units and 1 text unit', fakeAsync(() => {
-        fixture.detectChanges();
+    it('should display all three lecture units: 2 attachment video units and 1 text unit', async () => {
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
 
         const attachmentVideoUnits = debugElement.queryAll(By.css('jhi-attachment-video-unit'));
         const textUnits = debugElement.queryAll(By.css('jhi-text-unit'));
         expect(attachmentVideoUnits).toHaveLength(2);
         expect(textUnits).toHaveLength(1);
-    }));
+    });
 
-    it('should display download PDF button', fakeAsync(() => {
-        fixture.detectChanges();
+    it('should display download PDF button', async () => {
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
 
         const downloadButton = debugElement.query(By.css('#downloadButton'));
         expect(downloadButton).not.toBeNull();
-        expect(courseLecturesDetailsComponent.hasPdfLectureUnit).toBeTrue();
-    }));
+        expect(courseLecturesDetailsComponent.hasPdfLectureUnit).toBe(true);
+    });
 
-    it('should not display download PDF button', fakeAsync(() => {
+    it('should not display download PDF button', async () => {
         lecture.lectureUnits = [lectureUnit3];
         courseLecturesDetailsComponent.lecture = lecture;
         courseLecturesDetailsComponent.ngOnInit();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
 
         const downloadButton = debugElement.query(By.css('#downloadButton'));
         expect(downloadButton).toBeNull();
-        expect(courseLecturesDetailsComponent.hasPdfLectureUnit).toBeFalse();
-    }));
+        expect(courseLecturesDetailsComponent.hasPdfLectureUnit).toBe(false);
+    });
 
-    it('should not display manage button when user is only tutor', fakeAsync(() => {
+    it('should not display manage button when user is only tutor', async () => {
         lecture.course!.isAtLeastTutor = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
 
         const manageLectureButton = debugElement.query(By.css('#manageLectureButton'));
         expect(manageLectureButton).toBeNull();
-    }));
+    });
 
-    it('should display manage button when user is at least editor', fakeAsync(() => {
+    it('should display manage button when user is at least editor', async () => {
         lecture.course!.isAtLeastEditor = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
 
         const manageLectureButton = debugElement.query(By.css('#manageLectureButton'));
         expect(manageLectureButton).not.toBeNull();
-    }));
+    });
 
-    it('should not display manage button when user is a student', fakeAsync(() => {
+    it('should not display manage button when user is a student', async () => {
         lecture.course!.isAtLeastTutor = false;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
 
         const manageLectureButton = debugElement.query(By.css('#manageLectureButton'));
         expect(manageLectureButton).toBeNull();
-    }));
+    });
 
-    it('should redirect to lecture management', fakeAsync(() => {
+    it('should redirect to lecture management', async () => {
         const router = TestBed.inject(Router);
-        const navigateSpy = jest.spyOn(router, 'navigate');
-        fixture.detectChanges();
+        const navigateSpy = vi.spyOn(router, 'navigate');
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
 
         courseLecturesDetailsComponent.redirectToLectureManagement();
         expect(navigateSpy).toHaveBeenCalledWith(['course-management', 456, 'lectures', 1]);
-    }));
+    });
 
-    it('should check attachment release date', fakeAsync(() => {
+    it('should check attachment release date', async () => {
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
         const attachment = getAttachmentVideoUnit(lecture, 1, dayjs().add(1, 'day')).attachment!;
 
-        expect(courseLecturesDetailsComponent.attachmentNotReleased(attachment)).toBeTrue();
+        expect(courseLecturesDetailsComponent.attachmentNotReleased(attachment)).toBe(true);
 
         attachment.releaseDate = dayjs().subtract(1, 'day');
-        expect(courseLecturesDetailsComponent.attachmentNotReleased(attachment)).toBeFalse();
+        expect(courseLecturesDetailsComponent.attachmentNotReleased(attachment)).toBe(false);
 
         attachment.releaseDate = undefined;
-        expect(courseLecturesDetailsComponent.attachmentNotReleased(attachment)).toBeFalse();
-    }));
+        expect(courseLecturesDetailsComponent.attachmentNotReleased(attachment)).toBe(false);
+    });
 
-    it('should get the attachment extension', fakeAsync(() => {
+    it('should get the attachment extension', async () => {
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
         const attachment = getAttachmentVideoUnit(lecture, 1, dayjs()).attachment!;
 
         expect(courseLecturesDetailsComponent.attachmentExtension(attachment)).toBe('pdf');
@@ -259,67 +288,75 @@ describe('CourseLectureDetailsComponent', () => {
 
         attachment.link = undefined;
         expect(courseLecturesDetailsComponent.attachmentExtension(attachment)).toBe('N/A');
-    }));
+    });
 
-    it('should show discussion section when communication is enabled', fakeAsync(() => {
-        fixture.detectChanges();
+    it('should show discussion section when communication is enabled', async () => {
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
 
         const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
         expect(discussionSection).toBeTruthy();
-    }));
+    });
 
-    it('should not show discussion section when communication is disabled', fakeAsync(() => {
+    it('should not show discussion section when communication is disabled', async () => {
         const lecture = {
             ...lectureUnit3.lecture,
             course: { courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED },
         };
         const response = of(new HttpResponse({ body: { ...lecture }, status: 200 }));
-        jest.spyOn(TestBed.inject(LectureService), 'findWithDetails').mockReturnValue(response);
+        vi.spyOn(TestBed.inject(LectureService), 'findWithDetails').mockReturnValue(response);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
 
         const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
         expect(discussionSection).toBeFalsy();
-    }));
+    });
 
-    it('should download file for attachment', fakeAsync(() => {
+    it('should download file for attachment', async () => {
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
         const fileService = TestBed.inject(FileService);
-        const downloadFileSpy = jest.spyOn(fileService, 'downloadFileByAttachmentName');
+        const downloadFileSpy = vi.spyOn(fileService, 'downloadFileByAttachmentName');
         const attachment = getAttachmentVideoUnit(lecture, 1, dayjs()).attachment!;
 
         courseLecturesDetailsComponent.downloadAttachment(attachment.link, attachment.name);
 
-        expect(downloadFileSpy).toHaveBeenCalledOnce();
+        expect(downloadFileSpy).toHaveBeenCalledTimes(1);
         expect(downloadFileSpy).toHaveBeenCalledWith(attachment.link, attachment.name);
         expect(courseLecturesDetailsComponent.isDownloadingLink).toBeUndefined();
-    }));
+    });
 
-    it('should download PDF file', fakeAsync(() => {
-        fixture.detectChanges();
+    it('should download PDF file', async () => {
+        fixture.changeDetectorRef.detectChanges();
 
-        const downloadAttachmentStub = jest.spyOn(courseLecturesDetailsComponent, 'downloadMergedFiles');
-        const downloadStreamStub = jest.spyOn(DownloadUtils, 'downloadStream').mockImplementation(() => {});
+        const downloadAttachmentStub = vi.spyOn(courseLecturesDetailsComponent, 'downloadMergedFiles');
+        const downloadStreamStub = vi.spyOn(DownloadUtils, 'downloadStream').mockImplementation(() => {});
         const downloadButton = debugElement.query(By.css('#downloadButton'));
         expect(downloadButton).not.toBeNull();
 
         downloadButton.nativeElement.click();
-        tick();
-        expect(downloadAttachmentStub).toHaveBeenCalledOnce();
-        expect(downloadStreamStub).toHaveBeenCalledExactlyOnceWith(null, 'application/pdf', 'Test lecture');
-    }));
+        await fixture.whenStable();
+        expect(downloadAttachmentStub).toHaveBeenCalledTimes(1);
+        expect(downloadStreamStub).toHaveBeenCalledWith(null, 'application/pdf', 'Test lecture');
+    });
 
-    it('should set lecture unit as completed', fakeAsync(() => {
+    it('should set lecture unit as completed', async () => {
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
         const lectureUnitService = TestBed.inject(LectureUnitService);
-        const completeSpy = jest.spyOn(lectureUnitService, 'completeLectureUnit');
+        const completeSpy = vi.spyOn(lectureUnitService, 'completeLectureUnit');
 
         courseLecturesDetailsComponent.lecture = lecture;
         courseLecturesDetailsComponent.ngOnInit();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(lectureUnit3.completed).toBeFalsy();
         courseLecturesDetailsComponent.completeLectureUnit({ lectureUnit: lectureUnit3, completed: true });
-        expect(completeSpy).toHaveBeenCalledExactlyOnceWith(lecture, { lectureUnit: lectureUnit3, completed: true });
-    }));
+        expect(completeSpy).toHaveBeenCalledWith(lecture, { lectureUnit: lectureUnit3, completed: true });
+    });
 });
 
 const getAttachmentVideoUnit = (lecture: Lecture, id: number, releaseDate: dayjs.Dayjs) => {

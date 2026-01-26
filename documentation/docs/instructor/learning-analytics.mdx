@@ -1,0 +1,56 @@
+---
+id: learning-analytics
+title: Learning Analytics
+sidebar_label: Learning Analytics
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../src/components/Image/Image";
+
+import instructorsBasicStatisticsImg from './assets/learning-analytics/instructors-basic-statistics.png';
+import instructorsCourseStatisticsButtonImg from './assets/learning-analytics/instructors-course-statistics-button.png';
+import instructorsCourseStatisticsImg from './assets/learning-analytics/instructors-course-statistics.png';
+import instructorsExerciseStatisticsImg from './assets/learning-analytics/instructors-exercise-statistics.png';
+
+# Learning Analytics
+
+## Overview
+
+Artemis integrates different statistics for students to compare themselves to the course average.
+It allows instructors to evaluate the average student performance based on exercises and competencies.
+
+<Callout variant={CalloutVariant.info}>
+    <p>To preserve the individual's data privacy, Artemis calculates the data on the fly and only shows aggregated data to instructors so that it's not possible to track an individual student within the learning analytics modules.</p>
+</Callout>
+
+---
+
+## Learning Analytics for Instructors
+
+Artemis provides instructors with several different learning analytics, which are detailed in this section.
+Key statistics such as the number of total assessments or the average student score are already displayed on the course's main page.
+
+<Image src={instructorsBasicStatisticsImg} alt={"instructors-basic-statistics"} size={ImageSize.large} />
+
+### Course Statistics
+
+More detailed as well as additional course statistics can be inspected by instructors when navigating to the course's <code>Statistics</code> page.
+
+<Image src={instructorsCourseStatisticsButtonImg} alt={"instructors-course-statistics-button"} size={ImageSize.large} />
+
+On this page instructors can explore and evaluate all available course statistics such as the average points, number of submissions, number of active users, and much more.
+All the statistics can be generated for different time frames.
+
+<Image src={instructorsCourseStatisticsImg} alt={"instructors-course-statistics"} size={ImageSize.large} />
+
+### Exercise Statistics
+
+Similar to course statistics instructors can have an overview of different learning metrics such as the average score or the participation rate for a specific exercise.
+To get to this view, instructors can either click on one of the average score bars of the <code>Course Statistics</code> or click on the <code>Statistics</code> button that is displayed on each exercise overview page.
+
+<Image src={instructorsExerciseStatisticsImg} alt={"instructors-exercise-statistics"} size={ImageSize.large} />
+
+### See Also
+
+For information regarding how learning analytics tie into competencies in Artemis, please refer to the **[Adaptive Learning](./adaptive-learning.mdx)** documentation.

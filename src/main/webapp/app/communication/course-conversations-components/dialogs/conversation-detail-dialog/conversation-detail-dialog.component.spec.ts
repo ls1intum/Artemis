@@ -25,6 +25,8 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRouteWithSubjects } from 'test/helpers/mocks/activated-route/mock-activated-route-with-subjects';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];
 
@@ -47,6 +49,7 @@ examples.forEach((activeConversation) => {
                     SessionStorageService,
                     { provide: Router, useClass: MockRouter },
                     { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
+                    { provide: DialogService, useClass: MockDialogService },
                 ],
             })
                 .compileComponents()
@@ -54,7 +57,7 @@ examples.forEach((activeConversation) => {
                     fixture = TestBed.createComponent(ConversationDetailDialogComponent);
                     component = fixture.componentInstance;
                     initializeDialog(component, fixture, { course, activeConversation, selectedTab: ConversationDetailTabs.INFO });
-                    fixture.detectChanges();
+                    fixture.changeDetectorRef.detectChanges();
                 });
         }));
 
@@ -77,7 +80,7 @@ examples.forEach((activeConversation) => {
 
         it('should react correctly to events from members tab', () => {
             component.selectedTab = ConversationDetailTabs.MEMBERS;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const membersComponentDebug = fixture.debugElement.query(By.css('jhi-conversation-members'));
             expect(membersComponentDebug).toBeTruthy();
@@ -92,7 +95,7 @@ examples.forEach((activeConversation) => {
 
         it('should react correctly to events from info tab', () => {
             component.selectedTab = ConversationDetailTabs.INFO;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const infoComponentDebug = fixture.debugElement.query(By.css('jhi-conversation-info'));
             expect(infoComponentDebug).toBeTruthy();
@@ -108,7 +111,7 @@ examples.forEach((activeConversation) => {
         it('should react correctly to events from settings tab', () => {
             if (!component.isOneToOneChat) {
                 component.selectedTab = ConversationDetailTabs.SETTINGS;
-                fixture.detectChanges();
+                fixture.changeDetectorRef.detectChanges();
 
                 const settingsComponentDebug = fixture.debugElement.query(By.css('jhi-conversation-settings'));
                 expect(settingsComponentDebug).toBeTruthy();

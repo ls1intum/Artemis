@@ -12,8 +12,7 @@
                     "filterFuture": "Future",
                     "filterUnspecifiedDates": "Unspecified Date(s)"
                 },
-                "createOrEditLabel": "Create or Edit Lecture",
-                "ingestLecturesInPyrisLabel": "Send Lectures to Iris"
+                "createOrEditLabel": "Create or Edit Lecture"
             },
             "created": "Created new lecture with identifier {{ param }}",
             "updated": "Updated lecture with identifier {{ param }}",
@@ -29,7 +28,6 @@
             "endDate": "End Date",
             "visibleDate": "Visible from",
             "course": "Course",
-            "ingestionState": "Iris Processing Status",
             "detail": {
                 "title": "Lecture",
                 "sections": {
@@ -73,14 +71,14 @@
                 "title": "Title",
                 "titleDescription": "Add a title and meaningful description to the lecture.",
                 "period": "Period",
-                "periodDescription": "Specify the begin and end dates of the lecture.",
+                "periodDescription": "Specify begin and end date of the lecture.",
                 "attachments": "Attachments",
                 "attachmentsDescription": "Upload attachments to this lecture.",
-                "units": "Units",
-                "unitsDescription": "Add content to the lecture by creating different kinds of lecture units."
+                "units": "Content",
+                "unitsDescription": "Add content to the lecture by creating different kinds of lecture content."
             },
-            "newLectureUnit": "New Lecture Unit",
-            "editLectureUnit": "Edit Lecture Unit",
+            "newLectureUnit": "New Lecture Content",
+            "editLectureUnit": "Edit Lecture Content",
             "dismissChangesModal": {
                 "title": "Discard unsaved lecture changes",
                 "message": "Are you sure you want to discard your unsaved changes?",
@@ -95,6 +93,22 @@
                 "tutorialLectureTooltip": "A tutorial lecture will only be part of the tutorial tab and can be used to deliver tutorial contents.",
                 "tutorialLectureCheckboxLabel": "Make this a tutorial lecture.",
                 "title": "Lessons"
+            },
+            "pdfUpload": {
+                "dropZoneTitle": "Drop PDF files here to add slides",
+                "dropZoneHint": "or click to select files",
+                "dialogTitle": "Add PDFs to Lecture",
+                "newLecture": "Create new lecture",
+                "existingLecture": "Add to existing lecture",
+                "selectLecture": "Select a lecture",
+                "selectLecturePlaceholder": "-- Select a lecture --",
+                "lectureTitle": "Lecture Title",
+                "lectureTitlePlaceholder": "Enter lecture title",
+                "confirm": "Create",
+                "filesSelected": "{{ count }} PDF file(s) selected",
+                "success": "PDF content added successfully.",
+                "lectureCreated": "Lecture and content created successfully.",
+                "fileTooLarge": "One or more files exceed the maximum size of 20MB and were skipped."
             },
             "createSeries": {
                 "startAndEndDateExplanation": "Quickly create a lecture series by only defining titles and timing. Add lecture contents later. Start by specifying start and end of at least one lecture, that you would like to repeat weekly:",
@@ -123,7 +137,7 @@
             "pdfPreview": {
                 "title": "Attachment",
                 "attachmentIDError": "Invalid Attachment or Attachment ID.",
-                "attachmentVideoUnitIDError": "Invalid Attachment Unit or Attachment Unit ID.",
+                "attachmentVideoUnitIDError": "Invalid Attachment Content or Attachment Content ID.",
                 "noPDFAvailable": "No PDF available",
                 "cancelButton": "Cancel",
                 "removePageButton": "Remove Pages",
@@ -141,8 +155,8 @@
                 "confirmCancelEditing": "Confirm cancel operation",
                 "cancelEditingQuestion": "Are you sure you would like to leave without saving your changes?",
                 "invalidFileType": "You can only upload PDF files.",
-                "studentVersionCreateError": "Student Version of the Attachment Unit could not be created.",
-                "studentVersionUpdateError": "Student Version of the Attachment Unit could not be updated.",
+                "studentVersionCreateError": "Student Version of the Attachment Content could not be created.",
+                "studentVersionUpdateError": "Student Version of the Attachment Content could not be updated.",
                 "thumbnailGrid": {
                     "showPage": "Show Page {{ param }}",
                     "hiddenUntil": "This page is hidden until:",

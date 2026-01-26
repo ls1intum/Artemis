@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { combineLatest, finalize } from 'rxjs';
@@ -21,6 +21,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
 
 @Component({
     selector: 'jhi-edit-course-lti-configuration',
@@ -47,28 +48,29 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
     ],
 })
 export class EditCourseLtiConfigurationComponent implements OnInit {
-    private route = inject(ActivatedRoute);
-    private courseService = inject(CourseManagementService);
-    private router = inject(Router);
-    private ltiConfigurationService = inject(LtiConfigurationService);
+    private readonly route = inject(ActivatedRoute);
+    private readonly courseService = inject(CourseManagementService);
+    private readonly router = inject(Router);
+    private readonly ltiConfigurationService = inject(LtiConfigurationService);
 
-    @ViewChild('scrollableContent') scrollableContent: ElementRef;
+    protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
+
+    protected readonly faBan = faBan;
+    protected readonly faSave = faSave;
+
+    readonly scrollableContent = viewChild.required<ElementRef>('scrollableContent');
 
     course: Course;
     onlineCourseConfiguration: OnlineCourseConfiguration;
     onlineCourseConfigurationForm: FormGroup;
-    ltiConfiguredPlatforms: LtiPlatformConfiguration[] = [];
+    readonly ltiConfiguredPlatforms = signal<LtiPlatformConfiguration[]>([]);
 
-    page = 1;
-    itemsPerPage = ITEMS_PER_PAGE;
-    totalItems = 0;
+    readonly page = signal(1);
+    readonly itemsPerPage = signal(ITEMS_PER_PAGE);
+    readonly totalItems = signal(0);
 
-    isSaving = false;
-    loading = false;
-
-    // Icons
-    faBan = faBan;
-    faSave = faSave;
+    readonly isSaving = signal(false);
+    readonly loading = signal(false);
 
     /**
      * Gets the configuration for the course encoded in the route and prepares the form
@@ -93,8 +95,8 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
 
     loadInitialPlatforms() {
         combineLatest({ data: this.route.data, params: this.route.queryParamMap }).subscribe(({ params }) => {
-            const page = params.get('page');
-            this.page = page !== null ? +page : 1;
+            const pageParam = params.get('page');
+            this.page.set(pageParam !== null ? +pageParam : 1);
             this.loadData();
         });
     }
@@ -102,8 +104,8 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
     loadData(): void {
         this.ltiConfigurationService
             .query({
-                page: this.page - 1,
-                size: this.itemsPerPage,
+                page: this.page() - 1,
+                size: this.itemsPerPage(),
                 sort: ['id', 'asc'],
             })
             .subscribe((res: HttpResponse<LtiPlatformConfiguration[]>) => this.onSuccess(res.body, res.headers));
@@ -112,7 +114,7 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
     transition(): void {
         this.router.navigate(['/admin/lti-configuration'], {
             queryParams: {
-                page: this.page,
+                page: this.page(),
                 sort: ['id', 'asc'],
             },
         });
@@ -122,13 +124,13 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
      * Save the changes to the online course configuration
      */
     save() {
-        this.isSaving = true;
+        this.isSaving.set(true);
         const onlineCourseConfiguration = this.onlineCourseConfigurationForm.getRawValue();
         this.courseService
             .updateOnlineCourseConfiguration(this.course.id!, onlineCourseConfiguration)
             .pipe(
                 finalize(() => {
-                    this.isSaving = false;
+                    this.isSaving.set(false);
                 }),
             )
             .subscribe({
@@ -140,13 +142,13 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
      * Action on successful online course configuration or edit
      */
     private onSaveSuccess() {
-        this.isSaving = false;
+        this.isSaving.set(false);
         this.navigateToLtiConfigurationPage();
     }
 
     private onSuccess(platforms: LtiPlatformConfiguration[] | null, headers: HttpHeaders): void {
-        this.totalItems = Number(headers.get('X-Total-Count'));
-        this.ltiConfiguredPlatforms = platforms || [];
+        this.totalItems.set(Number(headers.get('X-Total-Count')));
+        this.ltiConfiguredPlatforms.set(platforms || []);
     }
     /**
      * Gets the user prefix

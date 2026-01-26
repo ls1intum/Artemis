@@ -71,13 +71,19 @@ export class QuizExerciseComponent extends ExerciseComponent {
                     exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
                     exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(exercise.course);
                     exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
+                    exercise.visibleToStudents = ExerciseService.isExerciseVisibleToStudents(exercise) || exercise.quizStarted;
                     exercise.quizBatches = exercise.quizBatches?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
                     exercise.status = this.quizExerciseService.getStatus(exercise);
-                    exercise.isEditable = isQuizEditable(exercise);
+                    exercise.quizStarted = exercise.status === QuizStatus.ACTIVE;
+                    exercise.isEditable = (exercise.isEditable ?? true) && isQuizEditable(exercise);
+                    if (exercise.quizMode === QuizMode.SYNCHRONIZED) {
+                        if (exercise.quizBatches && exercise.quizBatches.length > 0) {
+                            exercise.startDate = exercise.quizBatches[0].startTime;
+                        }
+                    }
                     this.selectedExercises = [];
                 });
                 this.quizExercises.set(quizExercises);
-                this.setQuizExercisesStatus();
                 this.emitExerciseCount(quizExercises.length);
                 this.applyFilter();
             },
@@ -114,13 +120,6 @@ export class QuizExerciseComponent extends ExerciseComponent {
      */
     fullMinutesForSeconds(seconds: number) {
         return Math.floor(seconds / 60);
-    }
-
-    /**
-     * Set the quiz exercise status for all quiz exercises.
-     */
-    setQuizExercisesStatus() {
-        this.quizExercises().forEach((quizExercise) => (quizExercise.status = this.quizExerciseService.getStatus(quizExercise)));
     }
 
     /**

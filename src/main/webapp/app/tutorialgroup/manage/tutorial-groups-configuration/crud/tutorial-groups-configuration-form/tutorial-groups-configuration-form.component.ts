@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnChanges, OnInit, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, effect, inject, input, output } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { Course, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
@@ -22,7 +22,7 @@ export interface TutorialGroupsConfigurationFormData {
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective, OwlDateTimeModule, FaIconComponent, ArtemisDateRangePipe],
     providers: [ArtemisDatePipe],
 })
-export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChanges {
+export class TutorialGroupsConfigurationFormComponent implements OnInit {
     private fb = inject(FormBuilder);
 
     readonly formData = input<TutorialGroupsConfigurationFormData>({
@@ -43,6 +43,18 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
 
     form: FormGroup;
 
+    constructor() {
+        // Effect to handle formData changes (replaces ngOnChanges)
+        effect(() => {
+            const formData = this.formData();
+            const editMode = this.isEditMode();
+            this.initializeForm();
+            if (editMode && formData) {
+                this.setFormValues(formData);
+            }
+        });
+    }
+
     get periodControl() {
         return this.form.get('period');
     }
@@ -61,13 +73,6 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
 
     ngOnInit(): void {
         this.initializeForm();
-    }
-    ngOnChanges() {
-        this.initializeForm();
-        const formData = this.formData();
-        if (this.isEditMode() && formData) {
-            this.setFormValues(formData);
-        }
     }
     private setFormValues(formData: TutorialGroupsConfigurationFormData) {
         this.existingChannelSetting = formData.useTutorialGroupChannels;

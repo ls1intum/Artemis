@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -23,6 +25,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('ModelingExercise Management Detail Component', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: ModelingExerciseDetailComponent;
     let fixture: ComponentFixture<ModelingExerciseDetailComponent>;
     let modelingExerciseService: ModelingExerciseService;
@@ -56,7 +60,7 @@ describe('ModelingExercise Management Detail Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ModelingExerciseDetailComponent, MockComponent(NonProgrammingExerciseDetailCommonActionsComponent)],
+            imports: [ModelingExerciseDetailComponent, MockComponent(NonProgrammingExerciseDetailCommonActionsComponent)],
             providers: [
                 LocalStorageService,
                 SessionStorageService,
@@ -68,9 +72,8 @@ describe('ModelingExercise Management Detail Component', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .overrideTemplate(ModelingExerciseDetailComponent, '')
-            .compileComponents();
+        }).overrideTemplate(ModelingExerciseDetailComponent, '');
+
         fixture = TestBed.createComponent(ModelingExerciseDetailComponent);
         comp = fixture.componentInstance;
         modelingExerciseService = TestBed.inject(ModelingExerciseService);
@@ -79,11 +82,15 @@ describe('ModelingExercise Management Detail Component', () => {
         fixture.detectChanges();
     });
 
-    it('should load exercise on init', fakeAsync(() => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should load exercise on init', async () => {
         // GIVEN
-        const subscribeSpy = jest.spyOn(eventManager, 'subscribe');
+        const subscribeSpy = vi.spyOn(eventManager, 'subscribe');
         const headers = new HttpHeaders().append('link', 'link;link');
-        const findStub = jest.spyOn(modelingExerciseService, 'find').mockReturnValue(
+        const findStub = vi.spyOn(modelingExerciseService, 'find').mockReturnValue(
             of(
                 new HttpResponse({
                     body: modelingExercise,
@@ -91,7 +98,7 @@ describe('ModelingExercise Management Detail Component', () => {
                 }),
             ),
         );
-        const statisticsServiceStub = jest.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(modelingExerciseStatistics));
+        const statisticsServiceStub = vi.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(modelingExerciseStatistics));
 
         // WHEN
         comp.ngOnInit();
@@ -104,12 +111,12 @@ describe('ModelingExercise Management Detail Component', () => {
         expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
         expect(comp.doughnutStats.absoluteAveragePoints).toBe(5);
         expect(subscribeSpy).toHaveBeenCalledWith('modelingExerciseListModification', expect.anything());
-        tick();
+        await fixture.whenStable();
         expect(comp.exampleSolutionUML).toEqual(model);
-    }));
+    });
 
     it('should destroy event manager on destroy', () => {
-        const destroySpy = jest.spyOn(eventManager, 'destroy');
+        const destroySpy = vi.spyOn(eventManager, 'destroy');
         comp.ngOnDestroy();
         expect(destroySpy).toHaveBeenCalledOnce();
     });

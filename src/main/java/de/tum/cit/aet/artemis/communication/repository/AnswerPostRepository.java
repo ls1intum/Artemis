@@ -9,9 +9,11 @@ import java.util.Set;
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -37,6 +39,17 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
      * @return a set of answer posts created by the author
      */
     Set<AnswerPost> findAnswerPostsByAuthorId(long authorId);
+
+    /**
+     * Deletes all answer posts associated with the given course ID via conversations.
+     * This should be called before deleting posts to handle the cascade properly.
+     *
+     * @param courseId ID of the course
+     */
+    @Transactional // ok because of delete
+    @Modifying
+    @Query("DELETE FROM AnswerPost a WHERE a.post.conversation.course.id = :courseId")
+    void deleteAllByCourseId(@Param("courseId") long courseId);
 
     /**
      * Retrieves an {@link AnswerPost} by ID that is **not** part of a conversation.
@@ -83,6 +96,21 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
             WHERE a.post.conversation.course.id = :courseId
             """)
     long countAnswerPostsByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Finds all answer posts related to a specific course via conversations.
+     *
+     * @param courseId ID of the course
+     * @return list of answer posts associated with the course
+     */
+    @Query("""
+            SELECT a
+            FROM AnswerPost a
+            LEFT JOIN FETCH a.author
+            LEFT JOIN FETCH a.post
+            WHERE a.post.conversation.course.id = :courseId
+            """)
+    List<AnswerPost> findAllByCourseId(@Param("courseId") long courseId);
 
     /**
      * Counts the number of distinct {@link AnswerPost} entities in a specific conversation.

@@ -8,6 +8,7 @@ import { IrisGuard } from 'app/iris/shared/iris-guard.service';
 import { FaqResolve } from 'app/communication/faq/faq-resolve.service';
 import { CourseManagementResolve } from 'app/core/course/manage/services/course-management-resolve.service';
 import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
+import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
 
 export const courseManagementRoutes: Routes = [
     {
@@ -26,7 +27,7 @@ export const courseManagementRoutes: Routes = [
             authorities: IS_AT_LEAST_ADMIN,
             pageTitle: 'global.generic.create',
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, PasskeyAuthenticationGuard],
     },
     {
         path: '',
@@ -45,19 +46,17 @@ export const courseManagementRoutes: Routes = [
                 canActivate: [UserRouteAccessService],
             },
             {
-                path: ':courseId/grading-system',
-                loadComponent: () => import('app/assessment/manage/grading-system/grading-system.component').then((m) => m.GradingSystemComponent),
+                path: ':courseId/grading',
+                loadComponent: () => import('app/assessment/manage/grading/grading.component').then((m) => m.GradingComponent),
                 data: {
                     authorities: IS_AT_LEAST_INSTRUCTOR,
                     pageTitle: 'artemisApp.course.gradingSystem',
                 },
                 canActivate: [UserRouteAccessService],
-                loadChildren: () => import('app/assessment/manage/grading-system/grading-system.route').then((m) => m.gradingSystemRoutes),
             },
             {
                 path: ':courseId/iris-settings',
-                loadComponent: () =>
-                    import('app/iris/manage/settings/iris-course-settings-update/iris-course-settings-update.component').then((m) => m.IrisCourseSettingsUpdateComponent),
+                loadComponent: () => import('app/iris/manage/settings/iris-settings-update/iris-settings-update.component').then((m) => m.IrisSettingsUpdateComponent),
                 data: {
                     authorities: IS_AT_LEAST_INSTRUCTOR,
                     pageTitle: 'artemisApp.iris.settings.title.course',
@@ -376,7 +375,7 @@ export const courseManagementRoutes: Routes = [
                                 loadComponent: () => import('app/atlas/manage/create/create-prerequisite.component').then((m) => m.CreatePrerequisiteComponent),
                                 data: {
                                     authorities: IS_AT_LEAST_INSTRUCTOR,
-                                    pageTitle: 'artemisApp.prerequisite.createPrerequisite.title',
+                                    pageTitle: 'artemisApp.prerequisite.create.title',
                                 },
                                 canActivate: [UserRouteAccessService],
                             },
@@ -385,7 +384,7 @@ export const courseManagementRoutes: Routes = [
                                 loadComponent: () => import('app/atlas/manage/edit/edit-prerequisite.component').then((m) => m.EditPrerequisiteComponent),
                                 data: {
                                     authorities: IS_AT_LEAST_INSTRUCTOR,
-                                    pageTitle: 'artemisApp.prerequisite.editPrerequisite.title',
+                                    pageTitle: 'artemisApp.prerequisite.edit.title',
                                 },
                                 canActivate: [UserRouteAccessService],
                             },

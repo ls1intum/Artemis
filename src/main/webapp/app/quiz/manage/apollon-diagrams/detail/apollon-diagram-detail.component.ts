@@ -139,7 +139,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             mode: ApollonMode.Modelling,
             model: initialModel,
             type: this.apollonDiagram()!.diagramType,
-            locale: this.translateService.currentLang as Locale,
+            locale: this.translateService.getCurrentLang() as Locale,
         });
         this.apollonEditor.subscribeToModelChange((newModel) => {
             this.isSaved = JSON.stringify(newModel) === this.apollonDiagram()?.jsonRepresentation;

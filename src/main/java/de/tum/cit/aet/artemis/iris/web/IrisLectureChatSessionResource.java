@@ -23,7 +23,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.repository.IrisLectureChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.AbstractIrisChatSessionService;
@@ -81,14 +80,14 @@ public class IrisLectureChatSessionResource {
 
         var lecture = api.findByIdElseThrow(lectureId);
 
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+        /* The visibleDate property of the Lecture entity is deprecated. We're keeping the related logic temporarily to monitor for user feedback before full removal */
         /* TODO: #11479 - remove the commented out code and the called method OR comment back in */
         // checkWhetherLectureIsVisibleToStudentsElseThrow(lecture);
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.LECTURE_CHAT, lecture.getCourse());
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(lecture.getCourse());
         var sessionOptional = irisLectureChatSessionRepository.findLatestSessionsByLectureIdAndUserIdWithMessages(lecture.getId(), user.getId(), Pageable.ofSize(1)).stream()
                 .findFirst();
         if (sessionOptional.isPresent()) {
@@ -113,14 +112,14 @@ public class IrisLectureChatSessionResource {
         LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
         var lecture = api.findByIdElseThrow(lectureId);
 
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+        /* The visibleDate property of the Lecture entity is deprecated. We're keeping the related logic temporarily to monitor for user feedback before full removal */
         /* TODO: #11479 - remove the commented out code and the called method OR comment back in */
         // checkWhetherLectureIsVisibleToStudentsElseThrow(lecture);
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.LECTURE_CHAT, lecture.getCourse());
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(lecture.getCourse());
         user.hasAcceptedExternalLLMUsageElseThrow();
 
         var session = new IrisLectureChatSession(lecture, user);
@@ -142,14 +141,14 @@ public class IrisLectureChatSessionResource {
         LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
         var lecture = api.findByIdElseThrow(lectureId);
 
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+        /* The visibleDate property of the Lecture entity is deprecated. We're keeping the related logic temporarily to monitor for user feedback before full removal */
         /* TODO: #11479 - remove the commented out code and the called method OR comment back in */
         // checkWhetherLectureIsVisibleToStudentsElseThrow(lecture);
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.LECTURE_CHAT, lecture.getCourse());
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(lecture.getCourse());
         user.hasAcceptedExternalLLMUsageElseThrow();
 
         var sessions = irisLectureChatSessionRepository.findByLectureIdAndUserIdOrderByCreationDateDesc(lecture.getId(), user.getId());

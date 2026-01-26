@@ -132,7 +132,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
 
         tick(500);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const resultEta = getResultEtaContainer();
         expect(resultEta).not.toBeNull();
@@ -148,7 +148,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         triggerChanges(comp, { property: 'exercise', currentValue: comp.exercise });
         getExerciseSubmissionStateSubject.next(isNotBuildingSubmission);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const resultEta = getResultEtaContainer();
         expect(resultEta).toBeNull();
@@ -168,7 +168,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         // Wait for a second as the view is updated with a debounce.
         tick(500);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(getExerciseSubmissionStateStub).toHaveBeenCalledOnce();
         expect(getExerciseSubmissionStateStub).toHaveBeenCalledWith(exercise.id);
@@ -203,7 +203,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         // Wait for a second as the view is updated with a debounce.
         tick(500);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(getExerciseSubmissionStateStub).toHaveBeenCalledWith(exercise.id);
 
@@ -242,12 +242,12 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         expect(getFailedSubmissionParticipationsForExerciseStub).toHaveBeenCalledWith(comp.exercise.id, ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
         expect(triggerAllStub).toHaveBeenCalledWith(comp.exercise.id, failedSubmissionParticipationIds);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Now the request returns a response.
         triggerInstructorBuildForParticipationsOfExerciseSubject.next(undefined);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(comp.isBuildingFailedSubmissions).toBeFalse();
     });
@@ -265,17 +265,17 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         // Wait for a second as the view is updated with a debounce.
         tick(500);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(getTriggerAllButton().disabled).toBeFalse();
 
         getBuildRunStateSubject.next(BuildRunState.RUNNING);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(getTriggerAllButton().disabled).toBeTrue();
 
         getBuildRunStateSubject.next(BuildRunState.COMPLETED);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(getTriggerAllButton().disabled).toBeFalse();
     }));

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
@@ -33,37 +33,41 @@ export class CreateExerciseUnitComponent implements OnInit {
     protected readonly faTimes = faTimes;
     protected readonly faSort = faSort;
 
-    @Input() lectureId: number | undefined;
-    @Input() courseId: number | undefined;
+    lectureId = input<number | undefined>(undefined);
+    courseId = input<number | undefined>(undefined);
     hasCancelButton = input<boolean>();
     shouldNavigateOnSubmit = input<boolean>(true);
 
     onCancel = output<void>();
     onExerciseUnitCreated = output<void>();
 
+    // Internal mutable copies of inputs for route param resolution
+    private resolvedLectureId = signal<number | undefined>(undefined);
+    private resolvedCourseId = signal<number | undefined>(undefined);
+
     predicate = 'type';
     reverse = false;
-    isLoading = false;
+    isLoading = signal(false);
 
-    exercisesAvailableForUnitCreation: Exercise[] = [];
-    exercisesToCreateUnitFor: Exercise[] = [];
+    exercisesAvailableForUnitCreation = signal<Exercise[]>([]);
+    exercisesToCreateUnitFor = signal<Exercise[]>([]);
 
     ngOnInit(): void {
-        this.isLoading = true;
+        this.isLoading.set(true);
         const lectureRoute = this.activatedRoute.parent!.parent!;
         combineLatest([lectureRoute.paramMap, lectureRoute.parent!.paramMap])
             .pipe(
                 take(1),
                 switchMap(([params, parentParams]) => {
-                    this.lectureId ??= Number(params.get('lectureId'));
-                    this.courseId ??= Number(parentParams.get('courseId'));
+                    this.resolvedLectureId.set(this.lectureId() ?? Number(params.get('lectureId')));
+                    this.resolvedCourseId.set(this.courseId() ?? Number(parentParams.get('courseId')));
 
-                    const courseObservable = this.courseManagementService.findWithExercises(this.courseId);
-                    const exerciseUnitObservable = this.exerciseUnitService.findAllByLectureId(this.lectureId);
+                    const courseObservable = this.courseManagementService.findWithExercises(this.resolvedCourseId()!);
+                    const exerciseUnitObservable = this.exerciseUnitService.findAllByLectureId(this.resolvedLectureId()!);
                     return forkJoin([courseObservable, exerciseUnitObservable]);
                 }),
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
             )
             .subscribe({
@@ -72,14 +76,14 @@ export class CreateExerciseUnitComponent implements OnInit {
                     const idsOfExercisesAlreadyConnectedToUnit = exerciseUnitResult?.body
                         ? exerciseUnitResult?.body?.map((exerciseUnit: ExerciseUnit) => exerciseUnit.exercise?.id)
                         : [];
-                    this.exercisesAvailableForUnitCreation = allExercisesOfCourse.filter((exercise: Exercise) => !idsOfExercisesAlreadyConnectedToUnit.includes(exercise.id));
+                    this.exercisesAvailableForUnitCreation.set(allExercisesOfCourse.filter((exercise: Exercise) => !idsOfExercisesAlreadyConnectedToUnit.includes(exercise.id)));
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
     }
 
     createExerciseUnits() {
-        const exerciseUnitsToCreate = this.exercisesToCreateUnitFor.map((exercise: Exercise) => {
+        const exerciseUnitsToCreate = this.exercisesToCreateUnitFor().map((exercise: Exercise) => {
             const unit = new ExerciseUnit();
             unit.exercise = exercise;
             return unit;
@@ -87,7 +91,7 @@ export class CreateExerciseUnitComponent implements OnInit {
 
         from(exerciseUnitsToCreate)
             .pipe(
-                concatMap((unit) => this.exerciseUnitService.create(unit, this.lectureId!)),
+                concatMap((unit) => this.exerciseUnitService.create(unit, this.resolvedLectureId()!)),
                 finalize(() => {
                     if (this.shouldNavigateOnSubmit()) {
                         this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
@@ -102,23 +106,21 @@ export class CreateExerciseUnitComponent implements OnInit {
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.exercisesAvailableForUnitCreation, this.predicate, this.reverse);
+        const sorted = [...this.exercisesAvailableForUnitCreation()];
+        this.sortService.sortByProperty(sorted, this.predicate, this.reverse);
+        this.exercisesAvailableForUnitCreation.set(sorted);
     }
 
     selectExerciseForUnitCreation(exercise: Exercise) {
         if (this.isExerciseSelectedForUnitCreation(exercise)) {
-            this.exercisesToCreateUnitFor.forEach((selectedExercise, index) => {
-                if (selectedExercise === exercise) {
-                    this.exercisesToCreateUnitFor.splice(index, 1);
-                }
-            });
+            this.exercisesToCreateUnitFor.update((exercises) => exercises.filter((e) => e !== exercise));
         } else {
-            this.exercisesToCreateUnitFor.push(exercise);
+            this.exercisesToCreateUnitFor.update((exercises) => [...exercises, exercise]);
         }
     }
 
     isExerciseSelectedForUnitCreation(exercise: Exercise) {
-        return this.exercisesToCreateUnitFor.includes(exercise);
+        return this.exercisesToCreateUnitFor().includes(exercise);
     }
 
     cancelForm() {

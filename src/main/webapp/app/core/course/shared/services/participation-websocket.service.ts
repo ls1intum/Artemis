@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Observable, of, pipe } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription, of, pipe } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -10,6 +10,9 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { deepClone } from 'app/shared/util/deep-clone.util';
+import { SubmissionUpdateResult } from 'app/exercise/shared/entities/submission/submission-updated-with-result.model';
 
 /**
  * Websocket destination for user-specific participation results.
@@ -87,25 +90,25 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     private participationService = inject(ParticipationService);
 
     /**
-     * Cache of student participations by participation ID.
+     * Cache of student participations by participationId.
      */
-    cachedParticipations: Map<number /* ID of participation */, StudentParticipation> = new Map<number, StudentParticipation>();
+    cachedParticipations: Map<number, StudentParticipation> = new Map<number, StudentParticipation>();
 
     /**
-     * Tracks open non-personal result websocket subscriptions by exercise ID.
-     * Value is the subscribed topic URL.
+     * Tracks open non-personal result websocket subscriptions by exerciseId.
+     * Value is the websocket subscription.
      */
-    openResultWebsocketSubscriptions: Map<number /*ID of participation */, string /* url of websocket connection */> = new Map<number, string>();
+    openResultWebsocketSubscriptions: Map<number, Subscription> = new Map<number, Subscription>();
 
     /**
-     * Topic URL of an open personal websocket subscription if any.
+     * Subscription of one open personal websocket subscription if any.
      */
-    openPersonalWebsocketSubscription?: string; /* url of websocket connection */
+    openPersonalWebsocketSubscription?: Subscription;
 
     /**
-     * BehaviorSubjects that emit the latest result per participation ID.
+     * BehaviorSubjects that emit the latest result per participationId.
      */
-    resultObservables: Map<number /* ID of participation */, BehaviorSubject<Result | undefined>> = new Map<number, BehaviorSubject<Result>>();
+    resultObservables: Map<number, BehaviorSubject<Result | undefined>> = new Map<number, BehaviorSubject<Result>>();
 
     /**
      * BehaviorSubject that emits the latest updated participation.
@@ -125,15 +128,29 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     participationSubscriptionTypes: Map<number /* ID of participation */, boolean /* Whether the participation was subscribed in personal mode */> = new Map<number, boolean>();
 
     /**
-     * Creates an RxJS pipe that:
-     * 1. Notifies result subscribers,
-     * 2. Adds the result to the cached participation,
-     * 3. Notifies participation subscribers.
+     * Central pipe for handling incoming results from the websocket.
      *
-     * @returns A pipeable operator for handling incoming results
+     * The server only sends Result objects, but callers consume them in two ways:
+     *  - via per-participation "latest result" streams (can be read as-is), and
+     *  - via Participation objects (e.g. in course exercise details/result history component).
+     *  - participation objects need to be updated with the latest results wherever the participation object
+     *  is used to display the latest results
+     *
+     * To keep both views in sync, each incoming result is processed as follows:
+     *  1. Notify result subscribers,
+     *  2. Update the cached participation's submissions
+     *  3. Read the updated participation from the cache
+     *  4. Notify participation subscribers.
+     *
+     * @returns A pipeable operator that applies this flow to each websocket result.
      */
     private getNotifyAllSubscribersPipe = () => {
-        return pipe(tap(this.notifyResultSubscribers), switchMap(this.getParticipationForResult), tap(this.notifyParticipationSubscribers));
+        return pipe(
+            tap(this.notifyResultSubscribers),
+            tap(this.updateCachedParticipationWithResult),
+            switchMap(this.getParticipationForResult),
+            tap(this.notifyParticipationSubscribers),
+        );
     };
 
     /**
@@ -262,7 +279,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
                 // The subscription was a personal subscription, so it should only be removed if it was the last of it kind
                 const openPersonalSubscriptions = [...this.participationSubscriptionTypes.values()].filter((personal: boolean) => personal).length;
                 if (openPersonalSubscriptions === 0) {
-                    this.websocketService.unsubscribe(PERSONAL_PARTICIPATION_TOPIC);
+                    this.openPersonalWebsocketSubscription?.unsubscribe();
                     this.openPersonalWebsocketSubscription = undefined;
                 }
             } else {
@@ -272,9 +289,9 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
                     openSubscriptionsForExercise.delete(participationId);
                     if (openSubscriptionsForExercise.size === 0) {
                         this.subscribedExercises.delete(exerciseId!);
-                        const subscribedTopic = this.openResultWebsocketSubscriptions.get(exerciseId!);
-                        if (subscribedTopic) {
-                            this.websocketService.unsubscribe(subscribedTopic);
+                        const subscription = this.openResultWebsocketSubscriptions.get(exerciseId!);
+                        if (subscription) {
+                            subscription.unsubscribe();
                             this.openResultWebsocketSubscriptions.delete(exerciseId!);
                         }
                     }
@@ -297,10 +314,8 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             let participationResultTopic: string;
             if (personal) {
                 participationResultTopic = PERSONAL_PARTICIPATION_TOPIC;
-                this.openPersonalWebsocketSubscription = participationResultTopic;
             } else {
                 participationResultTopic = EXERCISE_PARTICIPATION_TOPIC(exerciseId!);
-                this.openResultWebsocketSubscriptions.set(exerciseId!, participationResultTopic);
             }
             this.participationSubscriptionTypes.set(participationId, personal);
             if (!this.subscribedExercises.has(exerciseId!)) {
@@ -309,9 +324,117 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             const subscribedParticipations = this.subscribedExercises.get(exerciseId!);
             subscribedParticipations!.add(participationId);
 
-            this.websocketService.subscribe(participationResultTopic);
-            this.websocketService.receive(participationResultTopic).pipe(this.getNotifyAllSubscribersPipe()).subscribe();
+            const subscription = this.websocketService.subscribe<Result>(participationResultTopic).pipe(this.getNotifyAllSubscribersPipe()).subscribe();
+            if (personal) {
+                this.openPersonalWebsocketSubscription = subscription;
+            } else {
+                this.openResultWebsocketSubscriptions.set(exerciseId!, subscription);
+            }
         }
+    }
+
+    /**
+     * Updates the cached participation for the given result.
+     *
+     * - Looks up the participation in the local cache by result.submission.participation.id.
+     * - If a matching submission exists, its `results` array is updated by replacing/adding this result.
+     * - If no matching submission exists, a submission is created from the result and appended.
+     * - Finally, writes the updated participation back into cachedParticipations.
+     *
+     * If the result does not contain a participation ID or the participation is not cached,
+     * the method returns without modifying anything.
+     *
+     * @param result The new result that should be reflected in the cached participation state.
+     */
+    private updateCachedParticipationWithResult = (result: Result): void => {
+        const participationId = result.submission?.participation?.id;
+        if (!participationId) {
+            return;
+        }
+
+        const cachedParticipation = this.cachedParticipations.get(participationId);
+        if (!cachedParticipation) {
+            return;
+        }
+
+        // load submissions of given participation
+        const submissions = cachedParticipation.submissions ?? [];
+
+        // if submission with latest result exists, append result to submission
+        const { updatedSubmissions, hasMatchingSubmission } = this.updateExistingSubmissionResult(submissions, result);
+        // if not then create a new submission object with result appended
+        const appendedOrUpdatedSubmission = hasMatchingSubmission ? updatedSubmissions : this.appendNewSubmission(updatedSubmissions, cachedParticipation, result);
+
+        const updatedParticipation = deepClone(cachedParticipation);
+        updatedParticipation.submissions = appendedOrUpdatedSubmission;
+        this.cachedParticipations.set(participationId, updatedParticipation);
+    };
+
+    /**
+     * Appends a synthetic submission for a result whose submission is not yet
+     * present in the cached participation.
+     *
+     * Uses result.submission as a base, fixes the participation reference, and
+     * ensures the new result appears exactly once in the submission's results array.
+     *
+     * @param submissions Current list of submissions for the participation
+     * @param result The new result to apply
+     * @returns An object containing:
+     *          - submissionsWithMatch: the updated submissions array
+     *          - matchedExistingSubmission: whether a submission was updated
+     */
+    private updateExistingSubmissionResult(submissions: Submission[], result: Result): SubmissionUpdateResult {
+        let matchedExistingSubmission = false;
+
+        const submissionsAfterUpdate: Submission[] = submissions.map((submission) => {
+            if (submission.id !== result.submission!.id) {
+                return submission;
+            }
+
+            matchedExistingSubmission = true;
+
+            const existingResults = (submission.results ?? []).filter((existingResult) => existingResult.id !== result.id);
+            // we do not mutate the mergedResults, hence concat is fine
+            const mergedResults = existingResults.concat(result);
+
+            const submissionToUpdate = deepClone(submission);
+            submissionToUpdate.results = mergedResults;
+
+            return submissionToUpdate;
+        });
+
+        return { updatedSubmissions: submissionsAfterUpdate, hasMatchingSubmission: matchedExistingSubmission };
+    }
+
+    /**
+     * Creates and appends a new submission for a result whose submission
+     * is not yet present on the cached participation.
+     *
+     * The new submission is based on result.submission and linked to the given participation, and
+     * contains a deduplicated results list that includes the incoming result.
+     *
+     * @param submissions existing submissions of the participation
+     * @param participation participation to which the new submission belongs
+     * @param result incoming result that triggered creation of the submission
+     */
+    private appendNewSubmission(submissions: Submission[], participation: StudentParticipation, result: Result): Submission[] {
+        const baseResults = result.submission?.results ?? [];
+        // we do not mutate the mergedResults, hence concat is fine
+        const mergedResults = baseResults.concat(result);
+
+        const deduplicatedResults = mergedResults.filter((mergedResult, index, allResults) => {
+            if (mergedResult.id == null) {
+                // For results without an ID, we keep all of them
+                return true;
+            }
+            return allResults.findIndex((result) => result.id === mergedResult.id) === index;
+        });
+
+        const newSubmission = deepClone(result.submission as Submission);
+        newSubmission.participation = participation;
+        newSubmission.results = deduplicatedResults;
+        // We only need to append the new submission to the submissions array, hence no deepClone required
+        return submissions.concat(newSubmission);
     }
 
     /**

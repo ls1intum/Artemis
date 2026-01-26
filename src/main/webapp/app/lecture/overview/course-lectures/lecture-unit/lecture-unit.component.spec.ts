@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
 import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -7,6 +9,8 @@ import { By } from '@angular/platform-browser';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('LectureUnitComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: LectureUnitComponent;
     let fixture: ComponentFixture<LectureUnitComponent>;
 
@@ -38,7 +42,7 @@ describe('LectureUnitComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -46,47 +50,47 @@ describe('LectureUnitComponent', () => {
     });
 
     it('should handle isolated view', async () => {
-        const emitSpy = jest.spyOn(component.onShowIsolated, 'emit');
-        const handleIsolatedViewSpy = jest.spyOn(component, 'handleIsolatedView');
+        const emitSpy = vi.spyOn(component.onShowIsolated, 'emit');
+        const handleIsolatedViewSpy = vi.spyOn(component, 'handleIsolatedView');
 
         fixture.detectChanges();
 
         const viewIsolatedButton = fixture.debugElement.query(By.css('#view-isolated-button'));
         viewIsolatedButton.nativeElement.click();
 
-        expect(handleIsolatedViewSpy).toHaveBeenCalledOnce();
-        expect(emitSpy).toHaveBeenCalledOnce();
+        expect(handleIsolatedViewSpy).toHaveBeenCalledTimes(1);
+        expect(emitSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should toggle completion', async () => {
-        const toggleCompletionSpy = jest.spyOn(component, 'toggleCompletion');
-        const onCompletionEmitSpy = jest.spyOn(component.onCompletion, 'emit');
+        const toggleCompletionSpy = vi.spyOn(component, 'toggleCompletion');
+        const onCompletionEmitSpy = vi.spyOn(component.onCompletion, 'emit');
 
         fixture.detectChanges();
 
         const completedCheckbox = fixture.debugElement.query(By.css('#completed-checkbox'));
         completedCheckbox.nativeElement.click();
 
-        expect(toggleCompletionSpy).toHaveBeenCalledOnce();
-        expect(onCompletionEmitSpy).toHaveBeenCalledOnce();
+        expect(toggleCompletionSpy).toHaveBeenCalledTimes(1);
+        expect(onCompletionEmitSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should toggle collapse', async () => {
-        const toggleCollapseSpy = jest.spyOn(component, 'toggleCollapse');
-        const onCollapseEmitSpy = jest.spyOn(component.onCollapse, 'emit');
+        const toggleCollapseSpy = vi.spyOn(component, 'toggleCollapse');
+        const onCollapseEmitSpy = vi.spyOn(component.onCollapse, 'emit');
 
         fixture.detectChanges();
 
         const collapseButton = fixture.debugElement.query(By.css('#lecture-unit-toggle-button'));
         collapseButton.nativeElement.click();
 
-        expect(toggleCollapseSpy).toHaveBeenCalledOnce();
-        expect(onCollapseEmitSpy).toHaveBeenCalledOnce();
+        expect(toggleCollapseSpy).toHaveBeenCalledTimes(1);
+        expect(onCollapseEmitSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should handle original version view', async () => {
-        const handleOriginalVersionViewSpy = jest.spyOn(component, 'handleOriginalVersionView');
-        const onShowOriginalVersionEmitSpy = jest.spyOn(component.onShowOriginalVersion, 'emit');
+        const handleOriginalVersionViewSpy = vi.spyOn(component, 'handleOriginalVersionView');
+        const onShowOriginalVersionEmitSpy = vi.spyOn(component.onShowOriginalVersion, 'emit');
 
         fixture.componentRef.setInput('showOriginalVersionButton', true);
         fixture.detectChanges();
@@ -98,7 +102,7 @@ describe('LectureUnitComponent', () => {
 
         button.nativeElement.dispatchEvent(event);
 
-        expect(handleOriginalVersionViewSpy).toHaveBeenCalledOnce();
-        expect(onShowOriginalVersionEmitSpy).toHaveBeenCalledOnce();
+        expect(handleOriginalVersionViewSpy).toHaveBeenCalledTimes(1);
+        expect(onShowOriginalVersionEmitSpy).toHaveBeenCalledTimes(1);
     });
 });

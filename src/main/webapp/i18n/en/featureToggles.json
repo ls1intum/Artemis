@@ -1,5 +1,194 @@
 {
-    "featureToggles": {
-        "title": "Feature Toggles"
+    "features": {
+        "title": "Features"
+    },
+    "artemisApp": {
+        "features": {
+            "title": "Features",
+            "active": "Active",
+            "inactive": "Inactive",
+            "enabled": "Enabled",
+            "disabled": "Disabled",
+            "viewDocumentation": "View documentation",
+            "jumpTo": "Jump to:",
+            "profileFeatures": {
+                "title": "Profile-Based Features",
+                "shortTitle": "Profiles",
+                "description": "These features are controlled by Spring profiles and must be activated in the service configuration. Changes require a server restart."
+            },
+            "moduleFeatures": {
+                "title": "Module Features",
+                "shortTitle": "Modules",
+                "description": "These features are controlled by module configuration in application-prod.yml. Changes require a server restart."
+            },
+            "dynamicToggles": {
+                "title": "Runtime Feature Toggles",
+                "shortTitle": "Toggles",
+                "description": "Enable or disable features for all users. Changes take effect immediately without server restart."
+            },
+            "profiles": {
+                "iris": {
+                    "name": "Iris (AI Assistant)",
+                    "description": "Enables the Iris AI virtual tutor powered by LLMs for personalized student support and code assistance."
+                },
+                "athena": {
+                    "name": "Athena (AI Assessment)",
+                    "description": "Enables Athena ML-based automated feedback suggestions for text and programming exercises."
+                },
+                "apollon": {
+                    "name": "Apollon (Modeling)",
+                    "description": "Enables the Apollon UML modeling editor for creating and editing diagrams in modeling exercises."
+                },
+                "theia": {
+                    "name": "Theia (Online IDE)",
+                    "description": "Enables the Theia cloud-based IDE for programming exercises, allowing students to code in the browser."
+                },
+                "ldap": {
+                    "name": "LDAP Authentication",
+                    "description": "Enables LDAP-based authentication for user login through institutional directory services."
+                },
+                "saml2": {
+                    "name": "SAML2 Authentication",
+                    "description": "Enables SAML2-based single sign-on (SSO) authentication through identity providers."
+                },
+                "localci": {
+                    "name": "Local CI",
+                    "description": "Enables the local continuous integration system for building and testing programming submissions."
+                },
+                "buildagent": {
+                    "name": "Integrated Build Agent",
+                    "description": "Enables the integrated build agent on the server node for Local CI, eliminating the need for separate build agent nodes."
+                },
+                "aeolus": {
+                    "name": "Aeolus (Build Plans)",
+                    "description": "Enables Aeolus for dynamic build plan generation and customization for programming exercises."
+                },
+                "jenkins": {
+                    "name": "Jenkins CI",
+                    "description": "Enables Jenkins as the continuous integration system for programming exercise builds."
+                }
+            },
+            "modules": {
+                "atlas": {
+                    "name": "Atlas (Adaptive Learning)",
+                    "description": "Enables competency-based learning features including learning paths, competency tracking, and analytics."
+                },
+                "hyperion": {
+                    "name": "Hyperion (Exercise Creation)",
+                    "description": "Enables AI-assisted exercise creation using Hyperion for generating programming exercises."
+                },
+                "exam": {
+                    "name": "Exam Mode",
+                    "description": "Enables exam mode for conducting secure online assessments with proctoring features."
+                },
+                "plagiarism": {
+                    "name": "Plagiarism Detection",
+                    "description": "Enables plagiarism detection using JPlag for text, modeling, and programming exercises."
+                },
+                "text": {
+                    "name": "Text Exercises",
+                    "description": "Enables text exercises with manual and automated assessment capabilities."
+                },
+                "modeling": {
+                    "name": "Modeling Exercises",
+                    "description": "Enables UML diagram exercises using the Apollon editor with automatic similarity comparison."
+                },
+                "fileupload": {
+                    "name": "File Upload Exercises",
+                    "description": "Enables file upload exercises for submitting documents, images, and other files."
+                },
+                "lecture": {
+                    "name": "Lectures",
+                    "description": "Enables lecture management with units, slides, videos, and attachments."
+                },
+                "tutorialgroup": {
+                    "name": "Tutorial Groups",
+                    "description": "Enables tutorial group management for organizing students and tutors."
+                },
+                "nebula": {
+                    "name": "Nebula (Video Processing)",
+                    "description": "Enables lecture video processing and transcription for AI-enhanced content understanding."
+                },
+                "sharing": {
+                    "name": "Exercise Sharing",
+                    "description": "Enables sharing and importing of programming exercises between courses and institutions."
+                },
+                "lti": {
+                    "name": "LTI Integration",
+                    "description": "Enables Learning Tools Interoperability (LTI) for integration with external learning management systems."
+                },
+                "passkey": {
+                    "name": "Passkey Authentication",
+                    "description": "Enables passwordless authentication using FIDO2/WebAuthn passkeys for enhanced security."
+                }
+            },
+            "toggles": {
+                "ProgrammingExercises": {
+                    "name": "Programming Exercises",
+                    "description": "Allows instructors to create programming exercises with automatic assessment through CI/CD pipelines.",
+                    "disableWarning": "Students will not be able to participate in programming exercises. Existing submissions remain accessible."
+                },
+                "PlagiarismChecks": {
+                    "name": "Plagiarism Detection",
+                    "description": "Enables plagiarism detection for text, modeling, and programming exercises using JPlag.",
+                    "disableWarning": "Instructors will not be able to run plagiarism checks on exercises."
+                },
+                "Exports": {
+                    "name": "Data Exports",
+                    "description": "Allows exporting course data, exam results, and student submissions.",
+                    "disableWarning": "Users will not be able to export course or exam data."
+                },
+                "LearningPaths": {
+                    "name": "Learning Paths",
+                    "description": "Enables personalized learning paths based on competencies and student progress.",
+                    "disableWarning": "Students will not see personalized learning path recommendations."
+                },
+                "Science": {
+                    "name": "Science Data Collection",
+                    "description": "Collects anonymized usage data for research purposes to improve learning outcomes.",
+                    "disableWarning": "No usage data will be collected for research analysis."
+                },
+                "StandardizedCompetencies": {
+                    "name": "Competency Import",
+                    "description": "Allows instructors to import competencies from standardized frameworks (e.g., curricula, qualification profiles) and link them to course competencies for better alignment with educational standards.",
+                    "disableWarning": "Instructors will not be able to import or link standardized competencies to their courses."
+                },
+                "StudentCourseAnalyticsDashboard": {
+                    "name": "Analytics Dashboard",
+                    "description": "Provides students with a personal dashboard showing learning progress, performance metrics, exercise statistics, and competency mastery - when enabled by course instructors.",
+                    "disableWarning": "Students will not have access to their personal analytics dashboard, even if instructors enable it for their course."
+                },
+                "TutorSuggestions": {
+                    "name": "AI Tutor Suggestions",
+                    "description": "Uses Iris to suggest answers for tutors when responding to student questions in the communication module.",
+                    "disableWarning": "Tutors will not receive AI-assisted answer suggestions from Iris in the communication module."
+                },
+                "AtlasML": {
+                    "name": "Atlas Machine Learning",
+                    "description": "Uses machine learning to automatically generate competency recommendations based on course content, predict student performance, and provide intelligent suggestions for learning path optimization.",
+                    "disableWarning": "Automatic competency generation, performance predictions, and ML-based learning recommendations will not be available."
+                },
+                "AtlasAgent": {
+                    "name": "Atlas Agent",
+                    "description": "Enables an AI agent that helps students understand and master competencies by providing personalized explanations, answering questions about learning objectives, and guiding them through their competency-based learning journey.",
+                    "disableWarning": "Students will not have access to the AI-powered competency assistant."
+                },
+                "Memiris": {
+                    "name": "Iris Memory System",
+                    "description": "Enables long-term memory for Iris AI assistants, allowing them to remember context from previous conversations and provide more personalized, contextually aware responses over time.",
+                    "disableWarning": "Iris will not retain conversation history between sessions, resulting in less personalized AI assistance."
+                },
+                "LectureContentProcessing": {
+                    "name": "Lecture Video Processing",
+                    "description": "Uses Nebula to automatically generate transcriptions from lecture videos and sends them to Pyris/Iris, enabling AI assistants to answer questions about lecture content and provide more accurate, content-aware responses.",
+                    "disableWarning": "Lecture videos will not be transcribed by Nebula and Iris will not be able to reference lecture content in its responses."
+                },
+                "RateLimit": {
+                    "name": "API Rate Limiting",
+                    "description": "Protects the application from abuse and overload by limiting the number of specific API requests per user within a given time period.",
+                    "disableWarning": "Specific API endpoints are not protected by rate limiting, which can lead to potential abuse or overload."
+                }
+            }
+        }
     }
 }

@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
@@ -8,23 +10,25 @@ import { ApollonDiagramCreateFormComponent } from 'app/quiz/manage/apollon-diagr
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { UMLDiagramType } from '@tumaet/apollon';
 
 describe('ApollonDiagramCreateForm Component', () => {
+    setupTestBed({ zoneless: true });
+
     let apollonDiagramService: ApollonDiagramService;
     let ngbModal: NgbActiveModal;
     let fixture: ComponentFixture<ApollonDiagramCreateFormComponent>;
 
     const diagram: ApollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, 123);
 
-    beforeEach(() => {
+    beforeEach(async () => {
         diagram.id = 1;
 
-        TestBed.configureTestingModule({
+        await TestBed.configureTestingModule({
             imports: [ApollonDiagramCreateFormComponent],
             providers: [
                 provideHttpClient(),
@@ -37,28 +41,27 @@ describe('ApollonDiagramCreateForm Component', () => {
                 { provide: Router, useClass: MockRouter },
             ],
         })
-            .overrideTemplate(ApollonDiagramCreateFormComponent, '')
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ApollonDiagramCreateFormComponent);
-                apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
-                ngbModal = fixture.debugElement.injector.get(NgbActiveModal);
-            });
+            .overrideTemplate(ApollonDiagramCreateFormComponent, '<input #titleInput />')
+            .compileComponents();
+
+        fixture = TestBed.createComponent(ApollonDiagramCreateFormComponent);
+        apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
+        ngbModal = fixture.debugElement.injector.get(NgbActiveModal);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('save', fakeAsync(() => {
+    it('save', async () => {
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
-        jest.spyOn(apollonDiagramService, 'create').mockReturnValue(of(response));
-        const ngbModalSpy = jest.spyOn(ngbModal, 'close');
+        vi.spyOn(apollonDiagramService, 'create').mockReturnValue(of(response));
+        const ngbModalSpy = vi.spyOn(ngbModal, 'close');
         fixture.componentInstance.apollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, 999);
 
         // test
         fixture.componentInstance.save();
-        tick();
+        await fixture.whenStable();
         expect(ngbModalSpy).toHaveBeenCalledOnce();
-    }));
+    });
 });

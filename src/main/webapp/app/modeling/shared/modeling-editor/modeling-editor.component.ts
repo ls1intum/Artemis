@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewEncapsulation, inject } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
 import { ApollonEditor, ApollonMode, SVG, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { isFullScreen } from 'app/shared/util/fullscreen.util';
@@ -11,15 +11,16 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass, NgStyle } from '@angular/common';
 import { ModelingExplanationEditorComponent } from '../modeling-explanation-editor/modeling-explanation-editor.component';
 import { captureException } from '@sentry/angular';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-modeling-editor',
     templateUrl: './modeling-editor.component.html',
     styleUrls: ['./modeling-editor.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [TranslateDirective, FaIconComponent, NgStyle, NgClass, ModelingExplanationEditorComponent],
+    imports: [TranslateDirective, FaIconComponent, NgStyle, NgClass, ModelingExplanationEditorComponent, HtmlForMarkdownPipe],
 })
-export class ModelingEditorComponent extends ModelingComponent implements AfterViewInit, OnDestroy, OnChanges {
+export class ModelingEditorComponent extends ModelingComponent implements AfterViewInit, OnDestroy {
     protected readonly faCheck = faCheck;
     protected readonly faTimes = faTimes;
     protected readonly faCircleNotch = faCircleNotch;
@@ -28,22 +29,51 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     private readonly modalService = inject(NgbModal);
     private readonly sanitizer = inject(DomSanitizer);
 
-    @Input() showHelpButton = true;
-    @Input() withExplanation = false;
-    @Input() savedStatus?: { isChanged?: boolean; isSaving?: boolean };
+    showHelpButton = input(true);
+    withExplanation = input(false);
+    savedStatus = input<{
+        isChanged?: boolean;
+        isSaving?: boolean;
+    }>();
 
-    @Output() private onModelChanged: EventEmitter<UMLModel> = new EventEmitter<UMLModel>();
-    @Output() onModelPatch = new EventEmitter<string>();
-
-    @Output() explanationChange = new EventEmitter();
+    onModelChanged = output<UMLModel>();
+    onModelPatch = output<string>();
 
     private modelSubscription: number;
+    private isDestroyed = false;
 
     readonlyApollonDiagram?: SVG;
     readOnlySVG?: SafeHtml;
 
     constructor() {
         super();
+        effect(() => {
+            const diagramType = this.diagramType();
+
+            if (this.isDestroyed || !diagramType || !this.editorContainer()) {
+                return;
+            }
+
+            this.initializeApollonEditor();
+        });
+
+        effect(() => {
+            const model = this.umlModel();
+
+            if (this.isDestroyed || !model || !this.apollonEditor) {
+                return;
+            }
+
+            try {
+                // work on a copy if removeAssessments mutates
+                const umlModel = { ...model } as UMLModel;
+                ModelingEditorComponent.removeAssessments(umlModel);
+                this.apollonEditor.model = umlModel;
+            } catch (err) {
+                // Editor may not be fully initialized yet or already destroyed
+                captureException(err);
+            }
+        });
     }
 
     /**
@@ -52,7 +82,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      */
     async ngAfterViewInit(): Promise<void> {
         this.initializeApollonEditor();
-        if (this.readOnly) {
+        if (this.readOnly()) {
             if (this.apollonEditor) {
                 await ApollonEditor.exportModelAsSvg(this.apollonEditor?.model);
                 this.readonlyApollonDiagram = await this.apollonEditor?.exportAsSVG();
@@ -75,14 +105,18 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         }
 
         // Apollon doesn't need assessments in Modeling mode
-        ModelingEditorComponent.removeAssessments(this.umlModel);
+        const umlModel = this.umlModel();
+        if (umlModel) {
+            ModelingEditorComponent.removeAssessments(umlModel);
+        }
 
-        if (this.editorContainer) {
-            this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
-                model: this.umlModel,
+        const editorContainer = this.editorContainer();
+        if (editorContainer) {
+            this.apollonEditor = new ApollonEditor(editorContainer.nativeElement, {
+                model: umlModel,
                 mode: ApollonMode.Modelling,
-                readonly: this.readOnly,
-                type: this.diagramType || UMLDiagramType.ClassDiagram,
+                readonly: this.readOnly(),
+                type: this.diagramType() || UMLDiagramType.ClassDiagram,
                 scale: 0.8,
             });
 
@@ -143,26 +177,10 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     }
 
     /**
-     * If changes are made to the uml model, update the model and remove assessments
-     * @param {SimpleChanges} changes - Changes made
-     */
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes.diagramType) {
-            // if the diagram type changed -> recreate the editor
-            this.initializeApollonEditor();
-        }
-
-        if (changes.umlModel && changes.umlModel.currentValue && this.apollonEditor) {
-            this.umlModel = changes.umlModel.currentValue;
-            // Apollon doesn't need assessments in Modeling mode
-            ModelingEditorComponent.removeAssessments(this.umlModel);
-        }
-    }
-
-    /**
      * If the apollon editor is not null, destroy it and set it to null, on component destruction
      */
     ngOnDestroy(): void {
+        this.isDestroyed = true;
         try {
             this.destroyApollonEditor();
         } catch (err) {
@@ -175,12 +193,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      */
     get isFullScreen() {
         return isFullScreen();
-    }
-
-    // Emit explanation change when textarea input changes
-    onExplanationInput(newValue: string) {
-        this.explanationChange.emit(newValue);
-        this.explanation = newValue;
     }
 
     /**

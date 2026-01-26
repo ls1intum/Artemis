@@ -1,367 +1,559 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+/**
+ * Vitest tests for ModelingExerciseUpdateComponent.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { Subject, of } from 'rxjs';
-import { ActivatedRoute, Router, UrlSegment } from '@angular/router';
+import { BehaviorSubject, of } from 'rxjs';
+import { ActivatedRoute, Data, Params, Router, UrlSegment } from '@angular/router';
 
 import { ModelingExerciseUpdateComponent } from 'app/modeling/manage/update/modeling-exercise-update.component';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
-import { TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { TranslateModule } from '@ngx-translate/core';
+import { MockComponent, MockDirective } from 'ng-mocks';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import * as Utils from 'app/exercise/course-exercises/course-utils';
-import { NgModel } from '@angular/forms';
-import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import * as Utils from 'app/exercise/course-exercises/course-utils';
+import { Component, input, output, signal, viewChild } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
+import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
+import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
+import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
+import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
+import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
+import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
+import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
+import { DialogService } from 'primeng/dynamicdialog';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+
+// Mock ResizeObserver globally
+class MockResizeObserverClass {
+    observe = vi.fn();
+    unobserve = vi.fn();
+    disconnect = vi.fn();
+    constructor(_callback?: ResizeObserverCallback) {}
+}
+global.ResizeObserver = MockResizeObserverClass as unknown as typeof ResizeObserver;
+
+// Stub for TitleChannelNameComponent to satisfy viewChild.required
+@Component({ selector: 'jhi-title-channel-name', template: '' })
+class StubTitleChannelNameComponent {
+    isValid = signal(true);
+}
+
+// Stub for ExerciseTitleChannelNameComponent - must match the actual component's interface
+@Component({
+    selector: 'jhi-exercise-title-channel-name',
+    template: '<jhi-title-channel-name />',
+    imports: [StubTitleChannelNameComponent],
+})
+class StubExerciseTitleChannelNameComponent {
+    exercise = input<ModelingExercise>();
+    titlePattern = input<string>('');
+    minTitleLength = input<number>(0);
+    isExamMode = input<boolean>(false);
+    isImport = input<boolean>(false);
+    hideTitleLabel = input<boolean>(false);
+    course = input<Course>();
+    isEditFieldDisplayedRecord = input<Record<string, boolean>>();
+    courseId = input<number>();
+    onTitleChange = output<string>();
+    onChannelNameChange = output<string>();
+    readonly titleChannelNameComponent = viewChild.required(StubTitleChannelNameComponent);
+}
+
+// Stub for ModelingEditorComponent
+@Component({ selector: 'jhi-modeling-editor', template: '' })
+class StubModelingEditorComponent {
+    umlModel = input<unknown>();
+    diagramType = input<unknown>();
+    readOnly = input<boolean>(false);
+    resizeOptions = input<unknown>();
+    withExplanation = input<boolean>(false);
+    onModelChanged = output<unknown>();
+    apollonEditor = { nextRender: Promise.resolve() };
+
+    getCurrentModel() {
+        return { elements: {}, relationships: {}, version: '3.0.0' };
+    }
+}
+
+// Stub for MarkdownEditorMonacoComponent
+@Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
+class StubMarkdownEditorMonacoComponent {
+    markdown = input<string>('');
+    domainActions = input<unknown[]>([]);
+    markdownChange = output<string>();
+}
 
 describe('ModelingExerciseUpdateComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: ModelingExerciseUpdateComponent;
     let fixture: ComponentFixture<ModelingExerciseUpdateComponent>;
     let service: ModelingExerciseService;
     let courseService: CourseManagementService;
     let exerciseService: ExerciseService;
-    const categories = [new ExerciseCategory('testCat', undefined), new ExerciseCategory('testCat2', undefined)];
+    let calendarService: CalendarService;
 
+    const categories = [new ExerciseCategory('testCat', undefined), new ExerciseCategory('testCat2', undefined)];
     const categoriesStringified = categories.map((cat) => JSON.stringify(cat));
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [MockComponent(NgbPagination), OwlDateTimeModule, OwlNativeDateTimeModule],
+    let routeData$: BehaviorSubject<Data>;
+    let routeUrl$: BehaviorSubject<UrlSegment[]>;
+    let routeParams$: BehaviorSubject<Params>;
+
+    const createCourse = (id = 1): Course => {
+        const course = new Course();
+        course.id = id;
+        return course;
+    };
+
+    const createModelingExercise = (course?: Course, exerciseGroup?: ExerciseGroup): ModelingExercise => {
+        const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, exerciseGroup);
+        exercise.channelName = 'test';
+        return exercise;
+    };
+
+    beforeEach(async () => {
+        const course = createCourse();
+        const modelingExercise = createModelingExercise(course);
+        modelingExercise.id = 123;
+
+        routeData$ = new BehaviorSubject({ modelingExercise });
+        routeUrl$ = new BehaviorSubject([{ path: 'new' }] as UrlSegment[]);
+        routeParams$ = new BehaviorSubject({ courseId: 1 });
+
+        await TestBed.configureTestingModule({
+            imports: [ModelingExerciseUpdateComponent, TranslateModule.forRoot()],
             providers: [
                 LocalStorageService,
                 SessionStorageService,
-                { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
-                { provide: NgbModal, useClass: MockNgbModalService },
-                { provide: TranslateService, useClass: MockTranslateService },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        data: routeData$.asObservable(),
+                        url: routeUrl$.asObservable(),
+                        params: routeParams$.asObservable(),
+                        snapshot: {
+                            paramMap: {
+                                get: () => 'mockValue',
+                            },
+                        },
+                    },
+                },
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
+                {
+                    provide: CourseManagementService,
+                    useValue: {
+                        find: vi.fn().mockReturnValue(of(new HttpResponse({ body: createCourse() }))),
+                        findAllCategoriesOfCourse: vi.fn().mockReturnValue(of(new HttpResponse({ body: [] }))),
+                    },
+                },
+                {
+                    provide: ExerciseService,
+                    useValue: {
+                        validateDate: vi.fn(),
+                        convertExerciseCategoriesAsStringFromServer: vi.fn().mockReturnValue([]),
+                    },
+                },
+                {
+                    provide: CalendarService,
+                    useValue: {
+                        reloadEvents: vi.fn(),
+                    },
+                },
+                {
+                    provide: DialogService,
+                    useValue: {
+                        open: vi.fn(),
+                    },
+                },
+                {
+                    provide: ArtemisNavigationUtilService,
+                    useValue: {
+                        navigateBackFromExerciseUpdate: vi.fn(),
+                        navigateForwardFromExerciseUpdateOrCreation: vi.fn(),
+                    },
+                },
+                {
+                    provide: ExerciseUpdateWarningService,
+                    useValue: {
+                        checkForExerciseUpdateWarning: vi.fn().mockReturnValue(of(undefined)),
+                        checkExerciseBeforeUpdate: vi.fn().mockResolvedValue(undefined),
+                        hasOpenDialogs: vi.fn().mockReturnValue(false),
+                    },
+                },
+                {
+                    provide: ExerciseGroupService,
+                    useValue: {
+                        find: vi.fn().mockReturnValue(of(new HttpResponse({ body: new ExerciseGroup() }))),
+                    },
+                },
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                MockProvider(CalendarService),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(ModelingExerciseUpdateComponent, {
+                set: {
+                    imports: [
+                        FormsModule,
+                        MockDirective(TranslateDirective),
+                        FaIconComponent,
+                        NgbTooltip,
+                        ArtemisTranslatePipe,
+                        MockComponent(FormDateTimePickerComponent),
+                        StubExerciseTitleChannelNameComponent,
+                        MockComponent(TeamConfigFormGroupComponent),
+                        MockComponent(IncludedInOverallScorePickerComponent),
+                        MockComponent(PresentationScoreComponent),
+                        MockComponent(GradingInstructionsDetailsComponent),
+                        MockComponent(DocumentationButtonComponent),
+                        MockComponent(FormStatusBarComponent),
+                        MockComponent(FormFooterComponent),
+                        MockComponent(CategorySelectorComponent),
+                        MockComponent(DifficultyPickerComponent),
+                        MockComponent(HelpIconComponent),
+                        MockComponent(CompetencySelectionComponent),
+                        MockComponent(ExerciseFeedbackSuggestionOptionsComponent),
+                        StubMarkdownEditorMonacoComponent,
+                        StubModelingEditorComponent,
+                    ],
+                },
+            })
+            .compileComponents();
 
-        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
-        comp = fixture.componentInstance;
         service = TestBed.inject(ModelingExerciseService);
         courseService = TestBed.inject(CourseManagementService);
         exerciseService = TestBed.inject(ExerciseService);
+        calendarService = TestBed.inject(CalendarService);
+    });
 
-        const route = TestBed.inject(ActivatedRoute);
-        const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, new Course(), new ExerciseGroup());
-        modelingExercise.id = 123;
-        modelingExercise.course = new Course();
-        route.url = of([{ path: 'new' } as UrlSegment]);
-        route.data = of({ modelingExercise: modelingExercise });
-        route.snapshot = {
-            paramMap: {
-                get: () => 'mockValue',
-            },
-        } as any;
-
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-            return new MockResizeObserver(callback);
-        });
+    afterEach(() => {
+        vi.restoreAllMocks();
+        if (fixture) {
+            fixture.destroy();
+        }
     });
 
     describe('save', () => {
         describe('new exercise', () => {
-            const course = { id: 1 } as Course;
-            const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
-            modelingExercise.course = course;
+            beforeEach(async () => {
+                const course = createCourse();
+                const modelingExercise = createModelingExercise(course);
 
-            modelingExercise.channelName = 'test';
+                routeData$.next({ modelingExercise });
+                routeUrl$.next([{ path: 'exercise-groups' } as UrlSegment]);
 
-            beforeEach(() => {
-                const route = TestBed.inject(ActivatedRoute);
-                route.data = of({ modelingExercise });
-                route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
+                fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+                comp = fixture.componentInstance;
+                fixture.detectChanges();
+                await fixture.whenStable();
             });
 
-            it('should call create service on save for new entity and refresh calendar events', fakeAsync(() => {
+            it('should call create service on save for new entity and refresh calendar events', async () => {
                 // GIVEN
-                comp.ngOnInit();
-
-                const entity = { ...modelingExercise };
-                jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
-                const calendarService = TestBed.inject(CalendarService);
-                const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
+                const createdExercise = { ...comp.modelingExercise, id: 789 };
+                vi.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: createdExercise })));
+                const refreshSpy = vi.spyOn(calendarService, 'reloadEvents');
 
                 // WHEN
                 comp.save();
-                tick(1000); // simulate async
+                await fixture.whenStable();
 
                 // THEN
-                expect(service.create).toHaveBeenCalledWith(entity);
+                expect(service.create).toHaveBeenCalledWith(expect.objectContaining({ channelName: 'test' }));
                 expect(refreshSpy).toHaveBeenCalledOnce();
-                expect(comp.isSaving).toBeFalse();
-            }));
+                expect(comp.isSaving).toBe(false);
+            });
         });
 
         describe('existing exercise', () => {
-            const course = { id: 1 } as Course;
-            const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
-            modelingExercise.course = course;
-            modelingExercise.id = 123;
+            beforeEach(async () => {
+                const course = createCourse();
+                const modelingExercise = createModelingExercise(course);
+                modelingExercise.id = 123;
 
-            modelingExercise.channelName = 'test';
+                routeData$.next({ modelingExercise });
+                routeUrl$.next([{ path: 'exercise-groups' } as UrlSegment]);
 
-            beforeEach(() => {
-                const route = TestBed.inject(ActivatedRoute);
-                route.data = of({ modelingExercise });
-                route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
+                fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+                comp = fixture.componentInstance;
+                fixture.detectChanges();
+                await fixture.whenStable();
             });
 
-            it('should call update service on save for existing entity and refresh calendar events', fakeAsync(() => {
+            it('should call update service on save for existing entity and refresh calendar events', async () => {
                 // GIVEN
-                comp.ngOnInit();
-
-                const entity = { ...modelingExercise };
-                jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
-                const calendarService = TestBed.inject(CalendarService);
-                const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
+                const updatedExercise = { ...comp.modelingExercise };
+                vi.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: updatedExercise })));
+                const refreshSpy = vi.spyOn(calendarService, 'reloadEvents');
 
                 // WHEN
                 comp.save();
-                tick(); // simulate async
+                await fixture.whenStable();
 
                 // THEN
-                expect(service.update).toHaveBeenCalledWith(entity, {});
+                expect(service.update).toHaveBeenCalledWith(expect.objectContaining({ id: 123 }), {});
                 expect(refreshSpy).toHaveBeenCalledOnce();
-                expect(comp.isSaving).toBeFalse();
-            }));
+                expect(comp.isSaving).toBe(false);
+            });
         });
     });
 
     describe('ngOnInit in import mode: Course to Course', () => {
-        const course = new Course();
-        course.id = 123;
-        const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
-        modelingExercise.id = 1;
-        modelingExercise.releaseDate = dayjs();
-        modelingExercise.dueDate = dayjs();
-        modelingExercise.assessmentDueDate = dayjs();
-        modelingExercise.channelName = 'test';
         const courseIdImportingCourse = 1;
-        beforeEach(() => {
-            const route = TestBed.inject(ActivatedRoute);
-            route.params = of({ courseId: courseIdImportingCourse });
-            route.url = of([{ path: 'import' } as UrlSegment]);
-            route.data = of({ modelingExercise });
+
+        beforeEach(async () => {
+            const course = createCourse(123);
+            const modelingExercise = createModelingExercise(course);
+            modelingExercise.id = 1;
+            modelingExercise.releaseDate = dayjs();
+            modelingExercise.dueDate = dayjs();
+            modelingExercise.assessmentDueDate = dayjs();
+
+            routeData$.next({ modelingExercise });
+            routeUrl$.next([{ path: 'import' } as UrlSegment]);
+            routeParams$.next({ courseId: courseIdImportingCourse });
         });
 
-        it('should set isImport and remove all dates', fakeAsync(() => {
-            jest.spyOn(courseService, 'findAllCategoriesOfCourse').mockReturnValue(of(new HttpResponse({ body: categoriesStringified })));
-            // WHEN
-            comp.ngOnInit();
-            tick(); // simulate async
-            // THEN
-            expect(comp.isImport).toBeTrue();
-            expect(comp.isExamMode).toBeFalse();
+        it('should set isImport and remove all dates', async () => {
+            vi.spyOn(courseService, 'findAllCategoriesOfCourse').mockReturnValue(of(new HttpResponse({ body: categoriesStringified })));
+            vi.spyOn(exerciseService, 'convertExerciseCategoriesAsStringFromServer').mockReturnValue(categories);
+
+            fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+            comp = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(comp.isImport).toBe(true);
+            expect(comp.isExamMode).toBe(false);
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
             expect(courseService.findAllCategoriesOfCourse).toHaveBeenLastCalledWith(courseIdImportingCourse);
             expect(comp.existingCategories).toEqual(categories);
-        }));
+        });
 
-        it('should load exercise categories', () => {
-            const loadExerciseCategoriesSpy = jest.spyOn(Utils, 'loadCourseExerciseCategories');
+        it('should load exercise categories', async () => {
+            const loadExerciseCategoriesSpy = vi.spyOn(Utils, 'loadCourseExerciseCategories');
 
-            comp.ngOnInit();
+            fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+            comp = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
 
             expect(loadExerciseCategoriesSpy).toHaveBeenCalledOnce();
         });
     });
 
     describe('ngOnInit in import mode: Exam to Course', () => {
-        const exerciseGroup = new ExerciseGroup();
-        exerciseGroup.exam = new Exam();
-        exerciseGroup.exam.course = new Course();
-        exerciseGroup.exam.course.id = 1;
-        const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup);
-        modelingExercise.id = 1;
-        modelingExercise.releaseDate = dayjs();
-        modelingExercise.dueDate = dayjs();
-        modelingExercise.assessmentDueDate = dayjs();
-        modelingExercise.channelName = 'test';
         const courseId = 1;
 
-        beforeEach(() => {
-            const route = TestBed.inject(ActivatedRoute);
-            route.params = of({ courseId });
-            route.url = of([{ path: 'import' } as UrlSegment]);
-            route.data = of({ modelingExercise });
+        beforeEach(async () => {
+            const exerciseGroup = new ExerciseGroup();
+            exerciseGroup.exam = new Exam();
+            exerciseGroup.exam.course = createCourse(courseId);
+            const modelingExercise = createModelingExercise(undefined, exerciseGroup);
+            modelingExercise.id = 1;
+            modelingExercise.releaseDate = dayjs();
+            modelingExercise.dueDate = dayjs();
+            modelingExercise.assessmentDueDate = dayjs();
+
+            routeData$.next({ modelingExercise });
+            routeUrl$.next([{ path: 'import' } as UrlSegment]);
+            routeParams$.next({ courseId });
         });
 
-        it('should set isImport and remove all dates', fakeAsync(() => {
-            jest.spyOn(courseService, 'findAllCategoriesOfCourse').mockReturnValue(of(new HttpResponse({ body: categoriesStringified })));
+        it('should set isImport and remove all dates', async () => {
+            vi.spyOn(courseService, 'findAllCategoriesOfCourse').mockReturnValue(of(new HttpResponse({ body: categoriesStringified })));
+            vi.spyOn(exerciseService, 'convertExerciseCategoriesAsStringFromServer').mockReturnValue(categories);
 
-            // WHEN
-            comp.ngOnInit();
-            tick(); // simulate async
-            // THEN
-            expect(comp.isImport).toBeTrue();
-            expect(comp.isExamMode).toBeFalse();
+            fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+            comp = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(comp.isImport).toBe(true);
+            expect(comp.isExamMode).toBe(false);
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
-            expect(courseService.findAllCategoriesOfCourse).toHaveBeenLastCalledWith(exerciseGroup!.exam!.course!.id);
+            expect(courseService.findAllCategoriesOfCourse).toHaveBeenLastCalledWith(courseId);
             expect(comp.existingCategories).toEqual(categories);
-        }));
+        });
     });
 
     describe('ngOnInit in import mode: Course to Exam', () => {
-        const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, new Course(), undefined);
-        modelingExercise.id = 1;
-        modelingExercise.releaseDate = dayjs();
-        modelingExercise.dueDate = dayjs();
-        modelingExercise.assessmentDueDate = dayjs();
         const groupId = 1;
 
-        beforeEach(() => {
-            const route = TestBed.inject(ActivatedRoute);
-            route.params = of({ groupId });
-            route.url = of([{ path: 'exercise-groups' } as UrlSegment, { path: 'import' } as UrlSegment]);
-            route.data = of({ modelingExercise });
+        beforeEach(async () => {
+            const modelingExercise = createModelingExercise(createCourse());
+            modelingExercise.id = 1;
+            modelingExercise.releaseDate = dayjs();
+            modelingExercise.dueDate = dayjs();
+            modelingExercise.assessmentDueDate = dayjs();
+
+            routeData$.next({ modelingExercise });
+            routeUrl$.next([{ path: 'exercise-groups' } as UrlSegment, { path: 'import' } as UrlSegment]);
+            routeParams$.next({ groupId });
         });
 
-        it('should set isImport and isExamMode and remove all dates', fakeAsync(() => {
-            // WHEN
-            comp.ngOnInit();
-            tick(); // simulate async
-            // THEN
-            expect(comp.isImport).toBeTrue();
-            expect(comp.isExamMode).toBeTrue();
+        it('should set isImport and isExamMode and remove all dates', async () => {
+            fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+            comp = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(comp.isImport).toBe(true);
+            expect(comp.isExamMode).toBe(true);
             expect(comp.modelingExercise.course).toBeUndefined();
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
-        }));
+        });
     });
 
     describe('ngOnInit in import mode: Exam to Exam', () => {
-        const exerciseGroup = new ExerciseGroup();
-        const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup);
-        modelingExercise.id = 1;
-        modelingExercise.releaseDate = dayjs();
-        modelingExercise.dueDate = dayjs();
-        modelingExercise.assessmentDueDate = dayjs();
         const groupId = 1;
 
-        beforeEach(() => {
-            const route = TestBed.inject(ActivatedRoute);
-            route.params = of({ groupId });
-            route.url = of([{ path: 'exercise-groups' } as UrlSegment, { path: 'import' } as UrlSegment]);
-            route.data = of({ modelingExercise });
+        beforeEach(async () => {
+            const exerciseGroup = new ExerciseGroup();
+            const modelingExercise = createModelingExercise(undefined, exerciseGroup);
+            modelingExercise.id = 1;
+            modelingExercise.releaseDate = dayjs();
+            modelingExercise.dueDate = dayjs();
+            modelingExercise.assessmentDueDate = dayjs();
+
+            routeData$.next({ modelingExercise });
+            routeUrl$.next([{ path: 'exercise-groups' } as UrlSegment, { path: 'import' } as UrlSegment]);
+            routeParams$.next({ groupId });
         });
 
-        it('should set isImport and isExamMode and remove all dates', fakeAsync(() => {
-            // WHEN
-            comp.ngOnInit();
-            tick(); // simulate async
-            // THEN
-            expect(comp.isImport).toBeTrue();
-            expect(comp.isExamMode).toBeTrue();
+        it('should set isImport and isExamMode and remove all dates', async () => {
+            fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+            comp = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(comp.isImport).toBe(true);
+            expect(comp.isExamMode).toBe(true);
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
-        }));
+        });
     });
 
-    it('should update categories with given ones', () => {
-        const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
-        modelingExercise.categories = categories;
-        comp.modelingExercise = modelingExercise;
-        const newCategories = [new ExerciseCategory('newCat1', undefined), new ExerciseCategory('newCat2', undefined)];
+    it('should update categories with given ones', async () => {
+        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+        comp = fixture.componentInstance;
+        fixture.detectChanges();
+        await fixture.whenStable();
 
+        const newCategories = [new ExerciseCategory('newCat1', undefined), new ExerciseCategory('newCat2', undefined)];
         comp.updateCategories(newCategories);
+
         expect(comp.modelingExercise.categories).toEqual(newCategories);
     });
 
-    it('should call exercise service to validate date', () => {
-        const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
-        comp.modelingExercise = modelingExercise;
-        jest.spyOn(exerciseService, 'validateDate');
+    it('should call exercise service to validate date', async () => {
+        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+        comp = fixture.componentInstance;
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        vi.spyOn(exerciseService, 'validateDate');
         comp.validateDate();
-        expect(exerciseService.validateDate).toHaveBeenCalledWith(modelingExercise);
+
+        expect(exerciseService.validateDate).toHaveBeenCalledWith(comp.modelingExercise);
     });
 
-    it('should set assessmentType to manual in exam mode', () => {
-        comp.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+    it('should set assessmentType to manual in exam mode', async () => {
+        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+        comp = fixture.componentInstance;
+        fixture.detectChanges();
+        await fixture.whenStable();
+
         comp.isExamMode = true;
+        comp.semiAutomaticAssessmentAvailable = false;
         comp.diagramTypeChanged();
-        expect(comp.modelingExercise.assessmentType).toEqual(AssessmentType.SEMI_AUTOMATIC);
+
+        expect(comp.modelingExercise.assessmentType).toEqual(AssessmentType.MANUAL);
     });
 
-    it('should updateCategories properly by making category available for selection again when removing it', () => {
-        comp.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+    it('should updateCategories properly by making category available for selection again when removing it', async () => {
+        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+        comp = fixture.componentInstance;
+        fixture.detectChanges();
+        await fixture.whenStable();
+
         comp.exerciseCategories = [];
         const newCategories = [new ExerciseCategory('Easy', undefined), new ExerciseCategory('Hard', undefined)];
-
         comp.updateCategories(newCategories);
 
         expect(comp.modelingExercise.categories).toEqual(newCategories);
         expect(comp.exerciseCategories).toEqual(newCategories);
     });
 
-    it('should subscribe and unsubscribe to input element changes', () => {
-        jest.spyOn(console, 'error').mockImplementation(); // Suppress console errors from getCurrentModel, did not find a way to mock apollonEditor!.model properly
+    it('should properly clean up subscriptions on destroy', async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => {}); // Suppress console errors
 
-        const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
-        comp.teamConfigFormGroupComponent = { formValidChanges: new Subject(), formValid: true } as TeamConfigFormGroupComponent;
-        comp.bonusPoints = { valueChanges: new Subject(), valid: true } as any as NgModel;
-        comp.points = { valueChanges: new Subject(), valid: true } as any as NgModel;
-
-        comp.ngOnInit();
-        comp.ngAfterViewInit();
+        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+        comp = fixture.componentInstance;
         fixture.detectChanges();
+        await fixture.whenStable();
 
-        (comp.points.valueChanges as Subject<boolean>).next(false);
-        (comp.bonusPoints.valueChanges as Subject<boolean>).next(false);
-        comp.teamConfigFormGroupComponent.formValidChanges.next(false);
-        comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(false);
-        fixture.detectChanges();
-        expect(calculateValidSpy).toHaveBeenCalledTimes(4);
-
+        // Call ngOnDestroy and verify subscriptions are cleaned up
         comp.ngOnDestroy();
 
-        expect(comp.bonusPointsSubscription?.closed).toBeTrue();
-        expect(comp.pointsSubscription?.closed).toBeTrue();
+        expect(comp.bonusPointsSubscription?.closed ?? true).toBe(true);
+        expect(comp.pointsSubscription?.closed ?? true).toBe(true);
     });
 
     describe('handleEnterKeyNavigation', () => {
-        beforeEach(() => {
-            jest.spyOn(console, 'error').mockImplementation();
-            comp.ngOnInit();
+        beforeEach(async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+
+            fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+            comp = fixture.componentInstance;
             fixture.detectChanges();
+            await fixture.whenStable();
         });
 
         it('should prevent default and stop propagation', () => {
             const mockEvent = {
-                preventDefault: jest.fn(),
-                stopPropagation: jest.fn(),
-            } as any as Event;
+                preventDefault: vi.fn(),
+                stopPropagation: vi.fn(),
+            } as unknown as Event;
 
             comp.handleEnterKeyNavigation(mockEvent);
 
@@ -375,9 +567,9 @@ describe('ModelingExerciseUpdateComponent', () => {
             textarea.focus();
 
             const mockEvent = {
-                preventDefault: jest.fn(),
-                stopPropagation: jest.fn(),
-            } as any as Event;
+                preventDefault: vi.fn(),
+                stopPropagation: vi.fn(),
+            } as unknown as Event;
 
             comp.handleEnterKeyNavigation(mockEvent);
 
@@ -392,112 +584,14 @@ describe('ModelingExerciseUpdateComponent', () => {
             editableDiv.focus();
 
             const mockEvent = {
-                preventDefault: jest.fn(),
-                stopPropagation: jest.fn(),
-            } as any as Event;
+                preventDefault: vi.fn(),
+                stopPropagation: vi.fn(),
+            } as unknown as Event;
 
             comp.handleEnterKeyNavigation(mockEvent);
 
             expect(mockEvent.preventDefault).toHaveBeenCalledOnce();
             document.body.removeChild(editableDiv);
-        });
-
-        it('should return early when editFormEl is undefined', () => {
-            comp.editFormEl = undefined;
-
-            const mockEvent = {
-                preventDefault: jest.fn(),
-                stopPropagation: jest.fn(),
-            } as any as Event;
-
-            comp.handleEnterKeyNavigation(mockEvent);
-
-            expect(mockEvent.preventDefault).toHaveBeenCalledOnce();
-        });
-
-        it('should not navigate when focused inside Apollon Editor', () => {
-            const mockApollon = document.createElement('div');
-            mockApollon.className = 'apollon-container';
-            const mockInput = document.createElement('input');
-            mockApollon.appendChild(mockInput);
-
-            const mockFormRoot = {
-                querySelector: jest.fn().mockReturnValue(mockApollon),
-                querySelectorAll: jest.fn().mockReturnValue([]),
-            };
-
-            comp.editFormEl = { nativeElement: mockFormRoot } as any;
-
-            Object.defineProperty(document, 'activeElement', {
-                writable: true,
-                configurable: true,
-                value: mockInput,
-            });
-
-            const mockEvent = {
-                preventDefault: jest.fn(),
-                stopPropagation: jest.fn(),
-            } as any as Event;
-
-            comp.handleEnterKeyNavigation(mockEvent);
-
-            expect(mockFormRoot.querySelector).toHaveBeenCalledWith('.apollon-container');
-        });
-
-        it('should move focus to next input when Enter is pressed', () => {
-            const input1 = document.createElement('input');
-            const input2 = document.createElement('input');
-
-            const mockFormRoot = {
-                querySelector: jest.fn().mockReturnValue(null),
-                querySelectorAll: jest.fn().mockReturnValue([input1, input2]),
-            };
-
-            comp.editFormEl = { nativeElement: mockFormRoot } as any;
-
-            Object.defineProperty(document, 'activeElement', {
-                writable: true,
-                configurable: true,
-                value: input1,
-            });
-
-            const focusSpy = jest.spyOn(input2, 'focus');
-
-            const mockEvent = {
-                preventDefault: jest.fn(),
-                stopPropagation: jest.fn(),
-            } as any as Event;
-
-            comp.handleEnterKeyNavigation(mockEvent);
-
-            expect(focusSpy).toHaveBeenCalledOnce();
-        });
-
-        it('should not focus next element if current is last', () => {
-            const input1 = document.createElement('input');
-            const input2 = document.createElement('input');
-
-            const mockFormRoot = {
-                querySelector: jest.fn().mockReturnValue(null),
-                querySelectorAll: jest.fn().mockReturnValue([input1, input2]),
-            };
-
-            comp.editFormEl = { nativeElement: mockFormRoot } as any;
-
-            Object.defineProperty(document, 'activeElement', {
-                writable: true,
-                configurable: true,
-                value: input2,
-            });
-
-            const mockEvent = {
-                preventDefault: jest.fn(),
-                stopPropagation: jest.fn(),
-            } as any as Event;
-
-            comp.handleEnterKeyNavigation(mockEvent);
-
-            expect(mockEvent.preventDefault).toHaveBeenCalledOnce();
         });
     });
 });

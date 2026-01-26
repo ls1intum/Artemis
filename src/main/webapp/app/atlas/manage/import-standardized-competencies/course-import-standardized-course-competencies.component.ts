@@ -10,8 +10,9 @@ import {
 } from 'app/atlas/shared/entities/standardized-competency.model';
 import { faBan, faDownLeftAndUpRightToCenter, faFileImport, faSort, faTrash, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Component, HostListener, OnInit, inject } from '@angular/core';
+import { Component, HostListener, OnInit, inject, viewChild } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
+import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 import { forkJoin, map } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -45,6 +46,13 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
     protected translateService = inject(TranslateService);
     protected sortService = inject(SortService);
 
+    /** Reference to the knowledge area tree component for tree control */
+    private readonly knowledgeAreaTree = viewChild(KnowledgeAreaTreeComponent);
+
+    protected override get knowledgeAreaTreeComponent(): KnowledgeAreaTreeComponent | undefined {
+        return this.knowledgeAreaTree();
+    }
+
     protected selectedCompetencies: StandardizedCompetencyForImport[] = [];
     protected selectedCompetency?: StandardizedCompetencyForImport;
     protected sourceString = '';
@@ -75,7 +83,6 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
                 const knowledgeAreas = knowledgeAreasResponse.body!;
                 const knowledgeAreasForImport = knowledgeAreas.map((knowledgeArea) => this.convertToKnowledgeAreaForImport(knowledgeArea));
                 this.dataSource.data = knowledgeAreasForImport;
-                this.treeControl.dataNodes = knowledgeAreasForImport;
                 knowledgeAreasForImport.forEach((knowledgeArea) => {
                     this.addSelfAndDescendantsToMap(knowledgeArea);
                     this.addSelfAndDescendantsToSelectArray(knowledgeArea);

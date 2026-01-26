@@ -1,10 +1,13 @@
+import { Component, EventEmitter, input, output } from '@angular/core';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { ApollonEdge, ApollonNode, UMLDiagramType, UMLModel } from '@tumaet/apollon';
+import { UMLDiagramType, UMLElement, UMLModel } from '@tumaet/apollon';
 import { TranslateService } from '@ngx-translate/core';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -31,6 +34,7 @@ import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.c
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -44,8 +48,39 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+
+// Stub component that provides all needed functionality for ModelingEditorComponent
+@Component({
+    selector: 'jhi-modeling-editor',
+    template: '',
+})
+class StubModelingEditorComponent {
+    umlModel = input<UMLModel>();
+    diagramType = input<UMLDiagramType>();
+    readOnly = input<boolean>(false);
+    resizeOptions = input<{ verticalResize?: boolean }>({});
+    showHelpButton = input<boolean>(true);
+    withExplanation = input<boolean>(false);
+    savedStatus = input<{ isChanged?: boolean; isSaving?: boolean }>();
+
+    savedStatusOutput = output<boolean>();
+    onModelChanged = output<UMLModel>();
+    onModelPatch = output<unknown[]>();
+
+    apollonEditor = { nextRender: Promise.resolve() };
+    isApollonEditorMounted = false;
+
+    getCurrentModel(): UMLModel {
+        return { elements: {}, relationships: {}, version: '3.0.0' } as unknown as UMLModel;
+    }
+
+    importPatch = vi.fn();
+}
 
 describe('ModelingSubmissionComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: ModelingSubmissionComponent;
     let fixture: ComponentFixture<ModelingSubmissionComponent>;
     let debugElement: DebugElement;
@@ -56,32 +91,65 @@ describe('ModelingSubmissionComponent', () => {
     const participation = new StudentParticipation();
     participation.exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
     participation.id = 1;
-    participation.exercise.studentParticipations = [];
     const submission = <ModelingSubmission>(<unknown>{ id: 20, submitted: true, participation });
     const result = { id: 1 } as Result;
 
     const originalConsoleError = console.error;
 
-    function createModelingSubmissionComponent(route?: ActivatedRoute) {
-        if (route) {
-            TestBed.overrideProvider(ActivatedRoute, { useValue: route });
+    // Create a mock modeling editor component for use in tests
+    let mockModelingEditor: Partial<ModelingEditorComponent>;
+
+    function createModelingSubmissionComponent(routeOverride?: ActivatedRoute) {
+        if (routeOverride) {
+            TestBed.overrideProvider(ActivatedRoute, { useValue: routeOverride });
         }
+
+        // Override the component to use stubs/mocks instead of real components
+        TestBed.overrideComponent(ModelingSubmissionComponent, {
+            remove: {
+                imports: [ModelingEditorComponent, HeaderParticipationPageComponent, TeamParticipateInfoBoxComponent],
+            },
+            add: {
+                imports: [StubModelingEditorComponent, MockComponent(HeaderParticipationPageComponent), MockComponent(TeamParticipateInfoBoxComponent)],
+            },
+        });
+
         fixture = TestBed.createComponent(ModelingSubmissionComponent);
         comp = fixture.componentInstance;
         debugElement = fixture.debugElement;
         service = TestBed.inject(ModelingSubmissionService);
         alertService = TestBed.inject(AlertService);
-        comp.modelingEditor = TestBed.createComponent(MockComponent(ModelingEditorComponent)).componentInstance;
+
+        // Create a mock for the modeling editor viewChild signal
+        // Return a model with elements so that submit validation passes
+        mockModelingEditor = {
+            getCurrentModel: vi.fn().mockReturnValue({
+                elements: { element1: { id: 'element1', type: 'Class' } },
+                relationships: {},
+                version: '3.0.0',
+                type: 'ClassDiagram',
+                size: { width: 0, height: 0 },
+                interactive: { elements: {}, relationships: {} },
+                assessments: {},
+            } as unknown as UMLModel),
+            isApollonEditorMounted: false,
+            onModelPatch: new EventEmitter() as any,
+            importPatch: vi.fn(),
+        };
+
+        // Mock the viewChild signal to return our mock editor
+        vi.spyOn(comp, 'modelingEditor').mockReturnValue(mockModelingEditor as ModelingEditorComponent);
     }
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([routes[0]])],
-            declarations: [
+            imports: [
+                RouterModule.forRoot([routes[0]]),
                 ModelingSubmissionComponent,
-                MockComponent(ModelingEditorComponent),
+                StubModelingEditorComponent,
                 MockPipe(HtmlForMarkdownPipe),
                 MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisTimeAgoPipe),
                 MockComponent(HeaderParticipationPageComponent),
                 MockComponent(ButtonComponent),
                 MockComponent(ResizeableContainerComponent),
@@ -101,6 +169,7 @@ describe('ModelingSubmissionComponent', () => {
                 SessionStorageService,
                 { provide: ActivatedRoute, useValue: route },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 ResultService,
                 provideHttpClientTesting(),
                 provideHttpClient(),
@@ -110,16 +179,26 @@ describe('ModelingSubmissionComponent', () => {
                 },
             ],
         });
-        console.error = jest.fn();
+        console.error = vi.fn();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
         console.error = originalConsoleError;
+
+        // Reset shared submission state to prevent test pollution
+        submission.submitted = true;
+        submission.model = undefined;
+        submission.participation!.initializationDate = undefined;
+        (<StudentParticipation>submission.participation).exercise!.dueDate = undefined;
 
         // Ensure all subscriptions are cleaned up
         if (comp) {
-            comp.ngOnDestroy();
+            try {
+                comp.ngOnDestroy();
+            } catch (_) {
+                // Ignore errors during cleanup
+            }
         }
         TestBed.resetTestingModule();
     });
@@ -139,14 +218,14 @@ describe('ModelingSubmissionComponent', () => {
         submission.participation = participation;
 
         // Mock service calls
-        const getLatestSubmissionSpy = jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-        const getSubmissionsWithResultsSpy = jest.spyOn(service, 'getSubmissionsWithResultsForParticipation');
+        const getLatestSubmissionSpy = vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        const getSubmissionsWithResultsSpy = vi.spyOn(service, 'getSubmissionsWithResultsForParticipation');
 
         // Initialize component
         comp.ngOnInit();
 
         // Assertions
-        expect(comp.isFeedbackView).toBeFalse();
+        expect(comp.isFeedbackView).toBe(false);
         expect(getLatestSubmissionSpy).toHaveBeenCalledOnce();
         expect(getSubmissionsWithResultsSpy).not.toHaveBeenCalled();
         expect(comp.submission).toEqual(submission);
@@ -185,14 +264,14 @@ describe('ModelingSubmissionComponent', () => {
         submission.latestResult = result;
 
         // Mock service calls
-        const getSubmissionsWithResultsSpy = jest.spyOn(service, 'getSubmissionsWithResultsForParticipation').mockReturnValue(of([submission]));
-        const getLatestSubmissionSpy = jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        const getSubmissionsWithResultsSpy = vi.spyOn(service, 'getSubmissionsWithResultsForParticipation').mockReturnValue(of([submission]));
+        const getLatestSubmissionSpy = vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
         // Initialize component
         comp.ngOnInit();
 
         // Assertions
-        expect(comp.isFeedbackView).toBeTrue();
+        expect(comp.isFeedbackView).toBe(true);
         expect(comp.submissionId).toBe(20);
         expect(getSubmissionsWithResultsSpy).toHaveBeenCalledOnce();
         expect(getLatestSubmissionSpy).toHaveBeenCalledOnce();
@@ -205,98 +284,103 @@ describe('ModelingSubmissionComponent', () => {
         createModelingSubmissionComponent();
 
         // GIVEN
-        jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
         // WHEN
         comp.isLoading = false;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(debugElement.query(By.css('div'))).not.toBeNull();
 
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).not.toBeNull();
-        expect(submitButton.componentInstance.disabled).toBeFalse();
-        expect(comp.isActive).toBeTrue();
+        expect(submitButton.componentInstance.disabled).toBe(false);
+        expect(comp.isActive).toBe(true);
     });
 
-    it('should not allow to submit after the due date if the initialization date is before the due date', () => {
+    it('should not allow to submit after the due date if the initialization date is before the due date', async () => {
         createModelingSubmissionComponent();
 
         submission.participation!.initializationDate = dayjs().subtract(2, 'days');
         (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs().subtract(1, 'days');
-        jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
         fixture.detectChanges();
+        await fixture.whenStable();
 
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).not.toBeNull();
-        expect(submitButton.componentInstance.disabled).toBeTrue();
+        expect(submitButton.componentInstance.disabled).toBe(true);
     });
 
-    it('should allow to submit after the due date if the initialization date is after the due date and not submitted', () => {
+    it('should allow to submit after the due date if the initialization date is after the due date and not submitted', async () => {
         createModelingSubmissionComponent();
 
         submission.participation!.initializationDate = dayjs().add(1, 'days');
         (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs();
         submission.submitted = false;
-        jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
         fixture.detectChanges();
+        await fixture.whenStable();
 
-        expect(comp.isLate).toBeTrue();
+        expect(comp.isLate).toBe(true);
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).not.toBeNull();
-        expect(submitButton.componentInstance.disabled).toBeFalse();
+        expect(submitButton.componentInstance.disabled).toBe(false);
         submission.submitted = true;
     });
 
-    it('should not allow to submit if there is a result and no due date', () => {
+    it('should not allow to submit if there is a result and no due date', async () => {
         createModelingSubmissionComponent();
 
         comp.result = result;
-        jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
         fixture.detectChanges();
+        await fixture.whenStable();
 
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).not.toBeNull();
-        expect(submitButton.componentInstance.disabled).toBeTrue();
+        expect(submitButton.componentInstance.disabled).toBe(true);
     });
 
-    it('should get inactive as soon as the due date passes the current date', () => {
+    it('should get inactive as soon as the due date passes the current date', async () => {
         createModelingSubmissionComponent();
 
         (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs().add(1, 'days');
-        jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
         fixture.detectChanges();
+        await fixture.whenStable();
         comp.participation.initializationDate = dayjs();
 
-        expect(comp.isActive).toBeTrue();
+        expect(comp.isActive).toBe(true);
 
         comp.modelingExercise.dueDate = dayjs().subtract(1, 'days');
 
-        fixture.detectChanges();
-        expect(comp.isActive).toBeFalse();
+        fixture.changeDetectorRef.detectChanges();
+        expect(comp.isActive).toBe(false);
     });
 
     it('should catch error on 403 error status', () => {
         createModelingSubmissionComponent();
 
-        jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(throwError(() => ({ status: 403 })));
-        const alertServiceSpy = jest.spyOn(alertService, 'error');
+        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(throwError(() => ({ status: 403 })));
+        const alertServiceSpy = vi.spyOn(alertService, 'error');
         fixture.detectChanges();
 
         expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
 
-    it('should set correct properties on modeling exercise update when saving', () => {
+    it('should set correct properties on modeling exercise update when saving', async () => {
         createModelingSubmissionComponent();
 
-        jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
         fixture.detectChanges();
+        await fixture.whenStable();
 
-        const updateStub = jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
+        const updateStub = vi.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
         comp.saveDiagram();
         expect(updateStub).toHaveBeenCalledOnce();
         expect(comp.submission).toEqual(submission);
@@ -307,7 +391,7 @@ describe('ModelingSubmissionComponent', () => {
 
         fixture.detectChanges();
 
-        const createStub = jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: submission })));
+        const createStub = vi.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: submission })));
         comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
         comp.modelingExercise.id = 1;
         comp.saveDiagram();
@@ -321,11 +405,11 @@ describe('ModelingSubmissionComponent', () => {
         fixture.detectChanges();
 
         comp.submission = <ModelingSubmission>(<unknown>{
-            model: '{"nodes": [{"id": 1}], "edges": []}',
+            model: '{"elements": [{"id": 1}]}',
             submitted: true,
             participation,
         });
-        const createStub = jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: submission })));
+        const createStub = vi.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: submission })));
         comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
         comp.modelingExercise.id = 1;
         comp.submit();
@@ -337,13 +421,13 @@ describe('ModelingSubmissionComponent', () => {
         createModelingSubmissionComponent();
 
         const modelSubmission = <ModelingSubmission>(<unknown>{
-            model: '{"nodes": [{"id": 1}], "edges": []}',
+            model: '{"elements": [{"id": 1}]}',
             submitted: true,
             participation,
         });
         comp.submission = modelSubmission;
-        jest.spyOn(service, 'create').mockReturnValue(throwError(() => ({ status: 500 })));
-        const alertServiceSpy = jest.spyOn(alertService, 'error');
+        vi.spyOn(service, 'create').mockReturnValue(throwError(() => ({ status: 500 })));
+        const alertServiceSpy = vi.spyOn(alertService, 'error');
         comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
         comp.modelingExercise.id = 1;
         comp.submit();
@@ -351,17 +435,16 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.submission).toBe(modelSubmission);
     });
 
-    it('should handle failed Athena assessment appropriately', () => {
+    it('should handle failed Athena assessment appropriately', async () => {
         // Set up route with participationId
-        const route = {
+        const routeOverride = {
             params: of({ courseId: 5, exerciseId: 22, participationId: 123 }),
         } as any as ActivatedRoute;
-        createModelingSubmissionComponent(route); // Pass the route
+        createModelingSubmissionComponent(routeOverride);
 
-        submission.model = '{"id": "test-diagram-id", "version": "4.0.0", "title": "Test Diagram", "type": "ClassDiagram", "nodes": [{"id": 1}], "edges": []}';
-        jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        // IMPORTANT: Set up mocks BEFORE ngOnInit is triggered
         const participationWebSocketService = TestBed.inject(ParticipationWebsocketService);
-        const alertServiceSpy = jest.spyOn(alertService, 'error');
+        const alertServiceSpy = vi.spyOn(alertService, 'error');
 
         // Create initial manual result
         const manualResult = new Result();
@@ -380,10 +463,16 @@ describe('ModelingSubmissionComponent', () => {
         failedAthenaResult.feedbacks = [];
 
         const resultSubject = new BehaviorSubject<Result | undefined>(manualResult);
-        const subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebSocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(resultSubject);
+        const subscribeForLatestResultOfParticipationStub = vi.spyOn(participationWebSocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(resultSubject);
 
-        // Initialize component
+        // Set up the model data and mock service call
+        submission.model = '{"elements": [{"id": 1}]}';
+        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+
+        // Initialize component (ngOnInit is called here)
         fixture.detectChanges();
+        await fixture.whenStable();
+
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
 
         // Clear any previous calls
@@ -391,21 +480,20 @@ describe('ModelingSubmissionComponent', () => {
 
         // Emit failed Athena result
         resultSubject.next(failedAthenaResult);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Verify error was shown
         expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.athenaFeedbackFailed');
-        expect(comp.isGeneratingFeedback).toBeFalse();
+        expect(comp.isGeneratingFeedback).toBe(false);
     });
 
-    it('should handle Athena assessment results separately from manual assessments', () => {
+    it('should handle Athena assessment results separately from manual assessments', async () => {
         createModelingSubmissionComponent();
 
-        submission.model = '{"id": "test-diagram-id", "version": "4.0.0", "title": "Test Diagram", "type": "ClassDiagram", "nodes": [{"id": 1}], "edges": []}';
-        jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        // IMPORTANT: Set up mocks BEFORE ngOnInit is triggered
         const participationWebSocketService = TestBed.inject(ParticipationWebsocketService);
-        const alertServiceInfoSpy = jest.spyOn(alertService, 'info');
-        const alterServiceSuccessSpy = jest.spyOn(alertService, 'success');
+        const alertServiceInfoSpy = vi.spyOn(alertService, 'info');
+        const alterServiceSuccessSpy = vi.spyOn(alertService, 'success');
 
         // Create an Athena result
         const athenaResult = new Result();
@@ -426,28 +514,33 @@ describe('ModelingSubmissionComponent', () => {
 
         // Setup initial manual result in subject
         const resultSubject = new BehaviorSubject<Result | undefined>(manualResult);
-        const subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebSocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(resultSubject);
+        const subscribeForLatestResultOfParticipationStub = vi.spyOn(participationWebSocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(resultSubject);
+
+        // Set up model and mock service call
+        submission.model = '{"elements": [{"id": 1}]}';
+        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
         // Initialize component and verify manual result
         fixture.detectChanges();
+        await fixture.whenStable();
+
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
         expect(comp.assessmentResult).toEqual(manualResult);
         expect(alertServiceInfoSpy).toHaveBeenCalledWith('artemisApp.modelingEditor.newAssessment');
 
         // Emit Athena result
         resultSubject.next(athenaResult);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Verify Athena result handling
         expect(comp.assessmentResult).toEqual(athenaResult);
         expect(alterServiceSuccessSpy).toHaveBeenCalledWith('artemisApp.exercise.athenaFeedbackSuccessful');
     });
 
-    it('should set result when new result comes in from websocket', () => {
+    it('should set result when new result comes in from websocket', async () => {
         createModelingSubmissionComponent();
 
-        submission.model = '{"id": "test-diagram-id", "version": "4.0.0", "title": "Test Diagram", "type": "ClassDiagram", "nodes": [{"id": 1}], "edges": []}';
-        jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        // IMPORTANT: Set up mocks BEFORE ngOnInit is triggered
         const participationWebSocketService = TestBed.inject(ParticipationWebsocketService);
 
         const unreferencedFeedback = new Feedback();
@@ -462,10 +555,17 @@ describe('ModelingSubmissionComponent', () => {
         newResult.completionDate = dayjs();
         newResult.feedbacks = [unreferencedFeedback];
         const subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(newResult);
-        const subscribeForLatestResultOfParticipationStub = jest
+        const subscribeForLatestResultOfParticipationStub = vi
             .spyOn(participationWebSocketService, 'subscribeForLatestResultOfParticipation')
             .mockReturnValue(subscribeForLatestResultOfParticipationSubject);
+
+        // Set up model and mock service call
+        submission.model = '{"elements": [{"id": 1}]}';
+        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+
         fixture.detectChanges();
+        await fixture.whenStable();
+
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
         expect(comp.assessmentResult).toEqual(newResult);
     });
@@ -474,26 +574,26 @@ describe('ModelingSubmissionComponent', () => {
         createModelingSubmissionComponent();
 
         submission.submitted = false;
-        jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-        const websocketService = TestBed.inject(WebsocketService);
-        jest.spyOn(websocketService, 'subscribe');
+        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        // @ts-ignore
+        const websocketService = TestBed.inject(WebsocketService) as MockWebsocketService;
+        vi.spyOn(websocketService, 'subscribe');
         const modelSubmission = <ModelingSubmission>(<unknown>{
-            id: 1,
-            model: '{"nodes": [{"id": 1}], "edges": []}',
+            id: submission.id,
+            model: '{"elements": [{"id": 1}]}',
             submitted: true,
             participation,
         });
-        const receiveStub = jest.spyOn(websocketService, 'receive').mockReturnValue(of(modelSubmission));
         fixture.detectChanges();
+        websocketService.emit(`/user/topic/modelingSubmission/${submission.id}`, modelSubmission);
         expect(comp.submission).toEqual(modelSubmission);
-        expect(receiveStub).toHaveBeenCalledOnce();
     });
 
     it('should not process results without completionDate except for failed Athena results', () => {
         createModelingSubmissionComponent();
 
-        submission.model = '{"nodes": [{"id": 1}], "edges": []}';
-        jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        submission.model = '{"elements": [{"id": 1}]}';
+        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
         const participationWebSocketService = TestBed.inject(ParticipationWebsocketService);
 
         // Create an incomplete result
@@ -503,7 +603,7 @@ describe('ModelingSubmissionComponent', () => {
         incompleteResult.completionDate = undefined;
 
         const resultSubject = new BehaviorSubject<Result | undefined>(incompleteResult);
-        jest.spyOn(participationWebSocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(resultSubject);
+        vi.spyOn(participationWebSocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(resultSubject);
 
         // Initialize component
         fixture.detectChanges();
@@ -517,11 +617,11 @@ describe('ModelingSubmissionComponent', () => {
 
         comp.submission = <ModelingSubmission>(<unknown>{
             id: 1,
-            model: '{"nodes": [{"id": 1}], "edges": []}',
+            model: '{"elements": [{"id": 1}]}',
             submitted: true,
             participation,
         });
-        const updateStub = jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
+        const updateStub = vi.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
         comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
         comp.modelingExercise.id = 1;
         fixture.detectChanges();
@@ -537,56 +637,83 @@ describe('ModelingSubmissionComponent', () => {
         const relationships = [{ id: 4 }, { id: 5 }];
         submission.model = JSON.stringify({ elements, relationships });
         comp.submission = submission;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.calculateNumberOfModelElements()).toBe(elements.length + relationships.length);
     });
 
-    it('should track selected element ids', () => {
+    it('should update selected entities with given elements', () => {
         createModelingSubmissionComponent();
 
-        const selectedIds = ['elementId1', 'relationshipId'];
-        comp.onSelectedElementIdsChanged(selectedIds);
-        expect(comp.selectedElementIds).toEqual(selectedIds);
+        const selection = {
+            elements: {
+                ownerId1: true,
+                ownerId2: true,
+            },
+            relationships: {
+                relationShip1: true,
+                relationShip2: true,
+            },
+        };
+        comp.umlModel = <UMLModel>(<unknown>{
+            elements: {
+                elementId1: <UMLElement>(<unknown>{
+                    owner: 'ownerId1',
+                    id: 'elementId1',
+                }),
+                elementId2: <UMLElement>(<unknown>{
+                    owner: 'ownerId2',
+                    id: 'elementId2',
+                }),
+            },
+        });
+        fixture.changeDetectorRef.detectChanges();
+        comp.onSelectionChanged(selection);
+        expect(comp.selectedRelationships).toEqual(['relationShip1', 'relationShip2']);
+        expect(comp.selectedEntities).toEqual(['ownerId1', 'ownerId2', 'elementId1', 'elementId2']);
     });
 
-    it('should display feedback when nothing is selected', () => {
+    it('should shouldBeDisplayed return true if no selectedEntities and selectedRelationships', () => {
         createModelingSubmissionComponent();
 
         const feedback = <Feedback>(<unknown>{ referenceType: 'Activity', referenceId: '5' });
-        comp.selectedElementIds = [];
-        expect(comp.shouldBeDisplayed(feedback)).toBeTrue();
-        comp.selectedElementIds = ['3'];
-        expect(comp.shouldBeDisplayed(feedback)).toBeFalse();
+        comp.selectedEntities = [];
+        comp.selectedRelationships = [];
+        fixture.changeDetectorRef.detectChanges();
+        expect(comp.shouldBeDisplayed(feedback)).toBe(true);
+        comp.selectedEntities = ['3'];
+        fixture.changeDetectorRef.detectChanges();
+        expect(comp.shouldBeDisplayed(feedback)).toBe(false);
     });
 
-    it('should display feedback only if selection contains its reference', () => {
+    it('should shouldBeDisplayed return true if feedback reference is in selectedEntities or selectedRelationships', () => {
         createModelingSubmissionComponent();
 
         const id = 'referenceId';
         const feedback = <Feedback>(<unknown>{ referenceType: 'Activity', referenceId: id });
-        comp.selectedElementIds = [id];
-        expect(comp.shouldBeDisplayed(feedback)).toBeTrue();
-        comp.selectedElementIds = ['other'];
-        expect(comp.shouldBeDisplayed(feedback)).toBeFalse();
+        comp.selectedEntities = [id];
+        comp.selectedRelationships = [];
+        fixture.changeDetectorRef.detectChanges();
+        expect(comp.shouldBeDisplayed(feedback)).toBe(true);
+        comp.selectedEntities = [];
+        comp.selectedRelationships = [id];
+        fixture.changeDetectorRef.detectChanges();
+        expect(comp.shouldBeDisplayed(feedback)).toBe(false);
     });
 
     it('should update submission with current values', () => {
         createModelingSubmissionComponent();
 
         const model = <UMLModel>(<unknown>{
-            version: '4.0.0',
-            id: 'model1',
-            title: 'Test model',
-            type: UMLDiagramType.ClassDiagram,
-            nodes: [{ id: 'elementId1', owner: 'ownerId1' } as Partial<ApollonNode>, { id: 'elementId2', owner: 'ownerId2' } as Partial<ApollonNode>],
-            edges: [] as ApollonEdge[],
-            assessments: {},
+            elements: [<UMLElement>(<unknown>{
+                    owner: 'ownerId1',
+                    id: 'elementId1',
+                }), <UMLElement>(<unknown>{ owner: 'ownerId2', id: 'elementId2' })],
         });
-        const currentModelStub = jest.spyOn(comp.modelingEditor, 'getCurrentModel').mockReturnValue(model as UMLModel);
+        (mockModelingEditor.getCurrentModel as ReturnType<typeof vi.fn>).mockReturnValue(model as UMLModel);
         comp.explanation = 'Explanation Test';
         comp.updateSubmissionWithCurrentValues();
-        expect(currentModelStub).toHaveBeenCalledTimes(2);
-        expect(comp.hasElements).toBeTrue();
+        expect(mockModelingEditor.getCurrentModel).toHaveBeenCalledTimes(2);
+        expect(comp.hasElements).toBe(true);
         expect(comp.submission).toBeDefined();
         expect(comp.submission.model).toBe(JSON.stringify(model));
         expect(comp.submission.explanationText).toBe('Explanation Test');
@@ -621,26 +748,26 @@ describe('ModelingSubmissionComponent', () => {
         createModelingSubmissionComponent();
 
         const currentModel = <UMLModel>(<unknown>{
-            elements: [<any>(<unknown>{
+            elements: [<UMLElement>(<unknown>{
                     owner: 'ownerId1',
                     id: 'elementId1',
-                }), <any>(<unknown>{ owner: 'ownerId2', id: 'elementId2' })],
+                }), <UMLElement>(<unknown>{ owner: 'ownerId2', id: 'elementId2' })],
             version: 'version',
         });
         const unsavedModel = <UMLModel>(<unknown>{
-            elements: [<any>(<unknown>{ owner: 'ownerId1', id: 'elementId1' })],
+            elements: [<UMLElement>(<unknown>{ owner: 'ownerId1', id: 'elementId1' })],
             version: 'version',
         });
 
-        const currentModelStub = jest.spyOn(comp.modelingEditor, 'getCurrentModel').mockReturnValue(currentModel as UMLModel);
-        jest.spyOn(comp.modelingEditor, 'isApollonEditorMounted', 'get').mockReturnValue(true);
+        (mockModelingEditor.getCurrentModel as ReturnType<typeof vi.fn>).mockReturnValue(currentModel as UMLModel);
+        (mockModelingEditor as any).isApollonEditorMounted = true;
         comp.submission = submission;
         comp.submission.model = JSON.stringify(unsavedModel);
 
         const canDeactivate = comp.canDeactivate();
 
-        expect(currentModelStub).toHaveBeenCalledOnce();
-        expect(canDeactivate).toBeFalse();
+        expect(mockModelingEditor.getCurrentModel).toHaveBeenCalledOnce();
+        expect(canDeactivate).toBe(false);
     });
 
     it('should set isChanged property to false after saving', () => {
@@ -648,17 +775,17 @@ describe('ModelingSubmissionComponent', () => {
 
         comp.submission = <ModelingSubmission>(<unknown>{
             id: 1,
-            model: '{"nodes": [{"id": 1}], "edges": []}',
+            model: '{"elements": [{"id": 1}]}',
             submitted: true,
             participation,
         });
         comp.isChanged = true;
-        jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
+        vi.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
         comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
         comp.modelingExercise.id = 1;
         fixture.detectChanges();
         comp.saveDiagram();
-        expect(comp.isChanged).toBeFalse();
+        expect(comp.isChanged).toBe(false);
     });
 
     it('should mark the subsequent feedback', () => {
@@ -701,37 +828,27 @@ describe('ModelingSubmissionComponent', () => {
         expect(unreferencedFeedback![0].isSubsequent).toBeUndefined();
         expect(referencedFeedback).toBeDefined();
         expect(referencedFeedback).toHaveLength(1);
-        expect(referencedFeedback![0].isSubsequent).toBeTrue();
+        expect(referencedFeedback![0].isSubsequent).toBe(true);
     });
 
     it('should be set up with input values if present instead of loading new values from server', () => {
         createModelingSubmissionComponent();
 
         // @ts-ignore method is private
-        const setUpComponentWithInputValuesSpy = jest.spyOn(comp, 'setupComponentWithInputValues');
-        const getDataForFileUploadEditorSpy = jest.spyOn(service, 'getLatestSubmissionForModelingEditor');
+        const setUpComponentWithInputValuesSpy = vi.spyOn(comp, 'setupComponentWithInputValues');
+        const getDataForFileUploadEditorSpy = vi.spyOn(service, 'getLatestSubmissionForModelingEditor');
         const modelingSubmission = submission;
         modelingSubmission.model = JSON.stringify({
-            id: 'test-id',
-            title: 'Test Diagram',
-            nodes: [{ id: 1, name: 'TestClass' }],
-            edges: [],
-            version: '4.0.0',
-            type: 'ClassDiagram',
-            size: { width: 220, height: 420 },
-            interactive: {
-                elements: {
+            elements: [
+                {
                     content: 'some element',
                 },
-                relationships: {},
-            },
-            elements: { '1': { id: 1, name: 'TestClass' } },
-            relationships: {},
-            assessments: {},
+            ],
         });
-        comp.inputExercise = participation.exercise;
-        comp.inputSubmission = modelingSubmission;
-        comp.inputParticipation = participation;
+
+        fixture.componentRef.setInput('inputExercise', participation.exercise);
+        fixture.componentRef.setInput('inputSubmission', modelingSubmission);
+        fixture.componentRef.setInput('inputParticipation', participation);
 
         fixture.detectChanges();
 
@@ -740,7 +857,7 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.submission).toEqual(modelingSubmission);
         expect(comp.participation).toEqual(participation);
         expect(comp.umlModel).toBeTruthy();
-        expect(comp.hasElements).toBeTrue();
+        expect(comp.hasElements).toBe(true);
 
         // should not fetch additional information from server, reason for input values!
         expect(getDataForFileUploadEditorSpy).not.toHaveBeenCalled();
@@ -799,7 +916,7 @@ describe('ModelingSubmissionComponent', () => {
         const expectedSortedResults = [results[2], results[3], results[5]];
 
         // Mock the service call
-        const submissionsWithResultsSpy = jest.spyOn(service, 'getSubmissionsWithResultsForParticipation').mockReturnValue(of([submissions[2], submissions[1], submissions[0]]));
+        const submissionsWithResultsSpy = vi.spyOn(service, 'getSubmissionsWithResultsForParticipation').mockReturnValue(of([submissions[2], submissions[1], submissions[0]]));
 
         // Initialize the component
         comp.ngOnInit();
@@ -810,7 +927,7 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.sortedSubmissionHistory).toEqual(expectedSortedSubmissions);
         comp.sortedResultHistory.forEach((result, index) => {
             expect(result?.id).toBe(expectedSortedResults[index].id);
-            expect(result?.completionDate?.isSame(expectedSortedResults[index].completionDate)).toBeTrue();
+            expect(result?.completionDate?.isSame(expectedSortedResults[index].completionDate)).toBe(true);
         });
     });
 });

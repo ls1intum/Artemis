@@ -127,7 +127,7 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
         component.isLocalCIEnabled = false;
         const spy = jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage');
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(spy).not.toHaveBeenCalled();
     });
@@ -143,7 +143,7 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
 
     it('should NOT display checkoutDirectory preview if localCI is NOT used', () => {
         component.isLocalCIEnabled = false;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const submissionPreviewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SUBMISSION_BUILD_PLAN);
         const solutionPreviewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SOLUTION_BUILD_PLAN);
         expect(submissionPreviewElement).toBeFalsy();
@@ -154,7 +154,7 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [PROFILE_LOCALCI] } as ProfileInfo);
         component.programmingExercise!.auxiliaryRepositories = [{ checkoutDirectory: 'assignment/sut' } as AuxiliaryRepository];
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const submissionPreviewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SUBMISSION_BUILD_PLAN);
         const solutionPreviewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SOLUTION_BUILD_PLAN);
@@ -277,7 +277,7 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
             },
         } as unknown as SimpleChanges);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const submissionPreviewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SUBMISSION_BUILD_PLAN);
         expect(submissionPreviewElement).toBeTruthy();

@@ -3,9 +3,13 @@ package de.tum.cit.aet.artemis.core.config;
 import static de.tum.cit.aet.artemis.core.config.Constants.ATLAS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.NEBULA_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHARING_ENABLED_PROPERTY_NAME;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.core.env.Environment;
 
@@ -24,6 +28,17 @@ public class ArtemisConfigHelper {
      */
     public boolean isPasskeyEnabled(Environment environment) {
         return getPropertyOrExitArtemis(PASSKEY_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if passkey is required for administrator features.
+     * This only applies when passkey is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if passkey is required for administrator features, false otherwise
+     */
+    public boolean isPasskeyRequiredForAdmin(Environment environment) {
+        return environment.getProperty(Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME, Boolean.class, false);
     }
 
     /**
@@ -87,6 +102,36 @@ public class ArtemisConfigHelper {
     }
 
     /**
+     * Check if the modeling module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the modeling module is enabled, false otherwise
+     */
+    public boolean isModelingEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(Constants.MODELING_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the file upload module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the file upload module is enabled, false otherwise
+     */
+    public boolean isFileUploadEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(Constants.FILEUPLOAD_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the lecture module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the lecture module is enabled, false otherwise
+     */
+    public boolean isLectureEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(Constants.LECTURE_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
      * Check if the tutorial group feature is enabled.
      *
      * @param environment the Spring environment
@@ -104,6 +149,71 @@ public class ArtemisConfigHelper {
      */
     public boolean isNebulaEnabled(Environment environment) {
         return getPropertyOrExitArtemis(NEBULA_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the LTI module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the LTI module is enabled, false otherwise
+     */
+    public boolean isLtiEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(LTI_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Gets the list of all enabled module features based on configuration.
+     *
+     * @param environment the Spring environment
+     * @return list of enabled feature names
+     */
+    public List<String> getEnabledFeatures(Environment environment) {
+        List<String> enabledFeatures = new ArrayList<>();
+
+        if (isAtlasEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_ATLAS);
+        }
+        if (isHyperionEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_HYPERION);
+        }
+        if (isExamEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_EXAM);
+        }
+        if (isPlagiarismEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_PLAGIARISM);
+        }
+        if (isTextExerciseEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_TEXT);
+        }
+        if (isModelingEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_MODELING);
+        }
+        if (isFileUploadEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_FILEUPLOAD);
+        }
+        if (isLectureEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_LECTURE);
+        }
+        if (isTutorialGroupEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_TUTORIALGROUP);
+        }
+        if (isPasskeyEnabled(environment)) {
+            enabledFeatures.add(Constants.FEATURE_PASSKEY);
+            if (isPasskeyRequiredForAdmin(environment)) {
+                enabledFeatures.add(Constants.FEATURE_PASSKEY_REQUIRE_ADMIN);
+            }
+        }
+        if (isNebulaEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_NEBULA);
+        }
+        if (isSharingEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_SHARING);
+        }
+        if (isLtiEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_LTI);
+        }
+
+        return enabledFeatures;
     }
 
     private boolean getPropertyOrExitArtemis(String key, Environment environment) {

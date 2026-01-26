@@ -47,11 +47,13 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.tcp.TcpOperations;
 import org.springframework.messaging.tcp.reactor.ReactorNettyTcpClient;
 import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.DelegatingWebSocketMessageBrokerConfiguration;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
+import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 import org.springframework.web.socket.sockjs.transport.handler.WebSocketTransportHandler;
@@ -143,7 +145,9 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                     // Set the same heartbeat as in the client (websocket-service.ts) to detect broken connections
                     .setSystemHeartbeatSendInterval(10_000)
                     // Set the TCP client to the one generated above
-                    .setTcpClient(tcpClient);
+                    .setTcpClient(tcpClient)
+                    // Use the custom task scheduler for the heartbeat messages
+                    .setTaskScheduler(messageBrokerTaskScheduler);
         }
         else {
             log.info("Did NOT enable StompBrokerRelay for WebSocket messages. Use simple integrated broker instead.");
@@ -223,6 +227,38 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration.interceptors(new TopicSubscriptionInterceptor());
+        registration.taskExecutor(createExecutor("ws-inbound-"));
+    }
+
+    @Override
+    protected void configureClientOutboundChannel(ChannelRegistration registration) {
+        int cores = Runtime.getRuntime().availableProcessors();
+        registration.taskExecutor(createExecutor("ws-outbound-"));
+    }
+
+    /**
+     * Creates and configures a thread pool executor for websocket message handling.
+     *
+     * @param threadNamePrefix the prefix to use for the executor thread names, distinguishing inbound and outbound channels
+     * @return a configured {@link ThreadPoolTaskExecutor} ready for websocket channel registration
+     */
+    public ThreadPoolTaskExecutor createExecutor(String threadNamePrefix) {
+        int cores = Runtime.getRuntime().availableProcessors();
+        ThreadPoolTaskExecutor exec = new ThreadPoolTaskExecutor();
+        exec.setCorePoolSize(cores * 2);
+        exec.setMaxPoolSize(cores * 4); // allow short bursts with more threads
+        exec.setQueueCapacity(10_000);
+        exec.setKeepAliveSeconds(60);
+        exec.setThreadNamePrefix(threadNamePrefix);
+        exec.initialize();
+        return exec;
+    }
+
+    @Override
+    public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
+        registration.setSendTimeLimit(15_000)           // ms – disconnect if we can’t send within 15s
+                .setSendBufferSizeLimit(512 * 1024) // bytes – per-session buffer limit
+                .setTimeToFirstMessage(20_000);     // give clients 20s to send first frame
     }
 
     @NonNull

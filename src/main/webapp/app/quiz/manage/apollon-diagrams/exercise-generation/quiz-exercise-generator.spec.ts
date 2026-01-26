@@ -1,13 +1,19 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { ApollonEditor, ApollonNode, UMLModel, importDiagram } from '@tumaet/apollon';
+import { Selection, UMLModel, UMLModelElement, findElement } from '@tumaet/apollon';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
-import { computeDropLocation, generateDragAndDropItemForNode, generateDragAndDropQuizExercise } from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
+import {
+    computeDropLocation,
+    generateDragAndDropItemForElement,
+    generateDragAndDropQuizExercise,
+} from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import * as SVGRendererAPI from 'app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -19,6 +25,8 @@ import * as testClassDiagram from 'test/helpers/sample/modeling/test-models/clas
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 
 describe('QuizExercise Generator', () => {
+    setupTestBed({ zoneless: true });
+
     let quizExerciseService: QuizExerciseService;
 
     const course: Course = { id: 123 } as Course;
@@ -27,9 +35,8 @@ describe('QuizExercise Generator', () => {
         quizExerciseService = TestBed.inject(QuizExerciseService);
     };
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -39,47 +46,37 @@ describe('QuizExercise Generator', () => {
                 { provide: Router, useClass: MockRouter },
             ],
         }).compileComponents();
+
+        configureServices();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('generateDragAndDropExercise for Class Diagram', async () => {
-        // TODO: we should mock this differently without require
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const svgRenderer = require('app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
-        configureServices();
-        jest.spyOn(quizExerciseService, 'create').mockImplementation((generatedExercise) => of({ body: generatedExercise } as HttpResponse<QuizExercise>));
-        jest.spyOn(svgRenderer, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob());
-        jest.spyOn(ApollonEditor, 'exportModelAsSvg').mockResolvedValue({ svg: '<svg></svg>', clip: { width: 100, height: 100, x: 0, y: 0 } } as any);
-        const classDiagram: UMLModel = importDiagram({ id: 'diagram', title: 'Diagram', model: testClassDiagram } as unknown as {
-            id: string;
-            title: string;
-            model: UMLModel;
-        });
-        const nodeEntries = Object.fromEntries(
-            (Array.isArray(classDiagram.nodes) ? classDiagram.nodes : Object.values(classDiagram.nodes ?? {})).map((node: any) => [node.id, node]),
-        );
-        const edgeEntries = Object.fromEntries(
-            (Array.isArray(classDiagram.edges) ? classDiagram.edges : Object.values(classDiagram.edges ?? {})).map((edge: any) => [edge.id, edge]),
-        );
-        (classDiagram as any).nodes = nodeEntries;
-        (classDiagram as any).edges = edgeEntries;
+        vi.spyOn(quizExerciseService, 'create').mockImplementation((generatedExercise) => of({ body: generatedExercise } as HttpResponse<QuizExercise>));
+        vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob());
+        // @ts-ignore
+        const classDiagram: UMLModel = testClassDiagram as UMLModel;
+        const interactiveElements: Selection = classDiagram.interactive;
+        const selectedElements = Object.entries(interactiveElements.elements)
+            .filter(([include]) => include)
+            .map(([id]) => id);
+        const selectedRelationships = Object.entries(interactiveElements.relationships)
+            .filter(([include]) => include)
+            .map(([id]) => id);
         const exerciseTitle = 'GenerateDragAndDropExerciseTest';
         const generatedQuestion = await generateDragAndDropQuizExercise(course, exerciseTitle, classDiagram);
         expect(generatedQuestion).toBeTruthy();
         expect(generatedQuestion.title).toEqual(exerciseTitle);
         expect(generatedQuestion.type).toEqual(QuizQuestionType.DRAG_AND_DROP);
         // create one DragItem for each interactive element
-        expect(generatedQuestion.dragItems).toBeDefined();
-        expect(generatedQuestion.dragItems!.length).toBeGreaterThan(0);
+        expect(generatedQuestion.dragItems).toHaveLength(selectedElements.length + selectedRelationships.length);
         // each DragItem needs one DropLocation
-        expect(generatedQuestion.dropLocations).toBeDefined();
-        expect(generatedQuestion.dropLocations!).toHaveLength(generatedQuestion.dragItems!.length);
+        expect(generatedQuestion.dropLocations).toHaveLength(selectedElements.length + selectedRelationships.length);
         // if there are no similar elements -> amount of correct mappings = interactive elements
-        expect(generatedQuestion.correctMappings).toBeDefined();
-        expect(generatedQuestion.correctMappings!).toHaveLength(generatedQuestion.dragItems!.length);
+        expect(generatedQuestion.correctMappings).toHaveLength(selectedElements.length + selectedRelationships.length);
     });
 
     it('computeDropLocation with totalSize x and y coordinates', async () => {
@@ -119,23 +116,15 @@ describe('QuizExercise Generator', () => {
     });
 
     it('generateDragAndDropItemForElement', async () => {
-        jest.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob([]));
+        vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob([]));
 
-        const umlModel: UMLModel = importDiagram({ id: 'diagram', title: 'Diagram', model: testClassDiagram } as unknown as {
-            id: string;
-            title: string;
-            model: UMLModel;
-        });
-        const nodeEntriesForItem = Object.fromEntries((Array.isArray(umlModel.nodes) ? umlModel.nodes : Object.values(umlModel.nodes ?? {})).map((node: any) => [node.id, node]));
-        (umlModel as any).nodes = nodeEntriesForItem;
+        const umlModel: UMLModel = testClassDiagram as unknown as UMLModel;
 
-        const umlModelElement = (Object.values(nodeEntriesForItem)[0] as ApollonNode) ?? (Array.isArray(umlModel.nodes) ? (umlModel.nodes as any[])[0] : undefined);
+        const umlModelElement: UMLModelElement = findElement(umlModel, 'fea23cbc-8df0-4dcc-9d7a-eb86fbb2ce9d')!;
 
         const fileMap = new Map<string, File>();
 
-        jest.spyOn(ApollonEditor, 'exportModelAsSvg').mockResolvedValue({ svg: '<svg></svg>', clip: { width: 200, height: 200, x: 0, y: 0 } } as any);
-
-        const dragAndDropMapping: DragAndDropMapping = await generateDragAndDropItemForNode(
+        const dragAndDropMapping: DragAndDropMapping = await generateDragAndDropItemForElement(
             umlModelElement,
             umlModel,
             {
@@ -149,11 +138,97 @@ describe('QuizExercise Generator', () => {
 
         expect(fileMap.get(expectedFileName)).toBeDefined();
         expect(dragAndDropMapping.dragItem?.pictureFilePath).toEqual(expectedFileName);
-        expect(dragAndDropMapping.dropLocation?.posX).toBeDefined();
-        expect(dragAndDropMapping.dropLocation?.posY).toBeDefined();
-        expect(dragAndDropMapping.dropLocation?.width).toBeGreaterThan(0);
-        expect(dragAndDropMapping.dropLocation?.height).toBeGreaterThan(0);
+        expect(dragAndDropMapping.dropLocation?.posX).toBe(292.5);
+        expect(dragAndDropMapping.dropLocation?.posY).toBe(207.5);
+        expect(dragAndDropMapping.dropLocation?.width).toBe(114.5);
+        expect(dragAndDropMapping.dropLocation?.height).toBe(30);
 
-        jest.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockReset();
+        vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockReset();
+    });
+
+    it('computeDropLocation at origin', () => {
+        const elementLocation = { x: 0, y: 0, width: 100, height: 100 };
+        const totalSize = { width: 200, height: 200 };
+
+        const dropLocation = computeDropLocation(elementLocation, totalSize);
+
+        expect(dropLocation.posX).toBe(0);
+        expect(dropLocation.posY).toBe(0);
+        expect(dropLocation.width).toBe(100);
+        expect(dropLocation.height).toBe(100);
+    });
+
+    it('computeDropLocation for small element', () => {
+        const elementLocation = { x: 5, y: 5, width: 10, height: 10 };
+        const totalSize = { width: 1000, height: 1000 };
+
+        const dropLocation = computeDropLocation(elementLocation, totalSize);
+
+        expect(dropLocation.posX).toBe(1);
+        expect(dropLocation.posY).toBe(1);
+        expect(dropLocation.width).toBe(2);
+        expect(dropLocation.height).toBe(2);
+    });
+
+    it('computeDropLocation for element filling entire canvas', () => {
+        const elementLocation = { x: 0, y: 0, width: 500, height: 400 };
+        const totalSize = { width: 500, height: 400 };
+
+        const dropLocation = computeDropLocation(elementLocation, totalSize);
+
+        expect(dropLocation.posX).toBe(0);
+        expect(dropLocation.posY).toBe(0);
+        expect(dropLocation.width).toBe(200);
+        expect(dropLocation.height).toBe(200);
+    });
+
+    it('computeDropLocation rounds to two decimal places', () => {
+        const elementLocation = { x: 33, y: 17, width: 77, height: 43 };
+        const totalSize = { width: 100, height: 100 };
+
+        const dropLocation = computeDropLocation(elementLocation, totalSize);
+
+        // Check that values are rounded appropriately
+        expect(dropLocation.posX).toBe(66);
+        expect(dropLocation.posY).toBe(34);
+        expect(dropLocation.width).toBe(154);
+        expect(dropLocation.height).toBe(86);
+    });
+
+    it('generateDragAndDropExercise handles empty interactive elements', async () => {
+        vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob());
+
+        // Create a model with no interactive elements
+        const emptyModel: UMLModel = {
+            ...testClassDiagram,
+            interactive: {
+                elements: {},
+                relationships: {},
+            },
+        } as unknown as UMLModel;
+
+        const exerciseTitle = 'EmptyInteractiveTest';
+        const generatedQuestion = await generateDragAndDropQuizExercise(course, exerciseTitle, emptyModel);
+
+        expect(generatedQuestion).toBeTruthy();
+        expect(generatedQuestion.title).toEqual(exerciseTitle);
+        expect(generatedQuestion.dragItems).toHaveLength(0);
+        expect(generatedQuestion.dropLocations).toHaveLength(0);
+        expect(generatedQuestion.correctMappings).toHaveLength(0);
+    });
+
+    it('generateDragAndDropExercise sets default text and scoring', async () => {
+        vi.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob());
+
+        const classDiagram: UMLModel = testClassDiagram as unknown as UMLModel;
+        const exerciseTitle = 'DefaultValuesTest';
+
+        const generatedQuestion = await generateDragAndDropQuizExercise(course, exerciseTitle, classDiagram);
+
+        expect(generatedQuestion.text).toBe('Fill the empty spaces in the UML diagram by dragging and dropping the elements below the diagram into the correct places.');
+        expect(generatedQuestion.points).toBe(1);
+        expect(generatedQuestion.backgroundFilePath).toBe('diagram-background.png');
+        expect(generatedQuestion.importedFiles).toBeDefined();
+        expect(generatedQuestion.importedFiles!.has('diagram-background.png')).toBe(true);
     });
 });

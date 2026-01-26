@@ -71,9 +71,7 @@ describe('MetisConversationService', () => {
         jest.spyOn(conversationService, 'convertServerDates').mockImplementation((conversation) => conversation);
 
         receiveMockSubject = new Subject<ConversationWebsocketDTO>();
-
-        jest.spyOn(websocketService, 'receive').mockReturnValue(receiveMockSubject.asObservable());
-        jest.spyOn(websocketService, 'subscribe');
+        jest.spyOn(websocketService, 'subscribe').mockReturnValue(receiveMockSubject.asObservable());
     });
 
     afterEach(() => {

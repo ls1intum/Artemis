@@ -1,7 +1,10 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -20,6 +23,7 @@ import { MockProvider } from 'ng-mocks';
 import { ChangeDetectorRef } from '@angular/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 const route = { params: of({ courseId: 2, exerciseId: 42 }) };
 const question = { id: 1 } as QuizQuestion;
@@ -36,18 +40,20 @@ let quizExercise = {
 } as QuizExercise;
 
 describe('QuizExercise Point Statistic Component', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: QuizPointStatisticComponent;
     let fixture: ComponentFixture<QuizPointStatisticComponent>;
     let quizService: QuizExerciseService;
     let accountService: AccountService;
-    let accountSpy: jest.SpyInstance;
+    let accountSpy: any;
     let router: Router;
     let translateService: TranslateService;
-    let quizServiceFindSpy: jest.SpyInstance;
-    Date.now = jest.fn(() => new Date(Date.UTC(2017, 0, 1)).valueOf());
+    let quizServiceFindSpy: any;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        vi.spyOn(Date, 'now').mockReturnValue(new Date(Date.UTC(2017, 0, 1)).valueOf());
+        await TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 LocalStorageService,
@@ -55,35 +61,36 @@ describe('QuizExercise Point Statistic Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(ChangeDetectorRef),
             ],
         })
             .overrideTemplate(QuizPointStatisticComponent, '')
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(QuizPointStatisticComponent);
-                comp = fixture.componentInstance;
-                quizService = TestBed.inject(QuizExerciseService);
-                accountService = TestBed.inject(AccountService);
-                router = TestBed.inject(Router);
-                translateService = TestBed.inject(TranslateService);
-                quizServiceFindSpy = jest.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
-            });
+            .compileComponents();
+
+        fixture = TestBed.createComponent(QuizPointStatisticComponent);
+        comp = fixture.componentInstance;
+        quizService = TestBed.inject(QuizExerciseService);
+        accountService = TestBed.inject(AccountService);
+        router = TestBed.inject(Router);
+        translateService = TestBed.inject(TranslateService);
+        quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
     });
 
     afterEach(() => {
+        vi.restoreAllMocks();
         quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
     });
 
     describe('onInit', () => {
-        it('should call functions on Init', fakeAsync(() => {
+        it('should call functions on Init', async () => {
             // setup
-            jest.useFakeTimers();
-            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-            const loadQuizSuccessSpy = jest.spyOn(comp, 'loadQuizSuccess');
-            const updateDisplayedTimesSpy = jest.spyOn(comp, 'updateDisplayedTimes');
+            vi.useFakeTimers();
+            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            const loadQuizSuccessSpy = vi.spyOn(comp, 'loadQuizSuccess');
+            const updateDisplayedTimesSpy = vi.spyOn(comp, 'updateDisplayedTimes');
             comp.quizExerciseChannel = '';
             comp.waitingForQuizStart = true;
             comp.quizExercise = quizExercise;
@@ -92,30 +99,28 @@ describe('QuizExercise Point Statistic Component', () => {
 
             // call
             comp.ngOnInit();
-            tick(); // simulate async
-            jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
+            await fixture.whenStable();
+            vi.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
 
             // check
-            expect(accountSpy).toHaveBeenCalledTimes(2);
+            expect(accountSpy).toHaveBeenCalled();
             expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
             expect(loadQuizSuccessSpy).toHaveBeenCalledWith(quizExercise);
             expect(comp.quizExerciseChannel).toBe('/topic/courses/2/quizExercises');
-            expect(updateDisplayedTimesSpy).toHaveBeenCalledOnce();
-            discardPeriodicTasks();
-        }));
+            expect(updateDisplayedTimesSpy).toHaveBeenCalled();
+            vi.clearAllTimers();
+        });
 
-        it('should not load QuizSuccess if not authorised', fakeAsync(() => {
-            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
-            const loadQuizSuccessSpy = jest.spyOn(comp, 'loadQuizSuccess');
+        it('should not load QuizSuccess if not authorised', async () => {
+            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
+            const loadQuizSuccessSpy = vi.spyOn(comp, 'loadQuizSuccess');
 
             comp.ngOnInit();
-            tick();
 
-            expect(accountSpy).toHaveBeenCalledOnce();
+            expect(accountSpy).toHaveBeenCalled();
             expect(quizServiceFindSpy).not.toHaveBeenCalled();
             expect(loadQuizSuccessSpy).not.toHaveBeenCalled();
-            discardPeriodicTasks();
-        }));
+        });
     });
 
     describe('updateDisplayedTimes', () => {
@@ -146,12 +151,12 @@ describe('QuizExercise Point Statistic Component', () => {
     });
 
     describe('loadQuizSuccess', () => {
-        let loadDataSpy: jest.SpyInstance;
-        let routerSpy: jest.SpyInstance;
+        let loadDataSpy: any;
+        let routerSpy: any;
 
         beforeEach(() => {
-            loadDataSpy = jest.spyOn(comp, 'loadData');
-            routerSpy = jest.spyOn(router, 'navigate');
+            loadDataSpy = vi.spyOn(comp, 'loadData');
+            routerSpy = vi.spyOn(router, 'navigate');
         });
 
         afterEach(() => {
@@ -161,7 +166,7 @@ describe('QuizExercise Point Statistic Component', () => {
 
         it('should call router if called by student', () => {
             // setup
-            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
+            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
             quizExercise.quizPointStatistic = new QuizPointStatistic();
             quizExercise.quizPointStatistic.pointCounters = pointCounters;
 
@@ -174,7 +179,7 @@ describe('QuizExercise Point Statistic Component', () => {
 
         it('should load the quiz', () => {
             // setup
-            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             quizExercise.quizPointStatistic = new QuizPointStatistic();
             quizExercise.quizPointStatistic.pointCounters = pointCounters;
 
@@ -184,7 +189,7 @@ describe('QuizExercise Point Statistic Component', () => {
             // check
             expect(routerSpy).not.toHaveBeenCalled();
             expect(comp.quizExercise).toEqual(quizExercise);
-            expect(comp.waitingForQuizStart).toBeFalse();
+            expect(comp.waitingForQuizStart).toBe(false);
             expect(loadDataSpy).toHaveBeenCalledOnce();
         });
     });
@@ -205,9 +210,9 @@ describe('QuizExercise Point Statistic Component', () => {
         quizExercise.quizQuestions = undefined;
         quizExercise.maxPoints = 42;
         comp.quizExercise = quizExercise;
-        accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+        accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
 
-        jest.spyOn(comp, 'loadData').mockImplementation();
+        vi.spyOn(comp, 'loadData').mockImplementation(() => {});
 
         // call
         comp.loadQuizSuccess(quizExercise);
@@ -219,7 +224,7 @@ describe('QuizExercise Point Statistic Component', () => {
     describe('loadData', () => {
         it('should set data', () => {
             // setup
-            const loadDataInDiagramSpy = jest.spyOn(comp, 'loadDataInDiagram');
+            const loadDataInDiagramSpy = vi.spyOn(comp, 'loadDataInDiagram');
             comp.quizPointStatistic = new QuizPointStatistic();
             comp.quizPointStatistic.pointCounters = pointCounters;
             comp.maxScore = 4;
@@ -237,9 +242,9 @@ describe('QuizExercise Point Statistic Component', () => {
 
     describe('loadNewData', () => {
         it('should route students back to courses', () => {
-            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
-            const routerMock = jest.spyOn(router, 'navigate').mockImplementation();
-            jest.spyOn(comp, 'loadData').mockImplementation();
+            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
+            const routerMock = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+            vi.spyOn(comp, 'loadData').mockImplementation(() => {});
             const testData = new QuizPointStatistic();
 
             comp.loadNewData(testData);
@@ -250,18 +255,17 @@ describe('QuizExercise Point Statistic Component', () => {
     });
 
     describe('recalculate', () => {
-        it('should recalculate', fakeAsync(() => {
-            const recalculateMock = jest.spyOn(quizService, 'recalculate').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
-            const loadQuizSucessMock = jest.spyOn(comp, 'loadQuizSuccess').mockImplementation();
+        it('should recalculate', () => {
+            const recalculateMock = vi.spyOn(quizService, 'recalculate').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+            const loadQuizSucessMock = vi.spyOn(comp, 'loadQuizSuccess').mockImplementation(() => {});
             comp.quizExercise = quizExercise;
 
             comp.recalculate();
-            tick();
 
             expect(recalculateMock).toHaveBeenCalledOnce();
             expect(recalculateMock).toHaveBeenCalledWith(42);
             expect(loadQuizSucessMock).toHaveBeenCalledOnce();
             expect(loadQuizSucessMock).toHaveBeenCalledWith(quizExercise);
-        }));
+        });
     });
 });

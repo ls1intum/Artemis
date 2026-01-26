@@ -16,11 +16,20 @@
             "updated": "Updated Programming Exercise with title {{ param }}",
             "deleted": "Deleted Programming Exercise with title {{ param }}",
             "delete": {
-                "question": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong>?",
-                "questionLocalVC": {
-                    "single": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong>?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!",
-                    "multiple": "Are you sure you want to delete selected programming exercises?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!"
+                "summary": {
+                    "title": "Programming Exercise Summary",
+                    "numberOfStudentParticipations": "Number of Student Participations",
+                    "numberOfBuilds": "Number of Builds",
+                    "numberOfCommunicationPosts": "Number of Communication Posts",
+                    "numberOfAnswerPosts": "Number of Answer Posts"
                 },
+                "question": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong> of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>?",
+                "questionLocalVC": {
+                    "single": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong> of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!",
+                    "multiple": "Are you sure you want to delete selected programming exercises of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!"
+                },
+                "testCourse": "test course",
+                "realCourse": "real course",
                 "studentReposBuildPlans": "Additionally delete all student repositories and student build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the repositories and build plans first!",
                 "studentRepos": "Additionally delete all student repositories (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the repositories and build plans first!",
                 "baseReposBuildPlans": "Additionally delete template, solution, test, and auxiliary repos and build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you back up these build plans and repos first!"
@@ -75,7 +84,7 @@
                     "languageStepMessage": "Configure the specific details related to the programming language and build mechanism used in the exercise",
                     "versionControlTitle": "Version Control",
                     "versionControlMessage": "Decide which version control features should be available.",
-                    "versionControlDocumentationLink": "For more information, please refer to the <a target=\"_blank\" href=\"https://docs.artemis.cit.tum.de/user/exercises/programming.html#generate-programming-exercise\">documentation</a> on the topic of exercise creation.",
+                    "versionControlDocumentationLink": "For more information, please refer to the <a target=\"_blank\" href=\"https://docs.artemis.tum.de/instructor/exercises/programming-exercise#generate-programming-exercise\">documentation</a> on the topic of exercise creation.",
                     "problemStepTitle": "Problem",
                     "problemStepMessage": "Create a comprehensive problem statement for the new exercise, including detailed tasks that clearly outline the required actions and expectations for students.",
                     "gradingStepTitle": "Grading",
@@ -229,7 +238,27 @@
                 "title": "Problem Statement",
                 "taskCommand": "Task",
                 "testCaseCommand": "Insert Test Case",
-                "tasksOfExercise": "Tasks:"
+                "tasksOfExercise": "Tasks:",
+                "generationAssistance": "Generate Draft Problem Statement",
+                "generateDraftDescription": "Use this field to draft the exercise brief or refine the current statement. Your input drives both the Problem Statement and the Learning Objectives. Be concrete about requirements, concepts, and constraints.",
+                "yourRequirements": "Your Requirements",
+                "examplePlaceholder": "Example: Create a Java exercise about implementing a binary search tree with insert, delete, and search operations. Students should demonstrate understanding of tree traversal and recursive algorithms.",
+                "generationSuccess": "Problem statement has been successfully generated.",
+                "generationError": "Failed to generate problem statement. Please try again."
+            },
+            "codeGeneration": {
+                "creationAssistance": "Creation Assistance",
+                "generateCode": "Generate Code",
+                "generating": "Generating...",
+                "description": "Generate solution, template, and test code using AI",
+                "tooltip": "AI Code Generation - Generate solution, template, and test code",
+                "confirmTitle": "Confirm Code Generation",
+                "confirmText": "This action uses an LLM and may take time and spend credits. Do you want to continue?",
+                "success": "{{repositoryType}} code generation completed successfully!",
+                "partialSuccess": "{{repositoryType}} code generation completed with some issues. Please review the generated code.",
+                "error": "{{repositoryType}} code generation failed. Please try again later.",
+                "unsupportedRepository": "Code generation is only supported for Template, Solution, and Test repositories.",
+                "attempts": "Attempts made: {{attempts}}"
             },
             "status": {
                 "solutionFailsTest": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue with the Solution Repository or the test cases.",
@@ -519,6 +548,7 @@
                 "complaintOnAutomaticAssessment": "Complaint on Automatic Assessment",
                 "complaintOnAutomaticAssessmentTooltip": "Students can complain after receiving an automatic assessment. Which will be evaluated by a tutor afterwards.",
                 "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable.",
+                "exampleSolutionPublicationDateTooltipOnImport": "The date when the Solution Repository becomes available to download for students. Cannot be set on import.",
                 "releaseTestsWithExampleSolution": "Include tests into example solution",
                 "releaseTestsWithExampleSolutionTooltip": "In addition to the example solution the automatic tests can be published after the due date.",
                 "setTestCaseVisibilityToAfterReleaseDateOfResults": "Set test case visibility to After Release Date of Results",
@@ -711,10 +741,12 @@
                 "pushTest": "Push the test code to its repository. It will be checked out in <code>{{checkoutDirectory}}</code>."
             },
             "dockerFlags": {
-                "disableNetworkAccess": {
-                    "title": "Disable internet access when executing the student submission",
-                    "description": "Activate this option to disable network access for containers. The network will be disabled when executing the student submission.",
-                    "warning": "If internet access is disabled, all dependencies must be included in the Docker image or cached within it. Otherwise, the build will fail."
+                "useCustomNetwork": {
+                    "title": "Use custom network",
+                    "description": "Enable this option to use your own Docker network, or no network at all.",
+                    "defaultOption": "Default (Bridge)",
+                    "noneOption": "None (no network)",
+                    "disableNetworkAccessWarning": "If internet access is disabled, all dependencies must be included in the Docker image or cached within it. Otherwise, the build will fail."
                 },
                 "envVars": {
                     "title": "Environment Variables",

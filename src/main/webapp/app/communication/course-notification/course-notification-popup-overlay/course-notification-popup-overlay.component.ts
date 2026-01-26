@@ -3,7 +3,6 @@ import { CourseNotification } from 'app/communication/shared/entities/course-not
 import { Subscription } from 'rxjs';
 import { CourseNotificationComponent } from 'app/communication/course-notification/course-notification/course-notification.component';
 import { CourseNotificationWebsocketService } from 'app/communication/course-notification/course-notification-websocket.service';
-import { animate, style, transition, trigger } from '@angular/animations';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { CourseNotificationViewingStatus } from 'app/communication/shared/entities/course-notification/course-notification-viewing-status';
 import { CommonModule } from '@angular/common';
@@ -20,12 +19,6 @@ import { faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
     imports: [CourseNotificationComponent, CommonModule, FaIconComponent],
     templateUrl: './course-notification-popup-overlay.component.html',
     styleUrls: ['./course-notification-popup-overlay.component.scss'],
-    animations: [
-        trigger('notificationAnimation', [
-            transition(':enter', [style({ opacity: 0, transform: 'scale(0)' }), animate('200ms ease-in-out', style({ opacity: 1, transform: 'scale(100%)' }))]),
-            transition(':leave', [animate('200ms ease-in-out', style({ opacity: 0, transform: 'scale(0)' }))]),
-        ]),
-    ],
 })
 export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestroy {
     protected readonly popupTimeInMilliseconds = 40000;

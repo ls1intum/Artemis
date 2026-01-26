@@ -54,8 +54,8 @@ export class FaqService {
             .pipe(map((res: EntityArrayResponseType) => FaqService.convertFaqCategoryArrayFromServer(res)));
     }
 
-    delete(courseId: number, faqId: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${courseId}/faqs/${faqId}`, { observe: 'response' });
+    delete(courseId: number, faqId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/faqs/${faqId}`, { observe: 'response' });
     }
 
     findAllCategoriesByCourseId(courseId: number) {

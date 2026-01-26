@@ -123,7 +123,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         comp.participation = participation;
 
         triggerChanges(comp, { property: 'exercise', currentValue: exercise });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         expect(subscribeForTestCaseSpy).toHaveBeenNthCalledWith(1, exercise.id);
@@ -141,7 +141,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         (gradingService as MockProgrammingExerciseGradingService).nextTestCases(testCases);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         expect(subscribeForTestCaseSpy).toHaveBeenNthCalledWith(1, exercise.id);
@@ -166,14 +166,14 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         (gradingService as MockProgrammingExerciseGradingService).nextTestCases(testCases);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         expect(comp.exerciseTestCases).toHaveLength(2);
         expect(comp.exerciseTestCases).toEqual(['test1', 'test2']);
 
         (gradingService as MockProgrammingExerciseGradingService).nextTestCases([{ testName: 'testX' }]);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         expect(comp.exerciseTestCases).toHaveLength(0);
@@ -195,7 +195,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         // No test cases available, might be that the solution build never ran to create tests...
         (gradingService as MockProgrammingExerciseGradingService).nextTestCases(undefined);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(comp.exerciseTestCases).toHaveLength(0);
         expect(getLatestResultWithFeedbacksStub).toHaveBeenNthCalledWith(1, exercise.templateParticipation!.id!);
@@ -217,7 +217,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         expect(comp.exerciseTestCases).toHaveLength(0);
@@ -241,12 +241,16 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
+
+        // Initial render is triggered in ngAfterViewInit when showPreview is true
+        const callCountAfterInit = generateHtmlSubjectStub.mock.calls.length;
 
         forceRenderSubject.next();
 
-        expect(generateHtmlSubjectStub).toHaveBeenCalledOnce();
+        // forceRender should trigger an additional call
+        expect(generateHtmlSubjectStub).toHaveBeenCalledTimes(callCountAfterInit + 1);
 
         fixture.destroy();
         flush();
@@ -324,7 +328,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         comp.courseId = 1;
         comp.exerciseId = 42;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const actions = comp.artemisIntelligenceActions();
         expect(actions).toHaveLength(1);

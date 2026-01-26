@@ -108,7 +108,7 @@ export class CourseManagementService {
 
     findAllOnlineCoursesWithRegistrationId(clientId: string): Observable<OnlineCourseDtoModel[]> {
         const params = new HttpParams().set('clientId', '' + clientId);
-        return this.http.get<OnlineCourseDtoModel[]>(`${this.resourceUrl}/for-lti-dashboard`, { params });
+        return this.http.get<OnlineCourseDtoModel[]>('api/lti/courses/for-lti-dashboard', { params });
     }
 
     /**
@@ -199,7 +199,7 @@ export class CourseManagementService {
                             this.courseNotificationService.updateNotificationCountMap(courseForDashboardDTO.course!.id, courseForDashboardDTO.courseNotificationCount);
 
                             // Setting the helper attribute in the course so we can use it in the course overview guard.
-                            courseForDashboardDTO.course.irisCourseChatEnabled = courseForDashboardDTO.irisCourseChatEnabled;
+                            courseForDashboardDTO.course.irisEnabledInCourse = courseForDashboardDTO.irisEnabledInCourse;
                         }
                         courses.push(courseForDashboardDTO.course);
                         this.saveScoresInStorage(courseForDashboardDTO);
@@ -230,7 +230,7 @@ export class CourseManagementService {
                         this.courseNotificationService.updateNotificationCountMap(courseForDashboardDTO.course!.id, courseForDashboardDTO.courseNotificationCount);
 
                         // Setting the helper attribute in the course so we can use it in the course overview guard.
-                        courseForDashboardDTO.course.irisCourseChatEnabled = courseForDashboardDTO.irisCourseChatEnabled;
+                        courseForDashboardDTO.course.irisEnabledInCourse = courseForDashboardDTO.irisEnabledInCourse;
                     }
                     this.saveScoresInStorage(courseForDashboardDTO);
 
@@ -484,8 +484,8 @@ export class CourseManagementService {
      * Archives the course of the specified courseId.
      * @param courseId The id of the course to archive
      */
-    archiveCourse(courseId: number): Observable<HttpResponse<any>> {
-        return this.http.put(`${this.resourceUrl}/${courseId}/archive`, {}, { observe: 'response' });
+    archiveCourse(courseId: number): Observable<HttpResponse<void>> {
+        return this.http.put<void>(`${this.resourceUrl}/${courseId}/archive`, {}, { observe: 'response' });
     }
 
     cleanupCourse(courseId: number): Observable<HttpResponse<void>> {

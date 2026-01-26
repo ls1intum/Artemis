@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamLiveEventRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.repository.ExamSessionRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -74,6 +75,8 @@ public class ExamDeletionService {
 
     private final ExamLiveEventRepository examLiveEventRepository;
 
+    private final ExamSessionRepository examSessionRepository;
+
     private final BuildJobRepository buildJobRepository;
 
     private final PostRepository postRepository;
@@ -87,8 +90,9 @@ public class ExamDeletionService {
     public ExamDeletionService(ExerciseDeletionService exerciseDeletionService, ParticipationDeletionService participationDeletionService, CacheManager cacheManager,
             UserRepository userRepository, ExamRepository examRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository,
             GradingScaleRepository gradingScaleRepository, StudentParticipationRepository studentParticipationRepository, ChannelRepository channelRepository,
-            ChannelService channelService, ExamLiveEventRepository examLiveEventRepository, BuildJobRepository buildJobRepository, PostRepository postRepository,
-            AnswerPostRepository answerPostRepository, ProgrammingExerciseRepository programmingExerciseRepository, ExamUserRepository examUserRepository) {
+            ChannelService channelService, ExamLiveEventRepository examLiveEventRepository, ExamSessionRepository examSessionRepository, BuildJobRepository buildJobRepository,
+            PostRepository postRepository, AnswerPostRepository answerPostRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            ExamUserRepository examUserRepository) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationDeletionService = participationDeletionService;
         this.cacheManager = cacheManager;
@@ -101,6 +105,7 @@ public class ExamDeletionService {
         this.channelRepository = channelRepository;
         this.channelService = channelService;
         this.examLiveEventRepository = examLiveEventRepository;
+        this.examSessionRepository = examSessionRepository;
         this.buildJobRepository = buildJobRepository;
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
@@ -161,33 +166,58 @@ public class ExamDeletionService {
     }
 
     /**
-     * Deletes all elements associated with the exam but not the exam itself in order to reset it.
+     * Resets an exam by deleting all student data while preserving the exam structure.
+     * <p>
+     * This method is optimized to work with IDs only, avoiding expensive eager loading
+     * of exercise groups and student exams. The exam title is fetched separately for
+     * audit logging purposes.
      * <p>
      * The deleted elements are:
      * <ul>
-     * <li>All StudentExams</li>
-     * <li>Everything that has been submitted by students to the exercises that are part of the exam,
-     * but not the exercises themself. See {@link ExerciseDeletionService#reset}</li>
+     * <li>All ExamSessions (via bulk delete query, must be deleted before StudentExams due to foreign key constraint)</li>
+     * <li>All StudentExams (via bulk delete query)</li>
+     * <li>All student participations, submissions, and results for exam exercises</li>
+     * <li>All plagiarism results for exam exercises</li>
+     * <li>All exam live events</li>
+     * </ul>
+     * <p>
+     * The preserved elements are:
+     * <ul>
+     * <li>The exam configuration</li>
+     * <li>All exercise groups and their exercises</li>
+     * <li>Grading scale (if any)</li>
      * </ul>
      *
      * @param examId the ID of the exam to be reset
      */
     public void reset(@NonNull Long examId) {
         User user = userRepository.getUser();
-        Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
-        log.info("User {} has requested to reset the exam {}", user.getLogin(), exam.getTitle());
-        AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.RESET_EXAM, "exam=" + exam.getTitle());
+
+        // Fetch only the title for audit logging - avoids loading the entire exam with exercises
+        String examTitle = examRepository.findTitleById(examId);
+        log.info("User {} has requested to reset the exam {}", user.getLogin(), examTitle);
+        AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.RESET_EXAM, "exam=" + examTitle);
         auditEventRepository.add(auditEvent);
-        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            if (exerciseGroup != null) {
-                for (Exercise exercise : exerciseGroup.getExercises()) {
-                    exerciseDeletionService.reset(exercise);
-                }
-            }
+
+        // Fetch exercise IDs directly - more efficient than loading full exercise entities
+        Set<Long> exerciseIds = examRepository.findExerciseIdsByExamId(examId);
+
+        // Reset each exercise by ID (deletes participations, submissions, results, plagiarism results)
+        for (Long exerciseId : exerciseIds) {
+            exerciseDeletionService.reset(exerciseId);
         }
-        studentExamRepository.deleteAll(exam.getStudentExams());
+
+        // Delete exam sessions first to avoid foreign key constraint violations
+        // (exam_session references student_exam via student_exam_id)
+        examSessionRepository.deleteAllByExamId(examId);
+
+        // Delete all student exams via bulk query - more efficient than loading and deleting entities
+        studentExamRepository.deleteAllByExamId(examId);
+
+        // Delete exam live events
         examLiveEventRepository.deleteAllByExamId(examId);
 
+        // Clear the cache for student exam exercise preparation status
         var studentExamExercisePreparationCache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
         if (studentExamExercisePreparationCache != null) {
             studentExamExercisePreparationCache.evict(examId);
