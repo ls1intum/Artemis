@@ -201,13 +201,22 @@
                         <div class="form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ quizExercise.course ? 'Course' : 'Exam' }}Label"></label>
                             <div>
-                                @if (quizExercise.includedInOverallScore) {
-                                    <jhi-included-in-overall-score-picker
-                                        [includedInOverallScore]="quizExercise.includedInOverallScore!"
-                                        (includedInOverallScoreChange)="includedInOverallScoreChange($event)"
-                                        [allowNotIncluded]="!isExamMode"
-                                    />
-                                }
+                                <jhi-included-in-overall-score-picker
+                                    [includedInOverallScore]="quizExercise.includedInOverallScore!"
+                                    (includedInOverallScoreChange)="includedInOverallScoreChange($event)"
+                                    [allowNotIncluded]="!isExamMode"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label jhiTranslate="artemisApp.exercise.maxPoints" for="field_points"></label>
+                            <!-- Quiz max score is derived → read-only -->
+                            <div class="form-control-plaintext">
+                                {{ calculateMaxExerciseScore() }}
                             </div>
                         </div>
                     </div>
