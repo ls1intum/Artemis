@@ -45,6 +45,15 @@ public class HyperionProblemStatementRewriteService {
 
     private final ObservationRegistry observationRegistry;
 
+    /**
+     * Creates a new ProblemStatementRewriteService.
+     *
+     * @param chatClient          the AI chat client (optional)
+     * @param templateService     prompt template service
+     * @param observationRegistry the observation registry for metrics
+     * @param llmTokeUsageService persist token usage in DB
+     * @param userRepository
+     */
     public HyperionProblemStatementRewriteService(ChatClient chatClient, HyperionPromptTemplateService templateService, ObservationRegistry observationRegistry,
             LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
         this.chatClient = chatClient;
