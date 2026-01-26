@@ -67,7 +67,7 @@ export default defineConfig({
                 'src/main/webapp/app/lti/**/*.ts',              // include lti for code coverage
                 'src/main/webapp/app/modeling/**/*.ts',         // include modeling for code coverage
                 'src/main/webapp/app/iris/**/*.ts',             // include iris for code coverage
-                'src/main/webapp/app/shared/components/buttons' // include shared buttons for code coverage
+                'src/main/webapp/app/shared/components/buttons/**/*.ts', // include shared buttons for code coverage
             ],
             exclude: ['**/node_modules/**', '**/*.spec.ts', '**/*.route.ts', '**/*.routes.ts', '**/*.model.ts'],
             thresholds: {
