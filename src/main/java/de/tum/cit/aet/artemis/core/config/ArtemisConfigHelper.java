@@ -177,6 +177,7 @@ public class ArtemisConfigHelper {
 
     /**
      * Check if Apollon PDF export is enabled.
+     * This only controls PDF export; the modeling editor is controlled by {@link #isModelingEnabled(Environment)}.
      *
      * @param environment the Spring environment
      * @return true if Apollon PDF export is enabled, false otherwise

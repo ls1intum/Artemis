@@ -84,7 +84,7 @@ public class DataExportExerciseCreationService {
 
     private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
-    // we define the field as optional to allow the application to start even if the apollon profile is not active
+    // we define the field as optional to allow the application to start even if Apollon PDF export is not enabled
     private final Optional<ModelingApollonApi> modelingApollonApi;
 
     private final ComplaintRepository complaintRepository;
@@ -232,7 +232,7 @@ public class DataExportExerciseCreationService {
     }
 
     /**
-     * Stores the modeling submission as pdf if the apollon profile is active and the apollon conversion service works, otherwise stores it as json file.
+     * Stores the modeling submission as PDF if Apollon PDF export is enabled and the conversion service works, otherwise stores it as a JSON file.
      *
      * @param modelingSubmission the modeling submission for which the content should be stored
      * @param outputDir          the directory in which the content should be stored
@@ -245,7 +245,7 @@ public class DataExportExerciseCreationService {
         }
         var fileName = "submission_" + modelingSubmission.getId();
         if (modelingApollonApi.isEmpty()) {
-            log.warn("Cannot include modeling submission content in data export as pdf because apollon profile is not active. Going to include the json file");
+            log.warn("Cannot include modeling submission content in data export as pdf because Apollon PDF export is not enabled. Going to include the json file");
             addModelJsonWithExplanationHowToView(modelingSubmission.getModel(), outputDir, fileName);
             return;
         }

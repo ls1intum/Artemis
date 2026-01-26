@@ -126,6 +126,7 @@ public class ModuleFeatureService {
 
     /**
      * Check if Apollon PDF export is enabled.
+     * This only controls PDF export; the modeling editor is controlled by artemis.modeling.enabled.
      *
      * @return true if Apollon PDF export is enabled, false otherwise
      */

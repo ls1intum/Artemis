@@ -448,7 +448,8 @@ public final class Constants {
     public static final String MODULE_FEATURE_LTI = "lti";
 
     /**
-     * The name of the module feature used for Apollon functionality.
+     * The name of the module feature used for Apollon PDF export functionality.
+     * This only controls PDF export; the modeling editor is controlled by {@link #MODULE_FEATURE_MODELING}.
      */
     public static final String MODULE_FEATURE_APOLLON = "apollon";
 
@@ -528,7 +529,8 @@ public final class Constants {
     public static final String LTI_ENABLED_PROPERTY_NAME = "artemis.lti.enabled";
 
     /**
-     * The name of the property used to enable or disable Apollon PDF export functionality.
+     * The name of the property used to enable or disable Apollon PDF export.
+     * This only controls PDF export; the modeling editor is controlled by {@link #MODELING_ENABLED_PROPERTY_NAME}.
      */
     public static final String APOLLON_ENABLED_PROPERTY_NAME = "artemis.apollon.enabled";
 
