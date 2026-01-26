@@ -86,6 +86,7 @@ artemis:
     secret: abcdef12345
     restricted-modules: module_text_llm,module_programming_llm
   apollon:
+    enabled: true # Set to true to enable Apollon PDF conversion for modeling diagrams
     conversion-service-url: http://localhost:8080
   hyperion:
     enabled: false  # Set this to true to enable the hyperion service on startup, requires Spring AI to be configured below.
