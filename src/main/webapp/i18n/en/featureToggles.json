@@ -39,10 +39,6 @@
                     "name": "Apollon (Modeling)",
                     "description": "Enables the Apollon UML modeling editor for creating and editing diagrams in modeling exercises."
                 },
-                "theia": {
-                    "name": "Theia (Online IDE)",
-                    "description": "Enables the Theia cloud-based IDE for programming exercises, allowing students to code in the browser."
-                },
                 "ldap": {
                     "name": "LDAP Authentication",
                     "description": "Enables LDAP-based authentication for user login through institutional directory services."
@@ -108,6 +104,10 @@
                 "nebula": {
                     "name": "Nebula (Video Processing)",
                     "description": "Enables lecture video processing and transcription for AI-enhanced content understanding."
+                },
+                "theia": {
+                    "name": "Theia (Online IDE)",
+                    "description": "Enables the Theia cloud-based IDE for programming exercises, allowing students to code in the browser."
                 },
                 "sharing": {
                     "name": "Exercise Sharing",
