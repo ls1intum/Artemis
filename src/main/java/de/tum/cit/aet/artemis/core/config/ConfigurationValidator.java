@@ -13,6 +13,7 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
@@ -39,6 +40,7 @@ import de.tum.cit.aet.artemis.core.exception.WeaviateConfigurationException;
 @Component
 @Profile(PROFILE_CORE)
 @Lazy(false)
+@EnableConfigurationProperties(WeaviateConfigurationProperties.class)
 public class ConfigurationValidator {
 
     private static final Logger log = LoggerFactory.getLogger(ConfigurationValidator.class);
