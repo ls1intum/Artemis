@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.EnrollmentService;
 import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
@@ -76,6 +77,8 @@ public class CourseOverviewResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final EnrollmentService enrollmentService;
+
     private final CourseScoreCalculationService courseScoreCalculationService;
 
     private final ComplaintService complaintService;
@@ -95,11 +98,13 @@ public class CourseOverviewResource {
     private final FaqRepository faqRepository;
 
     public CourseOverviewResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
-            CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, Optional<ExamRepositoryApi> examRepositoryApi,
-            ComplaintService complaintService, TeamRepository teamRepository, QuizQuestionProgressService quizQuestionProgressService, FaqRepository faqRepository) {
+            EnrollmentService enrollmentService, CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository,
+            Optional<ExamRepositoryApi> examRepositoryApi, ComplaintService complaintService, TeamRepository teamRepository,
+            QuizQuestionProgressService quizQuestionProgressService, FaqRepository faqRepository) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
+        this.enrollmentService = enrollmentService;
         this.userRepository = userRepository;
         this.courseScoreCalculationService = courseScoreCalculationService;
         this.gradingScaleRepository = gradingScaleRepository;
@@ -134,7 +139,7 @@ public class CourseOverviewResource {
             // user might be allowed to enroll in the course
             // We need the course with organizations so that we can check if the user is allowed to enroll
             course = courseRepository.findSingleWithOrganizationsAndPrerequisitesElseThrow(courseId);
-            if (authCheckService.isUserAllowedToSelfEnrollInCourse(user, course)) {
+            if (enrollmentService.isUserAllowedToSelfEnrollInCourse(user, course)) {
                 // suppress error alert with skipAlert: true so that the client can redirect to the enrollment page
                 throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this course, but you could enroll in it.", ENTITY_NAME,
                         "noAccessButCouldEnroll", true);

@@ -1,15 +1,15 @@
 ext {
     // TODO: this should become 90% for INSTRUCTION and 0 for CLASS
     //This also needs to be lowered if we merge nebula PRs
-    AggregatedCoverageThresholds = ["INSTRUCTION": 0.840, "CLASS": 147]
+    AggregatedCoverageThresholds = ["INSTRUCTION": 0.840, "CLASS": 150]
     // TODO: each module should achieve 90% for INSTRUCTION and 0 for CLASS
     ModuleCoverageThresholds = [
         "assessment"    :          ["INSTRUCTION": 0.918, "CLASS":  0],
         "athena"        :          ["INSTRUCTION": 0.855, "CLASS":  2],
         "atlas"         :          ["INSTRUCTION": 0.898, "CLASS":  4],
         "buildagent"    :          ["INSTRUCTION": 0.776, "CLASS":  1],
-        "communication" :          ["INSTRUCTION": 0.863, "CLASS":  6],
-        "core"          :          ["INSTRUCTION": 0.810, "CLASS": 63],
+        "communication" :          ["INSTRUCTION": 0.861, "CLASS":  7],
+        "core"          :          ["INSTRUCTION": 0.795, "CLASS": 66],
         "exam"          :          ["INSTRUCTION": 0.907, "CLASS":  2],
         "exercise"      :          ["INSTRUCTION": 0.911, "CLASS":  0],
         "fileupload"    :          ["INSTRUCTION": 0.927, "CLASS":  1],

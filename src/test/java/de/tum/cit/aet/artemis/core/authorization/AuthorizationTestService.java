@@ -15,6 +15,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -115,9 +116,11 @@ public class AuthorizationTestService {
         var methodProfileAnnotation = handlerMethod.getMethod().getAnnotation(Profile.class);
         var classConditionalAnnotation = handlerMethod.getMethod().getDeclaringClass().getAnnotation(Conditional.class);
         var classProfileAnnotation = handlerMethod.getMethod().getDeclaringClass().getAnnotation(Profile.class);
-        // No null-check required for classes because we have tests ensuring Profile annotations on classes
+        // Check for @ConditionalOnProperty annotations (used by LTI and similar modules)
+        var classConditionalOnPropertyAnnotation = handlerMethod.getMethod().getDeclaringClass().getAnnotation(ConditionalOnProperty.class);
+        // Classes may use @ConditionalOnProperty instead of @Profile, so null-check is required
         return (methodProfileAnnotation != null && isNonCoreProfile(methodProfileAnnotation)) || (classConditionalAnnotation != null && isConditional(classConditionalAnnotation))
-                || isNonCoreProfile(classProfileAnnotation);
+                || (classProfileAnnotation != null && isNonCoreProfile(classProfileAnnotation)) || classConditionalOnPropertyAnnotation != null;
     }
 
     private boolean isNonCoreProfile(Profile profileAnnotation) {

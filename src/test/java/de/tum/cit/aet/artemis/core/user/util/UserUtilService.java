@@ -511,6 +511,21 @@ public class UserUtilService {
     }
 
     /**
+     * Creates a new admin user if it doesn't exist or resets and updates existing user with admin authorities.
+     *
+     * @param prefix The prefix for the admin username
+     */
+    public void addAdmin(final String prefix) {
+        String adminLogin = prefix + "admin";
+        User admin = createOrReuseExistingUser(adminLogin, UserFactory.USER_PASSWORD);
+        String[] groups = new String[] { "admin", "testgroup" };
+        admin.setGroups(Set.of(groups));
+        admin.setAuthorities(adminAuthorities);
+        admin = userTestRepository.save(admin);
+        assertThat(admin.getId()).as("Admin has been created").isNotNull();
+    }
+
+    /**
      * Gets a user from the database using the provided login but without the authorities.
      * <p>
      * Note: Jackson sometimes fails to deserialize the authorities leading to flaky server tests. The specific
