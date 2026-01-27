@@ -63,6 +63,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupRegistrationApi;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
@@ -709,5 +710,16 @@ public class TutorialGroupResource {
                     + ", campus=" + campus + ", capacity=" + capacity + ", language=" + language + ", additionalInformation=" + additionalInformation + ", isOnline=" + isOnline
                     + '}';
         }
+    }
+
+    @GetMapping
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<List<TutorialGroupRegisteredUserDTO>> getRegisteredUsers(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
+        // TODO: check whether tutorial group is part of course (and user is either tutor of tutorial group, or editor, or admin)
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record TutorialGroupRegisteredUserDTO(@NotNull long id, @Nullable String name, @Nullable String profilePictureUrl, @NotNull String login, @Nullable String email,
+            @Nullable String registrationNumber) {
     }
 }
