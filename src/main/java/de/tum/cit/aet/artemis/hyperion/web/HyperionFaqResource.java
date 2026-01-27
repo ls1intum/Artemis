@@ -39,8 +39,8 @@ public class HyperionFaqResource {
     /**
      * POST /courses/{courseId}/faq/rewrite: Rewrite a faq for a course context
      *
-     * @param courseId the id of the course
-     * @param request  the id of the course the FAQ belongs to
+     * @param courseId the id of the course the FAQ belongs to
+     * @param request  the request containing the FAQ text to rewrite
      * @return the ResponseEntity with status 200 (OK), rewritten faq with inconsistencies, suggestions and improvement
      */
     @EnforceAtLeastTutorInCourse
