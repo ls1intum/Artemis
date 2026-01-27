@@ -42,6 +42,7 @@ import { NgClass } from '@angular/common';
 import { facSidebar } from 'app/shared/icons/icons';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -62,6 +63,7 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
         ChatHistoryItemComponent,
         NgClass,
         SearchFilterComponent,
+        ContextSelectionComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -139,12 +141,14 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private previousMessageIds = new Set<number>();
     public ButtonType = ButtonType;
 
+    readonly courseId = input<number>();
     showDeclineButton = input<boolean>(true);
     isChatHistoryAvailable = input<boolean>(false);
     isEmbeddedChat = input<boolean>(false);
     readonly fullSize = input<boolean>();
     readonly showCloseButton = input<boolean>(false);
     readonly isChatGptWrapper = input<boolean>(false);
+    readonly showContextSelection = input<boolean>(false);
     readonly fullSizeToggle = output<void>();
     readonly closeClicked = output<void>();
 
