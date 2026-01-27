@@ -16,6 +16,7 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Conditional;
@@ -113,9 +114,9 @@ public class AtlasAgentService {
 
     private final SessionBasedCache<CompetencyRelationDTO> pendingRelationOperationsCache;
 
-    public AtlasAgentService(CacheManager cacheManager, @Nullable ChatClient chatClient, AtlasPromptTemplateService templateService,
-            @Nullable ToolCallbackProvider mainAgentToolCallbackProvider, @Nullable ToolCallbackProvider competencyExpertToolCallbackProvider,
-            @Nullable ToolCallbackProvider competencyMapperToolCallbackProvider, @Nullable ChatMemory chatMemory, @Value("${atlas.chat-model:gpt-4o}") String deploymentName,
+    public AtlasAgentService(CacheManager cacheManager, @Autowired ChatClient chatClient, AtlasPromptTemplateService templateService,
+            @Autowired ToolCallbackProvider mainAgentToolCallbackProvider, @Autowired ToolCallbackProvider competencyExpertToolCallbackProvider,
+            @Autowired ToolCallbackProvider competencyMapperToolCallbackProvider, @Autowired ChatMemory chatMemory, @Value("${atlas.chat-model:gpt-4o}") String deploymentName,
             @Value("${atlas.chat-temperature:0.2}") double temperature) {
         this.chatClient = chatClient;
         this.templateService = templateService;
