@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import io.micrometer.observation.ObservationRegistry;
 
-class HyperionConsistencyIssueServiceTest {
+class HyperionConsistencyCheckServiceTest {
 
     @Mock
     private RepositoryService repositoryService;
