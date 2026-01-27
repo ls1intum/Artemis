@@ -801,9 +801,7 @@ components:
         groupId: {type: integer, format: int64, description: Grouping identifier for related threads}
         targetType: {$ref: '#/components/schemas/CommentThreadLocationType'}
         auxiliaryRepositoryId: {type: integer, format: int64, description: Identifier of the auxiliary repository, if applicable}
-        filePath: {type: string, description: Current file path for repository-based threads}
         initialFilePath: {type: string, description: Initial file path captured at thread creation}
-        lineNumber: {type: integer, format: int32, description: Current line number for repository-based threads}
         initialLineNumber: {type: integer, format: int32, description: Initial line number captured at thread creation}
         initialComment: {$ref: '#/components/schemas/CreateCommentDTO'}
       required: [initialComment, targetType]
@@ -827,6 +825,8 @@ components:
         threadId: {type: integer, format: int64, description: Identifier of the owning comment thread}
         authorId: {type: integer, format: int64, description: Identifier of the author user, if available}
         authorName: {type: string, description: Display name of the author, if available}
+        createdBy: {type: string, description: Login of the user who created the comment, if available}
+        lastModifiedBy: {type: string, description: Login of the user who last modified the comment, if available}
         type: {$ref: '#/components/schemas/CommentType'}
         content: {$ref: '#/components/schemas/CommentContentDTO'}
         initialVersionId: {type: integer, format: int64, description: Identifier of the initial exercise version, if available}
