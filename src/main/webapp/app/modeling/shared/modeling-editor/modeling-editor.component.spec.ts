@@ -35,7 +35,7 @@ vi.mock('@tumaet/apollon', async (importOriginal) => {
                 },
                 set model(value: UMLModel) {
                     this._model = value;
-                    this._subscriptions.forEach((callback) => callback(this._model));
+                    this._subscriptions.forEach((callback: (model: UMLModel) => void) => callback(this._model));
                 },
                 subscribeToModelChange: vi.fn(function (this: any, callback: (model: UMLModel) => void) {
                     const id = ++this._subscriptionCounter;
