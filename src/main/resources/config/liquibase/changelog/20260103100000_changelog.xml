@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        This changeset adds the infrastructure for ExampleParticipation (a subclass of Participation).
+
+        ExampleParticipation is a new entity that will eventually replace ExampleSubmission.
+        This changeset only creates the necessary database structures without migrating data.
+        The actual migration from ExampleSubmission to ExampleParticipation will be done in a follow-up PR.
+    -->
+
+    <!-- PHASE 1: Modify discriminator column to allow 'EP' value for ExampleParticipation -->
+    <changeSet id="20260103100000-1" author="krusche">
+        <!-- For MySQL, modify the enum to include 'EP' -->
+        <sql dbms="mysql">
+            ALTER TABLE participation MODIFY COLUMN discriminator enum('P','SP','PESP','SPEP','TPEP','EP') NOT NULL;
+        </sql>
+
+        <!-- For H2, modify the enum to include 'EP' -->
+        <sql dbms="h2">
+            ALTER TABLE participation ALTER COLUMN discriminator SET DATA TYPE enum('P','SP','PESP','SPEP','TPEP','EP');
+        </sql>
+
+        <!-- For PostgreSQL, the discriminator is typically varchar, no change needed -->
+
+        <rollback>
+            <sql dbms="mysql">
+                ALTER TABLE participation MODIFY COLUMN discriminator enum('P','SP','PESP','SPEP','TPEP') NOT NULL;
+            </sql>
+            <sql dbms="h2">
+                ALTER TABLE participation ALTER COLUMN discriminator SET DATA TYPE enum('P','SP','PESP','SPEP','TPEP');
+            </sql>
+        </rollback>
+    </changeSet>
+
+    <!-- PHASE 2: Create secondary table for ExampleParticipation -->
+    <changeSet id="20260103100000-2" author="krusche">
+        <createTable tableName="example_participation_details">
+            <column name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="used_for_tutorial" type="boolean"/>
+            <column name="assessment_explanation" type="varchar(2000)"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+            baseTableName="example_participation_details"
+            baseColumnNames="id"
+            referencedTableName="participation"
+            referencedColumnNames="id"
+            constraintName="fk_example_participation_details_participation"
+            onDelete="CASCADE"/>
+
+        <rollback>
+            <dropTable tableName="example_participation_details"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

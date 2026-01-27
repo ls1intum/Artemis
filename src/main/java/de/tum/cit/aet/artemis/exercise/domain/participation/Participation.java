@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import de.tum.cit.aet.artemis.assessment.domain.ExampleParticipation;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -58,6 +59,7 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
     @JsonSubTypes.Type(value = ProgrammingExerciseStudentParticipation.class, name = "programming"),
     @JsonSubTypes.Type(value = TemplateProgrammingExerciseParticipation.class, name = "template"),
     @JsonSubTypes.Type(value = SolutionProgrammingExerciseParticipation.class, name = "solution"),
+    @JsonSubTypes.Type(value = ExampleParticipation.class, name = "example"),
 })
 // @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
