@@ -1,9 +1,15 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.CacheConfiguration.HAZELCAST_MEMBER_TYPE_CLIENT;
+import static de.tum.cit.aet.artemis.core.config.CacheConfiguration.HAZELCAST_MEMBER_TYPE_KEY;
+import static de.tum.cit.aet.artemis.core.config.CacheConfiguration.HAZELCAST_MEMBER_TYPE_MEMBER;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.net.UnknownHostException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -65,6 +71,9 @@ public class HazelcastConnection {
     @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
     private String instanceName;
 
+    @Value("${spring.hazelcast.build-agent-client-mode:false}")
+    private boolean buildAgentClientMode;
+
     public HazelcastConnection(DiscoveryClient discoveryClient, Optional<Registration> registration, Environment env) {
         this.discoveryClient = discoveryClient;
         this.registration = registration;
@@ -82,10 +91,20 @@ public class HazelcastConnection {
      * and registers them in the Hazelcast configuration for joining the cluster.
      *
      * <p>
+     * This method is skipped when running as a Hazelcast client (build agent client mode),
+     * as clients manage their own connections to the cluster.
+     *
+     * <p>
      * Called once after this bean (HazelcastConnection) has been instantiated
      */
     @PostConstruct
     private void connectHazelcast() {
+        // Skip connection logic for Hazelcast clients - they manage their own connections
+        if (isRunningAsClient()) {
+            log.debug("Running as Hazelcast client, skipping cluster member connection logic");
+            return;
+        }
+
         if (registration.isEmpty()) {
             // If there is no registration, we are not running in a clustered environment and cannot connect Hazelcast nodes.
             return;
@@ -109,9 +128,18 @@ public class HazelcastConnection {
      * This scheduled task regularly checks if all members of the Hazelcast cluster are connected to each other.
      * This is one counter measure against a split cluster.
      * It also logs warnings for potential stale members (in Hazelcast but not in registry).
+     *
+     * <p>
+     * This method is skipped when running as a Hazelcast client (build agent client mode),
+     * as clients do not participate in cluster membership.
      */
     @Scheduled(fixedDelay = 10, initialDelay = 10, timeUnit = TimeUnit.SECONDS)
     public void connectToAllMembers() {
+        // Skip connection logic for Hazelcast clients - they don't participate in cluster membership
+        if (isRunningAsClient()) {
+            return;
+        }
+
         if (registration.isEmpty() || env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
             return;
         }
@@ -180,5 +208,101 @@ public class HazelcastConnection {
         var clusterMemberAddress = instance.getHost() + ":" + clusterMemberPort; // Address where the other instance is expected
         log.info("Adding Hazelcast cluster member {}", clusterMemberAddress);
         config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMemberAddress);
+    }
+
+    /**
+     * Checks if the current instance is running as a Hazelcast client (build agent client mode).
+     * Clients do not participate in cluster membership and manage their own connections.
+     *
+     * @return true if running as a Hazelcast client, false otherwise
+     */
+    private boolean isRunningAsClient() {
+        return buildAgentClientMode && env.acceptsProfiles(Profiles.of(PROFILE_BUILDAGENT)) && !env.acceptsProfiles(Profiles.of(PROFILE_CORE));
+    }
+
+    /**
+     * Discovers core node (cluster member) addresses from the service registry.
+     * This is used by build agents in client mode to find core nodes to connect to.
+     *
+     * <p>
+     * Filters to only include cluster members by checking the {@code hazelcast.member-type} metadata.
+     * Includes instances without this metadata for backwards compatibility with older deployments.
+     *
+     * @return list of core node addresses in "host:port" format, empty if no core nodes found
+     */
+    public List<String> discoverCoreNodeAddresses() {
+        if (registration.isEmpty()) {
+            log.warn("Service registry not available for auto-discovery of core nodes.");
+            return List.of();
+        }
+
+        log.info("Auto-discovering core nodes from service registry");
+        String serviceId = registration.get().getServiceId();
+        List<ServiceInstance> instances = discoveryClient.getInstances(serviceId);
+
+        List<String> coreNodes = instances.stream()
+                // Filter to only include cluster members (not clients)
+                .filter(this::isClusterMember)
+                // Exclude the current instance
+                .filter(instance -> !isCurrentInstance(instance)).map(this::formatInstanceAddress).toList();
+
+        if (!coreNodes.isEmpty()) {
+            log.info("Discovered {} core node(s) from service registry: {}", coreNodes.size(), coreNodes);
+        }
+        else {
+            log.warn("No core nodes found in service registry. Ensure core nodes are running and registered.");
+        }
+
+        return coreNodes;
+    }
+
+    /**
+     * Checks if a service instance is a Hazelcast cluster member (not a client).
+     *
+     * @param instance the service instance to check
+     * @return true if the instance is a cluster member
+     */
+    private boolean isClusterMember(ServiceInstance instance) {
+        String memberType = instance.getMetadata().get(HAZELCAST_MEMBER_TYPE_KEY);
+        // Include instances explicitly marked as members, or not marked at all (legacy/compatibility)
+        return memberType == null || HAZELCAST_MEMBER_TYPE_MEMBER.equals(memberType);
+    }
+
+    /**
+     * Checks if the given service instance is the current instance.
+     *
+     * @param instance the service instance to check
+     * @return true if this is the current instance
+     */
+    private boolean isCurrentInstance(ServiceInstance instance) {
+        if (registration.isEmpty()) {
+            return false;
+        }
+        String ownHost = registration.get().getHost().replace("[", "").replace("]", "");
+        String instanceHost = instance.getHost().replace("[", "").replace("]", "");
+        return ownHost.equals(instanceHost) && registration.get().getPort() == instance.getPort();
+    }
+
+    /**
+     * Formats a service instance address as "host:port" for Hazelcast connection.
+     *
+     * @param instance the service instance
+     * @return the formatted address string
+     */
+    private String formatInstanceAddress(ServiceInstance instance) {
+        String host = instance.getHost().replace("[", "").replace("]", ""); // Handle IPv6 brackets
+        String port = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(hazelcastPort));
+        return host + ":" + port;
+    }
+
+    /**
+     * Marks this instance as a Hazelcast client in the service registry.
+     * This allows other instances to identify it as a client rather than a cluster member.
+     */
+    public void registerAsClient() {
+        if (registration.isPresent()) {
+            registration.get().getMetadata().put(HAZELCAST_MEMBER_TYPE_KEY, HAZELCAST_MEMBER_TYPE_CLIENT);
+            log.info("Registered this instance as Hazelcast client in service registry");
+        }
     }
 }

@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,6 +39,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
+import com.hazelcast.client.HazelcastClient;
+import com.hazelcast.client.config.ClientConfig;
+import com.hazelcast.client.config.ClientConnectionStrategyConfig;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.EvictionConfig;
 import com.hazelcast.config.EvictionPolicy;
@@ -97,6 +101,16 @@ public class CacheConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(CacheConfiguration.class);
 
+    /**
+     * Metadata key used to identify the Hazelcast member type in the service registry.
+     * Core nodes are marked as "member", build agent clients are marked as "client".
+     */
+    public static final String HAZELCAST_MEMBER_TYPE_KEY = "hazelcast.member-type";
+
+    public static final String HAZELCAST_MEMBER_TYPE_MEMBER = "member";
+
+    public static final String HAZELCAST_MEMBER_TYPE_CLIENT = "client";
+
     private final ServerProperties serverProperties;
 
     // the service registry, in our current deployment this is the jhipster registry which offers a Eureka Server under the hood
@@ -105,6 +119,9 @@ public class CacheConfiguration {
     private final ApplicationContext applicationContext;
 
     private final Environment env;
+
+    // Lazy-injected to avoid circular dependency (HazelcastConnection depends on the HazelcastInstance we create)
+    private final HazelcastConnection hazelcastConnection;
 
     @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
     private String instanceName;
@@ -118,10 +135,24 @@ public class CacheConfiguration {
     @Value("${spring.hazelcast.localInstances:true}")
     private boolean hazelcastLocalInstances;
 
-    public CacheConfiguration(ApplicationContext applicationContext, ServerProperties serverProperties, Optional<Registration> registration, Environment env) {
+    /**
+     * When true, build agents connect as Hazelcast clients instead of cluster members.
+     * This isolates the core cluster from build agent failures and reduces heartbeat overhead.
+     * Core nodes are automatically discovered via the service registry.
+     *
+     * <p>
+     * Note: This setting is ignored when the same server runs both core and build agent profiles.
+     * In single-node deployments, client mode provides no benefit since there's no cluster separation.
+     */
+    @Value("${spring.hazelcast.build-agent-client-mode:false}")
+    private boolean buildAgentClientMode;
+
+    public CacheConfiguration(ApplicationContext applicationContext, ServerProperties serverProperties, Optional<Registration> registration,
+            @Lazy HazelcastConnection hazelcastConnection, Environment env) {
         this.applicationContext = applicationContext;
         this.serverProperties = serverProperties;
         this.registration = registration;
+        this.hazelcastConnection = hazelcastConnection;
         this.env = env;
 
         // Do not send telemetry to Hazelcast.
@@ -132,7 +163,9 @@ public class CacheConfiguration {
     @PreDestroy
     public void destroy() {
         log.info("Closing Cache Manager");
+        // Shutdown all Hazelcast instances (both cluster members and clients)
         Hazelcast.shutdownAll();
+        HazelcastClient.shutdownAll();
     }
 
     @Bean
@@ -182,6 +215,18 @@ public class CacheConfiguration {
             return Hazelcast.newHazelcastInstance(testConfig);
         }
         // ========================= TESTING ONLY =========================
+
+        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+
+        // ========================= BUILD AGENT CLIENT MODE =========================
+        // Build agents can connect as Hazelcast clients instead of cluster members.
+        // This isolates the core cluster from build agent failures and eliminates
+        // heartbeat overhead between build agents and core nodes.
+        if (buildAgentClientMode && activeProfiles.contains(PROFILE_BUILDAGENT) && !activeProfiles.contains(PROFILE_CORE)) {
+            log.info("Build agent running in CLIENT mode - connecting to core cluster as client");
+            return createHazelcastClient();
+        }
+        // ========================= END BUILD AGENT CLIENT MODE =========================
 
         log.debug("Configuring Hazelcast");
         HazelcastInstance hazelCastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
@@ -250,6 +295,8 @@ public class CacheConfiguration {
                 config.getNetworkConfig().setPort(hazelcastPort); // Own port
                 registration.get().getMetadata().put("hazelcast.port", String.valueOf(hazelcastPort));
             }
+            // Mark this instance as a cluster member (not a client) for service discovery
+            registration.get().getMetadata().put(HAZELCAST_MEMBER_TYPE_KEY, HAZELCAST_MEMBER_TYPE_MEMBER);
         }
 
         config.getMapConfigs().put("default", initializeDefaultMapConfig(jHipsterProperties));
@@ -317,7 +364,6 @@ public class CacheConfiguration {
         // ===================== End Cluster Stability Configuration =====================
 
         // only add the queue config if the profile "localci" is active
-        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         if (activeProfiles.contains(PROFILE_LOCALCI) || activeProfiles.contains(PROFILE_BUILDAGENT)) {
             // add queue config for local ci shared queue
             configureQueueCluster(config, jHipsterProperties);
@@ -330,6 +376,72 @@ public class CacheConfiguration {
         }
 
         return Hazelcast.newHazelcastInstance(config);
+    }
+
+    /**
+     * Creates a Hazelcast client instance for build agents to connect to the core cluster.
+     * Clients do not participate in cluster membership, eliminating heartbeat overhead
+     * and isolating the core cluster from build agent failures.
+     *
+     * <p>
+     * The client connects to core nodes via auto-discovery from the service registry.
+     * If no core nodes are available during startup, the client will start asynchronously
+     * and keep retrying until core nodes become available.
+     *
+     * @return a HazelcastInstance configured as a client
+     */
+    private HazelcastInstance createHazelcastClient() {
+        ClientConfig clientConfig = new ClientConfig();
+        clientConfig.setInstanceName(instanceName + "-client");
+
+        // Set cluster name (must match the core cluster)
+        if (!hazelcastLocalInstances) {
+            clientConfig.setClusterName("prod");
+        }
+
+        // Discover core node addresses from service registry using HazelcastConnection
+        List<String> discoveredAddresses = hazelcastConnection.discoverCoreNodeAddresses();
+
+        // Add discovered core node addresses (if any found)
+        for (String address : discoveredAddresses) {
+            log.info("Adding core node address for Hazelcast client: {}", address);
+            clientConfig.getNetworkConfig().addAddress(address);
+        }
+
+        // Connection strategy configuration for resilience:
+        // - asyncStart=true: Don't block startup if no core nodes available yet
+        // - reconnectMode=ON: Automatically reconnect if connection is lost
+        // This allows build agents to start even when core nodes are temporarily unavailable
+        // and reconnect automatically when they become available.
+        boolean hasInitialAddresses = !discoveredAddresses.isEmpty();
+        clientConfig.getConnectionStrategyConfig().setAsyncStart(!hasInitialAddresses)  // Block only if we have addresses to connect to
+                .setReconnectMode(ClientConnectionStrategyConfig.ReconnectMode.ON);
+
+        // Connection retry configuration - aggressive retry to handle temporary core node unavailability
+        clientConfig.getConnectionStrategyConfig().getConnectionRetryConfig().setInitialBackoffMillis(1000)       // Start with 1 second delay
+                .setMaxBackoffMillis(30000)          // Max 30 seconds between retries
+                .setMultiplier(1.5)                   // Exponential backoff
+                .setClusterConnectTimeoutMillis(-1)  // Unlimited timeout - keep trying forever
+                .setJitter(0.2);                      // Add randomness to prevent thundering herd
+
+        // Network configuration for client
+        clientConfig.getNetworkConfig().setConnectionTimeout(10000)  // 10 seconds connection timeout per attempt
+                .setSmartRouting(true);       // Enable smart routing to distribute load
+
+        // Serialization - use same Path serializer as cluster members
+        clientConfig.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
+
+        // Mark this instance as a client in the service registry
+        hazelcastConnection.registerAsClient();
+
+        if (hasInitialAddresses) {
+            log.info("Creating Hazelcast client to connect to core cluster at: {}", discoveredAddresses);
+        }
+        else {
+            log.warn("No core nodes found in service registry. Hazelcast client will start asynchronously and retry connection.");
+        }
+
+        return HazelcastClient.newHazelcastClient(clientConfig);
     }
 
     /**

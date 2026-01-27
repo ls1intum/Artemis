@@ -85,6 +85,17 @@ artemis:
         email: artemis@xcit.tum.de
 
 spring:
+    hazelcast:
+        # When true, build agents connect as Hazelcast clients instead of cluster members.
+        # Core nodes are automatically discovered via the service registry.
+        # This isolates the core cluster from build agent failures and eliminates heartbeat overhead.
+        # Benefits:
+        # - Core cluster stability: Build agent crashes don't affect core nodes
+        # - Reduced overhead: No heartbeat connections between build agents and core cluster
+        # - Simpler topology: Core cluster has only 4 members instead of 4+N build agents
+        # Note: This setting is ignored for single-node deployments where the same server
+        # runs both core and build agent profiles.
+        build-agent-client-mode: false
     liquibase:
         enabled: false #not needed for build agents
     autoconfigure:
