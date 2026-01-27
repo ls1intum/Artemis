@@ -2,12 +2,11 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { WebsocketService } from 'app/shared/service/websocket.service';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { ProblemStatementRewriteResponse } from 'app/openapi/model/problemStatementRewriteResponse';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
@@ -25,11 +24,12 @@ import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { RewriteFaqResponse } from 'app/openapi/model/rewriteFaqResponse';
+import { HyperionFaqApiService } from 'app/openapi/api/hyperionFaqApi.service';
 
 describe('ArtemisIntelligenceService', () => {
     let httpMock: HttpTestingController;
     let service: ArtemisIntelligenceService;
-    let websocketService: WebsocketService;
     let alertService: AlertService;
     let translateService: TranslateService;
 
@@ -37,22 +37,15 @@ describe('ArtemisIntelligenceService', () => {
         addLineWidget: jest.fn(),
     } as unknown as MonacoEditorComponent;
 
-    const mockWebsocketService = {
-        subscribe: jest.fn().mockReturnValue(
-            new BehaviorSubject({
-                result: 'Rewritten Text',
-                inconsistencies: ['Some inconsistency'],
-                suggestions: ['Suggestion 1'],
-                improvement: 'Improved text',
-            }),
-        ),
-    };
-
     const mockAlertService = {
         success: jest.fn(),
     };
 
-    const mockHyperionApiService = {
+    const mockHyperionFaqApiService = {
+        rewriteFaq: jest.fn(),
+    };
+
+    const mockHyperionProblemStatementApiService = {
         rewriteProblemStatement: jest.fn(),
         checkExerciseConsistency: jest.fn(),
     };
@@ -131,16 +124,15 @@ describe('ArtemisIntelligenceService', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                { provide: WebsocketService, useValue: mockWebsocketService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useValue: mockAlertService },
-                { provide: HyperionProblemStatementApiService, useValue: mockHyperionApiService },
+                { provide: HyperionFaqApiService, useValue: mockHyperionFaqApiService },
+                { provide: HyperionProblemStatementApiService, useValue: mockHyperionProblemStatementApiService },
             ],
         });
 
         httpMock = TestBed.inject(HttpTestingController);
         service = TestBed.inject(ArtemisIntelligenceService);
-        websocketService = TestBed.inject(WebsocketService);
         alertService = TestBed.inject(AlertService);
         translateService = TestBed.inject(TranslateService);
     });
@@ -151,10 +143,19 @@ describe('ArtemisIntelligenceService', () => {
     });
 
     describe('rewrite', () => {
-        it('should trigger rewriting pipeline for FAQ variant via Iris and return rewritten text', () => {
+        it('should trigger rewriting pipeline for FAQ variant via Hyperion and return rewritten text', () => {
             const toBeRewritten = 'OriginalText';
             const rewritingVariant = RewritingVariant.FAQ;
             const courseId = 1;
+
+            const mockResponse: RewriteFaqResponse = {
+                rewrittenText: 'Rewritten Text',
+                inconsistencies: ['Some inconsistency'],
+                suggestions: ['Suggestion 1'],
+                improvement: 'Improved text',
+            };
+
+            mockHyperionFaqApiService.rewriteFaq.mockReturnValue(of(mockResponse));
 
             service.rewrite(toBeRewritten, rewritingVariant, courseId).subscribe((result) => {
                 expect(result.result).toBe('Rewritten Text');
@@ -163,11 +164,10 @@ describe('ArtemisIntelligenceService', () => {
                 expect(result.improvement).toBe('Improved text');
 
                 expect(alertService.success).toHaveBeenCalledWith('artemisApp.markdownEditor.artemisIntelligence.alerts.rewrite.success');
+                expect(mockHyperionFaqApiService.rewriteFaq).toHaveBeenCalledWith(courseId, {
+                    faqText: toBeRewritten,
+                });
             });
-
-            const req = httpMock.expectOne(`api/iris/courses/${courseId}/rewrite-text`);
-            expect(req.request.method).toBe('POST');
-            req.flush(null);
         });
 
         it('should trigger rewriting pipeline for PROBLEM_STATEMENT variant via Hyperion and return rewritten text', () => {
@@ -180,7 +180,7 @@ describe('ArtemisIntelligenceService', () => {
                 improved: true,
             };
 
-            mockHyperionApiService.rewriteProblemStatement.mockReturnValue(of(mockResponse));
+            mockHyperionProblemStatementApiService.rewriteProblemStatement.mockReturnValue(of(mockResponse));
 
             service.rewrite(toBeRewritten, rewritingVariant, courseId).subscribe((result) => {
                 expect(result.result).toBe('Improved problem statement');
@@ -189,39 +189,10 @@ describe('ArtemisIntelligenceService', () => {
                 expect(result.suggestions).toBeUndefined();
 
                 expect(alertService.success).toHaveBeenCalledWith('artemisApp.markdownEditor.artemisIntelligence.alerts.rewrite.success');
-                expect(mockHyperionApiService.rewriteProblemStatement).toHaveBeenCalledWith(courseId, {
+                expect(mockHyperionProblemStatementApiService.rewriteProblemStatement).toHaveBeenCalledWith(courseId, {
                     problemStatementText: toBeRewritten,
                 });
             });
-        });
-
-        it('should handle HTTP error correctly for FAQ variant', () => {
-            const toBeRewritten = 'OriginalText';
-            const rewritingVariant = RewritingVariant.FAQ;
-            const courseId = 1;
-
-            service.rewrite(toBeRewritten, rewritingVariant, courseId).subscribe({
-                error: (err) => expect(err.status).toBe(400),
-            });
-
-            const req = httpMock.expectOne(`api/iris/courses/${courseId}/rewrite-text`);
-            req.flush({ message: 'Error' }, { status: 400, statusText: 'Bad Request' });
-        });
-
-        it('should handle WebSocket error correctly', () => {
-            mockWebsocketService.subscribe.mockReturnValueOnce(throwError(() => new Error('WebSocket Error')));
-
-            service.rewrite('OriginalText', RewritingVariant.FAQ, 1).subscribe({
-                next: () => {
-                    throw new Error('Should not reach this point');
-                },
-                error: (err) => expect(err.message).toBe('WebSocket Error'),
-            });
-
-            const req = httpMock.expectOne(`api/iris/courses/1/rewrite-text`);
-            req.flush(null);
-
-            expect(websocketService.subscribe).toHaveBeenCalled();
         });
     });
 
@@ -230,11 +201,11 @@ describe('ArtemisIntelligenceService', () => {
             const exerciseId = 42;
             const mockResponse: ConsistencyCheckResponse = { issues: [] };
 
-            mockHyperionApiService.checkExerciseConsistency.mockReturnValue(of(mockResponse));
+            mockHyperionProblemStatementApiService.checkExerciseConsistency.mockReturnValue(of(mockResponse));
 
             service.consistencyCheck(exerciseId).subscribe((result) => {
                 expect(result.issues).toEqual([]);
-                expect(mockHyperionApiService.checkExerciseConsistency).toHaveBeenCalledWith(exerciseId);
+                expect(mockHyperionProblemStatementApiService.checkExerciseConsistency).toHaveBeenCalledWith(exerciseId);
             });
         });
 
@@ -242,7 +213,7 @@ describe('ArtemisIntelligenceService', () => {
             const exerciseId = 42;
             const error = new Error('API Error');
 
-            mockHyperionApiService.checkExerciseConsistency.mockReturnValue(throwError(() => error));
+            mockHyperionProblemStatementApiService.checkExerciseConsistency.mockReturnValue(throwError(() => error));
 
             service.consistencyCheck(exerciseId).subscribe({
                 next: () => {
@@ -264,7 +235,7 @@ describe('ArtemisIntelligenceService', () => {
             // Cast to any because openapi types are structural; keeping literals preserves intent while avoiding enum import complexity in spec.
             const mockResponse: ConsistencyCheckResponse = { issues: [mockIssue as any] };
 
-            mockHyperionApiService.checkExerciseConsistency.mockReturnValue(of(mockResponse));
+            mockHyperionProblemStatementApiService.checkExerciseConsistency.mockReturnValue(of(mockResponse));
 
             service.consistencyCheck(exerciseId).subscribe(() => {
                 expect(service.isLoading()).toBeFalsy();
@@ -393,18 +364,19 @@ describe('ArtemisIntelligenceService', () => {
 
     describe('isLoading', () => {
         it('should reflect loading state correctly for FAQ rewrite', () => {
+            const mockResponse: RewriteFaqResponse = {
+                rewrittenText: 'Rewritten Text',
+            };
+            mockHyperionFaqApiService.rewriteFaq.mockReturnValue(of(mockResponse));
+
             expect(service.isLoading()).toBeFalsy();
-            const subscription = service.rewrite('test', RewritingVariant.FAQ, 1).subscribe();
-            expect(service.isLoading()).toBeTruthy();
-            const req = httpMock.expectOne(`api/iris/courses/1/rewrite-text`);
-            req.flush(null);
-            subscription.unsubscribe();
+            service.rewrite('test', RewritingVariant.FAQ, 1).subscribe((res) => expect(res.result).toBe('Rewritten Text'));
             expect(service.isLoading()).toBeFalsy();
         });
 
         it('should reflect loading state correctly for Hyperion consistency check', () => {
             const mockResponse: ConsistencyCheckResponse = { issues: [] };
-            mockHyperionApiService.checkExerciseConsistency.mockReturnValue(of(mockResponse));
+            mockHyperionProblemStatementApiService.checkExerciseConsistency.mockReturnValue(of(mockResponse));
 
             expect(service.isLoading()).toBeFalsy();
             service.consistencyCheck(42).subscribe((res) => expect(res.issues).toEqual([]));
