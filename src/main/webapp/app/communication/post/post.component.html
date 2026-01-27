@@ -215,6 +215,10 @@
             <fa-icon [icon]="faShare" class="item-icon" />
             <span jhiTranslate="artemisApp.metis.post.forwardMessage"></span>
         </button>
+        <button class="dropdown-item d-flex" (click)="markMessageAsUnread()">
+            <fa-icon [icon]="faCircle" class="item-icon" />
+            <span>Mark as Unread</span>
+        </button>
     </div>
 }
 

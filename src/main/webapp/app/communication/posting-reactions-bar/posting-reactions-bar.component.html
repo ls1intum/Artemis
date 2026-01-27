@@ -167,7 +167,7 @@
                 (click)="bookmarkPosting()"
                 [ngbTooltip]="(getSaved() ? 'artemisApp.metis.post.removeBookmarkPost' : 'artemisApp.metis.post.bookmarkPost') | artemisTranslate"
             >
-                <fa-icon [icon]="getSaved() ? faBookmark : faBookmark" />
+                <fa-icon [icon]="getSaved() ? faBookmark : farBookmark" />
             </button>
             <!-- Forward button -->
             <button
@@ -177,6 +177,9 @@
                 [ngbTooltip]="'artemisApp.metis.post.forwardMessage' | artemisTranslate"
             >
                 <fa-icon [icon]="faShare" cdkOverlayOrigin />
+            </button>
+            <button class="reaction-button clickable px-2 fs-small forward" [disabled]="isReadOnlyMode()" (click)="markMessageAsUnread()" ngbTooltip="Mark as Unread">
+                <fa-icon [icon]="faCircle" cdkOverlayOrigin />
             </button>
         }
     </div>

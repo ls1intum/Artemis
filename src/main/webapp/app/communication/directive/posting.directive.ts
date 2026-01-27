@@ -164,6 +164,10 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
         }
     }
 
+    protected markMessageAsUnread() {
+        // markMessageAsUnread
+    }
+
     private deletePostingWithoutTimeout() {
         if (this.isAnswerPost) {
             this.metisService.deleteAnswerPost(this.posting);

@@ -164,6 +164,10 @@ export class MetisConversationService implements OnDestroy {
         this.hasUnreadMessagesCheck();
     }
 
+    public markMessageAsUnread(courseId: number, conversationId: number, messageId: number): Observable<HttpResponse<void>> {
+        return this.conversationService.markMessageAsUnread(courseId, conversationId, messageId);
+    }
+
     private updateLastReadDateAndNumberOfUnreadMessages() {
         // update last read date and number of unread messages of the conversation that is currently active before switching to another conversation
         // if (this.activeConversation) {
