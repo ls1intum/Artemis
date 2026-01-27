@@ -37,6 +37,8 @@ artemis:
         enabled: false
     apollon:
         enabled: false
+    athena:
+        enabled: false
 
     checked-out-repos-path: ./checked-out-repos # The directory to which repositories temporarily get cloned for the build job execution
     repo-clone-path: ./repos
