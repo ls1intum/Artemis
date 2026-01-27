@@ -5,7 +5,7 @@
 services:
     postgres:
         container_name: artemis-postgres
-        image: docker.io/library/postgres:18.1-alpine
+        image: "${POSTGRES_IMAGE}"
         pull_policy: missing
         user: postgres
         command: ["postgres", "-c", "max_connections=10000"]
