@@ -234,14 +234,21 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createThread_forbiddenForStudent() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
+        long beforeCount = commentThreadRepository.count();
+
         request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Initial comment")), CommentThreadDTO.class, HttpStatus.FORBIDDEN);
+
+        assertThat(commentThreadRepository.count()).isEqualTo(beforeCount);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getThreads_forbiddenForStudent() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
+
         request.getList(reviewThreadsPath(exercise.getId()), HttpStatus.FORBIDDEN, CommentThreadDTO.class);
+
+        assertThat(commentThreadRepository.findByExerciseId(exercise.getId())).isEmpty();
     }
 
     @Test
@@ -252,6 +259,9 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
         UpdateThreadResolvedStateDTO update = new UpdateThreadResolvedStateDTO(true);
         request.putWithResponseBody(reviewThreadResolvedPath(exercise.getId(), createdThread.id()), update, CommentThreadDTO.class, HttpStatus.FORBIDDEN);
+
+        CommentThread persisted = commentThreadRepository.findById(createdThread.id()).orElseThrow();
+        assertThat(persisted.isResolved()).isFalse();
     }
 
     @Test
@@ -263,6 +273,10 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
         UpdateCommentContentDTO update = new UpdateCommentContentDTO(new UserCommentContentDTO("Updated text"));
         request.putWithResponseBody(reviewCommentPath(exercise.getId(), initialComment.id()), update, CommentDTO.class, HttpStatus.FORBIDDEN);
+
+        Comment persisted = commentRepository.findById(initialComment.id()).orElseThrow();
+        assertThat(persisted.getContent()).isInstanceOf(UserCommentContentDTO.class);
+        assertThat(((UserCommentContentDTO) persisted.getContent()).text()).isEqualTo("Initial comment");
     }
 
     @Test
@@ -273,6 +287,9 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         CommentDTO initialComment = createdThread.comments().getFirst();
 
         request.delete(reviewCommentPath(exercise.getId(), initialComment.id()), HttpStatus.FORBIDDEN);
+
+        assertThat(commentRepository.findById(initialComment.id())).isPresent();
+        assertThat(commentThreadRepository.findById(createdThread.id())).isPresent();
     }
 
     @Test

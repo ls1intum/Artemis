@@ -510,6 +510,27 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateThreadsForVersionChange_skipsTemplateRepoWhenParticipationDataMissing() {
+        CommentThread thread = buildRepoThread(CommentThreadLocationType.TEMPLATE_REPO, "src/Main.java", 5);
+        thread.setExercise(programmingExercise);
+        commentThreadRepository.save(thread);
+
+        var previousParticipation = new ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO(1L, null, null, "old");
+        var currentParticipation = new ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO(1L, "http://repo", null, null);
+        var previousProgramming = buildProgrammingSnapshot(null, null, previousParticipation, null, null);
+        var currentProgramming = buildProgrammingSnapshot(null, null, currentParticipation, null, null);
+        ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
+        ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
+
+        exerciseReviewCommentService.updateThreadsForVersionChange(previous, current);
+
+        CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
+        assertThat(updated.getLineNumber()).isEqualTo(5);
+        assertThat(updated.isOutdated()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateThreadsForVersionChange_updatesTestRepoLines() throws Exception {
         RepoHistory history = createRepoWithTwoCommits("test-map");
         CommentThread thread = buildRepoThread(CommentThreadLocationType.TEST_REPO, "src/Main.java", 2);
@@ -549,6 +570,89 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(3);
         assertThat(updated.isOutdated()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateThreadsForVersionChange_skipsAuxRepoWhenIdMissing() {
+        CommentThread thread = buildRepoThread(CommentThreadLocationType.AUXILIARY_REPO, "src/Main.java", 5);
+        thread.setExercise(programmingExercise);
+        commentThreadRepository.save(thread);
+
+        var previousProgramming = buildProgrammingSnapshot(null, null, null, null, null);
+        var currentProgramming = buildProgrammingSnapshot(null, null, null, null, null);
+        ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
+        ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
+
+        exerciseReviewCommentService.updateThreadsForVersionChange(previous, current);
+
+        CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
+        assertThat(updated.getLineNumber()).isEqualTo(5);
+        assertThat(updated.isOutdated()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateThreadsForVersionChange_skipsAuxRepoWhenCommitMissing() {
+        CommentThread thread = buildRepoThread(CommentThreadLocationType.AUXILIARY_REPO, "src/Main.java", 5);
+        thread.setAuxiliaryRepositoryId(42L);
+        thread.setExercise(programmingExercise);
+        commentThreadRepository.save(thread);
+
+        var previousAux = new ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO(42L, "http://repo", "old");
+        var currentAux = new ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO(42L, "http://repo", null);
+        var previousProgramming = buildProgrammingSnapshot(null, null, null, null, List.of(previousAux));
+        var currentProgramming = buildProgrammingSnapshot(null, null, null, null, List.of(currentAux));
+        ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
+        ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
+
+        exerciseReviewCommentService.updateThreadsForVersionChange(previous, current);
+
+        CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
+        assertThat(updated.getLineNumber()).isEqualTo(5);
+        assertThat(updated.isOutdated()).isFalse();
+    }
+
+    @Test
+    void updateThreadsForVersionChange_returnsWhenSnapshotsNull() {
+        CommentThread thread = persistThread(programmingExercise);
+        Integer originalLine = thread.getLineNumber();
+
+        exerciseReviewCommentService.updateThreadsForVersionChange(null, null);
+
+        CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
+        assertThat(updated.getLineNumber()).isEqualTo(originalLine);
+    }
+
+    @Test
+    void updateThreadsForVersionChange_returnsWhenProgrammingDataMissing() {
+        CommentThread thread = persistThread(programmingExercise);
+        Integer originalLine = thread.getLineNumber();
+
+        ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), null);
+        ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), null);
+
+        exerciseReviewCommentService.updateThreadsForVersionChange(previous, current);
+
+        CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
+        assertThat(updated.getLineNumber()).isEqualTo(originalLine);
+    }
+
+    @Test
+    void updateThreadsForVersionChange_returnsWhenNoThreads() throws Exception {
+        commentThreadRepository.deleteAll();
+
+        RepoHistory history = createRepoWithTwoCommits("no-threads");
+        var previousParticipation = new ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO(1L, history.repositoryUri().toString(), null, history.oldCommit());
+        var currentParticipation = new ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO(1L, history.repositoryUri().toString(), null, history.newCommit());
+        var previousProgramming = buildProgrammingSnapshot(null, null, previousParticipation, null, null);
+        var currentProgramming = buildProgrammingSnapshot(null, null, currentParticipation, null, null);
+        ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
+        ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
+
+        exerciseReviewCommentService.updateThreadsForVersionChange(previous, current);
+
+        assertThat(commentThreadRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
     }
 
     private CommentThread buildThread() {
