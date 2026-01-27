@@ -63,7 +63,7 @@ describe('ArtemisIntelligenceService', () => {
             category: ConsistencyIssue.CategoryEnum.MethodReturnTypeMismatch,
             description: 'Description 1.',
             suggestedFix: 'Fix 1',
-            relatedLocations: [
+            locations: [
                 {
                     type: ArtifactLocation.TypeEnum.TemplateRepository,
                     filePath: 'template_repository/src/Class1.java',
@@ -83,7 +83,7 @@ describe('ArtemisIntelligenceService', () => {
             category: ConsistencyIssue.CategoryEnum.AttributeTypeMismatch,
             description: 'Description 2',
             suggestedFix: 'Fix 2',
-            relatedLocations: [
+            locations: [
                 {
                     type: ArtifactLocation.TypeEnum.TemplateRepository,
                     filePath: 'template_repository/src/Class2.java',
@@ -109,7 +109,7 @@ describe('ArtemisIntelligenceService', () => {
             category: ConsistencyIssue.CategoryEnum.VisibilityMismatch,
             description: 'Description 2',
             suggestedFix: 'Fix 2',
-            relatedLocations: [
+            locations: [
                 {
                     type: ArtifactLocation.TypeEnum.ProblemStatement,
                     filePath: 'problem_statement.md',
@@ -259,7 +259,7 @@ describe('ArtemisIntelligenceService', () => {
                 category: 'METHOD_PARAMETER_MISMATCH',
                 description: 'Test issue',
                 suggestedFix: 'Fix this',
-                relatedLocations: [],
+                locations: [],
             } as const;
             // Cast to any because openapi types are structural; keeping literals preserves intent while avoiding enum import complexity in spec.
             const mockResponse: ConsistencyCheckResponse = { issues: [mockIssue as any] };

@@ -1,15 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ChecklistPanelComponent } from './checklist-panel.component';
-import { HyperionProblemStatementApiService } from 'app/course/manage/hyperion-problem-statement-api.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { of, throwError } from 'rxjs';
-import { ChecklistAnalysisRequestDTO, ChecklistAnalysisResponseDTO } from 'app/entities/hyperion/checklist-analysis.model';
+import { ChecklistAnalysisResponse } from 'app/openapi/model/checklistAnalysisResponse';
 import { By } from '@angular/platform-browser';
 
 describe('ChecklistPanelComponent', () => {
@@ -23,7 +23,7 @@ describe('ChecklistPanelComponent', () => {
     exercise.problemStatement = 'Problem statement';
     exercise.difficulty = 'EASY';
 
-    const mockResponse: ChecklistAnalysisResponseDTO = {
+    const mockResponse: ChecklistAnalysisResponse = {
         inferredLearningGoals: [{ skill: 'Loops', taxonomyLevel: 'APPLY', confidence: 0.9, explanation: 'Explanation' }],
         suggestedDifficulty: { suggested: 'EASY', reasoning: 'Reason', matchesDeclared: true },
         qualityIssues: [],
@@ -63,15 +63,15 @@ describe('ChecklistPanelComponent', () => {
         expect(button).toBeTruthy();
         button.nativeElement.click();
 
-        expect(component.analyzing).toBeTrue();
+        expect(component.isLoading()).toBeTrue();
         expect(analyzeSpy).toHaveBeenCalledWith(exercise.id!, expect.objectContaining({ problemStatement: 'Problem statement' }));
 
         // Wait for observable
         fixture.detectChanges();
 
-        expect(component.analyzing).toBeFalse();
-        expect(component.analysisResult).toEqual(mockResponse);
-        expect(component.checklistAvailable).toBeTrue();
+        expect(component.isLoading()).toBeFalse();
+        expect(component.analysisResult()).toEqual(mockResponse);
+        expect(component.analysisResult()).toBeDefined();
     });
 
     it('should handle analysis error', () => {
@@ -80,23 +80,17 @@ describe('ChecklistPanelComponent', () => {
 
         component.analyze();
 
-        expect(component.analyzing).toBeFalse();
+        expect(component.isLoading()).toBeFalse();
         expect(errorSpy).toHaveBeenCalled();
-        expect(component.analysisResult).toBeUndefined();
+        expect(component.analysisResult()).toBeUndefined();
     });
 
     it('should display results when available', () => {
-        component.analysisResult = mockResponse;
+        component.analysisResult.set(mockResponse);
         fixture.detectChanges();
 
-        const goalsSection = fixture.debugElement.query(By.css('[data-test="learning-goals-section"]')); // assuming we might add data-test, but for now check content
-        // Since we didn't add data-test, we check if text is present.
-        // Note: The template uses translation keys. Mock pipe returns key or inputs?
-        // MockPipe by ng-mocks returns first argument by default usually? Or empty?
-        // Let's assume the template renders structural directives.
-
-        // If analysisResult is present, sections should show.
-        // We can check component state.
-        expect(component.checklistAvailable).toBeTrue();
+        const goalsSection = fixture.debugElement.query(By.css('.analysis-results'));
+        expect(goalsSection).toBeTruthy();
+        expect(component.analysisResult()).toBeDefined();
     });
 });
