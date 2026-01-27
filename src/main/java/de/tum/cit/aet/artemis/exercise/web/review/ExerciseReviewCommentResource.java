@@ -25,7 +25,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
-import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadLocationType;
@@ -37,7 +36,6 @@ import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UpdateCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UpdateThreadResolvedStateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
 import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewCommentService;
 
 @Profile(PROFILE_CORE)
@@ -52,11 +50,8 @@ public class ExerciseReviewCommentResource {
 
     private final ExerciseReviewCommentService exerciseReviewCommentService;
 
-    private final ExerciseVersionRepository exerciseVersionRepository;
-
-    public ExerciseReviewCommentResource(ExerciseReviewCommentService exerciseReviewCommentService, ExerciseVersionRepository exerciseVersionRepository) {
+    public ExerciseReviewCommentResource(ExerciseReviewCommentService exerciseReviewCommentService) {
         this.exerciseReviewCommentService = exerciseReviewCommentService;
-        this.exerciseVersionRepository = exerciseVersionRepository;
     }
 
     /**
@@ -73,14 +68,14 @@ public class ExerciseReviewCommentResource {
         log.debug("REST request to create exercise review thread for exercise {}", exerciseId);
 
         validateThreadPayload(createCommentThreadDTO);
-        ExerciseVersion initialVersion = loadInitialVersion(createCommentThreadDTO.targetType(), exerciseId);
+        var initialVersion = exerciseReviewCommentService.resolveInitialVersion(createCommentThreadDTO.targetType(), exerciseId);
         String initialCommitSha = exerciseReviewCommentService.resolveLatestCommitSha(createCommentThreadDTO.targetType(), createCommentThreadDTO.auxiliaryRepositoryId(),
                 exerciseId);
         CreateCommentDTO initialCommentDTO = createCommentThreadDTO.initialComment();
         validateUserComment(initialCommentDTO);
-        CommentThread thread = toEntity(createCommentThreadDTO, initialVersion, initialCommitSha);
+        CommentThread thread = createCommentThreadDTO.toEntity(initialVersion, initialCommitSha);
         CommentThread savedThread = exerciseReviewCommentService.createThread(exerciseId, thread);
-        Comment savedComment = exerciseReviewCommentService.createComment(savedThread.getId(), toEntity(initialCommentDTO));
+        Comment savedComment = exerciseReviewCommentService.createComment(savedThread.getId(), initialCommentDTO.toEntity());
         return ResponseEntity.created(new URI("/api/exercise/exercises/" + exerciseId + "/review-threads/" + savedThread.getId()))
                 .body(new CommentThreadDTO(savedThread, List.of(new CommentDTO(savedComment))));
     }
@@ -114,7 +109,7 @@ public class ExerciseReviewCommentResource {
             throws URISyntaxException {
         log.debug("REST request to create exercise review comment for thread {}", threadId);
         validateUserComment(createCommentDTO);
-        Comment comment = toEntity(createCommentDTO);
+        Comment comment = createCommentDTO.toEntity();
         Comment savedComment = exerciseReviewCommentService.createComment(threadId, comment);
         return ResponseEntity.created(new URI("/api/exercise/exercises/" + exerciseId + "/review-comments/" + savedComment.getId())).body(new CommentDTO(savedComment));
     }
@@ -170,35 +165,6 @@ public class ExerciseReviewCommentResource {
         return ResponseEntity.ok().build();
     }
 
-    private ExerciseVersion loadInitialVersion(CommentThreadLocationType targetType, long exerciseId) {
-        if (targetType != CommentThreadLocationType.PROBLEM_STATEMENT) {
-            return null;
-        }
-        return exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exerciseId)
-                .orElseThrow(() -> new BadRequestAlertException("No exercise version available for problem statement thread", THREAD_ENTITY_NAME, "initialVersionMissing"));
-    }
-
-    private CommentThread toEntity(CreateCommentThreadDTO dto, ExerciseVersion initialVersion, String initialCommitSha) {
-        CommentThread thread = new CommentThread();
-        thread.setGroupId(dto.groupId());
-        thread.setTargetType(dto.targetType());
-        thread.setAuxiliaryRepositoryId(dto.auxiliaryRepositoryId());
-        thread.setInitialVersion(initialVersion);
-        thread.setInitialCommitSha(initialCommitSha);
-        thread.setFilePath(dto.filePath());
-        thread.setInitialFilePath(dto.initialFilePath());
-        thread.setLineNumber(dto.lineNumber());
-        thread.setInitialLineNumber(dto.initialLineNumber());
-        return thread;
-    }
-
-    private Comment toEntity(CreateCommentDTO dto) {
-        Comment comment = new Comment();
-        comment.setType(dto.type());
-        comment.setContent(dto.content());
-        return comment;
-    }
-
     private void validateUserComment(CreateCommentDTO dto) {
         if (dto.type() != CommentType.USER) {
             throw new BadRequestAlertException("Only user comments can be created via this endpoint", THREAD_ENTITY_NAME, "commentTypeNotSupported");
@@ -217,22 +183,6 @@ public class ExerciseReviewCommentResource {
         }
         if (dto.targetType() == CommentThreadLocationType.AUXILIARY_REPO && dto.auxiliaryRepositoryId() == null) {
             throw new BadRequestAlertException("Auxiliary repository id is required for auxiliary repository threads", THREAD_ENTITY_NAME, "auxiliaryRepositoryMissing");
-        }
-        if (dto.targetType() != CommentThreadLocationType.PROBLEM_STATEMENT) {
-            if (dto.filePath() == null || dto.lineNumber() == null) {
-                throw new BadRequestAlertException("File path and line number are required for repository threads", THREAD_ENTITY_NAME, "locationMissing");
-            }
-            if (!dto.filePath().equals(dto.initialFilePath()) || !dto.lineNumber().equals(dto.initialLineNumber())) {
-                throw new BadRequestAlertException("Initial and current location must match when creating repository threads", THREAD_ENTITY_NAME, "initialLocationMismatch");
-            }
-        }
-        if (dto.targetType() == CommentThreadLocationType.PROBLEM_STATEMENT) {
-            if (dto.filePath() != null && !dto.filePath().equals(dto.initialFilePath())) {
-                throw new BadRequestAlertException("Initial and current file path must match for problem statement threads", THREAD_ENTITY_NAME, "initialFilePathMismatch");
-            }
-            if (dto.lineNumber() != null && !dto.lineNumber().equals(dto.initialLineNumber())) {
-                throw new BadRequestAlertException("Initial and current line number must match for problem statement threads", THREAD_ENTITY_NAME, "initialLineNumberMismatch");
-            }
         }
     }
 

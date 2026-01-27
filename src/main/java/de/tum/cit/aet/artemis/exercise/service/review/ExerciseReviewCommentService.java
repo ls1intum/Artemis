@@ -550,6 +550,21 @@ public class ExerciseReviewCommentService {
     }
 
     /**
+     * Resolves the initial exercise version for a newly created problem-statement thread.
+     *
+     * @param targetType the thread target type
+     * @param exerciseId the exercise id
+     * @return the initial exercise version, or {@code null} for repository-based threads
+     */
+    public ExerciseVersion resolveInitialVersion(CommentThreadLocationType targetType, long exerciseId) {
+        if (targetType != CommentThreadLocationType.PROBLEM_STATEMENT) {
+            return null;
+        }
+        return exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exerciseId)
+                .orElseThrow(() -> new BadRequestAlertException("No exercise version available for problem statement thread", THREAD_ENTITY_NAME, "initialVersionMissing"));
+    }
+
+    /**
      * Resolves the latest commit SHA for the repository associated with a review thread target.
      *
      * @param targetType            the thread target type (repository-based only)
