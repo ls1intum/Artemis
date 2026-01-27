@@ -11,7 +11,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { UserSettingsContainerComponent } from 'app/core/user/settings/user-settings-container/user-settings-container.component';
-import { MODULE_FEATURE_IRIS, PROFILE_ATHENA } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_IRIS } from 'app/app.constants';
 
 describe('UserSettingsContainerComponent', () => {
     let fixture: ComponentFixture<UserSettingsContainerComponent>;
@@ -77,7 +77,7 @@ describe('UserSettingsContainerComponent', () => {
         });
 
         it('should display the external LLM usage link when athena is active', () => {
-            spyOnProfileService([PROFILE_ATHENA], []);
+            spyOnProfileService([], [MODULE_FEATURE_ATHENA]);
             const externalLLMLink = queryExternalLLMLink();
             expect(externalLLMLink).toBeTruthy();
             expect(externalLLMLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.externalLLMUsage');
@@ -91,7 +91,7 @@ describe('UserSettingsContainerComponent', () => {
         });
 
         it('should display the external LLM usage link when athena and iris are active', () => {
-            spyOnProfileService([PROFILE_ATHENA], [MODULE_FEATURE_IRIS]);
+            spyOnProfileService([], [MODULE_FEATURE_ATHENA, MODULE_FEATURE_IRIS]);
             const externalLLMLink = queryExternalLLMLink();
             expect(externalLLMLink).toBeTruthy();
             expect(externalLLMLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.externalLLMUsage');

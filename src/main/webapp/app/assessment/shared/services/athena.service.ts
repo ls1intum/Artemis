@@ -7,7 +7,7 @@ import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
-import { PROFILE_ATHENA } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingFeedbackSuggestion, ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/assessment/shared/entities/feedback-suggestion.model';
 
@@ -25,7 +25,7 @@ export class AthenaService {
      * @param exercise The exercise for which the feedback suggestion modules should be fetched
      */
     public getAvailableModules(courseId: number, exercise: Exercise): Observable<string[]> {
-        if (!this.profileService.isProfileActive(PROFILE_ATHENA)) {
+        if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA)) {
             return of([] as string[]);
         }
 
@@ -45,7 +45,7 @@ export class AthenaService {
         if (!exercise.feedbackSuggestionModule) {
             return of([]);
         }
-        if (!this.profileService.isProfileActive(PROFILE_ATHENA)) {
+        if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA)) {
             return of([] as T[]);
         }
 
