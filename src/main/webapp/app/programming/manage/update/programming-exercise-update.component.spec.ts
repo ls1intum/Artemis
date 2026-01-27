@@ -30,6 +30,7 @@ import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_THEIA } from 'app/app.constants';
 import { APP_NAME_PATTERN_FOR_SWIFT, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from 'app/shared/constants/input.constants';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
@@ -318,6 +319,82 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 fixture.changeDetectorRef.detectChanges();
                 expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_GRADLE);
             }));
+        });
+    });
+
+    describe('save with AI', () => {
+        it('should call automatic setup with empty repositories and navigate to solution editor', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.releaseDate = dayjs();
+            entity.course = course;
+
+            const savedEntity = new ProgrammingExercise(course, undefined);
+            savedEntity.id = 7;
+            savedEntity.course = course;
+            savedEntity.solutionParticipation = { id: 11 } as any;
+
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.hyperionEnabled = true;
+
+            const response$ = new Subject<HttpResponse<ProgrammingExercise>>();
+            const setupSpy = jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(response$);
+            const router = TestBed.inject(Router) as MockRouter;
+
+            comp.saveExerciseWithAi();
+
+            expect(comp.isGeneratingWithAi).toBeTrue();
+            expect(setupSpy).toHaveBeenCalledWith(entity, true);
+
+            response$.next(new HttpResponse({ body: savedEntity }));
+
+            expect(router.navigate).toHaveBeenCalledWith([
+                'course-management',
+                courseId,
+                'programming-exercises',
+                savedEntity.id,
+                'code-editor',
+                RepositoryType.SOLUTION,
+                savedEntity.solutionParticipation.id,
+            ]);
+            expect(comp.isGeneratingWithAi).toBeFalse();
+        });
+
+        it('should fall back to regular save when hyperion is disabled', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.releaseDate = dayjs();
+            entity.course = course;
+
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.hyperionEnabled = false;
+
+            const setupSpy = jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: entity })));
+
+            comp.saveExerciseWithAi();
+
+            expect(setupSpy).toHaveBeenCalledWith(entity);
+        });
+
+        it('should reset generating flag on save error', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.releaseDate = dayjs();
+            entity.course = course;
+
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.hyperionEnabled = true;
+
+            const response$ = new Subject<HttpResponse<ProgrammingExercise>>();
+            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(response$);
+
+            comp.saveExerciseWithAi();
+            expect(comp.isGeneratingWithAi).toBeTrue();
+
+            response$.error(new HttpErrorResponse({ headers: new HttpHeaders({ 'X-artemisApp-alert': 'error-message' }) }));
+
+            expect(comp.isGeneratingWithAi).toBeFalse();
+            expect(comp.isSaving).toBeFalse();
         });
     });
 
