@@ -1508,4 +1508,11 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             GROUP BY g
             """)
     List<StudentGroupCountDTO> countUsersByStudentGroupNamesAndUserIds(@Param("studentGroupNames") Set<String> studentGroupNames, @Param("userIds") Set<Long> userIds);
+
+    @Query("""
+            SELECT COUNT(tutorialGroup) > 0
+            FROM TutorialGroup tutorialGroup
+            WHERE tutorialGroup.teachingAssistant.id = :userId AND tutorialGroup.id = :tutorialGroupId AND tutorialGroup.course.id = :courseId
+            """)
+    boolean isTutorInTutorialGroup(@Param("userId") long userId, @Param("tutorialGroupId") long tutorialGroupId, @Param("courseId") long courseId);
 }

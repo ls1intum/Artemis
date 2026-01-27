@@ -715,7 +715,15 @@ public class TutorialGroupResource {
     @GetMapping
     @EnforceAtLeastTutorInCourse
     public ResponseEntity<List<TutorialGroupRegisteredUserDTO>> getRegisteredUsers(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
-        // TODO: check whether tutorial group is part of course (and user is either tutor of tutorial group, or editor, or admin)
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        var isUserTutorInTutorialGroup = userRepository.isTutorInTutorialGroup(user.getId(), tutorialGroupId, courseId);
+        var isUserAtLeastEditorInCourse = authorizationCheckService.isAtLeastEditorInCourse(user.getLogin(), courseId);
+        if (!isUserTutorInTutorialGroup && !isUserAtLeastEditorInCourse) {
+            throw new AccessForbiddenException("Only the tutor of the group, editors and instructors are allowed to access registered students of a tutorial group.");
+        }
+
+        // TODO: get TutorialGroupRegisteredUserDTOs for group and return
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
