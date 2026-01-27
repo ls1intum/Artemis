@@ -27,6 +27,9 @@ import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestReposit
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
 import io.micrometer.observation.ObservationRegistry;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 class HyperionProblemStatementRewriteServiceTest {
 
