@@ -39,4 +39,3 @@ The `startPlaywrightUI.sh` script starts Playwright in a graphical mode for debu
 - Allows manual selection and execution of individual or multiple tests.
 - Provides real-time debugging features, such as visual test steps and screenshots. 
 - Useful for debugging and inspecting browser behavior during test execution.
-
