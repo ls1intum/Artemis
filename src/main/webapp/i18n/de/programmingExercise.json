@@ -692,7 +692,6 @@
                 "lineStatBetweenSubmissionsCurrentSubmissionLabel": "Zeilen, die zwischen der aktuellen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ currentCommitHash }} </span>",
                 "lineStatBetweenSubmissionsPreviousSubmissionLabel": "und der vorherigen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ previousCommitHash }} </span> hinzugefügt/entfernt wurden",
                 "lineStatBetweenSubmissionsTemplateLabel": "und der Vorlage hinzugefügt/entfernt wurden",
-
                 "lineStatTooltipDetailPage": "Ungefilterte Zeilen, die beim Vergleich der Template- und Lösungs-Repositories hinzugefügt und entfernt wurden",
                 "lineStatTooltipExamTimeline": "Ungefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe hinzugefügt und entfernt wurden",
                 "lineStatTooltipFullReportExamTimeline": "Ungefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe hinzugefügt und entfernt wurden.",
@@ -780,6 +779,26 @@
                 "export": "Exportieren in die Austauschplattform",
                 "error": {
                     "export": "Kann Aufgabe nicht exportieren: {{ message }}"
+                }
+            },
+            "instructorChecklist": {
+                "title": "Checkliste für Lehrende",
+                "analyze": "Problemstellung analysieren",
+                "analyzing": "Analysiere...",
+                "defaultMessage": "Klicke auf \"Problemstellung analysieren\", um nach Qualitätsproblemen und Lernzielen zu suchen.",
+                "learningGoals": {
+                    "title": "Abgeleitete Lernziele",
+                    "empty": "Keine Lernziele abgeleitet."
+                },
+                "difficulty": {
+                    "title": "Schwierigkeitsgrad",
+                    "suggested": "Vorgeschlagen:",
+                    "match": "Übereinstimmung:"
+                },
+                "quality": {
+                    "title": "Qualitätsprobleme",
+                    "empty": "Keine Qualitätsprobleme gefunden.",
+                    "fix": "Lösung:"
                 }
             }
         },

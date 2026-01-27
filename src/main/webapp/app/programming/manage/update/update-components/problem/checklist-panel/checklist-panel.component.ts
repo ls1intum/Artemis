@@ -9,12 +9,15 @@ import { ChecklistAnalysisResponse } from 'app/openapi/model/checklistAnalysisRe
 import { AlertService } from 'app/shared/service/alert.service';
 import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
 
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+
 @Component({
     selector: 'jhi-checklist-panel',
     templateUrl: './checklist-panel.component.html',
     styleUrls: ['./checklist-panel.component.scss'],
     standalone: true,
-    imports: [CommonModule, TranslateModule, FontAwesomeModule],
+    imports: [CommonModule, TranslateModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective],
 })
 export class ChecklistPanelComponent {
     private hyperionApiService = inject(HyperionProblemStatementApiService);

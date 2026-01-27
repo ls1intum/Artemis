@@ -1,9 +1,11 @@
 <div class="card checklist-panel mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Instructor Checklist</h5>
+        <h5 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.title">Instructor Checklist</h5>
         <button class="btn btn-sm btn-primary" (click)="analyze()" [disabled]="isLoading()">
             <fa-icon [icon]="isLoading() ? faSpinner : faMagic" [animation]="isLoading() ? 'spin' : undefined" />
-            <span class="ms-1">{{ isLoading() ? 'Analyzing...' : 'Analyze Problem Statement' }}</span>
+            <span class="ms-1">{{
+                (isLoading() ? 'artemisApp.programmingExercise.instructorChecklist.analyzing' : 'artemisApp.programmingExercise.instructorChecklist.analyze') | artemisTranslate
+            }}</span>
         </button>
     </div>
 
@@ -14,12 +16,12 @@
                 <div class="card mb-2">
                     <div class="card-header p-2 d-flex align-items-center cursor-pointer" (click)="sections.learningGoals = !sections.learningGoals" style="cursor: pointer">
                         <fa-icon [icon]="sections.learningGoals ? faChevronDown : faChevronRight" class="me-2 text-muted" />
-                        <h6 class="mb-0">Inferred Learning Goals</h6>
+                        <h6 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.learningGoals.title">Inferred Learning Goals</h6>
                     </div>
                     @if (sections.learningGoals) {
                         <div class="card-body p-0">
                             @if (!result.inferredLearningGoals || result.inferredLearningGoals.length === 0) {
-                                <div class="p-3 text-muted">No learning goals inferred.</div>
+                                <div class="p-3 text-muted" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.learningGoals.empty">No learning goals inferred.</div>
                             }
                             @if (result.inferredLearningGoals && result.inferredLearningGoals.length > 0) {
                                 <ul class="list-group list-group-flush">
@@ -45,12 +47,12 @@
                 <div class="card mb-2">
                     <div class="card-header p-2 d-flex align-items-center cursor-pointer" (click)="sections.difficulty = !sections.difficulty" style="cursor: pointer">
                         <fa-icon [icon]="sections.difficulty ? faChevronDown : faChevronRight" class="me-2 text-muted" />
-                        <h6 class="mb-0">Difficulty Assessment</h6>
+                        <h6 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.title">Difficulty Assessment</h6>
                     </div>
                     @if (sections.difficulty && result.suggestedDifficulty) {
                         <div class="card-body p-3">
                             <div class="d-flex align-items-center mb-2">
-                                <span class="fw-bold me-2">Suggested:</span>
+                                <span class="fw-bold me-2" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.suggested">Suggested:</span>
                                 <span
                                     class="badge"
                                     [ngClass]="{
@@ -61,7 +63,7 @@
                                     >{{ result.suggestedDifficulty.suggested }}</span
                                 >
 
-                                <span class="ms-3 fw-bold me-2">Match:</span>
+                                <span class="ms-3 fw-bold me-2" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.match">Match:</span>
                                 <fa-icon
                                     [icon]="result.suggestedDifficulty.matchesDeclared ? faCheckCircle : faExclamationTriangle"
                                     [class.text-success]="result.suggestedDifficulty.matchesDeclared"
@@ -77,12 +79,15 @@
                 <div class="card mb-2">
                     <div class="card-header p-2 d-flex align-items-center cursor-pointer" (click)="sections.quality = !sections.quality" style="cursor: pointer">
                         <fa-icon [icon]="sections.quality ? faChevronDown : faChevronRight" class="me-2 text-muted" />
-                        <h6 class="mb-0">Quality Issues</h6>
+                        <h6 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.title">Quality Issues</h6>
                     </div>
                     @if (sections.quality) {
                         <div class="card-body p-0">
                             @if (!result.qualityIssues || result.qualityIssues.length === 0) {
-                                <div class="p-3 text-success"><fa-icon [icon]="faCheckCircle" /> No quality issues found.</div>
+                                <div class="p-3 text-success">
+                                    <fa-icon [icon]="faCheckCircle" />
+                                    <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.empty">No quality issues found.</span>
+                                </div>
                             }
                             @if (result.qualityIssues && result.qualityIssues.length > 0) {
                                 <ul class="list-group list-group-flush">
@@ -103,7 +108,9 @@
                                             </div>
                                             <p class="mb-1">{{ issue.description }}</p>
                                             @if (issue.suggestedFix) {
-                                                <small class="text-muted"> <strong>Fix:</strong> {{ issue.suggestedFix }} </small>
+                                                <small class="text-muted">
+                                                    <strong jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.fix">Fix:</strong> {{ issue.suggestedFix }}
+                                                </small>
                                             }
                                         </li>
                                     }
@@ -115,7 +122,9 @@
             </div>
         }
         @if (!analysisResult()) {
-            <div class="text-muted text-center p-3">Click "Analyze Problem Statement" to check for quality issues and learning goals.</div>
+            <div class="text-muted text-center p-3" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.defaultMessage">
+                Click "Analyze Problem Statement" to check for quality issues and learning goals.
+            </div>
         }
     </div>
 </div>

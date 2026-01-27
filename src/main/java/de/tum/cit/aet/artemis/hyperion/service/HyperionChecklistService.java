@@ -27,6 +27,9 @@ import io.micrometer.observation.annotation.Observed;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+/**
+ * Service for analyzing the checklist for the given programming exercise.
+ */
 @Service
 @Lazy
 @Conditional(HyperionEnabled.class)
@@ -52,6 +55,15 @@ public class HyperionChecklistService {
         this.observationRegistry = observationRegistry;
     }
 
+    /**
+     * Analyzes the checklist for the given programming exercise.
+     *
+     *
+     *
+     * @param exercise The programming exercise to analyze
+     * @param request  The request containing the problem statement and other details
+     * @return The analysis response containing learning goals, difficulty, and quality issues
+     */
     @Observed(name = "hyperion.checklist", contextualName = "checklist analysis", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
     public ChecklistAnalysisResponseDTO analyzeChecklist(ProgrammingExercise exercise, ChecklistAnalysisRequestDTO request) {
         log.info("Performing checklist analysis for exercise {}", exercise.getId());
