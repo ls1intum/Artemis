@@ -257,6 +257,9 @@
                 "createConfiguration": "Create Configuration",
                 "continueToManagement": "Continue to Tutorial Group Management"
             },
+            "tutorialGroupRegistrations": {
+                "title": "Registrations"
+            },
             "createTutorialGroup": {
                 "title": "Create Tutorial Group"
             },

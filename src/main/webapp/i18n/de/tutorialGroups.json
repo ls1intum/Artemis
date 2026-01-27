@@ -257,6 +257,9 @@
                 "createConfiguration": "Konfiguration erstellen",
                 "continueToManagement": "Weiter zur Übungsgruppen-Verwaltung"
             },
+            "tutorialGroupRegistrations": {
+                "title": "Registrierungen"
+            },
             "createTutorialGroup": {
                 "title": "Übungsgruppe erstellen"
             },
