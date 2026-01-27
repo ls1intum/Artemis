@@ -168,16 +168,16 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         this.fileBadges = {};
 
         // Combine feedback suggestions (ungraded) and graded feedbacks from submission
-        const allFeedbacks = this.feedbackSuggestions.concat(this.feedbackForSubmission());
+        const allFeedbacks = this.feedbackSuggestions().concat(this.feedbackForSubmission());
 
         // Get unique file paths with feedback
         const filePathsWithFeedback = Array.from(
-            new Set(allFeedbacks.map((feedback) => Feedback.getReferenceFilePath(feedback)).filter((filePath): filePath is string => filePath !== undefined)),
+            new Set(allFeedbacks.map((feedback: Feedback) => Feedback.getReferenceFilePath(feedback)).filter((filePath): filePath is string => filePath !== undefined)),
         );
 
         for (const filePath of filePathsWithFeedback) {
             // Count the number of feedbacks for this file
-            const feedbackCount = allFeedbacks.filter((feedback) => Feedback.getReferenceFilePath(feedback) === filePath).length;
+            const feedbackCount = allFeedbacks.filter((feedback: Feedback) => Feedback.getReferenceFilePath(feedback) === filePath).length;
             this.fileBadges[filePath] = [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, feedbackCount)];
         }
     }
