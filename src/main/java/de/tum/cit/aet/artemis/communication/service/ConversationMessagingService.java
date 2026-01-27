@@ -282,7 +282,7 @@ public class ConversationMessagingService extends PostingService {
             // we create the entry to be able to track the unread count)
             if (participantSet.isEmpty()) {
                 var participant = ConversationParticipant.createWithDefaultValues(requestingUser, conversationService.getConversationById(conversationId));
-                participant.setLastRead(ZonedDateTime.now());
+                // participant.setLastRead(ZonedDateTime.now());
                 // We surround this with a try/catch to avoid errors in case there are multiple requests at the exact
                 // same time and the select query on top was not aware of that yet. Therefore, we simply continue.
                 try {
@@ -294,7 +294,7 @@ public class ConversationMessagingService extends PostingService {
             }
             else {
                 // invoke async due to db write access to avoid that the client has to wait
-                conversationParticipantRepository.updateLastReadAsync(requestingUser.getId(), conversationId, ZonedDateTime.now());
+                // conversationParticipantRepository.updateLastReadAsync(requestingUser.getId(), conversationId, ZonedDateTime.now());
             }
         }
 

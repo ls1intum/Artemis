@@ -204,6 +204,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             }
             this._activeConversation = conversation;
             this.onActiveConversationChange();
+            // this.computeLastReadState();
         });
     }
 
@@ -294,6 +295,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.allPosts = posts;
             this.setPosts();
             this.isFetchingPosts = false;
+            // comment out maybe
             this.computeLastReadState();
         });
         this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {

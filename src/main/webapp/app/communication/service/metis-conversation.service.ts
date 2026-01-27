@@ -118,7 +118,7 @@ export class MetisConversationService implements OnDestroy {
     }
 
     public setActiveConversation(conversationIdentifier: ConversationDTO | number | undefined) {
-        this.updateLastReadDateAndNumberOfUnreadMessages();
+        // this.updateLastReadDateAndNumberOfUnreadMessages();
         let cachedConversation: ConversationDTO | undefined = undefined;
         if (conversationIdentifier) {
             const parameterJustId = typeof conversationIdentifier === 'number';
@@ -134,6 +134,7 @@ export class MetisConversationService implements OnDestroy {
         }
         this.activeConversation = cachedConversation;
         this._activeConversation$.next(this.activeConversation);
+        this.updateLastReadDateAndNumberOfUnreadMessages();
         this.isCodeOfConductPresented = false;
         this._isCodeOfConductPresented$.next(this.isCodeOfConductPresented);
     }
@@ -165,18 +166,18 @@ export class MetisConversationService implements OnDestroy {
 
     private updateLastReadDateAndNumberOfUnreadMessages() {
         // update last read date and number of unread messages of the conversation that is currently active before switching to another conversation
-        if (this.activeConversation) {
-            this.activeConversation.lastReadDate = dayjs();
-            this.activeConversation.unreadMessagesCount = 0;
-            this.activeConversation.hasUnreadMessage = false;
-            const indexOfConversationToUpdate = this.conversationsOfUser.findIndex((conversation) => conversation.id === this.activeConversation!.id);
-            if (indexOfConversationToUpdate !== -1) {
-                this.conversationsOfUser[indexOfConversationToUpdate].lastReadDate = dayjs();
-                this.conversationsOfUser[indexOfConversationToUpdate].unreadMessagesCount = 0;
-                this.conversationsOfUser[indexOfConversationToUpdate].hasUnreadMessage = false;
-                this._conversationsOfUser$.next(this.conversationsOfUser);
-            }
-        }
+        // if (this.activeConversation) {
+        //     this.activeConversation.lastReadDate = dayjs();
+        //     this.activeConversation.unreadMessagesCount = 0;
+        //     this.activeConversation.hasUnreadMessage = false;
+        //     const indexOfConversationToUpdate = this.conversationsOfUser.findIndex((conversation) => conversation.id === this.activeConversation!.id);
+        //     if (indexOfConversationToUpdate !== -1) {
+        //         this.conversationsOfUser[indexOfConversationToUpdate].lastReadDate = dayjs();
+        //         this.conversationsOfUser[indexOfConversationToUpdate].unreadMessagesCount = 0;
+        //         this.conversationsOfUser[indexOfConversationToUpdate].hasUnreadMessage = false;
+        //         this._conversationsOfUser$.next(this.conversationsOfUser);
+        //     }
+        // }
     }
 
     public forceRefresh(notifyActiveConversationSubscribers = true, notifyConversationsSubscribers = true): Observable<never> {
