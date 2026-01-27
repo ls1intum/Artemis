@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
@@ -12,4 +12,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     templateUrl: './tutorial-registrations.component.html',
     styleUrl: './tutorial-registrations.component.scss',
 })
-export class TutorialRegistrationsComponent {}
+export class TutorialRegistrationsComponent {
+    courseId = input.required<number>();
+    tutorialGroupId = input.required<number>();
+}

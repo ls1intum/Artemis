@@ -1,0 +1,9 @@
+<div class="frame">
+    @let courseIdToPass = courseId();
+    @let tutorialGroupIdToPass = tutorialGroupId();
+    @if (courseIdToPass && tutorialGroupIdToPass) {
+        <jhi-tutorial-registrations [courseId]="courseIdToPass" [tutorialGroupId]="tutorialGroupIdToPass" />
+    } @else {
+        <!-- TODO: create some error screen -->
+    }
+</div>
