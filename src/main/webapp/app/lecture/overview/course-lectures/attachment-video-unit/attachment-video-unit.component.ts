@@ -26,6 +26,7 @@ import {
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { VIDEO_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { FileService } from 'app/shared/service/file.service';
 import { ScienceService } from 'app/shared/science/science.service';
@@ -51,11 +52,33 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
     readonly isLoading = signal<boolean>(false);
+    readonly isCollapsed = signal<boolean>(true);
 
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
 
     // TODO: This must use a server configuration to make it compatible with deployments other than TUM
     private readonly videoUrlAllowList = [RegExp('^https://(?:live\\.rbg\\.tum\\.de|tum\\.live)/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1')];
+
+    /**
+     * Checks if the current video is an uploaded video file (not an embedded URL)
+     */
+    readonly isUploadedVideoFile = computed(() => {
+        const videoSource = this.lectureUnit().videoSource;
+
+        if (!videoSource) {
+            return false;
+        }
+
+        // Check if it's an internal file path (not an external URL like YouTube)
+        const isInternalPath = !videoSource.startsWith('http://') && !videoSource.startsWith('https://');
+
+        if (isInternalPath) {
+            const fileExtension = videoSource.split('.').pop()?.toLowerCase();
+            return VIDEO_FILE_EXTENSIONS.includes(fileExtension || '');
+        }
+
+        return false;
+    });
 
     /**
      * Return the URL of the video source
@@ -64,29 +87,39 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     /**
      * Computes the video URL based on the video source.
-     * Returns undefined if the source is invalid or doesn't match the allow list.
+     * Returns undefined if no valid video source exists.
      */
     private computeVideoUrl(): string | undefined {
         const source = this.lectureUnit().videoSource;
         if (!source) {
             return undefined;
         }
-        // Check if it matches the allow list (e.g., TUM Live URLs)
-        if (this.videoUrlAllowList.some((r) => r.test(source))) {
-            return source;
-        }
-        // Check if urlParser can parse it (e.g., YouTube, Vimeo, etc.)
-        if (urlParser) {
-            const parsed = urlParser.parse(source);
-            if (parsed) {
+
+        // Check if it's an external URL (starts with http:// or https://)
+        const isExternalUrl = source.startsWith('http://') || source.startsWith('https://');
+
+        if (isExternalUrl) {
+            // Check if it matches the allow list (e.g., TUM Live URLs)
+            if (this.videoUrlAllowList.some((r) => r.test(source))) {
                 return source;
             }
+            // Check if urlParser can parse it (e.g., YouTube, Vimeo, etc.)
+            if (urlParser) {
+                const parsed = urlParser.parse(source);
+                if (parsed) {
+                    return source;
+                }
+            }
+            // Unknown external URL - don't play it for security
+            return undefined;
         }
-        return undefined;
+        const unitId = this.lectureUnit().id;
+        return `api/core/files/attachment-video-units/${unitId}/video`;
     }
 
     override toggleCollapse(isCollapsed: boolean): void {
         super.toggleCollapse(isCollapsed);
+        this.isCollapsed.set(isCollapsed);
 
         if (!isCollapsed) {
             this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
@@ -200,8 +233,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     /**
      * Returns the matching icon for the file extension of the attachment
      */
-    getAttachmentIcon(): IconDefinition {
-        if (this.hasVideo()) {
+    readonly attachmentIcon = computed((): IconDefinition => {
+        // Show video icon if there's an embedded video source OR an uploaded video file
+        if (this.hasVideo() || this.isUploadedVideoFile()) {
             return faFileVideo;
         }
 
@@ -255,5 +289,5 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             }
         }
         return faFile;
-    }
+    });
 }

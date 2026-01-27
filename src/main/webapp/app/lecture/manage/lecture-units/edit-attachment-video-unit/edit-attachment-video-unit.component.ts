@@ -81,7 +81,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                             videoSource: unit.videoSource,
                         },
                         fileProperties: {
-                            fileName: attach.link,
+                            fileName: attach.link?.split('/').pop(),
                         },
                     });
                 },
@@ -92,7 +92,8 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
     updateAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData) {
         const { description, name, releaseDate, updateNotificationText, videoSource, competencyLinks } = attachmentVideoUnitFormData.formProperties;
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
-
+        const { videoFile, videoFileName } = attachmentVideoUnitFormData.videoFileProperties ?? {};
+        const { uploadProgressCallback } = attachmentVideoUnitFormData;
         // optional update notification text for students
         if (updateNotificationText) {
             this.notificationText.set(updateNotificationText);
@@ -124,14 +125,19 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
         this.isLoading.set(true);
 
         const formData = new FormData();
+        // Add PDF file if provided
         if (file) {
             formData.append('file', file, fileName);
+        }
+        // Add video file if provided
+        if (videoFile && videoFileName) {
+            formData.append('videoFile', videoFile, videoFileName);
         }
         formData.append('attachment', objectToJsonBlob(updatedAttachment));
         formData.append('attachmentVideoUnit', objectToJsonBlob(updatedUnit));
 
         this.attachmentVideoUnitService
-            .update(lectureId, currentUnit.id, formData, this.notificationText())
+            .update(lectureId, currentUnit.id, formData, this.notificationText(), uploadProgressCallback)
             .pipe(
                 takeUntilDestroyed(this.destroyRef),
                 finalize(() => this.isLoading.set(false)),

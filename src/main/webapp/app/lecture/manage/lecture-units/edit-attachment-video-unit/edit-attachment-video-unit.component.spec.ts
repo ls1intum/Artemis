@@ -136,7 +136,8 @@ describe('EditAttachmentVideoUnitComponent', () => {
         expect(attachmentVideoUnitFormComponent.formData()?.formProperties.version).toBe(1);
         expect(attachmentVideoUnitFormComponent.formData()?.formProperties.description).toEqual(attachmentVideoUnit.description);
         expect(attachmentVideoUnitFormComponent.formData()?.formProperties.videoSource).toEqual(attachmentVideoUnit.videoSource);
-        expect(attachmentVideoUnitFormComponent.formData()?.fileProperties.fileName).toEqual(attachment.link);
+        // fileName is extracted from the path using split('/').pop()
+        expect(attachmentVideoUnitFormComponent.formData()?.fileProperties.fileName).toEqual('file');
         expect(attachmentVideoUnitFormComponent.formData()?.fileProperties.file).toBeUndefined();
     });
 
@@ -166,7 +167,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
         attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
         fixture.detectChanges();
 
-        expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), undefined);
+        expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), undefined, undefined);
         expect(navigateSpy).toHaveBeenCalledTimes(1);
     });
 
@@ -196,7 +197,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
         attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
         fixture.detectChanges();
 
-        expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), notification);
+        expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), notification, undefined);
         expect(navigateSpy).toHaveBeenCalledTimes(1);
     });
 
@@ -225,7 +226,94 @@ describe('EditAttachmentVideoUnitComponent', () => {
         attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
         fixture.detectChanges();
 
-        expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), undefined);
+        expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), undefined, undefined);
         expect(navigateSpy).toHaveBeenCalledTimes(1);
+    });
+
+    describe('video file upload', () => {
+        it('should include video file in FormData when provided', () => {
+            fixture.detectChanges();
+            const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+
+            const videoFile = new File(['video content'], 'Test-Video.mp4', { type: 'video/mp4' });
+
+            const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
+                formProperties: {
+                    name: attachmentVideoUnit.name,
+                    description: attachmentVideoUnit.description,
+                    releaseDate: attachmentVideoUnit.releaseDate,
+                    version: 1,
+                    updateNotificationText: 'Update notification',
+                },
+                fileProperties: {},
+                videoFileProperties: {
+                    videoFile: videoFile,
+                    videoFileName: 'Test-Video.mp4',
+                },
+            };
+
+            updateAttachmentVideoUnitSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 200 })));
+            attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
+            fixture.detectChanges();
+
+            expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledOnce();
+            const formDataArg = updateAttachmentVideoUnitSpy.mock.calls[0][2] as FormData;
+            expect(formDataArg.get('videoFile')).toBeTruthy();
+        });
+
+        it('should not include video file in FormData when not provided', () => {
+            fixture.detectChanges();
+            const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+
+            const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
+                formProperties: {
+                    name: attachmentVideoUnit.name,
+                    description: attachmentVideoUnit.description,
+                    releaseDate: attachmentVideoUnit.releaseDate,
+                    version: 1,
+                    updateNotificationText: 'Update notification',
+                },
+                fileProperties: {},
+            };
+
+            updateAttachmentVideoUnitSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 200 })));
+            attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
+            fixture.detectChanges();
+
+            expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledOnce();
+            const formDataArg = updateAttachmentVideoUnitSpy.mock.calls[0][2] as FormData;
+            expect(formDataArg.get('videoFile')).toBeNull();
+        });
+
+        it('should not include video file if videoFileName is missing', () => {
+            fixture.detectChanges();
+            const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+
+            const videoFile = new File(['video content'], 'Test-Video.mp4', { type: 'video/mp4' });
+
+            const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
+                formProperties: {
+                    name: attachmentVideoUnit.name,
+                    description: attachmentVideoUnit.description,
+                    releaseDate: attachmentVideoUnit.releaseDate,
+                    version: 1,
+                    updateNotificationText: 'Update notification',
+                },
+                fileProperties: {},
+                videoFileProperties: {
+                    videoFile: videoFile,
+                    videoFileName: undefined, // Missing file name
+                },
+            };
+
+            updateAttachmentVideoUnitSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 200 })));
+            attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
+            fixture.detectChanges();
+
+            expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledOnce();
+            const formDataArg = updateAttachmentVideoUnitSpy.mock.calls[0][2] as FormData;
+            // videoFile should not be included because videoFileName is missing
+            expect(formDataArg.get('videoFile')).toBeNull();
+        });
     });
 });
