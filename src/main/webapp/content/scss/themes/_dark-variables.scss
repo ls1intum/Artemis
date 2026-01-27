@@ -631,13 +631,13 @@ $competency-rings-blue-bg: transparentize($competency-rings-blue, 0.8);
 
 // Iris Chatbot
 // New Iris Theme Variables
-$iris-primary-background: var(--neutral-dark);
-$iris-secondary-background: var(--neutral-dark-l-5);
-$iris-tertiary-background: var(--neutral-dark-l-10);
-$iris-accent-background: var(--neutral-dark-l-15);
-$iris-btn-primary: var(--primary);
-$iris-label-color: var(--gray-500);
-$iris-accent-border-color: var(--gray-500);
+$iris-primary-background: $neutral-dark;
+$iris-secondary-background: $neutral-dark-l-5;
+$iris-tertiary-background: $neutral-dark-l-10;
+$iris-accent-background: $neutral-dark-l-15;
+$iris-btn-primary: $primary;
+$iris-label-color: $gray-500;
+$iris-accent-border-color: $gray-500;
 // Iris Communication
 $tutor-suggestion-background: $gray-700;
 
