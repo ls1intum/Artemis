@@ -11,6 +11,7 @@ const NETWORKIDLE = 'networkidle';
 test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
     let course: Course;
     let lecture: Lecture;
+    let nestedCourse: Course;
 
     test.beforeEach('Setup course with learning paths enabled', async ({ login, courseManagementAPIRequests, userManagementAPIRequests }) => {
         await login(admin);
@@ -266,13 +267,13 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
     test.describe('Student Competency Progress - Exercise Completion', { tag: '@fast' }, () => {
         test.beforeEach('Setup course', async ({ login, courseManagementAPIRequests }) => {
             await login(admin);
-            course = await courseManagementAPIRequests.createCourse();
-            await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-            await courseManagementAPIRequests.enableLearningPaths(course);
+            nestedCourse = await courseManagementAPIRequests.createCourse();
+            await courseManagementAPIRequests.addStudentToCourse(nestedCourse, studentOne);
+            await courseManagementAPIRequests.enableLearningPaths(nestedCourse);
         });
 
         test.afterEach('Cleanup', async ({ courseManagementAPIRequests }) => {
-            await courseManagementAPIRequests.deleteCourse(course, admin);
+            await courseManagementAPIRequests.deleteCourse(nestedCourse, admin);
         });
 
         test('Exercise submission updates competency progress indicator', async ({
@@ -284,7 +285,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             quizExerciseMultipleChoice,
         }) => {
             // Create competency first
-            const competency = await courseManagementAPIRequests.createCompetency(course, 'Progress Test Competency', 'Track progress');
+            const competency = await courseManagementAPIRequests.createCompetency(nestedCourse, 'Progress Test Competency', 'Track progress');
 
             // Create quiz exercise with competency link using direct API call
             // Use a very short duration so the quiz ends quickly after submission
@@ -323,7 +324,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
                 ],
             };
 
-            const createResponse = await page.request.post(`api/quiz/courses/${course.id}/quiz-exercises`, {
+            const createResponse = await page.request.post(`api/quiz/courses/${nestedCourse.id}/quiz-exercises`, {
                 multipart: {
                     exercise: {
                         name: 'exercise',
@@ -343,7 +344,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             await login(studentOne);
 
             // Navigate to competencies overview first to check initial progress state
-            await page.goto(`/courses/${course.id}/competencies`);
+            await page.goto(`/courses/${nestedCourse.id}/competencies`);
             await page.waitForLoadState(NETWORKIDLE);
 
             // Verify competency is visible with initial state
@@ -352,7 +353,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             await expect(competencyCard).toBeVisible();
 
             // Navigate to quiz exercise and participate
-            await page.goto(`/courses/${course.id}/exercises/${quizExercise.id}`);
+            await page.goto(`/courses/${nestedCourse.id}/exercises/${quizExercise.id}`);
             await page.waitForLoadState(NETWORKIDLE);
 
             // Start the exercise
@@ -370,7 +371,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             await expect
                 .poll(
                     async () => {
-                        const progressResponse = await page.request.get(`api/atlas/courses/${course.id}/competencies`);
+                        const progressResponse = await page.request.get(`api/atlas/courses/${nestedCourse.id}/competencies`);
                         if (!progressResponse.ok()) {
                             return 0;
                         }
@@ -383,7 +384,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
                 .toBeGreaterThan(0);
 
             // Navigate to competencies overview to check updated progress
-            await page.goto(`/courses/${course.id}/competencies`);
+            await page.goto(`/courses/${nestedCourse.id}/competencies`);
             await page.waitForLoadState(NETWORKIDLE);
 
             // Verify competency is visible with progress rings showing update
@@ -392,7 +393,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             await expect(progressRings).toBeVisible();
 
             // Navigate to competency detail to verify progress has increased
-            await page.goto(`/courses/${course.id}/competencies/${competency.id}`);
+            await page.goto(`/courses/${nestedCourse.id}/competencies/${competency.id}`);
             await page.waitForLoadState(NETWORKIDLE);
 
             // Check that the exercise shows in the competency detail
