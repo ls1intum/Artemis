@@ -419,6 +419,7 @@ describe('AttachmentVideoUnitComponent', () => {
             const videoUnit: AttachmentVideoUnit = {
                 id: 1,
                 description: 'Video unit',
+                videoSource: 'attachments/attachment-unit/1/test-video.mp4',
                 attachment: {
                     id: 1,
                     version: 1,
@@ -457,6 +458,7 @@ describe('AttachmentVideoUnitComponent', () => {
             const videoUnit: AttachmentVideoUnit = {
                 id: 1,
                 description: 'Video unit',
+                videoSource: 'attachments/attachment-unit/1/test-video.webm',
                 attachment: {
                     id: 1,
                     version: 1,
@@ -469,15 +471,17 @@ describe('AttachmentVideoUnitComponent', () => {
             fixture.componentRef.setInput('lectureUnit', videoUnit);
             fixture.detectChanges();
 
+            // Uploaded video files use the API endpoint format
             const videoUrl = component.videoUrl();
             expect(videoUrl).toBeDefined();
-            expect(videoUrl).toContain('test-video.webm');
+            expect(videoUrl).toContain('attachment-video-units/1/video');
         });
 
         it('should show video icon for uploaded video files', () => {
             const videoUnit: AttachmentVideoUnit = {
                 id: 1,
                 description: 'Video unit',
+                videoSource: 'attachments/attachment-unit/1/test-video.mp4',
                 attachment: {
                     id: 1,
                     version: 1,
@@ -501,6 +505,7 @@ describe('AttachmentVideoUnitComponent', () => {
                 const videoUnit: AttachmentVideoUnit = {
                     id: 1,
                     description: 'Video unit',
+                    videoSource: `attachments/attachment-unit/1/test-video.${format}`,
                     attachment: {
                         id: 1,
                         version: 1,
@@ -517,11 +522,11 @@ describe('AttachmentVideoUnitComponent', () => {
             });
         });
 
-        it('should prioritize uploaded video over embedded source', () => {
+        it('should use uploaded video file path instead of external URL', () => {
             const videoUnit: AttachmentVideoUnit = {
                 id: 1,
-                description: 'Video unit with both',
-                videoSource: 'https://www.youtube.com/watch?v=test',
+                description: 'Video unit with uploaded file',
+                videoSource: 'attachments/attachment-unit/1/test-video.mp4',
                 attachment: {
                     id: 1,
                     version: 1,
@@ -534,8 +539,10 @@ describe('AttachmentVideoUnitComponent', () => {
             fixture.componentRef.setInput('lectureUnit', videoUnit);
             fixture.detectChanges();
 
+            // Uploaded video file uses the API endpoint
             const videoUrl = component.videoUrl();
-            expect(videoUrl).toContain('test-video.mp4');
+            expect(videoUrl).toBeDefined();
+            expect(videoUrl).toContain('attachment-video-units');
             expect(videoUrl).not.toContain('youtube');
         });
 

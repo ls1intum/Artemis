@@ -149,6 +149,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 videoFile: undefined,
                 videoFileName: undefined,
             },
+            uploadProgressCallback: expect.any(Function),
         });
 
         submitFormSpy.mockRestore();
@@ -296,6 +297,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 videoFile: undefined,
                 videoFileName: undefined,
             },
+            uploadProgressCallback: expect.any(Function),
         });
 
         submitFormSpy.mockRestore();
@@ -355,6 +357,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 videoFile: undefined,
                 videoFileName: undefined,
             },
+            uploadProgressCallback: expect.any(Function),
         });
 
         submitFormSpy.mockRestore();
@@ -574,10 +577,11 @@ describe('AttachmentVideoUnitFormComponent', () => {
             attachmentVideoUnitFormComponentFixture.detectChanges();
 
             // Set up form data as if loaded from server (pre-populated, NOT user-touched)
+            // videoSource with a file path (not http) triggers video file detection
             const formData: AttachmentVideoUnitFormData = {
-                formProperties: { name: 'Existing Video Unit' },
+                formProperties: { name: 'Existing Video Unit', videoSource: 'attachments/attachment-unit/1/existing-video.mp4' },
                 fileProperties: {},
-                videoFileProperties: { videoFileName: 'existing-video.mp4', videoFile: undefined },
+                videoFileProperties: {},
             };
             attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formData);
             attachmentVideoUnitFormComponentFixture.detectChanges();
@@ -879,12 +883,12 @@ describe('AttachmentVideoUnitFormComponent', () => {
             attachmentVideoUnitFormComponentFixture.detectChanges();
 
             const videoFile = new File(['video'], 'existing-video.mp4', { type: 'video/mp4' });
+            // videoSource with a file path (not http) triggers video filename extraction
             const formData: AttachmentVideoUnitFormData = {
-                formProperties: { name: 'Test Unit' },
+                formProperties: { name: 'Test Unit', videoSource: 'attachments/attachment-unit/1/existing-video.mp4' },
                 fileProperties: {},
                 videoFileProperties: {
                     videoFile: videoFile,
-                    videoFileName: 'existing-video.mp4',
                 },
             };
 
