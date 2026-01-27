@@ -353,9 +353,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private applyRemoteProblemStatementUpdate(updatedContent: string) {
         this.isApplyingRemoteUpdate = true;
         this.unsavedChanges = true;
-        const currentExercise = this.exercise();
-        // Mutate the current exercise so consumers (including tests) see the updated problem statement.
-        currentExercise.problemStatement = updatedContent;
+        // parents would update exercise.problemStatement through the event.
         this.instructionChange.emit(updatedContent);
         this.isApplyingRemoteUpdate = false;
     }
