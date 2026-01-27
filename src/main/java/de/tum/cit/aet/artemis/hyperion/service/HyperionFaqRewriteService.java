@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
@@ -43,6 +44,8 @@ public class HyperionFaqRewriteService {
 
     private final ObservationRegistry observationRegistry;
 
+    private final ObjectMapper objectMapper;
+
     /**
      * Creates a new HyperionFaqRewriteService.
      *
@@ -50,12 +53,15 @@ public class HyperionFaqRewriteService {
      * @param chatClient          the AI chat client
      * @param templateService     prompt template service
      * @param observationRegistry observation registry for metrics
+     * @param objectMapper object mapper
      */
-    public HyperionFaqRewriteService(FaqRepository faqRepository, ChatClient chatClient, HyperionPromptTemplateService templateService, ObservationRegistry observationRegistry) {
+    public HyperionFaqRewriteService(FaqRepository faqRepository, ChatClient chatClient, HyperionPromptTemplateService templateService, ObservationRegistry observationRegistry,
+                                     ObjectMapper objectMapper) {
         this.faqRepository = faqRepository;
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.observationRegistry = observationRegistry;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -112,11 +118,18 @@ public class HyperionFaqRewriteService {
         }
 
         List<ConsistencyIssue.Faq> faqData = faqs.stream().limit(10).map(faq -> new ConsistencyIssue.Faq(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer())).toList();
+        String faqsJson;
+        try {
+            faqsJson = objectMapper.writeValueAsString(faqData);
+        } catch (Exception e) {
+            log.error("Failed to serialize FAQ data", e);
+            return new RewriteFaqResponseDTO(rewrittenText.trim(), List.of(), List.of(), "");
+        }
 
         // Handle the JSON parsing automatically
         var outputConverter = new BeanOutputConverter<>(ConsistencyIssue.class);
         String systemPrompt = templateService.render(PROMPT_CONSISTENCY_SYSTEM, Map.of());
-        String userPrompt = templateService.renderObject(PROMPT_CONSISTENCY_USER, Map.of("faqs", faqData, "final_result", rewrittenText, "format", outputConverter.getFormat()));
+        String userPrompt = templateService.renderObject(PROMPT_CONSISTENCY_USER, Map.of("faqs", faqsJson, "final_result", rewrittenText, "format", outputConverter.getFormat()));
 
         ConsistencyIssue consistencyIssue;
         try {
@@ -126,7 +139,7 @@ public class HyperionFaqRewriteService {
                 .user(userPrompt)
                 .call()
                 .entity(outputConverter);
-        // @formatter:on
+            // @formatter:on
         } catch (Exception e) {
             log.error("Failed to process FAQ consistency for course {} - only returning rewritten text ", courseId, e);
             return new RewriteFaqResponseDTO(rewrittenText.trim(), List.of(), List.of(), "");
