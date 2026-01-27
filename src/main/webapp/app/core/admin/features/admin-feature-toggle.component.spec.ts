@@ -12,7 +12,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, PROFILE_ATHENA, PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, PROFILE_IRIS } from 'app/app.constants';
 
 describe('AdminFeatureToggleComponentTest', () => {
     setupTestBed({ zoneless: true });
@@ -108,7 +108,7 @@ describe('AdminFeatureToggleComponentTest', () => {
         it('ngOnInit should load profile features', () => {
             expect(comp.profileFeatures()).toHaveLength(0);
             comp.ngOnInit();
-            expect(comp.profileFeatures()).toHaveLength(10);
+            expect(comp.profileFeatures()).toHaveLength(9);
         });
 
         it('should set isActive based on active profiles', () => {
@@ -122,9 +122,6 @@ describe('AdminFeatureToggleComponentTest', () => {
 
             const iris = profiles.find((p) => p.profile === PROFILE_IRIS);
             expect(iris?.isActive).toBe(true);
-
-            const athena = profiles.find((p) => p.profile === PROFILE_ATHENA);
-            expect(athena?.isActive).toBe(false);
         });
 
         it('should set documentation links for profile features', () => {
@@ -141,7 +138,7 @@ describe('AdminFeatureToggleComponentTest', () => {
         it('ngOnInit should load module features', () => {
             expect(comp.moduleFeatures()).toHaveLength(0);
             comp.ngOnInit();
-            expect(comp.moduleFeatures()).toHaveLength(13);
+            expect(comp.moduleFeatures()).toHaveLength(14);
         });
 
         it('should set isActive based on active module features', () => {
@@ -192,8 +189,8 @@ describe('AdminFeatureToggleComponentTest', () => {
         });
 
         it('getProfileDescriptionKey should return correct translation key', () => {
-            const key = comp.getProfileDescriptionKey(PROFILE_ATHENA);
-            expect(key).toBe('artemisApp.features.profiles.athena.description');
+            const key = comp.getProfileDescriptionKey(PROFILE_IRIS);
+            expect(key).toBe('artemisApp.features.profiles.iris.description');
         });
 
         it('getModuleFeatureNameKey should return correct translation key', () => {

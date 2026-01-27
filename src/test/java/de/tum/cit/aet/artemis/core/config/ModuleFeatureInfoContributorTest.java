@@ -32,7 +32,9 @@ class ModuleFeatureInfoContributorTest {
         Constants.PASSKEY_ENABLED_PROPERTY_NAME,
         Constants.NEBULA_ENABLED_PROPERTY_NAME,
         Constants.SHARING_ENABLED_PROPERTY_NAME,
-        Constants.LTI_ENABLED_PROPERTY_NAME
+        Constants.LTI_ENABLED_PROPERTY_NAME,
+        Constants.APOLLON_ENABLED_PROPERTY_NAME,
+        Constants.ATHENA_ENABLED_PROPERTY_NAME
     );
     // @formatter:on
 
@@ -50,7 +52,9 @@ class ModuleFeatureInfoContributorTest {
         Constants.FEATURE_PASSKEY,
         Constants.MODULE_FEATURE_NEBULA,
         Constants.MODULE_FEATURE_SHARING,
-        Constants.MODULE_FEATURE_LTI
+        Constants.MODULE_FEATURE_LTI,
+        Constants.MODULE_FEATURE_APOLLON,
+        Constants.MODULE_FEATURE_ATHENA
     );
     // @formatter:on
 

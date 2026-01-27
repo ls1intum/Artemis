@@ -114,4 +114,23 @@ public class ModuleFeatureService {
     public boolean isLtiEnabled() {
         return artemisConfigHelper.isLtiEnabled(environment);
     }
+
+    /**
+     * Check if Apollon PDF export is enabled.
+     * This only controls PDF export; the modeling editor is controlled by artemis.modeling.enabled.
+     *
+     * @return true if Apollon PDF export is enabled, false otherwise
+     */
+    public boolean isApollonEnabled() {
+        return artemisConfigHelper.isApollonEnabled(environment);
+    }
+
+    /**
+     * Check if the Athena module is enabled.
+     *
+     * @return true if the Athena module is enabled, false otherwise
+     */
+    public boolean isAthenaEnabled() {
+        return artemisConfigHelper.isAthenaEnabled(environment);
+    }
 }

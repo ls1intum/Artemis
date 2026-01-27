@@ -61,6 +61,10 @@ export const MODULE_FEATURE_SHARING = 'sharing';
 
 export const MODULE_FEATURE_LTI = 'lti';
 
+export const MODULE_FEATURE_ATHENA = 'athena';
+
+export const MODULE_FEATURE_APOLLON = 'apollon';
+
 export type ModuleFeature =
     | typeof MODULE_FEATURE_PASSKEY
     | typeof MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN
@@ -75,7 +79,9 @@ export type ModuleFeature =
     | typeof MODULE_FEATURE_TUTORIALGROUP
     | typeof MODULE_FEATURE_NEBULA
     | typeof MODULE_FEATURE_SHARING
-    | typeof MODULE_FEATURE_LTI;
+    | typeof MODULE_FEATURE_LTI
+    | typeof MODULE_FEATURE_ATHENA
+    | typeof MODULE_FEATURE_APOLLON;
 
 export const PROFILE_LOCALCI = 'localci';
 
@@ -95,8 +101,6 @@ export const PROFILE_TEST = 'test';
 
 export const PROFILE_JENKINS = 'jenkins';
 
-export const PROFILE_APOLLON = 'apollon';
-
 export const PROFILE_ATHENA = 'athena';
 
 export const PROFILE_THEIA = 'theia';
@@ -115,7 +119,6 @@ export type ProfileFeature =
     | typeof PROFILE_DEV
     | typeof PROFILE_TEST
     | typeof PROFILE_JENKINS
-    | typeof PROFILE_APOLLON
     | typeof PROFILE_ATHENA
     | typeof PROFILE_THEIA
     | typeof PROFILE_LDAP
