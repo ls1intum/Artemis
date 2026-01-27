@@ -5,7 +5,7 @@ import { ButtonSize } from 'app/shared/components/buttons/button/button.componen
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
-import { UMLModel } from '@ls1intum/apollon';
+import { UMLModel } from '@tumaet/apollon';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { DetailOverviewNavigationBarComponent } from '../detail-overview-navigation-bar/detail-overview-navigation-bar.component';
 import { HelpIconComponent } from '../components/help-icon/help-icon.component';
