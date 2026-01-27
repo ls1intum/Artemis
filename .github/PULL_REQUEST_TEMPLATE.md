@@ -1,5 +1,7 @@
 <!-- Thanks for contributing to Artemis! Before you submit your pull request, please make sure to check all tasks by putting an x in the [ ] (don't: [x ], [ x], do: [x]). Remove not applicable tasks and do not leave them unchecked -->
-<!-- If your pull request is not ready for review yet, create a draft pull request! -->
+
+### Summary 
+<!-- Add a short, but convincing summary (abstract) of the PR changes here. --> 
 
 ### Checklist
 #### General
@@ -15,9 +17,9 @@
 #### Server
 - [ ] **Important**: I implemented the changes with a [very good performance](https://docs.artemis.tum.de/developer/guidelines/performance) and prevented too many (unnecessary) and too complex database calls.
 - [ ] I **strictly** followed the principle of **data economy** for all database calls.
-- [ ] I **strictly** followed the [server coding and design guidelines](https://docs.artemis.tum.de/developer/guidelines/server-development).
+- [ ] I **strictly** followed the [server coding and design guidelines](https://docs.artemis.tum.de/developer/guidelines/server-development) and the [REST API guidelines](https://docs.artemis.tum.de/developer/guidelines/rest-api).
 - [ ] I added multiple integration tests (Spring) related to the features (with a high test coverage).
-- [ ] I added pre-authorization annotations according to the [guidelines](https://docs.artemis.tum.de/developer/guidelines/server-development#rest-endpoint-best-practices-for-authorization) and checked the course groups for all new REST Calls (security).
+- [ ] I added pre-authorization annotations according to the [guidelines](https://docs.artemis.tum.de/developer/guidelines/rest-api#authorization) and checked the course groups for all new REST Calls (security).
 - [ ] I documented the Java code using JavaDoc style.
 
 
