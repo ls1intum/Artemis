@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -33,10 +31,10 @@ import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategy;
 import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategyType;
 import de.tum.cit.aet.artemis.exam.domain.room.SeatCondition;
-import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomAdminOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomLayoutStrategyDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUploadInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
@@ -106,6 +104,12 @@ public class ExamRoomService {
                 String roomNumber = FileUtil.sanitizeFilename(entryName.substring(roomNumberStartIndex, roomNumberEndIndex));
                 if (roomNumber.isBlank()) {
                     throw new BadRequestAlertException("Invalid room file name: missing room number", ENTITY_NAME, "room.missingRoomNumber");
+                }
+
+                if (roomNumber.startsWith(".")) {
+                    // ignore hidden files, see https://github.com/ls1intum/Artemis/pull/11788#pullrequestreview-3606138410
+                    // (Mac can create hidden files with garbage data when creating zip archives)
+                    continue;
                 }
 
                 try {
@@ -306,22 +310,15 @@ public class ExamRoomService {
      *
      * @return A DTO that can be sent to the client, containing basic information about the state of the exam room DB.
      */
-    public ExamRoomAdminOverviewDTO getExamRoomAdminOverview() {
-        final Set<ExamRoom> examRooms = examRoomRepository.findAllExamRoomsWithEagerLayoutStrategies();
+    public ExamRoomOverviewDTO getExamRoomOverview() {
+        final Set<ExamRoom> examRooms = examRoomRepository.findAllNewestExamRoomVersionsWithEagerLayoutStrategies();
 
-        final int numberOfStoredExamRooms = examRooms.size();
-        final int numberOfStoredExamSeats = examRooms.stream().mapToInt(er -> er.getSeats().size()).sum();
-        final int numberOfStoredLayoutStrategies = examRooms.stream().mapToInt(er -> er.getLayoutStrategies().size()).sum();
-
-        Map<String, ExamRoom> newestRoomByRoomNumber = examRooms.stream()
-                .collect(Collectors.toMap(ExamRoom::getRoomNumber, Function.identity(), BinaryOperator.maxBy(Comparator.comparing(ExamRoom::getCreatedDate))));
-
-        final Set<ExamRoomDTO> examRoomDTOS = newestRoomByRoomNumber.values().stream()
+        final Set<ExamRoomDTO> examRoomDTOS = examRooms.stream()
                 .map(examRoom -> new ExamRoomDTO(examRoom.getRoomNumber(), examRoom.getName(), examRoom.getBuilding(), examRoom.getSeats().size(),
                         examRoom.getLayoutStrategies().stream().map(ls -> new ExamRoomLayoutStrategyDTO(ls.getName(), ls.getType(), ls.getCapacity())).collect(Collectors.toSet())))
                 .collect(Collectors.toSet());
 
-        return new ExamRoomAdminOverviewDTO(numberOfStoredExamRooms, numberOfStoredExamSeats, numberOfStoredLayoutStrategies, examRoomDTOS);
+        return new ExamRoomOverviewDTO(examRoomDTOS);
     }
 
     /**
@@ -569,7 +566,7 @@ public class ExamRoomService {
      * @return {@code true} iff the {@link #examRoomRepository} contains all the given ids
      */
     public boolean allRoomsExistAndAreNewestVersions(Set<Long> examRoomIds) {
-        return examRoomRepository.findAllIdsOfCurrentExamRooms().containsAll(examRoomIds);
+        return examRoomRepository.findAllIdsOfNewestExamRoomVersions().containsAll(examRoomIds);
     }
 
     /**

@@ -35,7 +35,7 @@
                 "notFound": "Klausurteilnehmer:in konnte nicht gefunden werden",
                 "rooms": {
                     "dialogTitle": "Verteile Klausurteilnehmer",
-                    "introText": "In diesem Dialogfeld kannst du die für eine Prüfung angemeldeten Studierenden auf verschiedene Räume verteilen. Artemis verteilt Studenten in der Reihenfolge der angegebenen Räume.",
+                    "introText": "In diesem Dialogfeld kannst du die für eine Prüfung angemeldeten Studierenden auf verschiedene Räume verteilen. Artemis verteilt Studenten in der Reihenfolge der angegebenen Räume. Falls ein angebener Raum nicht gefunden werden kann, kannst du ihn über die Prüfungsraumverwaltung hinzufügen.",
                     "reserveFactor": "Reservierte Sitze %",
                     "reserveFactorTooltip": "Der Prozentsatz der Sitze, die reserviert werden sollten, d. h. nicht verteilt werden sollten; gilt für jeden Raum einzeln",
                     "allowNarrowLayouts": "Engere Layouts zulassen?",
@@ -47,7 +47,8 @@
                     "enoughSeatsForStudents": "Du kannst alle {{ totalStudents }} Studierenden unterbringen.",
                     "notEnoughSeatsForStudents": "Du kannst nur {{ usableCapacity }} der {{ totalStudents }} Studierenden unterbringen ({{ percentage }}%).",
                     "distribute": "Verteilen",
-                    "noRoomSelected": "Es ist kein Raum ausgewählt"
+                    "noRoomSelected": "Es ist kein Raum ausgewählt",
+                    "cantFindRoom": "Raum kann nicht gefunden werden? Lade ihn hier hoch: "
                 }
             },
             "overview": {

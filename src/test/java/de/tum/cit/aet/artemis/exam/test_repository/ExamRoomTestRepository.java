@@ -19,21 +19,11 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
 public interface ExamRoomTestRepository extends ExamRoomRepository {
 
     @Query("""
-            WITH latestRooms AS (
-                SELECT
-                    roomNumber AS roomNumber,
-                    MAX(createdDate) AS maxCreatedDate
-                FROM ExamRoom
-                GROUP BY roomNumber
-            )
-            SELECT DISTINCT examRoom
-            FROM ExamRoom examRoom
-            JOIN latestRooms latestRoom
-                ON examRoom.roomNumber = latestRoom.roomNumber
-                AND examRoom.createdDate = latestRoom.maxCreatedDate
-            LEFT JOIN FETCH examRoom.layoutStrategies
+            SELECT er
+            FROM ExamRoom er
+            LEFT JOIN FETCH er.layoutStrategies
             """)
-    Set<ExamRoom> findAllNewestExamRoomVersionsWithEagerLayoutStrategies();
+    Set<ExamRoom> findAllExamRoomsWithEagerLayoutStrategies();
 
     @Query("""
             WITH latestRooms AS (

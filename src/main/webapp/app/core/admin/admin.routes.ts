@@ -158,14 +158,6 @@ const childRoutes: Routes = [
         },
     },
     {
-        path: 'exam-rooms',
-        loadComponent: () => import('app/core/admin/exam-rooms/exam-rooms.component').then((m) => m.ExamRoomsComponent),
-        data: {
-            authorities: IS_AT_LEAST_ADMIN,
-            pageTitle: 'global.menu.admin.examRooms',
-        },
-    },
-    {
         path: 'course-requests',
         loadComponent: () => import('app/core/admin/course-requests/course-requests.component').then((m) => m.CourseRequestsComponent),
         data: {
