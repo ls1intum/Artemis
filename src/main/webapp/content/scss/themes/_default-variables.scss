@@ -566,12 +566,12 @@ $competency-rings-blue-bg: transparentize($competency-rings-blue, 0.8);
 // TODO: Use standard colors
 // New Iris Theme Variables
 $iris-primary-background: $white;
-$iris-secondary-background: var(--gray-100);
-$iris-tertiary-background: var(--gray-200);
-$iris-accent-background: var(--gray-300);
-$iris-btn-primary: var(--primary);
-$iris-label-color: var(--gray-600);
-$iris-accent-border-color: var(--gray-500);
+$iris-secondary-background: $gray-100;
+$iris-tertiary-background: $gray-200;
+$iris-accent-background: $gray-300;
+$iris-btn-primary: $primary;
+$iris-label-color: $gray-600;
+$iris-accent-border-color: $gray-500;
 
 // Iris Communication
 $tutor-suggestion-background: $gray-400;
