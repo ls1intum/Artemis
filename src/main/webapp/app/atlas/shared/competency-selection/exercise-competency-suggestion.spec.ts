@@ -1,10 +1,11 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CUSTOM_ELEMENTS_SCHEMA, Component, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { of, throwError } from 'rxjs';
+import { delay, of, throwError } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
@@ -20,6 +21,7 @@ import { MockProvider } from 'ng-mocks';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 /**
  * Test component that simulates an exercise creation form
@@ -81,7 +83,8 @@ class TestExerciseFormComponent {
  * 6. Saves the exercise
  */
 describe('Exercise Creation with Competency Suggestions - E2E', () => {
-    let consoleErrorSpy: jest.SpyInstance;
+    setupTestBed({ zoneless: true });
+    let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
     let fixture: ComponentFixture<TestExerciseFormComponent>;
     let component: TestExerciseFormComponent;
     let httpClient: HttpClient;
@@ -96,7 +99,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
     ];
 
     beforeEach(() => {
-        consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     });
 
     beforeEach(async () => {
@@ -130,10 +133,10 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
         const profileService = TestBed.inject(ProfileService);
         const profileInfo = new ProfileInfo();
         profileInfo.activeModuleFeatures = [MODULE_FEATURE_ATLAS];
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
         // Mock course with competencies
-        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({
             id: 123,
             competencies: sampleCompetencies,
         });
@@ -141,7 +144,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
 
     afterEach(() => {
         consoleErrorSpy?.mockRestore();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('Template compatibility', () => {
@@ -152,13 +155,12 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
     });
 
     describe('Complete Exercise Creation Workflow', () => {
-        it('should allow user to create programming exercise with AI-suggested competencies', fakeAsync(() => {
+        it('should allow user to create programming exercise with AI-suggested competencies', () => {
             // Step 1: User fills out basic exercise information
             component.exercise.title = 'Binary Search Tree Implementation';
             component.exercise.description = 'Implement a binary search tree class in Java with insert, delete, and search methods. Include proper error handling and unit tests.';
 
-            fixture.detectChanges();
-            tick(); // Allow form to update
+            fixture.detectChanges(false);
 
             // Step 2: Verify competency selection component is rendered
             const competencySelection = fixture.debugElement.query(By.directive(CompetencySelectionComponent));
@@ -176,44 +178,46 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
                     { id: 3, title: 'Algorithm Analysis' },
                 ],
             };
-            const httpSpy = jest.spyOn(httpClient, 'post').mockReturnValue(of(suggestionResponse));
+            vi.useFakeTimers();
+            try {
+                const httpSpy = vi.spyOn(httpClient, 'post').mockReturnValue(of(suggestionResponse).pipe(delay(0)));
 
-            // Step 5: Trigger suggestions via component API to avoid jhi-button internals
-            component.competencySelection().suggestCompetencies();
-            tick();
-            fixture.detectChanges();
+                // Step 5: Trigger suggestions via component API to avoid jhi-button internals
+                component.competencySelection().suggestCompetencies();
+                vi.runAllTimers();
 
-            // Step 6: Verify API was called with correct parameters
-            expect(httpSpy).toHaveBeenCalledWith('/api/atlas/competencies/suggest', {
-                description: component.exercise.description,
-                course_id: '123',
-            });
+                // Step 6: Verify API was called with correct parameters
+                expect(httpSpy).toHaveBeenCalledWith('/api/atlas/competencies/suggest', {
+                    description: component.exercise.description,
+                    course_id: '123',
+                });
 
-            // Step 7: Verify suggested competencies are highlighted
-            const suggestedIcons = fixture.debugElement.queryAll(By.css('fa-icon.text-warning.ms-2'));
-            expect(suggestedIcons).toHaveLength(3);
+                // Step 7: Verify suggested competencies are highlighted
+                const suggestedIcons = fixture.debugElement.queryAll(By.css('fa-icon.text-warning.ms-2'));
+                expect(suggestedIcons).toHaveLength(3);
 
-            // Step 8: Verify suggested competencies are sorted to top
-            const competencyCheckboxes = fixture.debugElement.queryAll(By.css('input[type="checkbox"]'));
-            expect(competencyCheckboxes[0].attributes['id']).toContain('competency-1');
-            expect(competencyCheckboxes[1].attributes['id']).toContain('competency-2');
-            expect(competencyCheckboxes[2].attributes['id']).toContain('competency-3');
+                // Step 8: Verify suggested competencies are sorted to top
+                const competencyCheckboxes = fixture.debugElement.queryAll(By.css('input[type="checkbox"]'));
+                expect(competencyCheckboxes[0].attributes['id']).toContain('competency-1');
+                expect(competencyCheckboxes[1].attributes['id']).toContain('competency-2');
+                expect(competencyCheckboxes[2].attributes['id']).toContain('competency-3');
 
-            // Step 9: Select suggested competencies via component API for reliability
-            const compForSelect = component.competencySelection();
-            const linkJava = compForSelect.competencyLinks?.find((l) => l.competency?.id === 1);
-            const linkDS = compForSelect.competencyLinks?.find((l) => l.competency?.id === 2);
-            expect(linkJava).toBeTruthy();
-            expect(linkDS).toBeTruthy();
-            if (linkJava) {
-                compForSelect.toggleCompetency(linkJava);
-                tick();
+                // Step 9: Select suggested competencies via component API for reliability
+                const compForSelect = component.competencySelection();
+                const linkJava = compForSelect.competencyLinks?.find((l) => l.competency?.id === 1);
+                const linkDS = compForSelect.competencyLinks?.find((l) => l.competency?.id === 2);
+                expect(linkJava).toBeTruthy();
+                expect(linkDS).toBeTruthy();
+                if (linkJava) {
+                    compForSelect.toggleCompetency(linkJava);
+                }
+                if (linkDS) {
+                    compForSelect.toggleCompetency(linkDS);
+                }
+                fixture.detectChanges(false);
+            } finally {
+                vi.useRealTimers();
             }
-            if (linkDS) {
-                compForSelect.toggleCompetency(linkDS);
-                tick();
-            }
-            fixture.detectChanges();
 
             // Step 10: Verify form is valid and save button is enabled
             const form = fixture.debugElement.query(By.css('form'));
@@ -226,12 +230,11 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
             expect(competencyComponent.selectedCompetencyLinks?.length).toBe(2);
             expect(competencyComponent.isSuggested(1)).toBeTruthy();
             expect(competencyComponent.isSuggested(2)).toBeTruthy();
-        }));
+        });
 
-        it('should handle mixed selection of suggested and non-suggested competencies', fakeAsync(() => {
+        it('should handle mixed selection of suggested and non-suggested competencies', () => {
             component.exercise.description = 'Create a comprehensive testing strategy for a Java application';
-            fixture.detectChanges();
-            tick();
+            fixture.detectChanges(false);
 
             // Mock suggestions for testing-related competencies
             const suggestionResponse = {
@@ -239,29 +242,31 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
                     { id: 4, title: 'Software Testing' }, // Only testing is suggested
                 ],
             };
-            jest.spyOn(httpClient, 'post').mockReturnValue(of(suggestionResponse));
+            vi.useFakeTimers();
+            try {
+                vi.spyOn(httpClient, 'post').mockReturnValue(of(suggestionResponse).pipe(delay(0)));
 
-            // Get suggestions via component API
-            const comp = component.competencySelection();
-            comp.suggestCompetencies();
-            tick();
-            fixture.detectChanges();
+                // Get suggestions via component API
+                const comp = component.competencySelection();
+                comp.suggestCompetencies();
+                vi.runAllTimers();
 
-            // Select both suggested and non-suggested via component API
-            const compMixed = component.competencySelection();
-            const linkTesting = compMixed.competencyLinks?.find((l) => l.competency?.id === 4);
-            const linkPatterns = compMixed.competencyLinks?.find((l) => l.competency?.id === 5);
-            expect(linkTesting).toBeTruthy();
-            expect(linkPatterns).toBeTruthy();
-            if (linkTesting) {
-                compMixed.toggleCompetency(linkTesting);
-                tick();
+                // Select both suggested and non-suggested via component API
+                const compMixed = component.competencySelection();
+                const linkTesting = compMixed.competencyLinks?.find((l) => l.competency?.id === 4);
+                const linkPatterns = compMixed.competencyLinks?.find((l) => l.competency?.id === 5);
+                expect(linkTesting).toBeTruthy();
+                expect(linkPatterns).toBeTruthy();
+                if (linkTesting) {
+                    compMixed.toggleCompetency(linkTesting);
+                }
+                if (linkPatterns) {
+                    compMixed.toggleCompetency(linkPatterns);
+                }
+                fixture.detectChanges(false);
+            } finally {
+                vi.useRealTimers();
             }
-            if (linkPatterns) {
-                compMixed.toggleCompetency(linkPatterns);
-                tick();
-            }
-            fixture.detectChanges();
 
             // Verify both are selected but only one is marked as suggested
             const competencyComponent = component.competencySelection();
@@ -272,7 +277,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
             // Verify lightbulb icon only appears next to suggested competency
             const suggestedIcons = fixture.debugElement.queryAll(By.css('fa-icon.text-warning.ms-2'));
             expect(suggestedIcons).toHaveLength(1);
-        }));
+        });
     });
 
     describe('Different Exercise Types Integration', () => {
@@ -298,12 +303,11 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
         ];
 
         exerciseTypes.forEach((exerciseType) => {
-            it(`should provide relevant suggestions for ${exerciseType.type} exercises`, fakeAsync(() => {
+            it(`should provide relevant suggestions for ${exerciseType.type} exercises`, () => {
                 // Setup exercise
                 component.exercise.title = exerciseType.title;
                 component.exercise.description = exerciseType.description;
                 fixture.detectChanges();
-                tick();
 
                 // Mock API response
                 const suggestionResponse = {
@@ -312,12 +316,11 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
                         title: sampleCompetencies[id - 1].title,
                     })),
                 };
-                jest.spyOn(httpClient, 'post').mockReturnValue(of(suggestionResponse));
+                vi.spyOn(httpClient, 'post').mockReturnValue(of(suggestionResponse));
 
                 // Request suggestions via component API
                 const comp = component.competencySelection();
                 comp.suggestCompetencies();
-                tick();
                 fixture.detectChanges();
 
                 // Verify correct suggestions
@@ -329,7 +332,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
                 // Verify correct number of suggestion icons
                 const suggestedIcons = fixture.debugElement.queryAll(By.css('fa-icon.text-warning.ms-2'));
                 expect(suggestedIcons).toHaveLength(exerciseType.expectedSuggestions.length);
-            }));
+            });
         });
     });
 
@@ -337,17 +340,16 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
         beforeEach(() => {
             component.exercise.title = 'Test Exercise';
             component.exercise.description = 'Test description for suggestions';
-            fixture.detectChanges();
+            fixture.detectChanges(false);
         });
 
-        it('should handle API errors gracefully without breaking exercise creation', fakeAsync(() => {
+        it('should handle API errors gracefully without breaking exercise creation', () => {
             // Mock API error
-            jest.spyOn(httpClient, 'post').mockReturnValue(throwError(() => ({ status: 500, message: 'Server Error' })));
+            vi.spyOn(httpClient, 'post').mockReturnValue(throwError(() => ({ status: 500, message: 'Server Error' })));
 
             const comp = component.competencySelection();
             comp.suggestCompetencies();
-            tick();
-            fixture.detectChanges();
+            fixture.detectChanges(false);
 
             // Exercise creation should still work
             const saveButton = fixture.debugElement.query(By.css('button[type="submit"]'));
@@ -364,14 +366,14 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
             fixture.detectChanges();
 
             expect(competencyComponent.selectedCompetencyLinks?.length).toBe(1);
-        }));
+        });
 
         it('should work when AtlasML feature is disabled', () => {
             // Disable Atlas feature
             const profileService = TestBed.inject(ProfileService);
             const profileInfo = new ProfileInfo();
             profileInfo.activeModuleFeatures = [];
-            jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
             // Recreate component with disabled feature
             component.competencySelection().ngOnInit();
@@ -388,27 +390,25 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
     });
 
     describe('Form Validation Integration', () => {
-        it('should maintain form validation when using competency suggestions', fakeAsync(() => {
+        it('should maintain form validation when using competency suggestions', () => {
             // Start with valid form (both title and description provided)
             component.exercise.title = 'Valid Title';
             component.exercise.description = 'Valid description for testing';
             fixture.detectChanges();
-            tick();
 
             let saveButton = fixture.debugElement.query(By.css('button[type="submit"]'));
             expect(saveButton.nativeElement.disabled).toBeFalsy(); // Should be enabled
 
             // Using suggestions shouldn't affect form validation
             const mockResponse = { competencies: [{ id: 1, title: 'Test' }] };
-            jest.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
+            vi.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
 
             const comp = component.competencySelection();
             comp.suggestCompetencies();
-            tick();
             fixture.detectChanges();
 
             saveButton = fixture.debugElement.query(By.css('button[type="submit"]'));
             expect(saveButton.nativeElement.disabled).toBeFalsy(); // Should still be enabled
-        }));
+        });
     });
 });

@@ -1,4 +1,5 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { JudgementOfLearningRatingComponent } from 'app/atlas/overview/judgement-of-learning-rating/judgement-of-learning-rating.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
@@ -9,8 +10,10 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { of, throwError } from 'rxjs';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('JudgementOfLearningRatingComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: JudgementOfLearningRatingComponent;
     let fixture: ComponentFixture<JudgementOfLearningRatingComponent>;
 
@@ -73,29 +76,29 @@ describe('JudgementOfLearningRatingComponent', () => {
         expect(component.rating()).toBe(3);
     });
 
-    it('should emit new rating when onRate is called with valid data', fakeAsync(() => {
+    it('should emit new rating when onRate is called with valid data', () => {
         fixture.componentRef.setInput('rating', undefined);
         fixture.componentRef.setInput('courseId', 1);
 
         const newRating = 4;
         const event = { oldValue: 3, newValue: newRating };
-        jest.spyOn(courseCompetencyService, 'setJudgementOfLearning').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+        vi.spyOn(courseCompetencyService, 'setJudgementOfLearning').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
         component.onRate(event);
         expect(component.rating()).toBe(newRating);
-    }));
+    });
 
-    it('should show error message when setting judgement of learning fails', fakeAsync(() => {
+    it('should show error message when setting judgement of learning fails', () => {
         fixture.componentRef.setInput('rating', undefined);
         fixture.componentRef.setInput('courseId', 1);
 
         const newRating = 4;
         const event = { oldValue: 3, newValue: newRating };
-        jest.spyOn(courseCompetencyService, 'setJudgementOfLearning').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
-        const errorSpy = jest.spyOn(alertService, 'error');
+        vi.spyOn(courseCompetencyService, 'setJudgementOfLearning').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+        const errorSpy = vi.spyOn(alertService, 'error');
 
         component.onRate(event);
 
         expect(component.rating()).toBeUndefined();
         expect(errorSpy).toHaveBeenCalled();
-    }));
+    });
 });

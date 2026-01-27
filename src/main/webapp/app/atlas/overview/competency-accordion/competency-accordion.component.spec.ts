@@ -16,20 +16,21 @@ import {
 import dayjs from 'dayjs/esm';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyAccordionComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<CompetencyAccordionComponent>;
     let component: CompetencyAccordionComponent;
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [CompetencyAccordionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(CompetencyRingsComponent)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [CompetencyAccordionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(CompetencyRingsComponent)],
+            declarations: [],
             providers: [MockProvider(TranslateService)],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CompetencyAccordionComponent);
-                component = fixture.componentInstance;
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(CompetencyAccordionComponent);
+        component = fixture.componentInstance;
     });
 
     it('should calculate exercise progress', () => {

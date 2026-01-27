@@ -1,4 +1,6 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { vi } from 'vitest';
+import type { Mocked } from 'vitest';
+import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -6,15 +8,17 @@ import { AccountService } from 'app/core/auth/account.service';
 import { AgentChatService } from './agent-chat.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('AgentChatService', () => {
+    setupTestBed({ zoneless: true });
     let service: AgentChatService;
     let httpMock: HttpTestingController;
-    let translateService: jest.Mocked<TranslateService>;
+    let translateService: Mocked<TranslateService>;
     let accountService: AccountService;
 
     const mockTranslateService = {
-        instant: jest.fn(),
+        instant: vi.fn(),
     };
 
     beforeEach(() => {
@@ -36,13 +40,13 @@ describe('AgentChatService', () => {
 
         service = TestBed.inject(AgentChatService);
         httpMock = TestBed.inject(HttpTestingController);
-        translateService = TestBed.inject(TranslateService) as jest.Mocked<TranslateService>;
+        translateService = TestBed.inject(TranslateService) as Mocked<TranslateService>;
         accountService = TestBed.inject(AccountService);
 
         accountService.userIdentity.set({ id: 42, login: 'testuser' } as User);
 
         // Reset mocks
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     afterEach(() => {
@@ -113,7 +117,7 @@ describe('AgentChatService', () => {
             req.error(new ProgressEvent('Network error'));
 
             // Verify catchError worked - no error thrown, fallback response returned
-            expect(errorOccurred).toBeFalse();
+            expect(errorOccurred).toBeFalsy();
             expect(result.message).toBe(fallbackMessage);
             expect(translateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error');
         });
@@ -122,26 +126,34 @@ describe('AgentChatService', () => {
             const courseId = 123;
             const message = 'Test message';
 
-            it('should handle timeout after 30 seconds', fakeAsync(() => {
+            it('should handle timeout after 30 seconds', () => {
                 const expectedUrl = `api/atlas/agent/courses/${courseId}/chat`;
                 let result: any;
 
-                service.sendMessage(message, courseId).subscribe({
-                    next: (response) => {
-                        result = response;
-                    },
-                });
+                vi.useFakeTimers();
+                try {
+                    service.sendMessage(message, courseId).subscribe({
+                        next: (response) => {
+                            result = response;
+                        },
+                    });
 
-                httpMock.expectOne(expectedUrl);
+                    const req = httpMock.expectOne(expectedUrl);
 
-                // Simulate timeout by advancing time past 30 seconds
-                tick(30001);
+                    // Simulate timeout by advancing time past 30 seconds
+                    vi.advanceTimersByTime(30001);
+                    if (!req.cancelled) {
+                        req.error(new ErrorEvent('Timeout'));
+                    }
+                } finally {
+                    vi.useRealTimers();
+                }
 
                 // Assert - timeout should trigger catchError which returns fallback response
                 expect(result).toBeDefined();
-                expect(result.competenciesModified).toBeFalse();
+                expect(result.competenciesModified).toBeFalsy();
                 expect(translateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error');
-            }));
+            });
         });
 
         describe('HTTP request details', () => {
@@ -202,7 +214,7 @@ describe('AgentChatService', () => {
 
                 expect(result).toBeDefined();
                 expect(result.message).toBe('Translated error message');
-                expect(result.competenciesModified).toBeFalse();
+                expect(result.competenciesModified).toBeFalsy();
                 expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error');
             });
 
@@ -311,7 +323,7 @@ describe('AgentChatService', () => {
                 req.flush(mockResponse);
 
                 expect(result).toEqual(mockResponse);
-                expect(result.competenciesModified).toBeTrue();
+                expect(result.competenciesModified).toBeTruthy();
             });
         });
 
@@ -401,7 +413,7 @@ describe('AgentChatService', () => {
             req.error(new ProgressEvent('Network error'));
 
             // Verify catchError worked - no error thrown, empty array returned
-            expect(errorOccurred).toBeFalse();
+            expect(errorOccurred).toBeFalsy();
             expect(result).toEqual([]);
         });
 
@@ -458,11 +470,11 @@ describe('AgentChatService', () => {
 
             expect(result).toHaveLength(2);
             expect(result[0].content).toBe('Create a competency for OOP');
-            expect(result[0].isUser).toBeTrue();
+            expect(result[0].isUser).toBeTruthy();
             expect(result[0].competencyPreviews).toBeUndefined();
 
             expect(result[1].content).toBe("Here's your competency preview");
-            expect(result[1].isUser).toBeFalse();
+            expect(result[1].isUser).toBeFalsy();
             expect(result[1].competencyPreviews).toBeDefined();
             expect(result[1].competencyPreviews).toHaveLength(1);
             expect(result[1].competencyPreviews[0].competency.title).toBe('Object-Oriented Programming');
@@ -555,7 +567,7 @@ describe('AgentChatService', () => {
             req.flush(mockMixedHistory);
 
             expect(result).toHaveLength(6);
-            expect(result[0].isUser).toBeTrue();
+            expect(result[0].isUser).toBeTruthy();
             expect(result[1].competencyPreviews).toBeDefined();
             expect(result[3].competencyPreviews).toBeUndefined();
             expect(result[5].competencyPreviews).toBeDefined();
@@ -621,7 +633,7 @@ describe('AgentChatService', () => {
             const req = httpMock.expectOne(expectedUrl);
             req.flush(mockHistoryWithViewOnly);
 
-            expect(result[1].competencyPreviews[0].viewOnly).toBeTrue();
+            expect(result[1].competencyPreviews[0].viewOnly).toBeTruthy();
         });
 
         it('should handle history with multiple competencies with viewOnly flag', () => {
@@ -661,7 +673,7 @@ describe('AgentChatService', () => {
             const req = httpMock.expectOne(expectedUrl);
             req.flush(mockHistoryWithBatchViewOnly);
 
-            expect(result[1].competencyPreviews[0].viewOnly).toBeTrue();
+            expect(result[1].competencyPreviews[0].viewOnly).toBeTruthy();
             expect(result[1].competencyPreviews).toHaveLength(2);
         });
 
