@@ -83,6 +83,22 @@ spring:
         multiplier: 2.0
         max-interval: 30000ms
 ```
+
+### Token Usage Tracking
+
+Artemis tracks LLM token usage and costs per request. Configure model pricing under `artemis.llm.model-costs` to enable accurate cost reporting in admin dashboards.
+
+```yaml
+artemis:
+  llm:
+    model-costs:
+      gpt-5-mini:
+        input-cost-per-million-eur: 0.23
+        output-cost-per-million-eur: 1.84
+```
+
+Add entries for each model you use. The key must match the model name returned by your provider (without date suffixes like `-2024-07-18`). If a model has no cost entry, costs default to zero but token counts are still recorded.
+
 ### Observability (Optional)
 
 Enabling observability during development helps you understand how LLM-based features behave, why they produce certain outputs, and how to optimize them. Since LLMs are non-deterministic and sensitive to prompts, parameters, and context, traditional logging is often not enough.

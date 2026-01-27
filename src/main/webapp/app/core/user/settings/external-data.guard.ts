@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { CanActivate } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_ATHENA, PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, PROFILE_ATHENA, PROFILE_IRIS } from 'app/app.constants';
 
 /**
  * Guard to check if the route "/user-settings/external-data" can be activated.
@@ -22,7 +22,8 @@ export class ExternalDataGuard implements CanActivate {
     isUsingExternalLLM(): boolean {
         const isIrisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
         const isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+        const isHyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
-        return isIrisEnabled || isAthenaEnabled;
+        return isIrisEnabled || isAthenaEnabled || isHyperionEnabled;
     }
 }
