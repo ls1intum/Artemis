@@ -1,1 +1,31 @@
-<p>register-students works!</p>
+<div class="frame">
+    <div class="controls">
+        <p-iconfield class="search-field">
+            <p-inputicon class="pi pi-search" />
+            <input class="search-input" type="text" pInputText placeholder="Search by Name or Login" />
+        </p-iconfield>
+        <button pButton class="p-button-secondary p-button-sm" data-testid="import-button">Import</button>
+        <button pButton class="p-button-secondary p-button-sm" data-testid="export-button">Export</button>
+        <button pButton class="p-button-primary p-button-sm" data-testid="new-student-button">New Student</button>
+    </div>
+    <table>
+        <thead>
+            <tr class="header-row">
+                <th>Name</th>
+                <th>Login</th>
+                <th>Email</th>
+                <th>Registration Number</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!--
+            @for (student of students; track student.id) {
+                <tr>
+                    <td></td>
+                </tr>
+            }
+            -->
+        </tbody>
+    </table>
+</div>

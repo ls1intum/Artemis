@@ -1,0 +1,43 @@
+.frame {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    .controls {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+
+        .search-field {
+            flex: 1;
+
+            .search-input {
+                width: 100%;
+            }
+        }
+    }
+
+    .header-row {
+        display: flex;
+        border-bottom: 1px solid var(--border-color);
+
+        th {
+            padding-top: 0;
+            padding-bottom: 1rem;
+            white-space: normal;
+            overflow-wrap: break-word;
+        }
+
+        th:not(:last-child) {
+            flex: 1;
+        }
+    }
+
+    td {
+        width: 20%;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+        white-space: normal;
+        overflow-wrap: break-word;
+    }
+}
