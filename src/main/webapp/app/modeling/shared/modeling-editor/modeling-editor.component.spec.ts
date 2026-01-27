@@ -18,26 +18,31 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 // Mock the entire ApollonEditor class to prevent React initialization
 // This MUST be done before any imports that use ApollonEditor
+// Note: vi.mock is hoisted, so we cannot use imports like cloneDeep here
 vi.mock('@tumaet/apollon', async (importOriginal) => {
     const actual = await importOriginal<typeof import('@tumaet/apollon')>();
+
+    // Simple deep clone without external dependencies (vi.mock is hoisted)
+    const deepClone = <T>(obj: T): T => JSON.parse(JSON.stringify(obj));
+
     return {
         ...actual,
-        ApollonEditor: vi.fn().mockImplementation((container, options) => {
+        ApollonEditor: vi.fn().mockImplementation((container: HTMLElement, options?: { model?: any }) => {
             // Return a mock editor instance that tracks all interactions
             const mockEditor = {
-                _model: options?.model ? cloneDeep(options.model) : ({} as UMLModel),
-                _subscriptions: new Map<number, (model: UMLModel) => void>(),
+                _model: options?.model ? deepClone(options.model) : {},
+                _subscriptions: new Map<number, (model: any) => void>(),
                 _subscriptionCounter: 0,
                 _broadcastCallback: undefined as ((patch: string) => void) | undefined,
                 _destroyed: false,
                 get model() {
                     return this._model;
                 },
-                set model(value: UMLModel) {
+                set model(value: any) {
                     this._model = value;
-                    this._subscriptions.forEach((callback: (model: UMLModel) => void) => callback(this._model));
+                    this._subscriptions.forEach((callback: (model: any) => void) => callback(this._model));
                 },
-                subscribeToModelChange: vi.fn(function (this: any, callback: (model: UMLModel) => void) {
+                subscribeToModelChange: vi.fn(function (this: any, callback: (model: any) => void) {
                     const id = ++this._subscriptionCounter;
                     this._subscriptions.set(id, callback);
                     return id;
