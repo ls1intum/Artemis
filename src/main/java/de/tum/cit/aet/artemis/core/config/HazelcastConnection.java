@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.CacheConfiguration.HAZELCAST_ME
 import static de.tum.cit.aet.artemis.core.config.CacheConfiguration.HAZELCAST_MEMBER_TYPE_MEMBER;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGENT;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.net.UnknownHostException;
@@ -70,9 +71,6 @@ public class HazelcastConnection {
 
     @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
     private String instanceName;
-
-    @Value("${spring.hazelcast.build-agent-client-mode:false}")
-    private boolean buildAgentClientMode;
 
     public HazelcastConnection(DiscoveryClient discoveryClient, Optional<Registration> registration, Environment env) {
         this.discoveryClient = discoveryClient;
@@ -211,13 +209,16 @@ public class HazelcastConnection {
     }
 
     /**
-     * Checks if the current instance is running as a Hazelcast client (build agent client mode).
-     * Clients do not participate in cluster membership and manage their own connections.
+     * Checks if the current instance is running as a Hazelcast client.
+     * Build agents (without the core profile) always run as clients to isolate the core cluster
+     * from build agent failures and eliminate heartbeat overhead.
+     * Test profiles are excluded since build agent tests create a local Hazelcast instance.
      *
      * @return true if running as a Hazelcast client, false otherwise
      */
     private boolean isRunningAsClient() {
-        return buildAgentClientMode && env.acceptsProfiles(Profiles.of(PROFILE_BUILDAGENT)) && !env.acceptsProfiles(Profiles.of(PROFILE_CORE));
+        return env.acceptsProfiles(Profiles.of(PROFILE_BUILDAGENT)) && !env.acceptsProfiles(Profiles.of(PROFILE_CORE))
+                && !env.acceptsProfiles(Profiles.of(PROFILE_TEST_BUILDAGENT));
     }
 
     /**

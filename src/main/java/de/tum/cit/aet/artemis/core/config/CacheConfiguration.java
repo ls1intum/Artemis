@@ -42,6 +42,7 @@ import org.springframework.core.env.Profiles;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.client.config.ClientConnectionStrategyConfig;
+import com.hazelcast.client.impl.connection.tcp.RoutingMode;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.EvictionConfig;
 import com.hazelcast.config.EvictionPolicy;
@@ -135,18 +136,6 @@ public class CacheConfiguration {
     @Value("${spring.hazelcast.localInstances:true}")
     private boolean hazelcastLocalInstances;
 
-    /**
-     * When true, build agents connect as Hazelcast clients instead of cluster members.
-     * This isolates the core cluster from build agent failures and reduces heartbeat overhead.
-     * Core nodes are automatically discovered via the service registry.
-     *
-     * <p>
-     * Note: This setting is ignored when the same server runs both core and build agent profiles.
-     * In single-node deployments, client mode provides no benefit since there's no cluster separation.
-     */
-    @Value("${spring.hazelcast.build-agent-client-mode:false}")
-    private boolean buildAgentClientMode;
-
     public CacheConfiguration(ApplicationContext applicationContext, ServerProperties serverProperties, Optional<Registration> registration,
             @Lazy HazelcastConnection hazelcastConnection, Environment env) {
         this.applicationContext = applicationContext;
@@ -219,11 +208,14 @@ public class CacheConfiguration {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
 
         // ========================= BUILD AGENT CLIENT MODE =========================
-        // Build agents can connect as Hazelcast clients instead of cluster members.
+        // Build agents connect as Hazelcast clients instead of cluster members.
         // This isolates the core cluster from build agent failures and eliminates
         // heartbeat overhead between build agents and core nodes.
-        if (buildAgentClientMode && activeProfiles.contains(PROFILE_BUILDAGENT) && !activeProfiles.contains(PROFILE_CORE)) {
-            log.info("Build agent running in CLIENT mode - connecting to core cluster as client");
+        // Note: Single-node deployments (with both core and buildagent profiles) run as
+        // cluster members since client mode provides no benefit when there's no cluster separation.
+        // Note: Test profiles are excluded - build agent tests create a local Hazelcast instance.
+        if (activeProfiles.contains(PROFILE_BUILDAGENT) && !activeProfiles.contains(PROFILE_CORE) && !activeProfiles.contains(PROFILE_TEST_BUILDAGENT)) {
+            log.info("Build agent connecting to core cluster as Hazelcast client");
             return createHazelcastClient();
         }
         // ========================= END BUILD AGENT CLIENT MODE =========================
@@ -426,7 +418,7 @@ public class CacheConfiguration {
 
         // Network configuration for client
         clientConfig.getNetworkConfig().setConnectionTimeout(10000)  // 10 seconds connection timeout per attempt
-                .setSmartRouting(true);       // Enable smart routing to distribute load
+                .getClusterRoutingConfig().setRoutingMode(RoutingMode.ALL_MEMBERS);       // Enable smart routing to distribute load
 
         // Serialization - use same Path serializer as cluster members
         clientConfig.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
