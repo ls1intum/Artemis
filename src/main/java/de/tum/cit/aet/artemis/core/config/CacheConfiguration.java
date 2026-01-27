@@ -42,7 +42,7 @@ import org.springframework.core.env.Profiles;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.client.config.ClientConnectionStrategyConfig;
-import com.hazelcast.client.impl.connection.tcp.RoutingMode;
+import com.hazelcast.client.config.RoutingMode;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.EvictionConfig;
 import com.hazelcast.config.EvictionPolicy;
