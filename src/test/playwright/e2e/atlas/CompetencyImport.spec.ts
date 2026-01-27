@@ -42,8 +42,6 @@ test.describe('Competency Import', { tag: '@fast' }, () => {
 
         // Enable relation import
         await page.locator('#importRelations-checkbox').check();
-
-        // Search for source course by ID to ensure uniqueness
         await page.locator('#import-objects-search').fill(sourceCourse.title!.toString());
 
         // Wait for search results to update and select the correct course
