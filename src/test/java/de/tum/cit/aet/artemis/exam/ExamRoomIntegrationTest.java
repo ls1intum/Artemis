@@ -267,7 +267,7 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private void validateExamRoomOverview(ExamRoomOverviewDTO roomOverview, String... expectedNewRoomNames) {
-        if (roomOverview.newestUniqueExamRooms() == null) {
+        if (roomOverview.newestUniqueExamRooms() == null || roomOverview.newestUniqueExamRooms().isEmpty()) {
             assertThat(expectedNewRoomNames).isEmpty();
             return;
         }
