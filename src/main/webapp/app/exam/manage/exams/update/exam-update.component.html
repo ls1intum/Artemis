@@ -71,6 +71,16 @@
                         <jhi-working-time-change [oldWorkingTime]="oldWorkingTime" [newWorkingTime]="newWorkingTime" />
                     }
                 </div>
+                <hr />
+                <div>
+                    <jhi-confirm-entity-name
+                        confirmationText="artemisApp.examManagement.editWorkingTime.typeNameToConfirm"
+                        [entityName]="exam.title!"
+                        name="confirmEntityName"
+                        [ngModel]="confirmEntityNameValue()"
+                        (ngModelChange)="onConfirmNameChange($event)"
+                    />
+                </div>
             </ng-template>
             <div class="row mb-3 position-relative">
                 <div class="col-sm-4">
