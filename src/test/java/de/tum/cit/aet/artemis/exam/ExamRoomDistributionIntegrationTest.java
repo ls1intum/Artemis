@@ -276,7 +276,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
-    void testGetAttendanceCheckerInformationRegisteredStudentsWithModernDistribution() throws Exception {
+    void testGetAttendanceCheckerInformationRegisteredStudentsWithAutomaticDistribution() throws Exception {
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 10);
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileSingleExamRoom);
         List<Long> ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001")).stream().toList();
@@ -350,7 +350,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
-    void testGetAttendanceCheckerInformationRegisteredStudentsWithModernDistributionNotAllDistributed() throws Exception {
+    void testGetAttendanceCheckerInformationRegisteredStudentsWithAutomaticDistributionNotAllDistributed() throws Exception {
         uploadFourRoomsAndDistributeStudentsInExam1(10);
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 5);
 
