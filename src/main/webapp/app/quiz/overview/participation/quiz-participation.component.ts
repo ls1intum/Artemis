@@ -470,7 +470,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             // Rely on the grace period to store any unsaved changes at the end of the quiz
             if (!this.submission.submitted) {
                 this.stopAutoSave();
-                this.triggerSave(false);
+                this.triggerSave();
                 if (this.hasAnyAnswer() && this.quizExercise.quizMode !== QuizMode.SYNCHRONIZED) {
                     this.alertService.success('artemisApp.quizExercise.submitSuccess');
                 }
