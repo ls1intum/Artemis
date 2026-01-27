@@ -311,7 +311,7 @@ describe('RedirectToIrisButtonComponent', () => {
     }));
 
     it('should call setIrisStatus without parameters when checkIrisSettings is called with undefined channelDTO', () => {
-        const spySetIrisStatus = jest.spyOn(component as any, 'setIrisStatus');
+        const spySetIrisStatus = jest.spyOn(component as RedirectToIrisButtonComponent, 'setIrisStatus');
 
         (component as any).checkIrisSettings(undefined);
 
@@ -320,7 +320,7 @@ describe('RedirectToIrisButtonComponent', () => {
     });
 
     it('should call setIrisStatus without parameters when checkIrisSettings is called with null channelDTO', () => {
-        const spySetIrisStatus = jest.spyOn(component as any, 'setIrisStatus');
+        const spySetIrisStatus = jest.spyOn(component as RedirectToIrisButtonComponent, 'setIrisStatus');
 
         (component as any).checkIrisSettings(null);
 
