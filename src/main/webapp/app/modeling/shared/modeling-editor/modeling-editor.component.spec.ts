@@ -4,7 +4,7 @@ import { vi } from 'vitest';
 const { createMockApollonEditor } = vi.hoisted(() => {
     return {
         createMockApollonEditor: (options?: { model?: any }) => {
-            const deepClone = <T>(obj: T): T => (obj ? JSON.parse(JSON.stringify(obj)) : {});
+            const deepClone = (obj: any): any => (obj ? JSON.parse(JSON.stringify(obj)) : {});
             return {
                 _model: options?.model ? deepClone(options.model) : {},
                 _subscriptions: new Map<number, (model: any) => void>(),
