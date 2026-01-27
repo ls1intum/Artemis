@@ -780,6 +780,26 @@
                 "error": {
                     "export": "Unable to export programming exercise: {{ message }}"
                 }
+            },
+            "instructorChecklist": {
+                "title": "Instructor Checklist",
+                "analyze": "Analyze Problem Statement",
+                "analyzing": "Analyzing...",
+                "defaultMessage": "Click \"Analyze Problem Statement\" to check for quality issues and learning goals.",
+                "learningGoals": {
+                    "title": "Inferred Learning Goals",
+                    "empty": "No learning goals inferred."
+                },
+                "difficulty": {
+                    "title": "Difficulty Assessment",
+                    "suggested": "Suggested:",
+                    "match": "Match:"
+                },
+                "quality": {
+                    "title": "Quality Issues",
+                    "empty": "No quality issues found.",
+                    "fix": "Fix:"
+                }
             }
         },
         "error": {
