@@ -242,7 +242,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             return false;
         }
         if (this.selectedRepository === RepositoryType.AUXILIARY) {
-            return !(change.auxiliaryRepositoryId || change.auxiliaryRepositoryId === this.selectedRepositoryId);
+            return !change.auxiliaryRepositoryId && change.auxiliaryRepositoryId === this.selectedRepositoryId;
         }
         return true;
     }
