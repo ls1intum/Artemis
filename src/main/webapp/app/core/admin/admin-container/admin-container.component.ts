@@ -7,7 +7,7 @@ import { Subscription, filter } from 'rxjs';
 import { AdminSidebarComponent } from 'app/core/admin/admin-sidebar/admin-sidebar.component';
 import { AdminTitleBarComponent } from 'app/core/admin/shared/admin-title-bar/admin-title-bar.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LTI, MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN, PROFILE_LOCALCI } from 'app/app.constants';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
@@ -56,7 +56,7 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
         this.atlasEnabled.set(profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS));
         this.examEnabled.set(profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_EXAM));
         this.localCIActive.set(profileInfo.activeProfiles.includes(PROFILE_LOCALCI));
-        this.ltiEnabled.set(profileInfo.activeProfiles.includes(PROFILE_LTI));
+        this.ltiEnabled.set(profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_LTI));
         this.passkeyEnabled.set(profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PASSKEY));
         this.passkeyRequiredForAdmin.set(profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN));
         this.isSuperAdmin.set(this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_SUPER_ADMIN));

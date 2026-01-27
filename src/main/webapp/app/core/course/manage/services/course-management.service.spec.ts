@@ -173,7 +173,7 @@ describe('Course Management Service', () => {
             expect(courses).toEqual(mockResponse);
         });
 
-        const req = httpMock.expectOne(`${resourceUrl}/for-lti-dashboard?clientId=${mockClientId}`);
+        const req = httpMock.expectOne(`api/lti/courses/for-lti-dashboard?clientId=${mockClientId}`);
         expect(req.request.method).toBe('GET');
         req.flush(mockResponse);
     });
