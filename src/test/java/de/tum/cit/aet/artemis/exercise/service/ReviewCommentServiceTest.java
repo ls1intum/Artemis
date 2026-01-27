@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -25,12 +26,16 @@ import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadLocationType;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
+import de.tum.cit.aet.artemis.exercise.dto.review.ConsistencyIssueCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
 import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewCommentService;
 import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewCommentService.LineMappingResult;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
+import de.tum.cit.aet.artemis.hyperion.domain.Severity;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -72,7 +77,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
     void initTest() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
         programmingExercise.setProblemStatement("Line 1\nLine 2\nLine 3");
         programmingExerciseRepository.save(programmingExercise);
@@ -88,7 +93,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
     void shouldReturnThreadsWhenInstructorRequestsByExerciseId() {
         CommentThread thread = persistThread(programmingExercise);
         Course otherCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
-        ProgrammingExercise otherExercise = exerciseUtilService.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
+        ProgrammingExercise otherExercise = ExerciseUtilService.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
         persistThread(otherExercise);
 
         List<CommentThread> threads = exerciseReviewCommentService.findThreadsByExerciseId(programmingExercise.getId());
@@ -162,7 +167,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRejectThreadWithMismatchedExercise() {
         Course otherCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
-        ProgrammingExercise otherExercise = exerciseUtilService.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
+        ProgrammingExercise otherExercise = ExerciseUtilService.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
         CommentThread thread = buildThread();
         thread.setExercise(otherExercise);
 
@@ -230,6 +235,18 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldCountCommentsByThreadId() {
+        CommentThread thread = exerciseReviewCommentService.createThread(programmingExercise.getId(), buildThread());
+        exerciseReviewCommentService.createComment(thread.getId(), buildUserComment("First"));
+        exerciseReviewCommentService.createComment(thread.getId(), buildUserComment("Second"));
+
+        long count = commentRepository.countByThreadId(thread.getId());
+
+        assertThat(count).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldUpdateThreadResolvedState() {
         CommentThread thread = exerciseReviewCommentService.createThread(programmingExercise.getId(), buildThread());
 
@@ -238,6 +255,44 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         assertThat(updated.isResolved()).isTrue();
         CommentThread persisted = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(persisted.isResolved()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldLoadThreadWithCommentsById() {
+        CommentThread thread = exerciseReviewCommentService.createThread(programmingExercise.getId(), buildThread());
+        exerciseReviewCommentService.createComment(thread.getId(), buildUserComment("First"));
+
+        Optional<CommentThread> loaded = commentThreadRepository.findWithCommentsById(thread.getId());
+
+        assertThat(loaded).isPresent();
+        assertThat(loaded.get().getComments()).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldLoadThreadsWithCommentsByExerciseId() {
+        CommentThread thread = exerciseReviewCommentService.createThread(programmingExercise.getId(), buildThread());
+        exerciseReviewCommentService.createComment(thread.getId(), buildUserComment("First"));
+
+        List<CommentThread> threads = commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId());
+
+        assertThat(threads).hasSize(1);
+        assertThat(threads.getFirst().getComments()).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldLoadCommentWithThreadAndExercise() {
+        CommentThread thread = exerciseReviewCommentService.createThread(programmingExercise.getId(), buildThread());
+        Comment comment = exerciseReviewCommentService.createComment(thread.getId(), buildUserComment("Initial"));
+
+        Comment loaded = commentRepository.findWithThreadById(comment.getId()).orElseThrow();
+
+        assertThat(loaded.getThread()).isNotNull();
+        assertThat(loaded.getThread().getExercise()).isNotNull();
+        assertThat(loaded.getThread().getExercise().getId()).isEqualTo(programmingExercise.getId());
+        assertThat(loaded.getAuthor()).isNotNull();
     }
 
     @Test
@@ -252,6 +307,27 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         assertThat(updated.getContent()).isInstanceOf(UserCommentContentDTO.class);
         assertThat(((UserCommentContentDTO) updated.getContent()).text()).isEqualTo("Updated");
         assertThat(updated.getLastModifiedDate()).isAfterOrEqualTo(previousModified);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectCommentWithoutType() {
+        CommentThread thread = exerciseReviewCommentService.createThread(programmingExercise.getId(), buildThread());
+        Comment comment = new Comment();
+        comment.setContent(new UserCommentContentDTO("Missing type"));
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exerciseReviewCommentService.createComment(thread.getId(), comment));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectCommentWithMismatchedContentType() {
+        CommentThread thread = exerciseReviewCommentService.createThread(programmingExercise.getId(), buildThread());
+        Comment comment = new Comment();
+        comment.setType(CommentType.USER);
+        comment.setContent(new ConsistencyIssueCommentContentDTO(Severity.LOW, ConsistencyIssueCategory.METHOD_RETURN_TYPE_MISMATCH, "wrong", null));
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exerciseReviewCommentService.createComment(thread.getId(), comment));
     }
 
     @Test

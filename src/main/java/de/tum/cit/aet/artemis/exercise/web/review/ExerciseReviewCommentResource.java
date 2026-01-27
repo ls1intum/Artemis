@@ -212,9 +212,26 @@ public class ExerciseReviewCommentResource {
         if (dto.initialFilePath() == null || dto.initialLineNumber() == null) {
             throw new BadRequestAlertException("Initial file path and line number are required", THREAD_ENTITY_NAME, "initialLocationMissing");
         }
+        if (dto.targetType() != CommentThreadLocationType.AUXILIARY_REPO && dto.auxiliaryRepositoryId() != null) {
+            throw new BadRequestAlertException("Auxiliary repository id is only allowed for auxiliary repository threads", THREAD_ENTITY_NAME, "auxiliaryRepositoryNotAllowed");
+        }
+        if (dto.targetType() == CommentThreadLocationType.AUXILIARY_REPO && dto.auxiliaryRepositoryId() == null) {
+            throw new BadRequestAlertException("Auxiliary repository id is required for auxiliary repository threads", THREAD_ENTITY_NAME, "auxiliaryRepositoryMissing");
+        }
         if (dto.targetType() != CommentThreadLocationType.PROBLEM_STATEMENT) {
             if (dto.filePath() == null || dto.lineNumber() == null) {
                 throw new BadRequestAlertException("File path and line number are required for repository threads", THREAD_ENTITY_NAME, "locationMissing");
+            }
+            if (!dto.filePath().equals(dto.initialFilePath()) || !dto.lineNumber().equals(dto.initialLineNumber())) {
+                throw new BadRequestAlertException("Initial and current location must match when creating repository threads", THREAD_ENTITY_NAME, "initialLocationMismatch");
+            }
+        }
+        if (dto.targetType() == CommentThreadLocationType.PROBLEM_STATEMENT) {
+            if (dto.filePath() != null && !dto.filePath().equals(dto.initialFilePath())) {
+                throw new BadRequestAlertException("Initial and current file path must match for problem statement threads", THREAD_ENTITY_NAME, "initialFilePathMismatch");
+            }
+            if (dto.lineNumber() != null && !dto.lineNumber().equals(dto.initialLineNumber())) {
+                throw new BadRequestAlertException("Initial and current line number must match for problem statement threads", THREAD_ENTITY_NAME, "initialLineNumberMismatch");
             }
         }
     }
