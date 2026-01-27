@@ -144,6 +144,13 @@ artemis:
             allowed-cidrs:
                 - ::/0
                 - 0.0.0.0/0
+    weaviate:
+        enabled: false                    # Disabled by default; set to true to enable Weaviate integration
+        host: localhost                   # Weaviate server hostname
+        port: 8001                        # Weaviate HTTP port (avoid conflicts with main app)
+        grpc-port: 50051                  # Weaviate gRPC port for better performance
+        secure: false                     # Use HTTP in development
+        scheme: http                      # http scheme for development
 
 # Needs to be provided so Sentry's LogbackAppender picks up a sensible configuration
 sentry:
