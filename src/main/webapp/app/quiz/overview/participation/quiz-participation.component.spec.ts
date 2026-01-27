@@ -338,7 +338,7 @@ describe('QuizParticipationComponent - live mode', () => {
         vi.useRealTimers();
     });
 
-    it('should auto-submit on quiz end if the answers were not submitted', () => {
+    it('should trigger a save on quiz end if the answers were not submitted', () => {
         vi.useFakeTimers();
         fixture.detectChanges();
 
@@ -346,16 +346,15 @@ describe('QuizParticipationComponent - live mode', () => {
         component.quizExercise.quizMode = QuizMode.BATCHED;
         component.submission.submissionDate = dayjs();
         component.submission.submitted = false;
-        component.selectedAnswerOptions = new Map<number, AnswerOption[]>([[2, [{} as AnswerOption]]]);
 
-        const autoSubmitOnTimeout = vi.spyOn(component, 'autoSubmitOnTimeout').mockImplementation(() => {});
+        const triggerSaveStub = vi.spyOn(component, 'triggerSave').mockImplementation(() => {});
         const checkQuizEndSpy = vi.spyOn(component, 'checkForQuizEnd');
 
         vi.advanceTimersByTime(2000);
         // Don't call fixture.detectChanges() here - spies capture calls synchronously
 
         expect(checkQuizEndSpy).toHaveBeenCalledTimes(20);
-        expect(autoSubmitOnTimeout).toHaveBeenCalledOnce();
+        expect(triggerSaveStub).toHaveBeenCalledOnce();
         vi.useRealTimers();
     });
 
@@ -525,30 +524,24 @@ describe('QuizParticipationComponent - live mode', () => {
         expect(component.shouldTreatAsSubmittedForUi).toBe(false);
     });
 
-    it('autoSubmitOnTimeout should return early when already submitting', () => {
-        component.isSubmitting = true;
+    it('shouldTreatAsSubmittedForUi should be true after timeout if submissionDate exists even without answers', () => {
         component.submission.submitted = false;
+        component.remainingTimeSeconds = -1;
 
-        const applySelectionSpy = vi.spyOn(component, 'applySelection');
-        const saveSpy = vi.spyOn(TestBed.inject(QuizParticipationService), 'saveOrSubmitForLiveMode');
+        vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(false);
+        component.submission.submissionDate = dayjs();
 
-        component.autoSubmitOnTimeout();
-
-        expect(applySelectionSpy).not.toHaveBeenCalled();
-        expect(saveSpy).not.toHaveBeenCalled();
+        expect(component.shouldTreatAsSubmittedForUi).toBe(true);
     });
 
-    it('autoSubmitOnTimeout should return early when already submitted', () => {
-        component.isSubmitting = false;
-        component.submission.submitted = true;
+    it('shouldTreatAsSubmittedForUi should be true after timeout if submission id exists even without answers', () => {
+        component.submission.submitted = false;
+        component.remainingTimeSeconds = -1;
 
-        const applySelectionSpy = vi.spyOn(component, 'applySelection');
-        const saveSpy = vi.spyOn(TestBed.inject(QuizParticipationService), 'saveOrSubmitForLiveMode');
+        vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(false);
+        component.submission.id = 42;
 
-        component.autoSubmitOnTimeout();
-
-        expect(applySelectionSpy).not.toHaveBeenCalled();
-        expect(saveSpy).not.toHaveBeenCalled();
+        expect(component.shouldTreatAsSubmittedForUi).toBe(true);
     });
 });
 

@@ -470,9 +470,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             // Rely on the grace period to store any unsaved changes at the end of the quiz
             if (!this.submission.submitted) {
                 this.stopAutoSave();
-                // Unmodified or empty submissions should not be auto-submitted on timeout.
-                if (this.hasAnyAnswer()) {
-                    this.autoSubmitOnTimeout();
+                this.triggerSave(false);
+                if (this.hasAnyAnswer() && this.quizExercise.quizMode !== QuizMode.SYNCHRONIZED) {
+                    this.alertService.success('artemisApp.quizExercise.submitSuccess');
                 }
             }
         }
@@ -815,46 +815,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Finalizes the quiz submission when the working time expires.
-     *
-     * This method performs a final submit of the current answers to ensure that
-     * saved-but-unsubmitted quiz submissions do not remain in an intermediate
-     * state after the timeout.
-     */
-    autoSubmitOnTimeout(): void {
-        if (this.isSubmitting || this.submission.submitted) {
-            return;
-        }
-
-        this.isSubmitting = true;
-
-        this.applySelection();
-        this.submission.submissionDate = this.serverDateService.now();
-
-        const quizSubmission = new QuizSubmission();
-        quizSubmission.submittedAnswers = this.submission.submittedAnswers;
-
-        this.quizParticipationService
-            .saveOrSubmitForLiveMode(quizSubmission, this.quizId, true)
-            .pipe(take(1))
-            .subscribe({
-                next: (response: HttpResponse<QuizSubmission>) => {
-                    this.submission = response.body!;
-                    this.isSubmitting = false;
-                    this.unsavedChanges = false;
-                    this.updateSubmissionTime();
-                    this.applySubmission();
-                    // Show the same success banner as for a manual submit to keep the UI behavior
-                    // consistent after an automatic submission triggered by a timeout.
-                    if (this.quizExercise.quizMode !== QuizMode.SYNCHRONIZED) {
-                        this.alertService.success('artemisApp.quizExercise.submitSuccess');
-                    }
-                },
-                error: (error: HttpErrorResponse) => this.onSubmitError(error),
-            });
-    }
-
-    /**
      * update the value for adjustedSubmissionDate in submission
      */
     updateSubmissionTime() {
@@ -1109,8 +1069,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * This is the case if either:
      * <ul>
      *   <li>the submission has already been marked as submitted by the server, or</li>
-     *   <li>the quiz working time has expired and the student has provided at least
-     *       one answer</li>
+     *   <li>the quiz working time has expired and the submission shows evidence of user interaction
+     *       (e.g. at least one answer was given, or the submission has already been saved or created)</li>
      * </ul>
      *
      * @returns `true` if the submission should be considered submitted in the UI;
@@ -1118,6 +1078,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
 
     get shouldTreatAsSubmittedForUi(): boolean {
-        return this.submission.submitted || (this.remainingTimeSeconds < 0 && this.hasAnyAnswer());
+        const hasSavedOrAnswered = this.hasAnyAnswer() || !!this.submission?.submissionDate || !!this.submission?.id;
+        return this.submission.submitted || (this.remainingTimeSeconds < 0 && hasSavedOrAnswered);
     }
 }
