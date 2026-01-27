@@ -308,10 +308,10 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
-    void testGetExamRoomOverviewSingleRoomRepeated() throws Exception {
+    void testGetExamRoomOverviewSingleRoomRepeatedlyUploaded() throws Exception {
         final int ITERATIONS = 3;
         for (int i = 0; i < ITERATIONS; i++) {
-            request.postMultipartFileOnly("/api/exam/rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoomRepeated, HttpStatus.OK);
+            request.postMultipartFileOnly("/api/exam/rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.OK);
         }
 
         var roomOverview = request.get("/api/exam/rooms/overview", HttpStatus.OK, ExamRoomOverviewDTO.class);
