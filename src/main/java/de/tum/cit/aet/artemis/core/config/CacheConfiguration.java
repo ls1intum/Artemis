@@ -271,6 +271,51 @@ public class CacheConfiguration {
         ClusterProperty.MERGE_FIRST_RUN_DELAY_SECONDS.setSystemProperty("30");
         ClusterProperty.MERGE_NEXT_RUN_DELAY_SECONDS.setSystemProperty("30");
 
+        // ===================== Cluster Stability Configuration =====================
+        // These settings prevent cascading failures when individual members become unresponsive.
+        // See: https://docs.hazelcast.com/hazelcast/5.5/clusters/failure-detector-configuration
+
+        // Use Phi Accrual failure detector instead of deadline-based detection.
+        // Phi Accrual is adaptive and calculates suspicion probability based on historical
+        // heartbeat patterns, making it more resilient to temporary GC pauses or network hiccups.
+        config.setProperty("hazelcast.heartbeat.failuredetector.type", "phi-accrual");
+        // Suspicion threshold: lower = more aggressive (default 10, range 1-16)
+        // Value of 8 provides faster detection while still tolerating brief delays
+        config.setProperty("hazelcast.heartbeat.phiaccrual.failuredetector.threshold", "8");
+        // Number of heartbeat samples to keep for calculating variance (default 200)
+        config.setProperty("hazelcast.heartbeat.phiaccrual.failuredetector.sample.size", "100");
+        // Minimum standard deviation in milliseconds (default 100)
+        config.setProperty("hazelcast.heartbeat.phiaccrual.failuredetector.min.std.dev.millis", "100");
+
+        // Heartbeat configuration - reduced from defaults for faster detection
+        // Heartbeat interval: how often heartbeats are sent (default 5 seconds)
+        ClusterProperty.HEARTBEAT_INTERVAL_SECONDS.setSystemProperty("5");
+        // Maximum time without heartbeat before suspecting a member (default 60 seconds)
+        // With phi-accrual detector, this acts as an absolute upper bound
+        ClusterProperty.MAX_NO_HEARTBEAT_SECONDS.setSystemProperty("15");
+
+        // Operation timeouts - prevent threads from blocking too long on unresponsive members
+        // Timeout for remote operations (default 60000ms) - reduced to fail faster
+        ClusterProperty.OPERATION_CALL_TIMEOUT_MILLIS.setSystemProperty("15000");
+        // Timeout for backup acknowledgments (default 5000ms)
+        ClusterProperty.OPERATION_BACKUP_TIMEOUT_MILLIS.setSystemProperty("5000");
+
+        // Invocation retry configuration - fail faster instead of retrying indefinitely
+        // Maximum retry count for failed invocations (default ~250)
+        ClusterProperty.INVOCATION_MAX_RETRY_COUNT.setSystemProperty("5");
+        // Pause between retries in milliseconds (default 500)
+        ClusterProperty.INVOCATION_RETRY_PAUSE.setSystemProperty("1000");
+
+        // Slow operation detection - helps identify problematic operations
+        // Threshold for logging slow operations (default 10000ms)
+        ClusterProperty.SLOW_OPERATION_DETECTOR_THRESHOLD_MILLIS.setSystemProperty("5000");
+        // How long to retain slow operation logs (default 60 seconds)
+        ClusterProperty.SLOW_OPERATION_DETECTOR_LOG_RETENTION_SECONDS.setSystemProperty("300");
+
+        // Connection timeouts
+        config.setProperty("hazelcast.socket.connect.timeout.seconds", "5");
+        // ===================== End Cluster Stability Configuration =====================
+
         // only add the queue config if the profile "localci" is active
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         if (activeProfiles.contains(PROFILE_LOCALCI) || activeProfiles.contains(PROFILE_BUILDAGENT)) {

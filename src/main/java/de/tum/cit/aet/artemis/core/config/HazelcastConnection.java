@@ -3,8 +3,11 @@ package de.tum.cit.aet.artemis.core.config;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.net.UnknownHostException;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
 
@@ -105,8 +108,9 @@ public class HazelcastConnection {
     /**
      * This scheduled task regularly checks if all members of the Hazelcast cluster are connected to each other.
      * This is one counter measure against a split cluster.
+     * It also logs warnings for potential stale members (in Hazelcast but not in registry).
      */
-    @Scheduled(fixedRate = 10, initialDelay = 10, timeUnit = TimeUnit.SECONDS)
+    @Scheduled(fixedDelay = 10, initialDelay = 10, timeUnit = TimeUnit.SECONDS)
     public void connectToAllMembers() {
         if (registration.isEmpty() || env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
             return;
@@ -124,17 +128,37 @@ public class HazelcastConnection {
             catch (UnknownHostException e) {
                 return "unknown";
             }
-        }).toList();
+        }).collect(Collectors.toSet());
 
         var instances = discoveryClient.getInstances(registration.get().getServiceId());
-        log.debug("Current {} Registry members: {}", instances.size(), instances.stream().map(ServiceInstance::getHost).toList());
+
+        // Build set of registry member addresses (cleaned for IPv6 bracket handling)
+        Set<String> registryMemberAddresses = new HashSet<>();
+        for (ServiceInstance instance : instances) {
+            registryMemberAddresses.add(instance.getHost().replace("[", "").replace("]", ""));
+        }
+
+        log.debug("Current {} Registry members: {}", instances.size(), registryMemberAddresses);
         log.debug("Current {} Hazelcast members: {}", hazelcastMemberAddresses.size(), hazelcastMemberAddresses);
 
+        // Check for members in registry but not in Hazelcast (need to add)
         for (ServiceInstance instance : instances) {
-            // Workaround for IPv6 addresses, as they are enclosed in brackets
             var instanceHostClean = instance.getHost().replace("[", "").replace("]", "");
-            if (hazelcastMemberAddresses.stream().noneMatch(member -> member.equals(instanceHostClean))) {
+            if (!hazelcastMemberAddresses.contains(instanceHostClean)) {
                 addHazelcastClusterMember(instance, hazelcastInstance.getConfig());
+            }
+        }
+
+        // Check for members in Hazelcast but not in registry (potentially stale/zombie members)
+        // This can indicate a member that crashed without proper deregistration
+        for (String hazelcastMember : hazelcastMemberAddresses) {
+            if (!"unknown".equals(hazelcastMember) && !registryMemberAddresses.contains(hazelcastMember)) {
+                // Don't log warning for own address
+                String ownHost = registration.get().getHost().replace("[", "").replace("]", "");
+                if (!hazelcastMember.equals(ownHost)) {
+                    log.warn("Hazelcast member {} is not registered in service registry - may be a stale/zombie member. "
+                            + "If this persists, the member may have crashed without proper deregistration.", hazelcastMember);
+                }
             }
         }
     }
