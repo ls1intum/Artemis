@@ -30,7 +30,7 @@ export interface NumberOfAvailable {
 }
 
 export interface ExamRoomOverviewDTO {
-    newestUniqueExamRooms: ExamRoomDTO[];
+    newestUniqueExamRooms?: ExamRoomDTO[];
 }
 
 export interface ExamRoomDeletionSummaryDTO {
