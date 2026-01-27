@@ -546,7 +546,15 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     private renderCitationNavHtml(count: number): string {
-        return `<span class="iris-citation__nav"><span class="iris-citation__nav-button iris-citation__nav-button--prev" role="button" tabindex="0" aria-label="Previous citation">‹</span><span class="iris-citation__nav-count">1/${count}</span><span class="iris-citation__nav-button iris-citation__nav-button--next" role="button" tabindex="0" aria-label="Next citation">›</span></span>`;
+        return `<span class="iris-citation__nav">
+            <span class="iris-citation__nav-button iris-citation__nav-button--prev" role="button" tabindex="0" aria-label="Previous citation">
+                <span class="iris-citation__nav-icon iris-citation__nav-icon--prev" aria-hidden="true"></span>
+            </span>
+            <span class="iris-citation__nav-count">1/${count}</span>
+            <span class="iris-citation__nav-button iris-citation__nav-button--next" role="button" tabindex="0" aria-label="Next citation">
+                <span class="iris-citation__nav-icon iris-citation__nav-icon--next" aria-hidden="true"></span>
+            </span>
+        </span>`;
     }
 
     private formatGroupSummaryItem(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
