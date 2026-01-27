@@ -2,13 +2,15 @@ import { test } from '../../support/fixtures';
 import { admin } from '../../support/users';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { expect } from '@playwright/test';
+import { Competency } from 'app/atlas/shared/entities/competency.model';
+import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 
 test.describe('Competency Import', { tag: '@fast' }, () => {
     let sourceCourse: Course;
     let targetCourse: Course;
-    let competency1: any;
-    let competency2: any;
-    let prerequisite: any;
+    let competency1: Competency;
+    let competency2: Competency;
+    let prerequisite: Prerequisite;
 
     test.beforeEach(async ({ login, courseManagementAPIRequests }) => {
         await login(admin);
@@ -21,7 +23,7 @@ test.describe('Competency Import', { tag: '@fast' }, () => {
         prerequisite = await courseManagementAPIRequests.createPrerequisite(sourceCourse, 'Source Prerequisite');
 
         // Create relation: competency1 EXTENDS competency2
-        await courseManagementAPIRequests.createCompetencyRelation(sourceCourse, competency1.id, competency2.id, 'EXTENDS');
+        await courseManagementAPIRequests.createCompetencyRelation(sourceCourse, competency1.id!, competency2.id!, 'EXTENDS');
     });
 
     test.afterEach(async ({ courseManagementAPIRequests }) => {
@@ -56,9 +58,9 @@ test.describe('Competency Import', { tag: '@fast' }, () => {
         }
 
         // Verify imported entities in the list
-        await expect(page.getByRole('link', { name: competency1.title })).toBeVisible();
-        await expect(page.getByRole('link', { name: competency2.title })).toBeVisible();
-        await expect(page.getByRole('link', { name: prerequisite.title })).toBeVisible();
+        await expect(page.getByRole('link', { name: competency1.title! })).toBeVisible();
+        await expect(page.getByRole('link', { name: competency2.title! })).toBeVisible();
+        await expect(page.getByRole('link', { name: prerequisite.title! })).toBeVisible();
 
         // Verify relation
         await page.getByRole('button', { name: 'Edit relations' }).click();
@@ -67,8 +69,8 @@ test.describe('Competency Import', { tag: '@fast' }, () => {
         await expect(page.locator('jhi-course-competencies-relation-graph')).toBeVisible();
 
         // Select the imported competencies to verify the relation exists
-        await page.selectOption('#head', { label: competency2.title });
-        await page.selectOption('#tail', { label: competency1.title });
+        await page.selectOption('#head', { label: competency2.title! });
+        await page.selectOption('#tail', { label: competency1.title! });
 
         // If relation exists, we should see "Delete relation" button
         await expect(page.getByRole('button', { name: 'Delete relation' })).toBeVisible();
@@ -86,7 +88,7 @@ test.describe('Competency Import', { tag: '@fast' }, () => {
 
         // Select only competency1
         await page
-            .getByRole('row', { name: '' + competency1.id + ' ' + competency1.title })
+            .getByRole('row', { name: '' + competency1.id! + ' ' + competency1.title! })
             .getByRole('button', { name: 'Select' })
             .click();
 
@@ -100,7 +102,7 @@ test.describe('Competency Import', { tag: '@fast' }, () => {
         }
 
         // Verify competency1 is imported but competency2 is not
-        await expect(page.getByRole('link', { name: competency1.title })).toBeVisible();
-        await expect(page.getByRole('link', { name: competency2.title })).not.toBeVisible();
+        await expect(page.getByRole('link', { name: competency1.title! })).toBeVisible();
+        await expect(page.getByRole('link', { name: competency2.title! })).not.toBeVisible();
     });
 });
