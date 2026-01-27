@@ -333,7 +333,7 @@
                 gap: 4px;
                 padding: 2px 6px;
                 border-radius: 999px;
-                background-color: var(--gray-300);
+                background-color: var(--iris-rate-background);
                 font-size: 0.85em;
                 line-height: 1.2;
                 vertical-align: middle;
@@ -352,10 +352,10 @@
                 justify-content: center;
                 padding: 2px 6px;
                 border-radius: 999px;
-                background-color: var(--gray-500);
+                background-color: var(--iris-chat-citation-aggregation);
                 font-size: 0.85em;
                 line-height: 1.2;
-                color: var(--gray-300);
+                color: var(--iris-rate-background);
                 pointer-events: none;
                 margin-left: -7px;
             }
@@ -368,8 +368,7 @@
                 max-width: 70vw;
                 padding: 8px 10px;
                 border-radius: 8px;
-                background-color: var(--gray-300);
-                border: none;
+                background-color: var(--iris-rate-background);
                 box-shadow: none;
                 font-size: 1em;
                 line-height: 1.4;
@@ -399,7 +398,7 @@
             .iris-citation__summary-meta {
                 font-size: 0.7rem;
                 line-height: 1.2;
-                color: var(--gray-600);
+                color: var(--iris-chat-history-label-color);
             }
 
             .iris-citation--has-summary:hover,
@@ -455,7 +454,7 @@
                 line-height: 1.4;
                 cursor: pointer;
                 user-select: none;
-                color: var(--gray-600);
+                color: var(--iris-chat-history-label-color);
                 font-size: 0;
             }
 
@@ -479,11 +478,11 @@
             }
 
             .iris-citation__nav-button:hover {
-                background: rgba(0, 0, 0, 0.08);
+                background-color: var(--iris-chat-header-button-background);
             }
 
             .iris-citation__nav-button:focus-visible {
-                outline: 2px solid rgba(0, 0, 0, 0.25);
+                outline: 2px solid var(--iris-chat-header-button-background);
                 outline-offset: 1px;
             }
 
@@ -503,7 +502,7 @@
                 width: 20px;
                 height: 20px;
                 border-radius: 50%;
-                background-color: var(--gray-600);
+                background-color: var(--iris-chat-history-label-color);
                 display: grid;
                 place-items: center;
                 flex-shrink: 0;
@@ -548,7 +547,7 @@
 
             .iris-citation--source .iris-citation__icon::before {
                 content: '!';
-                color: var(--gray-600);
+                color: var(--iris-chat-history-label-color);
             }
         }
     }
