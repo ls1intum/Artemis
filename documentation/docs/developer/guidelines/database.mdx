@@ -3,6 +3,10 @@ import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 
 # Database
 
+<Callout variant={CalloutVariant.info}>
+  <strong>Important:</strong> For REST API design and Data Transfer Objects (DTOs), see the <a href="/developer/guidelines/rest-api">REST API Guidelines</a>. Entities must never be used directly in REST API request or response bodies.
+</Callout>
+
 ## Structural Migration with Liquibase
 
 To prevent accidental irreversible database modifications, we use [Liquibase](https://docs.liquibase.com/home.html) to prepare changes when developing that can be confirmed in the review process.
@@ -269,6 +273,73 @@ If the source entity is refreshed, it cascades the refresh to the target of the 
 
 <Callout variant={CalloutVariant.info}>
   This cascade type is not used in Artemis yet.
+</Callout>
+
+## Saving and Deleting Entities with Cascade and OrphanRemoval
+
+When using `CascadeType.REMOVE` and `orphanRemoval = true` on `@OneToMany` relationships, special care must be taken
+to properly save new child entities and delete parent entities, especially when Hibernate L2 cache is enabled.
+
+### Saving New Child Entities
+
+When adding a new child entity to a parent's collection with `CascadeType.REMOVE` and `orphanRemoval = true`:
+
+1. Set the child's reference to the parent: `child.setParent(parent)`
+2. Save the child entity via its repository: `childRepository.save(child)`
+3. Add to the parent's collection for in-memory consistency: `parent.addChild(child)`
+
+The foreign key is on the child side, so the parent does NOT need to be saved again after adding a child (assuming the parent is managed in the current persistence context; otherwise merge/save it).
+
+```java
+// Example: Adding a submission to a participation
+submission.setParticipation(participation);
+submission = submissionRepository.save(submission);
+participation.addSubmission(submission);  // For in-memory consistency only
+```
+
+### Deleting Parent Entities with Cached Collections
+
+When explicitly deleting child entities before deleting a parent entity, you must reload the parent
+with its collection to refresh the L2 cache. Without this step, Hibernate's cascade mechanism will
+load stale references from the L2 cache and throw `EntityNotFoundException`.
+
+**The Problem:**
+
+1. You explicitly delete child entities (e.g., via `childRepository.deleteById()`)
+2. The L2 cache still contains the old collection with references to deleted children
+3. When you delete the parent, cascade tries to process the collection
+4. Hibernate loads the collection from L2 cache (stale data)
+5. `EntityNotFoundException` is thrown for already-deleted children
+
+**The Solution:**
+
+After deleting children explicitly, reload the parent entity with its collection before deleting:
+
+```java
+// Example: Deleting a participation with its submissions
+public void delete(long participationId) {
+    // Step 1: Delete children explicitly (for special cleanup like build logs)
+    deleteSubmissionsOfParticipation(participationId);
+
+    // Step 2: Reload parent WITH the collection to refresh L2 cache
+    // The collection will now be empty since children were deleted
+    var participation = participationRepository.findByIdWithSubmissionsElseThrow(participationId);
+
+    // Step 3: Delete the parent - cascade has nothing to do
+    participationRepository.delete(participation);
+}
+```
+
+This pattern is used in several places in Artemis:
+
+* `ParticipationDeletionService.delete()` - reloads participation with submissions
+* `ExampleParticipationService.deleteById()` - reloads example participation with submissions
+* `ExerciseDeletionService` - reloads exercise with participations
+* `ProgrammingExerciseDeletionService` - reloads exercise with participations
+
+<Callout variant={CalloutVariant.danger}>
+  Do NOT skip the reload step when using <code>CascadeType.REMOVE</code> with L2 cache. The stale cache
+  references will cause <code>EntityNotFoundException</code> during cascade processing.
 </Callout>
 
 ## Dynamic Fetching
