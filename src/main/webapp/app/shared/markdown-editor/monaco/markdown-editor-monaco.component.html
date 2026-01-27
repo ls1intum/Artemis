@@ -1,12 +1,12 @@
-<div #fullElement class="h-100">
+<div #fullElement class="h-100 d-flex flex-column">
     @if (showMarkdownInfoText()) {
-        <div class="pb-1 text-muted small" jhiTranslate="artemisApp.markdownEditor.infoText"></div>
+        <div class="pb-1 text-muted small flex-shrink-0" jhiTranslate="artemisApp.markdownEditor.infoText"></div>
     }
     <div
         #wrapper
-        class="markdown-editor-wrapper"
+        class="markdown-editor-wrapper flex-grow-1"
         [style.overflow]="inEditMode ? 'visible' : 'auto'"
-        [style.height.px]="inEditMode ? targetWrapperHeight : undefined"
+        [style.height]="inEditMode && targetWrapperHeight ? targetWrapperHeight + 'px' : 'auto'"
         [style.cursor]="isResizing ? 'ns-resize' : undefined"
         [style.min-height.px]="minWrapperHeight"
     >
