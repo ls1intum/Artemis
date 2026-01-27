@@ -386,8 +386,20 @@
                     visibility 120ms ease;
                 display: flex;
                 flex-direction: column;
+                align-items: center;
                 gap: 8px;
                 z-index: 2;
+            }
+
+            .iris-citation__summary-keyword {
+                font-size: 0.95rem;
+                font-weight: 500;
+            }
+
+            .iris-citation__summary-meta {
+                font-size: 0.7rem;
+                line-height: 1.2;
+                color: var(--gray-600);
             }
 
             .iris-citation--has-summary:hover,
@@ -467,6 +479,21 @@
                 font-size: 0.55em;
                 font-weight: 600;
                 flex: 0 0 auto;
+            }
+
+            .iris-citation__summary-icon {
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background-color: var(--gray-600);
+                display: grid;
+                place-items: center;
+                flex-shrink: 0;
+                color: inherit;
+            }
+
+            .iris-citation__summary-icon::before {
+                content: '';
             }
 
             .iris-citation__icon::before {

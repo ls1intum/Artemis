@@ -511,7 +511,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const classes = ['iris-citation', typeClass, hasSummary ? 'iris-citation--has-summary' : undefined].filter(Boolean).join(' ');
 
         const summaryHtml = hasSummary
-            ? `<span class="iris-citation__summary"><span class="iris-citation__summary-content"><span class="iris-citation__summary-item is-active">${summaryText}</span></span></span>`
+            ? `<span class="iris-citation__summary"><span class="iris-citation__summary-content"><span class="iris-citation__summary-item is-active">${summaryText}</span></span><span class="iris-citation__summary-icon iris-citation__icon" aria-hidden="true"></span></span>`
             : '';
 
         return `<span class="${classes}"><span class="iris-citation__icon"></span><span class="iris-citation__text">${label}</span>${summaryHtml}</span>`;
@@ -535,10 +535,11 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const hasSummary = summaryItems.length > 0;
         const classes = ['iris-citation-group', typeClass, hasSummary ? 'iris-citation-group--has-summary' : undefined].filter(Boolean).join(' ');
         const count = parsed.length - 1;
+        const navHtml = summaryItems.length > 1 ? this.renderCitationNavHtml(summaryItems.length) : '';
         const summaryHtml = hasSummary
             ? `<span class="iris-citation__summary"><span class="iris-citation__summary-content">${summaryItems.join(
                   '',
-              )}</span>${summaryItems.length > 1 ? this.renderCitationNavHtml(summaryItems.length) : ''}</span>`
+              )}</span>${navHtml}<span class="iris-citation__summary-icon iris-citation__icon" aria-hidden="true"></span></span>`
             : '';
 
         return `<span class="${classes}"><span class="iris-citation ${typeClass}"><span class="iris-citation__icon"></span><span class="iris-citation__text">${label}</span></span><span class="iris-citation__count">+${count}</span>${summaryHtml}</span>`;
@@ -567,25 +568,28 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const fallbackKeyword = parsed.type === 'F' ? 'FAQ' : 'Source';
         const keywordValue = this.escapeHtml(parsed.keyword?.trim() || fallbackKeyword);
         const summaryValue = parsed.summary?.trim() ? this.escapeHtml(parsed.summary!.trim()) : '';
-        const lines: string[] = [];
+        const lines: string[] = [keywordValue];
 
-        if (parsed.type === 'L') {
-            lines.push(keywordValue);
-            if (summaryValue) {
-                lines.push(summaryValue);
-            }
-            const lectureTitle = this.escapeHtml(meta?.lectureTitle?.trim() ?? 'n/a');
-            const unitTitle = this.escapeHtml(meta?.lectureUnitTitle?.trim() ?? 'n/a');
-            lines.push(`Lecture: "${lectureTitle}"`);
-            lines.push(`Unit: "${unitTitle}"`);
-        } else {
-            lines.push(keywordValue);
-            if (summaryValue) {
-                lines.push(summaryValue);
-            }
+        if (summaryValue) {
+            lines.push(summaryValue);
         }
 
-        return lines.filter(Boolean).join('<br />');
+        const lectureTitle = parsed.type === 'L' ? this.escapeHtml(meta?.lectureTitle?.trim() ?? 'n/a') : undefined;
+        const unitTitle = parsed.type === 'L' ? this.escapeHtml(meta?.lectureUnitTitle?.trim() ?? 'n/a') : undefined;
+
+        const filtered = lines.filter(Boolean);
+        if (filtered.length === 0) {
+            return '';
+        }
+
+        const [keywordLine, ...restLines] = filtered;
+        const rest = restLines.length > 0 ? `<br />${restLines.join('<br />')}` : '';
+        const metaHtml =
+            lectureTitle && unitTitle
+                ? `<br /><span class="iris-citation__summary-meta">Lecture: "${lectureTitle}"</span><br /><span class="iris-citation__summary-meta">Unit: "${unitTitle}"</span>`
+                : '';
+
+        return `<span class="iris-citation__summary-keyword">${keywordLine}</span>${rest}${metaHtml}`;
     }
 
     private resolveCitationTypeClass(parsed: IrisCitationParsed): string {
