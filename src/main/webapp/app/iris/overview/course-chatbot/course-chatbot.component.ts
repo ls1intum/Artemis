@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, viewChild } from '@angular/core';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisBaseChatbotComponent } from '../base-chatbot/iris-base-chatbot.component';
 
@@ -11,6 +11,7 @@ import { IrisBaseChatbotComponent } from '../base-chatbot/iris-base-chatbot.comp
 })
 export class CourseChatbotComponent {
     private readonly chatService = inject(IrisChatService);
+    private readonly irisBaseChatbot = viewChild(IrisBaseChatbotComponent);
 
     readonly courseId = input<number>();
 
@@ -22,5 +23,13 @@ export class CourseChatbotComponent {
                 this.chatService.switchTo(ChatServiceMode.COURSE, courseId);
             }
         });
+    }
+
+    toggleChatHistory(): void {
+        const baseChatbot = this.irisBaseChatbot();
+        if (!baseChatbot) {
+            return;
+        }
+        baseChatbot.setChatHistoryVisibility(!baseChatbot.isChatHistoryOpen());
     }
 }

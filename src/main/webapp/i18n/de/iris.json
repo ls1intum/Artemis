@@ -173,6 +173,7 @@
             },
             "chatHistory": {
                 "title": "Chats",
+                "newChat": "Neuer Chat",
                 "today": "Heute",
                 "yesterday": "Gestern",
                 "last7Days": "Letzten 7 Tage",

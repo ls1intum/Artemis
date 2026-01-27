@@ -136,6 +136,16 @@ describe('CourseOverviewGuard', () => {
             expect(resultValue).toBeTrue();
         });
 
+        it('should return true if type is iris and course has irisEnabledInCourse', () => {
+            mockCourse.irisEnabledInCourse = true;
+            const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.IRIS);
+            let resultValue = true;
+            result.subscribe((value) => {
+                resultValue = value;
+            });
+            expect(resultValue).toBeTrue();
+        });
+
         it('should return true if type is faq and course has faqEnabled', () => {
             const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.FAQ);
             let resultValue = true;

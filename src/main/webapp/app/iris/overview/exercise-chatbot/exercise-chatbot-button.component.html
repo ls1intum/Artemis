@@ -6,11 +6,11 @@
         [ngClass]="{ 'content-overflow': isOverflowing(), 'bubble-visible': newIrisMessage(), 'bubble-hidden': !newIrisMessage() }"
     >
         @if (newIrisMessage()) {
-            <span [innerHTML]="newIrisMessage() | htmlForMarkdown"></span>
+            <div class="bubble-text" [innerHTML]="newIrisMessage() | htmlForMarkdown"></div>
             @if (isOverflowing()) {
                 <div class="read-more">
-                    <span jhiTranslate="artemisApp.iris.chatBubble.seeFull"></span>
-                    <fa-icon [icon]="faAngleDoubleDown" class="read-more-icon" />
+                    <!-- <span jhiTranslate="artemisApp.iris.chatBubble.seeFull"></span> -->
+                    <fa-icon [icon]="faArrowRight" class="read-more-icon" />
                 </div>
             }
         }
