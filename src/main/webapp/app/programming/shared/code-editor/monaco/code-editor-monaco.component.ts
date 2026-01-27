@@ -38,6 +38,8 @@ import { CodeEditorFileService } from 'app/programming/shared/code-editor/servic
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { TranslateService } from '@ngx-translate/core';
+import { MonacoBinding } from 'y-monaco';
+import { RepositoryFileSyncService } from 'app/programming/manage/services/repository-file-sync.service';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
 type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
@@ -72,6 +74,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     private readonly fileTypeService = inject(FileTypeService);
     private readonly translateService = inject(TranslateService);
     private readonly ngZone = inject(NgZone);
+    private readonly repositorySyncService = inject(RepositoryFileSyncService, { optional: true });
 
     readonly editor = viewChild.required<MonacoEditorComponent>('editor');
     readonly inlineFeedbackComponents = viewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent);
@@ -87,6 +90,8 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     readonly disableActions = input<boolean>(false);
     readonly selectedFile = input<string>();
     readonly selectedRepository = input<RepositoryType>();
+    readonly auxiliaryRepositoryId = input<number | undefined>();
+    readonly enableCollaboration = input<boolean>(false);
     readonly sessionId = input.required<number | string>();
     readonly buildAnnotations = input<Annotation[]>([]);
     readonly consistencyIssues = input<ConsistencyIssue[]>([]);
@@ -138,6 +143,8 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     private renderScheduled = false;
     private renderFocusLine?: number;
     private renderAnimationFrameId?: number;
+    private bindings = new Map<string, MonacoBinding>();
+    private bindingDisposables = new Map<string, Disposable>();
 
     constructor() {
         effect(() => {
@@ -164,6 +171,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         // Refreshing the editor resets any local files.
         if (editorWasRefreshed || editorWasReset) {
             this.fileSession.set({});
+            this.disposeCollaborativeBindings();
             this.editor().reset();
             this.onEditorLoaded.emit();
         }
@@ -196,6 +204,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
 
     ngOnDestroy(): void {
         this.disposeAddFeedbackShortcut();
+        this.disposeCollaborativeBindings();
         if (this.renderAnimationFrameId !== undefined) {
             window.cancelAnimationFrame(this.renderAnimationFrameId);
         }
@@ -243,7 +252,15 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     }
 
     switchToSelectedFile(selectedFileName: string, code: string): void {
-        this.editor().changeModel(selectedFileName, code);
+        const resolvedContent = this.resolveCollaborativeContent(selectedFileName, code);
+        const session = this.fileSession()[selectedFileName];
+        if (session && session.code !== resolvedContent) {
+            const updatedSession = Object.assign({}, session, { code: resolvedContent });
+            const updatedFileSession = Object.assign({}, this.fileSession(), { [selectedFileName]: updatedSession });
+            this.fileSession.set(updatedFileSession);
+        }
+        this.editor().changeModel(selectedFileName, resolvedContent);
+        this.setupCollaborativeBinding(selectedFileName, resolvedContent);
         this.editor().setPosition(this.fileSession()[selectedFileName].cursor);
         this.editor().setScrollTop(this.fileSession()[this.selectedFile()!].scrollTop ?? 0);
     }
@@ -299,6 +316,52 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         } finally {
             this.isApplyingExternalUpdate = false;
         }
+    }
+
+    private resolveCollaborativeContent(fileName: string, fallbackContent: string): string {
+        if (!this.enableCollaboration() || !this.selectedRepository() || !this.repositorySyncService) {
+            return fallbackContent;
+        }
+        const doc = this.repositorySyncService.getOrCreateFileDoc(this.selectedRepository()!, fileName, fallbackContent, this.auxiliaryRepositoryId());
+        if (!doc) {
+            return fallbackContent;
+        }
+        return doc.text.toString();
+    }
+
+    private setupCollaborativeBinding(fileName: string, fallbackContent: string) {
+        if (!this.enableCollaboration() || !this.selectedRepository() || !this.repositorySyncService) {
+            return;
+        }
+        const model = this.editor().getModel();
+        if (!model) {
+            return;
+        }
+        const modelKey = model.uri.toString();
+        if (this.bindings.has(modelKey)) {
+            return;
+        }
+        const doc = this.repositorySyncService.getOrCreateFileDoc(this.selectedRepository()!, fileName, fallbackContent, this.auxiliaryRepositoryId());
+        if (!doc) {
+            return;
+        }
+        const binding = new MonacoBinding(doc.text, model, new Set([this.editor().getEditor()]), doc.awareness);
+        this.bindings.set(modelKey, binding);
+        const dispose = model.onWillDispose(() => {
+            binding.destroy();
+            this.bindings.delete(modelKey);
+            const existing = this.bindingDisposables.get(modelKey);
+            existing?.dispose();
+            this.bindingDisposables.delete(modelKey);
+        });
+        this.bindingDisposables.set(modelKey, dispose);
+    }
+
+    private disposeCollaborativeBindings() {
+        this.bindings.forEach((binding) => binding.destroy());
+        this.bindings.clear();
+        this.bindingDisposables.forEach((disposable) => disposable.dispose());
+        this.bindingDisposables.clear();
     }
 
     highlightLines(startLine: number, endLine: number) {

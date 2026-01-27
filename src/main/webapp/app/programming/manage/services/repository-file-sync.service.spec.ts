@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
-import { DiffMatchPatch } from 'diff-match-patch-typescript';
+import * as Y from 'yjs';
 
 import { FileOperation, RepositoryFileSyncService } from 'app/programming/manage/services/repository-file-sync.service';
 import {
@@ -12,26 +12,26 @@ import {
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
 import { DeleteFileChange, FileType, RenameFileChange, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
-import { AlertService } from 'app/shared/service/alert.service';
+import { encodeUint8ArrayToBase64 } from 'app/programming/manage/services/yjs-utils';
 
 describe('RepositoryFileSyncService', () => {
     let service: RepositoryFileSyncService;
     let syncService: jest.Mocked<ProgrammingExerciseEditorSyncService>;
     let fileService: jest.Mocked<CodeEditorFileService>;
-    let alertService: jest.Mocked<AlertService>;
     let incomingMessages$: Subject<ProgrammingExerciseEditorSyncMessage>;
-    const dmp = new DiffMatchPatch();
-
     const exerciseIdToUse = 42;
-    type RepositoryFileSyncServiceInternals = {
-        baselines: Record<string, string>;
-        lastProcessedTimestamps: Record<string, number>;
-        getBaselineKey: (target: ProgrammingExerciseEditorSyncTarget, fileName: string, auxiliaryId?: number) => string;
+    const createYjsUpdate = (content: string) => {
+        const doc = new Y.Doc();
+        doc.getText('content').insert(0, content);
+        return encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(doc));
     };
-    const getBaselines = (service: RepositoryFileSyncService) => (service as unknown as RepositoryFileSyncServiceInternals).baselines;
-    const getTimestamps = (service: RepositoryFileSyncService) => (service as unknown as RepositoryFileSyncServiceInternals).lastProcessedTimestamps;
-    const buildBaselineKey = (service: RepositoryFileSyncService, target: ProgrammingExerciseEditorSyncTarget, fileName: string, auxiliaryId?: number) =>
-        (service as unknown as RepositoryFileSyncServiceInternals).getBaselineKey(target, fileName, auxiliaryId);
+    type RepositoryFileSyncServiceInternals = {
+        docs: Record<string, { text: { toString: () => string } }>;
+        getDocKey: (target: ProgrammingExerciseEditorSyncTarget, fileName: string, auxiliaryId?: number) => string;
+    };
+    const getDocs = (service: RepositoryFileSyncService) => (service as unknown as RepositoryFileSyncServiceInternals).docs;
+    const buildDocKey = (service: RepositoryFileSyncService, target: ProgrammingExerciseEditorSyncTarget, fileName: string, auxiliaryId?: number) =>
+        (service as unknown as RepositoryFileSyncServiceInternals).getDocKey(target, fileName, auxiliaryId);
 
     beforeEach(() => {
         incomingMessages$ = new Subject<ProgrammingExerciseEditorSyncMessage>();
@@ -39,12 +39,6 @@ describe('RepositoryFileSyncService', () => {
         TestBed.configureTestingModule({
             providers: [
                 RepositoryFileSyncService,
-                {
-                    provide: AlertService,
-                    useValue: {
-                        info: jest.fn(),
-                    },
-                },
                 {
                     provide: ProgrammingExerciseEditorSyncService,
                     useValue: {
@@ -66,7 +60,6 @@ describe('RepositoryFileSyncService', () => {
         service = TestBed.inject(RepositoryFileSyncService);
         syncService = TestBed.inject(ProgrammingExerciseEditorSyncService) as jest.Mocked<ProgrammingExerciseEditorSyncService>;
         fileService = TestBed.inject(CodeEditorFileService) as jest.Mocked<CodeEditorFileService>;
-        alertService = TestBed.inject(AlertService) as jest.Mocked<AlertService>;
     });
 
     afterEach(() => {
@@ -98,8 +91,8 @@ describe('RepositoryFileSyncService', () => {
             service.init(exerciseIdToUse, () => true);
         });
 
-        it('sends patches for content changes using existing baseline', () => {
-            service.registerBaseline(RepositoryType.TEMPLATE, 'file.txt', 'old content');
+        it('sends yjs updates for content changes using existing content', () => {
+            service.getOrCreateFileDoc(RepositoryType.TEMPLATE, 'file.txt', 'old content');
 
             service.handleLocalFileOperation({ type: ProgrammingExerciseEditorFileChangeType.CONTENT, fileName: 'file.txt', content: 'new content' }, RepositoryType.TEMPLATE);
 
@@ -111,7 +104,7 @@ describe('RepositoryFileSyncService', () => {
                         expect.objectContaining({
                             fileName: 'file.txt',
                             changeType: ProgrammingExerciseEditorFileChangeType.CONTENT,
-                            patch: expect.any(String),
+                            yjsUpdate: expect.any(String),
                         }),
                     ]),
                 }),
@@ -119,36 +112,36 @@ describe('RepositoryFileSyncService', () => {
         });
 
         it('skips sending patches when content is unchanged', () => {
-            service.registerBaseline(RepositoryType.TEMPLATE, 'file.txt', 'same');
+            service.getOrCreateFileDoc(RepositoryType.TEMPLATE, 'file.txt', 'same');
 
             service.handleLocalFileOperation({ type: ProgrammingExerciseEditorFileChangeType.CONTENT, fileName: 'file.txt', content: 'same' }, RepositoryType.TEMPLATE);
 
             expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalled();
         });
 
-        it('stores baseline for create operations without broadcasting', () => {
+        it('stores document for create operations without broadcasting', () => {
             service.handleLocalFileOperation(
                 { type: ProgrammingExerciseEditorFileChangeType.CREATE, fileName: 'new.txt', content: 'hello', fileType: FileType.FILE },
                 RepositoryType.TEMPLATE,
             );
 
             expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalled();
-            const baselines = getBaselines(service);
-            expect(baselines[buildBaselineKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'new.txt', undefined)]).toBe('hello');
+            const docs = getDocs(service);
+            expect(docs[buildDocKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'new.txt', undefined)].text.toString()).toBe('hello');
         });
 
-        it('removes baseline on delete without broadcasting', () => {
-            service.registerBaseline(RepositoryType.TEMPLATE, 'old.txt', 'content');
+        it('removes document on delete without broadcasting', () => {
+            service.getOrCreateFileDoc(RepositoryType.TEMPLATE, 'old.txt', 'content');
 
             service.handleLocalFileOperation({ type: ProgrammingExerciseEditorFileChangeType.DELETE, fileName: 'old.txt' }, RepositoryType.TEMPLATE);
 
             expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalled();
-            const baselineKey = buildBaselineKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'old.txt', undefined);
-            expect(getBaselines(service)[baselineKey]).toBeUndefined();
+            const docKey = buildDocKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'old.txt', undefined);
+            expect(getDocs(service)[docKey]).toBeUndefined();
         });
 
-        it('moves baseline on rename operations without broadcasting', () => {
-            service.registerBaseline(RepositoryType.TEMPLATE, 'old.txt', 'content');
+        it('moves document on rename operations without broadcasting', () => {
+            service.getOrCreateFileDoc(RepositoryType.TEMPLATE, 'old.txt', 'content');
 
             service.handleLocalFileOperation(
                 { type: ProgrammingExerciseEditorFileChangeType.RENAME, fileName: 'old.txt', newFileName: 'new.txt', content: 'content', fileType: FileType.FILE },
@@ -157,19 +150,19 @@ describe('RepositoryFileSyncService', () => {
 
             expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalled();
 
-            const baselines = getBaselines(service);
-            expect(baselines[buildBaselineKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'old.txt', undefined)]).toBeUndefined();
-            expect(baselines[buildBaselineKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'new.txt', undefined)]).toBe('content');
+            const docs = getDocs(service);
+            expect(docs[buildDocKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'old.txt', undefined)]).toBeUndefined();
+            expect(docs[buildDocKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'new.txt', undefined)].text.toString()).toBe('content');
         });
 
-        it('falls back to provided content on rename when no baseline exists', () => {
+        it('skips creating documents on rename when no doc exists', () => {
             service.handleLocalFileOperation(
                 { type: ProgrammingExerciseEditorFileChangeType.RENAME, fileName: 'old.txt', newFileName: 'new.txt', content: 'renamed content', fileType: FileType.FILE },
                 RepositoryType.TEMPLATE,
             );
 
-            const baselines = getBaselines(service);
-            expect(baselines[buildBaselineKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'new.txt', undefined)]).toBe('renamed content');
+            const docs = getDocs(service);
+            expect(docs[buildDocKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'new.txt', undefined)]).toBeUndefined();
         });
 
         it('ignores unsupported repositories and uninitialized service', () => {
@@ -184,25 +177,27 @@ describe('RepositoryFileSyncService', () => {
     });
 
     describe('Remote synchronization handling', () => {
-        it('emits applied content patches from remote changes', () => {
+        it('applies remote content updates without emitting operations', () => {
             const operations: FileOperation[] = [];
             service.init(exerciseIdToUse, () => true).subscribe((op) => operations.push(op));
-            service.registerBaseline(RepositoryType.TEMPLATE, 'file.txt', 'old');
+            service.getOrCreateFileDoc(RepositoryType.TEMPLATE, 'file.txt', 'old');
 
-            const patch = dmp.patch_toText(dmp.patch_make('old', 'new'));
+            const doc = new Y.Doc();
+            doc.getText('content').insert(0, 'new');
+            const update = encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(doc));
             incomingMessages$.next({
                 target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
                 filePatches: [
                     {
                         fileName: 'file.txt',
-                        patch,
+                        yjsUpdate: update,
                         changeType: ProgrammingExerciseEditorFileChangeType.CONTENT,
                     },
                 ],
                 timestamp: 1,
             });
 
-            expect(operations).toEqual([{ type: ProgrammingExerciseEditorFileChangeType.CONTENT, fileName: 'file.txt', content: 'new' }]);
+            expect(operations).toEqual([]);
         });
 
         it('emits create, delete, and rename operations', () => {
@@ -238,10 +233,10 @@ describe('RepositoryFileSyncService', () => {
             ]);
         });
 
-        it('renames folders without creating baselines for folder paths', () => {
+        it('renames folders without creating documents for folder paths', () => {
             const operations: FileOperation[] = [];
             service.init(exerciseIdToUse, () => true).subscribe((op) => operations.push(op));
-            service.registerBaseline(RepositoryType.TEMPLATE, 'folder/file.txt', 'content');
+            service.getOrCreateFileDoc(RepositoryType.TEMPLATE, 'folder/file.txt', 'content');
 
             incomingMessages$.next({
                 target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
@@ -256,16 +251,14 @@ describe('RepositoryFileSyncService', () => {
                 timestamp: 2,
             });
 
-            const baselines = getBaselines(service);
-            const oldFileKey = buildBaselineKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'folder/file.txt', undefined);
-            const newFileKey = buildBaselineKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'renamed/file.txt', undefined);
-            const folderKey = buildBaselineKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'renamed', undefined);
-            const timestamps = getTimestamps(service);
+            const docs = getDocs(service);
+            const oldFileKey = buildDocKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'folder/file.txt', undefined);
+            const newFileKey = buildDocKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'renamed/file.txt', undefined);
+            const folderKey = buildDocKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'renamed', undefined);
 
-            expect(baselines[oldFileKey]).toBeUndefined();
-            expect(baselines[newFileKey]).toBe('content');
-            expect(baselines[folderKey]).toBeUndefined();
-            expect(timestamps[folderKey]).toBeUndefined();
+            expect(docs[oldFileKey]).toBeUndefined();
+            expect(docs[newFileKey].text.toString()).toBe('content');
+            expect(docs[folderKey]).toBeUndefined();
             expect(operations).toEqual([
                 {
                     type: ProgrammingExerciseEditorFileChangeType.RENAME,
@@ -277,41 +270,35 @@ describe('RepositoryFileSyncService', () => {
             ]);
         });
 
-        it('returns undefined and does not emit when patch cannot be applied', () => {
+        it('ignores content updates without yjs payload', () => {
             const operations: FileOperation[] = [];
             service.init(exerciseIdToUse, () => true).subscribe((op) => operations.push(op));
-            service.registerBaseline(RepositoryType.TEMPLATE, 'file.txt', 'baseline');
+            service.getOrCreateFileDoc(RepositoryType.TEMPLATE, 'file.txt', 'baseline');
 
             incomingMessages$.next({
                 target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
-                filePatches: [{ fileName: 'file.txt', patch: '<<<invalid>>>', changeType: ProgrammingExerciseEditorFileChangeType.CONTENT }],
+                filePatches: [{ fileName: 'file.txt', changeType: ProgrammingExerciseEditorFileChangeType.CONTENT }],
                 timestamp: 2,
             });
 
             expect(operations).toEqual([]);
-            expect(getBaselines(service)[buildBaselineKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'file.txt', undefined)]).toBe('baseline');
+            expect(getDocs(service)[buildDocKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'file.txt', undefined)].text.toString()).toBe('baseline');
         });
 
-        it('requests a full file instead of applying patches when no baseline exists', () => {
+        it('ignores yjs updates when no document exists', () => {
             const operations: FileOperation[] = [];
             service.init(exerciseIdToUse, () => true).subscribe((op) => operations.push(op));
 
-            const patch = dmp.patch_toText(dmp.patch_make('old content', 'new content'));
+            const update = createYjsUpdate('new content');
             incomingMessages$.next({
                 target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
-                filePatches: [{ fileName: 'file.txt', patch, changeType: ProgrammingExerciseEditorFileChangeType.CONTENT }],
+                filePatches: [{ fileName: 'file.txt', yjsUpdate: update, changeType: ProgrammingExerciseEditorFileChangeType.CONTENT }],
                 timestamp: 3,
             });
 
-            expect(operations).toHaveLength(0);
-            expect(alertService.info).not.toHaveBeenCalled();
-            expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
-                exerciseIdToUse,
-                expect.objectContaining({
-                    target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
-                    fileRequests: ['file.txt'],
-                }),
-            );
+            expect(operations).toEqual([]);
+            const docKey = buildDocKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'file.txt', undefined);
+            expect(getDocs(service)[docKey]).toBeUndefined();
         });
 
         it('ignores messages without a target', () => {
@@ -324,29 +311,6 @@ describe('RepositoryFileSyncService', () => {
             });
 
             expect(operations).toHaveLength(0);
-        });
-
-        it('skips outdated messages based on timestamp', () => {
-            const operations: FileOperation[] = [];
-            service.init(exerciseIdToUse, () => true).subscribe((op) => operations.push(op));
-            service.registerBaseline(RepositoryType.TEMPLATE, 'file.txt', 'initial');
-
-            const newPatch = dmp.patch_toText(dmp.patch_make('initial', 'new'));
-            const oldPatch = dmp.patch_toText(dmp.patch_make('initial', 'old'));
-
-            incomingMessages$.next({
-                target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
-                filePatches: [{ fileName: 'file.txt', patch: newPatch, changeType: ProgrammingExerciseEditorFileChangeType.CONTENT }],
-                timestamp: 5,
-            });
-
-            incomingMessages$.next({
-                target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
-                filePatches: [{ fileName: 'file.txt', patch: oldPatch, changeType: ProgrammingExerciseEditorFileChangeType.CONTENT }],
-                timestamp: 1,
-            });
-
-            expect(operations).toEqual([{ type: ProgrammingExerciseEditorFileChangeType.CONTENT, fileName: 'file.txt', content: 'new' }]);
         });
 
         it('filters messages via provided target filter', () => {
@@ -374,9 +338,9 @@ describe('RepositoryFileSyncService', () => {
             expect(operations).toEqual([{ type: 'NEW_COMMIT_ALERT' }]);
         });
 
-        it('responds to file requests with available baselines', () => {
+        it('responds to file requests with available documents', () => {
             service.init(exerciseIdToUse, () => true);
-            service.registerBaseline(RepositoryType.TEMPLATE, 'file.txt', 'baseline');
+            service.getOrCreateFileDoc(RepositoryType.TEMPLATE, 'file.txt', 'baseline');
 
             incomingMessages$.next({
                 target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
@@ -387,38 +351,45 @@ describe('RepositoryFileSyncService', () => {
                 exerciseIdToUse,
                 expect.objectContaining({
                     target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
-                    fileFulls: [{ fileName: 'file.txt', content: 'baseline' }],
+                    filePatches: [
+                        expect.objectContaining({
+                            fileName: 'file.txt',
+                            changeType: ProgrammingExerciseEditorFileChangeType.CONTENT,
+                            yjsUpdate: expect.any(String),
+                        }),
+                    ],
                 }),
             );
         });
 
-        it('stores auxiliary baselines and emits updates for full file syncs', () => {
+        it('ignores auxiliary yjs updates when no document exists', () => {
             const operations: FileOperation[] = [];
             service.init(exerciseIdToUse, () => true).subscribe((op) => operations.push(op));
 
             incomingMessages$.next({
                 target: ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY,
                 auxiliaryRepositoryId: 7,
-                fileFulls: [{ fileName: 'aux/readme.md', content: 'aux content' }],
+                filePatches: [{ fileName: 'aux/readme.md', yjsUpdate: createYjsUpdate('aux content'), changeType: ProgrammingExerciseEditorFileChangeType.CONTENT }],
                 timestamp: 3,
             });
 
-            const baselineKey = buildBaselineKey(service, ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY, 'aux/readme.md', 7);
-            expect(getBaselines(service)[baselineKey]).toBe('aux content');
-            expect(operations).toEqual([{ type: ProgrammingExerciseEditorFileChangeType.CONTENT, fileName: 'aux/readme.md', content: 'aux content' }]);
+            const docKey = buildDocKey(service, ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY, 'aux/readme.md', 7);
+            expect(getDocs(service)[docKey]).toBeUndefined();
+            expect(operations).toEqual([]);
         });
 
-        it('applies full file sync messages to baselines', () => {
+        it('applies yjs updates to documents', () => {
             const operations: FileOperation[] = [];
             service.init(exerciseIdToUse, () => true).subscribe((op) => operations.push(op));
+            service.getOrCreateFileDoc(RepositoryType.TEMPLATE, 'file.txt', '');
 
             incomingMessages$.next({
                 target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
-                fileFulls: [{ fileName: 'file.txt', content: 'complete content' }],
+                filePatches: [{ fileName: 'file.txt', yjsUpdate: createYjsUpdate('complete content'), changeType: ProgrammingExerciseEditorFileChangeType.CONTENT }],
                 timestamp: 2,
             });
 
-            expect(operations).toEqual([{ type: ProgrammingExerciseEditorFileChangeType.CONTENT, fileName: 'file.txt', content: 'complete content' }]);
+            expect(operations).toEqual([]);
         });
     });
 

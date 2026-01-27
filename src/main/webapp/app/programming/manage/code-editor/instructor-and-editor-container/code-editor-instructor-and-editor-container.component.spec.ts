@@ -380,7 +380,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Consistency Checks',
                 MockProvider(RepositoryFileSyncService, {
                     applyRemoteOperation: jest.fn(),
                     reset: jest.fn(),
-                    registerBaseline: jest.fn(),
+                    getOrCreateFileDoc: jest.fn(),
                     requestFullFile: jest.fn(),
                     handleLocalFileOperation: jest.fn(),
                     init: jest.fn().mockReturnValue(of()),
@@ -466,7 +466,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Consistency Checks',
         expect(repositorySyncService.applyRemoteOperation).not.toHaveBeenCalled();
     });
 
-    it('registers baselines and requests file content on load', () => {
+    it('registers documents and requests file content on load', () => {
         const repositorySyncService = TestBed.inject(RepositoryFileSyncService) as jest.Mocked<RepositoryFileSyncService>;
         comp.selectedRepository = RepositoryType.AUXILIARY;
         comp.selectedRepositoryId = 99;
@@ -474,18 +474,18 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Consistency Checks',
 
         comp.onFileLoaded('src/Main.java');
 
-        expect(repositorySyncService.registerBaseline).toHaveBeenCalledWith(RepositoryType.AUXILIARY, 'src/Main.java', 'content', 99);
+        expect(repositorySyncService.getOrCreateFileDoc).toHaveBeenCalledWith(RepositoryType.AUXILIARY, 'src/Main.java', 'content', 99);
         expect(repositorySyncService.requestFullFile).toHaveBeenCalledWith(RepositoryType.AUXILIARY, 'src/Main.java', 99);
     });
 
-    it('requests full content without baseline when file not available locally', () => {
+    it('requests full content when file not available locally', () => {
         const repositorySyncService = TestBed.inject(RepositoryFileSyncService) as jest.Mocked<RepositoryFileSyncService>;
         comp.selectedRepository = RepositoryType.TESTS;
         comp.codeEditorContainer = { getFileContent: jest.fn().mockReturnValue(undefined) } as any;
 
         comp.onFileLoaded('src/Main.java');
 
-        expect(repositorySyncService.registerBaseline).not.toHaveBeenCalled();
+        expect(repositorySyncService.getOrCreateFileDoc).not.toHaveBeenCalled();
         expect(repositorySyncService.requestFullFile).toHaveBeenCalledWith(RepositoryType.TESTS, 'src/Main.java', undefined);
     });
 

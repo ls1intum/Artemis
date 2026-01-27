@@ -10,15 +10,16 @@ import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExer
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ProgrammingExerciseEditorSyncEventDTO(ProgrammingExerciseEditorSyncTarget target, @Nullable Long auxiliaryRepositoryId, @Nullable String clientInstanceId,
-        @Nullable List<ProgrammingExerciseEditorFileSyncDTO> filePatches, @Nullable Boolean newCommitAlert) {
+        @Nullable List<ProgrammingExerciseEditorFileSyncDTO> filePatches, @Nullable Boolean newCommitAlert, @Nullable String yjsUpdate, @Nullable String yjsStateVector,
+        @Nullable Boolean yjsRequest, @Nullable ProgrammingExerciseEditorAwarenessDTO awareness) {
 
     public static ProgrammingExerciseEditorSyncEventDTO forFilePatch(ProgrammingExerciseEditorSyncTarget target, @Nullable Long auxiliaryRepositoryId,
             @Nullable String clientInstanceId, @Nullable List<ProgrammingExerciseEditorFileSyncDTO> filePatches) {
-        return new ProgrammingExerciseEditorSyncEventDTO(target, auxiliaryRepositoryId, clientInstanceId, filePatches, null);
+        return new ProgrammingExerciseEditorSyncEventDTO(target, auxiliaryRepositoryId, clientInstanceId, filePatches, null, null, null, null, null);
     }
 
     public static ProgrammingExerciseEditorSyncEventDTO forNewCommitAlert(ProgrammingExerciseEditorSyncTarget target, @Nullable Long auxiliaryRepositoryId,
             @Nullable String clientInstanceId) {
-        return new ProgrammingExerciseEditorSyncEventDTO(target, auxiliaryRepositoryId, clientInstanceId, null, true);
+        return new ProgrammingExerciseEditorSyncEventDTO(target, auxiliaryRepositoryId, clientInstanceId, null, true, null, null, null, null);
     }
 }

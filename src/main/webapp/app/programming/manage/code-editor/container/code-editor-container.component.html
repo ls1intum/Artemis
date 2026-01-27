@@ -72,6 +72,8 @@
             [highlightDifferences]="highlightDifferences()"
             [selectedFile]="selectedFile === problemStatementIdentifier ? undefined : selectedFile"
             [selectedRepository]="selectedRepository()"
+            [auxiliaryRepositoryId]="auxiliaryRepositoryId()"
+            [enableCollaboration]="enableCollaboration()"
             [buildAnnotations]="annotations"
             [sessionId]="participation()?.id ?? 'test'"
             [consistencyIssues]="consistencyIssues()"

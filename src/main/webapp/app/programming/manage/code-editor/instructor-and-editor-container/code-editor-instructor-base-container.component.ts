@@ -176,7 +176,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         const auxiliaryId = this.selectedRepository === RepositoryType.AUXILIARY ? this.selectedRepositoryId : undefined;
         const currentContent = this.codeEditorContainer?.getFileContent(fileName);
         if (currentContent !== undefined) {
-            this.repositorySyncService.registerBaseline(this.selectedRepository, fileName, currentContent, auxiliaryId);
+            this.repositorySyncService.getOrCreateFileDoc(this.selectedRepository, fileName, currentContent, auxiliaryId);
         }
         this.repositorySyncService.requestFullFile(this.selectedRepository, fileName, auxiliaryId);
     }
@@ -190,7 +190,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         // when renaming a file/path locally, the selected file should be set to undefined to
         // avoid editor automatically opening the new file, which would causes synchronization
         // service to request full content of the file from other active online ediors,
-        // causing a race condition with rename operation's baseline update
+        // causing a race condition with rename operation's document update
         if (operation.type === ProgrammingExerciseEditorFileChangeType.RENAME) {
             this.codeEditorContainer.selectedFile = undefined;
         }
@@ -242,7 +242,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             return false;
         }
         if (this.selectedRepository === RepositoryType.AUXILIARY) {
-            return !change.auxiliaryRepositoryId && change.auxiliaryRepositoryId === this.selectedRepositoryId;
+            return change.auxiliaryRepositoryId === this.selectedRepositoryId;
         }
         return true;
     }

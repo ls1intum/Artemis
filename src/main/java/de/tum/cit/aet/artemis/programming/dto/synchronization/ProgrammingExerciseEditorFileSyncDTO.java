@@ -8,8 +8,8 @@ import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExer
 import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorFileType;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ProgrammingExerciseEditorFileSyncDTO(String fileName, @Nullable String patch, @Nullable ProgrammingExerciseEditorFileChangeType changeType,
-        @Nullable String newFileName, @Nullable ProgrammingExerciseEditorFileType fileType) {
+public record ProgrammingExerciseEditorFileSyncDTO(String fileName, @Nullable String patch, @Nullable String yjsUpdate,
+        @Nullable ProgrammingExerciseEditorFileChangeType changeType, @Nullable String newFileName, @Nullable ProgrammingExerciseEditorFileType fileType) {
 
     /**
      * Creates a DTO for a file creation event.
@@ -18,7 +18,7 @@ public record ProgrammingExerciseEditorFileSyncDTO(String fileName, @Nullable St
      * @return a DTO representing a file creation
      */
     public static ProgrammingExerciseEditorFileSyncDTO forFileCreate(String filePath) {
-        return new ProgrammingExerciseEditorFileSyncDTO(filePath, null, ProgrammingExerciseEditorFileChangeType.CREATE, null, ProgrammingExerciseEditorFileType.FILE);
+        return new ProgrammingExerciseEditorFileSyncDTO(filePath, null, null, ProgrammingExerciseEditorFileChangeType.CREATE, null, ProgrammingExerciseEditorFileType.FILE);
     }
 
     /**
@@ -28,7 +28,7 @@ public record ProgrammingExerciseEditorFileSyncDTO(String fileName, @Nullable St
      * @return a DTO representing a folder creation
      */
     public static ProgrammingExerciseEditorFileSyncDTO forFolderCreate(String folderPath) {
-        return new ProgrammingExerciseEditorFileSyncDTO(folderPath, null, ProgrammingExerciseEditorFileChangeType.CREATE, null, ProgrammingExerciseEditorFileType.FOLDER);
+        return new ProgrammingExerciseEditorFileSyncDTO(folderPath, null, null, ProgrammingExerciseEditorFileChangeType.CREATE, null, ProgrammingExerciseEditorFileType.FOLDER);
     }
 
     /**
@@ -39,7 +39,7 @@ public record ProgrammingExerciseEditorFileSyncDTO(String fileName, @Nullable St
      * @return a DTO representing a rename operation
      */
     public static ProgrammingExerciseEditorFileSyncDTO forRename(String currentFilePath, String newFilename, ProgrammingExerciseEditorFileType fileType) {
-        return new ProgrammingExerciseEditorFileSyncDTO(currentFilePath, null, ProgrammingExerciseEditorFileChangeType.RENAME, newFilename, fileType);
+        return new ProgrammingExerciseEditorFileSyncDTO(currentFilePath, null, null, ProgrammingExerciseEditorFileChangeType.RENAME, newFilename, fileType);
     }
 
     /**
@@ -49,7 +49,7 @@ public record ProgrammingExerciseEditorFileSyncDTO(String fileName, @Nullable St
      * @return a DTO representing a deletion
      */
     public static ProgrammingExerciseEditorFileSyncDTO forDelete(String fileName) {
-        return new ProgrammingExerciseEditorFileSyncDTO(fileName, null, ProgrammingExerciseEditorFileChangeType.DELETE, null, null);
+        return new ProgrammingExerciseEditorFileSyncDTO(fileName, null, null, ProgrammingExerciseEditorFileChangeType.DELETE, null, null);
     }
 
 }

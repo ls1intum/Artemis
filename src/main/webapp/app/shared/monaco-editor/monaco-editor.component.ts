@@ -136,6 +136,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         return this._editor.getModel();
     }
 
+    public getEditor() {
+        return this._editor;
+    }
+
     public getLineContent(lineNumber: number): string {
         const model = this._editor.getModel();
         return model ? model.getLineContent(lineNumber) : '';

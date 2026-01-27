@@ -1,83 +1,49 @@
 import { Injectable, inject } from '@angular/core';
-import { DiffMatchPatch } from 'diff-match-patch-typescript';
-import { Observable, Subject, Subscription, debounceTime } from 'rxjs';
+import { Subscription } from 'rxjs';
+import * as Y from 'yjs';
 import {
     ProgrammingExerciseEditorSyncMessage,
     ProgrammingExerciseEditorSyncService,
     ProgrammingExerciseEditorSyncTarget,
 } from 'app/programming/manage/services/programming-exercise-editor-sync.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { decodeBase64ToUint8Array, encodeUint8ArrayToBase64, normalizeYjsOrigin } from 'app/programming/manage/services/yjs-utils';
+
+export type ProblemStatementSyncState = {
+    doc: Y.Doc;
+    text: Y.Text;
+};
 
 @Injectable({ providedIn: 'root' })
 export class ProblemStatementSyncService {
     private syncService = inject(ProgrammingExerciseEditorSyncService);
-    private alertService = inject(AlertService);
-    private readonly diffMatchPatch = new DiffMatchPatch();
 
     private exerciseId?: number;
     private incomingMessageSubscription?: Subscription;
-    private outgoingDebounceSubscription?: Subscription;
+    private yDoc?: Y.Doc;
+    private yText?: Y.Text;
+    private awaitingInitialSync = false;
+    private replaceOnNextSync = false;
 
-    private localChangesQueue = new Subject<string>();
-    private patchOperations = new Subject<string>();
-
-    private lastSyncedContent = '';
-    private lastProcessedTimestamp = 0;
-
-    init(exerciseId: number, initialContent: string): Observable<string> {
+    init(exerciseId: number, initialContent: string): ProblemStatementSyncState {
         this.reset();
         this.exerciseId = exerciseId;
-        this.lastSyncedContent = initialContent;
-        this.lastProcessedTimestamp = 0;
-        this.patchOperations = new Subject<string>();
-        this.localChangesQueue = new Subject<string>();
+        this.replaceOnNextSync = initialContent.length > 0;
+        this.awaitingInitialSync = true;
+        this.initializeYjsDocument(initialContent);
         this.incomingMessageSubscription = this.syncService.subscribeToUpdates(exerciseId).subscribe((message) => this.handleRemoteMessage(message));
-        this.outgoingDebounceSubscription = this.localChangesQueue.pipe(debounceTime(200)).subscribe((content) => this.handleLocalChange(content));
         this.requestInitialSync();
-        return this.patchOperations.asObservable();
+        return { doc: this.yDoc!, text: this.yText! };
     }
 
     reset() {
         this.incomingMessageSubscription?.unsubscribe();
         this.incomingMessageSubscription = undefined;
-        this.outgoingDebounceSubscription?.unsubscribe();
-        this.outgoingDebounceSubscription = undefined;
-        this.patchOperations.complete();
-        this.localChangesQueue.complete();
+        this.yDoc?.destroy();
+        this.yDoc = undefined;
+        this.yText = undefined;
         this.exerciseId = undefined;
-        this.lastSyncedContent = '';
-        this.lastProcessedTimestamp = 0;
-    }
-
-    /**
-     * put the edited content into the local queue for debounced synchronization
-     * @param content The edited content to be synchronized
-     */
-    queueLocalChange(content: string) {
-        if (!this.exerciseId || this.localChangesQueue.closed) {
-            return;
-        }
-        this.localChangesQueue.next(content);
-    }
-
-    /**
-     * Construct and send a patch for the local content change, from the localChangesQueue.
-     * This method is called debounced via the localChangesQueue$ subject.
-     * @param content The new content to be sent as a patch
-     */
-    handleLocalChange(content: string) {
-        if (!this.exerciseId) {
-            return;
-        }
-        const patchText = this.diffMatchPatch.patch_toText(this.diffMatchPatch.patch_make(this.lastSyncedContent, content));
-        if (!patchText) {
-            return;
-        }
-        this.lastSyncedContent = content;
-        this.syncService.sendSynchronizationUpdate(this.exerciseId, {
-            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            problemStatementPatch: patchText,
-        });
+        this.awaitingInitialSync = false;
+        this.replaceOnNextSync = false;
     }
 
     /**
@@ -88,24 +54,26 @@ export class ProblemStatementSyncService {
         if (!this.exerciseId) {
             return;
         }
+        const stateVector = this.yDoc && !this.replaceOnNextSync ? encodeUint8ArrayToBase64(Y.encodeStateVector(this.yDoc)) : undefined;
         this.syncService.sendSynchronizationUpdate(this.exerciseId, {
             target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            problemStatementRequest: true,
+            yjsRequest: true,
+            yjsStateVector: stateVector,
         });
     }
 
-    /**
-     * Respond to a request for the full problem statement content.
-     * @param content The current problem statement content to send
-     * @returns
-     */
-    private respondWithFullContent(content: string) {
+    private respondWithFullContent(stateVector?: string) {
         if (!this.exerciseId) {
             return;
         }
+        if (!this.yDoc) {
+            return;
+        }
+        const decodedStateVector = stateVector ? decodeBase64ToUint8Array(stateVector) : undefined;
+        const update = decodedStateVector ? Y.encodeStateAsUpdate(this.yDoc, decodedStateVector) : Y.encodeStateAsUpdate(this.yDoc);
         this.syncService.sendSynchronizationUpdate(this.exerciseId, {
             target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            problemStatementFull: content,
+            yjsUpdate: encodeUint8ArrayToBase64(update),
         });
     }
 
@@ -118,43 +86,62 @@ export class ProblemStatementSyncService {
         if (message.target !== ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT) {
             return;
         }
-        if (message.timestamp && message.timestamp <= this.lastProcessedTimestamp) {
-            return;
-        }
-        this.lastProcessedTimestamp = message.timestamp ?? Date.now();
 
-        // Receives a request for the full content, send the last synced content
-        if (message.problemStatementRequest) {
-            this.respondWithFullContent(this.lastSyncedContent);
+        if (message.yjsRequest) {
+            this.respondWithFullContent(message.yjsStateVector);
             return;
         }
 
-        // Receives the full content, update the last synced content and emit the update
-        if (message.problemStatementFull !== undefined) {
-            this.lastSyncedContent = message.problemStatementFull;
-            this.patchOperations.next(message.problemStatementFull);
-            return;
-        }
-
-        // Receives a patch, apply the patch to the last synced content and emit the update
-        if (message.problemStatementPatch) {
-            const patches = this.diffMatchPatch.patch_fromText(message.problemStatementPatch);
-            if (!patches.length) {
+        if (message.yjsUpdate && this.yDoc) {
+            const update = decodeBase64ToUint8Array(message.yjsUpdate);
+            if (this.awaitingInitialSync && this.replaceOnNextSync) {
+                this.replaceContentFromUpdate(update);
+                this.awaitingInitialSync = false;
                 return;
             }
-            try {
-                const [patchedContent, results] = this.diffMatchPatch.patch_apply(patches, this.lastSyncedContent);
-                // Check if any patch failed to apply (results array contains false for failed patches)
-                const hasFailedPatches = results.some((success) => !success);
-                if (hasFailedPatches) {
-                    this.alertService.info('artemisApp.editor.synchronization.patchFailedAlert');
-                    return;
-                }
-                this.lastSyncedContent = patchedContent;
-                this.patchOperations.next(patchedContent);
-            } catch (error) {
-                this.alertService.info('artemisApp.editor.synchronization.syncErrorAlert');
-            }
+            Y.applyUpdate(this.yDoc, update, 'remote');
+            this.awaitingInitialSync = false;
         }
+    }
+
+    private initializeYjsDocument(initialContent: string) {
+        const doc = new Y.Doc();
+        const text = doc.getText('problem-statement');
+        doc.transact(() => {
+            if (initialContent) {
+                text.insert(0, initialContent);
+            }
+        }, 'init');
+        doc.on('update', (update, origin: unknown) => {
+            if (!this.exerciseId) {
+                return;
+            }
+            const originTag = normalizeYjsOrigin(origin);
+            if (originTag === 'remote' || originTag === 'init') {
+                return;
+            }
+            this.syncService.sendSynchronizationUpdate(this.exerciseId, {
+                target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+                yjsUpdate: encodeUint8ArrayToBase64(update),
+            });
+        });
+        this.yDoc = doc;
+        this.yText = text;
+    }
+
+    private replaceContentFromUpdate(update: Uint8Array) {
+        if (!this.yDoc || !this.yText) {
+            return;
+        }
+        const snapshotDoc = new Y.Doc();
+        Y.applyUpdate(snapshotDoc, update);
+        const snapshotText = snapshotDoc.getText('problem-statement').toString();
+        this.yDoc.transact(() => {
+            this.yText?.delete(0, this.yText.length);
+            if (snapshotText) {
+                this.yText?.insert(0, snapshotText);
+            }
+        }, 'remote');
+        snapshotDoc.destroy();
     }
 }

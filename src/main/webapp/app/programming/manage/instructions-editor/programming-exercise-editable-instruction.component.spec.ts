@@ -4,6 +4,8 @@ import { By } from '@angular/platform-browser';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { Observable, Subject, of, throwError } from 'rxjs';
+import * as Y from 'yjs';
+import { Awareness } from 'y-protocols/awareness';
 import { DebugElement } from '@angular/core';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
@@ -70,10 +72,11 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         },
     } as ActivatedRoute;
 
-    const problemStatementUpdates$ = new Subject<string>();
+    const yDoc = new Y.Doc();
+    const yText = yDoc.getText('problem-statement');
+    const awareness = new Awareness(yDoc);
     const problemStatementSyncServiceMock = {
-        init: jest.fn().mockReturnValue(problemStatementUpdates$.asObservable()),
-        queueLocalChange: jest.fn(),
+        init: jest.fn().mockReturnValue({ doc: yDoc, text: yText, awareness }),
         reset: jest.fn(),
     };
 
@@ -142,21 +145,13 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize sync service and subscribe to remote updates', fakeAsync(() => {
+    it('should initialize sync service', fakeAsync(() => {
         const exercise = { id: 30, templateParticipation, problemStatement: 'test' } as ProgrammingExercise;
         setRequiredInputs(fixture, exercise);
         fixture.detectChanges();
         tick();
 
         expect(problemStatementSyncServiceMock.init).toHaveBeenCalledWith(exercise.id, exercise.problemStatement);
-
-        // Simulate remote update
-        problemStatementUpdates$.next('remote problem statement');
-        tick();
-
-        // Verify component applied the update without queueing it
-        expect(comp.exercise().problemStatement).toBe('remote problem statement');
-        expect(problemStatementSyncServiceMock.queueLocalChange).not.toHaveBeenCalled();
 
         fixture.destroy();
         flush();
@@ -172,7 +167,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(problemStatementSyncServiceMock.init).not.toHaveBeenCalled();
     }));
 
-    it('queues local changes and emits unsaved flag on user edits', () => {
+    it('emits unsaved flag on user edits', () => {
         const hasUnsavedSpy = jest.fn();
         comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
         setRequiredInputs(fixture, { ...exercise, problemStatement: 'old' });
@@ -180,20 +175,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         comp.updateProblemStatement('changed');
 
-        expect(problemStatementSyncServiceMock.queueLocalChange).toHaveBeenCalledWith('changed');
         expect(hasUnsavedSpy).toHaveBeenCalledWith(true);
-    });
-
-    it('applies remote updates and marks unsaved state', () => {
-        const instructionSpy = jest.fn();
-        comp.instructionChange.subscribe(instructionSpy);
-        setRequiredInputs(fixture, { ...exercise, problemStatement: 'old' });
-
-        (comp as any).applyRemoteProblemStatementUpdate('remote content');
-
-        expect(comp.exercise().problemStatement).toBe('remote content');
-        expect(instructionSpy).toHaveBeenCalledWith('remote content');
-        expect(comp.unsavedChangesValue).toBeTrue();
     });
 
     it('should reset sync service on component destroy', () => {

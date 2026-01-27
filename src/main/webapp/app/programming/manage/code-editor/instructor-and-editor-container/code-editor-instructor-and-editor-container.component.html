@@ -22,6 +22,8 @@
             [participation]="selectedParticipation!"
             [buildable]="selectedRepository !== RepositoryType.TESTS"
             [selectedRepository]="selectedRepository"
+            [auxiliaryRepositoryId]="selectedRepository === RepositoryType.AUXILIARY ? selectedRepositoryId : undefined"
+            [enableCollaboration]="true"
             [course]="course"
             [allowHiddenFiles]="true"
             [consistencyIssues]="consistencyIssues()"

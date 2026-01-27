@@ -30,9 +30,10 @@ import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actio
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { ProblemStatementSyncService } from 'app/programming/manage/services/problem-statement-sync.service';
+import { ProblemStatementSyncService, ProblemStatementSyncState } from 'app/programming/manage/services/problem-statement-sync.service';
 import { editor } from 'monaco-editor';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { MonacoBinding } from 'y-monaco';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -92,9 +93,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     testCaseSubscription: Subscription;
     forceRenderSubscription: Subscription;
-    incomingSyncPatchesSubscription?: Subscription;
-
-    private isApplyingRemoteUpdate = false;
+    private problemStatementSyncState?: ProblemStatementSyncState;
+    private problemStatementBinding?: MonacoBinding;
 
     @ViewChild(MarkdownEditorMonacoComponent, { static: false }) markdownEditorMonaco?: MarkdownEditorMonacoComponent;
 
@@ -179,6 +179,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             // Small delay to allow the instruction component to initialize
             setTimeout(() => this.generateHtmlSubject.next(), 0);
         }
+        this.trySetupProblemStatementBinding();
     }
 
     /** Save the problem statement on the server.
@@ -227,11 +228,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             this.instructionChange.emit(problemStatement);
             // Trigger preview update when showPreview is enabled
             this.generateHtmlSubject.next();
-            // Only queue local change if we're not applying a remote update
-            // This prevents circular updates when syncing with other editors
-            if (!this.isApplyingRemoteUpdate) {
-                this.problemStatementSyncService.queueLocalChange(problemStatement);
-            }
         }
     }
 
@@ -339,22 +335,27 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             return;
         }
         this.teardownProblemStatementSync();
-        this.incomingSyncPatchesSubscription = this.problemStatementSyncService
-            .init(exerciseId, initialContent ?? this.exercise()?.problemStatement ?? '')
-            .subscribe((updatedContent) => this.applyRemoteProblemStatementUpdate(updatedContent));
+        const initialText = initialContent ?? this.exercise()?.problemStatement ?? '';
+        this.problemStatementSyncState = this.problemStatementSyncService.init(exerciseId, initialText);
+        this.trySetupProblemStatementBinding();
     }
 
     private teardownProblemStatementSync() {
-        this.incomingSyncPatchesSubscription?.unsubscribe();
-        this.incomingSyncPatchesSubscription = undefined;
+        this.problemStatementBinding?.destroy();
+        this.problemStatementBinding = undefined;
+        this.problemStatementSyncState = undefined;
         this.problemStatementSyncService.reset();
     }
 
-    private applyRemoteProblemStatementUpdate(updatedContent: string) {
-        this.isApplyingRemoteUpdate = true;
-        this.unsavedChanges = true;
-        // parents would update exercise.problemStatement through the event.
-        this.instructionChange.emit(updatedContent);
-        this.isApplyingRemoteUpdate = false;
+    private trySetupProblemStatementBinding() {
+        if (!this.problemStatementSyncState || !this.markdownEditorMonaco?.monacoEditor || this.problemStatementBinding) {
+            return;
+        }
+        const model = this.markdownEditorMonaco.monacoEditor.getModel();
+        const editorInstance = this.markdownEditorMonaco.monacoEditor.getEditor();
+        if (!model) {
+            return;
+        }
+        this.problemStatementBinding = new MonacoBinding(this.problemStatementSyncState.text, model, new Set([editorInstance]));
     }
 }

@@ -1,18 +1,26 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, Subject, Subscription } from 'rxjs';
-import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { CommitState, DeleteFileChange, FileType, RenameFileChange, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
 import {
+    ProgrammingExerciseEditorAwarenessType,
     ProgrammingExerciseEditorFileChangeType,
-    ProgrammingExerciseEditorFileFull,
     ProgrammingExerciseEditorFileSync,
     ProgrammingExerciseEditorSyncMessage,
     ProgrammingExerciseEditorSyncService,
     ProgrammingExerciseEditorSyncTarget,
 } from 'app/programming/manage/services/programming-exercise-editor-sync.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import * as Y from 'yjs';
+import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
+import {
+    AwarenessUpdatePayload,
+    decodeBase64ToUint8Array,
+    encodeUint8ArrayToBase64,
+    ensureRemoteSelectionStyle,
+    getColorForClientId,
+    normalizeYjsOrigin,
+} from 'app/programming/manage/services/yjs-utils';
 
 type TargetFilter = (message: ProgrammingExerciseEditorSyncMessage) => boolean;
 
@@ -30,6 +38,15 @@ export type NewCommitAlertOperation = { type: 'NEW_COMMIT_ALERT' };
 
 export type FileOperation = FileContentEditOperation | FileCreateOperation | FileDeleteOperation | FileRenameOperation | NewCommitAlertOperation;
 
+type YjsFileDoc = {
+    doc: Y.Doc;
+    text: Y.Text;
+    awareness: Awareness;
+    target: ProgrammingExerciseEditorSyncTarget;
+    auxiliaryId?: number;
+    fileName: string;
+};
+
 /**
  * Service responsible for synchronizing file changes across multiple code editors in real-time.
  * This enables collaborative editing of programming exercise repositories (template, solution, tests, auxiliary)
@@ -42,17 +59,10 @@ export type FileOperation = FileContentEditOperation | FileCreateOperation | Fil
 @Injectable({ providedIn: 'root' })
 export class RepositoryFileSyncService {
     private syncService = inject(ProgrammingExerciseEditorSyncService);
-    private alertService = inject(AlertService);
     private fileService = inject(CodeEditorFileService);
 
-    /** Google's diff-match-patch library for generating and applying text diffs */
-    private readonly diffMatchPatch = new DiffMatchPatch();
-
-    /** Reference snapshots of file content used as the base for diff calculations */
-    private baselines: Record<string, string> = {};
-
-    /** Timestamps of last processed messages per file, used to prevent duplicate processing */
-    private lastProcessedTimestamps: Record<string, number> = {};
+    /** Yjs documents for live synchronization per file */
+    private docs: Record<string, YjsFileDoc> = {};
 
     /** The current programming exercise ID being synchronized */
     private exerciseId?: number;
@@ -98,8 +108,7 @@ export class RepositoryFileSyncService {
         this.reset();
         this.exerciseId = exerciseId;
         this.targetFilter = targetFilter;
-        this.baselines = {};
-        this.lastProcessedTimestamps = {};
+        this.docs = {};
         this.incomingMessageSubscription = this.syncService.subscribeToUpdates(exerciseId).subscribe((message) => this.handleIncomingMessage(message));
         return this.patchOperations.asObservable();
     }
@@ -110,15 +119,14 @@ export class RepositoryFileSyncService {
      *
      * Cleanup operations:
      * - Unsubscribes from WebSocket synchronization messages
-     * - Clears all baseline content snapshots
-     * - Resets timestamp tracking for duplicate detection
+     * - Clears tracked synchronization state
      * - Completes the patchOperations observable and creates a new one
      */
     reset() {
         this.syncService.unsubscribe();
         this.exerciseId = undefined;
-        this.baselines = {};
-        this.lastProcessedTimestamps = {};
+        Object.values(this.docs).forEach((doc) => doc.doc.destroy());
+        this.docs = {};
         this.targetFilter = () => true;
         this.incomingMessageSubscription?.unsubscribe();
         this.incomingMessageSubscription = undefined;
@@ -126,35 +134,17 @@ export class RepositoryFileSyncService {
         this.patchOperations = new Subject<FileOperation>();
     }
 
-    /**
-     * Registers a baseline (reference snapshot) of a file's content.
-     * This baseline is used as the starting point for generating and applying diff patches.
-     *
-     * When to call this:
-     * - When a file is first loaded from the server
-     * - When a file is created or renamed
-     * - After successfully applying a remote change
-     *
-     * The baseline ensures that both local and remote editors work from the same reference point
-     * when calculating diffs, preventing divergence in collaborative editing scenarios.
-     *
-     * @param repositoryType - The repository type (template, solution, tests, auxiliary)
-     * @param fileName - The file path within the repository
-     * @param content - The current content snapshot to use as baseline
-     * @param auxiliaryId - Optional ID for auxiliary repositories
-     */
-    registerBaseline(repositoryType: RepositoryType, fileName: string, content: string, auxiliaryId?: number) {
+    getOrCreateFileDoc(repositoryType: RepositoryType, fileName: string, initialContent: string, auxiliaryId?: number): YjsFileDoc | undefined {
         const target = RepositoryFileSyncService.REPOSITORY_TYPE_TO_SYNC_TARGET[repositoryType];
         if (!target) {
-            return;
+            return undefined;
         }
-        const key = this.getBaselineKey(target, fileName, auxiliaryId);
-        this.baselines[key] = content;
+        return this.ensureYjsDoc(target, fileName, auxiliaryId, initialContent);
     }
 
     /**
      * Requests the full content of a file from other connected editors.
-     * This is used as a fallback when patch application fails or when synchronizing a new editor.
+     * This is used when synchronizing a new editor or recovering missing file content.
      *
      * When this is needed:
      * - When an editor joins and needs to catch up
@@ -216,12 +206,9 @@ export class RepositoryFileSyncService {
     }
 
     /**
-     * Handles local file content edits and broadcasts them as diff patches.
+     * Handles local file content edits and broadcasts them as Yjs updates.
      *
-     * 1. Retrieves the previously saved baseline (reference snapshot)
-     * 2. Generates a diff patch between the baseline and new content
-     * 3. Updates the baseline to the new content
-     * 4. Sends the patch to other editors via WebSocket
+     * 1. Updates the Yjs document and broadcasts the update
      *
      * @param operation - The content edit operation with fileName and new content
      * @param target - The sync target (which repository type)
@@ -229,34 +216,16 @@ export class RepositoryFileSyncService {
      * @private
      */
     private handleLocalContentEdit(operation: FileContentEditOperation, target: ProgrammingExerciseEditorSyncTarget, auxiliaryId?: number) {
-        const baselineKey = this.getBaselineKey(target, operation.fileName, auxiliaryId);
-        const previousContent = this.baselines[baselineKey] ?? '';
-
-        const patch = this.diffMatchPatch.patch_toText(this.diffMatchPatch.patch_make(previousContent, operation.content));
-        if (!patch) {
-            // No changes detected
+        const previousContent = this.getDocContent(target, operation.fileName, auxiliaryId);
+        if (previousContent === operation.content) {
             return;
         }
-
-        this.baselines[baselineKey] = operation.content;
-
-        this.send({
-            target,
-            auxiliaryRepositoryId: auxiliaryId,
-            filePatches: [{ fileName: operation.fileName, changeType: ProgrammingExerciseEditorFileChangeType.CONTENT, patch }],
-        });
+        const yjsDoc = this.ensureYjsDoc(target, operation.fileName, auxiliaryId, operation.content);
+        this.updateDocContent(yjsDoc, operation.content, 'local');
     }
 
     /**
-     * Handles local file creation and broadcasts it to other editors.
-     *
-     * Process:
-     * 1. Registers the initial content as the baseline
-     * 2. Sends the full file content (using 'patch' field for initial content)
-     * 3. Includes file type metadata for proper rendering
-     *
-     * Note: For CREATE operations, the 'patch' field actually contains the full content,
-     * not a diff patch. This is intentional for initial file creation.
+     * Handles local file creation by initializing the Yjs document.
      *
      * @param operation - The create operation with fileName, content, and optional fileType
      * @param target - The sync target (which repository type)
@@ -264,18 +233,11 @@ export class RepositoryFileSyncService {
      * @private
      */
     private handleLocalFileCreate(operation: FileCreateOperation, target: ProgrammingExerciseEditorSyncTarget, auxiliaryId?: number) {
-        const baselineKey = this.getBaselineKey(target, operation.fileName, auxiliaryId);
-        this.baselines[baselineKey] = operation.content;
+        this.ensureYjsDoc(target, operation.fileName, auxiliaryId, operation.content);
     }
 
     /**
-     * Handles local file deletion and broadcasts it to other editors.
-     *
-     * Process:
-     * 1. Removes the file's baseline from tracking
-     * 2. Sends a DELETE message with just the fileName (no content needed)
-     *
-     * Other editors will remove the file from their UI and tracking.
+     * Handles local file deletion by removing the Yjs document.
      *
      * @param operation - The delete operation with fileName
      * @param target - The sync target (which repository type)
@@ -283,19 +245,13 @@ export class RepositoryFileSyncService {
      * @private
      */
     private handleLocalFileDelete(operation: FileDeleteOperation, target: ProgrammingExerciseEditorSyncTarget, auxiliaryId?: number) {
-        const baselineKey = this.getBaselineKey(target, operation.fileName, auxiliaryId);
-        delete this.baselines[baselineKey];
+        const docKey = this.getDocKey(target, operation.fileName, auxiliaryId);
+        this.docs[docKey]?.doc.destroy();
+        delete this.docs[docKey];
     }
 
     /**
-     * Handles local file rename. We keep baselines in sync locally and rely on the server broadcast to inform peers.
-     *
-     * 1. Retrieves content from the old file's baseline
-     * 2. Transfers the baseline to the new fileName
-     * 3. Deletes the old fileName's baseline
-     *
-     * The content is included to ensure all editors have the same final state,
-     * even if they haven't fully synced the file before the rename.
+     * Handles local file rename by moving any existing Yjs document.
      *
      * @param operation - The rename operation with fileName, newFileName, and content
      * @param target - The sync target (which repository type)
@@ -303,18 +259,13 @@ export class RepositoryFileSyncService {
      * @private
      */
     private handleLocalFileRename(operation: FileRenameOperation, target: ProgrammingExerciseEditorSyncTarget, auxiliaryId?: number) {
-        const baselineKey = this.getBaselineKey(target, operation.fileName, auxiliaryId);
+        const docKey = this.getDocKey(target, operation.fileName, auxiliaryId);
 
-        // early return for edge case where a file is renamed before its baseline is registered (e.g., file was never opened AND no live edits were received yet)
-        if (operation.fileType === FileType.FILE && !operation.content && !this.baselines[baselineKey]) {
+        // Skip if a file is renamed before its document is registered (e.g., file was never opened AND no live edits were received yet)
+        if (operation.fileType === FileType.FILE && !this.docs[docKey]) {
             return;
         }
-        const previousContent = this.baselines[baselineKey];
-        // Keep the current content even if we never registered a baseline for the old path
-        const renameContent = previousContent || operation.content;
-        this.renameTrackingEntries(target, auxiliaryId, operation.fileName, operation.newFileName);
-        this.baselines[this.getBaselineKey(target, operation.newFileName, auxiliaryId)] = renameContent;
-        delete this.baselines[baselineKey];
+        this.renameDocEntries(target, auxiliaryId, operation.fileName, operation.newFileName);
     }
 
     /**
@@ -326,8 +277,7 @@ export class RepositoryFileSyncService {
      * 2. Applies the configured targetFilter (e.g., only process template repo)
      * 3. If message contains newCommitAlert, emits a special commit alert operation
      * 4. If message contains file requests, responds with full file content
-     * 5. If message contains patches, applies them to local baselines
-     * 6. If message contains full file content, updates baselines directly
+     * 5. If message contains file patches, applies them to local Yjs documents
      *
      * @param message - The incoming synchronization message from another editor
      * @private
@@ -347,6 +297,11 @@ export class RepositoryFileSyncService {
             return;
         }
 
+        if (message.awareness?.type === ProgrammingExerciseEditorAwarenessType.UPDATE && message.awareness.update) {
+            this.handleAwarenessUpdate(message);
+            return;
+        }
+
         if (message.fileRequests?.length) {
             this.respondWithFullFiles(message);
             return;
@@ -358,45 +313,15 @@ export class RepositoryFileSyncService {
                 this.patchOperations.next(op);
             }
         });
-
-        this.handleFullFileSync(message);
-    }
-
-    /**
-     * Processes full file content received from other editors.
-     * This is used when another editor responds to our file request or sends complete file content.
-     *
-     * For each file:
-     * 1. Updates the baseline with the full content
-     * 2. Records the message timestamp to prevent processing older messages
-     * 3. Emits a CONTENT operation to notify subscribers
-     *
-     * @param message - The sync message containing full file contents
-     * @private
-     */
-    private handleFullFileSync(message: ProgrammingExerciseEditorSyncMessage) {
-        if (!message.target || !message.fileFulls?.length) {
-            return;
-        }
-        const auxiliaryId = message.target === ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY ? message.auxiliaryRepositoryId : undefined;
-        message.fileFulls.forEach((fullFile) => {
-            const baselineKey = this.getBaselineKey(message.target!, fullFile.fileName, auxiliaryId);
-            this.lastProcessedTimestamps[baselineKey] = message.timestamp ?? Date.now();
-            this.baselines[baselineKey] = fullFile.content;
-            this.patchOperations.next({ type: ProgrammingExerciseEditorFileChangeType.CONTENT, fileName: fullFile.fileName, content: fullFile.content });
-        });
     }
 
     /**
      * Processes a single file patch received from another editor.
-     * This is the core method for applying remote changes to the local baseline.
-     *
-     * Error handling:
-     * - If patch application fails (content diverged), returns undefined
+     * This is the core method for applying remote changes to the local Yjs documents.
      *
      * @param message - The sync message containing metadata (timestamp, target, etc.)
-     * @param filePatch - The specific file change (patch, create, delete, or rename)
-     * @returns FileOperation to apply to the UI, or undefined if patch failed
+     * @param filePatch - The specific file change (content update, create, delete, or rename)
+     * @returns FileOperation to apply to the UI, or undefined if not applicable
      * @private
      */
     private handleRemoteFilePatch(message: ProgrammingExerciseEditorSyncMessage, filePatch: ProgrammingExerciseEditorFileSync): FileOperation | undefined {
@@ -404,31 +329,20 @@ export class RepositoryFileSyncService {
             return undefined;
         }
         const auxiliaryId = message.target === ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY ? message.auxiliaryRepositoryId : undefined;
-        const baselineKey = this.getBaselineKey(message.target, filePatch.fileName, auxiliaryId);
-        const messageTimestamp = message.timestamp ?? Date.now();
-
-        // Duplicate prevention:
-        // - Checks message timestamp against lastProcessedTimestamps to skip duplicate/old messages
-        // - This prevents race conditions when multiple editors send updates simultaneously
-        if (this.lastProcessedTimestamps[baselineKey] && messageTimestamp <= this.lastProcessedTimestamps[baselineKey]) {
-            return undefined;
-        }
-
-        // **DELETE**: Removes the file's baseline and returns a delete operation
+        const docKey = this.getDocKey(message.target, filePatch.fileName, auxiliaryId);
+        // **DELETE**: Removes the file's Yjs document and returns a delete operation
         if (filePatch.changeType === ProgrammingExerciseEditorFileChangeType.DELETE) {
-            delete this.baselines[baselineKey];
-            this.lastProcessedTimestamps[baselineKey] = messageTimestamp;
+            this.docs[docKey]?.doc.destroy();
+            delete this.docs[docKey];
             return { type: ProgrammingExerciseEditorFileChangeType.DELETE, fileName: filePatch.fileName };
         }
 
-        // **RENAME**: Moves the baseline to the new filename and returns a rename operation
+        // **RENAME**: Moves the Yjs document to the new filename and returns a rename operation
         if (filePatch.changeType === ProgrammingExerciseEditorFileChangeType.RENAME && filePatch.newFileName) {
             const fileType = filePatch.fileType ?? (filePatch.fileName.includes('.') ? FileType.FILE : FileType.FOLDER);
-            const newKey = this.getBaselineKey(message.target, filePatch.newFileName, auxiliaryId);
+            const newKey = this.getDocKey(message.target, filePatch.newFileName, auxiliaryId);
             if (fileType === FileType.FOLDER) {
-                this.renameTrackingEntries(message.target, auxiliaryId, filePatch.fileName, filePatch.newFileName);
-                delete this.baselines[baselineKey];
-                delete this.lastProcessedTimestamps[baselineKey];
+                this.renameDocEntries(message.target, auxiliaryId, filePatch.fileName, filePatch.newFileName);
                 return {
                     type: ProgrammingExerciseEditorFileChangeType.RENAME,
                     fileName: filePatch.fileName,
@@ -437,12 +351,11 @@ export class RepositoryFileSyncService {
                     fileType,
                 };
             }
-            const currentContent = this.baselines[baselineKey] ?? filePatch.patch;
-            delete this.baselines[baselineKey];
-            delete this.lastProcessedTimestamps[baselineKey];
-            if (currentContent) {
-                this.baselines[newKey] = currentContent;
-                this.lastProcessedTimestamps[newKey] = messageTimestamp;
+            const existingDoc = this.docs[docKey];
+            const currentContent = existingDoc?.text.toString() ?? filePatch.patch ?? '';
+            if (existingDoc) {
+                this.docs[newKey] = { ...existingDoc, fileName: filePatch.newFileName };
+                delete this.docs[docKey];
             }
             return {
                 type: ProgrammingExerciseEditorFileChangeType.RENAME,
@@ -453,46 +366,22 @@ export class RepositoryFileSyncService {
             };
         }
 
-        //  **CREATE**: Registers a new baseline with initial content and returns a create operation
+        //  **CREATE**: Registers a new Yjs document with initial content and returns a create operation
         if (filePatch.changeType === ProgrammingExerciseEditorFileChangeType.CREATE) {
             const content = filePatch?.patch ?? '';
-            this.baselines[baselineKey] = content;
-            this.lastProcessedTimestamps[baselineKey] = messageTimestamp;
             return { type: ProgrammingExerciseEditorFileChangeType.CREATE, fileName: filePatch.fileName, content, fileType: filePatch.fileType };
         }
 
-        // **CONTENT** (default): Applies diff patch to baseline and returns updated content
-        const patches = filePatch.patch ? this.diffMatchPatch.patch_fromText(filePatch.patch) : [];
-        const currentContent = this.baselines[baselineKey];
-
-        if (currentContent === undefined) {
-            this.requestFullFileForTarget(message.target, filePatch.fileName, auxiliaryId);
+        if (!filePatch.yjsUpdate) {
             return undefined;
         }
-
-        let patchedContent: string;
-        try {
-            if (patches.length) {
-                const [appliedContent, results] = this.diffMatchPatch.patch_apply(patches, currentContent);
-                // Check if any patch failed to apply (results array contains false for failed patches)
-                const hasFailedPatches = results.some((success) => !success);
-                if (hasFailedPatches) {
-                    this.alertService.info('artemisApp.editor.synchronization.patchFailedAlert');
-                    return undefined;
-                }
-                patchedContent = appliedContent;
-            } else {
-                patchedContent = filePatch.patch ?? currentContent;
-            }
-        } catch (error) {
-            // If patch parsing or application throws an error, request full file sync as fallback
-            this.alertService.info('artemisApp.editor.synchronization.syncErrorAlert');
+        const yjsDoc = this.getExistingDoc(message.target, filePatch.fileName, auxiliaryId);
+        if (!yjsDoc) {
             return undefined;
         }
-
-        this.baselines[baselineKey] = patchedContent;
-        this.lastProcessedTimestamps[baselineKey] = messageTimestamp;
-        return { type: ProgrammingExerciseEditorFileChangeType.CONTENT, fileName: filePatch.fileName, content: patchedContent };
+        const update = decodeBase64ToUint8Array(filePatch.yjsUpdate);
+        Y.applyUpdate(yjsDoc.doc, update, 'remote');
+        return undefined;
     }
 
     /**
@@ -504,7 +393,7 @@ export class RepositoryFileSyncService {
      * 2. Updates the code editor container state
      * 3. Refreshes the repository tree view to reflect changes
      *
-     * Note: This method modifies the UI but does NOT update baselines - those are already
+     * Note: This method modifies the UI but does NOT update Yjs documents - those are already
      * updated by handleRemoteFilePatch() before this method is called.
      *
      * NEW_COMMIT_ALERT operations are handled by the calling component and should not
@@ -672,11 +561,11 @@ export class RepositoryFileSyncService {
 
     /**
      * Responds to file content requests from other editors.
-     * Called when another editor sends a fileRequests message (e.g., after failed patch application).
+     * Called when another editor sends a fileRequests message (e.g., after joining late).
      *
      * Process:
-     * 1. Looks up requested files in our local baselines
-     * 2. Sends back full file content for each file we have
+     * 1. Looks up requested files in our local Yjs documents
+     * 2. Sends back Yjs updates for each file we have
      * 3. Ignores requests for files we don't have (another editor may respond)
      *
      * @param message - The incoming file request message from another editor
@@ -686,54 +575,158 @@ export class RepositoryFileSyncService {
         if (!message.target || !message.fileRequests?.length) {
             return;
         }
-        const auxiliaryId = message.target === ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY ? message.auxiliaryRepositoryId : undefined;
-        const files: ProgrammingExerciseEditorFileFull[] = [];
+        const filePatches: ProgrammingExerciseEditorFileSync[] = [];
         message.fileRequests.forEach((fileName) => {
-            const baselineKey = this.getBaselineKey(message.target!, fileName, auxiliaryId);
-            const content = this.baselines[baselineKey];
-            if (content !== undefined) {
-                files.push({ fileName, content });
+            const doc = this.getExistingDoc(message.target!, fileName, message.auxiliaryRepositoryId);
+            if (!doc) {
+                return;
             }
+            const update = Y.encodeStateAsUpdate(doc.doc);
+            filePatches.push({
+                fileName,
+                changeType: ProgrammingExerciseEditorFileChangeType.CONTENT,
+                yjsUpdate: encodeUint8ArrayToBase64(update),
+            });
         });
-        if (!files.length) {
+        if (!filePatches.length) {
             return;
         }
         this.send({
             target: message.target,
             auxiliaryRepositoryId: message.auxiliaryRepositoryId,
-            fileFulls: files,
+            filePatches,
         });
     }
 
-    /**
-     * Renames all tracked baseline and timestamp entries for a file or folder rename.
-     * For folders, cascades to all nested paths.
-     * @param target - The repository sync target
-     * @param auxiliaryId - Optional auxiliary repository ID
-     * @param oldFileName - The previous file path
-     * @param newFileName - The new file path
-     * @private
-     */
-    private renameTrackingEntries(target: ProgrammingExerciseEditorSyncTarget, auxiliaryId: number | undefined, oldFileName: string, newFileName: string) {
+    private renameDocEntries(target: ProgrammingExerciseEditorSyncTarget, auxiliaryId: number | undefined, oldFileName: string, newFileName: string) {
         const basePrefix = `${this.exerciseId ?? 'unknown'}-${target}-${auxiliaryId ?? 'none'}::`;
         const oldPrefix = `${basePrefix}${oldFileName}`;
         const newPrefix = `${basePrefix}${newFileName}`;
-        const renameKeys = (collection: Record<string, unknown>) => {
-            Object.keys(collection).forEach((key) => {
-                if (key.startsWith(oldPrefix) && (key.length === oldPrefix.length || key.charAt(oldPrefix.length) === '/')) {
-                    const suffix = key.slice(oldPrefix.length);
-                    const newKey = `${newPrefix}${suffix}`;
-                    collection[newKey] = collection[key];
-                    delete collection[key];
-                }
+        Object.keys(this.docs).forEach((key) => {
+            if (key.startsWith(oldPrefix) && (key.length === oldPrefix.length || key.charAt(oldPrefix.length) === '/')) {
+                const suffix = key.slice(oldPrefix.length);
+                const newKey = `${newPrefix}${suffix}`;
+                const doc = this.docs[key];
+                doc.fileName = `${newFileName}${suffix}`;
+                this.docs[newKey] = doc;
+                delete this.docs[key];
+            }
+        });
+    }
+
+    private ensureYjsDoc(target: ProgrammingExerciseEditorSyncTarget, fileName: string, auxiliaryId: number | undefined, initialContent?: string) {
+        const key = this.getDocKey(target, fileName, auxiliaryId);
+        const existing = this.docs[key];
+        if (existing) {
+            const shouldApplyInitialContent = initialContent !== undefined && (initialContent.length > 0 || existing.text.length === 0);
+            if (shouldApplyInitialContent && existing.text.toString() !== initialContent) {
+                this.updateDocContent(existing, initialContent, 'init');
+            }
+            return existing;
+        }
+        const doc = new Y.Doc();
+        const text = doc.getText('content');
+        const awareness = new Awareness(doc);
+        doc.transact(() => {
+            if (initialContent) {
+                text.insert(0, initialContent);
+            }
+        }, 'init');
+        const fileDoc: YjsFileDoc = { doc, text, awareness, target, auxiliaryId, fileName };
+        doc.on('update', (update, origin: unknown) => {
+            if (!this.exerciseId) {
+                return;
+            }
+            const originTag = normalizeYjsOrigin(origin);
+            if (originTag === 'remote' || originTag === 'init') {
+                return;
+            }
+            this.send({
+                target: fileDoc.target,
+                auxiliaryRepositoryId: fileDoc.auxiliaryId,
+                filePatches: [
+                    {
+                        fileName: fileDoc.fileName,
+                        changeType: ProgrammingExerciseEditorFileChangeType.CONTENT,
+                        yjsUpdate: encodeUint8ArrayToBase64(update),
+                    },
+                ],
             });
-        };
-        renameKeys(this.baselines);
-        renameKeys(this.lastProcessedTimestamps);
+        });
+        awareness.on('update', ({ added, updated, removed }: AwarenessUpdatePayload, origin: unknown) => {
+            const originTag = normalizeYjsOrigin(origin);
+            if (!this.exerciseId || originTag === 'remote') {
+                return;
+            }
+            const update = encodeAwarenessUpdate(awareness, [...added, ...updated, ...removed]);
+            this.send({
+                target: fileDoc.target,
+                auxiliaryRepositoryId: fileDoc.auxiliaryId,
+                awareness: {
+                    type: ProgrammingExerciseEditorAwarenessType.UPDATE,
+                    update: encodeUint8ArrayToBase64(update),
+                    fileName: fileDoc.fileName,
+                },
+            });
+        });
+        this.initializeLocalAwareness(awareness);
+        this.docs[key] = fileDoc;
+        return fileDoc;
+    }
+
+    private initializeLocalAwareness(awareness: Awareness) {
+        const clientInstanceId = this.syncService.clientInstanceId;
+        const clientName = clientInstanceId ? `Editor ${clientInstanceId.slice(0, 6)}` : 'Editor';
+        const color = getColorForClientId(awareness.clientID);
+        awareness.setLocalStateField('user', { name: clientName, color });
+    }
+
+    private handleAwarenessUpdate(message: ProgrammingExerciseEditorSyncMessage) {
+        if (!message.target || !message.awareness?.update) {
+            return;
+        }
+        const fileName = message.awareness.fileName;
+        if (!fileName) {
+            return;
+        }
+        const fileDoc = this.getExistingDoc(message.target, fileName, message.auxiliaryRepositoryId);
+        if (!fileDoc) {
+            return;
+        }
+        const update = decodeBase64ToUint8Array(message.awareness.update);
+        applyAwarenessUpdate(fileDoc.awareness, update, 'remote');
+        this.registerRemoteClientStyles(fileDoc.awareness);
+    }
+
+    private registerRemoteClientStyles(awareness: Awareness) {
+        awareness.getStates().forEach((state, clientId) => {
+            if (clientId === awareness.clientID) {
+                return;
+            }
+            const color = state?.user?.color ?? getColorForClientId(clientId);
+            ensureRemoteSelectionStyle(clientId, color);
+        });
+    }
+
+    private updateDocContent(fileDoc: YjsFileDoc, content: string, origin: string) {
+        if (fileDoc.text.toString() === content) {
+            return;
+        }
+        fileDoc.doc.transact(() => {
+            fileDoc.text.delete(0, fileDoc.text.length);
+            if (content) {
+                fileDoc.text.insert(0, content);
+            }
+        }, origin);
+    }
+
+    private getExistingDoc(target: ProgrammingExerciseEditorSyncTarget, fileName: string, auxiliaryId?: number): YjsFileDoc | undefined {
+        const key = this.getDocKey(target, fileName, auxiliaryId);
+        return this.docs[key];
     }
 
     /**
-     * Generates a unique key for storing file baselines and timestamps.
+     * Generates a unique key for storing file documents.
      *
      * Key format: `{exerciseId}-{target}-{auxiliaryId}::{fileName}`
      * Examples:
@@ -743,19 +736,16 @@ export class RepositoryFileSyncService {
      * @param target - The repository sync target
      * @param fileName - The file path
      * @param auxiliaryId - Optional auxiliary repository ID
-     * @returns Unique baseline key for the file
+     * @returns Unique key for the file
      * @private
      */
-    private getBaselineKey(target: ProgrammingExerciseEditorSyncTarget, fileName: string, auxiliaryId?: number) {
+    private getDocKey(target: ProgrammingExerciseEditorSyncTarget, fileName: string, auxiliaryId?: number) {
         return `${this.exerciseId ?? 'unknown'}-${target}-${auxiliaryId ?? 'none'}::${fileName}`;
     }
 
-    private requestFullFileForTarget(target: ProgrammingExerciseEditorSyncTarget, fileName: string, auxiliaryId?: number) {
-        const repositoryType = RepositoryFileSyncService.SYNC_TARGET_TO_REPOSITORY_TYPE[target];
-        if (!repositoryType) {
-            return;
-        }
-        this.requestFullFile(repositoryType, fileName, auxiliaryId);
+    private getDocContent(target: ProgrammingExerciseEditorSyncTarget, fileName: string, auxiliaryId?: number) {
+        const key = this.getDocKey(target, fileName, auxiliaryId);
+        return this.docs[key]?.text.toString();
     }
 
     static readonly REPOSITORY_TYPE_TO_SYNC_TARGET: Readonly<Record<RepositoryType, ProgrammingExerciseEditorSyncTarget | undefined>> = {
@@ -765,13 +755,5 @@ export class RepositoryFileSyncService {
         [RepositoryType.TESTS]: ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY,
         [RepositoryType.ASSIGNMENT]: undefined,
         [RepositoryType.USER]: undefined,
-    };
-
-    static readonly SYNC_TARGET_TO_REPOSITORY_TYPE: Readonly<Record<ProgrammingExerciseEditorSyncTarget, RepositoryType | undefined>> = {
-        [ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY]: RepositoryType.TEMPLATE,
-        [ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY]: RepositoryType.SOLUTION,
-        [ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY]: RepositoryType.AUXILIARY,
-        [ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY]: RepositoryType.TESTS,
-        [ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT]: undefined,
     };
 }

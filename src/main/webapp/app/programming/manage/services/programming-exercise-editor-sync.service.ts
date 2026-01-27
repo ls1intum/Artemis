@@ -22,14 +22,25 @@ export interface ProgrammingExerciseEditorSyncMessage {
     target?: ProgrammingExerciseEditorSyncTarget;
     auxiliaryRepositoryId?: number;
     clientInstanceId?: string;
-    problemStatementPatch?: string;
-    problemStatementFull?: string;
-    problemStatementRequest?: boolean;
+    yjsUpdate?: string;
+    yjsStateVector?: string;
+    yjsRequest?: boolean;
+    awareness?: ProgrammingExerciseEditorAwarenessSync;
     filePatches?: ProgrammingExerciseEditorFileSync[];
     fileRequests?: string[];
-    fileFulls?: ProgrammingExerciseEditorFileFull[];
     timestamp?: number;
     newCommitAlert?: boolean;
+}
+
+export enum ProgrammingExerciseEditorAwarenessType {
+    UPDATE = 'UPDATE',
+    RESET = 'RESET',
+}
+
+export interface ProgrammingExerciseEditorAwarenessSync {
+    type: ProgrammingExerciseEditorAwarenessType;
+    update?: string;
+    fileName?: string;
 }
 
 export enum ProgrammingExerciseEditorFileChangeType {
@@ -42,14 +53,10 @@ export enum ProgrammingExerciseEditorFileChangeType {
 export interface ProgrammingExerciseEditorFileSync {
     fileName: string;
     patch?: string;
+    yjsUpdate?: string;
     changeType?: ProgrammingExerciseEditorFileChangeType;
     newFileName?: string;
     fileType?: FileType;
-}
-
-export interface ProgrammingExerciseEditorFileFull {
-    fileName: string;
-    content: string;
 }
 
 @Injectable({ providedIn: 'root' })

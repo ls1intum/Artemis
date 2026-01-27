@@ -89,6 +89,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
 
     course = input<Course | undefined>();
     selectedRepository = input<RepositoryType>();
+    auxiliaryRepositoryId = input<number | undefined>();
+    enableCollaboration = input<boolean>(false);
     onCommitStateChange = output<CommitState>();
     onFileChanged = output<void>();
     onUpdateFeedback = output<Feedback[]>();
@@ -278,7 +280,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
      */
     onFileContentChange({ fileName, text }: { fileName: string; text: string }) {
         this.unsavedFiles = { ...this.unsavedFiles, [fileName]: text };
-        if (!this.isApplyingRemoteFileUpdate) {
+        if (!this.isApplyingRemoteFileUpdate && !this.enableCollaboration()) {
             this.fileOperationSync.emit({ type: ProgrammingExerciseEditorFileChangeType.CONTENT, fileName, content: text });
         }
         this.onFileChanged.emit();

@@ -1,20 +1,18 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
-import { DiffMatchPatch } from 'diff-match-patch-typescript';
-
+import * as Y from 'yjs';
 import { ProblemStatementSyncService } from 'app/programming/manage/services/problem-statement-sync.service';
-import { AlertService } from 'app/shared/service/alert.service';
 import {
     ProgrammingExerciseEditorSyncMessage,
     ProgrammingExerciseEditorSyncService,
     ProgrammingExerciseEditorSyncTarget,
 } from 'app/programming/manage/services/programming-exercise-editor-sync.service';
+import { encodeUint8ArrayToBase64 } from 'app/programming/manage/services/yjs-utils';
 
 describe('ProblemStatementSyncService', () => {
     let service: ProblemStatementSyncService;
     let syncService: jest.Mocked<ProgrammingExerciseEditorSyncService>;
     let incomingMessages$: Subject<ProgrammingExerciseEditorSyncMessage>;
-    const dmp = new DiffMatchPatch();
 
     beforeEach(() => {
         incomingMessages$ = new Subject<ProgrammingExerciseEditorSyncMessage>();
@@ -29,10 +27,6 @@ describe('ProblemStatementSyncService', () => {
                         sendSynchronizationUpdate: jest.fn(),
                         unsubscribe: jest.fn(),
                     },
-                },
-                {
-                    provide: AlertService,
-                    useValue: { info: jest.fn(), error: jest.fn(), success: jest.fn() },
                 },
             ],
         });
@@ -54,136 +48,33 @@ describe('ProblemStatementSyncService', () => {
             42,
             expect.objectContaining({
                 target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-                problemStatementRequest: true,
+                yjsRequest: true,
+                yjsStateVector: undefined,
             }),
         );
     });
 
-    it('sends debounced patch for local changes', fakeAsync(() => {
-        service.init(42, 'Old content');
-
-        service.queueLocalChange('Updated content');
-        tick(300);
+    it('sends yjs update for local doc changes', () => {
+        const state = service.init(42, 'Old content');
+        state.text.insert(0, 'Updated ');
 
         expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
             42,
             expect.objectContaining({
                 target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-                problemStatementPatch: expect.any(String),
-            }),
-        );
-    }));
-
-    it('does not send patch if init was not called', () => {
-        service.handleLocalChange('content without init');
-
-        expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalled();
-    });
-
-    it('emits full content updates received from other clients', () => {
-        const received: string[] = [];
-        service.init(99, 'Initial content').subscribe((content) => received.push(content));
-
-        incomingMessages$.next({
-            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            problemStatementFull: 'Remote content',
-            timestamp: 1,
-        });
-
-        expect(received).toEqual(['Remote content']);
-    });
-
-    it('applies incoming patches and emits updated content', () => {
-        const received: string[] = [];
-        service.init(99, 'Hello World').subscribe((content) => received.push(content));
-
-        const patchText = dmp.patch_toText(dmp.patch_make('Hello World', 'Hello Artemis'));
-
-        incomingMessages$.next({
-            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            problemStatementPatch: patchText,
-            timestamp: 1,
-        });
-
-        expect(received).toEqual(['Hello Artemis']);
-    });
-
-    it('ignores patches that cannot be applied', () => {
-        const received: string[] = [];
-        service.init(99, 'Base content').subscribe((content) => received.push(content));
-
-        // Build a patch against a different base so application fails
-        const incompatiblePatch = dmp.patch_toText(dmp.patch_make('other base', 'new content'));
-        incomingMessages$.next({
-            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            problemStatementPatch: incompatiblePatch,
-            timestamp: 1,
-        });
-
-        expect(received).toEqual([]);
-    });
-
-    it('ignores non problem-statement messages', () => {
-        const received: string[] = [];
-        service.init(99, 'Initial').subscribe((content) => received.push(content));
-
-        incomingMessages$.next({
-            target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
-            problemStatementFull: 'Should be ignored',
-            timestamp: 1,
-        });
-
-        expect(received).toEqual([]);
-    });
-
-    it('ignores older messages based on timestamp', () => {
-        const received: string[] = [];
-        service.init(99, 'Initial').subscribe((content) => received.push(content));
-
-        incomingMessages$.next({
-            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            problemStatementFull: 'Newest',
-            timestamp: 2,
-        });
-
-        incomingMessages$.next({
-            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            problemStatementFull: 'Older content',
-            timestamp: 1,
-        });
-
-        expect(received).toEqual(['Newest']);
-    });
-
-    it('responds to content requests with the last synced content', () => {
-        service.init(99, 'Current content');
-
-        incomingMessages$.next({
-            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            problemStatementRequest: true,
-            timestamp: 1,
-        });
-
-        expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
-            99,
-            expect.objectContaining({
-                target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-                problemStatementFull: 'Current content',
+                yjsUpdate: expect.any(String),
             }),
         );
     });
 
-    it('cleans up subscriptions and completes observers on reset', () => {
-        let completed = false;
-        service.init(99, 'Initial').subscribe({ complete: () => (completed = true) });
+    it('applies incoming yjs updates to the doc', () => {
+        const state = service.init(99, 'Hello World');
 
-        service.reset();
-        expect(completed).toBeTrue();
+        const doc = new Y.Doc();
+        doc.getText('problem-statement').insert(0, 'Hello Artemis');
+        const update = encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(doc));
+        incomingMessages$.next({ target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT, yjsUpdate: update, timestamp: 1 });
 
-        incomingMessages$.next({
-            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            problemStatementFull: 'Should not be processed',
-            timestamp: 3,
-        });
+        expect(state.text.toString()).toBe('Hello Artemis');
     });
 });
