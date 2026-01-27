@@ -50,6 +50,9 @@ describe('CodeEditorContainerComponent', () => {
         component = fixture.componentInstance;
         alertService = TestBed.inject(AlertService);
         fileService = TestBed.inject(CodeEditorFileService) as unknown as MockFileService;
+
+        fixture.componentRef.setInput('participation', {} as Participation);
+
         component.monacoEditor = {
             onFileChange: jest.fn(),
             storeAnnotations: jest.fn(),
