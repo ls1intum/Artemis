@@ -60,7 +60,7 @@ public class HyperionFaqRewriteService {
     }
 
     /**
-     * Executes the give n FAQ for the provided course
+     * Rewrites the given FAQ for the provided course
      *
      * @param courseId the id of the course context
      * @param faqText  the FAQ to be rewritten
