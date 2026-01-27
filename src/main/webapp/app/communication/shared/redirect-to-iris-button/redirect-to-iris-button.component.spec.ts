@@ -309,4 +309,22 @@ describe('RedirectToIrisButtonComponent', () => {
 
         expect(spyCheckIrisSettings).toHaveBeenCalledOnce();
     }));
+
+    it('should call setIrisStatus without parameters when checkIrisSettings is called with undefined channelDTO', () => {
+        const spySetIrisStatus = jest.spyOn(fixture.componentInstance, 'setIrisStatus');
+
+        fixture.componentInstance.checkIrisSettings(undefined);
+
+        expect(spySetIrisStatus).toHaveBeenCalledOnce();
+        expect(spySetIrisStatus).toHaveBeenCalledWith();
+    });
+
+    it('should call setIrisStatus without parameters when checkIrisSettings is called with null channelDTO', () => {
+        const spySetIrisStatus = jest.spyOn(fixture.componentInstance, 'setIrisStatus');
+
+        fixture.componentInstance.checkIrisSettings(null);
+
+        expect(spySetIrisStatus).toHaveBeenCalledOnce();
+        expect(spySetIrisStatus).toHaveBeenCalledWith();
+    });
 });
