@@ -84,6 +84,45 @@
                                 }
                             </div>
                         }
+                        @if (message.relationGraphPreview) {
+                            <div class="relation-graph-preview-container mt-2 border rounded">
+                                <div style="height: 400px">
+                                    @if (message.graphCompetencies && message.graphRelations) {
+                                        <jhi-course-competencies-relation-graph
+                                            [courseCompetencies]="message.graphCompetencies"
+                                            [relations]="message.graphRelations"
+                                            [(selectedRelationId)]="selectedRelationId"
+                                        />
+                                    }
+                                </div>
+                                @if (!message.relationGraphPreview.viewOnly) {
+                                    <div class="p-3 border-top bg-light">
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm"
+                                            [class.btn-primary]="!message.relationCreated"
+                                            [class.btn-success]="message.relationCreated"
+                                            (click)="onCreateRelation(message)"
+                                            [disabled]="isAgentTyping() || message.relationCreated"
+                                        >
+                                            @if (message.relationCreated) {
+                                                @if (isRelationUpdateOperation(message)) {
+                                                    <span jhiTranslate="artemisApp.agent.chat.updated"></span>
+                                                } @else {
+                                                    <span jhiTranslate="artemisApp.agent.chat.mapped"></span>
+                                                }
+                                            } @else {
+                                                @if (isRelationUpdateOperation(message)) {
+                                                    <span jhiTranslate="artemisApp.agent.chat.update"></span>
+                                                } @else {
+                                                    <span jhiTranslate="artemisApp.agent.chat.map"></span>
+                                                }
+                                            }
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        }
                     </div>
                 </div>
             }

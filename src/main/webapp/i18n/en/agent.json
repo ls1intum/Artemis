@@ -26,9 +26,15 @@
                     "updated": "Successfully updated {{count}} competencies!",
                     "created": "Successfully created {{count}} competencies!",
                     "updatedSingle": "Competency updated successfully!",
-                    "createdSingle": "Competency created successfully!"
+                    "createdSingle": "Competency created successfully!",
+                    "relationCreated": "Competency relation created successfully!"
                 },
-                "authentication": "You must be authenticated to use agent chat"
+                "failure": {
+                    "relationMappingFailed": "Failed to create competency relation. Please try again."
+                },
+                "authentication": "You must be authenticated to use agent chat",
+                "map": "Map",
+                "mapped": "Mapped"
             }
         }
     }
