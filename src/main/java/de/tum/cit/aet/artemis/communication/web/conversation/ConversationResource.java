@@ -186,6 +186,18 @@ public class ConversationResource extends ConversationManagementResource {
         return ResponseEntity.ok().build();
     }
 
+    @PatchMapping("{courseId}/conversations/{conversationId}/messages/{messageId}/mark-as-unread")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> markMessageAsUnread(@PathVariable Long courseId, @PathVariable Long conversationId, @PathVariable Long messageId) {
+        checkCommunicationEnabledElseThrow(courseId);
+
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
+
+        conversationService.markAsUnread(conversationId, requestingUser.getId(), messageId);
+        return ResponseEntity.ok().build();
+    }
+
     /**
      * GET courses/:courseId/code-of-conduct/agreement : Checks if the user agrees to the code of conduct
      *

@@ -233,6 +233,12 @@ public class ConversationService {
         conversationParticipantRepository.updateLastReadAsync(userId, conversationId, ZonedDateTime.now());
     }
 
+    public void markAsUnread(Long conversationId, Long userId, Long messageId) {
+        Post post = postRepository.findByIdElseThrow(messageId);
+        // Recalculate unread count from this message onwards
+        conversationParticipantRepository.markFromMessageAsUnread(conversationId, userId, post.getCreationDate());
+    }
+
     /**
      * Updates a conversation last message date in the given object and asynchronously in the database
      *
