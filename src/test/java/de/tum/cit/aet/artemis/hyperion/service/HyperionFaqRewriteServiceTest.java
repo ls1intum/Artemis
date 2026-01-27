@@ -34,6 +34,8 @@ class HyperionFaqRewriteServiceTest {
 
     private HyperionFaqRewriteService hyperionFaqRewriteService;
 
+    private static Faq existingFaq;
+
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
@@ -41,6 +43,11 @@ class HyperionFaqRewriteServiceTest {
         var templateService = new HyperionPromptTemplateService();
         var observationRegistry = ObservationRegistry.create();
         this.hyperionFaqRewriteService = new HyperionFaqRewriteService(faqRepository, chatClient, templateService, observationRegistry);
+
+        existingFaq = new Faq();
+        existingFaq.setId(100L);
+        existingFaq.setQuestionTitle("Exam Date");
+        existingFaq.setQuestionAnswer("The exam is on Monday.");
     }
 
     @Test
@@ -48,11 +55,6 @@ class HyperionFaqRewriteServiceTest {
         long courseId = 1L;
         String originalText = "This is a bullet point text.";
         String rewrittenText = "This is a rewritten complete sentence.";
-
-        Faq existingFaq = new Faq();
-        existingFaq.setId(100L);
-        existingFaq.setQuestionTitle("Exam Date");
-        existingFaq.setQuestionAnswer("The exam is on Monday.");
 
         String consistencyJsonResponse = """
                 {
@@ -79,6 +81,9 @@ class HyperionFaqRewriteServiceTest {
         assertThat(resp.inconsistencies().getFirst()).contains("FAQ ID: 100");
         assertThat(resp.suggestions()).contains("Change the date to Monday.");
         assertThat(resp.improvement()).isEqualTo("The exam is actually on Monday.");
+
+        // Rewrite and check consistency call was made
+        verify(chatModel, times(2)).call(any(Prompt.class));
     }
 
     @Test
@@ -94,8 +99,46 @@ class HyperionFaqRewriteServiceTest {
 
         assertThat(result.rewrittenText()).isEqualTo(rewrittenText);
         assertThat(result.inconsistencies()).isEmpty();
-        // Verifies the second AI call was never made because faqs were empty
+        assertThat(result.suggestions()).isEmpty();
+        assertThat(result.improvement()).isEmpty();
+
+        // Only rewrite call was made
         verify(chatModel, times(1)).call(any(Prompt.class));
+    }
+
+    @Test
+    void rewriteFaq_onError_returnsFallback() {
+        long courseId = 1L;
+        String originalText = "This is a bullet point text.";
+
+        when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("AI Service Unavailable"));
+
+        when(faqRepository.findAllByCourseIdOrderByCreatedDateDesc(courseId)).thenReturn(List.of(existingFaq));
+
+        var result = hyperionFaqRewriteService.rewriteFaq(courseId, originalText);
+        assertThat(result.rewrittenText()).isEqualTo(originalText);
+        assertThat(result.inconsistencies()).isEmpty();
+        assertThat(result.suggestions()).isEmpty();
+        assertThat(result.improvement()).isEmpty();
+    }
+
+    @Test
+    void rewriteFaq_invalidJsonResponse_returnsFallback() {
+        long courseId = 1L;
+        String rewrittenText = "Rewritten text.";
+
+        // AI returns garbage instead of JSON
+        String garbageResponse = "I am an AI and I refuse to use the format you requested.";
+
+        when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(rewrittenText)).thenReturn(createChatResponse(garbageResponse));
+
+        when(faqRepository.findAllByCourseIdOrderByCreatedDateDesc(courseId)).thenReturn(List.of(existingFaq));
+
+        var result = hyperionFaqRewriteService.rewriteFaq(courseId, "input");
+        assertThat(result.rewrittenText()).isEqualTo(rewrittenText);
+        assertThat(result.inconsistencies()).isEmpty();
+        assertThat(result.suggestions()).isEmpty();
+        assertThat(result.improvement()).isEmpty();
     }
 
     private ChatResponse createChatResponse(String content) {

@@ -73,9 +73,10 @@ public class HyperionFaqRewriteService {
         String systemPrompt = templateService.render(PROMPT_REWRITE_SYSTEM, Map.of());
         String userPrompt = templateService.render(PROMPT_REWRITE_USER, input);
 
+        String rewrittenText;
         try (var scope = observation.openScope()) {
             // @formatter:off
-            String rewrittenText = chatClient
+            rewrittenText = chatClient
                 .prompt()
                 .system(systemPrompt)
                 .user(userPrompt)
@@ -83,45 +84,51 @@ public class HyperionFaqRewriteService {
                 .content();
             // @formatter:on
             observation.event(Observation.Event.of("ai_rewrite_completed"));
-
-            List<Faq> faqs = faqRepository.findAllByCourseIdOrderByCreatedDateDesc(courseId);
-            if (faqs.isEmpty()) {
-                return new RewriteFaqResponseDTO(rewrittenText, List.of(), List.of(), "");
-            }
-
-            var inconsistency = checkFaqConsistency(faqs, rewrittenText);
-
-            if (ConsistencyIssue.ConsistencyStatus.CONSISTENT.equals(inconsistency.type)) {
-                return new RewriteFaqResponseDTO(rewrittenText.trim(), List.of(), List.of(), "");
-            }
-            return new RewriteFaqResponseDTO(rewrittenText.trim(), parseInconsistencies(inconsistency.faqs()), inconsistency.suggestions(), inconsistency.improvedVersion());
-
         }
         catch (Exception e) {
-            log.error("Failed to process FAQ rewrite/consistency for course {} - returning original text", courseId, e);
+            log.error("Failed to process FAQ rewrite for course {} - returning original text", courseId, e);
             observation.error(e);
             return new RewriteFaqResponseDTO(faqText.trim(), List.of(), List.of(), "");
         }
         finally {
             observation.stop();
         }
+
+        return checkFaqConsistency(courseId, rewrittenText);
     }
 
-    private ConsistencyIssue checkFaqConsistency(List<Faq> faqs, String text) {
+    private RewriteFaqResponseDTO checkFaqConsistency(long courseId, String rewrittenText) {
+        List<Faq> faqs = faqRepository.findAllByCourseIdOrderByCreatedDateDesc(courseId);
+        if (faqs.isEmpty()) {
+            return new RewriteFaqResponseDTO(rewrittenText, List.of(), List.of(), "");
+        }
+
         List<ConsistencyIssue.Faq> faqData = faqs.stream().limit(10).map(faq -> new ConsistencyIssue.Faq(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer())).toList();
 
         // Handle the JSON parsing automatically
         var outputConverter = new BeanOutputConverter<>(ConsistencyIssue.class);
         String systemPrompt = templateService.render(PROMPT_CONSISTENCY_SYSTEM, Map.of());
-        String userPrompt = templateService.render(PROMPT_CONSISTENCY_USER, Map.of("faqs", faqData, "final_result", text, "format", outputConverter.getFormat()));
+        String userPrompt = templateService.renderObject(PROMPT_CONSISTENCY_USER, Map.of("faqs", faqData, "final_result", rewrittenText, "format", outputConverter.getFormat()));
 
-        // @formatter:off
-        return chatClient.prompt()
-            .system(systemPrompt)
-            .user(userPrompt)
-            .call()
-            .entity(outputConverter);
-        // @formatter:on
+        ConsistencyIssue consistencyIssue;
+        try {
+            // @formatter:off
+            consistencyIssue = chatClient.prompt()
+                .system(systemPrompt)
+                .user(userPrompt)
+                .call()
+                .entity(outputConverter);
+        // @formatter:onó
+        }
+        catch (Exception e) {
+            log.error("Failed to process FAQ consistency for course {} - only returning rewritten text ", courseId, e);
+            return new RewriteFaqResponseDTO(rewrittenText.trim(), List.of(), List.of(), "");
+        }
+
+        if (consistencyIssue == null || ConsistencyIssue.ConsistencyStatus.CONSISTENT.equals(consistencyIssue.type)) {
+            return new RewriteFaqResponseDTO(rewrittenText.trim(), List.of(), List.of(), "");
+        }
+        return new RewriteFaqResponseDTO(rewrittenText.trim(), parseInconsistencies(consistencyIssue.faqs()), consistencyIssue.suggestions(), consistencyIssue.improvedVersion());
     }
 
     // Internal representation of found consistency issues.
