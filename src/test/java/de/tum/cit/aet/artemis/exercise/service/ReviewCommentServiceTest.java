@@ -453,6 +453,14 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
     }
 
     @Test
+    void mapLineInText_marksInvalidLineAsOutdated() {
+        LineMappingResult result = exerciseReviewCommentService.mapLineInText("a\nb\n", "a\nb\n", 0);
+
+        assertThat(result.newLine()).isNull();
+        assertThat(result.outdated()).isTrue();
+    }
+
+    @Test
     void mapLine_mapsLinesBetweenCommitsInRepository() throws Exception {
         LocalRepoWithUri repo = createLocalRepository("linemap");
         LocalVCRepositoryUri repositoryUri = repo.uri();
@@ -484,6 +492,50 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         LineMappingResult unchangedLine = exerciseReviewCommentService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 9);
         assertThat(unchangedLine.newLine()).isEqualTo(10);
         assertThat(unchangedLine.outdated()).isFalse();
+    }
+
+    @Test
+    void mapLine_marksDeletedFileAsOutdated() throws Exception {
+        LocalRepoWithUri repo = createLocalRepository("linemap-delete");
+        LocalVCRepositoryUri repositoryUri = repo.uri();
+        LocalRepository repository = repo.repository();
+
+        Path filePath = repository.workingCopyGitRepoFile.toPath().resolve("src").resolve("Main.java");
+        Files.createDirectories(filePath.getParent());
+        FileUtils.writeStringToFile(filePath.toFile(), "a\nb\nc\n", StandardCharsets.UTF_8);
+        repository.workingCopyGitRepo.add().addFilepattern(".").call();
+        RevCommit oldCommit = GitService.commit(repository.workingCopyGitRepo).setMessage("Add file").call();
+        repository.workingCopyGitRepo.push().setRemote("origin").call();
+
+        Files.deleteIfExists(filePath);
+        repository.workingCopyGitRepo.add().addFilepattern(".").call();
+        RevCommit newCommit = GitService.commit(repository.workingCopyGitRepo).setMessage("Delete file").call();
+        repository.workingCopyGitRepo.push().setRemote("origin").call();
+
+        LineMappingResult result = exerciseReviewCommentService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 1);
+        assertThat(result.newLine()).isNull();
+        assertThat(result.outdated()).isTrue();
+    }
+
+    @Test
+    void mapLine_marksAddedFileAsOutdatedWhenPreviouslyMissing() throws Exception {
+        LocalRepoWithUri repo = createLocalRepository("linemap-add");
+        LocalVCRepositoryUri repositoryUri = repo.uri();
+        LocalRepository repository = repo.repository();
+
+        RevCommit oldCommit = GitService.commit(repository.workingCopyGitRepo).setMessage("Initial").call();
+        repository.workingCopyGitRepo.push().setRemote("origin").call();
+
+        Path filePath = repository.workingCopyGitRepoFile.toPath().resolve("src").resolve("Main.java");
+        Files.createDirectories(filePath.getParent());
+        FileUtils.writeStringToFile(filePath.toFile(), "a\nb\nc\n", StandardCharsets.UTF_8);
+        repository.workingCopyGitRepo.add().addFilepattern(".").call();
+        RevCommit newCommit = GitService.commit(repository.workingCopyGitRepo).setMessage("Add file").call();
+        repository.workingCopyGitRepo.push().setRemote("origin").call();
+
+        LineMappingResult result = exerciseReviewCommentService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 1);
+        assertThat(result.newLine()).isNull();
+        assertThat(result.outdated()).isTrue();
     }
 
     @Test
