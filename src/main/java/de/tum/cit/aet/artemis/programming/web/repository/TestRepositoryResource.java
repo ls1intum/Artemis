@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -38,10 +39,14 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorFileType;
+import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
+import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExerciseEditorFileSyncDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseEditorSyncService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
@@ -57,16 +62,18 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 public class TestRepositoryResource extends RepositoryResource {
 
     public TestRepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService, RepositoryService repositoryService,
-            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService) {
-        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService);
+            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService,
+            ProgrammingExerciseEditorSyncService programmingExerciseEditorSyncService) {
+        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, programmingExerciseEditorSyncService,
+                localVCServletService);
     }
 
     @Override
     Repository getRepository(Long exerciseId, RepositoryActionType repositoryActionType, boolean pullOnGet, boolean writeAccess) throws GitAPIException {
-        final var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        final ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, exercise, user, "test");
-        final var repoUri = exercise.getVcsTestRepositoryUri();
+        final LocalVCRepositoryUri repoUri = exercise.getVcsTestRepositoryUri();
         return gitService.getOrCheckoutRepository(repoUri, pullOnGet, writeAccess);
     }
 
@@ -112,7 +119,11 @@ public class TestRepositoryResource extends RepositoryResource {
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFile(@PathVariable Long exerciseId, @RequestParam("file") String filePath, HttpServletRequest request) {
-        return super.createFile(exerciseId, filePath, request);
+        ResponseEntity<Void> response = super.createFile(exerciseId, filePath, request);
+        if (response.getStatusCode().is2xxSuccessful()) {
+            broadcastTestRepositoryChange(exerciseId, ProgrammingExerciseEditorFileSyncDTO.forFileCreate(filePath));
+        }
+        return response;
     }
 
     @Override
@@ -120,7 +131,11 @@ public class TestRepositoryResource extends RepositoryResource {
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFolder(@PathVariable Long exerciseId, @RequestParam("folder") String folderPath, HttpServletRequest request) {
-        return super.createFolder(exerciseId, folderPath, request);
+        ResponseEntity<Void> response = super.createFolder(exerciseId, folderPath, request);
+        if (response.getStatusCode().is2xxSuccessful()) {
+            broadcastTestRepositoryChange(exerciseId, ProgrammingExerciseEditorFileSyncDTO.forFolderCreate(folderPath));
+        }
+        return response;
     }
 
     @Override
@@ -128,7 +143,15 @@ public class TestRepositoryResource extends RepositoryResource {
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> renameFile(@PathVariable Long exerciseId, @RequestBody FileMove fileMove) {
-        return super.renameFile(exerciseId, fileMove);
+        return executeAndCheckForExceptions(() -> {
+            Repository repository = getRepository(exerciseId, RepositoryActionType.WRITE, true, false);
+            ProgrammingExerciseEditorFileType fileType = getEditorFileType(repository, fileMove.currentFilePath());
+            String newFilePath = buildNewFilePath(fileMove.currentFilePath(), fileMove.newFilename());
+
+            repositoryService.renameFile(repository, fileMove);
+            broadcastTestRepositoryChange(exerciseId, ProgrammingExerciseEditorFileSyncDTO.forRename(fileMove.currentFilePath(), newFilePath, fileType));
+            return new ResponseEntity<>(HttpStatus.OK);
+        });
     }
 
     @Override
@@ -136,7 +159,11 @@ public class TestRepositoryResource extends RepositoryResource {
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> deleteFile(@PathVariable Long exerciseId, @RequestParam("file") String filename) {
-        return super.deleteFile(exerciseId, filename);
+        ResponseEntity<Void> response = super.deleteFile(exerciseId, filename);
+        if (response.getStatusCode().is2xxSuccessful()) {
+            broadcastTestRepositoryChange(exerciseId, ProgrammingExerciseEditorFileSyncDTO.forDelete(filename));
+        }
+        return response;
     }
 
     @Override
@@ -203,5 +230,9 @@ public class TestRepositoryResource extends RepositoryResource {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
         }
         return saveFilesAndCommitChanges(exerciseId, submissions, commit, repository);
+    }
+
+    private void broadcastTestRepositoryChange(Long exerciseId, @Nullable ProgrammingExerciseEditorFileSyncDTO filePatch) {
+        this.broadcastRepositoryUpdates(exerciseId, ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY, null, filePatch);
     }
 }

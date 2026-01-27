@@ -158,7 +158,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, IF
     filesTreeViewItem: TreeViewItem<string>[] = [];
     compressFolders = true;
 
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
+    readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     collapsed = false;
 
@@ -212,7 +212,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, IF
     /**
      * Initialize repositoryFiles with Problem Statement as a first-class file type
      */
-    private initializeRepositoryFiles(): void {
+    initializeRepositoryFiles(): void {
         if (!this.repositoryFiles) {
             this.repositoryFiles = {};
         }
@@ -257,6 +257,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, IF
             this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER] = FileType.PROBLEM_STATEMENT;
         }
 
+        this.setupTreeview();
+    }
+
+    refreshTreeview(): void {
         this.setupTreeview();
     }
 

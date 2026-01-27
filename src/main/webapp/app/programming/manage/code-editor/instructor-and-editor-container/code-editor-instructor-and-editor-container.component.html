@@ -25,7 +25,8 @@
             [course]="course"
             [allowHiddenFiles]="true"
             [consistencyIssues]="consistencyIssues()"
-            (onFileLoad)="onFileLoad($event)"
+            (fileOperationSync)="onLocalFileOperationSync($event)"
+            (onFileLoad)="onFileLoaded($event)"
             (onEditorLoaded)="onEditorLoaded()"
         >
             <div editorTitle>
@@ -235,9 +236,8 @@
             </div>
             <jhi-programming-exercise-editable-instructions
                 editorCenter
-                [(exercise)]="exercise"
-                [(participation)]="selectedParticipation!"
-                [templateParticipation]="exercise.templateParticipation!"
+                [exercise]="exercise"
+                [participation]="selectedParticipation!"
                 [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
                 [externalHeight]="true"
                 [enableResize]="false"

@@ -3,7 +3,6 @@ import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { AlertService } from 'app/shared/service/alert.service';
 import { catchError, filter, map, tap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
@@ -22,6 +21,9 @@ import { isExamExercise } from 'app/shared/util/utils';
 import { Subject } from 'rxjs';
 import { debounceTime, shareReplay } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
+import { AlertService } from 'app/shared/service/alert.service';
+import { ProgrammingExerciseEditorFileChangeType, ProgrammingExerciseEditorSyncMessage } from 'app/programming/manage/services/programming-exercise-editor-sync.service';
+import { FileOperation, RepositoryFileSyncService } from 'app/programming/manage/services/repository-file-sync.service';
 /**
  * Enumeration specifying the loading state
  */
@@ -46,6 +48,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     private location = inject(Location);
     private participationService = inject(ParticipationService);
     private route = inject(ActivatedRoute);
+    private repositorySyncService = inject(RepositoryFileSyncService);
     /** Raw markdown changes from the center editor for debounce logic */
     private problemStatementChanges$ = new Subject<string>();
     protected alertService = inject(AlertService);
@@ -60,6 +63,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     // :exerciseId/:participationId -> Load exercise and select repository according to participationId
     // :exerciseId/test -> Load exercise and select test repository
     paramSub: Subscription;
+    repositorySyncSubscription?: Subscription;
 
     // Contains all participations (template, solution, assignment)
     exercise: ProgrammingExercise;
@@ -146,6 +150,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                             this.domainChangeSubscription = this.subscribeToDomainChange();
                         }
                     }),
+                    tap(() => this.setupSynchronizationSubscription(exerciseId)),
                 )
                 .subscribe({
                     next: () => {
@@ -161,7 +166,36 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     }
     /** Called by the center editor on every markdown change */
     onInstructionChanged(markdown: string) {
+        if (this.exercise) {
+            this.exercise.problemStatement = markdown;
+        }
         this.problemStatementChanges$.next(markdown);
+    }
+
+    onFileLoaded(fileName: string) {
+        const auxiliaryId = this.selectedRepository === RepositoryType.AUXILIARY ? this.selectedRepositoryId : undefined;
+        const currentContent = this.codeEditorContainer?.getFileContent(fileName);
+        if (currentContent !== undefined) {
+            this.repositorySyncService.registerBaseline(this.selectedRepository, fileName, currentContent, auxiliaryId);
+        }
+        this.repositorySyncService.requestFullFile(this.selectedRepository, fileName, auxiliaryId);
+    }
+
+    onLocalFileOperationSync(operation: FileOperation) {
+        if (!this.exercise?.id) {
+            return;
+        }
+        const auxiliaryId = this.selectedRepository === RepositoryType.AUXILIARY ? this.selectedRepositoryId : undefined;
+
+        // when renaming a file/path locally, the selected file should be set to undefined to
+        // avoid editor automatically opening the new file, which would causes synchronization
+        // service to request full content of the file from other active online ediors,
+        // causing a race condition with rename operation's baseline update
+        if (operation.type === ProgrammingExerciseEditorFileChangeType.RENAME) {
+            this.codeEditorContainer.selectedFile = undefined;
+        }
+
+        this.repositorySyncService.handleLocalFileOperation(operation, this.selectedRepository, auxiliaryId);
     }
 
     /**
@@ -174,6 +208,43 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
+        this.repositorySyncSubscription?.unsubscribe();
+        this.repositorySyncService.reset();
+    }
+
+    private setupSynchronizationSubscription(exerciseId: number) {
+        if (!exerciseId) {
+            return;
+        }
+        this.repositorySyncSubscription?.unsubscribe();
+        this.repositorySyncSubscription = this.repositorySyncService
+            .init(exerciseId, (message) => this.isChangeRelevant(message))
+            .subscribe((operation) => this.applyRemoteFileOperation(operation));
+    }
+
+    private applyRemoteFileOperation(operation: FileOperation) {
+        // Handle new commit alert - notify user to refresh the page
+        if (operation.type === 'NEW_COMMIT_ALERT') {
+            this.alertService.info('artemisApp.editor.synchronization.newCommitAlert');
+            return;
+        }
+
+        if (this.codeEditorContainer) {
+            this.repositorySyncService.applyRemoteOperation(operation, this.codeEditorContainer);
+        }
+    }
+
+    private isChangeRelevant(change: ProgrammingExerciseEditorSyncMessage) {
+        if (!change.target) {
+            return false;
+        }
+        if (RepositoryFileSyncService.REPOSITORY_TYPE_TO_SYNC_TARGET[this.selectedRepository] !== change.target) {
+            return false;
+        }
+        if (this.selectedRepository === RepositoryType.AUXILIARY) {
+            return !change.auxiliaryRepositoryId && change.auxiliaryRepositoryId === this.selectedRepositoryId;
+        }
+        return true;
     }
 
     /**

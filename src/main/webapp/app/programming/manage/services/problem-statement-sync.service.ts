@@ -1,0 +1,160 @@
+import { Injectable, inject } from '@angular/core';
+import { DiffMatchPatch } from 'diff-match-patch-typescript';
+import { Observable, Subject, Subscription, debounceTime } from 'rxjs';
+import {
+    ProgrammingExerciseEditorSyncMessage,
+    ProgrammingExerciseEditorSyncService,
+    ProgrammingExerciseEditorSyncTarget,
+} from 'app/programming/manage/services/programming-exercise-editor-sync.service';
+import { AlertService } from 'app/shared/service/alert.service';
+
+@Injectable({ providedIn: 'root' })
+export class ProblemStatementSyncService {
+    private syncService = inject(ProgrammingExerciseEditorSyncService);
+    private alertService = inject(AlertService);
+    private readonly diffMatchPatch = new DiffMatchPatch();
+
+    private exerciseId?: number;
+    private incomingMessageSubscription?: Subscription;
+    private outgoingDebounceSubscription?: Subscription;
+
+    private localChangesQueue = new Subject<string>();
+    private patchOperations = new Subject<string>();
+
+    private lastSyncedContent = '';
+    private lastProcessedTimestamp = 0;
+
+    init(exerciseId: number, initialContent: string): Observable<string> {
+        this.reset();
+        this.exerciseId = exerciseId;
+        this.lastSyncedContent = initialContent;
+        this.lastProcessedTimestamp = 0;
+        this.patchOperations = new Subject<string>();
+        this.localChangesQueue = new Subject<string>();
+        this.incomingMessageSubscription = this.syncService.subscribeToUpdates(exerciseId).subscribe((message) => this.handleRemoteMessage(message));
+        this.outgoingDebounceSubscription = this.localChangesQueue.pipe(debounceTime(200)).subscribe((content) => this.handleLocalChange(content));
+        this.requestInitialSync();
+        return this.patchOperations.asObservable();
+    }
+
+    reset() {
+        this.incomingMessageSubscription?.unsubscribe();
+        this.incomingMessageSubscription = undefined;
+        this.outgoingDebounceSubscription?.unsubscribe();
+        this.outgoingDebounceSubscription = undefined;
+        this.patchOperations.complete();
+        this.localChangesQueue.complete();
+        this.exerciseId = undefined;
+        this.lastSyncedContent = '';
+        this.lastProcessedTimestamp = 0;
+    }
+
+    /**
+     * put the edited content into the local queue for debounced synchronization
+     * @param content The edited content to be synchronized
+     */
+    queueLocalChange(content: string) {
+        if (!this.exerciseId || this.localChangesQueue.closed) {
+            return;
+        }
+        this.localChangesQueue.next(content);
+    }
+
+    /**
+     * Construct and send a patch for the local content change, from the localChangesQueue.
+     * This method is called debounced via the localChangesQueue$ subject.
+     * @param content The new content to be sent as a patch
+     */
+    handleLocalChange(content: string) {
+        if (!this.exerciseId) {
+            return;
+        }
+        const patchText = this.diffMatchPatch.patch_toText(this.diffMatchPatch.patch_make(this.lastSyncedContent, content));
+        if (!patchText) {
+            return;
+        }
+        this.lastSyncedContent = content;
+        this.syncService.sendSynchronizationUpdate(this.exerciseId, {
+            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            problemStatementPatch: patchText,
+        });
+    }
+
+    /**
+     * Request the newest problem statement content from other active editors (if exists).
+     * This ensures that unsaved problem statement from other editors are also synchronized.
+     */
+    requestInitialSync() {
+        if (!this.exerciseId) {
+            return;
+        }
+        this.syncService.sendSynchronizationUpdate(this.exerciseId, {
+            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            problemStatementRequest: true,
+        });
+    }
+
+    /**
+     * Respond to a request for the full problem statement content.
+     * @param content The current problem statement content to send
+     * @returns
+     */
+    private respondWithFullContent(content: string) {
+        if (!this.exerciseId) {
+            return;
+        }
+        this.syncService.sendSynchronizationUpdate(this.exerciseId, {
+            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            problemStatementFull: content,
+        });
+    }
+
+    /**
+     * Respond to a synchronization message from the websocket subscription for programming exercise problem statements.
+     *
+     * @param message The synchronization message to process
+     */
+    private handleRemoteMessage(message: ProgrammingExerciseEditorSyncMessage) {
+        if (message.target !== ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT) {
+            return;
+        }
+        if (message.timestamp && message.timestamp <= this.lastProcessedTimestamp) {
+            return;
+        }
+        this.lastProcessedTimestamp = message.timestamp ?? Date.now();
+
+        // Receives a request for the full content, send the last synced content
+        if (message.problemStatementRequest) {
+            this.respondWithFullContent(this.lastSyncedContent);
+            return;
+        }
+
+        // Receives the full content, update the last synced content and emit the update
+        if (message.problemStatementFull !== undefined) {
+            this.lastSyncedContent = message.problemStatementFull;
+            this.patchOperations.next(message.problemStatementFull);
+            return;
+        }
+
+        // Receives a patch, apply the patch to the last synced content and emit the update
+        if (message.problemStatementPatch) {
+            const patches = this.diffMatchPatch.patch_fromText(message.problemStatementPatch);
+            if (!patches.length) {
+                return;
+            }
+            try {
+                const [patchedContent, results] = this.diffMatchPatch.patch_apply(patches, this.lastSyncedContent);
+                // Check if any patch failed to apply (results array contains false for failed patches)
+                const hasFailedPatches = results.some((success) => !success);
+                if (hasFailedPatches) {
+                    this.alertService.info('artemisApp.editor.synchronization.patchFailedAlert');
+                    return;
+                }
+                this.lastSyncedContent = patchedContent;
+                this.patchOperations.next(patchedContent);
+            } catch (error) {
+                this.alertService.info('artemisApp.editor.synchronization.syncErrorAlert');
+            }
+        }
+    }
+}
