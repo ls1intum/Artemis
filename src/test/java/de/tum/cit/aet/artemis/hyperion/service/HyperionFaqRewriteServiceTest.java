@@ -34,7 +34,7 @@ class HyperionFaqRewriteServiceTest {
 
     private HyperionFaqRewriteService hyperionFaqRewriteService;
 
-    private static Faq existingFaq;
+    private Faq existingFaq;
 
     @BeforeEach
     void setup() {

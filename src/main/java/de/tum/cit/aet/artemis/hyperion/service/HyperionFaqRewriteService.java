@@ -44,18 +44,20 @@ public class HyperionFaqRewriteService {
 
     private final HyperionPromptTemplateService templateService;
 
+    private final ObservationRegistry observationRegistry;
+
     /**
      * Creates a new HyperionFaqRewriteService.
      *
-     * @param chatClient      the AI chat client (optional)
-     * @param templateService prompt template service
+     * @param faqRepository       repository for FAQ entities
+     * @param chatClient          the AI chat client
+     * @param templateService     prompt template service
+     * @param observationRegistry observation registry for metrics
      */
-    private final ObservationRegistry observationRegistry;
-
-    public HyperionFaqRewriteService(FaqRepository faqRepository, ChatClient chatClient, HyperionPromptTemplateService templates, ObservationRegistry observationRegistry) {
+    public HyperionFaqRewriteService(FaqRepository faqRepository, ChatClient chatClient, HyperionPromptTemplateService templateService, ObservationRegistry observationRegistry) {
         this.faqRepository = faqRepository;
         this.chatClient = chatClient;
-        this.templateService = templates;
+        this.templateService = templateService;
         this.observationRegistry = observationRegistry;
     }
 
@@ -118,7 +120,7 @@ public class HyperionFaqRewriteService {
                 .user(userPrompt)
                 .call()
                 .entity(outputConverter);
-        // @formatter:onó
+        // @formatter:on
         }
         catch (Exception e) {
             log.error("Failed to process FAQ consistency for course {} - only returning rewritten text ", courseId, e);
