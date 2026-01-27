@@ -38,7 +38,7 @@ public class WeaviateConfigurationFailureAnalyzer extends AbstractFailureAnalyze
                       weaviate:
                         enabled: true
                         host: your-weaviate-host
-                        port: 8080
+                        port: 8001
                         grpc-port: 50051
 
                 Option 2: Disable Weaviate if not needed:
