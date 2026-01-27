@@ -1,35 +1,11 @@
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { By } from '@angular/platform-browser';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { of } from 'rxjs';
-import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
-import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
-import { cloneDeep } from 'lodash-es';
-import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
-import { provideHttpClient } from '@angular/common/http';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { vi } from 'vitest';
 
-// Mock the entire ApollonEditor class to prevent React initialization
-// This MUST be done before any imports that use ApollonEditor
-// Note: vi.mock is hoisted, so we cannot use imports like cloneDeep here
-vi.mock('@tumaet/apollon', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('@tumaet/apollon')>();
-
-    // Simple deep clone without external dependencies (vi.mock is hoisted)
-    const deepClone = <T>(obj: T): T => JSON.parse(JSON.stringify(obj));
-
+// Create mock factory using vi.hoisted() to ensure it's available before vi.mock runs
+const { createMockApollonEditor } = vi.hoisted(() => {
     return {
-        ...actual,
-        ApollonEditor: vi.fn().mockImplementation((container: HTMLElement, options?: { model?: any }) => {
-            // Return a mock editor instance that tracks all interactions
-            const mockEditor = {
+        createMockApollonEditor: (options?: { model?: any }) => {
+            const deepClone = <T>(obj: T): T => (obj ? JSON.parse(JSON.stringify(obj)) : {});
+            return {
                 _model: options?.model ? deepClone(options.model) : {},
                 _subscriptions: new Map<number, (model: any) => void>(),
                 _subscriptionCounter: 0,
@@ -61,10 +37,38 @@ vi.mock('@tumaet/apollon', async (importOriginal) => {
                 exportAsSVG: vi.fn().mockResolvedValue({ svg: '<svg></svg>' }),
                 nextRender: Promise.resolve(),
             };
-            return mockEditor;
+        },
+    };
+});
+
+// Mock the entire ApollonEditor class to prevent React initialization
+vi.mock('@tumaet/apollon', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@tumaet/apollon')>();
+    return {
+        ...actual,
+        ApollonEditor: vi.fn().mockImplementation((_container: HTMLElement, options?: { model?: any }) => {
+            return createMockApollonEditor(options);
         }),
     };
 });
+
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { By } from '@angular/platform-browser';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { of } from 'rxjs';
+import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
+import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
+import testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
+import { cloneDeep } from 'lodash-es';
+import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
+import { provideHttpClient } from '@angular/common/http';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ModelingEditorComponent', () => {
     setupTestBed({ zoneless: true });
