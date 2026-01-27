@@ -322,7 +322,7 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testUploadSingleRoomRepeatedDuplicatesRejected() throws Exception {
         // The zip file contains the same room duplicated in nested directories, which should trigger a BadRequest
-        request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoomRepeated, HttpStatus.BAD_REQUEST);
+        request.postMultipartFileOnly("/api/exam/rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoomRepeated, HttpStatus.BAD_REQUEST);
     }
 
     @Test

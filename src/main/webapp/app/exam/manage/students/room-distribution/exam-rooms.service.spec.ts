@@ -27,7 +27,7 @@ describe('ExamRoomsService', () => {
     });
 
     describe('getRoomOverview', () => {
-        it('should send GET request to retrieve admin overview', () => {
+        it('should send GET request to retrieve room overview', () => {
             const mockOverview: ExamRoomOverviewDTO = {
                 newestUniqueExamRooms: [
                     { roomNumber: 'R101', name: 'Room 101', building: 'Building A', numberOfSeats: 50 },
