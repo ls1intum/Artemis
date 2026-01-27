@@ -125,7 +125,7 @@ public class HyperionFaqRewriteService {
             return new RewriteFaqResponseDTO(rewrittenText.trim(), List.of(), List.of(), "");
         }
 
-        if (consistencyIssue == null || ConsistencyIssue.ConsistencyStatus.CONSISTENT.equals(consistencyIssue.type)) {
+        if (consistencyIssue == null || ConsistencyIssue.ConsistencyStatus.CONSISTENT.equals(consistencyIssue.type())) {
             return new RewriteFaqResponseDTO(rewrittenText.trim(), List.of(), List.of(), "");
         }
         return new RewriteFaqResponseDTO(rewrittenText.trim(), parseInconsistencies(consistencyIssue.faqs()), consistencyIssue.suggestions(), consistencyIssue.improvedVersion());
