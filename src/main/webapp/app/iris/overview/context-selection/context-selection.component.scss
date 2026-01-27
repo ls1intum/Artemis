@@ -88,16 +88,6 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-
-    // Override search-filter margins
-    jhi-search-filter {
-        width: 100%;
-
-        form {
-            margin-right: 0 !important;
-            margin-left: 0 !important;
-        }
-    }
 }
 
 .selection-header {
