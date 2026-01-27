@@ -10,7 +10,9 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { of, throwError } from 'rxjs';
 import { ChecklistAnalysisResponse } from 'app/openapi/model/checklistAnalysisResponse';
+import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
+import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('ChecklistPanelComponent', () => {
     let component: ChecklistPanelComponent;
@@ -21,8 +23,12 @@ describe('ChecklistPanelComponent', () => {
     const exercise = new ProgrammingExercise(undefined, undefined);
     exercise.id = 123;
     exercise.problemStatement = 'Problem statement';
-    exercise.difficulty = 'EASY';
-
+    exercise.difficulty = DifficultyLevel.EASY; // Changed 'EASY' to DifficultyLevel.EASY for consistency with mockExercise
+    const mockExercise = {
+        id: 1,
+        difficulty: DifficultyLevel.EASY,
+        competencyLinks: [{ competency: { title: 'Competency 1' } }],
+    } as ProgrammingExercise;
     const mockResponse: ChecklistAnalysisResponse = {
         inferredLearningGoals: [{ skill: 'Loops', taxonomyLevel: 'APPLY', confidence: 0.9, explanation: 'Explanation' }],
         suggestedDifficulty: { suggested: 'EASY', reasoning: 'Reason', matchesDeclared: true },
@@ -56,7 +62,7 @@ describe('ChecklistPanelComponent', () => {
     });
 
     it('should call analyzeChecklist on button click', () => {
-        const analyzeSpy = jest.spyOn(apiService, 'analyzeChecklist').mockReturnValue(of(mockResponse));
+        const analyzeSpy = jest.spyOn(apiService, 'analyzeChecklist').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
 
         // Find analyze button
         const button = fixture.debugElement.query(By.css('button'));

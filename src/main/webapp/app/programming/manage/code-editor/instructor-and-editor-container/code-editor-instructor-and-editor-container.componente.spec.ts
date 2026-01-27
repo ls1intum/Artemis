@@ -44,7 +44,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             category: ConsistencyIssue.CategoryEnum.ConstructorParameterMismatch,
             description: 'Problem statement inconsistency',
             suggestedFix: 'Review the problem statement file.',
-            relatedLocations: [
+            locations: [
                 {
                     type: ArtifactLocation.TypeEnum.ProblemStatement,
                     filePath: 'problem_statement.md',
@@ -58,7 +58,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             category: ConsistencyIssue.CategoryEnum.MethodParameterMismatch,
             description: 'Template repository issue',
             suggestedFix: 'Fix template repository references.',
-            relatedLocations: [
+            locations: [
                 {
                     type: ArtifactLocation.TypeEnum.TemplateRepository,
                     filePath: 'src/template/Example.java',
@@ -72,7 +72,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             category: ConsistencyIssue.CategoryEnum.AttributeTypeMismatch,
             description: 'Solution repository issue',
             suggestedFix: 'Fix solution repository references.',
-            relatedLocations: [
+            locations: [
                 {
                     type: ArtifactLocation.TypeEnum.SolutionRepository,
                     filePath: 'src/solution/Solution.java',
@@ -86,7 +86,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             category: ConsistencyIssue.CategoryEnum.IdentifierNamingInconsistency,
             description: 'Tests repository issue',
             suggestedFix: 'Adjust tests in test repository.',
-            relatedLocations: [
+            locations: [
                 {
                     type: ArtifactLocation.TypeEnum.TestsRepository,
                     filePath: 'src/tests/ExampleTest.java',
@@ -101,7 +101,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             category: ConsistencyIssue.CategoryEnum.VisibilityMismatch,
             description: 'Multi-location navigation test issue',
             suggestedFix: 'Resolve inconsistencies across artifacts.',
-            relatedLocations: [
+            locations: [
                 {
                     type: ArtifactLocation.TypeEnum.TestsRepository,
                     filePath: 'src/template/A.java',
@@ -269,7 +269,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
     it('navigates to PROBLEM_STATEMENT and calls jumpToLine without scheduling file load state', fakeAsync(() => {
         const issue = mockIssues[0]; // PROBLEM_STATEMENT
-        const loc = issue.relatedLocations[0];
+        const loc = issue.locations![0];
 
         const jumpToLineSpy = jest.spyOn((comp as any).editableInstructions, 'jumpToLine');
 
