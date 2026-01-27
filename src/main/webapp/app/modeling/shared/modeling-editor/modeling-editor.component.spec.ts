@@ -1,44 +1,56 @@
 import { vi } from 'vitest';
 
-// Create mock factory using vi.hoisted() to ensure it's available before vi.mock runs
-const { createMockApollonEditor } = vi.hoisted(() => {
-    return {
-        createMockApollonEditor: (options?: { model?: any }) => {
-            const deepClone = (obj: any): any => (obj ? JSON.parse(JSON.stringify(obj)) : {});
-            return {
-                _model: options?.model ? deepClone(options.model) : {},
-                _subscriptions: new Map<number, (model: any) => void>(),
-                _subscriptionCounter: 0,
-                _broadcastCallback: undefined as ((patch: string) => void) | undefined,
-                _destroyed: false,
-                get model() {
-                    return this._model;
-                },
-                set model(value: any) {
-                    this._model = value;
-                    this._subscriptions.forEach((callback: (model: any) => void) => callback(this._model));
-                },
-                subscribeToModelChange: vi.fn(function (this: any, callback: (model: any) => void) {
-                    const id = ++this._subscriptionCounter;
-                    this._subscriptions.set(id, callback);
-                    return id;
-                }),
-                unsubscribe: vi.fn(function (this: any, id: number) {
-                    this._subscriptions.delete(id);
-                }),
-                sendBroadcastMessage: vi.fn(function (this: any, callback: (patch: string) => void) {
-                    this._broadcastCallback = callback;
-                }),
-                receiveBroadcastedMessage: vi.fn(),
-                destroy: vi.fn(function (this: any) {
-                    this._destroyed = true;
-                    this._subscriptions.clear();
-                }),
-                exportAsSVG: vi.fn().mockResolvedValue({ svg: '<svg></svg>' }),
-                nextRender: Promise.resolve(),
-            };
-        },
-    };
+// Create mock class using vi.hoisted() to ensure it's available before vi.mock runs
+const { MockApollonEditor } = vi.hoisted(() => {
+    const deepClone = (obj: any): any => (obj ? JSON.parse(JSON.stringify(obj)) : {});
+
+    class MockApollonEditorClass {
+        _model: any;
+        _subscriptions = new Map<number, (model: any) => void>();
+        _subscriptionCounter = 0;
+        _broadcastCallback: ((patch: string) => void) | undefined;
+        _destroyed = false;
+
+        subscribeToModelChange = vi.fn((callback: (model: any) => void) => {
+            const id = ++this._subscriptionCounter;
+            this._subscriptions.set(id, callback);
+            return id;
+        });
+
+        unsubscribe = vi.fn((id: number) => {
+            this._subscriptions.delete(id);
+        });
+
+        sendBroadcastMessage = vi.fn((callback: (patch: string) => void) => {
+            this._broadcastCallback = callback;
+        });
+
+        receiveBroadcastedMessage = vi.fn();
+
+        destroy = vi.fn(() => {
+            this._destroyed = true;
+            this._subscriptions.clear();
+        });
+
+        exportAsSVG = vi.fn().mockResolvedValue({ svg: '<svg></svg>' });
+
+        nextRender = Promise.resolve();
+
+        constructor(_container: HTMLElement, options?: { model?: any }) {
+            this._model = options?.model ? deepClone(options.model) : {};
+        }
+
+        get model() {
+            return this._model;
+        }
+
+        set model(value: any) {
+            this._model = value;
+            this._subscriptions.forEach((callback: (model: any) => void) => callback(this._model));
+        }
+    }
+
+    return { MockApollonEditor: MockApollonEditorClass };
 });
 
 // Mock the entire ApollonEditor class to prevent React initialization
@@ -46,9 +58,7 @@ vi.mock('@tumaet/apollon', async (importOriginal) => {
     const actual = await importOriginal<typeof import('@tumaet/apollon')>();
     return {
         ...actual,
-        ApollonEditor: vi.fn().mockImplementation((_container: HTMLElement, options?: { model?: any }) => {
-            return createMockApollonEditor(options);
-        }),
+        ApollonEditor: MockApollonEditor,
     };
 });
 
