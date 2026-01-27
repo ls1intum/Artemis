@@ -114,10 +114,10 @@ public class AtlasAgentService {
 
     private final SessionBasedCache<CompetencyRelationDTO> pendingRelationOperationsCache;
 
-    public AtlasAgentService(CacheManager cacheManager, @Autowired ChatClient chatClient, AtlasPromptTemplateService templateService,
-            @Autowired ToolCallbackProvider mainAgentToolCallbackProvider, @Autowired ToolCallbackProvider competencyExpertToolCallbackProvider,
-            @Autowired ToolCallbackProvider competencyMapperToolCallbackProvider, @Autowired ChatMemory chatMemory, @Value("${atlas.chat-model:gpt-4o}") String deploymentName,
-            @Value("${atlas.chat-temperature:0.2}") double temperature) {
+    public AtlasAgentService(CacheManager cacheManager, @Autowired(required = false) ChatClient chatClient, AtlasPromptTemplateService templateService,
+            @Autowired(required = false) ToolCallbackProvider mainAgentToolCallbackProvider, @Autowired(required = false) ToolCallbackProvider competencyExpertToolCallbackProvider,
+            @Autowired(required = false) ToolCallbackProvider competencyMapperToolCallbackProvider, @Autowired(required = false) ChatMemory chatMemory,
+            @Value("${atlas.chat-model:gpt-4o}") String deploymentName, @Value("${atlas.chat-temperature:0.2}") double temperature) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.mainAgentToolCallbackProvider = mainAgentToolCallbackProvider;
