@@ -6,6 +6,8 @@ import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
 import { Buffer } from 'buffer';
 
+const NETWORKIDLE = 'networkidle';
+
 test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
     let course: Course;
     let lecture: Lecture;
@@ -45,7 +47,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
 
             // Navigate to competencies view
             await page.goto(`/courses/${course.id}/competencies`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState(NETWORKIDLE);
 
             // Assert: A grid/list of competencies is visible
             await expect(page.getByText('Competency A')).toBeVisible();
@@ -80,7 +82,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
 
             // Navigate to competency detail view
             await page.goto(`/courses/${course.id}/competencies/${competency.id}`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState(NETWORKIDLE);
 
             // Assert: Initial state - No mastery badge
             await expect(page.locator('.badge.text-bg-success', { hasText: 'Mastered' })).not.toBeVisible();
@@ -98,11 +100,11 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             await completionCheckbox.click();
 
             // Wait for the completion to be processed
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState(NETWORKIDLE);
 
             // Refresh the page to see updated progress
             await page.reload();
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState(NETWORKIDLE);
 
             // Assert: The lecture unit should now show as completed (green check icon)
             const completedIcon = page.locator('jhi-text-unit #completed-checkbox.text-success');
@@ -116,7 +118,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
 
             // Navigate to competencies overview to verify global state
             await page.goto(`/courses/${course.id}/competencies`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState(NETWORKIDLE);
 
             // Assert: Check that the mastered count is visible in the overview
             const masteredCount = page.locator('.badge.bg-dark');
@@ -167,7 +169,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
 
             // Navigate to competency detail and mark the unit as complete to get >= 20% progress
             await page.goto(`/courses/${course.id}/competencies/${competency.id}`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState(NETWORKIDLE);
 
             // Complete the lecture unit to trigger JoL prompt (100% progress on single unit = 100% >= 20%)
             const textUnitCard = page.locator('jhi-text-unit');
@@ -175,7 +177,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             await textUnitCard.locator('#lecture-unit-toggle-button').click();
             const completionCheckbox = textUnitCard.locator('#completed-checkbox');
             await completionCheckbox.click();
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState(NETWORKIDLE);
 
             // Wait for the completion to be persisted (progress > 0)
             await expect
@@ -195,7 +197,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             // Wait for the completion to be reflected in progress (progress ring should update)
             // Reload the page to ensure progress is fetched fresh from server
             await page.reload();
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState(NETWORKIDLE);
 
             // Verify the unit is completed by checking for the green checkmark
             // First expand the unit again (it collapses after reload)
@@ -209,7 +211,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
 
             // Navigate to dashboard where JoL rating component appears in competency accordion
             await page.goto(`/courses/${course.id}/dashboard`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState(NETWORKIDLE);
 
             // Look for the competency accordion which contains JoL rating
             const competencyAccordion = page.locator(`#competency-accordion-${competency.id}`);
@@ -245,16 +247,16 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             });
 
             // Wait for the rating to be saved
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState(NETWORKIDLE);
 
             // After rating, the star-rating should become read-only and show the rating
             // The JoL component should still be visible but now in rated state
             await page.reload();
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState(NETWORKIDLE);
 
             // Navigate back and check the accordion
             await competencyAccordion.click();
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState(NETWORKIDLE);
 
             // The JoL component should show the submitted rating
             await expect(jolRatingComponent).toBeVisible();
@@ -342,7 +344,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
 
             // Navigate to competencies overview first to check initial progress state
             await page.goto(`/courses/${course.id}/competencies`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState(NETWORKIDLE);
 
             // Verify competency is visible with initial state
             await expect(page.getByText('Progress Test Competency')).toBeVisible();
@@ -351,7 +353,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
 
             // Navigate to quiz exercise and participate
             await page.goto(`/courses/${course.id}/exercises/${quizExercise.id}`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState(NETWORKIDLE);
 
             // Start the exercise
             await courseOverview.startExercise(quizExercise.id!);
@@ -382,7 +384,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
 
             // Navigate to competencies overview to check updated progress
             await page.goto(`/courses/${course.id}/competencies`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState(NETWORKIDLE);
 
             // Verify competency is visible with progress rings showing update
             await expect(page.getByText('Progress Test Competency')).toBeVisible();
@@ -391,7 +393,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
 
             // Navigate to competency detail to verify progress has increased
             await page.goto(`/courses/${course.id}/competencies/${competency.id}`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState(NETWORKIDLE);
 
             // Check that the exercise shows in the competency detail
             await expect(page.getByRole('heading', { name: 'Progress Test Quiz' })).toBeVisible();

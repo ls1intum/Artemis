@@ -10,6 +10,8 @@ open -a Docker
 echo "Updating docker group ID in the docker compose file"
 # On macOS, Docker Desktop uses a user-owned socket (e.g., ~/.docker/run/docker.sock).
 # The 'docker' group usually does not exist, so we derive the GID from the actual socket.
+# The compose file uses 999 as a placeholder GID. We replace it with PRIMARY_GROUP_ID so the
+# container can access /var/run/docker.sock. If we cannot determine it, we keep 999.
 DOCKER_SOCK_PATH="/var/run/docker.sock"
 if [ -L "$DOCKER_SOCK_PATH" ]; then
     DOCKER_SOCK_PATH="$(readlink "$DOCKER_SOCK_PATH")"
