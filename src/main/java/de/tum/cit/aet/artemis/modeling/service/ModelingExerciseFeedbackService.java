@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.modeling.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
-
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -21,8 +19,8 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
+import de.tum.cit.aet.artemis.athena.config.AthenaApiNotPresentException;
 import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
-import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
@@ -164,7 +162,7 @@ public class ModelingExerciseFeedbackService {
      * @throws NetworkingException if there's a problem communicating with Athena
      */
     private List<Feedback> getAthenaFeedback(ModelingExercise modelingExercise, ModelingSubmission submission) throws NetworkingException {
-        AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA));
+        AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new AthenaApiNotPresentException(AthenaFeedbackApi.class));
         return api.getModelingFeedbackSuggestions(modelingExercise, submission, false).stream().filter(feedbackItem -> feedbackItem.description() != null)
                 .map(this::convertToFeedback).toList();
     }
