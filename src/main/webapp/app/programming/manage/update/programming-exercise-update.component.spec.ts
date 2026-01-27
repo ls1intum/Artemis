@@ -339,7 +339,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             const response$ = new Subject<HttpResponse<ProgrammingExercise>>();
             const setupSpy = jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(response$);
-            const router = TestBed.inject(Router) as MockRouter;
+            const router = TestBed.inject(Router) as unknown as MockRouter;
 
             comp.saveExerciseWithAi();
 
@@ -355,7 +355,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 savedEntity.id,
                 'code-editor',
                 RepositoryType.SOLUTION,
-                savedEntity.solutionParticipation.id,
+                savedEntity.solutionParticipation!.id,
             ]);
             expect(comp.isGeneratingWithAi).toBeFalse();
         });
