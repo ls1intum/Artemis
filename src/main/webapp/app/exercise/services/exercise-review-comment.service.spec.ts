@@ -92,7 +92,9 @@ describe('ExerciseReviewCommentService', () => {
 
         expect(result).toHaveLength(2);
         expect(result.find((t: any) => t.id === 2)).toBeUndefined();
-        expect(result.find((t: any) => t.id === 1).comments).toHaveLength(2);
+        const remainingThread = result.find((t: any) => t.id === 1);
+        expect(remainingThread).toBeDefined();
+        expect(remainingThread!.comments).toHaveLength(2);
     });
 
     it('should append a created comment to its thread', () => {
@@ -104,16 +106,18 @@ describe('ExerciseReviewCommentService', () => {
 
         const result = service.appendCommentToThreads(threads, created);
 
-        expect(result.find((t: any) => t.id === 2).comments).toHaveLength(2);
+        const thread = result.find((t: any) => t.id === 2);
+        expect(thread).toBeDefined();
+        expect(thread!.comments).toHaveLength(2);
     });
 
     it('should update a comment in its thread', () => {
-        const threads = [{ id: 1, comments: [{ id: 5, text: 'old' }] }] as any;
-        const updated = { id: 5, threadId: 1, text: 'new' } as any;
+        const threads = [{ id: 1, comments: [{ id: 5, content: { contentType: 'USER', text: 'old' } }] }] as any;
+        const updated = { id: 5, threadId: 1, content: { contentType: 'USER', text: 'new' } } as any;
 
         const result = service.updateCommentInThreads(threads, updated);
 
-        expect(result[0].comments[0].text).toBe('new');
+        expect(result[0].comments[0].content.text).toBe('new');
     });
 
     it('should replace an updated thread', () => {
@@ -125,7 +129,9 @@ describe('ExerciseReviewCommentService', () => {
 
         const result = service.replaceThreadInThreads(threads, updatedThread);
 
-        expect(result.find((t: any) => t.id === 2).resolved).toBeTrue();
+        const updated = result.find((t: any) => t.id === 2);
+        expect(updated).toBeDefined();
+        expect(updated!.resolved).toBeTrue();
     });
 
     it('should append a new thread', () => {
