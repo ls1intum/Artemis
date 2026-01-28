@@ -2,6 +2,9 @@
     <div class="monaco-review-comment-title">{{ 'artemisApp.review.addCommentTitle' | artemisTranslate }}</div>
     <textarea class="monaco-review-comment-textarea" [placeholder]="'artemisApp.review.addCommentPlaceholder' | artemisTranslate" [(ngModel)]="text"></textarea>
     <div class="monaco-review-comment-actions">
+        @if (showSubmitError) {
+            <span class="monaco-review-comment-error">{{ 'artemisApp.review.submitBeforeComment' | artemisTranslate }}</span>
+        }
         <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancel()">
             {{ 'artemisApp.review.addCommentCancel' | artemisTranslate }}
         </button>

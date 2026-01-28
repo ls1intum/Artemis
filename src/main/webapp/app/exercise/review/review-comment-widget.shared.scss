@@ -1,10 +1,14 @@
 .monaco-review-comment-widget {
     width: 100%;
     box-sizing: border-box;
-    padding: 0.75rem;
+    padding: 0.1rem 0.75rem 0.5rem;
     background-color: var(--body-bg);
     border: 1px solid var(--border-color);
     border-radius: 0.25rem;
+}
+
+.monaco-review-comment-widget.monaco-review-comment-thread--collapsed {
+    padding-bottom: 0.1rem;
 }
 
 .monaco-review-comment-title {
@@ -18,6 +22,7 @@
     color: var(--secondary-text-color);
     margin-top: 0.1rem;
     opacity: 0.75;
+    line-height: 1;
 }
 
 .monaco-review-comment-meta-separator {
@@ -110,22 +115,23 @@
     align-items: center;
     justify-content: space-between;
     font-weight: 600;
-    margin-bottom: 0.75rem;
+    margin: 0;
 }
 
 .monaco-review-comment-thread-header--collapsed {
-    margin-bottom: 0;
+    margin: 0;
 }
 
 .monaco-review-comment-thread-divider {
     border-bottom: 1px solid var(--border-color);
-    margin-bottom: 0.75rem;
+    margin-top: 0.15rem;
+    margin-bottom: 0.3rem;
 }
 
 .monaco-review-comment-thread-title {
-    font-size: 0.9rem;
+    font-size: 0.75rem;
     display: flex;
-    align-items: center;
+    align-items: baseline;
     gap: 0.35rem;
     min-width: 0;
 }
@@ -139,7 +145,7 @@
     align-items: center;
     font-size: 0.72rem;
     font-weight: 600;
-    padding: 0.1rem 0.4rem;
+    padding: 0.02rem 0.4rem;
     border-radius: 999px;
     margin-left: 0.35rem;
     background-color: var(--border-color);
@@ -217,7 +223,15 @@
 
 .monaco-review-comment-actions {
     display: flex;
+    align-items: center;
     justify-content: flex-end;
     gap: 0.5rem;
     margin-top: 0.5rem;
+}
+
+.monaco-review-comment-error {
+    color: var(--danger);
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-right: auto;
 }

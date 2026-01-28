@@ -214,14 +214,6 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             this.renderFeedbackWidgets();
         }
 
-        if (changes.commitState && this.enableExerciseReviewComments()) {
-            this.setupAddReviewCommentButton();
-            if (this.commitState() === CommitState.UNCOMMITTED_CHANGES) {
-                this.reviewCommentManager?.clearDrafts();
-                this.renderReviewCommentWidgets();
-            }
-        }
-
         this.editor().layout();
     }
 
@@ -487,7 +479,6 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             requestAnimationFrame(() => {
                 this.reviewRenderScheduled = false;
                 this.ngZone.run(() => {
-                    this.editor().disposeWidgetsByPrefix('review-comment-');
                     this.getReviewCommentManager().renderWidgets();
                 });
             }),
@@ -498,7 +489,8 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         if (!this.reviewCommentManager) {
             this.reviewCommentManager = new ReviewCommentWidgetManager(this.editor(), this.viewContainerRef, {
                 hoverButtonClass: CodeEditorMonacoComponent.CLASS_REVIEW_COMMENT_HOVER_BUTTON,
-                shouldShowHoverButton: () => this.enableExerciseReviewComments() && this.commitState() !== CommitState.UNCOMMITTED_CHANGES,
+                shouldShowHoverButton: () => this.enableExerciseReviewComments(),
+                canSubmit: () => this.commitState() !== CommitState.UNCOMMITTED_CHANGES,
                 getDraftFileName: () => this.selectedFile(),
                 getThreads: () => this.reviewCommentThreads(),
                 filterThread: (thread) =>

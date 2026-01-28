@@ -1,8 +1,8 @@
-<div class="monaco-review-comment-widget monaco-review-comment-thread">
+<div class="monaco-review-comment-widget monaco-review-comment-thread" [class.monaco-review-comment-thread--collapsed]="!showThreadBody">
     <div class="monaco-review-comment-thread-header" [class.monaco-review-comment-thread-header--collapsed]="!showThreadBody">
         <div class="monaco-review-comment-thread-title">
             <span class="monaco-review-comment-thread-title-text">
-                {{ 'artemisApp.review.threadTitle' | artemisTranslate: { line: getThreadLineLabel() } }}
+                {{ 'artemisApp.review.threadTitle' | artemisTranslate }}
             </span>
             @if (getThreadMeta(); as meta) {
                 <span

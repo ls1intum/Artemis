@@ -17,14 +17,15 @@
             "editComment": "Edit",
             "editCancel": "Cancel",
             "editSubmit": "Update",
-            "threadTitle": "Comment thread on line {{line}}",
+            "threadTitle": "Comment thread",
             "resolveThread": "Resolve",
             "unresolveThread": "Unresolve",
             "resolveFailed": "Could not update the thread status.",
             "threadResolved": "Resolved",
             "threadOutdated": "Outdated",
             "threadVersion": "created in version {{versionId}}",
-            "threadCommit": "created in commit {{commitSha}}"
+            "threadCommit": "created in commit {{commitSha}}",
+            "submitBeforeComment": "Submit the exercise before starting a thread."
         }
     }
 }

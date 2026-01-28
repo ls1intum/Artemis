@@ -7,6 +7,7 @@ import { CommentThread } from 'app/exercise/shared/entities/review/comment-threa
 export type ReviewCommentWidgetManagerConfig = {
     hoverButtonClass: string;
     shouldShowHoverButton: () => boolean;
+    canSubmit?: () => boolean;
     getDraftFileName: () => string | undefined;
     getThreads: () => CommentThread[];
     filterThread: (thread: CommentThread) => boolean;
@@ -83,8 +84,17 @@ export class ReviewCommentWidgetManager {
         if (!existing.has(lineNumberZeroBased)) {
             existing.add(lineNumberZeroBased);
             this.draftLinesByFile.set(fileName, existing);
-            this.config.requestRender();
         }
+        const widgetKey = this.getDraftKey(fileName, lineNumberZeroBased);
+        let widgetRef = this.draftWidgetRefs.get(widgetKey);
+        if (!widgetRef) {
+            widgetRef = this.viewContainerRef.createComponent(ReviewCommentDraftWidgetComponent);
+            widgetRef.instance.onSubmit.subscribe((text) => this.submitDraft(fileName, lineNumberZeroBased, text));
+            widgetRef.instance.onCancel.subscribe(() => this.removeDraft(fileName, lineNumberZeroBased));
+            this.draftWidgetRefs.set(widgetKey, widgetRef);
+        }
+        widgetRef.setInput('canSubmit', this.config.canSubmit ? this.config.canSubmit() : true);
+        this.editor.addLineWidget(lineNumber, this.buildDraftWidgetId(fileName, lineNumberZeroBased), widgetRef.location.nativeElement);
         this.config.onAdd?.({ lineNumber, fileName });
     }
 
@@ -106,7 +116,8 @@ export class ReviewCommentWidgetManager {
                 widgetRef.instance.onCancel.subscribe(() => this.removeDraft(activeFileName, line));
                 this.draftWidgetRefs.set(widgetKey, widgetRef);
             }
-            this.editor.addLineWidget(line + 1, `review-comment-${activeFileName}-${line}`, widgetRef.location.nativeElement);
+            widgetRef.setInput('canSubmit', this.config.canSubmit ? this.config.canSubmit() : true);
+            this.editor.addLineWidget(line + 1, this.buildDraftWidgetId(activeFileName, line), widgetRef.location.nativeElement);
         }
     }
 
@@ -120,6 +131,7 @@ export class ReviewCommentWidgetManager {
         }
         for (const [threadId, ref] of this.threadWidgetRefs.entries()) {
             if (!threadIds.has(threadId)) {
+                this.editor.disposeWidgetsByPrefix(this.buildThreadWidgetId(threadId));
                 ref.destroy();
                 this.threadWidgetRefs.delete(threadId);
             }
@@ -147,6 +159,7 @@ export class ReviewCommentWidgetManager {
             } else {
                 widgetRef.setInput('thread', thread);
             }
+            this.editor.disposeWidgetsByPrefix(widgetId);
             this.editor.addLineWidget(line + 1, widgetId, widgetRef.location.nativeElement);
         }
     }
@@ -165,9 +178,9 @@ export class ReviewCommentWidgetManager {
             }
         }
         const widgetKey = this.getDraftKey(fileName, line);
+        this.editor.disposeWidgetsByPrefix(this.buildDraftWidgetId(fileName, line));
         this.draftWidgetRefs.get(widgetKey)?.destroy();
         this.draftWidgetRefs.delete(widgetKey);
-        this.config.requestRender();
     }
 
     private disposeDraftWidgets(): void {
@@ -182,6 +195,10 @@ export class ReviewCommentWidgetManager {
 
     private buildThreadWidgetId(threadId: number): string {
         return `review-comment-thread-${threadId}`;
+    }
+
+    private buildDraftWidgetId(fileName: string, line: number): string {
+        return `review-comment-${fileName}-${line}`;
     }
 
     private getDraftKey(fileName: string, line: number): string {

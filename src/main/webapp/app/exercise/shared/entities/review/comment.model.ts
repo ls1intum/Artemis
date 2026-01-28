@@ -10,6 +10,8 @@ export interface Comment {
     threadId: number;
     authorId?: number;
     authorName?: string;
+    createdBy?: string;
+    lastModifiedBy?: string;
     type: CommentType;
     content: CommentContent;
     initialVersionId?: number;

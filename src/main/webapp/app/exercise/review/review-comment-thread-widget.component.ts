@@ -73,7 +73,12 @@ export class ReviewCommentThreadWidgetComponent implements OnInit {
         if (!thread) {
             return;
         }
-        this.onToggleResolved.emit(!thread.resolved);
+        const nextResolved = !thread.resolved;
+        this.onToggleResolved.emit(nextResolved);
+        if (nextResolved) {
+            this.showThreadBody = false;
+            this.onToggleCollapse.emit(true);
+        }
     }
 
     toggleThreadBody(): void {

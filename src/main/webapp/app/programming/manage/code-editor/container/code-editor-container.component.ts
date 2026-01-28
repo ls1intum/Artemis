@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, ViewChild, effect, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, ViewChild, computed, effect, inject, input, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -313,6 +313,12 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         this.grid.toggleCollapse(event, collapsableElement);
     }
 
+    readonly feedbackForSubmission = computed<Feedback[]>(() => {
+        const submission = this.participation().submissions?.[0];
+        const result = submission?.results?.[0];
+        return this.showInlineFeedback() && result?.feedbacks ? result.feedbacks : [];
+    });
+
     /**
      * Set the annotations and extract error files for the file browser.
      * @param annotations The new annotations array
@@ -327,15 +333,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
      */
     canDeactivate() {
         return _isEmpty(this.unsavedFiles);
-    }
-
-    /**
-     * Returns the feedbacks for the current submission or an empty array if no feedbacks are available.
-     */
-    feedbackForSubmission(): Feedback[] {
-        const submission = this.participation().submissions?.[0];
-        const result = submission?.results?.[0];
-        return this.showInlineFeedback() && result?.feedbacks ? result.feedbacks : [];
     }
 
     /**

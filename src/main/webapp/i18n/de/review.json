@@ -17,14 +17,15 @@
             "editComment": "Bearbeiten",
             "editCancel": "Abbrechen",
             "editSubmit": "Aktualisieren",
-            "threadTitle": "Kommentar-Thread in Zeile {{line}}",
+            "threadTitle": "Kommentar-Thread",
             "resolveThread": "Erledigen",
             "unresolveThread": "Wieder öffnen",
             "resolveFailed": "Der Thread-Status konnte nicht aktualisiert werden.",
             "threadResolved": "Erledigt",
             "threadOutdated": "Veraltet",
             "threadVersion": "erstellt in Version {{versionId}}",
-            "threadCommit": "erstellt in Commit {{commitSha}}"
+            "threadCommit": "erstellt in Commit {{commitSha}}",
+            "submitBeforeComment": "Bitte gib die Aufgabe zuerst ab, bevor du einen Thread startest."
         }
     }
 }

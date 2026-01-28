@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewEncapsulation, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
@@ -12,20 +12,28 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [FormsModule, ArtemisTranslatePipe],
 })
 export class ReviewCommentDraftWidgetComponent {
+    readonly canSubmit = input<boolean>(true);
     readonly onSubmit = output<string>();
     readonly onCancel = output<void>();
 
     text = '';
+    showSubmitError = false;
 
     submit(): void {
+        if (!this.canSubmit()) {
+            this.showSubmitError = true;
+            return;
+        }
         const trimmed = this.text.trim();
         if (!trimmed) {
             return;
         }
+        this.showSubmitError = false;
         this.onSubmit.emit(trimmed);
     }
 
     cancel(): void {
+        this.showSubmitError = false;
         this.onCancel.emit();
     }
 }
