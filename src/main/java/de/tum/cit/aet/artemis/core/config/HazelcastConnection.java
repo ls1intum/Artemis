@@ -203,6 +203,7 @@ public class HazelcastConnection {
      */
     private void addHazelcastClusterMember(ServiceInstance instance, Config config) {
         var clusterMemberPort = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(hazelcastPort));
+        // Normalize the host to remove brackets that Eureka adds for IPv6 addresses
         var host = normalizeHost(instance.getHost());
         var clusterMemberAddress = formatAddressForHazelcast(host, clusterMemberPort);
         log.info("Adding Hazelcast cluster member {}", clusterMemberAddress);
@@ -292,6 +293,7 @@ public class HazelcastConnection {
      * @return the formatted address string
      */
     private String formatInstanceAddress(ServiceInstance instance) {
+        // Normalize the host to remove brackets that Eureka adds for IPv6 addresses
         String host = normalizeHost(instance.getHost());
         String port = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(hazelcastPort));
         return formatAddressForHazelcast(host, port);
@@ -299,12 +301,23 @@ public class HazelcastConnection {
 
     /**
      * Removes brackets from a host string if present.
-     * Eureka/Spring Cloud stores IPv6 addresses with brackets (URI format), but we need the raw IP.
+     * Eureka/Spring Cloud stores IPv6 addresses with brackets (URI format per RFC 3986),
+     * but we need the raw IP address for comparison and formatting operations.
+     *
+     * <p>
+     * <strong>Examples:</strong>
+     * <ul>
+     * <li>{@code "[fcfe:0:0:0:0:0:a:1]"} → {@code "fcfe:0:0:0:0:0:a:1"} (IPv6 with brackets)</li>
+     * <li>{@code "[::1]"} → {@code "::1"} (IPv6 localhost with brackets)</li>
+     * <li>{@code "192.168.1.1"} → {@code "192.168.1.1"} (IPv4 unchanged)</li>
+     * <li>{@code "fcfe:0:0:0:0:0:a:1"} → {@code "fcfe:0:0:0:0:0:a:1"} (IPv6 without brackets unchanged)</li>
+     * <li>{@code null} → {@code null}</li>
+     * </ul>
      *
      * @param host the host string, possibly with brackets (e.g., "[::1]" or "192.168.1.1")
-     * @return the host without brackets (e.g., "::1" or "192.168.1.1")
+     * @return the host without brackets (e.g., "::1" or "192.168.1.1"), or null if input is null
      */
-    private String normalizeHost(String host) {
+    String normalizeHost(String host) {
         if (host == null) {
             return null;
         }
@@ -318,13 +331,31 @@ public class HazelcastConnection {
     /**
      * Formats a host and port for Hazelcast connection.
      * IPv6 addresses must be wrapped in brackets: "[ipv6]:port", IPv4 is just "ipv4:port".
+     * This follows RFC 3986 URI syntax for IPv6 literal addresses, which requires brackets
+     * around IPv6 addresses to distinguish the port separator colon from IPv6 address colons.
      *
-     * @param host the normalized host (without brackets)
-     * @param port the port number
-     * @return the formatted address string
+     * <p>
+     * <strong>Examples:</strong>
+     * <ul>
+     * <li>{@code ("192.168.1.1", "5701")} → {@code "192.168.1.1:5701"} (IPv4)</li>
+     * <li>{@code ("10.0.0.1", "5701")} → {@code "10.0.0.1:5701"} (IPv4 private)</li>
+     * <li>{@code ("fcfe:0:0:0:0:0:a:1", "5701")} → {@code "[fcfe:0:0:0:0:0:a:1]:5701"} (IPv6 full)</li>
+     * <li>{@code ("::1", "5701")} → {@code "[::1]:5701"} (IPv6 localhost)</li>
+     * <li>{@code ("2001:db8::1", "5701")} → {@code "[2001:db8::1]:5701"} (IPv6 compressed)</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Important:</strong> The host parameter must be normalized (without brackets) before
+     * calling this method. Use {@link #normalizeHost(String)} to remove brackets from Eureka-provided hosts.
+     *
+     * @param host the normalized host without brackets (use {@link #normalizeHost(String)} first)
+     * @param port the port number as a string
+     * @return the formatted address string suitable for Hazelcast TCP/IP configuration
+     * @throws NullPointerException if host is null
      */
-    private String formatAddressForHazelcast(String host, String port) {
+    String formatAddressForHazelcast(String host, String port) {
         // IPv6 addresses contain colons, so we need to wrap them in brackets
+        // to distinguish the port separator from the IPv6 address colons
         if (host.contains(":")) {
             return "[" + host + "]:" + port;
         }
@@ -334,6 +365,14 @@ public class HazelcastConnection {
     /**
      * Marks this instance as a Hazelcast client in the service registry.
      * This allows other instances to identify it as a client rather than a cluster member.
+     *
+     * <p>
+     * <strong>Note on Eureka propagation:</strong> The metadata change is stored in the local
+     * Registration object and will be propagated to the Eureka server on the next heartbeat
+     * (default interval: 30 seconds). For immediate visibility to other nodes, ensure this method
+     * is called early during application startup, before the first Eureka registration.
+     * In practice, this is called during Hazelcast client bean creation, which typically occurs
+     * before or during the initial Eureka registration.
      */
     public void registerAsClient() {
         if (registration.isPresent()) {

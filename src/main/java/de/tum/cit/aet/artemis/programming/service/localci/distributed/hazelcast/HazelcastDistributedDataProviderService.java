@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.programming.service.localci.distributed.hazelcast;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -70,11 +72,33 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
     }
 
     /**
-     * Returns the address of the local Hazelcast instance.
-     * For cluster members, returns the member's cluster address.
-     * For clients (e.g., build agents in client mode), returns the client's local endpoint address.
+     * Returns a unique identifier for the local Hazelcast instance.
+     * For cluster members, returns the member's cluster address in normalized format.
+     * For clients (e.g., build agents in client mode), returns the client's local endpoint address,
+     * or the instance name as a fallback if not yet connected.
      *
-     * @return the address as a string in the format "[host]:port"
+     * <p>
+     * The address format is always {@code [host]:port} where the host is the IP address.
+     * IPv6 addresses are wrapped in brackets per RFC 3986, and IPv4 addresses are also
+     * wrapped in brackets for consistency across the codebase.
+     *
+     * <p>
+     * <strong>Examples:</strong>
+     * <ul>
+     * <li>IPv4: {@code [192.168.1.1]:5701}</li>
+     * <li>IPv6: {@code [2001:db8::1]:5701}</li>
+     * <li>Client not connected: {@code Artemis-client} (uses instance name as fallback)</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Important:</strong> When using asyncStart=true for Hazelcast clients, the endpoint
+     * address may not be available immediately. In this case, the instance name is returned as a
+     * unique identifier. This ensures that build agents can register themselves in the distributed
+     * map even before connecting to the cluster.
+     *
+     * @return a unique identifier for this instance: the address in format {@code [host]:port},
+     *         or the instance name if the client endpoint is not yet connected
+     * @throws HazelcastInstanceNotActiveException if the Hazelcast instance is not running
      */
     @Override
     public String getLocalMemberAddress() {
@@ -84,14 +108,42 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
 
         // Check if this is a Hazelcast client (build agents in client mode)
         if (hazelcastInstance instanceof HazelcastClientProxy) {
-            // For clients, use getLocalEndpoint() which provides the client's socket address
-            InetSocketAddress socketAddress = (InetSocketAddress) hazelcastInstance.getLocalEndpoint().getSocketAddress();
-            // Format consistently with cluster member addresses: [host]:port
+            // For clients with asyncStart=true, getLocalEndpoint() may return null
+            // if the client hasn't connected to the cluster yet
+            var localEndpoint = hazelcastInstance.getLocalEndpoint();
+            if (localEndpoint == null || localEndpoint.getSocketAddress() == null) {
+                // Use hostname + instance name as a unique fallback identifier.
+                // This ensures each build agent has a unique key in the distributed map
+                // even before connecting to the cluster.
+                return getUniqueInstanceIdentifier();
+            }
+            InetSocketAddress socketAddress = (InetSocketAddress) localEndpoint.getSocketAddress();
+            // Format as [host]:port for consistency
             return "[" + socketAddress.getAddress().getHostAddress() + "]:" + socketAddress.getPort();
         }
 
-        // For cluster members, use the traditional approach
-        return hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+        // For cluster members, format consistently with client addresses
+        var memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress();
+        return "[" + memberAddress.getHost() + "]:" + memberAddress.getPort();
+    }
+
+    /**
+     * Generates a unique identifier for this instance when the endpoint address is not available.
+     * This is used as a fallback for Hazelcast clients with asyncStart=true before they connect.
+     *
+     * @return a unique identifier combining hostname and Hazelcast instance name
+     */
+    private String getUniqueInstanceIdentifier() {
+        String hostname;
+        try {
+            hostname = InetAddress.getLocalHost().getHostName();
+        }
+        catch (UnknownHostException e) {
+            hostname = "unknown-host";
+        }
+        // Combine hostname with instance name to ensure uniqueness across hosts
+        // even if they share the same Hazelcast instance name configuration
+        return hostname + "/" + hazelcastInstance.getName();
     }
 
     /**
