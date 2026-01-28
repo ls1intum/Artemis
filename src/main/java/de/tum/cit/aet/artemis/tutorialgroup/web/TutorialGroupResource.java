@@ -74,6 +74,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailGroupDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegisteredUserDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
@@ -712,9 +713,9 @@ public class TutorialGroupResource {
         }
     }
 
-    @GetMapping
+    @GetMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/registered-students")
     @EnforceAtLeastTutorInCourse
-    public ResponseEntity<List<TutorialGroupRegisteredUserDTO>> getRegisteredUsers(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
+    public ResponseEntity<Set<TutorialGroupRegisteredUserDTO>> getRegisteredStudents(@PathVariable long courseId, @PathVariable long tutorialGroupId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         var isUserTutorInTutorialGroup = userRepository.isTutorInTutorialGroup(user.getId(), tutorialGroupId, courseId);
@@ -723,11 +724,7 @@ public class TutorialGroupResource {
             throw new AccessForbiddenException("Only the tutor of the group, editors and instructors are allowed to access registered students of a tutorial group.");
         }
 
-        // TODO: get TutorialGroupRegisteredUserDTOs for group and return
-    }
-
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TutorialGroupRegisteredUserDTO(@NotNull long id, @Nullable String name, @Nullable String profilePictureUrl, @NotNull String login, @Nullable String email,
-            @Nullable String registrationNumber) {
+        var registerStudentDTOs = tutorialGroupRepository.getRegisteredStudentsOfTutorialGroup(tutorialGroupId);
+        return ResponseEntity.ok().body(registerStudentDTOs);
     }
 }
