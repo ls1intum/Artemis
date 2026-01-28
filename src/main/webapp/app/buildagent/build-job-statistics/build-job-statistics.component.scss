@@ -1,8 +1,32 @@
-.result-card {
-    width: 8vw;
-    min-width: 115px;
+.chart-container {
+    flex-shrink: 0;
 }
 
-.stats-column {
-    min-width: 230px;
+.stats-container {
+    flex: 1;
+}
+
+.stats-item {
+    display: flex;
+    gap: 0.25rem;
+    align-items: baseline;
+    padding: 0.25rem 0.5rem;
+    background-color: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.25rem;
+    white-space: nowrap;
+
+    .stats-label {
+        font-weight: 600;
+        color: var(--bs-body-color);
+    }
+
+    .stats-value {
+        color: var(--bs-body-color);
+    }
+
+    .stats-percentage {
+        color: var(--bs-secondary-color);
+        font-size: 0.85em;
+    }
 }

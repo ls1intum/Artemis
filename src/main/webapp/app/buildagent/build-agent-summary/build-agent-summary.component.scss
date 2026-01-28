@@ -1,4 +1,80 @@
-.wrap-long-text {
-    word-break: break-all; /* This will break the text at any character */
-    overflow-wrap: break-word; /* This will only break the text at whitespace */
+// Build agents table section
+.build-agents-section {
+    .table-responsive {
+        overflow-x: visible;
+    }
+
+    .table {
+        width: max-content;
+        table-layout: auto;
+
+        th {
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+    }
+}
+
+// Standard columns with consistent padding
+.build-agents-column {
+    white-space: nowrap;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+}
+
+// String columns with ellipsis for overflow text
+.build-agents-column-strings {
+    min-width: 100px;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+}
+
+// Running jobs column
+.build-agents-column-jobs {
+    min-width: 150px;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+}
+
+// Clickable table rows with pointer cursor
+.clickable-row {
+    cursor: pointer;
+
+    td {
+        font-size: 0.85rem;
+        vertical-align: middle;
+    }
+}
+
+// Running job item styling
+.running-job-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+
+    .job-link {
+        color: var(--bs-primary);
+        cursor: pointer;
+        font-size: 0.8rem;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}
+
+// Extra small cancel button
+.btn-xs {
+    padding: 0.15rem 0.3rem;
+    font-size: 0.7rem;
+    line-height: 1;
 }

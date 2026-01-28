@@ -58,7 +58,7 @@ describe('BuildJobStatisticsComponent', () => {
     });
 
     it('should get build job statistics when changing the span', () => {
-        mockActivatedRoute.url = of([{ path: 'build-queue' }]);
+        mockActivatedRoute.url = of([{ path: 'build-overview' }]);
         mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of(mockBuildJobStatistics));
 
         component.ngOnInit();
@@ -69,7 +69,7 @@ describe('BuildJobStatisticsComponent', () => {
     });
 
     it('should not get build job statistics when span is the same', () => {
-        mockActivatedRoute.url = of([{ path: 'build-queue' }]);
+        mockActivatedRoute.url = of([{ path: 'build-overview' }]);
         mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of(mockBuildJobStatistics));
 
         component.ngOnInit();
@@ -80,7 +80,7 @@ describe('BuildJobStatisticsComponent', () => {
     });
 
     it('should get build job statistics for course when courseId is present', () => {
-        mockActivatedRoute.url = of([{ path: 'build-queue' }]);
+        mockActivatedRoute.url = of([{ path: 'build-overview' }]);
         mockActivatedRoute.paramMap = of(new Map([['courseId', testCourseId]]));
         mockBuildQueueService.getBuildJobStatisticsForCourse.mockReturnValue(of(mockBuildJobStatistics));
 

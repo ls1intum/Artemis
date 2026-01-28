@@ -1,10 +1,20 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.CacheConfiguration.HAZELCAST_MEMBER_TYPE_CLIENT;
+import static de.tum.cit.aet.artemis.core.config.CacheConfiguration.HAZELCAST_MEMBER_TYPE_KEY;
+import static de.tum.cit.aet.artemis.core.config.CacheConfiguration.HAZELCAST_MEMBER_TYPE_MEMBER;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGENT;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.net.UnknownHostException;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
 
@@ -14,6 +24,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.serviceregistry.Registration;
+import org.springframework.cloud.client.serviceregistry.ServiceRegistry;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -54,6 +65,10 @@ public class HazelcastConnection {
     // the service registry, in our current deployment this is the jhipster registry which offers a Eureka Server under the hood
     private final Optional<Registration> registration;
 
+    // the service registry used to trigger immediate re-registration when metadata changes
+    @SuppressWarnings("rawtypes")
+    private final Optional<ServiceRegistry> serviceRegistry;
+
     private final Environment env;
 
     @Value("${spring.hazelcast.port:5701}")
@@ -62,9 +77,11 @@ public class HazelcastConnection {
     @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
     private String instanceName;
 
-    public HazelcastConnection(DiscoveryClient discoveryClient, Optional<Registration> registration, Environment env) {
+    @SuppressWarnings("rawtypes")
+    public HazelcastConnection(DiscoveryClient discoveryClient, Optional<Registration> registration, Optional<ServiceRegistry> serviceRegistry, Environment env) {
         this.discoveryClient = discoveryClient;
         this.registration = registration;
+        this.serviceRegistry = serviceRegistry;
         this.env = env;
     }
 
@@ -79,10 +96,20 @@ public class HazelcastConnection {
      * and registers them in the Hazelcast configuration for joining the cluster.
      *
      * <p>
+     * This method is skipped when running as a Hazelcast client (build agent client mode),
+     * as clients manage their own connections to the cluster.
+     *
+     * <p>
      * Called once after this bean (HazelcastConnection) has been instantiated
      */
     @PostConstruct
     private void connectHazelcast() {
+        // Skip connection logic for Hazelcast clients - they manage their own connections
+        if (isRunningAsClient()) {
+            log.debug("Running as Hazelcast client, skipping cluster member connection logic");
+            return;
+        }
+
         if (registration.isEmpty()) {
             // If there is no registration, we are not running in a clustered environment and cannot connect Hazelcast nodes.
             return;
@@ -105,9 +132,19 @@ public class HazelcastConnection {
     /**
      * This scheduled task regularly checks if all members of the Hazelcast cluster are connected to each other.
      * This is one counter measure against a split cluster.
+     * It also logs warnings for potential stale members (in Hazelcast but not in registry).
+     *
+     * <p>
+     * This method is skipped when running as a Hazelcast client (build agent client mode),
+     * as clients do not participate in cluster membership.
      */
-    @Scheduled(fixedRate = 10, initialDelay = 10, timeUnit = TimeUnit.SECONDS)
+    @Scheduled(fixedDelay = 10, initialDelay = 10, timeUnit = TimeUnit.SECONDS)
     public void connectToAllMembers() {
+        // Skip connection logic for Hazelcast clients - they don't participate in cluster membership
+        if (isRunningAsClient()) {
+            return;
+        }
+
         if (registration.isEmpty() || env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
             return;
         }
@@ -124,17 +161,37 @@ public class HazelcastConnection {
             catch (UnknownHostException e) {
                 return "unknown";
             }
-        }).toList();
+        }).collect(Collectors.toSet());
 
         var instances = discoveryClient.getInstances(registration.get().getServiceId());
-        log.debug("Current {} Registry members: {}", instances.size(), instances.stream().map(ServiceInstance::getHost).toList());
+
+        // Build set of registry member addresses (normalized for comparison)
+        Set<String> registryMemberAddresses = new HashSet<>();
+        for (ServiceInstance instance : instances) {
+            registryMemberAddresses.add(normalizeHost(instance.getHost()));
+        }
+
+        log.debug("Current {} Registry members: {}", instances.size(), registryMemberAddresses);
         log.debug("Current {} Hazelcast members: {}", hazelcastMemberAddresses.size(), hazelcastMemberAddresses);
 
+        // Check for members in registry but not in Hazelcast (need to add)
         for (ServiceInstance instance : instances) {
-            // Workaround for IPv6 addresses, as they are enclosed in brackets
-            var instanceHostClean = instance.getHost().replace("[", "").replace("]", "");
-            if (hazelcastMemberAddresses.stream().noneMatch(member -> member.equals(instanceHostClean))) {
+            var instanceHostClean = normalizeHost(instance.getHost());
+            if (!hazelcastMemberAddresses.contains(instanceHostClean)) {
                 addHazelcastClusterMember(instance, hazelcastInstance.getConfig());
+            }
+        }
+
+        // Check for members in Hazelcast but not in registry (potentially stale/zombie members)
+        // This can indicate a member that crashed without proper deregistration
+        for (String hazelcastMember : hazelcastMemberAddresses) {
+            if (!"unknown".equals(hazelcastMember) && !registryMemberAddresses.contains(hazelcastMember)) {
+                // Don't log warning for own address
+                String ownHost = normalizeHost(registration.get().getHost());
+                if (!hazelcastMember.equals(ownHost)) {
+                    log.warn("Hazelcast member {} is not registered in service registry - may be a stale/zombie member. "
+                            + "If this persists, the member may have crashed without proper deregistration.", hazelcastMember);
+                }
             }
         }
     }
@@ -153,8 +210,197 @@ public class HazelcastConnection {
      */
     private void addHazelcastClusterMember(ServiceInstance instance, Config config) {
         var clusterMemberPort = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(hazelcastPort));
-        var clusterMemberAddress = instance.getHost() + ":" + clusterMemberPort; // Address where the other instance is expected
+        // Normalize the host to remove brackets that Eureka adds for IPv6 addresses
+        var host = normalizeHost(instance.getHost());
+        var clusterMemberAddress = formatAddressForHazelcast(host, clusterMemberPort);
         log.info("Adding Hazelcast cluster member {}", clusterMemberAddress);
         config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMemberAddress);
+    }
+
+    /**
+     * Checks if the current instance is running as a Hazelcast client.
+     * Build agents (without the core profile) always run as clients to isolate the core cluster
+     * from build agent failures and eliminate heartbeat overhead.
+     * Test profiles are excluded since build agent tests create a local Hazelcast instance.
+     *
+     * @return true if running as a Hazelcast client, false otherwise
+     */
+    private boolean isRunningAsClient() {
+        return env.acceptsProfiles(Profiles.of(PROFILE_BUILDAGENT)) && !env.acceptsProfiles(Profiles.of(PROFILE_CORE))
+                && !env.acceptsProfiles(Profiles.of(PROFILE_TEST_BUILDAGENT));
+    }
+
+    /**
+     * Discovers core node (cluster member) addresses from the service registry.
+     * This is used by build agents in client mode to find core nodes to connect to.
+     *
+     * <p>
+     * Filters to only include cluster members by checking the {@code hazelcast.member-type} metadata.
+     * Includes instances without this metadata for backwards compatibility with older deployments.
+     *
+     * @return list of core node addresses in "host:port" format, empty if no core nodes found
+     */
+    public List<String> discoverCoreNodeAddresses() {
+        if (registration.isEmpty()) {
+            log.warn("Service registry not available for auto-discovery of core nodes.");
+            return List.of();
+        }
+
+        log.info("Auto-discovering core nodes from service registry");
+        String serviceId = registration.get().getServiceId();
+        List<ServiceInstance> instances = discoveryClient.getInstances(serviceId);
+
+        List<String> coreNodes = instances.stream()
+                // Filter to only include cluster members (not clients)
+                .filter(this::isClusterMember)
+                // Exclude the current instance
+                .filter(instance -> !isCurrentInstance(instance)).map(this::formatInstanceAddress).toList();
+
+        if (!coreNodes.isEmpty()) {
+            log.info("Discovered {} core node(s) from service registry: {}", coreNodes.size(), coreNodes);
+        }
+        else {
+            log.warn("No core nodes found in service registry. Ensure core nodes are running and registered.");
+        }
+
+        return coreNodes;
+    }
+
+    /**
+     * Checks if a service instance is a Hazelcast cluster member (not a client).
+     *
+     * @param instance the service instance to check
+     * @return true if the instance is a cluster member
+     */
+    private boolean isClusterMember(ServiceInstance instance) {
+        String memberType = instance.getMetadata().get(HAZELCAST_MEMBER_TYPE_KEY);
+        // Include instances explicitly marked as members, or not marked at all (legacy/compatibility)
+        return memberType == null || HAZELCAST_MEMBER_TYPE_MEMBER.equals(memberType);
+    }
+
+    /**
+     * Checks if the given service instance is the current instance.
+     *
+     * @param instance the service instance to check
+     * @return true if this is the current instance
+     */
+    private boolean isCurrentInstance(ServiceInstance instance) {
+        if (registration.isEmpty()) {
+            return false;
+        }
+        String ownHost = normalizeHost(registration.get().getHost());
+        String instanceHost = normalizeHost(instance.getHost());
+        return ownHost.equals(instanceHost) && registration.get().getPort() == instance.getPort();
+    }
+
+    /**
+     * Formats a service instance address as "host:port" for Hazelcast connection.
+     *
+     * @param instance the service instance
+     * @return the formatted address string
+     */
+    private String formatInstanceAddress(ServiceInstance instance) {
+        // Normalize the host to remove brackets that Eureka adds for IPv6 addresses
+        String host = normalizeHost(instance.getHost());
+        String port = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(hazelcastPort));
+        return formatAddressForHazelcast(host, port);
+    }
+
+    /**
+     * Removes brackets from a host string if present.
+     * Eureka/Spring Cloud stores IPv6 addresses with brackets (URI format per RFC 3986),
+     * but we need the raw IP address for comparison and formatting operations.
+     *
+     * <p>
+     * <strong>Examples:</strong>
+     * <ul>
+     * <li>{@code "[fcfe:0:0:0:0:0:a:1]"} → {@code "fcfe:0:0:0:0:0:a:1"} (IPv6 with brackets)</li>
+     * <li>{@code "[::1]"} → {@code "::1"} (IPv6 localhost with brackets)</li>
+     * <li>{@code "192.168.1.1"} → {@code "192.168.1.1"} (IPv4 unchanged)</li>
+     * <li>{@code "fcfe:0:0:0:0:0:a:1"} → {@code "fcfe:0:0:0:0:0:a:1"} (IPv6 without brackets unchanged)</li>
+     * <li>{@code null} → {@code null}</li>
+     * </ul>
+     *
+     * @param host the host string, possibly with brackets (e.g., "[::1]" or "192.168.1.1")
+     * @return the host without brackets (e.g., "::1" or "192.168.1.1"), or null if input is null
+     */
+    String normalizeHost(String host) {
+        if (host == null) {
+            return null;
+        }
+        // Remove URI-style brackets that Eureka adds for IPv6 addresses
+        if (host.startsWith("[") && host.endsWith("]")) {
+            return host.substring(1, host.length() - 1);
+        }
+        return host;
+    }
+
+    /**
+     * Formats a host and port for Hazelcast connection.
+     * IPv6 addresses must be wrapped in brackets: "[ipv6]:port", IPv4 is just "ipv4:port".
+     * This follows RFC 3986 URI syntax for IPv6 literal addresses, which requires brackets
+     * around IPv6 addresses to distinguish the port separator colon from IPv6 address colons.
+     *
+     * <p>
+     * <strong>Examples:</strong>
+     * <ul>
+     * <li>{@code ("192.168.1.1", "5701")} → {@code "192.168.1.1:5701"} (IPv4)</li>
+     * <li>{@code ("10.0.0.1", "5701")} → {@code "10.0.0.1:5701"} (IPv4 private)</li>
+     * <li>{@code ("fcfe:0:0:0:0:0:a:1", "5701")} → {@code "[fcfe:0:0:0:0:0:a:1]:5701"} (IPv6 full)</li>
+     * <li>{@code ("::1", "5701")} → {@code "[::1]:5701"} (IPv6 localhost)</li>
+     * <li>{@code ("2001:db8::1", "5701")} → {@code "[2001:db8::1]:5701"} (IPv6 compressed)</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Important:</strong> The host parameter must be normalized (without brackets) before
+     * calling this method. Use {@link #normalizeHost(String)} to remove brackets from Eureka-provided hosts.
+     *
+     * @param host the normalized host without brackets (use {@link #normalizeHost(String)} first)
+     * @param port the port number as a string
+     * @return the formatted address string suitable for Hazelcast TCP/IP configuration
+     * @throws NullPointerException if host is null
+     */
+    String formatAddressForHazelcast(String host, String port) {
+        // IPv6 addresses contain colons, so we need to wrap them in brackets
+        // to distinguish the port separator from the IPv6 address colons
+        if (host.contains(":")) {
+            return "[" + host + "]:" + port;
+        }
+        return host + ":" + port;
+    }
+
+    /**
+     * Marks this instance as a Hazelcast client in the service registry.
+     * This allows other instances to identify it as a client rather than a cluster member.
+     *
+     * <p>
+     * The metadata change is immediately propagated to the Eureka server by triggering
+     * a re-registration. This ensures other instances can identify this node as a client
+     * without waiting for the next heartbeat (default interval: 30 seconds).
+     *
+     * <p>
+     * If the ServiceRegistry is not available (e.g., in test environments), the metadata
+     * change will still be made locally and propagated on the next heartbeat.
+     */
+    @SuppressWarnings("unchecked")
+    public void registerAsClient() {
+        if (registration.isPresent()) {
+            registration.get().getMetadata().put(HAZELCAST_MEMBER_TYPE_KEY, HAZELCAST_MEMBER_TYPE_CLIENT);
+            log.info("Marked this instance as Hazelcast client in service registry metadata");
+
+            // Trigger immediate re-registration to propagate metadata change
+            if (serviceRegistry.isPresent()) {
+                try {
+                    serviceRegistry.get().register(registration.get());
+                    log.info("Triggered immediate Eureka re-registration for Hazelcast client metadata");
+                }
+                catch (Exception e) {
+                    log.warn("Failed to trigger immediate Eureka re-registration: {}. Metadata will propagate on next heartbeat.", e.getMessage());
+                }
+            }
+            else {
+                log.debug("ServiceRegistry not available - metadata will propagate on next Eureka heartbeat");
+            }
+        }
     }
 }

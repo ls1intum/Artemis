@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 
 /**
@@ -59,6 +60,28 @@ public class LocalCIQueueWebsocketService {
         var processingJobsForCourse = processingJobs.stream().filter(job -> job.courseId() == courseId).toList();
         localCIWebsocketMessagingService.sendRunningBuildJobs(processingJobs);
         localCIWebsocketMessagingService.sendRunningBuildJobsForCourse(courseId, processingJobsForCourse);
+    }
+
+    /**
+     * Sends a single build job update over websocket.
+     * This is used for the build job detail page to receive live updates.
+     *
+     * @param buildJob the build job to send the update for
+     */
+    void sendBuildJobUpdateOverWebsocket(BuildJobQueueItem buildJob) {
+        localCIWebsocketMessagingService.sendBuildJobUpdate(buildJob);
+    }
+
+    /**
+     * Sends a finished build job update over websocket.
+     * This notifies clients that a new finished build job is available.
+     *
+     * @param finishedBuildJob the finished build job DTO to send
+     */
+    void sendFinishedBuildJobOverWebsocket(FinishedBuildJobDTO finishedBuildJob) {
+        localCIWebsocketMessagingService.sendFinishedBuildJobUpdate(finishedBuildJob);
+        // Also send to the individual build job topic for the build job detail page
+        localCIWebsocketMessagingService.sendFinishedBuildJobDetailUpdate(finishedBuildJob);
     }
 
     /**

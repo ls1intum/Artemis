@@ -177,6 +177,7 @@ public class LocalCIEventListenerService {
         public void entryAdded(MapEntryAddedEvent<String, BuildJobQueueItem> event) {
             log.debug("CIBuildJobQueueItem added to processing jobs: {}", event.value());
             localCIQueueWebsocketService.sendProcessingJobsOverWebsocket(event.value().courseId());
+            localCIQueueWebsocketService.sendBuildJobUpdateOverWebsocket(event.value());
             buildJobRepository.updateBuildJobStatusWithBuildStartDate(event.value().id(), BuildStatus.BUILDING, event.value().jobTimingInfo().buildStartDate());
             notifyUserAboutBuildProcessing(event.value().exerciseId(), event.value().participationId(), event.value().buildConfig().assignmentCommitHash(),
                     event.value().jobTimingInfo().submissionDate(), event.value().jobTimingInfo().buildStartDate(), event.value().jobTimingInfo().estimatedCompletionDate());
@@ -186,6 +187,7 @@ public class LocalCIEventListenerService {
         public void entryRemoved(MapEntryRemovedEvent<String, BuildJobQueueItem> event) {
             log.debug("CIBuildJobQueueItem removed from processing jobs: {}", event.oldValue());
             localCIQueueWebsocketService.sendProcessingJobsOverWebsocket(event.oldValue().courseId());
+            localCIQueueWebsocketService.sendBuildJobUpdateOverWebsocket(event.oldValue());
         }
 
         @Override

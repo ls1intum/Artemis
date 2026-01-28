@@ -254,9 +254,9 @@ export class CourseSidebarItemService {
 
     getBuildQueueItem(courseId: number): SidebarItem {
         return {
-            routerLink: `${courseId}/build-queue`,
+            routerLink: `${courseId}/build-overview`,
             icon: faList,
-            title: 'Build Queue',
+            title: 'Build Overview',
             translation: 'artemisApp.buildQueue.title',
             hidden: false,
         };

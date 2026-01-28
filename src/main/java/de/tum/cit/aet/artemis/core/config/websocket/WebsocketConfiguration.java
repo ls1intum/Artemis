@@ -6,6 +6,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.exercise.web.ParticipationTeamWebsocketService.getParticipationIdFromDestination;
 import static de.tum.cit.aet.artemis.exercise.web.ParticipationTeamWebsocketService.isParticipationTeamDestination;
 import static de.tum.cit.aet.artemis.programming.service.localci.LocalCIWebsocketMessagingService.isBuildAgentDestination;
+import static de.tum.cit.aet.artemis.programming.service.localci.LocalCIWebsocketMessagingService.isBuildJobAdminDestination;
+import static de.tum.cit.aet.artemis.programming.service.localci.LocalCIWebsocketMessagingService.isBuildJobCourseDestination;
 import static de.tum.cit.aet.artemis.programming.service.localci.LocalCIWebsocketMessagingService.isBuildQueueAdminDestination;
 import static de.tum.cit.aet.artemis.programming.service.localci.LocalCIWebsocketMessagingService.isBuildQueueCourseDestination;
 
@@ -378,13 +380,18 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
             final var login = principal.getName();
 
-            if (isBuildQueueAdminDestination(destination) || isBuildAgentDestination(destination)) {
+            if (isBuildQueueAdminDestination(destination) || isBuildAgentDestination(destination) || isBuildJobAdminDestination(destination)) {
                 return authorizationCheckService.isAdmin(login);
             }
 
             Optional<Long> courseId = isBuildQueueCourseDestination(destination);
             if (courseId.isPresent()) {
                 return authorizationCheckService.isAtLeastInstructorInCourse(login, courseId.get());
+            }
+
+            Optional<Long> buildJobCourseId = isBuildJobCourseDestination(destination);
+            if (buildJobCourseId.isPresent()) {
+                return authorizationCheckService.isAtLeastInstructorInCourse(login, buildJobCourseId.get());
             }
 
             if (isParticipationTeamDestination(destination)) {

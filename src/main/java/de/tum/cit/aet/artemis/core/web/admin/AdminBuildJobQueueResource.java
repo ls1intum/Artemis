@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
@@ -57,6 +58,35 @@ public class AdminBuildJobQueueResource {
         this.localCIBuildJobQueueService = localCIBuildJobQueueService;
         this.buildJobRepository = buildJobRepository;
         this.distributedDataAccessService = distributedDataAccessService;
+    }
+
+    /**
+     * Returns a single build job by its ID.
+     * Checks running jobs, queued jobs, and finished jobs in that order.
+     *
+     * @param buildJobId the id of the build job
+     * @return the build job, or 404 if not found
+     */
+    @GetMapping("build-job/{buildJobId}")
+    public ResponseEntity<BuildJobDTO> getBuildJobById(@PathVariable String buildJobId) {
+        log.debug("REST request to get build job by id {}", buildJobId);
+
+        // Check running jobs first
+        BuildJobQueueItem processingJob = distributedDataAccessService.getDistributedProcessingJobs().get(buildJobId);
+        if (processingJob != null) {
+            return ResponseEntity.ok(processingJob);
+        }
+
+        // Check queued jobs
+        for (BuildJobQueueItem queuedJob : distributedDataAccessService.getQueuedJobs()) {
+            if (buildJobId.equals(queuedJob.id())) {
+                return ResponseEntity.ok(queuedJob);
+            }
+        }
+
+        // Check finished jobs in database (use findWithData to eagerly fetch result, submission, and participation)
+        return buildJobRepository.findWithDataByBuildJobId(buildJobId).<BuildJobDTO>map(FinishedBuildJobDTO::of).map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     /**

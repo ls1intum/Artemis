@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.programming.service.localci.distributed.redisson;
 
 import java.util.Set;
+import java.util.UUID;
+import java.util.function.Consumer;
 
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Value;
@@ -69,5 +71,36 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
     @Override
     public boolean noDataMemberInClusterAvailable() {
         return !isInstanceRunning();
+    }
+
+    @Override
+    public Set<String> getConnectedClientNames() {
+        // Redis doesn't have the concept of connected clients in the same way as Hazelcast
+        // Return all known clients from the Redis client list
+        return redisClientListResolver.getUniqueClients();
+    }
+
+    @Override
+    public boolean isConnectedToCluster() {
+        // For Redis, being running means being connected
+        return isInstanceRunning();
+    }
+
+    @Override
+    public UUID addConnectionStateListener(Consumer<Boolean> callback) {
+        // Redis doesn't have the same connection lifecycle semantics as Hazelcast clients.
+        // The connection is either available or not, and Redisson handles reconnection internally.
+        // We immediately invoke the callback with isInitialConnection=true if connected.
+        if (isConnectedToCluster()) {
+            callback.accept(true);
+        }
+        // Return a random UUID - listeners are not tracked since Redis doesn't have lifecycle events
+        return UUID.randomUUID();
+    }
+
+    @Override
+    public boolean removeConnectionStateListener(UUID listenerId) {
+        // No-op for Redis - listeners are not tracked
+        return false;
     }
 }

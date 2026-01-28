@@ -38,7 +38,13 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
+import com.hazelcast.client.HazelcastClient;
+import com.hazelcast.client.config.ClientConfig;
+import com.hazelcast.client.config.ClientConnectionStrategyConfig;
+import com.hazelcast.client.config.RoutingMode;
 import com.hazelcast.config.Config;
+import com.hazelcast.config.DiscoveryConfig;
+import com.hazelcast.config.DiscoveryStrategyConfig;
 import com.hazelcast.config.EvictionConfig;
 import com.hazelcast.config.EvictionPolicy;
 import com.hazelcast.config.MapConfig;
@@ -97,6 +103,16 @@ public class CacheConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(CacheConfiguration.class);
 
+    /**
+     * Metadata key used to identify the Hazelcast member type in the service registry.
+     * Core nodes are marked as "member", build agent clients are marked as "client".
+     */
+    public static final String HAZELCAST_MEMBER_TYPE_KEY = "hazelcast.member-type";
+
+    public static final String HAZELCAST_MEMBER_TYPE_MEMBER = "member";
+
+    public static final String HAZELCAST_MEMBER_TYPE_CLIENT = "client";
+
     private final ServerProperties serverProperties;
 
     // the service registry, in our current deployment this is the jhipster registry which offers a Eureka Server under the hood
@@ -105,6 +121,9 @@ public class CacheConfiguration {
     private final ApplicationContext applicationContext;
 
     private final Environment env;
+
+    // Lazy-injected to avoid circular dependency (HazelcastConnection depends on the HazelcastInstance we create)
+    private final HazelcastConnection hazelcastConnection;
 
     @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
     private String instanceName;
@@ -118,10 +137,12 @@ public class CacheConfiguration {
     @Value("${spring.hazelcast.localInstances:true}")
     private boolean hazelcastLocalInstances;
 
-    public CacheConfiguration(ApplicationContext applicationContext, ServerProperties serverProperties, Optional<Registration> registration, Environment env) {
+    public CacheConfiguration(ApplicationContext applicationContext, ServerProperties serverProperties, Optional<Registration> registration,
+            @Lazy HazelcastConnection hazelcastConnection, Environment env) {
         this.applicationContext = applicationContext;
         this.serverProperties = serverProperties;
         this.registration = registration;
+        this.hazelcastConnection = hazelcastConnection;
         this.env = env;
 
         // Do not send telemetry to Hazelcast.
@@ -129,10 +150,19 @@ public class CacheConfiguration {
         System.setProperty("hazelcast.phone.home.enabled", "false");
     }
 
+    /**
+     * Cleans up Hazelcast resources when the application context is being destroyed.
+     * This method clears static references to prevent memory leaks and shuts down
+     * all Hazelcast instances (both cluster members and clients).
+     */
     @PreDestroy
     public void destroy() {
         log.info("Closing Cache Manager");
+        // Clear static references to prevent memory leaks
+        EurekaHazelcastDiscoveryStrategy.clearHazelcastConnection();
+        // Shutdown all Hazelcast instances (both cluster members and clients)
         Hazelcast.shutdownAll();
+        HazelcastClient.shutdownAll();
     }
 
     @Bean
@@ -182,6 +212,21 @@ public class CacheConfiguration {
             return Hazelcast.newHazelcastInstance(testConfig);
         }
         // ========================= TESTING ONLY =========================
+
+        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+
+        // ========================= BUILD AGENT CLIENT MODE =========================
+        // Build agents connect as Hazelcast clients instead of cluster members.
+        // This isolates the core cluster from build agent failures and eliminates
+        // heartbeat overhead between build agents and core nodes.
+        // Note: Single-node deployments (with both core and buildagent profiles) run as
+        // cluster members since client mode provides no benefit when there's no cluster separation.
+        // Note: Test profiles are excluded - build agent tests create a local Hazelcast instance.
+        if (activeProfiles.contains(PROFILE_BUILDAGENT) && !activeProfiles.contains(PROFILE_CORE) && !activeProfiles.contains(PROFILE_TEST_BUILDAGENT)) {
+            log.info("Build agent connecting to core cluster as Hazelcast client");
+            return createHazelcastClient();
+        }
+        // ========================= END BUILD AGENT CLIENT MODE =========================
 
         log.debug("Configuring Hazelcast");
         HazelcastInstance hazelCastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
@@ -250,6 +295,11 @@ public class CacheConfiguration {
                 config.getNetworkConfig().setPort(hazelcastPort); // Own port
                 registration.get().getMetadata().put("hazelcast.port", String.valueOf(hazelcastPort));
             }
+            // Mark this instance as a cluster member (not a client) for service discovery.
+            // This metadata is stored in the local Registration object and propagated to Eureka
+            // on the next heartbeat. Since this is called during bean creation (before the first
+            // Eureka registration), the metadata will be included in the initial registration.
+            registration.get().getMetadata().put(HAZELCAST_MEMBER_TYPE_KEY, HAZELCAST_MEMBER_TYPE_MEMBER);
         }
 
         config.getMapConfigs().put("default", initializeDefaultMapConfig(jHipsterProperties));
@@ -268,11 +318,77 @@ public class CacheConfiguration {
         config.setSplitBrainProtectionConfigs(new ConcurrentHashMap<>());
         config.addSplitBrainProtectionConfig(splitBrainProtectionConfig);
         // Specify when the first run of the split brain protection should be executed (in seconds)
-        ClusterProperty.MERGE_FIRST_RUN_DELAY_SECONDS.setSystemProperty("30");
-        ClusterProperty.MERGE_NEXT_RUN_DELAY_SECONDS.setSystemProperty("30");
+        config.setProperty(ClusterProperty.MERGE_FIRST_RUN_DELAY_SECONDS.getName(), "30");
+        config.setProperty(ClusterProperty.MERGE_NEXT_RUN_DELAY_SECONDS.getName(), "30");
+
+        // ===================== Cluster Stability Configuration =====================
+        // These settings prevent cascading failures when individual members become unresponsive.
+        // All properties are set on the Config instance (not JVM-wide system properties) to ensure
+        // they are scoped to this Hazelcast instance only.
+        // See: https://docs.hazelcast.com/hazelcast/5.5/clusters/failure-detector-configuration
+
+        // Use Phi Accrual failure detector instead of deadline-based detection.
+        // Phi Accrual is adaptive and calculates suspicion probability based on historical
+        // heartbeat patterns, making it more resilient to temporary GC pauses or network hiccups.
+        // Note: These phi-accrual properties don't have ClusterProperty constants, so we use string names.
+        config.setProperty("hazelcast.heartbeat.failuredetector.type", "phi-accrual");
+        // Suspicion threshold: lower = more aggressive (default 10, range 1-16)
+        // Value of 8 provides faster detection while still tolerating brief delays
+        config.setProperty("hazelcast.heartbeat.phiaccrual.failuredetector.threshold", "8");
+        // Number of heartbeat samples to keep for calculating variance (default 200)
+        config.setProperty("hazelcast.heartbeat.phiaccrual.failuredetector.sample.size", "100");
+        // Minimum standard deviation in milliseconds (default 100)
+        config.setProperty("hazelcast.heartbeat.phiaccrual.failuredetector.min.std.dev.millis", "100");
+
+        // ===================================================================================
+        // CLUSTER MEMBER HEARTBEAT CONFIGURATION
+        // ===================================================================================
+        // These settings control how quickly cluster members (core nodes) detect when another
+        // member has crashed or become unreachable. This is critical for:
+        // - Maintaining data consistency (failed members are removed from partition tables)
+        // - Preventing split-brain scenarios
+        // - Ensuring distributed data structures remain accessible
+        //
+        // The values are intentionally aligned with client heartbeat settings (see createHazelcastClient)
+        // so that all node types are detected within the same timeframe (~15 seconds).
+        //
+        // With phi-accrual detector + these settings:
+        // - Heartbeats sent every 5 seconds
+        // - After 3 missed heartbeats (~15 seconds), member is suspected
+        // - Phi-accrual may detect failures faster based on historical patterns
+        // - MAX_NO_HEARTBEAT_SECONDS acts as an absolute upper bound
+        // ===================================================================================
+
+        // How often heartbeats are sent between cluster members (default: 5 seconds)
+        config.setProperty(ClusterProperty.HEARTBEAT_INTERVAL_SECONDS.getName(), "5");
+
+        // Maximum time without receiving a heartbeat before suspecting a member (default: 60 seconds)
+        // Reduced to 15 seconds for faster detection of crashed/unreachable core nodes
+        config.setProperty(ClusterProperty.MAX_NO_HEARTBEAT_SECONDS.getName(), "15");
+
+        // Operation timeouts - prevent threads from blocking too long on unresponsive members
+        // Timeout for remote operations (default 60000ms) - reduced to fail faster
+        config.setProperty(ClusterProperty.OPERATION_CALL_TIMEOUT_MILLIS.getName(), "15000");
+        // Timeout for backup acknowledgments (default 5000ms)
+        config.setProperty(ClusterProperty.OPERATION_BACKUP_TIMEOUT_MILLIS.getName(), "5000");
+
+        // Invocation retry configuration - fail faster instead of retrying indefinitely
+        // Maximum retry count for failed invocations (default ~250)
+        config.setProperty(ClusterProperty.INVOCATION_MAX_RETRY_COUNT.getName(), "5");
+        // Pause between retries in milliseconds (default 500)
+        config.setProperty(ClusterProperty.INVOCATION_RETRY_PAUSE.getName(), "1000");
+
+        // Slow operation detection - helps identify problematic operations
+        // Threshold for logging slow operations (default 10000ms)
+        config.setProperty(ClusterProperty.SLOW_OPERATION_DETECTOR_THRESHOLD_MILLIS.getName(), "5000");
+        // How long to retain slow operation logs (default 60 seconds)
+        config.setProperty(ClusterProperty.SLOW_OPERATION_DETECTOR_LOG_RETENTION_SECONDS.getName(), "300");
+
+        // Connection timeouts
+        config.setProperty(ClusterProperty.SOCKET_CONNECT_TIMEOUT_SECONDS.getName(), "5");
+        // ===================== End Cluster Stability Configuration =====================
 
         // only add the queue config if the profile "localci" is active
-        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         if (activeProfiles.contains(PROFILE_LOCALCI) || activeProfiles.contains(PROFILE_BUILDAGENT)) {
             // add queue config for local ci shared queue
             configureQueueCluster(config, jHipsterProperties);
@@ -285,6 +401,101 @@ public class CacheConfiguration {
         }
 
         return Hazelcast.newHazelcastInstance(config);
+    }
+
+    /**
+     * Creates a Hazelcast client instance for build agents to connect to the core cluster.
+     * Clients do not participate in cluster membership, eliminating heartbeat overhead
+     * and isolating the core cluster from build agent failures.
+     *
+     * <p>
+     * The client uses a custom Eureka-based discovery strategy to dynamically discover
+     * core cluster nodes from the service registry. This enables automatic reconnection
+     * to newly available core nodes without requiring static address configuration.
+     *
+     * <p>
+     * If no core nodes are available during startup, the client will start asynchronously
+     * and keep retrying discovery until core nodes become available.
+     *
+     * @return a HazelcastInstance configured as a client
+     */
+    private HazelcastInstance createHazelcastClient() {
+        ClientConfig clientConfig = new ClientConfig();
+        // Use the build agent short name as the client instance name for identification
+        // This allows core nodes to match connected clients with build agent information
+        String buildAgentShortName = env.getProperty("artemis.continuous-integration.build-agent.short-name", instanceName + "-client");
+        clientConfig.setInstanceName(buildAgentShortName);
+
+        // Set cluster name (must match the core cluster)
+        if (!hazelcastLocalInstances) {
+            clientConfig.setClusterName("prod");
+        }
+
+        // Set up the HazelcastConnection reference for the discovery strategy
+        // This must be done before creating the client
+        EurekaHazelcastDiscoveryStrategy.setHazelcastConnection(hazelcastConnection);
+
+        // Configure Eureka-based discovery strategy for dynamic core node discovery
+        // This replaces static address configuration and allows the client to discover
+        // core nodes that become available after client startup
+        DiscoveryStrategyConfig discoveryStrategyConfig = new DiscoveryStrategyConfig(new EurekaHazelcastDiscoveryStrategyFactory());
+        DiscoveryConfig discoveryConfig = clientConfig.getNetworkConfig().getDiscoveryConfig();
+        discoveryConfig.addDiscoveryStrategyConfig(discoveryStrategyConfig);
+
+        // Connection strategy configuration for resilience:
+        // - asyncStart=true: Don't block startup, connect in background
+        // - reconnectMode=ON: Automatically reconnect if connection is lost
+        // This allows build agents to start even when core nodes are temporarily unavailable
+        // and reconnect automatically when they become available.
+        clientConfig.getConnectionStrategyConfig().setAsyncStart(true)  // Never block startup - connect in background
+                .setReconnectMode(ClientConnectionStrategyConfig.ReconnectMode.ON);
+
+        // Connection retry configuration - aggressive retry to handle temporary core node unavailability
+        clientConfig.getConnectionStrategyConfig().getConnectionRetryConfig().setInitialBackoffMillis(1000)       // Start with 1 second delay
+                .setMaxBackoffMillis(30000)          // Max 30 seconds between retries
+                .setMultiplier(1.5)                   // Exponential backoff
+                .setClusterConnectTimeoutMillis(-1)  // Unlimited timeout - keep trying forever
+                .setJitter(0.2);                      // Add randomness to prevent thundering herd
+
+        // ===================================================================================
+        // CLIENT HEARTBEAT CONFIGURATION
+        // ===================================================================================
+        // These settings control how quickly core nodes detect disconnected build agents.
+        // When a build agent crashes or loses network connectivity, core nodes use these
+        // heartbeats to detect the failure and remove the agent from the active agents list.
+        //
+        // The values are intentionally aligned with the cluster member heartbeat settings
+        // (HEARTBEAT_INTERVAL_SECONDS=5, MAX_NO_HEARTBEAT_SECONDS=15) for consistent behavior:
+        // - All node types (core members and build agent clients) are detected within ~15 seconds
+        // - The build agents admin page shows accurate real-time status
+        // - Hazelcast's clientService.getConnectedClients() reflects actual connectivity
+        //
+        // Trade-offs considered:
+        // - Shorter timeouts = faster detection but more sensitive to brief network hiccups
+        // - 15 seconds allows for 3 missed heartbeats (at 5s interval) before declaring failure
+        // - This matches the cluster member detection time for operational consistency
+        // ===================================================================================
+
+        // How often the client sends heartbeats to cluster members (default: 5000ms)
+        clientConfig.setProperty("hazelcast.client.heartbeat.interval", "5000");
+
+        // Maximum time without receiving a heartbeat response before the connection is considered dead
+        // Default is 60000ms (60 seconds), reduced to 15000ms (15 seconds) to match cluster member timeout
+        clientConfig.setProperty("hazelcast.client.heartbeat.timeout", "15000");
+
+        // Network configuration for client
+        clientConfig.getNetworkConfig().setConnectionTimeout(10000)  // 10 seconds connection timeout per attempt
+                .getClusterRoutingConfig().setRoutingMode(RoutingMode.ALL_MEMBERS);       // Enable smart routing to distribute load
+
+        // Serialization - use same Path serializer as cluster members
+        clientConfig.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
+
+        // Mark this instance as a client in the service registry
+        hazelcastConnection.registerAsClient();
+
+        log.info("Creating Hazelcast client with Eureka-based dynamic discovery");
+
+        return HazelcastClient.newHazelcastClient(clientConfig);
     }
 
     /**
