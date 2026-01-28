@@ -22,7 +22,10 @@
             @for (student of registeredStudents(); track student.id) {
                 <tr class="body-row">
                     <td>
-                        <div class="student-property">{{ student.name }}</div>
+                        <div class="student-property">
+                            <jhi-profile-picture imageSizeInRem="3.5" [isBoxShadow]="true" [imageUrl]="addPublicFilePrefix(student.profilePictureUrl)" />
+                            {{ student.name }}
+                        </div>
                     </td>
                     <td>
                         <div class="student-property">{{ student.login }}</div>

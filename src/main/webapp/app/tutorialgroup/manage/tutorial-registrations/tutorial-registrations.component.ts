@@ -6,10 +6,20 @@ import { ButtonModule } from 'primeng/button';
 import { CourseTutorialGroupDetailSessionStatusIndicatorComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail-session-status-indicator/course-tutorial-group-detail-session-status-indicator.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-tutorial-registrations',
-    imports: [IconFieldModule, InputIconModule, InputTextModule, ButtonModule, CourseTutorialGroupDetailSessionStatusIndicatorComponent, TranslateDirective],
+    imports: [
+        IconFieldModule,
+        InputIconModule,
+        InputTextModule,
+        ButtonModule,
+        CourseTutorialGroupDetailSessionStatusIndicatorComponent,
+        TranslateDirective,
+        ProfilePictureComponent,
+    ],
     templateUrl: './tutorial-registrations.component.html',
     styleUrl: './tutorial-registrations.component.scss',
 })
@@ -17,4 +27,5 @@ export class TutorialRegistrationsComponent {
     courseId = input.required<number>();
     tutorialGroupId = input.required<number>();
     registeredStudents = input.required<TutorialGroupRegisteredStudentDTO[]>();
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }
