@@ -202,7 +202,7 @@
                     }
                     @if (queueWaitTime() !== undefined) {
                         <dt class="col-sm-4" jhiTranslate="artemisApp.buildQueue.detail.queueWaitTime"></dt>
-                        <dd class="col-sm-8">{{ queueWaitTime() | artemisDurationFromSeconds }}</dd>
+                        <dd class="col-sm-8">{{ queueWaitTime()! | artemisDurationFromSeconds }}</dd>
                     }
                     @if (getBuildCompletionDate()) {
                         <dt class="col-sm-4" jhiTranslate="artemisApp.buildQueue.buildJob.buildCompletionDate"></dt>

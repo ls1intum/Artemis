@@ -125,7 +125,7 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId') || 0);
         this.isAdministrationView.set(this.courseId === 0);
-        this.buildJobId = this.route.snapshot.queryParamMap.get('jobId') || '';
+        this.buildJobId = this.route.snapshot.paramMap.get('jobId') || '';
 
         if (!this.buildJobId) {
             this.notFound.set(true);

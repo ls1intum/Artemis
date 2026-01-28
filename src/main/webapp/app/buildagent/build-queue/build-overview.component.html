@@ -570,7 +570,9 @@
                                     </span>
                                 </td>
                                 <td class="finish-jobs-column-strings">
-                                    <span class="wrap-long-text">{{ finishedBuildJob.name }}</span>
+                                    <span class="compact-cell" [title]="finishedBuildJob.name ?? ''"
+                                        >{{ finishedBuildJob.name ?? '' | slice: 0 : 25 }}{{ (finishedBuildJob.name ?? '').length > 25 ? '...' : '' }}</span
+                                    >
                                 </td>
                                 <td class="finish-jobs-column">
                                     @if (finishedBuildJob.status === 'SUCCESSFUL') {
@@ -604,10 +606,10 @@
                                     </td>
                                 }
                                 <td class="finish-jobs-column">
-                                    <span>{{ finishedBuildJob.buildDuration }}</span>
+                                    <span class="compact-cell">{{ finishedBuildJob.buildDuration }}</span>
                                 </td>
                                 <td class="finish-jobs-column">
-                                    <span class="text-muted small">{{ finishedBuildJob.buildCompletionDate | artemisDate: 'short-date' : true }}</span>
+                                    <span class="compact-cell text-muted">{{ finishedBuildJob.buildCompletionDate | artemisDate: 'short' : true }}</span>
                                 </td>
                                 <td class="finish-jobs-column-strings">
                                     <a

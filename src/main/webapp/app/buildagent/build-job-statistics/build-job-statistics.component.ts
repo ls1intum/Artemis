@@ -95,8 +95,8 @@ export class BuildJobStatisticsComponent implements OnInit {
         // Determine context by checking the current route
         this.route.url.pipe(take(1)).subscribe((urlSegments) => {
             const firstSegment = urlSegments[0];
-            if (firstSegment?.path === 'build-queue') {
-                // Build queue context: fetch statistics from API with time span filtering
+            if (firstSegment?.path === 'build-overview') {
+                // Build overview context: fetch statistics from API with time span filtering
                 this.getBuildJobStatisticsForBuildQueue(span);
             } else {
                 // Embedded in another component: use input statistics without span selector

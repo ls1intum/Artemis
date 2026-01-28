@@ -20,15 +20,20 @@
 }
 
 .finish-jobs-column {
-    min-width: 100px;
+    min-width: 80px;
 }
 
 .finish-jobs-column-strings {
-    max-width: 180px;
+    min-width: 200px;
+    max-width: 250px;
 }
 
 .clickable-row {
     cursor: pointer;
+}
+
+.compact-cell {
+    font-size: 0.85rem;
 }
 
 .build-output {

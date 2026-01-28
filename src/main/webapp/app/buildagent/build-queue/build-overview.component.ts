@@ -18,7 +18,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { NgClass } from '@angular/common';
+import { NgClass, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
@@ -71,6 +71,7 @@ import { BuildAgentInformation, BuildAgentStatus } from 'app/buildagent/shared/e
         SliceNavigatorComponent,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
+        SlicePipe,
     ],
 })
 export class BuildOverviewComponent implements OnInit, OnDestroy {
@@ -511,9 +512,9 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     navigateToJobDetail(jobId: string | undefined) {
         if (!jobId) return;
         if (this.courseId) {
-            this.router.navigate(['/course-management', this.courseId, 'build-queue', 'job-details'], { queryParams: { jobId } });
+            this.router.navigate(['/course-management', this.courseId, 'build-overview', jobId, 'job-details']);
         } else {
-            this.router.navigate(['/admin/build-queue/job-details'], { queryParams: { jobId } });
+            this.router.navigate(['/admin', 'build-overview', jobId, 'job-details']);
         }
     }
 }

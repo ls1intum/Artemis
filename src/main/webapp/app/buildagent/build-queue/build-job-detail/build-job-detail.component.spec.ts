@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
@@ -19,7 +19,6 @@ describe('BuildJobDetailComponent', () => {
     let fixture: ComponentFixture<BuildJobDetailComponent>;
     let buildQueueService: BuildOverviewService;
     let websocketService: WebsocketService;
-    let alertService: AlertService;
 
     const mockRunningJob = {
         id: 'test-job-1',
@@ -60,10 +59,11 @@ describe('BuildJobDetailComponent', () => {
     const mockRoute = {
         snapshot: {
             paramMap: {
-                get: (key: string) => (key === 'courseId' ? null : null),
-            },
-            queryParamMap: {
-                get: (key: string) => (key === 'jobId' ? 'test-job-1' : null),
+                get: (key: string) => {
+                    if (key === 'jobId') return 'test-job-1';
+                    if (key === 'courseId') return null;
+                    return null;
+                },
             },
         },
     };
@@ -100,7 +100,6 @@ describe('BuildJobDetailComponent', () => {
         component = fixture.componentInstance;
         buildQueueService = TestBed.inject(BuildOverviewService);
         websocketService = TestBed.inject(WebsocketService);
-        alertService = TestBed.inject(AlertService);
     });
 
     afterEach(() => {
