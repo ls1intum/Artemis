@@ -33,6 +33,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -726,5 +727,26 @@ public class TutorialGroupResource {
 
         var registerStudentDTOs = tutorialGroupRepository.getRegisteredStudentsOfTutorialGroup(tutorialGroupId);
         return ResponseEntity.ok().body(registerStudentDTOs);
+    }
+
+    @PatchMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/registered-students/{studentId}")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<Void> moveStudentToOtherGroup(@PathVariable long courseId, @PathVariable long tutorialGroupId, @PathVariable long studentId,
+            @RequestParam long otherTutorialGroupId) {
+        log.debug("REST request to move student {} from tutorial group {} to group {}", studentId, tutorialGroupId, otherTutorialGroupId);
+        TutorialGroup tutorialGroup = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
+        checkEntityIdMatchesPathIds(tutorialGroup, Optional.of(courseId), Optional.of(tutorialGroupId));
+
+        User user = getUserAndCheckWhetherTheyAreAllowedToChangeRegistration(tutorialGroup);
+        User studentToMove = userRepository.getUserWithGroupsAndAuthorities(studentId);
+        TutorialGroup otherTutorialGroup = this.tutorialGroupRepository.findByIdElseThrow(otherTutorialGroupId);
+        if (!studentToMove.getGroups().contains(otherTutorialGroup.getCourse().getStudentGroupName())) {
+            throw new BadRequestAlertException("The user is not a student of the course", ENTITY_NAME, "userNotPartOfCourse");
+        }
+
+        tutorialGroupService.deregisterStudent(studentToMove, tutorialGroup, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION, user);
+        tutorialGroupService.registerStudent(studentToMove, otherTutorialGroup, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION, user);
+        return ResponseEntity.noContent().build();
+
     }
 }

@@ -947,6 +947,11 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesByLogin(username));
     }
 
+    @NonNull
+    default User getUserWithGroupsAndAuthorities(Long userId) {
+        return getValueElseThrow(findOneWithGroupsAndAuthoritiesById(userId));
+    }
+
     /**
      * Finds a single user with groups and authorities using the registration number
      *

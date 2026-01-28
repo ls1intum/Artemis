@@ -59,6 +59,14 @@ export class TutorialGroupsService {
         return this.httpClient.get<TutorialGroupRegisteredStudentDTO[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/registered-students`);
     }
 
+    moveStudentToOtherGroup(courseId: number, tutorialGroupId: number, studentId: number, otherTutorialGroupId: number): Observable<void> {
+        return this.httpClient.patch<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/registered-students/${studentId}`, null, {
+            params: {
+                otherTutorialGroupId: otherTutorialGroupId,
+            },
+        });
+    }
+
     create(tutorialGroup: TutorialGroup, courseId: number): Observable<EntityResponseType> {
         const copy = this.convertTutorialGroupDatesFromClient(tutorialGroup);
         return this.httpClient
