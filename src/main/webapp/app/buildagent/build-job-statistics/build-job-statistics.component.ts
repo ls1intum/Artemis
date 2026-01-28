@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, effect, inject, input, signal } from '@angular/core';
 import { BuildJobStatistics, SpanType } from 'app/buildagent/shared/entities/build-job.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { onError } from 'app/shared/util/global.utils';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
@@ -11,9 +10,7 @@ import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 /**
  * Component that displays build job statistics with a pie chart visualization.
@@ -22,13 +19,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
  * Can receive statistics via input signal (for embedding in other components like BuildAgentDetailsComponent)
  * or fetch them from the REST API based on the current route (for the build queue view).
  *
- * Features a collapsible panel and supports time span filtering (day, week, month) in build queue mode.
+ * Supports time span filtering (day, week, month) in build queue mode.
  *
  * Uses OnPush change detection with signals for optimal performance.
  */
 @Component({
     selector: 'jhi-build-job-statistics',
-    imports: [TranslateDirective, NgxChartsModule, NgbCollapse, HelpIconComponent, FaIconComponent],
+    imports: [TranslateDirective, NgxChartsModule, HelpIconComponent],
     templateUrl: './build-job-statistics.component.html',
     styleUrl: './build-job-statistics.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -44,17 +41,10 @@ export class BuildJobStatisticsComponent implements OnInit {
      */
     buildJobStatisticsInput = input<BuildJobStatistics>();
 
-    // Font Awesome icons for collapse toggle
-    readonly faAngleDown = faAngleDown;
-    readonly faAngleRight = faAngleRight;
-
     protected readonly SpanType = SpanType;
 
     /** Currently selected time span for statistics (day, week, or month) */
     currentSpan: SpanType = SpanType.WEEK;
-
-    /** Whether the statistics panel is collapsed */
-    isCollapsed = false;
 
     /** Formatted percentage strings for display */
     successfulBuildsPercentage = signal('-%');

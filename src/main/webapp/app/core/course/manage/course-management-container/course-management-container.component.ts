@@ -250,6 +250,12 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             return routerUrl.includes(route.urlPart);
         });
 
+        // Hide Student View button for routes that have no corresponding student view
+        if (routerUrl.includes('build-queue')) {
+            this.studentViewLink.set([]);
+            return;
+        }
+
         this.studentViewLink.set(matchedRoute ? matchedRoute.targetPath : defaultPath);
     }
 

@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BuildJob, FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
 import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faFilter, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -32,6 +32,9 @@ import { Subject, Subscription } from 'rxjs';
 import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/shared/components/slice-navigator/slice-navigator.component';
 import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
+import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
+import { BuildAgentsService } from 'app/buildagent/build-agents.service';
+import { BuildAgentInformation, BuildAgentStatus } from 'app/buildagent/shared/entities/build-agent-information.model';
 
 /**
  * Component that provides an overview of the build queue system.
@@ -67,16 +70,35 @@ import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-b
         BuildJobStatisticsComponent,
         SliceNavigatorComponent,
         AdminTitleBarTitleDirective,
+        AdminTitleBarActionsDirective,
     ],
 })
 export class BuildOverviewComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
+    private router = inject(Router);
     private websocketService = inject(WebsocketService);
     private buildQueueService = inject(BuildOverviewService);
+    private buildAgentsService = inject(BuildAgentsService);
     private alertService = inject(AlertService);
     private modalService = inject(NgbModal);
 
     protected readonly TriggeredByPushTo = TriggeredByPushTo;
+
+    /** List of all build agents for capacity calculation */
+    buildAgents = signal<BuildAgentInformation[]>([]);
+
+    /** Computed signal for total build capacity across all active agents */
+    buildCapacity = computed(() =>
+        this.buildAgents()
+            .filter((agent) => agent.status !== BuildAgentStatus.PAUSED && agent.status !== BuildAgentStatus.SELF_PAUSED)
+            .reduce((total, agent) => total + (agent.maxNumberOfConcurrentBuildJobs || 0), 0),
+    );
+
+    /** Computed signal for current number of running builds */
+    currentBuilds = computed(() => this.buildAgents().reduce((total, agent) => total + (agent.numberOfCurrentBuildJobs || 0), 0));
+
+    /** Computed signal for number of online build agents */
+    onlineAgents = computed(() => this.buildAgents().length);
 
     /** List of build jobs waiting in the queue to be processed */
     queuedBuildJobs = signal<BuildJob[]>([]);
@@ -158,6 +180,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
         // NOTE: in the server administration, courseId will be parsed as 0, while in course management, it should be a positive integer
         this.isAdministrationView.set(this.courseId === 0);
         this.loadQueue();
+        this.loadBuildAgents();
         this.buildDurationInterval = setInterval(() => {
             this.runningBuildJobs.set(this.updateBuildJobDuration(this.runningBuildJobs()));
         }, 1000); // 1 second
@@ -232,6 +255,22 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
                 }),
             );
         }
+
+        // Subscribe to build agents updates for capacity information
+        this.websocketSubscriptions.push(
+            this.websocketService.subscribe<BuildAgentInformation[]>(`/topic/admin/build-agents`).subscribe((agents: BuildAgentInformation[]) => {
+                this.buildAgents.set(agents);
+            }),
+        );
+    }
+
+    /**
+     * Loads the list of build agents to display capacity information.
+     */
+    loadBuildAgents() {
+        this.buildAgentsService.getBuildAgentSummary().subscribe((agents) => {
+            this.buildAgents.set(agents);
+        });
     }
 
     /**
@@ -452,5 +491,29 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
                 this.loadFinishedBuildJobs();
             })
             .catch(() => {});
+    }
+
+    /**
+     * Scrolls to a specific section on the page.
+     * @param elementId The ID of the element to scroll to
+     */
+    scrollToSection(elementId: string) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    /**
+     * Navigate to the build job detail page
+     * @param jobId The ID of the build job
+     */
+    navigateToJobDetail(jobId: string | undefined) {
+        if (!jobId) return;
+        if (this.courseId) {
+            this.router.navigate(['/course-management', this.courseId, 'build-queue', 'job-details'], { queryParams: { jobId } });
+        } else {
+            this.router.navigate(['/admin/build-queue/job-details'], { queryParams: { jobId } });
+        }
     }
 }

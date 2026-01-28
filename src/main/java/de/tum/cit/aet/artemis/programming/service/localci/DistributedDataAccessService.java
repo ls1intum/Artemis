@@ -355,16 +355,17 @@ public class DistributedDataAccessService {
     }
 
     /**
-     * Retrieves the build agent status for the local member.
+     * Retrieves the build agent status for a specific agent by its key.
      *
-     * @return the status of the local build agent, or {@code null} if the local member is not registered as a build agent
+     * @param agentKey the key identifying the build agent (typically the short name)
+     * @return the status of the build agent, or {@code null} if the agent is not registered
      */
     @Nullable
-    public BuildAgentStatus getLocalBuildAgentStatus() {
-        BuildAgentInformation localAgentInfo = getDistributedBuildAgentInformation().get(getLocalMemberAddress());
-        if (localAgentInfo == null) {
+    public BuildAgentStatus getBuildAgentStatus(String agentKey) {
+        BuildAgentInformation agentInfo = getDistributedBuildAgentInformation().get(agentKey);
+        if (agentInfo == null) {
             return null;
         }
-        return localAgentInfo.status();
+        return agentInfo.status();
     }
 }

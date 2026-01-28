@@ -64,6 +64,8 @@ public class BuildAgentInformationService {
 
     /**
      * Updates the local build agent information with the most recent build job.
+     * Uses the build agent's short name as the map key for stable identification,
+     * since the Hazelcast member address may change after initial client connection.
      *
      * @param recentBuildJob        the most recent build job
      * @param isPaused              whether the build agent is paused
@@ -71,24 +73,31 @@ public class BuildAgentInformationService {
      * @param consecutiveFailures   number of consecutive build failures on the build agent
      */
     public void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures) {
-        String memberAddress = distributedDataAccessService.getLocalMemberAddress();
+        // Use buildAgentShortName as the stable key - memberAddress can change after Hazelcast client connects
+        String agentKey = buildAgentShortName;
         try {
-            distributedDataAccessService.getDistributedBuildAgentInformation().lock(memberAddress);
+            distributedDataAccessService.getDistributedBuildAgentInformation().lock(agentKey);
             // Add/update
             BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob, isPaused, isPausedDueToFailures, consecutiveFailures);
 
+            log.debug("Updating build agent info: key='{}', name='{}', memberAddress='{}', displayName='{}'", agentKey, info.buildAgent().name(), info.buildAgent().memberAddress(),
+                    info.buildAgent().displayName());
+
             try {
-                distributedDataAccessService.getDistributedBuildAgentInformation().put(info.buildAgent().memberAddress(), info);
+                // Use the agent's short name as key for stable identification
+                distributedDataAccessService.getDistributedBuildAgentInformation().put(agentKey, info);
+                log.debug("Successfully stored build agent info with key '{}'. Current map size: {}", agentKey,
+                        distributedDataAccessService.getDistributedBuildAgentInformation().size());
             }
             catch (Exception e) {
                 log.error("Error while updating build agent information for agent {} with address {}", info.buildAgent().name(), info.buildAgent().memberAddress(), e);
             }
         }
         catch (Exception e) {
-            log.error("Error while updating build agent information for agent with address {}", memberAddress, e);
+            log.error("Error while updating build agent information for agent {}", agentKey, e);
         }
         finally {
-            distributedDataAccessService.getDistributedBuildAgentInformation().unlock(memberAddress);
+            distributedDataAccessService.getDistributedBuildAgentInformation().unlock(agentKey);
         }
     }
 
@@ -100,7 +109,8 @@ public class BuildAgentInformationService {
                 : buildAgentConfiguration.getThreadPoolSize();
         boolean hasJobs = numberOfCurrentBuildJobs > 0;
         BuildAgentStatus status;
-        BuildAgentInformation agent = distributedDataAccessService.getDistributedBuildAgentInformation().get(memberAddress);
+        // Use buildAgentShortName as key since that's what we use to store the agent info
+        BuildAgentInformation agent = distributedDataAccessService.getDistributedBuildAgentInformation().get(buildAgentShortName);
         if (isPaused) {
             boolean isAlreadySelfPaused = agent != null && agent.status() == BuildAgentStatus.SELF_PAUSED;
             status = (isPausedDueToFailures || isAlreadySelfPaused) ? BuildAgentStatus.SELF_PAUSED : BuildAgentStatus.PAUSED;

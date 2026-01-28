@@ -112,7 +112,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         });
 
         await().until(() -> {
-            var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
+            var buildAgent = buildAgentInformation.get(buildAgentShortName);
             return buildAgent.numberOfCurrentBuildJobs() == 1 && buildAgent.maxNumberOfConcurrentBuildJobs() == 2 && buildAgent.runningBuildJobs().size() == 1
                     && buildAgent.runningBuildJobs().getFirst().id().equals(queueItem.id());
         });
@@ -161,7 +161,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         });
 
         await().pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
-            var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
+            var buildAgent = buildAgentInformation.get(buildAgentShortName);
             return buildAgent.numberOfCurrentBuildJobs() == 2 && buildAgent.maxNumberOfConcurrentBuildJobs() == 2 && buildAgent.runningBuildJobs().size() == 2
                     && (buildAgent.runningBuildJobs().getFirst().id().equals(queueItem.id()) || buildAgent.runningBuildJobs().getFirst().id().equals(queueItem2.id()))
                     && (buildAgent.runningBuildJobs().getLast().id().equals(queueItem.id()) || buildAgent.runningBuildJobs().getLast().id().equals(queueItem2.id()));
@@ -289,7 +289,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         pauseBuildAgentTopic.publish(buildAgentShortName);
 
         await().until(() -> {
-            var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
+            var buildAgent = buildAgentInformation.get(buildAgentShortName);
             return buildAgent.status() == BuildAgentStatus.PAUSED;
         });
 
@@ -305,7 +305,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         resumeBuildAgentTopic.publish(buildAgentShortName);
 
         await().until(() -> {
-            var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
+            var buildAgent = buildAgentInformation.get(buildAgentShortName);
             return buildAgent.status() == BuildAgentStatus.ACTIVE;
         });
 
@@ -330,14 +330,14 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         buildJobQueue.add(queueItem);
 
         await().atMost(30, TimeUnit.SECONDS).until(() -> {
-            var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
+            var buildAgent = buildAgentInformation.get(buildAgentShortName);
             return buildAgent != null && buildAgent.status() == BuildAgentStatus.ACTIVE;
         });
 
         pauseBuildAgentTopic.publish(buildAgentShortName);
 
         await().atMost(30, TimeUnit.SECONDS).until(() -> {
-            var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
+            var buildAgent = buildAgentInformation.get(buildAgentShortName);
             return buildAgent != null && buildAgent.status() == BuildAgentStatus.PAUSED;
         });
 
@@ -409,14 +409,14 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         await().until(() -> resultQueue.size() >= pauseAfterConsecutiveFailures);
 
         await().until(() -> {
-            var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
+            var buildAgent = buildAgentInformation.get(buildAgentShortName);
             return buildAgent != null && buildAgent.status() == BuildAgentStatus.SELF_PAUSED;
         });
 
         // resume and wait for unpause not interfere with other tests
         resumeBuildAgentTopic.publish(buildAgentShortName);
         await().until(() -> {
-            var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
+            var buildAgent = buildAgentInformation.get(buildAgentShortName);
             return buildAgent.status() != BuildAgentStatus.SELF_PAUSED;
         });
     }

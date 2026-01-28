@@ -267,8 +267,9 @@ public class SharedQueueProcessingService {
 
         removeOfflineNodes();
 
-        // Add build agent information of local hazelcast member to map if not already present
-        if (!distributedDataAccessService.getBuildAgentInformationMap().containsKey(distributedDataAccessService.getLocalMemberAddress())) {
+        // Add build agent information to map if not already present
+        // Use buildAgentShortName as the key since that's what BuildAgentInformationService uses
+        if (!distributedDataAccessService.getBuildAgentInformationMap().containsKey(buildAgentShortName)) {
             buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
         }
     }
@@ -284,8 +285,9 @@ public class SharedQueueProcessingService {
         }
         // Check conditions before acquiring the lock to avoid unnecessary locking
         if (!nodeIsAvailable()) {
-            // Add build agent information of local hazelcast member to map if not already present
-            if (!distributedDataAccessService.getBuildAgentInformationMap().containsKey(distributedDataAccessService.getLocalMemberAddress())) {
+            // Add build agent information to map if not already present
+            // Use buildAgentShortName as the key since that's what BuildAgentInformationService uses
+            if (!distributedDataAccessService.getBuildAgentInformationMap().containsKey(buildAgentShortName)) {
                 buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
             }
 
@@ -381,26 +383,92 @@ public class SharedQueueProcessingService {
      * <p>
      * This cleanup is necessary because when a node goes offline unexpectedly (e.g., crash),
      * its build agent information and any jobs it was processing remain in the distributed maps.
-     * This method detects such stale entries by comparing registered agents with current cluster members.
+     * This method detects such stale entries by comparing the stored member address of each agent
+     * with current cluster members.
+     * <p>
+     * Note: Build agents running as Hazelcast clients (not cluster members) are not cleaned up by this
+     * method since their addresses are not in the cluster member list. Client-mode agents have addresses
+     * on ephemeral ports (e.g., [127.0.0.1]:54321) which will never exactly match cluster member addresses
+     * (which use the configured Hazelcast port like 5701). A separate mechanism (e.g., heartbeat-based
+     * cleanup) should be used for client-mode agent cleanup if needed.
      */
     private void removeOfflineNodes() {
         Set<String> memberAddresses = distributedDataAccessService.getClusterMemberAddresses();
-        for (String key : distributedDataAccessService.getBuildAgentInformationMap().keySet()) {
-            if (!memberAddresses.contains(key)) {
-                removeBuildAgentInformationForNode(key);
-                removeProcessingJobsForNode(key);
+        var buildAgentMap = distributedDataAccessService.getBuildAgentInformationMap();
+
+        log.debug("removeOfflineNodes: cluster member addresses = {}, build agent map keys = {}", memberAddresses, buildAgentMap.keySet());
+
+        // Iterate over entries to access both the key (short name) and the stored member address
+        for (var entry : buildAgentMap.entrySet()) {
+            String agentKey = entry.getKey();
+            String storedMemberAddress = entry.getValue().buildAgent().memberAddress();
+            boolean isClusterMember = isClusterMemberAddress(storedMemberAddress, memberAddresses);
+            boolean isInMemberSet = memberAddresses.contains(storedMemberAddress);
+
+            log.debug("removeOfflineNodes: checking agent '{}' with address '{}': isClusterMemberAddress={}, isInMemberSet={}", agentKey, storedMemberAddress, isClusterMember,
+                    isInMemberSet);
+
+            // Only clean up agents whose stored address matches the exact format of current cluster members
+            // AND is not in the current cluster member set (i.e., the member went offline).
+            // Client-mode agents have ephemeral port addresses that won't match cluster member addresses,
+            // so they are safely ignored by this cleanup logic.
+            if (isClusterMember && !isInMemberSet) {
+                log.info("removeOfflineNodes: REMOVING agent '{}' with address '{}' (was cluster member but is now offline)", agentKey, storedMemberAddress);
+                removeBuildAgentInformationForNode(agentKey, storedMemberAddress);
+                removeProcessingJobsForNode(storedMemberAddress);
             }
         }
     }
 
     /**
+     * Checks if the given address appears to be a cluster member address based on port matching.
+     * Cluster members use configured Hazelcast ports (typically 5701, 5702, etc.), while clients
+     * use ephemeral ports assigned by the OS.
+     *
+     * @param address         the address to check
+     * @param memberAddresses the current set of cluster member addresses
+     * @return true if the address appears to be a cluster member address (same port as known members)
+     */
+    private boolean isClusterMemberAddress(String address, Set<String> memberAddresses) {
+        if (address == null || !address.contains("]:")) {
+            return false;
+        }
+        // Extract port from the address (format: [host]:port)
+        String addressPort = extractPort(address);
+        if (addressPort == null) {
+            return false;
+        }
+        // Check if any cluster member uses the same port - this indicates it's a cluster member address
+        // Clients use random ephemeral ports, so they won't match cluster member ports
+        return memberAddresses.stream().map(this::extractPort).filter(port -> port != null).anyMatch(addressPort::equals);
+    }
+
+    /**
+     * Extracts the port from an address in [host]:port format.
+     *
+     * @param address the address string
+     * @return the port string, or null if extraction fails
+     */
+    private String extractPort(String address) {
+        if (address == null) {
+            return null;
+        }
+        int lastColon = address.lastIndexOf(':');
+        if (lastColon >= 0 && lastColon < address.length() - 1) {
+            return address.substring(lastColon + 1);
+        }
+        return null;
+    }
+
+    /**
      * Removes the build agent information entry for a specific node from the distributed map.
      *
-     * @param memberAddress the Hazelcast member address of the offline node
+     * @param agentKey      the map key (build agent short name) identifying the agent
+     * @param memberAddress the Hazelcast member address of the offline node (for logging)
      */
-    private void removeBuildAgentInformationForNode(String memberAddress) {
-        log.debug("Cleaning up build agent information for offline node: {}", memberAddress);
-        distributedDataAccessService.getDistributedBuildAgentInformation().remove(memberAddress);
+    private void removeBuildAgentInformationForNode(String agentKey, String memberAddress) {
+        log.debug("Cleaning up build agent information for offline node: {} (address: {})", agentKey, memberAddress);
+        distributedDataAccessService.getDistributedBuildAgentInformation().remove(agentKey);
     }
 
     /**

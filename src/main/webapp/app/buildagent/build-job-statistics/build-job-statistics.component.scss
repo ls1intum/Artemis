@@ -1,8 +1,28 @@
-.result-card {
-    width: 8vw;
-    min-width: 115px;
+.chart-container {
+    flex-shrink: 0;
 }
 
-.stats-column {
-    min-width: 230px;
+.stats-container {
+    flex: 1;
+}
+
+.stats-item {
+    display: flex;
+    gap: 0.25rem;
+    align-items: baseline;
+    padding: 0.25rem 0.5rem;
+    background-color: var(--bs-tertiary-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.25rem;
+    white-space: nowrap;
+    color: var(--bs-body-color);
+
+    .bold,
+    span {
+        color: var(--bs-body-color);
+    }
+
+    .text-muted {
+        color: var(--bs-secondary-color) !important;
+    }
 }

@@ -60,6 +60,35 @@ public class AdminBuildJobQueueResource {
     }
 
     /**
+     * Returns a single build job by its ID.
+     * Checks running jobs, queued jobs, and finished jobs in that order.
+     *
+     * @param buildJobId the id of the build job
+     * @return the build job, or 404 if not found
+     */
+    @GetMapping("build-job/{buildJobId}")
+    public ResponseEntity<?> getBuildJobById(@PathVariable String buildJobId) {
+        log.debug("REST request to get build job by id {}", buildJobId);
+
+        // Check running jobs first
+        BuildJobQueueItem processingJob = distributedDataAccessService.getDistributedProcessingJobs().get(buildJobId);
+        if (processingJob != null) {
+            return ResponseEntity.ok(processingJob);
+        }
+
+        // Check queued jobs
+        for (BuildJobQueueItem queuedJob : distributedDataAccessService.getQueuedJobs()) {
+            if (buildJobId.equals(queuedJob.id())) {
+                return ResponseEntity.ok(queuedJob);
+            }
+        }
+
+        // Check finished jobs in database
+        return buildJobRepository.findByBuildJobId(buildJobId).map(buildJob -> ResponseEntity.ok((Object) FinishedBuildJobDTO.of(buildJob)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /**
      * Returns the queued build jobs.
      *
      * @return the queued build jobs

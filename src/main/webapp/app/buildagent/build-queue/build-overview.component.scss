@@ -2,6 +2,19 @@
     word-break: break-all; /* This will break the text at any character */
 }
 
+.build-queue-nav-bar {
+    z-index: 10;
+    background-color: var(--bs-body-bg);
+    border-bottom: 1px solid var(--bs-border-color);
+    padding-bottom: 0.5rem;
+}
+
+.build-jobs-section {
+    min-height: 300px;
+    max-height: 800px;
+    overflow-y: auto;
+}
+
 .finish-jobs-column-tiny {
     max-width: 20px;
 }
@@ -12,6 +25,10 @@
 
 .finish-jobs-column-strings {
     max-width: 180px;
+}
+
+.clickable-row {
+    cursor: pointer;
 }
 
 .build-output {

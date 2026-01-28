@@ -1,0 +1,11 @@
+.build-logs-pre {
+    max-height: 600px;
+    overflow-y: auto;
+    background-color: var(--bs-dark-bg-subtle);
+    color: var(--bs-body-color);
+    padding: 1rem;
+    border-radius: 0.375rem;
+    font-size: 0.85rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}

@@ -62,6 +62,16 @@ public class LocalCIQueueWebsocketService {
     }
 
     /**
+     * Sends a single build job update over websocket.
+     * This is used for the build job detail page to receive live updates.
+     *
+     * @param buildJob the build job to send the update for
+     */
+    void sendBuildJobUpdateOverWebsocket(BuildJobQueueItem buildJob) {
+        localCIWebsocketMessagingService.sendBuildJobUpdate(buildJob);
+    }
+
+    /**
      * Sends build agent information over websocket. This method is called when a new build agent is added or removed.
      *
      * @param agentName the name of the build agent

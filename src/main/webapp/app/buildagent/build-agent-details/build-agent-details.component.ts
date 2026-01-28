@@ -28,6 +28,7 @@ import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/ht
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { FormsModule } from '@angular/forms';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 import dayjs from 'dayjs/esm';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/shared/components/slice-navigator/slice-navigator.component';
@@ -62,6 +63,7 @@ import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/
         NgxDatatableModule,
         FormsModule,
         SliceNavigatorComponent,
+        AdminTitleBarTitleDirective,
     ],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
@@ -76,6 +78,9 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
     /** Current build agent information including status and configuration */
     buildAgent = signal<BuildAgentInformation | undefined>(undefined);
+
+    /** Whether the build agent was not found (offline/removed) */
+    agentNotFound = signal(false);
 
     /** Aggregated statistics for build jobs processed by this agent */
     buildJobStatistics = signal<BuildJobStatistics>(new BuildJobStatistics());
@@ -252,11 +257,19 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         });
 
         // Load agent details including status and statistics
-        this.agentDetailsSubscription = this.buildAgentsService.getBuildAgentDetails(this.agentName).subscribe((buildAgent) => {
-            this.updateBuildAgent(buildAgent);
-            // Initialize filter with this agent's address to show only its finished jobs
-            this.finishedBuildJobFilter = new FinishedBuildJobFilter(this.buildAgent()?.buildAgent?.memberAddress);
-            this.loadFinishedBuildJobs();
+        this.agentDetailsSubscription = this.buildAgentsService.getBuildAgentDetails(this.agentName).subscribe({
+            next: (buildAgent) => {
+                this.updateBuildAgent(buildAgent);
+                // Initialize filter with this agent's address to show only its finished jobs
+                this.finishedBuildJobFilter = new FinishedBuildJobFilter(this.buildAgent()?.buildAgent?.memberAddress);
+                this.loadFinishedBuildJobs();
+            },
+            error: () => {
+                this.agentNotFound.set(true);
+                // Still load finished jobs filtered by agent name
+                this.finishedBuildJobFilter = new FinishedBuildJobFilter(this.agentName);
+                this.loadFinishedBuildJobs();
+            },
         });
     }
 

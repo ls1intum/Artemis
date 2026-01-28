@@ -68,6 +68,37 @@ public class BuildJobQueueResource {
     }
 
     /**
+     * Returns a single build job by its ID, verifying it belongs to the given course.
+     * Checks running jobs, queued jobs, and finished jobs in that order.
+     *
+     * @param courseId   the id of the course
+     * @param buildJobId the id of the build job
+     * @return the build job, or 404 if not found or does not belong to the course
+     */
+    @GetMapping("courses/{courseId}/build-job/{buildJobId}")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<?> getBuildJobById(@PathVariable long courseId, @PathVariable String buildJobId) {
+        log.debug("REST request to get build job by id {} for course {}", buildJobId, courseId);
+
+        // Check running jobs first
+        BuildJobQueueItem processingJob = distributedDataAccessService.getDistributedProcessingJobs().get(buildJobId);
+        if (processingJob != null && processingJob.courseId() == courseId) {
+            return ResponseEntity.ok(processingJob);
+        }
+
+        // Check queued jobs
+        for (BuildJobQueueItem queuedJob : distributedDataAccessService.getQueuedJobs()) {
+            if (buildJobId.equals(queuedJob.id()) && queuedJob.courseId() == courseId) {
+                return ResponseEntity.ok(queuedJob);
+            }
+        }
+
+        // Check finished jobs in database
+        return buildJobRepository.findByBuildJobId(buildJobId).filter(buildJob -> buildJob.getCourseId() == courseId)
+                .map(buildJob -> ResponseEntity.ok((Object) FinishedBuildJobDTO.of(buildJob))).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /**
      * Returns the queued build jobs for the given course.
      *
      * @param courseId the id of the course for which to get the queued build jobs

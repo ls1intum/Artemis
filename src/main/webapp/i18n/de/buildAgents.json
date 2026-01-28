@@ -34,6 +34,8 @@
                 "distributedDataCleared": "Verteilte Daten erfolgreich gelöscht.",
                 "distributedDataClearFailed": "Löschen der verteilten Daten fehlgeschlagen."
             },
+            "notFound": "Build Agent '{{ agentName }}' ist derzeit nicht verfügbar.",
+            "notFoundHint": "Der Agent ist möglicherweise offline oder wurde ersetzt. Kürzliche Build Jobs dieses Agenten werden unten angezeigt.",
             "pause": "Anhalten",
             "resume": "Fortsetzen",
             "pauseAll": "Alle Agenten Anhalten",

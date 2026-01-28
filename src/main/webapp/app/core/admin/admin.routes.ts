@@ -86,6 +86,14 @@ const childRoutes: Routes = [
         canActivate: [LocalCIGuard],
     },
     {
+        path: 'build-queue/job-details',
+        loadComponent: () => import('app/buildagent/build-queue/build-job-detail/build-job-detail.component').then((m) => m.BuildJobDetailComponent),
+        data: {
+            pageTitle: 'artemisApp.buildQueue.detail.title',
+        },
+        canActivate: [LocalCIGuard],
+    },
+    {
         path: 'build-agents',
         loadComponent: () => import('app/buildagent/build-agent-summary/build-agent-summary.component').then((m) => m.BuildAgentSummaryComponent),
         data: {
