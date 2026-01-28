@@ -3,20 +3,21 @@ set -e
 
 build_and_test_the_code () {
   echo '⚙️ executing build_and_test_the_code'
-  # copy test files
+  # Copy test files and package manifest to student directory
   cp -R Tests ${studentParentWorkingDirectoryName}
   cp Package.swift ${studentParentWorkingDirectoryName}
 
-  # In order to get the correct console output we need to execute the command within the ${studentParentWorkingDirectoryName} directory
-  # swift build
   cd ${studentParentWorkingDirectoryName}
+
+  # Build the project
   if swift build; then
-      # swift test
+      # Run tests with native xUnit output
+      # Note: --parallel is required due to Swift 6 bug where --xunit-output
+      # does not work correctly without it
       swift test --parallel --xunit-output tests.xml || true
   fi
 
-  # The used docker container is calling 'swift build' which creates files as root (e.g. tests.xml),
-  # so we need to allow everyone to access these files
+  # Ensure files created by Docker (running as root) are accessible
   cd ..
   chmod -R 777 .
 }
