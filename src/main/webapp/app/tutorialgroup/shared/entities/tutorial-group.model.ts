@@ -91,3 +91,12 @@ export class RawTutorialGroupDetailGroupDTO {
     groupChannelId?: number;
     tutorChatId?: number;
 }
+
+export interface TutorialGroupRegisteredStudentDTO {
+    id: number;
+    name: string;
+    profilePictureUrl: string;
+    login: string;
+    email: string;
+    registrationNumber: string;
+}

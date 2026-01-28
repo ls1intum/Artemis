@@ -72,7 +72,8 @@ export const tutorialGroupManagementRoutes: Routes = [
     },
     {
         path: ':tutorialGroupId/registrations',
-        loadComponent: () => import('app/tutorialgroup/manage/tutorial-registrations/tutorial-registrations.component').then((m) => m.TutorialRegistrationsComponent),
+        loadComponent: () =>
+            import('app/tutorialgroup/manage/tutorial-registrations-container/tutorial-registrations-container.component').then((m) => m.TutorialRegistrationsContainerComponent),
         data: {
             authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.pages.tutorialGroupRegistrations.title',

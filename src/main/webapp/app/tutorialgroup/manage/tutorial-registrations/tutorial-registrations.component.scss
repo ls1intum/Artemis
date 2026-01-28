@@ -22,6 +22,7 @@
         border-bottom: 1px solid var(--border-color);
 
         th {
+            width: 4rem;
             padding-top: 0;
             padding-bottom: 1rem;
             white-space: normal;
@@ -33,11 +34,26 @@
         }
     }
 
-    td {
-        width: 20%;
-        padding-top: 1rem;
-        padding-bottom: 1rem;
-        white-space: normal;
-        overflow-wrap: break-word;
+    .body-row {
+        display: flex;
+
+        td {
+            width: 4rem;
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+            white-space: normal;
+            overflow-wrap: break-word;
+        }
+
+        td:not(:last-child) {
+            flex: 1;
+        }
+
+        .student-property {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: start;
+            align-items: center;
+        }
     }
 }

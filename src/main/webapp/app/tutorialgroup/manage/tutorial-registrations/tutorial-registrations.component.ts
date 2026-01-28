@@ -5,6 +5,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { CourseTutorialGroupDetailSessionStatusIndicatorComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail-session-status-indicator/course-tutorial-group-detail-session-status-indicator.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 
 @Component({
     selector: 'jhi-tutorial-registrations',
@@ -15,4 +16,5 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 export class TutorialRegistrationsComponent {
     courseId = input.required<number>();
     tutorialGroupId = input.required<number>();
+    registeredStudents = input.required<TutorialGroupRegisteredStudentDTO[]>();
 }

@@ -1,6 +1,11 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { RawTutorialGroupDetailGroupDTO, TutorialGroup, TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import {
+    RawTutorialGroupDetailGroupDTO,
+    TutorialGroup,
+    TutorialGroupDetailGroupDTO,
+    TutorialGroupRegisteredStudentDTO,
+} from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Observable } from 'rxjs';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { map } from 'rxjs/operators';
@@ -44,10 +49,14 @@ export class TutorialGroupsService {
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupResponseDatesFromServer(res)));
     }
 
-    getTutorialGroupDetailGroupDTO(courseId: number, tutorialGroupId: number) {
+    getTutorialGroupDetailGroupDTO(courseId: number, tutorialGroupId: number): Observable<TutorialGroupDetailGroupDTO> {
         return this.httpClient
             .get<RawTutorialGroupDetailGroupDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-group-detail/${tutorialGroupId}`)
             .pipe(map((rawDto) => new TutorialGroupDetailGroupDTO(rawDto)));
+    }
+
+    getRegisteredStudentDTOs(courseId: number, tutorialGroupId: number): Observable<TutorialGroupRegisteredStudentDTO[]> {
+        return this.httpClient.get<TutorialGroupRegisteredStudentDTO[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/registered-students`);
     }
 
     create(tutorialGroup: TutorialGroup, courseId: number): Observable<EntityResponseType> {

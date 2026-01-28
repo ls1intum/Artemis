@@ -2,7 +2,7 @@
     <div class="controls">
         <p-iconfield class="search-field">
             <p-inputicon class="pi pi-search" />
-            <input class="search-input" type="text" pInputText placeholder="Search by Name or Login" />
+            <input pInputText class="search-input p-inputtext-sm" type="text" pInputText placeholder="Search by Name or Login" />
         </p-iconfield>
         <button pButton class="p-button-secondary p-button-sm" data-testid="import-button">Import</button>
         <button pButton class="p-button-secondary p-button-sm" data-testid="export-button">Export</button>
@@ -19,13 +19,25 @@
             </tr>
         </thead>
         <tbody>
-            <!--
-            @for (student of students; track student.id) {
-                <tr>
-                    <td></td>
+            @for (student of registeredStudents(); track student.id) {
+                <tr class="body-row">
+                    <td>
+                        <div class="student-property">{{ student.name }}</div>
+                    </td>
+                    <td>
+                        <div class="student-property">{{ student.login }}</div>
+                    </td>
+                    <td>
+                        <div class="student-property">{{ student.email }}</div>
+                    </td>
+                    <td>
+                        <div class="student-property">{{ student.registrationNumber }}</div>
+                    </td>
+                    <td>
+                        <div>Jo</div>
+                    </td>
                 </tr>
             }
-            -->
         </tbody>
     </table>
 </div>

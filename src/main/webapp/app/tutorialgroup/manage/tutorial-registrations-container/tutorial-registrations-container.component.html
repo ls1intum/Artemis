@@ -1,9 +1,11 @@
 <div class="frame">
     @let courseIdToPass = courseId();
     @let tutorialGroupIdToPass = tutorialGroupId();
-    @if (courseIdToPass && tutorialGroupIdToPass) {
-        <jhi-tutorial-registrations [courseId]="courseIdToPass" [tutorialGroupId]="tutorialGroupIdToPass" />
+    @let registeredStudentsToPass = registeredStudents();
+    @if (courseIdToPass && tutorialGroupIdToPass && registeredStudentsToPass !== undefined) {
+        <jhi-tutorial-registrations [courseId]="courseIdToPass" [tutorialGroupId]="tutorialGroupIdToPass" [registeredStudents]="registeredStudentsToPass" />
     } @else {
         <!-- TODO: create some error screen -->
+        No Data
     }
 </div>
