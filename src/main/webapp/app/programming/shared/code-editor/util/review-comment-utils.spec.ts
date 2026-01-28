@@ -1,0 +1,62 @@
+import { mapRepositoryToThreadLocationType, matchesSelectedRepository } from 'app/programming/shared/code-editor/util/review-comment-utils';
+import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+
+describe('matchesSelectedRepository', () => {
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    it('should match template repository', () => {
+        const thread = { targetType: CommentThreadLocationType.TEMPLATE_REPO } as any;
+        expect(matchesSelectedRepository(thread, RepositoryType.TEMPLATE)).toBeTrue();
+    });
+
+    it('should match solution repository', () => {
+        const thread = { targetType: CommentThreadLocationType.SOLUTION_REPO } as any;
+        expect(matchesSelectedRepository(thread, RepositoryType.SOLUTION)).toBeTrue();
+    });
+
+    it('should match test repository', () => {
+        const thread = { targetType: CommentThreadLocationType.TEST_REPO } as any;
+        expect(matchesSelectedRepository(thread, RepositoryType.TESTS)).toBeTrue();
+    });
+
+    it('should match auxiliary repository with matching id', () => {
+        const thread = { targetType: CommentThreadLocationType.AUXILIARY_REPO, auxiliaryRepositoryId: 4 } as any;
+        expect(matchesSelectedRepository(thread, RepositoryType.AUXILIARY, 4)).toBeTrue();
+    });
+
+    it('should reject auxiliary repository when id mismatches', () => {
+        const thread = { targetType: CommentThreadLocationType.AUXILIARY_REPO, auxiliaryRepositoryId: 2 } as any;
+        expect(matchesSelectedRepository(thread, RepositoryType.AUXILIARY, 3)).toBeFalse();
+    });
+
+    it('should accept auxiliary repository when no id is provided', () => {
+        const thread = { targetType: CommentThreadLocationType.AUXILIARY_REPO, auxiliaryRepositoryId: 2 } as any;
+        expect(matchesSelectedRepository(thread, RepositoryType.AUXILIARY)).toBeTrue();
+    });
+
+    it('should return false for unknown repository type', () => {
+        const thread = { targetType: CommentThreadLocationType.TEMPLATE_REPO } as any;
+        expect(matchesSelectedRepository(thread, undefined)).toBeFalse();
+    });
+});
+
+describe('mapRepositoryToThreadLocationType', () => {
+    it('should map solution repo', () => {
+        expect(mapRepositoryToThreadLocationType(RepositoryType.SOLUTION)).toBe(CommentThreadLocationType.SOLUTION_REPO);
+    });
+
+    it('should map test repo', () => {
+        expect(mapRepositoryToThreadLocationType(RepositoryType.TESTS)).toBe(CommentThreadLocationType.TEST_REPO);
+    });
+
+    it('should map auxiliary repo', () => {
+        expect(mapRepositoryToThreadLocationType(RepositoryType.AUXILIARY)).toBe(CommentThreadLocationType.AUXILIARY_REPO);
+    });
+
+    it('should default to template repo', () => {
+        expect(mapRepositoryToThreadLocationType(RepositoryType.TEMPLATE)).toBe(CommentThreadLocationType.TEMPLATE_REPO);
+    });
+});

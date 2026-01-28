@@ -25,6 +25,15 @@
             [course]="course"
             [allowHiddenFiles]="true"
             [consistencyIssues]="consistencyIssues()"
+            [enableExerciseReviewComments]="true"
+            [reviewCommentThreads]="reviewCommentThreads()"
+            [selectedAuxiliaryRepositoryId]="selectedRepositoryId"
+            (onCommit)="onCommit()"
+            (onSubmitReviewComment)="onSubmitReviewComment($event)"
+            (onDeleteReviewComment)="onDeleteReviewComment($event)"
+            (onReplyReviewComment)="onReplyReviewComment($event)"
+            (onUpdateReviewComment)="onUpdateReviewComment($event)"
+            (onToggleResolveReviewThread)="onToggleResolveReviewThread($event)"
             (onFileLoad)="onFileLoad($event)"
             (onEditorLoaded)="onEditorLoaded()"
         >
@@ -93,7 +102,7 @@
                             [style.background-color]="selectedRepository === RepositoryType.TESTS ? 'var(--link-color)' : 'transparent'"
                             jhiTranslate="artemisApp.editor.repoSelect.testRepo"
                         ></button>
-                        @for (auxiliaryRepository of exercise.auxiliaryRepositories; track exercise.auxiliaryRepositories; let i = $index) {
+                        @for (auxiliaryRepository of exercise.auxiliaryRepositories; track auxiliaryRepository.id ?? i; let i = $index) {
                             @if (auxiliaryRepository.id) {
                                 <button
                                     [disabled]="!exercise"
@@ -243,8 +252,15 @@
                 [enableResize]="false"
                 [showPreview]="false"
                 [consistencyIssues]="consistencyIssues()"
+                [enableExerciseReviewComments]="true"
+                [reviewCommentThreads]="reviewCommentThreads()"
                 class="instructions-wrapper__content card-body p-0"
                 (instructionChange)="onInstructionChanged($event)"
+                (onSubmitReviewComment)="onSubmitProblemStatementReviewComment($event)"
+                (onDeleteReviewComment)="onDeleteReviewComment($event)"
+                (onReplyReviewComment)="onReplyReviewComment($event)"
+                (onUpdateReviewComment)="onUpdateReviewComment($event)"
+                (onToggleResolveReviewThread)="onToggleResolveReviewThread($event)"
             />
             <!-- Preview-only component for right sidebar -->
             <jhi-programming-exercise-instructions

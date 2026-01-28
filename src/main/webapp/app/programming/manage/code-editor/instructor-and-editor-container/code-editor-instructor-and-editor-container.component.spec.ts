@@ -36,6 +36,9 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ExerciseReviewCommentService } from 'app/exercise/services/exercise-review-comment.service';
+import { CommentThreadLocationType, CreateCommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 
 describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
@@ -341,6 +344,204 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
         } finally {
             window.setTimeout = originalSetTimeout;
         }
+    });
+});
+
+describe('CodeEditorInstructorAndEditorContainerComponent - Review Comments', () => {
+    let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
+    let comp: CodeEditorInstructorAndEditorContainerComponent;
+    let reviewService: jest.Mocked<
+        Pick<
+            ExerciseReviewCommentService,
+            | 'deleteComment'
+            | 'createUserComment'
+            | 'updateUserCommentContent'
+            | 'updateThreadResolvedState'
+            | 'createThread'
+            | 'removeCommentFromThreads'
+            | 'appendCommentToThreads'
+            | 'updateCommentInThreads'
+            | 'replaceThreadInThreads'
+            | 'appendThreadToThreads'
+        >
+    >;
+    let alertService: AlertService;
+
+    beforeEach(async () => {
+        reviewService = {
+            deleteComment: jest.fn(),
+            createUserComment: jest.fn(),
+            updateUserCommentContent: jest.fn(),
+            updateThreadResolvedState: jest.fn(),
+            createThread: jest.fn(),
+            removeCommentFromThreads: jest.fn(),
+            appendCommentToThreads: jest.fn(),
+            updateCommentInThreads: jest.fn(),
+            replaceThreadInThreads: jest.fn(),
+            appendThreadToThreads: jest.fn(),
+        };
+
+        await TestBed.configureTestingModule({
+            imports: [CodeEditorInstructorAndEditorContainerComponent],
+            providers: [
+                { provide: AlertService, useClass: MockAlertService },
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: Router, useClass: MockRouter },
+                { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
+                { provide: CourseExerciseService, useClass: MockCourseExerciseService },
+                { provide: DomainService, useValue: { setDomain: jest.fn() } },
+                { provide: Location, useValue: { replaceState: jest.fn() } },
+                { provide: ParticipationService, useClass: MockParticipationService },
+                { provide: ActivatedRoute, useValue: { params: of({}) } },
+                { provide: HyperionCodeGenerationApiService, useValue: { generateCode: jest.fn() } },
+                { provide: NgbModal, useValue: { open: jest.fn(() => ({ componentInstance: {}, result: Promise.resolve() })) } },
+                { provide: HyperionWebsocketService, useValue: { subscribeToJob: jest.fn(), unsubscribeFromJob: jest.fn() } },
+                { provide: CodeEditorRepositoryService, useValue: { pull: jest.fn(() => of(void 0)) } },
+                { provide: CodeEditorRepositoryFileService, useValue: { getRepositoryContent: jest.fn(() => of({} as any)) } },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ConsistencyCheckService, useValue: { checkConsistencyForProgrammingExercise: jest.fn() } },
+                { provide: ArtemisIntelligenceService, useValue: { consistencyCheck: jest.fn(), isLoading: () => false } },
+                { provide: ExerciseReviewCommentService, useValue: reviewService },
+            ],
+        })
+            .overrideComponent(CodeEditorInstructorAndEditorContainerComponent, {
+                set: { template: '', imports: [] as any },
+            })
+            .compileComponents();
+
+        alertService = TestBed.inject(AlertService);
+        fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+        comp = fixture.componentInstance;
+        comp.exercise = { id: 1 } as any;
+    });
+
+    afterEach(() => {
+        fixture?.destroy();
+        jest.clearAllMocks();
+    });
+
+    it('should delete a review comment and update threads', () => {
+        const updatedThreads = [{ id: 2 }] as any;
+        reviewService.deleteComment.mockReturnValue(of({} as any));
+        reviewService.removeCommentFromThreads.mockReturnValue(updatedThreads);
+        comp.reviewCommentThreads.set([{ id: 1 }] as any);
+
+        comp.onDeleteReviewComment(5);
+
+        expect(reviewService.deleteComment).toHaveBeenCalledWith(1, 5);
+        expect(reviewService.removeCommentFromThreads).toHaveBeenCalledWith([{ id: 1 }], 5);
+        expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
+    });
+
+    it('should show an error when delete fails', () => {
+        reviewService.deleteComment.mockReturnValue(throwError(() => new Error('fail')));
+        const errorSpy = jest.spyOn(alertService, 'error');
+
+        comp.onDeleteReviewComment(5);
+
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.review.deleteFailed');
+    });
+
+    it('should create a reply and append it to threads', () => {
+        const createdComment = { id: 7, threadId: 9, type: CommentType.USER, content: { contentType: 'USER', text: 'reply' } } as any;
+        const updatedThreads = [{ id: 9, comments: [createdComment] }] as any;
+        reviewService.createUserComment.mockReturnValue(of({ body: createdComment } as any));
+        reviewService.appendCommentToThreads.mockReturnValue(updatedThreads);
+
+        comp.onReplyReviewComment({ threadId: 9, text: 'reply' });
+
+        expect(reviewService.createUserComment).toHaveBeenCalledWith(1, 9, expect.objectContaining({ type: CommentType.USER, content: { contentType: 'USER', text: 'reply' } }));
+        expect(reviewService.appendCommentToThreads).toHaveBeenCalledWith([], createdComment);
+        expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
+    });
+
+    it('should show an error when reply fails', () => {
+        reviewService.createUserComment.mockReturnValue(throwError(() => new Error('fail')));
+        const errorSpy = jest.spyOn(alertService, 'error');
+
+        comp.onReplyReviewComment({ threadId: 9, text: 'reply' });
+
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.review.saveFailed');
+    });
+
+    it('should update a comment and update threads', () => {
+        const updatedComment = { id: 7, threadId: 9, type: CommentType.USER, content: { contentType: 'USER', text: 'updated' } } as any;
+        const updatedThreads = [{ id: 9, comments: [updatedComment] }] as any;
+        reviewService.updateUserCommentContent.mockReturnValue(of({ body: updatedComment } as any));
+        reviewService.updateCommentInThreads.mockReturnValue(updatedThreads);
+
+        comp.onUpdateReviewComment({ commentId: 7, text: 'updated' });
+
+        expect(reviewService.updateUserCommentContent).toHaveBeenCalledWith(1, 7, { content: { contentType: 'USER', text: 'updated' } });
+        expect(reviewService.updateCommentInThreads).toHaveBeenCalledWith([], updatedComment);
+        expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
+    });
+
+    it('should show an error when update fails', () => {
+        reviewService.updateUserCommentContent.mockReturnValue(throwError(() => new Error('fail')));
+        const errorSpy = jest.spyOn(alertService, 'error');
+
+        comp.onUpdateReviewComment({ commentId: 7, text: 'updated' });
+
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.review.saveFailed');
+    });
+
+    it('should resolve a thread and update threads', () => {
+        const updatedThread = { id: 3, resolved: true } as any;
+        const updatedThreads = [{ id: 3, resolved: true }] as any;
+        reviewService.updateThreadResolvedState.mockReturnValue(of({ body: updatedThread } as any));
+        reviewService.replaceThreadInThreads.mockReturnValue(updatedThreads);
+
+        comp.onToggleResolveReviewThread({ threadId: 3, resolved: true });
+
+        expect(reviewService.updateThreadResolvedState).toHaveBeenCalledWith(1, 3, true);
+        expect(reviewService.replaceThreadInThreads).toHaveBeenCalledWith([], updatedThread);
+        expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
+    });
+
+    it('should show an error when resolve fails', () => {
+        reviewService.updateThreadResolvedState.mockReturnValue(throwError(() => new Error('fail')));
+        const errorSpy = jest.spyOn(alertService, 'error');
+
+        comp.onToggleResolveReviewThread({ threadId: 3, resolved: true });
+
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.review.resolveFailed');
+    });
+
+    it('should create a thread for auxiliary repository', () => {
+        const createdThread = { id: 11, comments: [] } as any;
+        const updatedThreads = [{ id: 11 }] as any;
+        reviewService.createThread.mockReturnValue(of({ body: createdThread } as any));
+        reviewService.appendThreadToThreads.mockReturnValue(updatedThreads);
+        comp.selectedRepository = RepositoryType.AUXILIARY;
+        comp.selectedRepositoryId = 42;
+
+        comp.onSubmitReviewComment({ lineNumber: 5, fileName: 'file.java', text: 'text' });
+
+        expect(reviewService.createThread).toHaveBeenCalledWith(
+            1,
+            expect.objectContaining({
+                targetType: CommentThreadLocationType.AUXILIARY_REPO,
+                filePath: 'file.java',
+                initialFilePath: 'file.java',
+                lineNumber: 5,
+                initialLineNumber: 5,
+                auxiliaryRepositoryId: 42,
+                initialComment: expect.objectContaining({ type: CommentType.USER }),
+            }) as CreateCommentThread,
+        );
+        expect(reviewService.appendThreadToThreads).toHaveBeenCalledWith([], createdThread);
+        expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
+    });
+
+    it('should show an error when thread creation fails', () => {
+        reviewService.createThread.mockReturnValue(throwError(() => new Error('fail')));
+        const errorSpy = jest.spyOn(alertService, 'error');
+        comp.selectedRepository = RepositoryType.TEMPLATE;
+
+        comp.onSubmitReviewComment({ lineNumber: 5, fileName: 'file.java', text: 'text' });
+
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.review.saveFailed');
     });
 });
 

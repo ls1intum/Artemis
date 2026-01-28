@@ -331,6 +331,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         // if we don't mock this, we get heap out of memory, probably due to some infinite recursion
         component.markdownEditor()!['monacoEditor'] = {
             setText: vi.fn(),
+            clearLineDecorationsHoverButton: vi.fn(),
         } as Partial<MonacoEditorComponent> as MonacoEditorComponent;
 
         const parseQuestionStub = vi.spyOn(component.visualChild(), 'parseQuestion').mockReturnValue('parsed-question');

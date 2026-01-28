@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, ViewChild, effect, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, ViewChild, computed, effect, inject, input, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -29,6 +29,7 @@ import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/co
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { editor } from 'monaco-editor';
 
 export enum CollapsableCodeEditorElement {
@@ -81,16 +82,28 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     highlightDifferences = input<boolean>(false);
     disableAutoSave = input<boolean>(false);
     consistencyIssues = input<ConsistencyIssue[]>([]);
+
+    readonly enableExerciseReviewComments = input<boolean>(false);
+    readonly reviewCommentThreads = input<CommentThread[]>([]);
+    readonly selectedAuxiliaryRepositoryId = input<number | undefined>();
+
     isProblemStatementVisible = input<boolean>(true);
     course = input<Course | undefined>();
     selectedRepository = input<RepositoryType>();
-
     onCommitStateChange = output<CommitState>();
     onFileChanged = output<void>();
     onUpdateFeedback = output<Feedback[]>();
     onFileLoad = output<string>();
     onAcceptSuggestion = output<Feedback>();
     onDiscardSuggestion = output<Feedback>();
+    readonly onCommit = output<void>();
+
+    readonly onSubmitReviewComment = output<{ lineNumber: number; fileName: string; text: string }>();
+    readonly onDeleteReviewComment = output<number>();
+    readonly onReplyReviewComment = output<{ threadId: number; text: string }>();
+    readonly onUpdateReviewComment = output<{ commentId: number; text: string }>();
+    readonly onToggleResolveReviewThread = output<{ threadId: number; resolved: boolean }>();
+    readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     onEditorLoaded = output<void>();
 
     /** Work in Progress: temporary properties needed to get first prototype working */
@@ -300,6 +313,12 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         this.grid.toggleCollapse(event, collapsableElement);
     }
 
+    readonly feedbackForSubmission = computed<Feedback[]>(() => {
+        const submission = this.participation().submissions?.[0];
+        const result = submission?.results?.[0];
+        return this.showInlineFeedback() && result?.feedbacks ? result.feedbacks : [];
+    });
+
     /**
      * Set the annotations and extract error files for the file browser.
      * @param annotations The new annotations array
@@ -314,15 +333,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
      */
     canDeactivate() {
         return _isEmpty(this.unsavedFiles);
-    }
-
-    /**
-     * Returns the feedbacks for the current submission or an empty array if no feedbacks are available.
-     */
-    feedbackForSubmission(): Feedback[] {
-        const submission = this.participation().submissions?.[0];
-        const result = submission?.results?.[0];
-        return this.showInlineFeedback() && result?.feedbacks ? result.feedbacks : [];
     }
 
     /**
