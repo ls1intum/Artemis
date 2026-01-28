@@ -46,7 +46,7 @@ public class IrisChatWebsocketService {
      * @param stages      that should be sent over the websocket
      */
     public void sendMessage(IrisChatSession session, IrisMessage irisMessage, List<PyrisStageDTO> stages) {
-        this.sendMessage(session, irisMessage, stages, null);
+        this.sendMessage(session, irisMessage, stages, null, null);
     }
 
     /**
@@ -60,11 +60,8 @@ public class IrisChatWebsocketService {
      * @param irisMessage  that should be sent over the websocket
      * @param stages       that should be sent over the websocket
      * @param sessionTitle the session title to send
+     * @param citationInfo the citation metadata to send
      */
-    public void sendMessage(IrisChatSession session, IrisMessage irisMessage, List<PyrisStageDTO> stages, String sessionTitle) {
-        this.sendMessage(session, irisMessage, stages, sessionTitle, null);
-    }
-
     public void sendMessage(IrisChatSession session, IrisMessage irisMessage, List<PyrisStageDTO> stages, String sessionTitle, List<IrisCitationMetaDTO> citationInfo) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var rateLimitInfo = rateLimitService.getRateLimitInformation(session, user);

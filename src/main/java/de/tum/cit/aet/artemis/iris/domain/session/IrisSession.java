@@ -116,7 +116,7 @@ public abstract class IrisSession extends DomainObject {
     }
 
     public void setCitationInfo(List<IrisCitationMetaDTO> citationInfo) {
-        this.citationInfo = citationInfo != null ? citationInfo : new ArrayList<>();
+        this.citationInfo = citationInfo != null ? citationInfo : List.of();
     }
 
     public abstract boolean shouldAcceptExternalLLMUsage();

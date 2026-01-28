@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.service.session;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -51,12 +52,28 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
 
     private final ObjectMapper objectMapper;
 
-    private final IrisCitationService irisCitationService;
+    private final Optional<IrisCitationService> irisCitationService;
 
     public AbstractIrisChatSessionService(IrisSessionRepository irisSessionRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
             IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService,
             IrisCitationService irisCitationService) {
+        this(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
+                irisChatWebsocketService, llmTokenUsageService, Optional.of(Objects.requireNonNull(irisCitationService)));
+    }
+
+    public AbstractIrisChatSessionService(IrisSessionRepository irisSessionRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
+            IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService) {
+        this(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
+                irisChatWebsocketService, llmTokenUsageService, Optional.empty());
+    }
+
+    private AbstractIrisChatSessionService(IrisSessionRepository irisSessionRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
+            IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService,
+            Optional<IrisCitationService> irisCitationService) {
+        this.irisCitationService = Objects.requireNonNull(irisCitationService);
         this.irisSessionRepository = irisSessionRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -65,7 +82,6 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         this.irisMessageRepository = irisMessageRepository;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.llmTokenUsageService = llmTokenUsageService;
-        this.irisCitationService = irisCitationService;
     }
 
     /**
@@ -140,7 +156,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         if (statusUpdate.result() != null) {
             var message = new IrisMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
-            var citationInfo = irisCitationService.resolveCitationInfo(statusUpdate.result());
+            var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(statusUpdate.result())).orElse(List.of());
             message.setAccessedMemories(statusUpdate.accessedMemories());
             message.setCreatedMemories(statusUpdate.createdMemories());
             savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);

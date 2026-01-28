@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
-import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
@@ -93,10 +92,9 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
             IrisMessageService irisMessageService, IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService,
             IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService, AuthorizationCheckService authCheckService, IrisSettingsService irisSettingsService,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, PyrisDTOService pyrisDTOService, PostRepository postRepository, UserRepository userRepository,
-            IrisCitationService irisCitationService) {
+            ProgrammingSubmissionRepository programmingSubmissionRepository, PyrisDTOService pyrisDTOService, PostRepository postRepository, UserRepository userRepository) {
         super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
-                irisChatWebsocketService, llmTokenUsageService, irisCitationService);
+                irisChatWebsocketService, llmTokenUsageService);
         this.irisSessionRepository = irisSessionRepository;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.rateLimitService = rateLimitService;
@@ -233,7 +231,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
                 var artifact = new IrisMessage();
                 artifact.addContent(new IrisTextMessageContent(statusUpdate.artifact()));
                 savedArtifact = irisMessageService.saveMessage(artifact, session, IrisMessageSender.ARTIFACT);
-                irisChatWebsocketService.sendMessage(session, savedArtifact, statusUpdate.stages(), null, null);
+                irisChatWebsocketService.sendMessage(session, savedArtifact, statusUpdate.stages());
             }
             else {
                 savedArtifact = null;
@@ -242,7 +240,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
                 var message = new IrisMessage();
                 message.addContent(new IrisTextMessageContent(statusUpdate.result()));
                 savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-                irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), null, null);
+                irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages());
             }
             else {
                 savedMessage = null;

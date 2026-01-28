@@ -147,7 +147,7 @@ public class IrisTextExerciseChatSessionService
             irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle, citationInfo.isEmpty() ? null : citationInfo);
         }
         else {
-            irisChatWebsocketService.sendMessage(session, null, statusUpdate.stages(), sessionTitle);
+            irisChatWebsocketService.sendMessage(session, null, statusUpdate.stages(), sessionTitle, null);
         }
 
         return job;

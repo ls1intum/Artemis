@@ -8,8 +8,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -24,9 +22,10 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 @Lazy
 @Service
 @Profile(PROFILE_IRIS)
+/**
+ * Parses Iris citation payloads from chat contents and resolves metadata for the referenced lecture units.
+ */
 public class IrisCitationService {
-
-    private static final Logger log = LoggerFactory.getLogger(IrisCitationService.class);
 
     private static final Pattern CITATION_PATTERN = Pattern.compile("\\[cite:(?<payload>[^\\]]+)\\]");
 
@@ -36,6 +35,9 @@ public class IrisCitationService {
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
     }
 
+    /**
+     * Extracts citation placeholders from the given text and returns the metadata for each lecture unit found.
+     */
     public List<IrisCitationMetaDTO> resolveCitationInfo(String text) {
         if (text == null || text.isBlank()) {
             return List.of();
@@ -46,13 +48,14 @@ public class IrisCitationService {
         }
         var resolved = new LinkedHashMap<Long, IrisCitationMetaDTO>();
         for (var reference : references.values()) {
-            if (reference.type() == CitationType.LECTURE_UNIT) {
-                resolveLectureUnit(reference).ifPresent(value -> resolved.put(reference.entityId(), value));
-            }
+            resolveLectureUnit(reference).ifPresent(value -> resolved.put(reference.entityId(), value));
         }
         return List.copyOf(resolved.values());
     }
 
+    /**
+     * Collects all contents from the supplied messages and resolves lecture unit citations contained within.
+     */
     public List<IrisCitationMetaDTO> resolveCitationInfoFromMessages(List<IrisMessage> messages) {
         if (messages == null || messages.isEmpty()) {
             return List.of();
@@ -74,7 +77,7 @@ public class IrisCitationService {
             var parsed = parseReference(payload);
             if (parsed.isPresent()) {
                 var reference = parsed.get();
-                references.put(reference.type().name() + ":" + reference.entityId(), reference);
+                references.put(String.valueOf(reference.entityId()), reference);
             }
         }
         return references;
@@ -90,8 +93,7 @@ public class IrisCitationService {
         }
         var typeValue = parts[0];
         var entityIdValue = parts[1];
-        if (!isCitationType(typeValue)) {
-            log.debug("Skipping citation with unsupported type in payload {}", payload);
+        if (!"L".equals(typeValue)) {
             return Optional.empty();
         }
 
@@ -100,21 +102,10 @@ public class IrisCitationService {
             entityId = Long.parseLong(entityIdValue);
         }
         catch (NumberFormatException ex) {
-            log.debug("Skipping citation with non-numeric entity id {}", entityIdValue);
             return Optional.empty();
         }
 
-        var type = "L".equals(typeValue) ? CitationType.LECTURE_UNIT : null;
-        if (type == null) {
-            log.debug("Skipping citation with unsupported type {}", typeValue);
-            return Optional.empty();
-        }
-
-        return Optional.of(new IrisCitationReference(entityId, type));
-    }
-
-    private boolean isCitationType(String value) {
-        return "L".equals(value) || "F".equals(value);
+        return Optional.of(new IrisCitationReference(entityId));
     }
 
     private Optional<IrisCitationMetaDTO> resolveLectureUnit(IrisCitationReference reference) {
@@ -134,15 +125,10 @@ public class IrisCitationService {
             return Optional.of(new IrisCitationMetaDTO(reference.entityId(), lectureTitle, lectureUnitTitle));
         }
         catch (EntityNotFoundException ex) {
-            log.debug("Lecture unit citation {} not found", reference.entityId());
             return Optional.empty();
         }
     }
 
-    private record IrisCitationReference(long entityId, CitationType type) {
-    }
-
-    private enum CitationType {
-        LECTURE_UNIT,
+    private record IrisCitationReference(long entityId) {
     }
 }
