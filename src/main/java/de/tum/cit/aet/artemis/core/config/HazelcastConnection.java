@@ -158,10 +158,10 @@ public class HazelcastConnection {
 
         var instances = discoveryClient.getInstances(registration.get().getServiceId());
 
-        // Build set of registry member addresses (cleaned for IPv6 bracket handling)
+        // Build set of registry member addresses (normalized for comparison)
         Set<String> registryMemberAddresses = new HashSet<>();
         for (ServiceInstance instance : instances) {
-            registryMemberAddresses.add(instance.getHost().replace("[", "").replace("]", ""));
+            registryMemberAddresses.add(normalizeHost(instance.getHost()));
         }
 
         log.debug("Current {} Registry members: {}", instances.size(), registryMemberAddresses);
@@ -169,7 +169,7 @@ public class HazelcastConnection {
 
         // Check for members in registry but not in Hazelcast (need to add)
         for (ServiceInstance instance : instances) {
-            var instanceHostClean = instance.getHost().replace("[", "").replace("]", "");
+            var instanceHostClean = normalizeHost(instance.getHost());
             if (!hazelcastMemberAddresses.contains(instanceHostClean)) {
                 addHazelcastClusterMember(instance, hazelcastInstance.getConfig());
             }
@@ -180,7 +180,7 @@ public class HazelcastConnection {
         for (String hazelcastMember : hazelcastMemberAddresses) {
             if (!"unknown".equals(hazelcastMember) && !registryMemberAddresses.contains(hazelcastMember)) {
                 // Don't log warning for own address
-                String ownHost = registration.get().getHost().replace("[", "").replace("]", "");
+                String ownHost = normalizeHost(registration.get().getHost());
                 if (!hazelcastMember.equals(ownHost)) {
                     log.warn("Hazelcast member {} is not registered in service registry - may be a stale/zombie member. "
                             + "If this persists, the member may have crashed without proper deregistration.", hazelcastMember);
@@ -203,7 +203,8 @@ public class HazelcastConnection {
      */
     private void addHazelcastClusterMember(ServiceInstance instance, Config config) {
         var clusterMemberPort = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(hazelcastPort));
-        var clusterMemberAddress = instance.getHost() + ":" + clusterMemberPort; // Address where the other instance is expected
+        var host = normalizeHost(instance.getHost());
+        var clusterMemberAddress = formatAddressForHazelcast(host, clusterMemberPort);
         log.info("Adding Hazelcast cluster member {}", clusterMemberAddress);
         config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMemberAddress);
     }
@@ -279,8 +280,8 @@ public class HazelcastConnection {
         if (registration.isEmpty()) {
             return false;
         }
-        String ownHost = registration.get().getHost().replace("[", "").replace("]", "");
-        String instanceHost = instance.getHost().replace("[", "").replace("]", "");
+        String ownHost = normalizeHost(registration.get().getHost());
+        String instanceHost = normalizeHost(instance.getHost());
         return ownHost.equals(instanceHost) && registration.get().getPort() == instance.getPort();
     }
 
@@ -291,8 +292,42 @@ public class HazelcastConnection {
      * @return the formatted address string
      */
     private String formatInstanceAddress(ServiceInstance instance) {
-        String host = instance.getHost().replace("[", "").replace("]", ""); // Handle IPv6 brackets
+        String host = normalizeHost(instance.getHost());
         String port = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(hazelcastPort));
+        return formatAddressForHazelcast(host, port);
+    }
+
+    /**
+     * Removes brackets from a host string if present.
+     * Eureka/Spring Cloud stores IPv6 addresses with brackets (URI format), but we need the raw IP.
+     *
+     * @param host the host string, possibly with brackets (e.g., "[::1]" or "192.168.1.1")
+     * @return the host without brackets (e.g., "::1" or "192.168.1.1")
+     */
+    private String normalizeHost(String host) {
+        if (host == null) {
+            return null;
+        }
+        // Remove URI-style brackets that Eureka adds for IPv6 addresses
+        if (host.startsWith("[") && host.endsWith("]")) {
+            return host.substring(1, host.length() - 1);
+        }
+        return host;
+    }
+
+    /**
+     * Formats a host and port for Hazelcast connection.
+     * IPv6 addresses must be wrapped in brackets: "[ipv6]:port", IPv4 is just "ipv4:port".
+     *
+     * @param host the normalized host (without brackets)
+     * @param port the port number
+     * @return the formatted address string
+     */
+    private String formatAddressForHazelcast(String host, String port) {
+        // IPv6 addresses contain colons, so we need to wrap them in brackets
+        if (host.contains(":")) {
+            return "[" + host + "]:" + port;
+        }
         return host + ":" + port;
     }
 

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.localci.distributed.hazelcast;
 
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -9,6 +10,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import com.hazelcast.client.impl.clientside.HazelcastClientProxy;
 import com.hazelcast.cluster.Member;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
@@ -68,13 +70,27 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
     }
 
     /**
-     * @return the address of the local Hazelcast member
+     * Returns the address of the local Hazelcast instance.
+     * For cluster members, returns the member's cluster address.
+     * For clients (e.g., build agents in client mode), returns the client's local endpoint address.
+     *
+     * @return the address as a string in the format "[host]:port"
      */
     @Override
     public String getLocalMemberAddress() {
         if (!isInstanceRunning()) {
             throw new HazelcastInstanceNotActiveException();
         }
+
+        // Check if this is a Hazelcast client (build agents in client mode)
+        if (hazelcastInstance instanceof HazelcastClientProxy) {
+            // For clients, use getLocalEndpoint() which provides the client's socket address
+            InetSocketAddress socketAddress = (InetSocketAddress) hazelcastInstance.getLocalEndpoint().getSocketAddress();
+            // Format consistently with cluster member addresses: [host]:port
+            return "[" + socketAddress.getAddress().getHostAddress() + "]:" + socketAddress.getPort();
+        }
+
+        // For cluster members, use the traditional approach
         return hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
     }
 

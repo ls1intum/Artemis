@@ -401,12 +401,11 @@ public class CacheConfiguration {
         }
 
         // Connection strategy configuration for resilience:
-        // - asyncStart=true: Don't block startup if no core nodes available yet
+        // - asyncStart=true: Don't block startup, connect in background
         // - reconnectMode=ON: Automatically reconnect if connection is lost
         // This allows build agents to start even when core nodes are temporarily unavailable
         // and reconnect automatically when they become available.
-        boolean hasInitialAddresses = !discoveredAddresses.isEmpty();
-        clientConfig.getConnectionStrategyConfig().setAsyncStart(!hasInitialAddresses)  // Block only if we have addresses to connect to
+        clientConfig.getConnectionStrategyConfig().setAsyncStart(true)  // Never block startup - connect in background
                 .setReconnectMode(ClientConnectionStrategyConfig.ReconnectMode.ON);
 
         // Connection retry configuration - aggressive retry to handle temporary core node unavailability
@@ -426,11 +425,11 @@ public class CacheConfiguration {
         // Mark this instance as a client in the service registry
         hazelcastConnection.registerAsClient();
 
-        if (hasInitialAddresses) {
+        if (!discoveredAddresses.isEmpty()) {
             log.info("Creating Hazelcast client to connect to core cluster at: {}", discoveredAddresses);
         }
         else {
-            log.warn("No core nodes found in service registry. Hazelcast client will start asynchronously and retry connection.");
+            log.warn("No core nodes found in service registry. Hazelcast client will retry connection in background.");
         }
 
         return HazelcastClient.newHazelcastClient(clientConfig);
