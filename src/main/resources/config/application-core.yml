@@ -3,6 +3,8 @@ artemis:
         enabled: true
     hyperion:
         enabled: false
+    iris:
+        enabled: false
     exam:
         enabled: true
     plagiarism:

@@ -48,9 +48,13 @@ This guide consolidates everything you need to configure both Artemis and Pyris 
 - Have access to the Artemis deployment configuration (e.g., `application-artemis.yml`).
 - Decide on a shared secret that will also be configured in Pyris.
 
-#### Enable the iris Spring profile
-```
---spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local,iris
+#### Enable Iris via configuration
+
+In your `application-artemis.yml`, set:
+```yaml
+artemis:
+  iris:
+    enabled: true
 ```
 
 #### Configure Pyris API endpoints

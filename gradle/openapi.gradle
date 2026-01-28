@@ -22,10 +22,11 @@
             def localVcsPath = "${rootDir}/local-vcs-repos"
 
             jvmArgs = [
-                "-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,iris,aeolus,theia,dev",
+                "-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,aeolus,theia,dev",
                 "-Dartemis.lti.enabled=true",
                 "-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web",
                 "-Dartemis.hyperion.enabled=true",
+                "-Dartemis.iris.enabled=true",
                 "-Dspringdoc.api-docs.enabled=true",
                 "-Dspringdoc.pre-loading-enabled=true",
                 "-Dspring.main.lazy-initialization=true"

@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
-import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
+import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisOrNebulaEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -46,7 +46,7 @@ import de.tum.cit.aet.artemis.nebula.api.TumLiveApi;
  * <li>FAILED: Processing failed after max retries</li>
  * </ul>
  */
-@Conditional(LectureEnabled.class)
+@Conditional(LectureWithIrisOrNebulaEnabled.class)
 @Service
 @Lazy
 public class LectureContentProcessingService {

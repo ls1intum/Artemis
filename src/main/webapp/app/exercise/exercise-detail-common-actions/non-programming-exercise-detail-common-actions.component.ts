@@ -11,7 +11,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { faBook, faChartBar, faListAlt, faRobot, faTable, faTrash, faUserCheck, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_PLAGIARISM, PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS, MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -77,7 +77,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
                 `/exercise-groups/${this.exercise.exerciseGroup?.id}/exercises/${this.exercise.id}/`;
             this.shortBaseResource = `/course-management/${this.course.id!}/exams/${this.exercise.exerciseGroup?.exam?.id}/`;
         }
-        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+        this.irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
         this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
     }
 

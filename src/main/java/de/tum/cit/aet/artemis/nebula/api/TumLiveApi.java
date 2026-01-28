@@ -1,12 +1,9 @@
 package de.tum.cit.aet.artemis.nebula.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
@@ -17,7 +14,6 @@ import de.tum.cit.aet.artemis.nebula.service.TumLiveService;
  * This class allows other modules to interact with the TUM Live service.
  */
 @Conditional(NebulaEnabled.class)
-@Profile(PROFILE_CORE)
 @Controller
 @Lazy
 public class TumLiveApi extends AbstractNebulaApi {
