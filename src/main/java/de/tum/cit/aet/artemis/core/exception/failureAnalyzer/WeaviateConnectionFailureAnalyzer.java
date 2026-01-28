@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.exception.failureAnalyzer;
 import org.springframework.boot.diagnostics.AbstractFailureAnalyzer;
 import org.springframework.boot.diagnostics.FailureAnalysis;
 
+import de.tum.cit.aet.artemis.core.config.ConfigurationValidator;
 import de.tum.cit.aet.artemis.core.exception.WeaviateConnectionException;
 
 /**
@@ -20,7 +21,7 @@ public class WeaviateConnectionFailureAnalyzer extends AbstractFailureAnalyzer<W
     }
 
     private String buildDescription(WeaviateConnectionException cause) {
-        String scheme = cause.isSecure() ? "https" : "http";
+        String scheme = cause.isSecure() ? ConfigurationValidator.HTTPS_SCHEME : ConfigurationValidator.HTTP_SCHEME;
         return String.format(
                 "Failed to connect to Weaviate vector database.%n%n" + "Connection details:%n" + "    Host: %s%n" + "    HTTP Port: %d (%s://%s:%d)%n" + "    gRPC Port: %d%n%n"
                         + "Error: %s%n",
@@ -29,7 +30,7 @@ public class WeaviateConnectionFailureAnalyzer extends AbstractFailureAnalyzer<W
     }
 
     private String buildAction(WeaviateConnectionException cause) {
-        String scheme = cause.isSecure() ? "https" : "http";
+        String scheme = cause.isSecure() ? ConfigurationValidator.HTTPS_SCHEME : ConfigurationValidator.HTTP_SCHEME;
         return """
                 Please verify the following:
 
