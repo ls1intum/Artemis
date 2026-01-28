@@ -117,7 +117,9 @@ describe('ExerciseReviewCommentService', () => {
 
         const result = service.updateCommentInThreads(threads, updated);
 
-        expect(result[0].comments[0].content.text).toBe('new');
+        const updatedComment = result[0]?.comments?.[0];
+        expect(updatedComment).toBeDefined();
+        expect(updatedComment!.content.text).toBe('new');
     });
 
     it('should replace an updated thread', () => {
