@@ -140,6 +140,23 @@ artemis:
         url: # Set this in production environment (e.g., https://nebula.example.com)
         secret-token: # Set this in production environment
 
+    # Theia configuration for online IDE functionality
+    theia:
+        enabled: false
+        portal-url: https://your-theia-instance.com
+
+        # Theia IDE images available for the different programming languages
+        images:
+            # Upper level key is the language category (must match the language key in the programming-exercise configuration)
+          java:
+            # Lower level key can be multiple flavors of the image, e.g. version, tag, or additional dependencies
+            java17: "my-kubernetes-appdefinition"
+            # Add more flavors here (e.g. Java-11, Java-8, etc.)
+            # Add more languages here (e.g. c, python, etc.)
+            c:
+              C: "my-kubernetes-appdefinition"
+
+
     iris:
         ratelimit:
             # Use -1 for both values to indicate unlimited (no rate limiting)
