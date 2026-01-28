@@ -297,7 +297,7 @@ describe('CourseSidebarItemService', () => {
             const item = service.getBuildQueueItem(courseId);
 
             expect(item).toEqual({
-                routerLink: `${courseId}/build-queue`,
+                routerLink: `${courseId}/build-overview`,
                 icon: faList,
                 title: 'Build Queue',
                 translation: 'artemisApp.buildQueue.title',

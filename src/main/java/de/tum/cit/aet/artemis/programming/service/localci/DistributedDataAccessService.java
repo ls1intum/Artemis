@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
+import java.util.function.Consumer;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
@@ -198,12 +200,26 @@ public class DistributedDataAccessService {
     /**
      * This method is used to get a List containing all build agent information. This should be used for reading/iterating over the map.
      * If you want to write to the map or add a listener, use {@link DistributedDataAccessService#getDistributedBuildAgentInformation()} instead.
+     * On core nodes (data members), this filters out disconnected build agents using Hazelcast's client tracking.
      *
-     * @return a list of build agent information
+     * @return a list of active build agent information (excludes disconnected agents on core nodes)
      */
     public List<BuildAgentInformation> getBuildAgentInformation() {
         // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
-        return new ArrayList<>(getDistributedBuildAgentInformation().values());
+        List<BuildAgentInformation> allAgents = new ArrayList<>(getDistributedBuildAgentInformation().values());
+
+        // Get connected client names from Hazelcast (only available on core nodes)
+        Set<String> connectedClients = distributedDataProvider.getConnectedClientNames();
+
+        // If we can't get connected clients (running as client or not supported), return all agents
+        // This happens on build agent nodes and when using local/Redis providers
+        if (connectedClients.isEmpty()) {
+            return allAgents;
+        }
+
+        // Filter to only include agents that are currently connected
+        // The build agent short name (map key) matches the Hazelcast client instance name
+        return allAgents.stream().filter(agent -> connectedClients.contains(agent.buildAgent().name())).toList();
     }
 
     /**
@@ -355,6 +371,23 @@ public class DistributedDataAccessService {
     }
 
     /**
+     * Checks if the distributed data provider is connected and ready to use.
+     * For cluster members (core nodes), this is equivalent to isInstanceRunning().
+     * For clients (build agents with asyncStart=true), this checks if the client
+     * has established a connection to at least one cluster member.
+     *
+     * <p>
+     * This is important for async-start clients that may be running but not yet
+     * connected to the cluster. Operations on distributed objects will fail until
+     * the client is connected.
+     *
+     * @return true if the instance is connected and ready to use, false otherwise
+     */
+    public boolean isConnectedToCluster() {
+        return distributedDataProvider.isConnectedToCluster();
+    }
+
+    /**
      * Retrieves the build agent status for a specific agent by its key.
      *
      * @param agentKey the key identifying the build agent (typically the short name)
@@ -367,5 +400,31 @@ public class DistributedDataAccessService {
             return null;
         }
         return agentInfo.status();
+    }
+
+    /**
+     * Registers a callback that will be invoked when the client connects or reconnects to the cluster.
+     * This is important for re-registering listeners on distributed objects after a connection loss.
+     *
+     * <p>
+     * The callback receives a boolean indicating whether this is the initial connection (true)
+     * or a reconnection after disconnection (false). Services can use this to differentiate
+     * between first-time setup and re-initialization after connection loss.
+     *
+     * @param callback a consumer that receives true for initial connection, false for reconnection
+     * @return a unique identifier that can be used to remove the listener later
+     */
+    public UUID addConnectionStateListener(Consumer<Boolean> callback) {
+        return distributedDataProvider.addConnectionStateListener(callback);
+    }
+
+    /**
+     * Removes a previously registered connection state listener.
+     *
+     * @param listenerId the unique identifier returned by {@link #addConnectionStateListener}
+     * @return true if the listener was found and removed, false otherwise
+     */
+    public boolean removeConnectionStateListener(UUID listenerId) {
+        return distributedDataProvider.removeConnectionStateListener(listenerId);
     }
 }

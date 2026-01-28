@@ -88,6 +88,12 @@ public class SharedQueueProcessingService {
 
     private static final Duration BUILD_CHECK_AVAILABILITY_INTERVAL = Duration.ofSeconds(5);
 
+    /**
+     * Interval between retries when waiting for cluster connection during startup.
+     * Uses the same interval as the availability check for consistency.
+     */
+    private static final Duration CLUSTER_CONNECTION_RETRY_INTERVAL = Duration.ofSeconds(5);
+
     private final BuildAgentConfiguration buildAgentConfiguration;
 
     private final BuildJobManagementService buildJobManagementService;
@@ -137,6 +143,18 @@ public class SharedQueueProcessingService {
      */
     private final AtomicBoolean isPaused = new AtomicBoolean(false);
 
+    /**
+     * Flag to track whether initialization has completed successfully.
+     * Uses AtomicBoolean to ensure thread-safe access from the retry task.
+     */
+    private final AtomicBoolean initialized = new AtomicBoolean(false);
+
+    /**
+     * Scheduled future for retrying cluster connection and initialization.
+     * This is used when the build agent starts before any core node is available.
+     */
+    private ScheduledFuture<?> connectionRetryFuture;
+
     @Value("${artemis.continuous-integration.pause-grace-period-seconds:60}")
     private int pauseGracePeriodSeconds;
 
@@ -179,12 +197,22 @@ public class SharedQueueProcessingService {
     }
 
     /**
-     * Initialize relevant data from hazelcast
+     * Initialize the service by validating configuration and setting up distributed listeners.
+     * <p>
+     * When running as a Hazelcast client with asyncStart=true, the client may not yet be
+     * connected to the cluster when this method is called. In that case, we schedule
+     * periodic retries until the connection is established and initialization completes.
+     * <p>
+     * Additionally, a connection state listener is registered to handle reconnection after
+     * a connection loss. When the client reconnects to the cluster, the listener re-initializes
+     * the distributed listeners (queue, topics) which may have been lost during the disconnection.
+     * <p>
      * EventListener cannot be used here, as the bean is lazy
      * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
     @PostConstruct
     public void init() {
+        // Validate build agent short name - this doesn't require cluster connection
         if (!buildAgentShortName.matches("^[a-z0-9-]+$")) {
             String errorMessage = "Build agent short name must not be empty and only contain lowercase letters, numbers and hyphens."
                     + " Build agent short name should be changed in the application properties under 'artemis.continuous-integration.build-agent.short-name'.";
@@ -196,40 +224,106 @@ public class SharedQueueProcessingService {
             buildAgentDisplayName = buildAgentShortName;
         }
 
-        // Remove listener if already present
-        if (this.listenerId != null) {
-            distributedDataAccessService.getDistributedBuildJobQueue().removeListener(this.listenerId);
+        // Register a connection state listener to handle both initial connection and reconnection.
+        // On reconnection (isInitialConnection=false), the distributed listeners need to be re-registered
+        // because they may have been lost when the connection was interrupted.
+        distributedDataAccessService.addConnectionStateListener(isInitialConnection -> {
+            if (!isInitialConnection) {
+                // This is a reconnection - reset the initialized flag so listeners are re-registered
+                log.info("Hazelcast client reconnected to cluster. Re-initializing SharedQueueProcessingService listeners.");
+                initialized.set(false);
+                // Also cancel existing scheduled future if it's still running, as a new one will be created
+                cancelCheckAvailabilityAndProcessNextBuildScheduledFuture();
+            }
+            tryInitialize();
+        });
+
+        // If already connected, tryInitialize was called by the listener above.
+        // If not connected yet, schedule periodic retries as a fallback.
+        if (!initialized.get() && !distributedDataAccessService.isConnectedToCluster()) {
+            log.info("Hazelcast client not yet connected to cluster. Scheduling periodic initialization retries every {} seconds.", CLUSTER_CONNECTION_RETRY_INTERVAL.toSeconds());
+
+            connectionRetryFuture = taskScheduler.scheduleAtFixedRate(() -> {
+                if (tryInitialize()) {
+                    // Initialization succeeded - cancel the retry task
+                    if (connectionRetryFuture != null) {
+                        connectionRetryFuture.cancel(false);
+                    }
+                }
+            }, CLUSTER_CONNECTION_RETRY_INTERVAL);
         }
-        log.info("Adding item listener to Hazelcast distributed build job queue for build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
-        this.listenerId = this.distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener());
+    }
 
-        /*
-         * Check every 5 seconds whether the node has at least one thread available for a new build job.
-         * If so, process the next build job.
-         * This is a backup mechanism in case the build queue is not empty, no new build jobs are entering the queue and the
-         * node otherwise stopped checking for build jobs in the queue.
-         */
-        scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, BUILD_CHECK_AVAILABILITY_INTERVAL);
+    /**
+     * Attempts to initialize the distributed listeners and scheduled tasks.
+     * <p>
+     * This method checks if the Hazelcast client is connected to the cluster before
+     * attempting to access distributed data structures. If not connected, it returns
+     * false so the caller can retry later.
+     *
+     * @return true if initialization succeeded, false if not connected to cluster
+     */
+    private boolean tryInitialize() {
+        if (initialized.get()) {
+            return true;
+        }
 
-        distributedDataAccessService.getPauseBuildAgentTopic().addMessageListener(buildAgentName -> {
-            if (buildAgentShortName.equals(buildAgentName)) {
-                pauseBuildAgent(false);
+        if (!distributedDataAccessService.isConnectedToCluster()) {
+            log.debug("Cannot initialize SharedQueueProcessingService: not connected to Hazelcast cluster yet");
+            return false;
+        }
+
+        try {
+            // Remove listener if already present (for idempotency)
+            if (this.listenerId != null) {
+                distributedDataAccessService.getDistributedBuildJobQueue().removeListener(this.listenerId);
             }
-        });
 
-        distributedDataAccessService.getResumeBuildAgentTopic().addMessageListener(buildAgentName -> {
-            if (buildAgentShortName.equals(buildAgentName)) {
-                resumeBuildAgent();
-            }
-        });
+            log.info("Adding item listener to Hazelcast distributed build job queue for build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
+            this.listenerId = this.distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener());
+
+            /*
+             * Check every 5 seconds whether the node has at least one thread available for a new build job.
+             * If so, process the next build job.
+             * This is a backup mechanism in case the build queue is not empty, no new build jobs are entering the queue and the
+             * node otherwise stopped checking for build jobs in the queue.
+             */
+            scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, BUILD_CHECK_AVAILABILITY_INTERVAL);
+
+            distributedDataAccessService.getPauseBuildAgentTopic().addMessageListener(buildAgentName -> {
+                if (buildAgentShortName.equals(buildAgentName)) {
+                    pauseBuildAgent(false);
+                }
+            });
+
+            distributedDataAccessService.getResumeBuildAgentTopic().addMessageListener(buildAgentName -> {
+                if (buildAgentShortName.equals(buildAgentName)) {
+                    resumeBuildAgent();
+                }
+            });
+
+            initialized.set(true);
+            log.info("SharedQueueProcessingService initialized successfully - listening for build jobs");
+            return true;
+        }
+        catch (Exception e) {
+            // This can happen if the connection is lost between the check and the access
+            log.warn("Failed to initialize SharedQueueProcessingService: {}. Will retry.", e.getMessage());
+            return false;
+        }
     }
 
     /**
      * Cleanup method called when the service is being destroyed.
-     * Removes the queue listener and cancels the scheduled availability check.
+     * Removes the queue listener, cancels the scheduled availability check, and cancels
+     * any pending connection retry task.
      */
     @PreDestroy
     public void removeListenerAndCancelScheduledFuture() {
+        // Cancel connection retry task if it's running (for build agents that never connected)
+        if (connectionRetryFuture != null && !connectionRetryFuture.isCancelled()) {
+            connectionRetryFuture.cancel(false);
+        }
         removeListener();
         cancelCheckAvailabilityAndProcessNextBuildScheduledFuture();
     }
@@ -260,6 +354,12 @@ public class SharedQueueProcessingService {
      */
     @Scheduled(initialDelay = 10_000, fixedRate = 10_000) // 10 seconds initial delay, 10 seconds fixed rate
     public void updateBuildAgentInformation() {
+        // Skip if not connected to cluster (happens when build agent starts before core nodes)
+        if (!distributedDataAccessService.isConnectedToCluster()) {
+            log.debug("Not connected to Hazelcast cluster yet. Skipping build agent information update.");
+            return;
+        }
+
         if (distributedDataAccessService.noDataMemberInClusterAvailable()) {
             log.debug("There are only lite member in the cluster. Not updating build agent information.");
             return;
@@ -279,6 +379,12 @@ public class SharedQueueProcessingService {
      * If so, process the next build job.
      */
     private void checkAvailabilityAndProcessNextBuild() {
+        // Skip if not connected to cluster (happens when build agent starts before core nodes)
+        if (!distributedDataAccessService.isConnectedToCluster()) {
+            log.debug("Not connected to Hazelcast cluster yet. Skipping build job processing.");
+            return;
+        }
+
         if (distributedDataAccessService.noDataMemberInClusterAvailable() || distributedDataAccessService.getDistributedBuildJobQueue() == null) {
             log.warn("There are only lite member in the cluster. Not processing build jobs.");
             return;

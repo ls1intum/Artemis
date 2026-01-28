@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
@@ -67,7 +68,7 @@ public class AdminBuildJobQueueResource {
      * @return the build job, or 404 if not found
      */
     @GetMapping("build-job/{buildJobId}")
-    public ResponseEntity<?> getBuildJobById(@PathVariable String buildJobId) {
+    public ResponseEntity<BuildJobDTO> getBuildJobById(@PathVariable String buildJobId) {
         log.debug("REST request to get build job by id {}", buildJobId);
 
         // Check running jobs first
@@ -83,8 +84,8 @@ public class AdminBuildJobQueueResource {
             }
         }
 
-        // Check finished jobs in database
-        return buildJobRepository.findByBuildJobId(buildJobId).map(buildJob -> ResponseEntity.ok((Object) FinishedBuildJobDTO.of(buildJob)))
+        // Check finished jobs in database (use findWithData to eagerly fetch result, submission, and participation)
+        return buildJobRepository.findWithDataByBuildJobId(buildJobId).<BuildJobDTO>map(FinishedBuildJobDTO::of).map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 

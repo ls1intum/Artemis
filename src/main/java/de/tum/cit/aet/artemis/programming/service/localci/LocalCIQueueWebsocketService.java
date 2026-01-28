@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 
 /**
@@ -69,6 +70,16 @@ public class LocalCIQueueWebsocketService {
      */
     void sendBuildJobUpdateOverWebsocket(BuildJobQueueItem buildJob) {
         localCIWebsocketMessagingService.sendBuildJobUpdate(buildJob);
+    }
+
+    /**
+     * Sends a finished build job update over websocket.
+     * This notifies clients that a new finished build job is available.
+     *
+     * @param finishedBuildJob the finished build job DTO to send
+     */
+    void sendFinishedBuildJobOverWebsocket(FinishedBuildJobDTO finishedBuildJob) {
+        localCIWebsocketMessagingService.sendFinishedBuildJobUpdate(finishedBuildJob);
     }
 
     /**

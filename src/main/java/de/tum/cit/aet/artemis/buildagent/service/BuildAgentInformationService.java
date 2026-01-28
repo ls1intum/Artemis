@@ -7,6 +7,8 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 
+import jakarta.annotation.PreDestroy;
+
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.info.GitProperties;
@@ -54,6 +56,24 @@ public class BuildAgentInformationService {
         this.distributedDataAccessService = distributedDataAccessService;
     }
 
+    /**
+     * Removes the build agent from the distributed map when the service is being destroyed.
+     * This ensures proper cleanup when the build agent shuts down gracefully.
+     */
+    @PreDestroy
+    public void removeLocalBuildAgentInformationOnShutdown() {
+        try {
+            if (distributedDataAccessService.isInstanceRunning()) {
+                log.info("Build agent '{}' is shutting down. Removing from distributed build agent information map.", buildAgentShortName);
+                distributedDataAccessService.getDistributedBuildAgentInformation().remove(buildAgentShortName);
+                log.info("Successfully removed build agent '{}' from distributed map.", buildAgentShortName);
+            }
+        }
+        catch (Exception e) {
+            log.warn("Error while removing build agent information for '{}' during shutdown: {}", buildAgentShortName, e.getMessage());
+        }
+    }
+
     public void updateLocalBuildAgentInformation(boolean isPaused) {
         updateLocalBuildAgentInformationWithRecentJob(null, isPaused, false, DEFAULT_CONSECUTIVE_FAILURES);
     }
@@ -73,6 +93,12 @@ public class BuildAgentInformationService {
      * @param consecutiveFailures   number of consecutive build failures on the build agent
      */
     public void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures) {
+        // Skip if not connected to cluster (happens when build agent starts before core nodes)
+        if (!distributedDataAccessService.isConnectedToCluster()) {
+            log.debug("Not connected to Hazelcast cluster yet. Skipping build agent information update.");
+            return;
+        }
+
         // Use buildAgentShortName as the stable key - memberAddress can change after Hazelcast client connects
         String agentKey = buildAgentShortName;
         try {

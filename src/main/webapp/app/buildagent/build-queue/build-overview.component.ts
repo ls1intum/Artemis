@@ -1,11 +1,10 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BuildJob, FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
-import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faFilter, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCircleCheck, faClock, faExclamationCircle, faExclamationTriangle, faFilter, faSort, faSpinner, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { BuildOverviewService } from 'app/buildagent/build-queue/build-overview.service';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
-import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { onError } from 'app/shared/util/global.utils';
@@ -16,14 +15,13 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { NgClass, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { BuildJobStatisticsComponent } from 'app/buildagent/build-job-statistics/build-job-statistics.component';
 import { downloadFile } from 'app/shared/util/download.util';
@@ -57,8 +55,6 @@ import { BuildAgentInformation, BuildAgentStatus } from 'app/buildagent/shared/e
         TranslateDirective,
         HelpIconComponent,
         FaIconComponent,
-        DataTableComponent,
-        NgxDatatableModule,
         NgClass,
         RouterLink,
         FormsModule,
@@ -67,6 +63,7 @@ import { BuildAgentInformation, BuildAgentStatus } from 'app/buildagent/shared/e
         ResultComponent,
         ArtemisDatePipe,
         ArtemisDurationFromSecondsPipe,
+        ArtemisTranslatePipe,
         BuildJobStatisticsComponent,
         SliceNavigatorComponent,
         AdminTitleBarTitleDirective,
@@ -82,8 +79,6 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     private buildAgentsService = inject(BuildAgentsService);
     private alertService = inject(AlertService);
     private modalService = inject(NgbModal);
-
-    protected readonly TriggeredByPushTo = TriggeredByPushTo;
 
     /** List of all build agents for capacity calculation */
     buildAgents = signal<BuildAgentInformation[]>([]);
@@ -120,6 +115,8 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     readonly faExclamationCircle = faExclamationCircle;
     readonly faExclamationTriangle = faExclamationTriangle;
     readonly faSync = faSync;
+    readonly faSpinner = faSpinner;
+    readonly faClock = faClock;
 
     /** Signal indicating if more finished build jobs are available for pagination */
     hasMore = signal(true);
@@ -184,6 +181,8 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
         this.loadBuildAgents();
         this.buildDurationInterval = setInterval(() => {
             this.runningBuildJobs.set(this.updateBuildJobDuration(this.runningBuildJobs()));
+            // Also trigger update for queued jobs to refresh waiting times
+            this.queuedBuildJobs.set([...this.queuedBuildJobs()]);
         }, 1000); // 1 second
         this.loadFinishedBuildJobs();
         this.initWebsocketSubscription();
@@ -220,8 +219,8 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
 
     /**
      * Initializes WebSocket subscriptions for real-time build job updates.
-     * Subscribes to two channels based on context:
-     * - Course mode: course-specific queued and running job channels
+     * Subscribes to channels based on context:
+     * - Course mode: course-specific queued, running, and finished job channels
      * - Admin mode: global admin channels for all courses
      */
     initWebsocketSubscription() {
@@ -233,6 +232,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
             // Course-specific mode: subscribe to course-scoped channels
             const queuedJobsTopic = `/topic/courses/${this.courseId}/queued-jobs`;
             const runningJobsTopic = `/topic/courses/${this.courseId}/running-jobs`;
+            const finishedJobsTopic = `/topic/courses/${this.courseId}/finished-jobs`;
             this.websocketSubscriptions.push(
                 this.websocketService.subscribe<BuildJob[]>(queuedJobsTopic).subscribe((queuedBuildJobs: BuildJob[]) => {
                     this.queuedBuildJobs.set(queuedBuildJobs);
@@ -241,6 +241,11 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
             this.websocketSubscriptions.push(
                 this.websocketService.subscribe<BuildJob[]>(runningJobsTopic).subscribe((runningBuildJobs: BuildJob[]) => {
                     this.runningBuildJobs.set(this.updateBuildJobDuration(runningBuildJobs));
+                }),
+            );
+            this.websocketSubscriptions.push(
+                this.websocketService.subscribe<FinishedBuildJob>(finishedJobsTopic).subscribe((finishedBuildJob: FinishedBuildJob) => {
+                    this.handleFinishedBuildJobUpdate(finishedBuildJob);
                 }),
             );
         } else {
@@ -255,6 +260,11 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
                     this.runningBuildJobs.set(this.updateBuildJobDuration(runningBuildJobs));
                 }),
             );
+            this.websocketSubscriptions.push(
+                this.websocketService.subscribe<FinishedBuildJob>(`/topic/admin/finished-jobs`).subscribe((finishedBuildJob: FinishedBuildJob) => {
+                    this.handleFinishedBuildJobUpdate(finishedBuildJob);
+                }),
+            );
         }
 
         // Subscribe to build agents updates for capacity information
@@ -263,6 +273,61 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
                 this.buildAgents.set(agents);
             }),
         );
+    }
+
+    /**
+     * Handles a finished build job update received via WebSocket.
+     * Only updates the list if no filters are applied (search term or filter settings).
+     * Adds the new job at the beginning of the list and removes the oldest one to maintain page size.
+     *
+     * @param finishedBuildJob the finished build job received via WebSocket
+     */
+    private handleFinishedBuildJobUpdate(finishedBuildJob: FinishedBuildJob) {
+        // Only update automatically if no filters are applied
+        if (this.hasActiveFilters()) {
+            return;
+        }
+
+        // Only update if we're on the first page (sorted by submission date descending)
+        if (this.currentPage !== 1) {
+            return;
+        }
+
+        // Calculate the duration for the new job
+        const jobWithDuration = this.calculateFinishedBuildJobDuration(finishedBuildJob);
+
+        // Add the new job at the beginning and limit to page size
+        const currentJobs = this.finishedBuildJobs();
+        const updatedJobs = [jobWithDuration, ...currentJobs.filter((job) => job.id !== finishedBuildJob.id)];
+
+        // Maintain the page size by removing excess items
+        if (updatedJobs.length > this.itemsPerPage) {
+            updatedJobs.splice(this.itemsPerPage);
+        }
+
+        this.finishedBuildJobs.set(updatedJobs);
+    }
+
+    /**
+     * Checks if any filters are currently applied to the finished build jobs list.
+     * @returns true if search term or any filter is applied
+     */
+    private hasActiveFilters(): boolean {
+        return !!(this.searchTerm && this.searchTerm.length > 0) || (this.finishedBuildJobFilter?.numberOfAppliedFilters ?? 0) > 0;
+    }
+
+    /**
+     * Calculate the duration for a single finished build job
+     * @param buildJob the finished build job
+     * @returns the job with calculated duration
+     */
+    private calculateFinishedBuildJobDuration(buildJob: FinishedBuildJob): FinishedBuildJob {
+        if (buildJob.buildStartDate && buildJob.buildCompletionDate) {
+            const start = dayjs(buildJob.buildStartDate);
+            const end = dayjs(buildJob.buildCompletionDate);
+            return { ...buildJob, buildDuration: (end.diff(start, 'milliseconds') / 1000).toFixed(3) + 's' };
+        }
+        return buildJob;
     }
 
     /**
@@ -515,6 +580,31 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
             this.router.navigate(['/course-management', this.courseId, 'build-overview', jobId, 'job-details']);
         } else {
             this.router.navigate(['/admin', 'build-overview', jobId, 'job-details']);
+        }
+    }
+
+    /**
+     * Calculate the waiting time since submission for a queued job
+     * @param submissionDate The submission date of the build job
+     * @returns A formatted string showing the waiting time
+     */
+    calculateWaitingTime(submissionDate: dayjs.Dayjs | undefined): string {
+        if (!submissionDate) {
+            return '-';
+        }
+        const now = dayjs();
+        const diffSeconds = now.diff(submissionDate, 'seconds');
+
+        if (diffSeconds < 60) {
+            return `${diffSeconds}s`;
+        } else if (diffSeconds < 3600) {
+            const minutes = Math.floor(diffSeconds / 60);
+            const seconds = diffSeconds % 60;
+            return `${minutes}m ${seconds}s`;
+        } else {
+            const hours = Math.floor(diffSeconds / 3600);
+            const minutes = Math.floor((diffSeconds % 3600) / 60);
+            return `${hours}h ${minutes}m`;
         }
     }
 }

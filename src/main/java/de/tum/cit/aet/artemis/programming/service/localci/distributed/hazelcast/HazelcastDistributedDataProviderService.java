@@ -4,9 +4,16 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -16,6 +23,7 @@ import com.hazelcast.client.impl.clientside.HazelcastClientProxy;
 import com.hazelcast.cluster.Member;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
+import com.hazelcast.core.LifecycleListener;
 
 import de.tum.cit.aet.artemis.core.config.LocalCIBuildAgentHazelcastDataCondition;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.DistributedDataProvider;
@@ -28,10 +36,83 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.
 @Conditional(LocalCIBuildAgentHazelcastDataCondition.class)
 public class HazelcastDistributedDataProviderService implements DistributedDataProvider {
 
+    private static final Logger log = LoggerFactory.getLogger(HazelcastDistributedDataProviderService.class);
+
     private final HazelcastInstance hazelcastInstance;
+
+    /**
+     * Registered connection state listeners. The callback receives true for initial connection,
+     * false for reconnection after disconnection.
+     */
+    private final Map<UUID, Consumer<Boolean>> connectionStateListeners = new ConcurrentHashMap<>();
+
+    /**
+     * Tracks whether a successful connection has been established at least once.
+     * Used to distinguish initial connection from reconnection in lifecycle events.
+     */
+    private final AtomicBoolean hasConnectedBefore = new AtomicBoolean(false);
+
+    /**
+     * The Hazelcast lifecycle listener registration ID, used for cleanup.
+     */
+    private UUID hazelcastLifecycleListenerId;
 
     public HazelcastDistributedDataProviderService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.hazelcastInstance = hazelcastInstance;
+        registerHazelcastLifecycleListener();
+    }
+
+    /**
+     * Registers a Hazelcast lifecycle listener to track connection state changes.
+     * For clients, this detects CLIENT_CONNECTED and CLIENT_DISCONNECTED events.
+     * For cluster members, this detects STARTED events.
+     */
+    private void registerHazelcastLifecycleListener() {
+        LifecycleListener listener = event -> {
+            log.debug("Hazelcast lifecycle event: {}", event.getState());
+
+            switch (event.getState()) {
+                case CLIENT_CONNECTED -> {
+                    // Client has (re)connected to the cluster
+                    boolean isInitialConnection = !hasConnectedBefore.getAndSet(true);
+                    log.info("Hazelcast client connected to cluster (initial={})", isInitialConnection);
+                    notifyConnectionStateListeners(isInitialConnection);
+                }
+                case CLIENT_DISCONNECTED -> {
+                    // Client lost connection - listeners will need to re-register on reconnection
+                    log.warn("Hazelcast client disconnected from cluster");
+                }
+                case STARTED -> {
+                    // For cluster members, STARTED indicates the instance is ready
+                    if (!(hazelcastInstance instanceof HazelcastClientProxy)) {
+                        boolean isInitialConnection = !hasConnectedBefore.getAndSet(true);
+                        log.info("Hazelcast cluster member started (initial={})", isInitialConnection);
+                        notifyConnectionStateListeners(isInitialConnection);
+                    }
+                }
+                default -> {
+                    // Other events (STARTING, SHUTTING_DOWN, SHUTDOWN, etc.) are logged but not acted upon
+                }
+            }
+        };
+
+        hazelcastLifecycleListenerId = hazelcastInstance.getLifecycleService().addLifecycleListener(listener);
+    }
+
+    /**
+     * Notifies all registered connection state listeners about a connection event.
+     *
+     * @param isInitialConnection true if this is the first connection, false if reconnecting
+     */
+    private void notifyConnectionStateListeners(boolean isInitialConnection) {
+        for (var entry : connectionStateListeners.entrySet()) {
+            try {
+                entry.getValue().accept(isInitialConnection);
+            }
+            catch (Exception e) {
+                log.error("Error notifying connection state listener {}: {}", entry.getKey(), e.getMessage(), e);
+            }
+        }
     }
 
     @Override
@@ -187,5 +268,115 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
             return new ArrayList<>();
         }
         return new ArrayList<>(hazelcastInstance.getCluster().getMembers());
+    }
+
+    /**
+     * Gets the names of all connected Hazelcast clients.
+     * This is only available on data members (core nodes), not on clients (build agents).
+     * The client name corresponds to the Hazelcast instance name set when creating the client,
+     * which is configured to be the build agent short name.
+     *
+     * @return a set of connected client names, or empty set if running as a client
+     */
+    @Override
+    public Set<String> getConnectedClientNames() {
+        if (!isInstanceRunning()) {
+            return Set.of();
+        }
+
+        // Client service is only available on cluster members, not on clients
+        if (hazelcastInstance instanceof HazelcastClientProxy) {
+            return Set.of();
+        }
+
+        try {
+            var clientService = hazelcastInstance.getClientService();
+            return clientService.getConnectedClients().stream().map(client -> client.getName()).collect(Collectors.toSet());
+        }
+        catch (UnsupportedOperationException e) {
+            // Client service not available
+            return Set.of();
+        }
+    }
+
+    /**
+     * Checks if the Hazelcast instance is connected and ready to use.
+     * For cluster members, this is equivalent to isInstanceRunning().
+     * For clients (build agents with asyncStart=true), this checks if the client
+     * has established a connection to at least one cluster member.
+     *
+     * @return true if connected and ready, false otherwise
+     */
+    @Override
+    public boolean isConnectedToCluster() {
+        if (!isInstanceRunning()) {
+            return false;
+        }
+
+        // For cluster members, being running means being connected
+        if (!(hazelcastInstance instanceof HazelcastClientProxy clientProxy)) {
+            return true;
+        }
+
+        // For clients, check if connected to the cluster by verifying the client lifecycle state
+        // A client in CONNECTED state has at least one active connection to a cluster member
+        try {
+            var lifecycleService = clientProxy.getLifecycleService();
+            // isRunning() returns true even for async clients that haven't connected yet
+            // We need to check if we can actually perform operations
+            // The safest way is to check if the cluster is accessible
+            return lifecycleService.isRunning() && clientProxy.getCluster().getMembers().size() > 0;
+        }
+        catch (Exception e) {
+            // Any exception means we're not properly connected
+            return false;
+        }
+    }
+
+    /**
+     * Registers a callback that will be invoked when the Hazelcast client connects or reconnects
+     * to the cluster. The callback receives true for initial connection, false for reconnection.
+     *
+     * <p>
+     * For Hazelcast clients (build agents), this uses the CLIENT_CONNECTED lifecycle event.
+     * For cluster members, this uses the STARTED lifecycle event.
+     *
+     * <p>
+     * If the client is already connected when this method is called, the callback will be
+     * invoked immediately with isInitialConnection=true if this is the first listener, or
+     * with the appropriate value based on connection history.
+     *
+     * @param callback a consumer that receives true for initial connection, false for reconnection
+     * @return a unique identifier that can be used to remove the listener later
+     */
+    @Override
+    public UUID addConnectionStateListener(Consumer<Boolean> callback) {
+        UUID listenerId = UUID.randomUUID();
+        connectionStateListeners.put(listenerId, callback);
+
+        // If already connected, notify the listener immediately
+        // This handles the case where a service registers a listener after initial connection
+        if (isConnectedToCluster()) {
+            try {
+                // For late registrations after initial connection, treat as initial
+                callback.accept(true);
+            }
+            catch (Exception e) {
+                log.error("Error invoking connection state callback on registration: {}", e.getMessage(), e);
+            }
+        }
+
+        return listenerId;
+    }
+
+    /**
+     * Removes a previously registered connection state listener.
+     *
+     * @param listenerId the unique identifier returned by {@link #addConnectionStateListener}
+     * @return true if the listener was found and removed, false otherwise
+     */
+    @Override
+    public boolean removeConnectionStateListener(UUID listenerId) {
+        return connectionStateListeners.remove(listenerId) != null;
     }
 }

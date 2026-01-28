@@ -15,17 +15,22 @@
     overflow-y: auto;
 }
 
+/* Common column styles for all build job tables */
+.build-jobs-column-tiny,
 .finish-jobs-column-tiny {
-    max-width: 20px;
+    width: 40px;
+    max-width: 40px;
 }
 
+.build-jobs-column,
 .finish-jobs-column {
     min-width: 80px;
 }
 
+.build-jobs-column-strings,
 .finish-jobs-column-strings {
     min-width: 200px;
-    max-width: 250px;
+    max-width: 300px;
 }
 
 .clickable-row {
@@ -33,6 +38,17 @@
 
     td {
         font-size: 0.75rem;
+        vertical-align: middle;
+    }
+}
+
+/* Consistent table styling for running and queued jobs */
+.build-jobs-section {
+    .table {
+        th {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
     }
 }
 

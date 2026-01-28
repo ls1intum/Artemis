@@ -32,8 +32,10 @@
                 "start": "Start",
                 "duration": "Dauer",
                 "status": "Status",
-                "buildLogs": "Build Logs"
+                "buildLogs": "Build Logs",
+                "waitingTime": "Wartezeit"
             },
+            "cancel": "Abbrechen",
             "cancelAll": "Alle abbrechen",
             "filter": {
                 "title": "BuildJobs Filter",

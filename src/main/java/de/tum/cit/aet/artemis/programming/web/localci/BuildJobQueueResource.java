@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
@@ -77,7 +78,7 @@ public class BuildJobQueueResource {
      */
     @GetMapping("courses/{courseId}/build-job/{buildJobId}")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<?> getBuildJobById(@PathVariable long courseId, @PathVariable String buildJobId) {
+    public ResponseEntity<BuildJobDTO> getBuildJobById(@PathVariable long courseId, @PathVariable String buildJobId) {
         log.debug("REST request to get build job by id {} for course {}", buildJobId, courseId);
 
         // Check running jobs first
@@ -93,9 +94,9 @@ public class BuildJobQueueResource {
             }
         }
 
-        // Check finished jobs in database
-        return buildJobRepository.findByBuildJobId(buildJobId).filter(buildJob -> buildJob.getCourseId() == courseId)
-                .map(buildJob -> ResponseEntity.ok((Object) FinishedBuildJobDTO.of(buildJob))).orElseGet(() -> ResponseEntity.notFound().build());
+        // Check finished jobs in database (use findWithData to eagerly fetch result, submission, and participation)
+        return buildJobRepository.findWithDataByBuildJobId(buildJobId).filter(buildJob -> buildJob.getCourseId() == courseId).<BuildJobDTO>map(FinishedBuildJobDTO::of)
+                .map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     /**

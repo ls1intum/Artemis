@@ -150,6 +150,11 @@ public class CacheConfiguration {
         System.setProperty("hazelcast.phone.home.enabled", "false");
     }
 
+    /**
+     * Cleans up Hazelcast resources when the application context is being destroyed.
+     * This method clears static references to prevent memory leaks and shuts down
+     * all Hazelcast instances (both cluster members and clients).
+     */
     @PreDestroy
     public void destroy() {
         log.info("Closing Cache Manager");
@@ -335,11 +340,30 @@ public class CacheConfiguration {
         // Minimum standard deviation in milliseconds (default 100)
         config.setProperty("hazelcast.heartbeat.phiaccrual.failuredetector.min.std.dev.millis", "100");
 
-        // Heartbeat configuration - reduced from defaults for faster detection
-        // Heartbeat interval: how often heartbeats are sent (default 5 seconds)
+        // ===================================================================================
+        // CLUSTER MEMBER HEARTBEAT CONFIGURATION
+        // ===================================================================================
+        // These settings control how quickly cluster members (core nodes) detect when another
+        // member has crashed or become unreachable. This is critical for:
+        // - Maintaining data consistency (failed members are removed from partition tables)
+        // - Preventing split-brain scenarios
+        // - Ensuring distributed data structures remain accessible
+        //
+        // The values are intentionally aligned with client heartbeat settings (see createHazelcastClient)
+        // so that all node types are detected within the same timeframe (~15 seconds).
+        //
+        // With phi-accrual detector + these settings:
+        // - Heartbeats sent every 5 seconds
+        // - After 3 missed heartbeats (~15 seconds), member is suspected
+        // - Phi-accrual may detect failures faster based on historical patterns
+        // - MAX_NO_HEARTBEAT_SECONDS acts as an absolute upper bound
+        // ===================================================================================
+
+        // How often heartbeats are sent between cluster members (default: 5 seconds)
         config.setProperty(ClusterProperty.HEARTBEAT_INTERVAL_SECONDS.getName(), "5");
-        // Maximum time without heartbeat before suspecting a member (default 60 seconds)
-        // With phi-accrual detector, this acts as an absolute upper bound
+
+        // Maximum time without receiving a heartbeat before suspecting a member (default: 60 seconds)
+        // Reduced to 15 seconds for faster detection of crashed/unreachable core nodes
         config.setProperty(ClusterProperty.MAX_NO_HEARTBEAT_SECONDS.getName(), "15");
 
         // Operation timeouts - prevent threads from blocking too long on unresponsive members
@@ -397,7 +421,10 @@ public class CacheConfiguration {
      */
     private HazelcastInstance createHazelcastClient() {
         ClientConfig clientConfig = new ClientConfig();
-        clientConfig.setInstanceName(instanceName + "-client");
+        // Use the build agent short name as the client instance name for identification
+        // This allows core nodes to match connected clients with build agent information
+        String buildAgentShortName = env.getProperty("artemis.continuous-integration.build-agent.short-name", instanceName + "-client");
+        clientConfig.setInstanceName(buildAgentShortName);
 
         // Set cluster name (must match the core cluster)
         if (!hazelcastLocalInstances) {
@@ -429,6 +456,32 @@ public class CacheConfiguration {
                 .setMultiplier(1.5)                   // Exponential backoff
                 .setClusterConnectTimeoutMillis(-1)  // Unlimited timeout - keep trying forever
                 .setJitter(0.2);                      // Add randomness to prevent thundering herd
+
+        // ===================================================================================
+        // CLIENT HEARTBEAT CONFIGURATION
+        // ===================================================================================
+        // These settings control how quickly core nodes detect disconnected build agents.
+        // When a build agent crashes or loses network connectivity, core nodes use these
+        // heartbeats to detect the failure and remove the agent from the active agents list.
+        //
+        // The values are intentionally aligned with the cluster member heartbeat settings
+        // (HEARTBEAT_INTERVAL_SECONDS=5, MAX_NO_HEARTBEAT_SECONDS=15) for consistent behavior:
+        // - All node types (core members and build agent clients) are detected within ~15 seconds
+        // - The build agents admin page shows accurate real-time status
+        // - Hazelcast's clientService.getConnectedClients() reflects actual connectivity
+        //
+        // Trade-offs considered:
+        // - Shorter timeouts = faster detection but more sensitive to brief network hiccups
+        // - 15 seconds allows for 3 missed heartbeats (at 5s interval) before declaring failure
+        // - This matches the cluster member detection time for operational consistency
+        // ===================================================================================
+
+        // How often the client sends heartbeats to cluster members (default: 5000ms)
+        clientConfig.setProperty("hazelcast.client.heartbeat.interval", "5000");
+
+        // Maximum time without receiving a heartbeat response before the connection is considered dead
+        // Default is 60000ms (60 seconds), reduced to 15000ms (15 seconds) to match cluster member timeout
+        clientConfig.setProperty("hazelcast.client.heartbeat.timeout", "15000");
 
         // Network configuration for client
         clientConfig.getNetworkConfig().setConnectionTimeout(10000)  // 10 seconds connection timeout per attempt
