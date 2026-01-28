@@ -983,8 +983,7 @@ public class SharedQueueProcessingService {
         @Override
         public void itemAdded(BuildJobQueueItem item) {
             try {
-                log.debug("CIBuildJobQueueItem added to queue: {}", item);
-                log.debug("Current queued items: {}", distributedDataAccessService.getQueuedJobsSize());
+                log.debug("CIBuildJobQueueItem added to queue: {}. Current queued items: {}", item, distributedDataAccessService.getQueuedJobsSize());
                 checkAvailabilityAndProcessNextBuild();
             }
             catch (Exception e) {
