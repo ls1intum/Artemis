@@ -229,7 +229,7 @@ describe('BuildQueueComponent', () => {
             buildSubmissionDate: dayjs('2023-01-05'),
             buildStartDate: dayjs('2023-01-05'),
             buildCompletionDate: dayjs('2023-01-05'),
-            buildDuration: '0.000s',
+            buildDuration: '0.0s',
             commitHash: 'abc127',
         },
         {
@@ -246,7 +246,7 @@ describe('BuildQueueComponent', () => {
             triggeredByPushTo: TriggeredByPushTo.USER,
             buildStartDate: dayjs('2023-01-06'),
             buildCompletionDate: dayjs('2023-01-06'),
-            buildDuration: '0.000s',
+            buildDuration: '0.0s',
             commitHash: 'abc128',
         },
     ];
@@ -570,7 +570,10 @@ describe('BuildQueueComponent', () => {
         for (const finishedBuildJob of component.finishedBuildJobs()) {
             const { buildDuration, buildCompletionDate, buildStartDate } = finishedBuildJob;
             if (buildDuration && buildCompletionDate && buildStartDate) {
-                expect(buildDuration).toEqual((buildCompletionDate.diff(buildStartDate, 'milliseconds') / 1000).toFixed(3) + 's');
+                // Component formats with 1 decimal place for durations under 60s
+                const durationSeconds = buildCompletionDate.diff(buildStartDate, 'milliseconds') / 1000;
+                const expectedDuration = durationSeconds.toFixed(1) + 's';
+                expect(buildDuration).toEqual(expectedDuration);
             }
         }
     });

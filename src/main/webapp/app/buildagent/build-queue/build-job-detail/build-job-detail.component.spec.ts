@@ -180,7 +180,8 @@ describe('BuildJobDetailComponent', () => {
         vi.mocked(buildQueueService.getBuildJobById).mockReturnValue(of(mockRunningJob));
         fixture.detectChanges();
 
-        expect(component.queueWaitTime()).toBe(5);
+        // queueWaitTime now returns a formatted string with 1 decimal place
+        expect(component.queueWaitTime()).toBe('5.0s');
     });
 
     it('should return correct job status', () => {
