@@ -570,7 +570,7 @@
                                     </span>
                                 </td>
                                 <td class="finish-jobs-column-strings">
-                                    <span class="compact-cell" [title]="finishedBuildJob.name ?? ''"
+                                    <span [title]="finishedBuildJob.name ?? ''"
                                         >{{ finishedBuildJob.name ?? '' | slice: 0 : 25 }}{{ (finishedBuildJob.name ?? '').length > 25 ? '...' : '' }}</span
                                     >
                                 </td>
@@ -606,10 +606,10 @@
                                     </td>
                                 }
                                 <td class="finish-jobs-column">
-                                    <span class="compact-cell">{{ finishedBuildJob.buildDuration }}</span>
+                                    {{ finishedBuildJob.buildDuration }}
                                 </td>
                                 <td class="finish-jobs-column">
-                                    <span class="compact-cell text-muted">{{ finishedBuildJob.buildCompletionDate | artemisDate: 'short' : true }}</span>
+                                    <span class="text-muted">{{ finishedBuildJob.buildCompletionDate | artemisDate: 'short' : true }}</span>
                                 </td>
                                 <td class="finish-jobs-column-strings">
                                     <a

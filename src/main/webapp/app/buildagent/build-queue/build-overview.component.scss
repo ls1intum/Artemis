@@ -30,10 +30,10 @@
 
 .clickable-row {
     cursor: pointer;
-}
 
-.compact-cell {
-    font-size: 0.85rem;
+    td {
+        font-size: 0.75rem;
+    }
 }
 
 .build-output {
