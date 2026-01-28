@@ -12,14 +12,14 @@ import { CommentContent } from 'app/exercise/shared/entities/review/comment-cont
 @Component({
     selector: 'jhi-review-comment-thread-widget',
     templateUrl: './review-comment-thread-widget.component.html',
-    styleUrls: ['./review-comment-widget.shared.scss'],
+    styleUrls: ['./review-comment-thread-widget.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,
     standalone: true,
     imports: [FormsModule, ArtemisTranslatePipe, ArtemisDatePipe, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, FaIconComponent],
 })
 export class ReviewCommentThreadWidgetComponent implements OnInit {
-    readonly thread = input<CommentThread | undefined>();
+    readonly thread = input.required<CommentThread>();
     readonly initialCollapsed = input<boolean>(false);
 
     readonly onDelete = output<number>();
@@ -70,9 +70,6 @@ export class ReviewCommentThreadWidgetComponent implements OnInit {
 
     toggleResolved(): void {
         const thread = this.thread();
-        if (!thread) {
-            return;
-        }
         const nextResolved = !thread.resolved;
         this.onToggleResolved.emit(nextResolved);
         if (nextResolved) {
@@ -84,11 +81,6 @@ export class ReviewCommentThreadWidgetComponent implements OnInit {
     toggleThreadBody(): void {
         this.showThreadBody = !this.showThreadBody;
         this.onToggleCollapse.emit(!this.showThreadBody);
-    }
-
-    getThreadLineLabel(): string {
-        const lineNumber = this.thread()?.lineNumber;
-        return lineNumber ? `${lineNumber}` : '-';
     }
 
     ngOnInit(): void {
@@ -103,7 +95,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit {
     }
 
     orderedComments(): Comment[] {
-        const comments = this.thread()?.comments ?? [];
+        const comments = this.thread().comments ?? [];
         return [...comments].sort((a, b) => {
             const aDate = a.createdDate ? Date.parse(a.createdDate) : 0;
             const bDate = b.createdDate ? Date.parse(b.createdDate) : 0;
@@ -144,10 +136,6 @@ export class ReviewCommentThreadWidgetComponent implements OnInit {
 
     getThreadMeta(): { key: string; params: { versionId?: number; commitSha?: string } } | undefined {
         const thread = this.thread();
-        if (!thread) {
-            return undefined;
-        }
-
         if (thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT && thread.initialVersionId) {
             return { key: 'artemisApp.review.threadVersion', params: { versionId: thread.initialVersionId } };
         }

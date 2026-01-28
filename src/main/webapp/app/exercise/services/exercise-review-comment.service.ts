@@ -38,4 +38,61 @@ export class ExerciseReviewCommentService {
     deleteComment(exerciseId: number, commentId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/review-comments/${commentId}`, { observe: 'response' });
     }
+
+    removeCommentFromThreads(threads: CommentThread[], commentId: number): CommentThread[] {
+        return threads
+            .map((thread) => {
+                if (!thread.comments) {
+                    return thread;
+                }
+                const remainingComments = thread.comments.filter((comment) => comment.id !== commentId);
+                if (remainingComments.length === thread.comments.length) {
+                    return thread;
+                }
+                return { ...thread, comments: remainingComments };
+            })
+            .filter((thread) => !thread.comments || thread.comments.length > 0);
+    }
+
+    appendCommentToThreads(threads: CommentThread[], createdComment: Comment): CommentThread[] {
+        if (!createdComment.threadId) {
+            return threads;
+        }
+        return threads.map((thread) => {
+            if (thread.id !== createdComment.threadId) {
+                return thread;
+            }
+            const comments = thread.comments ?? [];
+            return { ...thread, comments: [...comments, createdComment] };
+        });
+    }
+
+    updateCommentInThreads(threads: CommentThread[], updatedComment: Comment): CommentThread[] {
+        if (!updatedComment.id || !updatedComment.threadId) {
+            return threads;
+        }
+        return threads.map((thread) => {
+            if (thread.id !== updatedComment.threadId || !thread.comments) {
+                return thread;
+            }
+            return {
+                ...thread,
+                comments: thread.comments.map((comment) => (comment.id === updatedComment.id ? { ...comment, ...updatedComment } : comment)),
+            };
+        });
+    }
+
+    replaceThreadInThreads(threads: CommentThread[], updatedThread: CommentThread): CommentThread[] {
+        if (!updatedThread.id) {
+            return threads;
+        }
+        return threads.map((thread) => (thread.id === updatedThread.id ? updatedThread : thread));
+    }
+
+    appendThreadToThreads(threads: CommentThread[], newThread: CommentThread): CommentThread[] {
+        if (!newThread.id) {
+            return threads;
+        }
+        return [...threads, newThread];
+    }
 }

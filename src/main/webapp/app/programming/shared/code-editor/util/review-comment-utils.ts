@@ -22,3 +22,16 @@ export function matchesSelectedRepository(thread: CommentThread, repositoryType?
             return false;
     }
 }
+
+export function mapRepositoryToThreadLocationType(repositoryType: RepositoryType): CommentThreadLocationType {
+    switch (repositoryType) {
+        case RepositoryType.SOLUTION:
+            return CommentThreadLocationType.SOLUTION_REPO;
+        case RepositoryType.TESTS:
+            return CommentThreadLocationType.TEST_REPO;
+        case RepositoryType.AUXILIARY:
+            return CommentThreadLocationType.AUXILIARY_REPO;
+        default:
+            return CommentThreadLocationType.TEMPLATE_REPO;
+    }
+}

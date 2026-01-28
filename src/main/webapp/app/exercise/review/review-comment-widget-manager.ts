@@ -1,7 +1,7 @@
 import { ComponentRef, ViewContainerRef } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { ReviewCommentDraftWidgetComponent } from 'app/exercise/review/review-comment-draft-widget.component';
-import { ReviewCommentThreadWidgetComponent } from 'app/exercise/review/review-comment-thread-widget.component';
+import { ReviewCommentDraftWidgetComponent } from 'app/exercise/review/review-comment-draft-widget/review-comment-draft-widget.component';
+import { ReviewCommentThreadWidgetComponent } from 'app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component';
 import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
 
 export type ReviewCommentWidgetManagerConfig = {
@@ -46,6 +46,11 @@ export class ReviewCommentWidgetManager {
         this.addDraftWidgets();
     }
 
+    updateDraftInputs(): void {
+        const canSubmit = this.config.canSubmit ? this.config.canSubmit() : true;
+        this.draftWidgetRefs.forEach((ref) => ref.setInput('canSubmit', canSubmit));
+    }
+
     updateThreadInputs(threads: CommentThread[]): boolean {
         let updated = true;
         for (const thread of threads) {
@@ -70,6 +75,11 @@ export class ReviewCommentWidgetManager {
     }
 
     clearDrafts(): void {
+        for (const [fileName, lines] of this.draftLinesByFile.entries()) {
+            for (const line of lines) {
+                this.editor.disposeWidgetsByPrefix(this.buildDraftWidgetId(fileName, line));
+            }
+        }
         this.disposeDraftWidgets();
         this.draftLinesByFile.clear();
     }

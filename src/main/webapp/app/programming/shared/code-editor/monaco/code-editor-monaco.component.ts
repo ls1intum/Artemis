@@ -174,6 +174,11 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             this.reviewCommentThreads();
             this.renderReviewCommentWidgets();
         });
+
+        effect(() => {
+            this.commitState();
+            this.reviewCommentManager?.updateDraftInputs();
+        });
     }
 
     async ngOnChanges(changes: SimpleChanges): Promise<void> {
@@ -506,6 +511,10 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             });
         }
         return this.reviewCommentManager;
+    }
+
+    clearReviewCommentDrafts(): void {
+        this.reviewCommentManager?.clearDrafts();
     }
 
     /**

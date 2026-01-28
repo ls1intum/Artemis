@@ -52,6 +52,7 @@ import { UserCommentContent } from 'app/exercise/shared/entities/review/comment-
 
 const PROBLEM_STATEMENT_FILE_PATH = 'problem_statement.md';
 import { getRepoPath } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import { mapRepositoryToThreadLocationType } from 'app/programming/shared/code-editor/util/review-comment-utils';
 
 const SEVERITY_ORDER = {
     HIGH: 0,
@@ -147,7 +148,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (!exerciseId) {
             return;
         }
-        this.reviewCommentThreads.set([]);
+        this.codeEditorContainer?.monacoEditor?.clearReviewCommentDrafts();
         this.loadReviewCommentThreads(exerciseId);
     }
 
@@ -348,7 +349,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     onSubmitReviewComment(event: { lineNumber: number; fileName: string; text: string }): void {
-        const targetType = this.mapRepositoryToThreadLocationType(this.selectedRepository);
+        const targetType = mapRepositoryToThreadLocationType(this.selectedRepository);
         const auxiliaryRepositoryId = this.selectedRepository === RepositoryType.AUXILIARY ? this.selectedRepositoryId : undefined;
         this.createThreadWithInitialComment(targetType, event.fileName, event.lineNumber, event.text, auxiliaryRepositoryId);
     }
@@ -367,20 +368,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             .deleteComment(exerciseId, commentId)
             .pipe(
                 tap(() => {
-                    this.reviewCommentThreads.update((threads) =>
-                        threads
-                            .map((thread) => {
-                                if (!thread.comments) {
-                                    return thread;
-                                }
-                                const remainingComments = thread.comments.filter((comment) => comment.id !== commentId);
-                                if (remainingComments.length === thread.comments.length) {
-                                    return thread;
-                                }
-                                return { ...thread, comments: remainingComments };
-                            })
-                            .filter((thread) => !thread.comments || thread.comments.length > 0),
-                    );
+                    this.reviewCommentThreads.update((threads) => this.exerciseReviewCommentService.removeCommentFromThreads(threads, commentId));
                 }),
                 catchError(() => {
                     this.alertService.error('artemisApp.review.deleteFailed');
@@ -404,18 +392,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             .pipe(
                 tap((response) => {
                     const createdComment = response.body;
-                    if (!createdComment?.threadId) {
+                    if (!createdComment) {
                         return;
                     }
-                    this.reviewCommentThreads.update((threads) =>
-                        threads.map((thread) => {
-                            if (thread.id !== createdComment.threadId) {
-                                return thread;
-                            }
-                            const comments = thread.comments ?? [];
-                            return { ...thread, comments: [...comments, createdComment] };
-                        }),
-                    );
+                    this.reviewCommentThreads.update((threads) => this.exerciseReviewCommentService.appendCommentToThreads(threads, createdComment));
                 }),
                 catchError(() => {
                     this.alertService.error('artemisApp.review.saveFailed');
@@ -437,20 +417,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             .pipe(
                 tap((response) => {
                     const updatedComment = response.body;
-                    if (!updatedComment?.id || !updatedComment.threadId) {
+                    if (!updatedComment) {
                         return;
                     }
-                    this.reviewCommentThreads.update((threads) =>
-                        threads.map((thread) => {
-                            if (thread.id !== updatedComment.threadId || !thread.comments) {
-                                return thread;
-                            }
-                            return {
-                                ...thread,
-                                comments: thread.comments.map((comment) => (comment.id === updatedComment.id ? { ...comment, ...updatedComment } : comment)),
-                            };
-                        }),
-                    );
+                    this.reviewCommentThreads.update((threads) => this.exerciseReviewCommentService.updateCommentInThreads(threads, updatedComment));
                 }),
                 catchError(() => {
                     this.alertService.error('artemisApp.review.saveFailed');
@@ -474,7 +444,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     if (!updatedThread?.id) {
                         return;
                     }
-                    this.reviewCommentThreads.update((threads) => threads.map((thread) => (thread.id === updatedThread.id ? updatedThread : thread)));
+                    this.reviewCommentThreads.update((threads) => this.exerciseReviewCommentService.replaceThreadInThreads(threads, updatedThread));
                 }),
                 catchError(() => {
                     this.alertService.error('artemisApp.review.resolveFailed');
@@ -497,18 +467,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             .subscribe((threads) => this.reviewCommentThreads.set(threads));
     }
 
-    private mapRepositoryToThreadLocationType(repositoryType: RepositoryType): CommentThreadLocationType {
-        switch (repositoryType) {
-            case RepositoryType.SOLUTION:
-                return CommentThreadLocationType.SOLUTION_REPO;
-            case RepositoryType.TESTS:
-                return CommentThreadLocationType.TEST_REPO;
-            case RepositoryType.AUXILIARY:
-                return CommentThreadLocationType.AUXILIARY_REPO;
-            default:
-                return CommentThreadLocationType.TEMPLATE_REPO;
-        }
-    }
     /**
      * Returns the appropriate FontAwesome icon for the given severity.
      *
@@ -672,7 +630,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         return;
                     }
                     const newThread: CommentThread = thread.comments ? thread : { ...thread, comments: [] };
-                    this.reviewCommentThreads.update((threads) => [...threads, newThread]);
+                    this.reviewCommentThreads.update((threads) => this.exerciseReviewCommentService.appendThreadToThreads(threads, newThread));
                 }),
                 catchError(() => {
                     this.alertService.error('artemisApp.review.saveFailed');
