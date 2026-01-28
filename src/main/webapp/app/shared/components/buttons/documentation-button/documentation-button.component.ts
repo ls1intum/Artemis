@@ -15,7 +15,7 @@ const DocumentationLinks = {
     Model: 'instructor/exercises/modeling-exercise',
     Programming: 'instructor/exercises/programming-exercise',
     SshSetup: 'student/integrated-code-lifecycle',
-    Text: 'instructor/exercises/textual-exercise',
+    Text: 'instructor/exercises/text-exercise',
     FileUpload: 'instructor/exercises/file-upload-exercise',
     Notifications: 'student/notifications',
     Competencies: 'instructor/adaptive-learning',

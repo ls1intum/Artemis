@@ -38,7 +38,6 @@ const sidebars: SidebarsConfig = {
         'builds-and-dependencies',
         'e2e-testing-playwright',
         'spring-ai',
-        'jenkins-localvc',
         'aeolus',
         'openapi',
         'docker-compose',
