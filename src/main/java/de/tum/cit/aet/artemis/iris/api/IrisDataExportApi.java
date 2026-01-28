@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.iris.api;
 
-import java.util.List;
+import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -27,11 +27,17 @@ public class IrisDataExportApi extends AbstractIrisApi {
 
     /**
      * Finds all chat sessions for a user with their messages loaded.
+     * Uses a two-query approach to avoid PostgreSQL JSON equality comparison issues
+     * that occur when using DISTINCT with JSON columns in a single query.
      *
      * @param userId the ID of the user
-     * @return a list of all chat sessions with messages for the user
+     * @return a set of all chat sessions with messages for the user
      */
-    public List<IrisChatSession> findAllChatSessionsWithMessagesByUserId(long userId) {
-        return irisChatSessionRepository.findAllWithMessagesByUserId(userId);
+    public Set<IrisChatSession> findAllChatSessionsWithMessagesByUserId(long userId) {
+        Set<Long> sessionIds = irisChatSessionRepository.findSessionIdsByUserId(userId);
+        if (sessionIds.isEmpty()) {
+            return Set.of();
+        }
+        return irisChatSessionRepository.findAllWithMessagesByIds(sessionIds);
     }
 }

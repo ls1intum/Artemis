@@ -41,7 +41,10 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.ArtemisVersionService;
 import de.tum.cit.aet.artemis.core.service.PasskeyAuthenticationService;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.core.service.VulnerabilityService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
@@ -60,8 +63,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 // TODO: PROFILE_AEOLUS is bound to PROGRAMMING and LOCAL_VC and should not be active in an independent test context.
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_TEST_INDEPENDENT, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_ATHENA, PROFILE_APOLLON, PROFILE_AEOLUS })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false", "artemis.sharing.enabled=true", "artemis.user-management.passkey.enabled=true",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent", "artemis.nebula.enabled=true", "artemis.iris.enabled=true",
-        "artemis.lti.enabled=true" })
+        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent", "artemis.nebula.enabled=true", "artemis.iris.enabled=true", "artemis.lti.enabled=true",
+        // Property moved here to avoid creating a separate Spring context in AutomaticBuildJobCleanupServiceIntegrationTest
+        "artemis.continuous-integration.build-job.retention-period=30" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractSpringIntegrationIndependentTest.class);
@@ -116,6 +120,16 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @MockitoSpyBean
     protected PasskeyAuthenticationService passkeyAuthenticationService;
 
+    // Spy beans moved here to avoid creating separate Spring contexts in AdminSbomResourceIntegrationTest and VulnerabilityScanScheduleServiceTest
+    @MockitoSpyBean
+    protected ArtemisVersionService artemisVersionService;
+
+    @MockitoSpyBean
+    protected VulnerabilityService vulnerabilityService;
+
+    @MockitoSpyBean
+    protected ProfileService profileService;
+
     @BeforeEach
     protected void setupSpringAIMocks() {
         if (chatModel != null) {
@@ -130,6 +144,7 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @Override
     protected void resetSpyBeans() {
         Mockito.reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, competencyProgressService, competencyProgressApi);
+        Mockito.reset(artemisVersionService, vulnerabilityService, profileService);
         if (chatModel != null) {
             Mockito.reset(chatModel);
         }

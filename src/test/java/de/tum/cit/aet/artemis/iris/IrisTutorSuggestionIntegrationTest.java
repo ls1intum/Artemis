@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
+// Note: PROFILE_IRIS is already included in the base class AbstractSpringIntegrationLocalCILocalVCTest, so no additional @ActiveProfiles is needed
 class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "iristutorsuggestionintegration";
