@@ -12,19 +12,19 @@ import { faCircleCheck, faClock, faDownload, faExclamationCircle, faExclamationT
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { NgClass } from '@angular/common';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 import { downloadFile } from 'app/shared/util/download.util';
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 @Component({
     selector: 'jhi-build-job-detail',
     templateUrl: './build-job-detail.component.html',
     styleUrl: './build-job-detail.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, FaIconComponent, ArtemisDatePipe, ArtemisDurationFromSecondsPipe, NgClass, RouterLink, ResultComponent, AdminTitleBarTitleDirective],
+    imports: [TranslateDirective, FaIconComponent, ArtemisDatePipe, NgClass, RouterLink, ResultComponent, AdminTitleBarTitleDirective, HelpIconComponent],
 })
 export class BuildJobDetailComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
@@ -82,43 +82,76 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
         );
     });
 
-    /** Computed queue wait time in seconds */
+    /** Computed queue wait time formatted for display */
     queueWaitTime = computed(() => {
         const job = this.buildJob();
         if (!job) return undefined;
         const submissionDate = job.buildSubmissionDate || job.jobTimingInfo?.submissionDate;
         const buildStartDate = job.buildStartDate || job.jobTimingInfo?.buildStartDate;
         if (submissionDate && buildStartDate) {
-            return dayjs(buildStartDate).diff(dayjs(submissionDate), 'seconds');
+            const waitTimeSeconds = dayjs(buildStartDate).diff(dayjs(submissionDate), 'milliseconds') / 1000;
+            return this.formatFinishedDuration(waitTimeSeconds);
         }
         return undefined;
     });
 
-    /** Build duration in seconds */
+    /** Build duration formatted for display */
     buildDuration = computed(() => {
         const job = this.buildJob();
         if (!job) return undefined;
         // For finished jobs, compute from start/completion dates
         if (job.buildStartDate && job.buildCompletionDate) {
-            return (dayjs(job.buildCompletionDate).diff(dayjs(job.buildStartDate), 'milliseconds') / 1000).toFixed(3) + 's';
+            const durationSeconds = dayjs(job.buildCompletionDate).diff(dayjs(job.buildStartDate), 'milliseconds') / 1000;
+            return this.formatFinishedDuration(durationSeconds);
         }
         // For running jobs, use jobTimingInfo.buildDuration (updated by interval)
-        if (job.jobTimingInfo?.buildDuration) {
-            return job.jobTimingInfo.buildDuration;
+        if (job.jobTimingInfo?.buildDuration !== undefined) {
+            return this.formatLiveDuration(job.jobTimingInfo.buildDuration);
         }
         if (job.buildDuration) {
-            return job.buildDuration;
+            // If buildDuration is already a string, return it; otherwise format it
+            if (typeof job.buildDuration === 'string') {
+                return job.buildDuration;
+            }
+            return this.formatFinishedDuration(job.buildDuration);
         }
         return undefined;
     });
+
+    /**
+     * Formats duration for finished builds:
+     * - If >= 60s: show as "Xm Ys" (e.g., "1m 3s")
+     * - If < 60s: show with one decimal (e.g., "45.3s")
+     */
+    private formatFinishedDuration(seconds: number): string {
+        if (seconds >= 60) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = Math.round(seconds % 60);
+            return `${minutes}m ${remainingSeconds}s`;
+        }
+        return `${seconds.toFixed(1)}s`;
+    }
+
+    /**
+     * Formats duration for live/running builds (whole seconds only)
+     */
+    private formatLiveDuration(seconds: number): string {
+        if (seconds >= 60) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = Math.floor(seconds % 60);
+            return `${minutes}m ${remainingSeconds}s`;
+        }
+        return `${Math.floor(seconds)}s`;
+    }
 
     /** Get the status of the job */
     jobStatus = computed(() => {
         const job = this.buildJob();
         if (!job) return undefined;
         if (job.status) return job.status;
-        // For BuildJobQueueItem, check if it has a buildAgent (running) or not (queued)
-        if (job.buildAgent) return 'BUILDING';
+        // For BuildJobQueueItem, check if it has a buildStartDate (running) or not (queued)
+        const buildStartDate = job.buildStartDate || job.jobTimingInfo?.buildStartDate;
+        if (buildStartDate) return 'BUILDING';
         return 'QUEUED';
     });
 
@@ -280,6 +313,11 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
     /** Get the name of the job */
     getJobName(): string | undefined {
         return this.buildJob()?.name;
+    }
+
+    /** Get the ID of the job */
+    getJobId(): string | undefined {
+        return this.buildJob()?.id;
     }
 
     /** Get submission date */

@@ -183,4 +183,48 @@ export class BuildJobStatisticsComponent implements OnInit {
             this.getBuildJobStatistics(span);
         }
     }
+
+    /**
+     * Increments the appropriate statistics counter based on the build job status.
+     * Used for real-time updates when a finished job arrives via WebSocket.
+     * @param status The status of the finished build job
+     */
+    incrementStatisticsByStatus(status: string | undefined): void {
+        if (!status) {
+            return;
+        }
+
+        const currentStats = this.buildJobStatistics();
+        const updatedStats = new BuildJobStatistics();
+
+        // Copy current values
+        updatedStats.totalBuilds = currentStats.totalBuilds + 1;
+        updatedStats.successfulBuilds = currentStats.successfulBuilds;
+        updatedStats.failedBuilds = currentStats.failedBuilds;
+        updatedStats.cancelledBuilds = currentStats.cancelledBuilds;
+        updatedStats.timeOutBuilds = currentStats.timeOutBuilds;
+        updatedStats.missingBuilds = currentStats.missingBuilds;
+
+        // Increment the appropriate counter based on status
+        switch (status) {
+            case 'SUCCESSFUL':
+                updatedStats.successfulBuilds++;
+                break;
+            case 'FAILED':
+            case 'ERROR':
+                updatedStats.failedBuilds++;
+                break;
+            case 'CANCELLED':
+                updatedStats.cancelledBuilds++;
+                break;
+            case 'TIMEOUT':
+                updatedStats.timeOutBuilds++;
+                break;
+            case 'MISSING':
+                updatedStats.missingBuilds++;
+                break;
+        }
+
+        this.updateDisplayedBuildJobStatistics(updatedStats);
+    }
 }

@@ -33,8 +33,11 @@
                 "duration": "Dauer",
                 "status": "Status",
                 "buildLogs": "Build Logs",
-                "waitingTime": "Wartezeit"
+                "waitingTime": "Wartezeit",
+                "submitted": "Eingereicht",
+                "priorityTooltip": "Niedrigere Werte = höhere Priorität. 1 = Klausur läuft, 2 = Normal, 3 = Übung/Optional, 4 = Alle Builds auslösen. Testkurse erhalten +5 Strafe."
             },
+            "actions": "Aktionen",
             "cancel": "Abbrechen",
             "cancelAll": "Alle abbrechen",
             "filter": {

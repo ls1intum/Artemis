@@ -136,6 +136,23 @@ public class LocalCIWebsocketMessagingService {
         websocketMessagingService.sendMessage(courseChannel, finishedBuildJob);
     }
 
+    /**
+     * Sends a finished build job update to the individual build job topic.
+     * This is used to notify the build job detail page when a job finishes.
+     * Sends to both the admin topic and the course-specific topic.
+     *
+     * @param finishedBuildJob the finished build job DTO to send
+     */
+    public void sendFinishedBuildJobDetailUpdate(FinishedBuildJobDTO finishedBuildJob) {
+        String adminChannel = "/topic/admin/build-job/" + finishedBuildJob.id();
+        log.debug("Sending finished build job detail update on topic {}", adminChannel);
+        websocketMessagingService.sendMessage(adminChannel, finishedBuildJob);
+
+        String courseChannel = "/topic/courses/" + finishedBuildJob.courseId() + "/build-job/" + finishedBuildJob.id();
+        log.debug("Sending finished build job detail update on topic {}", courseChannel);
+        websocketMessagingService.sendMessage(courseChannel, finishedBuildJob);
+    }
+
     public void sendBuildAgentDetails(BuildAgentInformation buildAgentDetails) {
         String channel = "/topic/admin/build-agent/" + buildAgentDetails.buildAgent().name();
         log.debug("Sending message on topic {}: {}", channel, buildAgentDetails);

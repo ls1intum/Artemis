@@ -33,8 +33,11 @@
                 "duration": "Duration",
                 "status": "Status",
                 "buildLogs": "Build Logs",
-                "waitingTime": "Waiting"
+                "waitingTime": "Waiting",
+                "submitted": "Submitted",
+                "priorityTooltip": "Lower values = higher priority. 1 = Exam in progress, 2 = Normal, 3 = Practice/Optional, 4 = Trigger all builds. Test courses add +5 penalty."
             },
+            "actions": "Actions",
             "cancel": "Cancel",
             "cancelAll": "Cancel All",
             "filter": {

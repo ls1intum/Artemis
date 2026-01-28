@@ -334,10 +334,14 @@ public class LocalCIResultProcessingService {
             BuildJob savedBuildJob = buildJobRepository.save(buildJob);
 
             // Send WebSocket notification for the finished build job
+            // Refetch with eager loading to avoid LazyInitializationException
+            final BuildJob finalSavedBuildJob = savedBuildJob;
             localCIQueueWebsocketService.ifPresent(service -> {
                 try {
-                    FinishedBuildJobDTO finishedBuildJobDTO = FinishedBuildJobDTO.of(savedBuildJob);
-                    service.sendFinishedBuildJobOverWebsocket(finishedBuildJobDTO);
+                    buildJobRepository.findWithDataByBuildJobId(finalSavedBuildJob.getBuildJobId()).ifPresent(buildJobWithData -> {
+                        FinishedBuildJobDTO finishedBuildJobDTO = FinishedBuildJobDTO.of(buildJobWithData);
+                        service.sendFinishedBuildJobOverWebsocket(finishedBuildJobDTO);
+                    });
                 }
                 catch (Exception e) {
                     log.warn("Could not send finished build job notification over WebSocket", e);

@@ -1,6 +1,6 @@
 <div>
     @if (!courseId) {
-        <h5 *adminTitleBarTitle jhiTranslate="artemisApp.buildQueue.detail.title"></h5>
+        <h5 *adminTitleBarTitle id="build-job-detail-heading" class="mb-0" jhiTranslate="artemisApp.buildQueue.detail.title"></h5>
     }
 
     @if (isLoading()) {
@@ -74,6 +74,12 @@
                 <div class="row">
                     <div class="col-md-6">
                         <dl>
+                            @if (getJobId()) {
+                                <dt jhiTranslate="artemisApp.buildQueue.buildJob.id"></dt>
+                                <dd>
+                                    <code>{{ getJobId() }}</code>
+                                </dd>
+                            }
                             @if (getBuildAgentName()) {
                                 <dt jhiTranslate="artemisApp.buildQueue.buildJob.buildAgent"></dt>
                                 <dd>
@@ -174,7 +180,10 @@
                                 </dd>
                             }
                             @if (getPriority() !== undefined) {
-                                <dt jhiTranslate="artemisApp.buildQueue.buildJob.priority"></dt>
+                                <dt>
+                                    <span jhiTranslate="artemisApp.buildQueue.buildJob.priority"></span>
+                                    <jhi-help-icon text="artemisApp.buildQueue.buildJob.priorityTooltip" />
+                                </dt>
                                 <dd>{{ getPriority() }}</dd>
                             }
                             @if (getRetryCount() !== undefined && getRetryCount()! > 0) {
@@ -200,9 +209,9 @@
                         <dt class="col-sm-4" jhiTranslate="artemisApp.buildQueue.buildJob.buildStartDate"></dt>
                         <dd class="col-sm-8">{{ getBuildStartDate() | artemisDate: 'long' : true }}</dd>
                     }
-                    @if (queueWaitTime() !== undefined) {
+                    @if (queueWaitTime()) {
                         <dt class="col-sm-4" jhiTranslate="artemisApp.buildQueue.detail.queueWaitTime"></dt>
-                        <dd class="col-sm-8">{{ queueWaitTime()! | artemisDurationFromSeconds }}</dd>
+                        <dd class="col-sm-8">{{ queueWaitTime() }}</dd>
                     }
                     @if (getBuildCompletionDate()) {
                         <dt class="col-sm-4" jhiTranslate="artemisApp.buildQueue.buildJob.buildCompletionDate"></dt>
@@ -210,13 +219,7 @@
                     }
                     @if (buildDuration() !== undefined) {
                         <dt class="col-sm-4" jhiTranslate="artemisApp.buildQueue.buildJob.duration"></dt>
-                        <dd class="col-sm-8">
-                            @if (typeof buildDuration() === 'number') {
-                                {{ buildDuration() | artemisDurationFromSeconds }}
-                            } @else {
-                                {{ buildDuration() }}
-                            }
-                        </dd>
+                        <dd class="col-sm-8">{{ buildDuration() }}</dd>
                     }
                 </dl>
             </div>

@@ -11,18 +11,22 @@
     gap: 0.25rem;
     align-items: baseline;
     padding: 0.25rem 0.5rem;
-    background-color: var(--bs-tertiary-bg);
+    background-color: var(--bs-body-bg);
     border: 1px solid var(--bs-border-color);
     border-radius: 0.25rem;
     white-space: nowrap;
-    color: var(--bs-body-color);
 
-    .bold,
-    span {
+    .stats-label {
+        font-weight: 600;
         color: var(--bs-body-color);
     }
 
-    .text-muted {
-        color: var(--bs-secondary-color) !important;
+    .stats-value {
+        color: var(--bs-body-color);
+    }
+
+    .stats-percentage {
+        color: var(--bs-secondary-color);
+        font-size: 0.85em;
     }
 }

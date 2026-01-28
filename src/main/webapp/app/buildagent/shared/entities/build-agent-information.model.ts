@@ -16,6 +16,7 @@ export class BuildAgentInformation implements BaseEntity {
     public maxNumberOfConcurrentBuildJobs?: number;
     public numberOfCurrentBuildJobs?: number;
     public status?: BuildAgentStatus;
+    public runningBuildJobs?: BuildJob[];
     public recentBuildJobs?: BuildJob[];
     public buildAgentDetails?: BuildAgentDetails;
     public pauseAfterConsecutiveBuildFailures?: number;

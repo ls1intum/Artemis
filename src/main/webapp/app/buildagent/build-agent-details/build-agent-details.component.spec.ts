@@ -5,7 +5,6 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Subject, of, throwError } from 'rxjs';
 import { BuildJob, FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
 import dayjs from 'dayjs/esm';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { MockProvider } from 'ng-mocks';
 import { BuildAgentInformation, BuildAgentStatus } from 'app/buildagent/shared/entities/build-agent-information.model';
 import { RepositoryInfo, TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
@@ -13,7 +12,8 @@ import { JobTimingInfo } from 'app/buildagent/shared/entities/job-timing-info.mo
 import { BuildConfig } from 'app/buildagent/shared/entities/build-config.model';
 import { BuildAgentDetailsComponent } from 'app/buildagent/build-agent-details/build-agent-details.component';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -33,6 +33,7 @@ describe('BuildAgentDetailsComponent', () => {
     let component: BuildAgentDetailsComponent;
     let fixture: ComponentFixture<BuildAgentDetailsComponent>;
     let activatedRoute: MockActivatedRoute;
+    let router: MockRouter;
 
     const mockWebsocketService = {
         subscribe: vi.fn(),
@@ -193,10 +194,10 @@ describe('BuildAgentDetailsComponent', () => {
                 { provide: WebsocketService, useValue: mockWebsocketService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ key: 'ABC123' }) },
                 { provide: BuildAgentsService, useValue: mockBuildAgentsService },
-                { provide: DataTableComponent, useClass: DataTableComponent },
                 { provide: BuildOverviewService, useValue: mockBuildQueueService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: Router, useClass: MockRouter },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(AlertService),
@@ -208,6 +209,7 @@ describe('BuildAgentDetailsComponent', () => {
         component = fixture.componentInstance;
         activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
         modalService = TestBed.inject(NgbModal);
+        router = TestBed.inject(Router) as unknown as MockRouter;
         activatedRoute.setParameters({ agentName: mockBuildAgent.buildAgent?.name });
         alertService = TestBed.inject(AlertService);
         alertServiceAddAlertStub = vi.spyOn(alertService, 'addAlert');
@@ -420,5 +422,12 @@ describe('BuildAgentDetailsComponent', () => {
         component.viewBuildLogs('1');
         expect(windowSpy).toHaveBeenCalledOnce();
         expect(windowSpy).toHaveBeenCalledWith('/api/programming/build-log/1', '_blank');
+    });
+
+    it('should navigate to job detail page', () => {
+        const navigateSpy = vi.spyOn(router, 'navigate');
+        component.navigateToJobDetail('job-123');
+        expect(navigateSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledWith(['/admin', 'build-overview', 'job-123', 'job-details']);
     });
 });

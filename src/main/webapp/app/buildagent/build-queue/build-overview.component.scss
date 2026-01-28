@@ -1,54 +1,30 @@
 .wrap-long-text {
-    word-break: break-all; /* This will break the text at any character */
+    word-break: break-all;
 }
 
-.build-queue-nav-bar {
-    z-index: 10;
-    background-color: var(--bs-body-bg);
-    border-bottom: 1px solid var(--bs-border-color);
-    padding-bottom: 0.5rem;
-}
+// Course management view layout
+.build-overview-course-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    // Pull up to counteract parent padding
+    margin: -1rem;
 
-.build-jobs-section {
-    min-height: 300px;
-    max-height: 800px;
-    overflow-y: auto;
-}
+    .build-queue-nav-bar {
+        flex-shrink: 0;
+        background-color: #fff;
+        padding: 0.5rem 1rem;
+        z-index: 10;
 
-/* Common column styles for all build job tables */
-.build-jobs-column-tiny,
-.finish-jobs-column-tiny {
-    width: 40px;
-    max-width: 40px;
-}
-
-.build-jobs-column,
-.finish-jobs-column {
-    min-width: 80px;
-}
-
-.build-jobs-column-strings,
-.finish-jobs-column-strings {
-    min-width: 200px;
-    max-width: 300px;
-}
-
-.clickable-row {
-    cursor: pointer;
-
-    td {
-        font-size: 0.75rem;
-        vertical-align: middle;
-    }
-}
-
-/* Consistent table styling for running and queued jobs */
-.build-jobs-section {
-    .table {
-        th {
-            font-size: 0.8rem;
-            font-weight: 600;
+        :host-context(.dark) & {
+            background-color: var(--bs-body-bg);
         }
+    }
+
+    .build-queue-main-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
     }
 }
 

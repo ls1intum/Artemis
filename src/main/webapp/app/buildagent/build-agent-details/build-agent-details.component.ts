@@ -1,25 +1,18 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { BuildAgentInformation } from 'app/buildagent/shared/entities/build-agent-information.model';
 import { Subject, Subscription, debounceTime, switchMap, tap } from 'rxjs';
-import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faFilter, faPause, faPauseCircle, faPlay, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { faCircleCheck, faFilter, faPause, faPauseCircle, faPlay, faSync } from '@fortawesome/free-solid-svg-icons';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { BuildOverviewService } from 'app/buildagent/build-queue/build-overview.service';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CommonModule } from '@angular/common';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { ResultComponent } from 'app/exercise/result/result.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { BuildJobStatisticsComponent } from 'app/buildagent/build-job-statistics/build-job-statistics.component';
 import { BuildJob, BuildJobStatistics, FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -32,6 +25,8 @@ import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-b
 import dayjs from 'dayjs/esm';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/shared/components/slice-navigator/slice-navigator.component';
+import { RunningJobsTableComponent } from 'app/buildagent/build-queue/tables/running-jobs-table/running-jobs-table.component';
+import { FinishedJobsTableComponent } from 'app/buildagent/build-queue/tables/finished-jobs-table/finished-jobs-table.component';
 
 /**
  * Component that displays detailed information about a specific build agent.
@@ -46,35 +41,28 @@ import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/
     styleUrl: './build-agent-details.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        NgxDatatableModule,
-        DataTableComponent,
-        ArtemisDurationFromSecondsPipe,
-        ArtemisDatePipe,
         FontAwesomeModule,
         RouterModule,
         CommonModule,
-        ResultComponent,
         TranslateDirective,
+        ArtemisDatePipe,
         BuildJobStatisticsComponent,
         HelpIconComponent,
-        SortByDirective,
-        SortDirective,
-        DataTableComponent,
-        NgxDatatableModule,
         FormsModule,
         SliceNavigatorComponent,
         AdminTitleBarTitleDirective,
+        RunningJobsTableComponent,
+        FinishedJobsTableComponent,
     ],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     private readonly websocketService = inject(WebsocketService);
     private readonly buildAgentsService = inject(BuildAgentsService);
     private readonly route = inject(ActivatedRoute);
+    private readonly router = inject(Router);
     private readonly buildQueueService = inject(BuildOverviewService);
     private readonly alertService = inject(AlertService);
     private readonly modalService = inject(NgbModal);
-
-    protected readonly TriggeredByPushTo = TriggeredByPushTo;
 
     /** Current build agent information including status and configuration */
     buildAgent = signal<BuildAgentInformation | undefined>(undefined);
@@ -132,14 +120,11 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
     // Font Awesome icons for the UI
     readonly faCircleCheck = faCircleCheck;
-    readonly faExclamationCircle = faExclamationCircle;
-    readonly faExclamationTriangle = faExclamationTriangle;
-    readonly faTimes = faTimes;
     readonly faPauseCircle = faPauseCircle;
     readonly faPause = faPause;
     readonly faPlay = faPlay;
-    readonly faSort = faSort;
     readonly faSync = faSync;
+    readonly faFilter = faFilter;
 
     /** Configuration for the pagination component */
     readonly paginationConfig: PaginationConfig = {
@@ -162,7 +147,6 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
     /** Filter configuration for finished build jobs */
     finishedBuildJobFilter: FinishedBuildJobFilter;
-    faFilter = faFilter;
 
     /** Number of items to display per page */
     itemsPerPage = ITEMS_PER_PAGE;
@@ -488,5 +472,13 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
             // This is necessary to update the view when the build job duration is updated
             return { ...buildJob };
         });
+    }
+
+    /**
+     * Navigate to the build job detail page.
+     * @param jobId The ID of the build job
+     */
+    navigateToJobDetail(jobId: string): void {
+        this.router.navigate(['/admin', 'build-overview', jobId, 'job-details']);
     }
 }

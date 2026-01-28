@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.function.Function;
@@ -31,6 +32,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
+import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
@@ -59,14 +61,18 @@ public class SharedQueueManagementService {
 
     private final ProfileService profileService;
 
+    private final Optional<LocalCIQueueWebsocketService> localCIQueueWebsocketService;
+
     private int buildAgentsCapacity;
 
     private int runningBuildJobCount;
 
-    public SharedQueueManagementService(BuildJobRepository buildJobRepository, ProfileService profileService, DistributedDataAccessService distributedDataAccessService) {
+    public SharedQueueManagementService(BuildJobRepository buildJobRepository, ProfileService profileService, DistributedDataAccessService distributedDataAccessService,
+            Optional<LocalCIQueueWebsocketService> localCIQueueWebsocketService) {
         this.buildJobRepository = buildJobRepository;
         this.profileService = profileService;
         this.distributedDataAccessService = distributedDataAccessService;
+        this.localCIQueueWebsocketService = localCIQueueWebsocketService;
     }
 
     /**
@@ -143,6 +149,13 @@ public class SharedQueueManagementService {
     private void updateCancelledQueuedBuildJobsStatus(List<BuildJobQueueItem> queuedJobs) {
         for (BuildJobQueueItem queuedJob : queuedJobs) {
             buildJobRepository.updateBuildJobStatus(queuedJob.id(), BuildStatus.CANCELLED);
+            // Send WebSocket notification for the cancelled job (only on scheduling node)
+            localCIQueueWebsocketService.ifPresent(websocketService -> {
+                buildJobRepository.findByBuildJobId(queuedJob.id()).ifPresent(buildJob -> {
+                    FinishedBuildJobDTO finishedBuildJobDTO = FinishedBuildJobDTO.of(buildJob);
+                    websocketService.sendFinishedBuildJobOverWebsocket(finishedBuildJobDTO);
+                });
+            });
         }
     }
 

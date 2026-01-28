@@ -23,34 +23,34 @@
         <ngx-charts-pie-chart class="chart-container" [view]="[80, 80]" [results]="pieChartData()" [scheme]="pieChartColorScheme" [doughnut]="true" [arcWidth]="0.4" />
         <div class="d-flex flex-wrap gap-2 stats-container">
             <div class="stats-item">
-                <span class="bold" jhiTranslate="artemisApp.buildQueue.statistics.totalBuilds"></span>
-                <span>{{ buildJobStatistics().totalBuilds }}</span>
+                <span class="stats-label" jhiTranslate="artemisApp.buildQueue.statistics.totalBuilds"></span>
+                <span class="stats-value">{{ buildJobStatistics().totalBuilds }}</span>
             </div>
             <div class="stats-item">
-                <span class="bold" jhiTranslate="artemisApp.buildQueue.statistics.successfulBuildsWithColon"></span>
-                <span>{{ buildJobStatistics().successfulBuilds }}</span>
-                <span class="text-muted small">({{ successfulBuildsPercentage() }})</span>
+                <span class="stats-label" jhiTranslate="artemisApp.buildQueue.statistics.successfulBuildsWithColon"></span>
+                <span class="stats-value">{{ buildJobStatistics().successfulBuilds }}</span>
+                <span class="stats-percentage">({{ successfulBuildsPercentage() }})</span>
             </div>
             <div class="stats-item">
-                <span class="bold" jhiTranslate="artemisApp.buildQueue.statistics.failedBuilds"></span>
-                <span>{{ buildJobStatistics().failedBuilds }}</span>
-                <span class="text-muted small">({{ failedBuildsPercentage() }})</span>
+                <span class="stats-label" jhiTranslate="artemisApp.buildQueue.statistics.failedBuilds"></span>
+                <span class="stats-value">{{ buildJobStatistics().failedBuilds }}</span>
+                <span class="stats-percentage">({{ failedBuildsPercentage() }})</span>
             </div>
             <div class="stats-item">
-                <span class="bold" jhiTranslate="artemisApp.buildQueue.statistics.cancelledBuilds"></span>
-                <span>{{ buildJobStatistics().cancelledBuilds }}</span>
-                <span class="text-muted small">({{ cancelledBuildsPercentage() }})</span>
+                <span class="stats-label" jhiTranslate="artemisApp.buildQueue.statistics.cancelledBuilds"></span>
+                <span class="stats-value">{{ buildJobStatistics().cancelledBuilds }}</span>
+                <span class="stats-percentage">({{ cancelledBuildsPercentage() }})</span>
             </div>
             <div class="stats-item">
-                <span class="bold" jhiTranslate="artemisApp.buildQueue.statistics.timeoutBuilds"></span>
-                <span>{{ buildJobStatistics().timeOutBuilds }}</span>
-                <span class="text-muted small">({{ timeoutBuildsPercentage() }})</span>
+                <span class="stats-label" jhiTranslate="artemisApp.buildQueue.statistics.timeoutBuilds"></span>
+                <span class="stats-value">{{ buildJobStatistics().timeOutBuilds }}</span>
+                <span class="stats-percentage">({{ timeoutBuildsPercentage() }})</span>
             </div>
             @if (displayMissingBuilds) {
                 <div class="stats-item">
-                    <span class="bold" jhiTranslate="artemisApp.buildQueue.statistics.missingBuilds"></span>
-                    <span>{{ buildJobStatistics().missingBuilds }}</span>
-                    <span class="text-muted small">({{ missingBuildsPercentage() }})</span>
+                    <span class="stats-label" jhiTranslate="artemisApp.buildQueue.statistics.missingBuilds"></span>
+                    <span class="stats-value">{{ buildJobStatistics().missingBuilds }}</span>
+                    <span class="stats-percentage">({{ missingBuildsPercentage() }})</span>
                 </div>
             }
         </div>

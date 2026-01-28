@@ -80,6 +80,8 @@ public class LocalCIQueueWebsocketService {
      */
     void sendFinishedBuildJobOverWebsocket(FinishedBuildJobDTO finishedBuildJob) {
         localCIWebsocketMessagingService.sendFinishedBuildJobUpdate(finishedBuildJob);
+        // Also send to the individual build job topic for the build job detail page
+        localCIWebsocketMessagingService.sendFinishedBuildJobDetailUpdate(finishedBuildJob);
     }
 
     /**

@@ -1,0 +1,74 @@
+<div class="build-jobs-section">
+    @if (buildJobs()?.length) {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th class="build-jobs-column-tiny"></th>
+                        <th class="build-jobs-column-strings" jhiTranslate="artemisApp.buildQueue.buildJob.name"></th>
+                        <th class="build-jobs-column-strings" jhiTranslate="artemisApp.buildQueue.buildJob.buildAgent"></th>
+                        <th class="build-jobs-column" jhiTranslate="artemisApp.buildQueue.buildJob.start"></th>
+                        <th class="build-jobs-column" jhiTranslate="artemisApp.buildQueue.buildJob.duration"></th>
+                        @if (showCourseId()) {
+                            <th class="build-jobs-column" jhiTranslate="artemisApp.buildQueue.buildJob.courseId"></th>
+                        }
+                        <th class="build-jobs-column">
+                            <span jhiTranslate="artemisApp.buildQueue.buildJob.priority"></span>
+                            <jhi-help-icon text="artemisApp.buildQueue.buildJob.priorityTooltip" />
+                        </th>
+                        <th class="build-jobs-column-tiny"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (buildJob of buildJobs(); track buildJob.id) {
+                        <tr class="clickable-row" (click)="onJobClick(buildJob.id)">
+                            <td class="build-jobs-column-tiny">
+                                <span class="text-primary">
+                                    <fa-icon [icon]="faSpinner" animation="spin" />
+                                </span>
+                            </td>
+                            <td class="build-jobs-column-strings">
+                                <span [title]="buildJob.name ?? ''" [ngClass]="{ 'text-danger': (buildJob.jobTimingInfo?.buildDuration ?? 0) > 240 }">
+                                    @if ((buildJob.jobTimingInfo?.buildDuration ?? 0) > 240) {
+                                        <fa-icon [icon]="faExclamationCircle" class="me-1" />
+                                    }
+                                    {{ buildJob.name ?? '' | slice: 0 : 30 }}{{ (buildJob.name ?? '').length > 30 ? '...' : '' }}
+                                </span>
+                            </td>
+                            <td class="build-jobs-column-strings">
+                                @if (isAdminView() && buildJob.buildAgent) {
+                                    <a [routerLink]="['/admin/build-agents/details']" [queryParams]="{ agentName: buildJob.buildAgent.name }" (click)="onLinkClick($event)">
+                                        {{ buildJob.buildAgent.displayName }}
+                                    </a>
+                                } @else if (buildJob.buildAgent) {
+                                    <span>{{ buildJob.buildAgent.displayName }}</span>
+                                }
+                            </td>
+                            <td class="build-jobs-column">
+                                <span class="text-muted small">{{ buildJob.jobTimingInfo?.buildStartDate | artemisDate: 'short' : true }}</span>
+                            </td>
+                            <td class="build-jobs-column">
+                                {{ buildJob.jobTimingInfo?.buildDuration ?? 0 | artemisDurationFromSeconds }}
+                            </td>
+                            @if (showCourseId()) {
+                                <td class="build-jobs-column">
+                                    <a [routerLink]="['/course-management', buildJob.courseId]" (click)="onLinkClick($event)">{{ buildJob.courseId }}</a>
+                                </td>
+                            }
+                            <td class="build-jobs-column">
+                                {{ buildJob.priority }}
+                            </td>
+                            <td class="build-jobs-column-tiny">
+                                <button class="btn btn-danger btn-sm" (click)="onCancelJob(buildJob.id!, $event)" [title]="'artemisApp.buildQueue.cancel' | artemisTranslate">
+                                    <fa-icon [icon]="faTimes" />
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    } @else {
+        <p class="text-muted" jhiTranslate="artemisApp.buildQueue.noRunningBuilds"></p>
+    }
+</div>
