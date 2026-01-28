@@ -48,16 +48,9 @@
             WHERE external_llm_usage_accepted IS NOT NULL
         </sql>
 
-        <!-- Remove old columns -->
-        <dropColumn tableName="jhi_user" columnName="external_llm_usage_accepted"/>
+        <!-- Note: external_llm_usage_accepted column is intentionally kept for backwards compatibility -->
 
         <rollback>
-            <!-- Restore old column -->
-            <addColumn tableName="jhi_user">
-                <column name="external_llm_usage_accepted" type="datetime(3)">
-                    <constraints nullable="true"/>
-                </column>
-            </addColumn>
             <!-- Restore data from new columns back to old column -->
             <sql>
                 UPDATE jhi_user
