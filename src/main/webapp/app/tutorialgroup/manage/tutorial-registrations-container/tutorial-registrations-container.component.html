@@ -3,9 +3,13 @@
     @let tutorialGroupIdToPass = tutorialGroupId();
     @let registeredStudentsToPass = registeredStudents();
     @if (courseIdToPass && tutorialGroupIdToPass && registeredStudentsToPass !== undefined) {
-        <jhi-tutorial-registrations [courseId]="courseIdToPass" [tutorialGroupId]="tutorialGroupIdToPass" [registeredStudents]="registeredStudentsToPass" />
+        <jhi-tutorial-registrations
+            [courseId]="courseIdToPass"
+            [tutorialGroupId]="tutorialGroupIdToPass"
+            [registeredStudents]="registeredStudentsToPass"
+            (onDeregisterStudent)="deregisterStudent($event)"
+        />
     } @else {
         <!-- TODO: create some error screen -->
-        No Data
     }
 </div>

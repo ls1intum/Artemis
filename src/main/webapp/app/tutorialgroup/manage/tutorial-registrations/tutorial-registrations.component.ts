@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
@@ -7,6 +7,12 @@ import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/enti
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { addPublicFilePrefix } from 'app/app.constants';
 
+export interface DeregisterStudentEvent {
+    courseId: number;
+    tutorialGroupId: number;
+    studentLogin: string;
+}
+
 @Component({
     selector: 'jhi-tutorial-registrations',
     imports: [IconFieldModule, InputIconModule, InputTextModule, ButtonModule, ProfilePictureComponent],
@@ -14,8 +20,18 @@ import { addPublicFilePrefix } from 'app/app.constants';
     styleUrl: './tutorial-registrations.component.scss',
 })
 export class TutorialRegistrationsComponent {
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
+
     courseId = input.required<number>();
     tutorialGroupId = input.required<number>();
     registeredStudents = input.required<TutorialGroupRegisteredStudentDTO[]>();
-    protected readonly addPublicFilePrefix = addPublicFilePrefix;
+    onDeregisterStudent = output<DeregisterStudentEvent>();
+
+    deregisterStudent(studentLogin: string) {
+        this.onDeregisterStudent.emit({
+            courseId: this.courseId(),
+            tutorialGroupId: this.tutorialGroupId(),
+            studentLogin: studentLogin,
+        });
+    }
 }

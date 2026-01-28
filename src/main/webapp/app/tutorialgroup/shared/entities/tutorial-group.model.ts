@@ -94,9 +94,9 @@ export class RawTutorialGroupDetailGroupDTO {
 
 export interface TutorialGroupRegisteredStudentDTO {
     id: number;
-    name: string;
-    profilePictureUrl: string;
+    name?: string;
+    profilePictureUrl?: string;
     login: string;
-    email: string;
-    registrationNumber: string;
+    email?: string;
+    registrationNumber?: string;
 }

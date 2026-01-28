@@ -2,7 +2,7 @@ import { Component, DestroyRef, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariableSignal';
 import { ActivatedRoute } from '@angular/router';
-import { TutorialRegistrationsComponent } from 'app/tutorialgroup/manage/tutorial-registrations/tutorial-registrations.component';
+import { DeregisterStudentEvent, TutorialRegistrationsComponent } from 'app/tutorialgroup/manage/tutorial-registrations/tutorial-registrations.component';
 import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 
@@ -36,5 +36,21 @@ export class TutorialRegistrationsContainerComponent {
                     this.registeredStudents.set(registeredStudents);
                 });
         });
+    }
+
+    deregisterStudent(event: DeregisterStudentEvent) {
+        const courseId = event.courseId;
+        const tutorialGroupId = event.tutorialGroupId;
+        const studentLogin = event.studentLogin;
+        this.tutorialGroupsService
+            .deregisterStudent(courseId, tutorialGroupId, studentLogin)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(() => {
+                this.registeredStudents.update((registeredStudents) => {
+                    if (registeredStudents) {
+                        return registeredStudents.filter((student) => student.login !== studentLogin);
+                    }
+                });
+            });
     }
 }
