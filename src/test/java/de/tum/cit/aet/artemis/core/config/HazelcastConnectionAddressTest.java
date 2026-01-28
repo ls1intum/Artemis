@@ -29,7 +29,7 @@ class HazelcastConnectionAddressTest {
         // Create mock dependencies - we only need the instance to test the utility methods
         DiscoveryClient discoveryClient = Mockito.mock(DiscoveryClient.class);
         Environment env = Mockito.mock(Environment.class);
-        hazelcastConnection = new HazelcastConnection(discoveryClient, Optional.empty(), env);
+        hazelcastConnection = new HazelcastConnection(discoveryClient, Optional.empty(), Optional.empty(), env);
     }
 
     @Nested

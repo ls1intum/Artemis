@@ -75,29 +75,33 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
      * Returns a unique identifier for the local Hazelcast instance.
      * For cluster members, returns the member's cluster address in normalized format.
      * For clients (e.g., build agents in client mode), returns the client's local endpoint address,
-     * or the instance name as a fallback if not yet connected.
+     * or a unique fallback identifier if not yet connected.
      *
      * <p>
-     * The address format is always {@code [host]:port} where the host is the IP address.
+     * The address format is always {@code [host]:port} where the host is the IP address or hostname.
      * IPv6 addresses are wrapped in brackets per RFC 3986, and IPv4 addresses are also
-     * wrapped in brackets for consistency across the codebase.
+     * wrapped in brackets for consistency across the codebase. Note that for cluster members,
+     * {@code memberAddress.getHost()} may return either an IP address or a hostname depending
+     * on the Hazelcast configuration and network environment.
      *
      * <p>
      * <strong>Examples:</strong>
      * <ul>
      * <li>IPv4: {@code [192.168.1.1]:5701}</li>
      * <li>IPv6: {@code [2001:db8::1]:5701}</li>
-     * <li>Client not connected: {@code Artemis-client} (uses instance name as fallback)</li>
+     * <li>Hostname: {@code [artemis-node-1]:5701}</li>
+     * <li>Client not connected (fallback): {@code artemis-build-agent-1/Artemis-client}</li>
      * </ul>
      *
      * <p>
      * <strong>Important:</strong> When using asyncStart=true for Hazelcast clients, the endpoint
-     * address may not be available immediately. In this case, the instance name is returned as a
-     * unique identifier. This ensures that build agents can register themselves in the distributed
-     * map even before connecting to the cluster.
+     * address may not be available immediately. In this case, a unique fallback identifier
+     * combining hostname and instance name (format: {@code hostname/instanceName}) is returned.
+     * This ensures that each build agent has a unique key in the distributed map even before
+     * connecting to the cluster.
      *
      * @return a unique identifier for this instance: the address in format {@code [host]:port},
-     *         or the instance name if the client endpoint is not yet connected
+     *         or {@code hostname/instanceName} if the client endpoint is not yet connected
      * @throws HazelcastInstanceNotActiveException if the Hazelcast instance is not running
      */
     @Override
@@ -117,7 +121,12 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
                 // even before connecting to the cluster.
                 return getUniqueInstanceIdentifier();
             }
-            InetSocketAddress socketAddress = (InetSocketAddress) localEndpoint.getSocketAddress();
+            // Verify the socket address is an InetSocketAddress before casting
+            // In practice, Hazelcast always returns InetSocketAddress, but we guard against
+            // potential future changes or unexpected implementations
+            if (!(localEndpoint.getSocketAddress() instanceof InetSocketAddress socketAddress)) {
+                return getUniqueInstanceIdentifier();
+            }
             // Format as [host]:port for consistency
             return "[" + socketAddress.getAddress().getHostAddress() + "]:" + socketAddress.getPort();
         }

@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.serviceregistry.Registration;
+import org.springframework.cloud.client.serviceregistry.ServiceRegistry;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -64,6 +65,10 @@ public class HazelcastConnection {
     // the service registry, in our current deployment this is the jhipster registry which offers a Eureka Server under the hood
     private final Optional<Registration> registration;
 
+    // the service registry used to trigger immediate re-registration when metadata changes
+    @SuppressWarnings("rawtypes")
+    private final Optional<ServiceRegistry> serviceRegistry;
+
     private final Environment env;
 
     @Value("${spring.hazelcast.port:5701}")
@@ -72,9 +77,11 @@ public class HazelcastConnection {
     @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
     private String instanceName;
 
-    public HazelcastConnection(DiscoveryClient discoveryClient, Optional<Registration> registration, Environment env) {
+    @SuppressWarnings("rawtypes")
+    public HazelcastConnection(DiscoveryClient discoveryClient, Optional<Registration> registration, Optional<ServiceRegistry> serviceRegistry, Environment env) {
         this.discoveryClient = discoveryClient;
         this.registration = registration;
+        this.serviceRegistry = serviceRegistry;
         this.env = env;
     }
 
@@ -367,17 +374,33 @@ public class HazelcastConnection {
      * This allows other instances to identify it as a client rather than a cluster member.
      *
      * <p>
-     * <strong>Note on Eureka propagation:</strong> The metadata change is stored in the local
-     * Registration object and will be propagated to the Eureka server on the next heartbeat
-     * (default interval: 30 seconds). For immediate visibility to other nodes, ensure this method
-     * is called early during application startup, before the first Eureka registration.
-     * In practice, this is called during Hazelcast client bean creation, which typically occurs
-     * before or during the initial Eureka registration.
+     * The metadata change is immediately propagated to the Eureka server by triggering
+     * a re-registration. This ensures other instances can identify this node as a client
+     * without waiting for the next heartbeat (default interval: 30 seconds).
+     *
+     * <p>
+     * If the ServiceRegistry is not available (e.g., in test environments), the metadata
+     * change will still be made locally and propagated on the next heartbeat.
      */
+    @SuppressWarnings("unchecked")
     public void registerAsClient() {
         if (registration.isPresent()) {
             registration.get().getMetadata().put(HAZELCAST_MEMBER_TYPE_KEY, HAZELCAST_MEMBER_TYPE_CLIENT);
-            log.info("Registered this instance as Hazelcast client in service registry");
+            log.info("Marked this instance as Hazelcast client in service registry metadata");
+
+            // Trigger immediate re-registration to propagate metadata change
+            if (serviceRegistry.isPresent()) {
+                try {
+                    serviceRegistry.get().register(registration.get());
+                    log.info("Triggered immediate Eureka re-registration for Hazelcast client metadata");
+                }
+                catch (Exception e) {
+                    log.warn("Failed to trigger immediate Eureka re-registration: {}. Metadata will propagate on next heartbeat.", e.getMessage());
+                }
+            }
+            else {
+                log.debug("ServiceRegistry not available - metadata will propagate on next Eureka heartbeat");
+            }
         }
     }
 }

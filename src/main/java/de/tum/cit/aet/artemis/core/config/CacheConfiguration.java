@@ -13,7 +13,6 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,6 +43,8 @@ import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.client.config.ClientConnectionStrategyConfig;
 import com.hazelcast.client.config.RoutingMode;
 import com.hazelcast.config.Config;
+import com.hazelcast.config.DiscoveryConfig;
+import com.hazelcast.config.DiscoveryStrategyConfig;
 import com.hazelcast.config.EvictionConfig;
 import com.hazelcast.config.EvictionPolicy;
 import com.hazelcast.config.MapConfig;
@@ -152,6 +153,8 @@ public class CacheConfiguration {
     @PreDestroy
     public void destroy() {
         log.info("Closing Cache Manager");
+        // Clear static references to prevent memory leaks
+        EurekaHazelcastDiscoveryStrategy.clearHazelcastConnection();
         // Shutdown all Hazelcast instances (both cluster members and clients)
         Hazelcast.shutdownAll();
         HazelcastClient.shutdownAll();
@@ -382,9 +385,13 @@ public class CacheConfiguration {
      * and isolating the core cluster from build agent failures.
      *
      * <p>
-     * The client connects to core nodes via auto-discovery from the service registry.
+     * The client uses a custom Eureka-based discovery strategy to dynamically discover
+     * core cluster nodes from the service registry. This enables automatic reconnection
+     * to newly available core nodes without requiring static address configuration.
+     *
+     * <p>
      * If no core nodes are available during startup, the client will start asynchronously
-     * and keep retrying until core nodes become available.
+     * and keep retrying discovery until core nodes become available.
      *
      * @return a HazelcastInstance configured as a client
      */
@@ -397,14 +404,16 @@ public class CacheConfiguration {
             clientConfig.setClusterName("prod");
         }
 
-        // Discover core node addresses from service registry using HazelcastConnection
-        List<String> discoveredAddresses = hazelcastConnection.discoverCoreNodeAddresses();
+        // Set up the HazelcastConnection reference for the discovery strategy
+        // This must be done before creating the client
+        EurekaHazelcastDiscoveryStrategy.setHazelcastConnection(hazelcastConnection);
 
-        // Add discovered core node addresses (if any found)
-        for (String address : discoveredAddresses) {
-            log.info("Adding core node address for Hazelcast client: {}", address);
-            clientConfig.getNetworkConfig().addAddress(address);
-        }
+        // Configure Eureka-based discovery strategy for dynamic core node discovery
+        // This replaces static address configuration and allows the client to discover
+        // core nodes that become available after client startup
+        DiscoveryStrategyConfig discoveryStrategyConfig = new DiscoveryStrategyConfig(new EurekaHazelcastDiscoveryStrategyFactory());
+        DiscoveryConfig discoveryConfig = clientConfig.getNetworkConfig().getDiscoveryConfig();
+        discoveryConfig.addDiscoveryStrategyConfig(discoveryStrategyConfig);
 
         // Connection strategy configuration for resilience:
         // - asyncStart=true: Don't block startup, connect in background
@@ -431,12 +440,7 @@ public class CacheConfiguration {
         // Mark this instance as a client in the service registry
         hazelcastConnection.registerAsClient();
 
-        if (!discoveredAddresses.isEmpty()) {
-            log.info("Creating Hazelcast client to connect to core cluster at: {}", discoveredAddresses);
-        }
-        else {
-            log.warn("No core nodes found in service registry. Hazelcast client will retry connection in background.");
-        }
+        log.info("Creating Hazelcast client with Eureka-based dynamic discovery");
 
         return HazelcastClient.newHazelcastClient(clientConfig);
     }
