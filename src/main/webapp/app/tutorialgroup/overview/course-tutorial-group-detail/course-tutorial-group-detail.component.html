@@ -243,10 +243,10 @@
                         @if (allowManagementActions()) {
                             <td>
                                 <div class="session-actions">
-                                    <button class="icon-button">
+                                    <button>
                                         <fa-icon [icon]="faPenToSquare" aria-hidden="true" />
                                     </button>
-                                    <button class="icon-button danger" (click)="deleteTutorialGroupSession(session.id)">
+                                    <button class="danger" (click)="deleteTutorialGroupSession(session.id)">
                                         <fa-icon [icon]="faTrash" aria-hidden="true" />
                                     </button>
                                 </div>

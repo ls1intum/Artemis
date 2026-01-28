@@ -57,5 +57,24 @@
             justify-content: start;
             align-items: center;
         }
+
+        .student-actions {
+            display: flex;
+            gap: 1rem;
+
+            button {
+                background: none;
+                border: none;
+                padding: 0;
+
+                &.danger {
+                    color: var(--danger);
+                }
+
+                &:hover {
+                    opacity: 0.8;
+                }
+            }
+        }
     }
 }
