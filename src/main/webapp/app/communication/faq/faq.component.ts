@@ -110,8 +110,8 @@ export class FaqComponent implements OnInit, OnDestroy {
                 this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
             }
         });
-        const irisProfileActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
-        if (irisProfileActive) {
+        const irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
+        if (irisEnabled) {
             this.irisSettingsService.getCourseSettingsWithRateLimit(this.courseId).subscribe((response) => {
                 this.irisEnabled = response?.settings?.enabled || false;
             });
