@@ -5,26 +5,26 @@ import { Overlay } from '@angular/cdk/overlay';
 import { ActivatedRoute, Params } from '@angular/router';
 import { IrisChatbotWidgetComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component';
 import { EMPTY, filter, of, switchMap } from 'rxjs';
-import { faAngleDoubleDown, faChevronDown, faCircle } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDoubleDown, faCircle } from '@fortawesome/free-solid-svg-icons';
 import { IrisLogoLookDirection, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { isTextContent } from 'app/iris/shared/entities/iris-content-type.model';
+import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 
 @Component({
     selector: 'jhi-exercise-chatbot-button',
     templateUrl: './exercise-chatbot-button.component.html',
     styleUrls: ['./exercise-chatbot-button.component.scss'],
-    imports: [NgClass, TranslateDirective, FaIconComponent, IrisLogoComponent, HtmlForMarkdownPipe],
+    imports: [NgClass, TranslateDirective, FaIconComponent, IrisLogoComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisExerciseChatbotButtonComponent {
     protected readonly faCircle = faCircle;
-    protected readonly faChevronDown = faChevronDown;
     protected readonly faAngleDoubleDown = faAngleDoubleDown;
 
     private readonly dialog = inject(MatDialog);
@@ -45,11 +45,12 @@ export class IrisExerciseChatbotButtonComponent {
     // UI state as signals for OnPush change detection
     readonly chatOpen = signal(false);
     readonly isOverflowing = signal(false);
-    readonly newIrisMessage = signal<string | undefined>(undefined);
+    readonly newIrisMessage = signal<ChatBubbleMessage | undefined>(undefined);
 
     // Convert numNewMessages observable to signal
     private readonly numNewMessages = toSignal(this.chatService.numNewMessages, { initialValue: 0 });
     readonly hasNewMessages = computed(() => this.numNewMessages() > 0);
+    private readonly citationInfo = toSignal(this.chatService.currentCitationInfo(), { initialValue: [] as IrisCitationMetaDTO[] });
 
     // Convert newIrisMessage observable to signal for tracking incoming messages
     private readonly latestIrisMessageContent = toSignal(
@@ -57,7 +58,7 @@ export class IrisExerciseChatbotButtonComponent {
             filter((msg) => !!msg),
             switchMap((msg) => {
                 if (msg!.content && msg!.content.length > 0 && isTextContent(msg!.content[0])) {
-                    return of(msg!.content[0].textContent);
+                    return of({ text: msg!.content[0].textContent });
                 }
                 return EMPTY;
             }),
@@ -123,8 +124,8 @@ export class IrisExerciseChatbotButtonComponent {
             const isChatClosed = untracked(() => !this.chatOpen());
 
             // Only show if: message exists, chat is closed, AND it's a new message we haven't shown
-            if (message && isChatClosed && message !== this.lastShownBubbleMessage) {
-                this.lastShownBubbleMessage = message;
+            if (message?.text && isChatClosed && message.text !== this.lastShownBubbleMessage) {
+                this.lastShownBubbleMessage = message.text;
                 this.newIrisMessage.set(message);
                 setTimeout(() => this.checkOverflow(), 0);
 
@@ -190,4 +191,185 @@ export class IrisExerciseChatbotButtonComponent {
         this.chatOpen.set(false);
         this.newIrisMessage.set(undefined);
     }
+
+    renderChatBubbleMessage(message?: ChatBubbleMessage): string {
+        if (!message?.text) {
+            return '';
+        }
+        const withCitations = this.replaceCitationsPreview(message.text, this.citationInfo());
+        return htmlForMarkdown(withCitations);
+    }
+
+    private replaceCitationsPreview(text: string, citationInfo: IrisCitationMetaDTO[]): string {
+        if (!text || !text.includes('[cite:')) {
+            return text;
+        }
+        const citationMap = new Map<number, IrisCitationMetaDTO>(citationInfo.map((citation) => [citation.entityId, citation]));
+        const citationRegex = /\[cite:[^\]]+\]/g;
+        const tokens: Array<{ type: 'text'; value: string } | { type: 'citation'; value: string }> = [];
+        let lastIndex = 0;
+        for (const match of text.matchAll(citationRegex)) {
+            const index = match.index ?? 0;
+            if (index > lastIndex) {
+                tokens.push({ type: 'text', value: text.slice(lastIndex, index) });
+            }
+            tokens.push({ type: 'citation', value: match[0] });
+            lastIndex = index + match[0].length;
+        }
+        if (lastIndex < text.length) {
+            tokens.push({ type: 'text', value: text.slice(lastIndex) });
+        }
+
+        const rendered: string[] = [];
+        let i = 0;
+        while (i < tokens.length) {
+            const token = tokens[i];
+            if (token.type === 'text') {
+                rendered.push(token.value);
+                i += 1;
+                continue;
+            }
+            const citationGroup: string[] = [token.value];
+            let j = i + 1;
+            let pendingWhitespace = '';
+            while (j < tokens.length) {
+                const nextToken = tokens[j];
+                if (nextToken.type === 'text' && /^\s*$/.test(nextToken.value)) {
+                    pendingWhitespace += nextToken.value;
+                    j += 1;
+                    continue;
+                }
+                if (nextToken.type === 'citation') {
+                    citationGroup.push(nextToken.value);
+                    pendingWhitespace = '';
+                    j += 1;
+                    continue;
+                }
+                break;
+            }
+
+            if (citationGroup.length > 1) {
+                const parsed = citationGroup.map((raw) => this.parseCitation(raw)).filter((value): value is IrisCitationParsed => Boolean(value));
+                if (parsed.length === 0) {
+                    rendered.push(citationGroup.join(''));
+                } else {
+                    const metas = parsed.map((entry) => (entry.type === 'L' ? citationMap.get(entry.entityId) : undefined));
+                    rendered.push(this.renderCitationGroupPreviewHtml(parsed, metas));
+                }
+                if (pendingWhitespace) {
+                    rendered.push(pendingWhitespace);
+                }
+                i = j;
+                continue;
+            }
+
+            const parsed = this.parseCitation(token.value);
+            if (!parsed) {
+                rendered.push(token.value);
+                i = j;
+                continue;
+            }
+            const meta = parsed.type === 'L' ? citationMap.get(parsed.entityId) : undefined;
+            rendered.push(this.renderCitationPreviewHtml(parsed, meta));
+            if (pendingWhitespace) {
+                rendered.push(pendingWhitespace);
+            }
+            i = j;
+        }
+
+        return rendered.join('');
+    }
+
+    private parseCitation(raw: string): IrisCitationParsed | undefined {
+        const content = raw.slice(6, -1);
+        const parts = content.split(':');
+        if (parts.length < 2) {
+            return undefined;
+        }
+        let type = parts[0];
+        let entityIdValue = parts[1];
+        let offset = 2;
+        if (!this.isCitationType(type) && this.isCitationType(parts[1])) {
+            type = parts[1];
+            entityIdValue = parts[0];
+            offset = 2;
+        }
+        if (!this.isCitationType(type)) {
+            return undefined;
+        }
+        const entityId = Number(entityIdValue);
+        if (!Number.isFinite(entityId)) {
+            return undefined;
+        }
+        const page = parts[offset] ?? '';
+        const start = parts[offset + 1] ?? '';
+        const end = parts[offset + 2] ?? '';
+        const keyword = parts[offset + 3] ?? '';
+        return {
+            type,
+            entityId,
+            page,
+            start,
+            end,
+            keyword,
+        };
+    }
+
+    private isCitationType(value?: string): value is 'L' | 'F' {
+        return value === 'L' || value === 'F';
+    }
+
+    private renderCitationPreviewHtml(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
+        const label = this.formatCitationLabel(parsed, meta);
+        const typeClass = this.resolveCitationTypeClass(parsed);
+        const classes = ['iris-citation', typeClass].filter(Boolean).join(' ');
+        return `<span class="${classes}"><span class="iris-citation__icon"></span><span class="iris-citation__text">${label}</span></span>`;
+    }
+
+    private renderCitationGroupPreviewHtml(parsed: IrisCitationParsed[], metas: Array<IrisCitationMetaDTO | undefined>): string {
+        const first = parsed[0];
+        const firstMeta = metas[0];
+        const label = this.formatCitationLabel(first, firstMeta);
+        const typeClass = this.resolveCitationTypeClass(first);
+        const classes = ['iris-citation-group', typeClass].filter(Boolean).join(' ');
+        const count = parsed.length - 1;
+        return `<span class="${classes}"><span class="iris-citation ${typeClass}"><span class="iris-citation__icon"></span><span class="iris-citation__text">${label}</span></span><span class="iris-citation__count">+${count}</span></span>`;
+    }
+
+    private formatCitationLabel(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
+        const keyword = parsed.keyword?.trim();
+        const fallback = parsed.type === 'F' ? 'FAQ' : 'Source';
+        const label = keyword || fallback;
+        return this.escapeHtml(label);
+    }
+
+    private resolveCitationTypeClass(parsed: IrisCitationParsed): string {
+        if (parsed.type === 'F') {
+            return 'iris-citation--faq';
+        }
+        if (parsed.start || parsed.end) {
+            return 'iris-citation--video';
+        }
+        if (parsed.page) {
+            return 'iris-citation--slide';
+        }
+        return 'iris-citation--source';
+    }
+
+    private escapeHtml(text: string): string {
+        return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
 }
+
+type ChatBubbleMessage = {
+    text: string;
+};
+
+type IrisCitationParsed = {
+    type: 'L' | 'F';
+    entityId: number;
+    page: string;
+    start: string;
+    end: string;
+    keyword: string;
+};

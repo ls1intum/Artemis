@@ -26,6 +26,7 @@ import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iri
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import { IrisMessageContentType, IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
+import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import * as _ from 'lodash-es';
@@ -36,12 +37,13 @@ import { ChatStatusBarComponent } from './chat-status-bar/chat-status-bar.compon
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AsPipe } from 'app/shared/pipes/as.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
 import { NgClass } from '@angular/common';
 import { facSidebar } from 'app/shared/icons/icons';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -58,7 +60,6 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
         ButtonComponent,
         ArtemisTranslatePipe,
         AsPipe,
-        HtmlForMarkdownPipe,
         ChatHistoryItemComponent,
         NgClass,
         SearchFilterComponent,
@@ -113,6 +114,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly numNewMessages = toSignal(this.chatService.currentNumNewMessages(), { initialValue: 0 });
     readonly rateLimitInfo = toSignal(this.statusService.currentRatelimitInfo(), { requireSync: true });
     readonly active = toSignal(this.statusService.getActiveStatus(), { initialValue: true });
+    readonly citationInfo = toSignal(this.chatService.currentCitationInfo(), { initialValue: [] as IrisCitationMetaDTO[] });
 
     // Messages with processing
     private readonly rawMessages = toSignal(this.chatService.currentMessages(), { initialValue: [] as IrisMessage[] });
@@ -137,6 +139,79 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private previousSessionId: number | undefined;
     private previousMessageCount = 0;
     private previousMessageIds = new Set<number>();
+    private hoverMessagesElement?: HTMLElement;
+    private injectedTestSessionId?: number;
+    private readonly handleCitationMouseOver = (event: MouseEvent) => {
+        const messagesElement = this.hoverMessagesElement;
+        if (!messagesElement) {
+            return;
+        }
+        const target = event.target as HTMLElement | null;
+        const citation = target?.closest('.iris-citation--has-summary, .iris-citation-group--has-summary') as HTMLElement | null;
+        if (!citation || !messagesElement.contains(citation)) {
+            return;
+        }
+        const summary = citation.querySelector('.iris-citation__summary') as HTMLElement | null;
+        if (!summary) {
+            return;
+        }
+        const bubble = citation.closest('.bubble-left') as HTMLElement | null;
+        const boundary = bubble ?? messagesElement;
+        citation.style.setProperty('--iris-citation-shift', '0px');
+        const boundaryRect = boundary.getBoundingClientRect();
+        const summaryRect = summary.getBoundingClientRect();
+        const padding = 8;
+        let shift = 0;
+        if (summaryRect.left < boundaryRect.left + padding) {
+            shift = boundaryRect.left + padding - summaryRect.left;
+        } else if (summaryRect.right > boundaryRect.right - padding) {
+            shift = boundaryRect.right - summaryRect.right;
+        }
+        if (shift !== 0) {
+            citation.style.setProperty('--iris-citation-shift', `${shift}px`);
+        }
+    };
+    private readonly handleCitationMouseOut = (event: MouseEvent) => {
+        const messagesElement = this.hoverMessagesElement;
+        if (!messagesElement) {
+            return;
+        }
+        const target = event.target as HTMLElement | null;
+        const citation = target?.closest('.iris-citation--has-summary, .iris-citation-group--has-summary') as HTMLElement | null;
+        if (!citation) {
+            return;
+        }
+        const relatedTarget = event.relatedTarget as HTMLElement | null;
+        if (relatedTarget && citation.contains(relatedTarget)) {
+            return;
+        }
+        citation.style.setProperty('--iris-citation-shift', '0px');
+        this.resetCitationGroupSummary(citation);
+    };
+    private readonly handleCitationNavigationClick = (event: MouseEvent) => {
+        const rawTarget = event.target as Node | null;
+        const target = rawTarget instanceof HTMLElement ? rawTarget : rawTarget?.parentElement;
+        const navButton = target?.closest('.iris-citation__nav-button') as HTMLElement | null;
+        if (!navButton) {
+            return;
+        }
+        const citationGroup = navButton.closest('.iris-citation-group') as HTMLElement | null;
+        if (!citationGroup) {
+            return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        const summaryItems = Array.from(citationGroup.querySelectorAll<HTMLElement>('.iris-citation__summary-item'));
+        if (summaryItems.length === 0) {
+            return;
+        }
+        const currentIndex = summaryItems.findIndex((item) => item.classList.contains('is-active'));
+        const normalizedIndex = currentIndex < 0 ? 0 : currentIndex;
+        const isPrev = navButton.classList.contains('iris-citation__nav-button--prev');
+        const delta = isPrev ? -1 : 1;
+        const nextIndex = (normalizedIndex + delta + summaryItems.length) % summaryItems.length;
+        this.updateCitationGroupSummary(citationGroup, nextIndex);
+    };
     public ButtonType = ButtonType;
 
     showDeclineButton = input<boolean>(true);
@@ -175,6 +250,33 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 onCleanup(() => clearTimeout(timeoutId));
             }
             this.previousSessionId = sessionId;
+        });
+
+        // TEMP: Inject a manual citation test message when a new empty session opens
+        effect(() => {
+            const sessionId = this.currentSessionId();
+            const rawMessages = this.rawMessages();
+            if (!sessionId || rawMessages.length > 0 || this.injectedTestSessionId === sessionId) {
+                return;
+            }
+            this.injectedTestSessionId = sessionId;
+            this.injectCitationTestMessage();
+        });
+
+        effect(() => {
+            const messagesElement = this.messagesElement()?.nativeElement as HTMLElement | undefined;
+            if (!messagesElement || messagesElement === this.hoverMessagesElement) {
+                return;
+            }
+            if (this.hoverMessagesElement) {
+                this.hoverMessagesElement.removeEventListener('mouseover', this.handleCitationMouseOver);
+                this.hoverMessagesElement.removeEventListener('mouseout', this.handleCitationMouseOut);
+                this.hoverMessagesElement.removeEventListener('click', this.handleCitationNavigationClick);
+            }
+            this.hoverMessagesElement = messagesElement;
+            messagesElement.addEventListener('mouseover', this.handleCitationMouseOver);
+            messagesElement.addEventListener('mouseout', this.handleCitationMouseOut);
+            messagesElement.addEventListener('click', this.handleCitationNavigationClick);
         });
 
         // Handle message scroll on new messages
@@ -252,10 +354,301 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return processed;
     }
 
+    private injectCitationTestMessage(): void {
+        const text = 'Satz eins [cite:L:101::::Intro:Kurz] Satz zwei ' + '[cite:L:102::::Alpha:Erste][cite:L:103::::Beta:Zweite][cite:L:104::::Gamma:Dritte]';
+
+        const message: IrisAssistantMessage = {
+            id: -Date.now(),
+            sender: IrisSender.LLM,
+            sentAt: dayjs(),
+            content: [new IrisTextMessageContent(text)],
+        };
+
+        const citationInfo: IrisCitationMetaDTO[] = [
+            { entityId: 101, lectureTitle: 'Test Lecture', lectureUnitTitle: 'Unit A' },
+            { entityId: 102, lectureTitle: 'Test Lecture', lectureUnitTitle: 'Unit B' },
+            { entityId: 103, lectureTitle: 'Test Lecture', lectureUnitTitle: 'Unit C' },
+            { entityId: 104, lectureTitle: 'Test Lecture', lectureUnitTitle: 'Unit D' },
+        ];
+
+        this.chatService.citationInfo.next(citationInfo);
+        this.chatService.messages.next([...this.chatService.messages.getValue(), message]);
+    }
+
+    renderMessageContent(content: IrisTextMessageContent): string {
+        const withCitations = this.replaceCitations(content.textContent ?? '', this.citationInfo());
+        return htmlForMarkdown(withCitations);
+    }
+
+    private replaceCitations(text: string, citationInfo: IrisCitationMetaDTO[]): string {
+        if (!text || !text.includes('[cite:')) {
+            return text;
+        }
+        const citationMap = new Map<number, IrisCitationMetaDTO>(citationInfo.map((citation) => [citation.entityId, citation]));
+        const tokens: Array<{ type: 'text'; value: string } | { type: 'citation'; value: string }> = [];
+        const citationRegex = /\[cite:[^\]]+\]/g;
+        let lastIndex = 0;
+        for (const match of text.matchAll(citationRegex)) {
+            const index = match.index ?? 0;
+            if (index > lastIndex) {
+                tokens.push({ type: 'text', value: text.slice(lastIndex, index) });
+            }
+            tokens.push({ type: 'citation', value: match[0] });
+            lastIndex = index + match[0].length;
+        }
+        if (lastIndex < text.length) {
+            tokens.push({ type: 'text', value: text.slice(lastIndex) });
+        }
+
+        const rendered: string[] = [];
+        let i = 0;
+        while (i < tokens.length) {
+            const token = tokens[i];
+            if (token.type === 'text') {
+                rendered.push(token.value);
+                i += 1;
+                continue;
+            }
+            const citationGroup: string[] = [token.value];
+            let j = i + 1;
+            let pendingWhitespace = '';
+            while (j < tokens.length) {
+                const nextToken = tokens[j];
+                if (nextToken.type === 'text' && /^\s*$/.test(nextToken.value)) {
+                    pendingWhitespace += nextToken.value;
+                    j += 1;
+                    continue;
+                }
+                if (nextToken.type === 'citation') {
+                    citationGroup.push(nextToken.value);
+                    pendingWhitespace = '';
+                    j += 1;
+                    continue;
+                }
+                break;
+            }
+
+            if (citationGroup.length > 1) {
+                const parsed = citationGroup.map((raw) => this.parseCitation(raw)).filter((value): value is IrisCitationParsed => Boolean(value));
+                if (parsed.length === 0) {
+                    rendered.push(citationGroup.join(''));
+                } else if (parsed.length === 1) {
+                    const meta = parsed[0].type === 'L' ? citationMap.get(parsed[0].entityId) : undefined;
+                    rendered.push(this.renderCitationHtml(parsed[0], meta));
+                } else {
+                    const metas = parsed.map((entry) => (entry.type === 'L' ? citationMap.get(entry.entityId) : undefined));
+                    rendered.push(this.renderCitationGroupHtml(parsed, metas));
+                }
+                if (pendingWhitespace) {
+                    rendered.push(pendingWhitespace);
+                }
+                i = j;
+                continue;
+            }
+
+            const parsed = this.parseCitation(token.value);
+            if (!parsed) {
+                rendered.push(token.value);
+            } else {
+                const meta = parsed.type === 'L' ? citationMap.get(parsed.entityId) : undefined;
+                rendered.push(this.renderCitationHtml(parsed, meta));
+            }
+            if (pendingWhitespace) {
+                rendered.push(pendingWhitespace);
+            }
+            i = j;
+        }
+
+        return rendered.join('');
+    }
+
+    private parseCitation(raw: string): IrisCitationParsed | undefined {
+        const content = raw.slice(6, -1);
+        const parts = content.split(':');
+        if (parts.length < 2) {
+            return undefined;
+        }
+        let type = parts[0];
+        let entityIdValue = parts[1];
+        let offset = 2;
+        if (!this.isCitationType(type) && this.isCitationType(parts[1])) {
+            type = parts[1];
+            entityIdValue = parts[0];
+            offset = 2;
+        }
+        if (!this.isCitationType(type)) {
+            return undefined;
+        }
+        const entityId = Number(entityIdValue);
+        if (!Number.isFinite(entityId)) {
+            return undefined;
+        }
+        const page = parts[offset] ?? '';
+        const start = parts[offset + 1] ?? '';
+        const end = parts[offset + 2] ?? '';
+        const keyword = parts[offset + 3] ?? '';
+        const summary = parts.slice(offset + 4).join(':');
+        return {
+            type,
+            entityId,
+            page,
+            start,
+            end,
+            keyword,
+            summary,
+        };
+    }
+
+    private isCitationType(value?: string): value is 'L' | 'F' {
+        return value === 'L' || value === 'F';
+    }
+
+    private renderCitationHtml(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
+        const summaryText = this.formatSummary(parsed, meta);
+        const label = this.formatCitationLabel(parsed, meta);
+        const typeClass = this.resolveCitationTypeClass(parsed);
+        const hasSummary = summaryText.length > 0;
+        const classes = ['iris-citation', typeClass, hasSummary ? 'iris-citation--has-summary' : undefined].filter(Boolean).join(' ');
+
+        const summaryHtml = hasSummary
+            ? `<span class="iris-citation__summary"><span class="iris-citation__summary-content"><span class="iris-citation__summary-item is-active">${summaryText}</span></span><span class="iris-citation__summary-icon iris-citation__icon" aria-hidden="true"></span></span>`
+            : '';
+
+        return `<span class="${classes}"><span class="iris-citation__icon"></span><span class="iris-citation__text">${label}</span>${summaryHtml}</span>`;
+    }
+
+    private renderCitationGroupHtml(parsed: IrisCitationParsed[], metas: Array<IrisCitationMetaDTO | undefined>): string {
+        const first = parsed[0];
+        const firstMeta = metas[0];
+        const label = this.formatCitationLabel(first, firstMeta);
+        const typeClass = this.resolveCitationTypeClass(first);
+        const summaryItems = parsed
+            .map((entry, index) => {
+                const summaryText = this.formatGroupSummaryItem(entry, metas[index]);
+                if (!summaryText) {
+                    return '';
+                }
+                const activeClass = index === 0 ? ' is-active' : '';
+                return `<span class="iris-citation__summary-item${activeClass}">${summaryText}</span>`;
+            })
+            .filter((value) => value.length > 0);
+        const hasSummary = summaryItems.length > 0;
+        const classes = ['iris-citation-group', typeClass, hasSummary ? 'iris-citation-group--has-summary' : undefined].filter(Boolean).join(' ');
+        const count = parsed.length - 1;
+        const navHtml = summaryItems.length > 1 ? this.renderCitationNavHtml(summaryItems.length) : '';
+        const summaryHtml = hasSummary
+            ? `<span class="iris-citation__summary"><span class="iris-citation__summary-content">${summaryItems.join(
+                  '',
+              )}</span>${navHtml}<span class="iris-citation__summary-icon iris-citation__icon" aria-hidden="true"></span></span>`
+            : '';
+
+        return `<span class="${classes}"><span class="iris-citation ${typeClass}"><span class="iris-citation__icon"></span><span class="iris-citation__text">${label}</span></span><span class="iris-citation__count">+${count}</span>${summaryHtml}</span>`;
+    }
+
+    private renderCitationNavHtml(count: number): string {
+        return `<span class="iris-citation__nav">
+            <span class="iris-citation__nav-button iris-citation__nav-button--prev" role="button" tabindex="0" aria-label="Previous citation">
+                <span class="iris-citation__nav-icon iris-citation__nav-icon--prev" aria-hidden="true"></span>
+            </span>
+            <span class="iris-citation__nav-count">1/${count}</span>
+            <span class="iris-citation__nav-button iris-citation__nav-button--next" role="button" tabindex="0" aria-label="Next citation">
+                <span class="iris-citation__nav-icon iris-citation__nav-icon--next" aria-hidden="true"></span>
+            </span>
+        </span>`;
+    }
+
+    private formatGroupSummaryItem(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
+        const summaryText = this.formatSummary(parsed, meta);
+        if (summaryText) {
+            return summaryText;
+        }
+        return this.formatCitationLabel(parsed, meta);
+    }
+
+    private formatCitationLabel(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
+        const keyword = parsed.keyword?.trim();
+        const fallback = parsed.type === 'F' ? 'FAQ' : 'Source';
+        const label = keyword || fallback;
+        return this.escapeHtml(label);
+    }
+
+    private formatSummary(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
+        const fallbackKeyword = parsed.type === 'F' ? 'FAQ' : 'Source';
+        const keywordValue = this.escapeHtml(parsed.keyword?.trim() || fallbackKeyword);
+        const summaryValue = parsed.summary?.trim() ? this.escapeHtml(parsed.summary!.trim()) : '';
+        const lines: string[] = [keywordValue];
+
+        if (summaryValue) {
+            lines.push(summaryValue);
+        }
+
+        const lectureTitle = parsed.type === 'L' ? this.escapeHtml(meta?.lectureTitle?.trim() ?? 'n/a') : undefined;
+        const unitTitle = parsed.type === 'L' ? this.escapeHtml(meta?.lectureUnitTitle?.trim() ?? 'n/a') : undefined;
+
+        const filtered = lines.filter(Boolean);
+        if (filtered.length === 0) {
+            return '';
+        }
+
+        const [keywordLine, ...restLines] = filtered;
+        const rest = restLines.length > 0 ? `<br />${restLines.join('<br />')}` : '';
+        const metaHtml =
+            lectureTitle && unitTitle
+                ? `<br /><span class="iris-citation__summary-meta">Lecture: "${lectureTitle}"</span><br /><span class="iris-citation__summary-meta">Unit: "${unitTitle}"</span>`
+                : '';
+
+        return `<span class="iris-citation__summary-keyword">${keywordLine}</span>${rest}${metaHtml}`;
+    }
+
+    private resolveCitationTypeClass(parsed: IrisCitationParsed): string {
+        if (parsed.type === 'F') {
+            return 'iris-citation--faq';
+        }
+        if (parsed.start || parsed.end) {
+            return 'iris-citation--video';
+        }
+        if (parsed.page) {
+            return 'iris-citation--slide';
+        }
+        return 'iris-citation--source';
+    }
+
+    private escapeHtml(text: string): string {
+        return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    private updateCitationGroupSummary(citationGroup: HTMLElement, nextIndex: number) {
+        const summaryItems = Array.from(citationGroup.querySelectorAll<HTMLElement>('.iris-citation__summary-item'));
+        if (summaryItems.length === 0) {
+            return;
+        }
+        summaryItems.forEach((item, index) => item.classList.toggle('is-active', index === nextIndex));
+        const navCount = citationGroup.querySelector<HTMLElement>('.iris-citation__nav-count');
+        if (navCount) {
+            navCount.textContent = `${nextIndex + 1}/${summaryItems.length}`;
+        }
+    }
+
+    private resetCitationGroupSummary(citationElement: HTMLElement) {
+        const citationGroup = citationElement.classList.contains('iris-citation-group') ? citationElement : citationElement.closest('.iris-citation-group');
+        if (!(citationGroup instanceof HTMLElement)) {
+            return;
+        }
+        this.updateCitationGroupSummary(citationGroup, 0);
+    }
+
     ngAfterViewInit() {
         // Enable animations after initial messages have loaded
         // Delay ensures initial message batch doesn't trigger animations
         setTimeout(() => (this.shouldAnimate = true), 500);
+        this.destroyRef.onDestroy(() => {
+            if (!this.hoverMessagesElement) {
+                return;
+            }
+            this.hoverMessagesElement.removeEventListener('mouseover', this.handleCitationMouseOver);
+            this.hoverMessagesElement.removeEventListener('mouseout', this.handleCitationMouseOut);
+            this.hoverMessagesElement.removeEventListener('click', this.handleCitationNavigationClick);
+        });
     }
 
     /**
@@ -538,3 +931,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
     }
 }
+
+type IrisCitationParsed = {
+    type: 'L' | 'F';
+    entityId: number;
+    page?: string;
+    start?: string;
+    end?: string;
+    keyword?: string;
+    summary?: string;
+};
