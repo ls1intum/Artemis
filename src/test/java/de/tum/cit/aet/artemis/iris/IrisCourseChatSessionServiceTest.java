@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -43,7 +44,8 @@ class IrisCourseChatSessionServiceTest extends AbstractIrisIntegrationTest {
         course = courseUtilService.createCourse();
 
         user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        user.setExternalLLMUsageAcceptedTimestamp(ZonedDateTime.now());
+        user.setSelectedLLMUsageTimestamp(ZonedDateTime.parse("2025-12-11T00:00:00Z"));
+        user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
         // Ensure course membership for auth check
         user.setGroups(Set.of(course.getStudentGroupName()));
 
@@ -66,9 +68,27 @@ class IrisCourseChatSessionServiceTest extends AbstractIrisIntegrationTest {
 
     @Test
     void checkHasAccessTo_throwsWhenLlMAcceptanceMissing() {
-        user.setExternalLLMUsageAcceptedTimestamp(null);
-
+        user.setSelectedLLMUsage(null);
         assertThatThrownBy(() -> irisCourseChatSessionService.checkHasAccessTo(user, session)).isInstanceOf(AccessForbiddenException.class).extracting(Throwable::getMessage)
-                .asString().contains("external LLM privacy policy");
+                .asString().contains("not selected to use AI");
+    }
+
+    @Test
+    void checkHasAccessTo_throwsWhenLlMAcceptanceNOAI() {
+        user.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        assertThatThrownBy(() -> irisCourseChatSessionService.checkHasAccessTo(user, session)).isInstanceOf(AccessForbiddenException.class).extracting(Throwable::getMessage)
+                .asString().contains("not selected to use AI");
+    }
+
+    @Test
+    void checkHasAccessTo_throwsWhenLlMAcceptanceLOCALAI() {
+        user.setSelectedLLMUsage(AiSelectionDecision.LOCAL_AI);
+        assertThatNoException().isThrownBy(() -> irisCourseChatSessionService.checkHasAccessTo(user, session));
+    }
+
+    @Test
+    void checkHasAccessTo_throwsWhenLlMAcceptanceCLOUDAI() {
+        user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+        assertThatNoException().isThrownBy(() -> irisCourseChatSessionService.checkHasAccessTo(user, session));
     }
 }

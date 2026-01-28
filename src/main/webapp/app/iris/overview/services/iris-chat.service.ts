@@ -17,6 +17,7 @@ import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model'
 import { Router } from '@angular/router';
 import { captureException } from '@sentry/angular';
 import dayjs from 'dayjs/esm';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
 import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-content-dto.model';
 import { randomInt } from 'app/shared/util/utils';
@@ -98,7 +99,10 @@ export class IrisChatService implements OnDestroy {
 
     private sessionCreationIdentifier?: string;
 
-    hasJustAcceptedExternalLLMUsage = false;
+    private shouldReopenChatSubject = new BehaviorSubject<boolean>(false);
+    public shouldReopenChat$ = this.shouldReopenChatSubject.asObservable();
+
+    hasJustAcceptedLLMUsage = false;
 
     /**
      * This property should only be used internally in {@link getCourseId()} and {@link setCourseId()}.
@@ -168,7 +172,12 @@ export class IrisChatService implements OnDestroy {
         const requiresAcceptance = this.sessionCreationIdentifier
             ? this.modeRequiresLLMAcceptance.get(Object.values(ChatServiceMode).find((mode) => this.sessionCreationIdentifier?.includes(mode)) as ChatServiceMode)
             : true;
-        if (requiresAcceptance === false || this.accountService.userIdentity()?.externalLLMUsageAccepted || this.hasJustAcceptedExternalLLMUsage) {
+        if (
+            requiresAcceptance === false ||
+            this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.LOCAL_AI ||
+            this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.CLOUD_AI ||
+            this.hasJustAcceptedLLMUsage
+        ) {
             this.getCurrentSessionOrCreate().subscribe({
                 ...this.handleNewSession(),
                 complete: () => this.loadChatSessions(),
@@ -283,12 +292,32 @@ export class IrisChatService implements OnDestroy {
         this.newIrisMessage.next(undefined);
     }
 
-    public updateExternalLLMUsageConsent(accepted: boolean): void {
+    public updateLLMUsageConsent(accepted: LLMSelectionDecision): void {
+        if (accepted === LLMSelectionDecision.NO_AI) {
+            this.hasJustAcceptedLLMUsage = false;
+            this.acceptSubscription?.unsubscribe();
+            this.userService.updateLLMSelectionDecision(accepted).subscribe({
+                next: () => {
+                    this.accountService.setUserLLMSelectionDecision(accepted);
+                    this.close();
+                },
+                error: () => {
+                    this.error.next(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE);
+                    this.close();
+                },
+            });
+            return;
+        }
         this.acceptSubscription?.unsubscribe();
-        this.acceptSubscription = this.userService.updateExternalLLMUsageConsent(accepted).subscribe(() => {
-            this.hasJustAcceptedExternalLLMUsage = accepted;
-            this.accountService.setUserAcceptedExternalLLMUsage(accepted);
-            this.closeAndStart();
+        this.acceptSubscription = this.userService.updateLLMSelectionDecision(accepted).subscribe({
+            next: () => {
+                this.hasJustAcceptedLLMUsage = true;
+                this.accountService.setUserLLMSelectionDecision(accepted);
+                this.closeAndStart();
+            },
+            error: () => {
+                this.error.next(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE);
+            },
         });
     }
 
@@ -628,5 +657,12 @@ export class IrisChatService implements OnDestroy {
 
     public availableChatSessions(): Observable<IrisSessionDTO[]> {
         return this.chatSessions.asObservable();
+    }
+
+    /**
+     * Sets whether the chat should reopen after being closed by LLM selection modal.
+     */
+    public setShouldReopenChat(value: boolean): void {
+        this.shouldReopenChatSubject.next(value);
     }
 }

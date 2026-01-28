@@ -4,22 +4,22 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { PROFILE_ATHENA, PROFILE_IRIS } from 'app/app.constants';
 
 /**
- * Guard to check if the route "/user-settings/external-data" can be activated.
+ * Guard to check if the route "/user-settings/llm-usage" can be activated.
  */
 @Injectable({ providedIn: 'root' })
-export class ExternalDataGuard implements CanActivate {
+export class DataGuard implements CanActivate {
     private readonly profileService = inject(ProfileService);
 
     /**
      * Check if the client can activate a route.
      *
-     * @return true if {@link isUsingExternalLLM} returns true, false otherwise.
+     * @return true if {@link isUsingLLM} returns true, false otherwise.
      */
     canActivate(): boolean | Promise<boolean> {
-        return this.isUsingExternalLLM();
+        return this.isUsingLLM();
     }
 
-    isUsingExternalLLM(): boolean {
+    isUsingLLM(): boolean {
         const isIrisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
         const isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
 
