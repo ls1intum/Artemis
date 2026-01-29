@@ -21,7 +21,13 @@
                 </thead>
                 <tbody>
                     @for (buildJob of buildJobs(); track buildJob.id) {
-                        <tr class="clickable-row" (click)="onJobClick(buildJob.id)">
+                        <tr
+                            class="clickable-row"
+                            tabindex="0"
+                            (click)="onJobClick(buildJob.id)"
+                            (keydown.enter)="onJobClick(buildJob.id)"
+                            (keydown.space)="onJobClick(buildJob.id)"
+                        >
                             <td class="build-jobs-column-tiny">
                                 <span class="text-primary">
                                     <fa-icon [icon]="faSpinner" animation="spin" />

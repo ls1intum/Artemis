@@ -248,8 +248,14 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
                 this.finishedBuildJobFilter = new FinishedBuildJobFilter(this.buildAgent()?.buildAgent?.memberAddress);
                 this.loadFinishedBuildJobs();
             },
-            error: () => {
-                this.agentNotFound.set(true);
+            error: (error: HttpErrorResponse) => {
+                if (error.status === 404) {
+                    // Agent not found - this is expected for offline/removed agents
+                    this.agentNotFound.set(true);
+                } else {
+                    // Other errors (server error, network issue, etc.) - show alert but don't mark as not found
+                    onError(this.alertService, error);
+                }
                 // Still load finished jobs filtered by agent name
                 this.finishedBuildJobFilter = new FinishedBuildJobFilter(this.agentName);
                 this.loadFinishedBuildJobs();
@@ -259,6 +265,8 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
     private updateBuildAgent(buildAgent: BuildAgentInformation) {
         this.buildAgent.set(buildAgent);
+        // Reset not-found state when we successfully receive agent data
+        this.agentNotFound.set(false);
         this.buildJobStatistics.set({
             successfulBuilds: buildAgent.buildAgentDetails?.successfulBuilds || 0,
             failedBuilds: buildAgent.buildAgentDetails?.failedBuilds || 0,

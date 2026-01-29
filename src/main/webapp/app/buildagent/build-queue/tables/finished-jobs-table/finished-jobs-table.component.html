@@ -38,7 +38,13 @@
             </thead>
             <tbody>
                 @for (finishedBuildJob of buildJobs(); track finishedBuildJob.id) {
-                    <tr class="clickable-row" (click)="onJobClick(finishedBuildJob.id)">
+                    <tr
+                        class="clickable-row"
+                        tabindex="0"
+                        (click)="onJobClick(finishedBuildJob.id)"
+                        (keydown.enter)="onJobClick(finishedBuildJob.id)"
+                        (keydown.space)="onJobClick(finishedBuildJob.id)"
+                    >
                         <td class="finish-jobs-column-tiny">
                             <span
                                 [ngClass]="{

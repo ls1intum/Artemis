@@ -133,26 +133,22 @@ public class SharedQueueProcessingService {
 
     private UUID listenerId;
 
-    /**
-     * Scheduled future for checking availability and processing next build job.
-     */
+    /** UUID of the pause build agent message listener. Stored to allow removal on reconnection. */
+    private UUID pauseListenerId;
+
+    /** UUID of the resume build agent message listener. Stored to allow removal on reconnection. */
+    private UUID resumeListenerId;
+
+    /** Scheduled future for checking availability and processing next build job. */
     private ScheduledFuture<?> scheduledFuture;
 
-    /**
-     * Flag to indicate whether the build agent is paused.
-     */
+    /** Flag to indicate whether the build agent is paused. */
     private final AtomicBoolean isPaused = new AtomicBoolean(false);
 
-    /**
-     * Flag to track whether initialization has completed successfully.
-     * Uses AtomicBoolean to ensure thread-safe access from the retry task.
-     */
+    /** Flag to track whether initialization has completed. Uses AtomicBoolean for thread-safe access. */
     private final AtomicBoolean initialized = new AtomicBoolean(false);
 
-    /**
-     * Scheduled future for retrying cluster connection and initialization.
-     * This is used when the build agent starts before any core node is available.
-     */
+    /** Scheduled future for retrying cluster connection when build agent starts before core nodes. */
     private ScheduledFuture<?> connectionRetryFuture;
 
     @Value("${artemis.continuous-integration.pause-grace-period-seconds:60}")
@@ -164,22 +160,12 @@ public class SharedQueueProcessingService {
     @Value("${artemis.continuous-integration.build-agent.display-name:}")
     private String buildAgentDisplayName;
 
-    /**
-     * Returns whether the build agent is currently paused.
-     *
-     * @return true if the build agent is paused, false otherwise
-     */
+    /** Returns whether the build agent is currently paused. */
     public boolean isPaused() {
         return isPaused.get();
     }
 
-    /**
-     * Resets the internal pause state of the build agent. This method should ONLY be used in tests
-     * to ensure proper test isolation when tests manipulate the pause/resume state.
-     * <p>
-     * This method resets both the {@code isPaused} flag and the {@code processResults} flag
-     * to their default (non-paused) state.
-     */
+    /** Resets the pause state (for tests only). */
     public void resetPauseState() {
         isPaused.set(false);
     }
@@ -290,13 +276,26 @@ public class SharedQueueProcessingService {
              */
             scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, BUILD_CHECK_AVAILABILITY_INTERVAL);
 
-            distributedDataAccessService.getPauseBuildAgentTopic().addMessageListener(buildAgentName -> {
+            var pauseTopic = distributedDataAccessService.getPauseBuildAgentTopic();
+            var resumeTopic = distributedDataAccessService.getResumeBuildAgentTopic();
+
+            // Remove old listeners if they exist (prevents duplicate listeners on reconnection)
+            if (pauseListenerId != null) {
+                pauseTopic.removeMessageListener(pauseListenerId);
+                pauseListenerId = null;
+            }
+            if (resumeListenerId != null) {
+                resumeTopic.removeMessageListener(resumeListenerId);
+                resumeListenerId = null;
+            }
+
+            pauseListenerId = pauseTopic.addMessageListener(buildAgentName -> {
                 if (buildAgentShortName.equals(buildAgentName)) {
                     pauseBuildAgent(false);
                 }
             });
 
-            distributedDataAccessService.getResumeBuildAgentTopic().addMessageListener(buildAgentName -> {
+            resumeListenerId = resumeTopic.addMessageListener(buildAgentName -> {
                 if (buildAgentShortName.equals(buildAgentName)) {
                     resumeBuildAgent();
                 }
@@ -328,31 +327,30 @@ public class SharedQueueProcessingService {
         cancelCheckAvailabilityAndProcessNextBuildScheduledFuture();
     }
 
-    /**
-     * Removes the item listener from the distributed build job queue.
-     * Only removes if the Hazelcast instance is still running and a listener was registered.
-     */
+    /** Removes all listeners (queue, pause, resume) if the Hazelcast instance is running. */
     private void removeListener() {
-        if (distributedDataAccessService.isInstanceRunning() && this.listenerId != null) {
-            distributedDataAccessService.getDistributedBuildJobQueue().removeListener(this.listenerId);
+        if (distributedDataAccessService.isInstanceRunning()) {
+            if (this.listenerId != null) {
+                distributedDataAccessService.getDistributedBuildJobQueue().removeListener(this.listenerId);
+            }
+            if (this.pauseListenerId != null) {
+                distributedDataAccessService.getPauseBuildAgentTopic().removeMessageListener(this.pauseListenerId);
+            }
+            if (this.resumeListenerId != null) {
+                distributedDataAccessService.getResumeBuildAgentTopic().removeMessageListener(this.resumeListenerId);
+            }
         }
     }
 
-    /**
-     * Cancels the scheduled future that periodically checks availability and processes builds.
-     * Uses non-interrupting cancel to allow current execution to complete gracefully.
-     */
+    /** Cancels the scheduled availability check, allowing current execution to complete gracefully. */
     private void cancelCheckAvailabilityAndProcessNextBuildScheduledFuture() {
         if (scheduledFuture != null && !scheduledFuture.isCancelled()) {
             scheduledFuture.cancel(false);
         }
     }
 
-    /**
-     * Wait 10 seconds after startup and then every 10 seconds update the build agent information of the local hazelcast member.
-     * This is necessary because the build agent information is not updated automatically when a node joins the cluster.
-     */
-    @Scheduled(initialDelay = 10_000, fixedRate = 10_000) // 10 seconds initial delay, 10 seconds fixed rate
+    /** Update the build agent information every 10s (not updated automatically when node joins cluster). */
+    @Scheduled(initialDelay = 10_000, fixedRate = 10_000)
     public void updateBuildAgentInformation() {
         // Skip if not connected to cluster (happens when build agent starts before core nodes)
         if (!distributedDataAccessService.isConnectedToCluster()) {

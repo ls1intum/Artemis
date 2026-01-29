@@ -167,7 +167,10 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
         // NOTE: in the server administration, courseId will be parsed as 0, while in course management, it should be a positive integer
         this.isAdministrationView.set(this.courseId === 0);
         this.loadQueue();
-        this.loadBuildAgents();
+        // Only load build agents in admin view - they are not visible in course management view
+        if (this.isAdministrationView()) {
+            this.loadBuildAgents();
+        }
         this.buildDurationInterval = setInterval(() => {
             this.runningBuildJobs.set(this.updateBuildJobDuration(this.runningBuildJobs()));
             // Also trigger update for queued jobs to refresh waiting times
@@ -254,14 +257,13 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
                     this.handleFinishedBuildJobUpdate(finishedBuildJob);
                 }),
             );
+            // Subscribe to build agents updates for capacity information (admin view only)
+            this.websocketSubscriptions.push(
+                this.websocketService.subscribe<BuildAgentInformation[]>(`/topic/admin/build-agents`).subscribe((agents: BuildAgentInformation[]) => {
+                    this.buildAgents.set(agents);
+                }),
+            );
         }
-
-        // Subscribe to build agents updates for capacity information
-        this.websocketSubscriptions.push(
-            this.websocketService.subscribe<BuildAgentInformation[]>(`/topic/admin/build-agents`).subscribe((agents: BuildAgentInformation[]) => {
-                this.buildAgents.set(agents);
-            }),
-        );
     }
 
     /**

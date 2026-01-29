@@ -110,6 +110,11 @@ public class BuildJobManagementService {
     private final AtomicBoolean initialized = new AtomicBoolean(false);
 
     /**
+     * UUID of the cancel build job message listener. Stored to allow removal on reconnection.
+     */
+    private java.util.UUID cancelListenerId;
+
+    /**
      * Guards job lifecycle state transitions that must be atomic across multiple data structures:
      * <ul>
      * <li>Submission (creating and registering {@code runningFutures}).</li>
@@ -246,7 +251,14 @@ public class BuildJobManagementService {
 
         try {
             var canceledBuildJobsTopic = distributedDataAccessService.getCanceledBuildJobsTopic();
-            canceledBuildJobsTopic.addMessageListener(buildJobId -> {
+
+            // Remove old listener if it exists (prevents duplicate listeners on reconnection)
+            if (cancelListenerId != null) {
+                canceledBuildJobsTopic.removeMessageListener(cancelListenerId);
+                cancelListenerId = null;
+            }
+
+            cancelListenerId = canceledBuildJobsTopic.addMessageListener(buildJobId -> {
                 jobLifecycleLock.lock();
                 try {
                     if (runningFutures.containsKey(buildJobId)) {
