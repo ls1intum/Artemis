@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
@@ -12,6 +12,7 @@ import { ConfirmationService } from 'primeng/api';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+import { FormsModule } from '@angular/forms';
 
 export interface DeregisterStudentEvent {
     courseId: number;
@@ -21,7 +22,7 @@ export interface DeregisterStudentEvent {
 
 @Component({
     selector: 'jhi-tutorial-registrations',
-    imports: [IconFieldModule, InputIconModule, InputTextModule, TooltipModule, ConfirmDialogModule, ButtonModule, ProfilePictureComponent, TranslateDirective],
+    imports: [IconFieldModule, InputIconModule, InputTextModule, TooltipModule, ConfirmDialogModule, ButtonModule, ProfilePictureComponent, TranslateDirective, FormsModule],
     providers: [ConfirmationService],
     templateUrl: './tutorial-registrations.component.html',
     styleUrl: './tutorial-registrations.component.scss',
@@ -36,9 +37,11 @@ export class TutorialRegistrationsComponent {
     courseId = input.required<number>();
     tutorialGroupId = input.required<number>();
     registeredStudents = input.required<TutorialGroupRegisteredStudentDTO[]>();
+    filteredRegisteredStudents = computed<TutorialGroupRegisteredStudentDTO[]>(() => this.computeFilteredRegisteredStudents());
     onDeregisterStudent = output<DeregisterStudentEvent>();
     removeButtonTooltip = computed<string>(() => this.computeRemoveButtonTooltip());
     searchFieldPlaceholder = computed<string>(() => this.computeSearchFieldPlaceholder());
+    searchString = signal('');
 
     confirmDeregistration(event: Event, studentLogin: string) {
         this.confirmationService.confirm({
@@ -71,5 +74,16 @@ export class TutorialRegistrationsComponent {
     private computeSearchFieldPlaceholder(): string {
         this.currentLocale();
         return this.translateService.instant('artemisApp.pages.tutorialGroupRegistrations.searchFieldPlaceholder');
+    }
+
+    private computeFilteredRegisteredStudents(): TutorialGroupRegisteredStudentDTO[] {
+        const registeredStudents = this.registeredStudents();
+        const searchString = this.searchString().toLowerCase();
+        if (searchString === '') return registeredStudents;
+        return registeredStudents.filter((student) => {
+            const nameMatches = student.name !== undefined && student.name.toLowerCase().includes(searchString);
+            const loginMatches = student.login.toLowerCase().includes(searchString);
+            return nameMatches || loginMatches;
+        });
     }
 }
