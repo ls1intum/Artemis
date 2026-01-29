@@ -60,10 +60,11 @@ public class PlagiarismPostService extends PostingService {
      * and sends a notification to affected user groups
      *
      * @param courseId id of course the post belongs to
-     * @param post     post to create
-     * @return created a post that was persisted
+     * @param postDto  post to create
+     * @return the created post as {@link PlagiarismPostCreationResponseDTO}
      */
-    public Post createPost(Long courseId, Post post) {
+    public PlagiarismPostCreationResponseDTO createPost(Long courseId, PlagiarismPostCreationDTO postDto) {
+        Post post = postDto.toEntity();
         // checks
         if (post.getId() != null) {
             throw new BadRequestAlertException("A new post cannot already have an ID", METIS_POST_ENTITY_NAME, "idExists");
@@ -91,12 +92,7 @@ public class PlagiarismPostService extends PostingService {
         Post savedPost = postRepository.save(post);
         plagiarismCaseService.savePostForPlagiarismCaseAndNotifyStudent(savedPost.getPlagiarismCase().getId(), savedPost);
 
-        return savedPost;
-    }
-
-    public PlagiarismPostCreationResponseDTO createPost(Long courseId, PlagiarismPostCreationDTO postDto) {
-        Post created = createPost(courseId, postDto.toEntity());
-        return PlagiarismPostCreationResponseDTO.of(created);
+        return PlagiarismPostCreationResponseDTO.of(savedPost);
     }
 
     /**
