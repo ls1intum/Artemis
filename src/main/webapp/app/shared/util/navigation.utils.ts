@@ -96,7 +96,7 @@ export class ArtemisNavigationUtilService {
 
     replaceNewWithIdInUrl(url: string, id: number) {
         const newUrl = url.slice(0, -3) + id;
-        const regex = /http(s)?:\/\/([a-zA-Z0-9.:-]*)(?<rest>\/.*)/;
+        const regex = /http(s)?:\/\/([a-zA-Z0-9.:-]+)(?<rest>\/.*)/;
         this.location.go(newUrl.match(regex)!.groups!.rest);
     }
 
