@@ -45,6 +45,8 @@ import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model'
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import dayjs from 'dayjs/esm';
 
+const CITATION_REGEX = /\[cite:[^\]]+\]/g;
+
 @Component({
     selector: 'jhi-iris-base-chatbot',
     templateUrl: './iris-base-chatbot.component.html',
@@ -386,9 +388,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
         const citationMap = new Map<number, IrisCitationMetaDTO>(citationInfo.map((citation) => [citation.entityId, citation]));
         const tokens: Array<{ type: 'text'; value: string } | { type: 'citation'; value: string }> = [];
-        const citationRegex = /\[cite:[^\]]+\]/g;
         let lastIndex = 0;
-        for (const match of text.matchAll(citationRegex)) {
+        for (const match of text.matchAll(CITATION_REGEX)) {
             const index = match.index ?? 0;
             if (index > lastIndex) {
                 tokens.push({ type: 'text', value: text.slice(lastIndex, index) });
@@ -468,35 +469,24 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         if (parts.length < 2) {
             return undefined;
         }
-        let type = parts[0];
-        let entityIdValue = parts[1];
-        let offset = 2;
-        if (!this.isCitationType(type) && this.isCitationType(parts[1])) {
-            type = parts[1];
-            entityIdValue = parts[0];
-            offset = 2;
-        }
+
+        const type = parts[0];
         if (!this.isCitationType(type)) {
             return undefined;
         }
-        const entityId = Number(entityIdValue);
+
+        const entityId = Number(parts[1]);
         if (!Number.isFinite(entityId)) {
             return undefined;
         }
-        const page = parts[offset] ?? '';
-        const start = parts[offset + 1] ?? '';
-        const end = parts[offset + 2] ?? '';
-        const keyword = parts[offset + 3] ?? '';
-        const summary = parts.slice(offset + 4).join(':');
-        return {
-            type,
-            entityId,
-            page,
-            start,
-            end,
-            keyword,
-            summary,
-        };
+
+        const page = parts[2] ?? '';
+        const start = parts[3] ?? '';
+        const end = parts[4] ?? '';
+        const keyword = parts[5] ?? '';
+        const summary = parts.slice(6).join(':');
+
+        return { type, entityId, page, start, end, keyword, summary };
     }
 
     private isCitationType(value?: string): value is 'L' | 'F' {

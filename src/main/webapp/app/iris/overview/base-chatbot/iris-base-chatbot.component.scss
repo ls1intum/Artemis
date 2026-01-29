@@ -369,7 +369,6 @@
                 padding: 8px 10px;
                 border-radius: 8px;
                 background-color: var(--iris-rate-background);
-                box-shadow: none;
                 font-size: 1em;
                 line-height: 1.4;
                 color: inherit;
@@ -387,7 +386,6 @@
                 flex-direction: column;
                 align-items: center;
                 gap: 8px;
-                z-index: 2;
             }
 
             .iris-citation__summary-keyword {
