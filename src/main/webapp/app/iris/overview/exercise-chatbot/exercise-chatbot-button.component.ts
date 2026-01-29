@@ -16,6 +16,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 
+const CITATION_REGEX = /\[cite:[^\]]+\]/g;
+
 @Component({
     selector: 'jhi-exercise-chatbot-button',
     templateUrl: './exercise-chatbot-button.component.html',
@@ -205,10 +207,9 @@ export class IrisExerciseChatbotButtonComponent {
             return text;
         }
         const citationMap = new Map<number, IrisCitationMetaDTO>(citationInfo.map((citation) => [citation.entityId, citation]));
-        const citationRegex = /\[cite:[^\]]+\]/g;
         const tokens: Array<{ type: 'text'; value: string } | { type: 'citation'; value: string }> = [];
         let lastIndex = 0;
-        for (const match of text.matchAll(citationRegex)) {
+        for (const match of text.matchAll(CITATION_REGEX)) {
             const index = match.index ?? 0;
             if (index > lastIndex) {
                 tokens.push({ type: 'text', value: text.slice(lastIndex, index) });
@@ -281,38 +282,28 @@ export class IrisExerciseChatbotButtonComponent {
     }
 
     private parseCitation(raw: string): IrisCitationParsed | undefined {
-        const content = raw.slice(6, -1);
+        const content = raw.slice(6, -1); // strip "[cite:" and trailing "]"
         const parts = content.split(':');
         if (parts.length < 2) {
             return undefined;
         }
-        let type = parts[0];
-        let entityIdValue = parts[1];
-        let offset = 2;
-        if (!this.isCitationType(type) && this.isCitationType(parts[1])) {
-            type = parts[1];
-            entityIdValue = parts[0];
-            offset = 2;
-        }
+
+        const type = parts[0];
         if (!this.isCitationType(type)) {
             return undefined;
         }
-        const entityId = Number(entityIdValue);
+
+        const entityId = Number(parts[1]);
         if (!Number.isFinite(entityId)) {
             return undefined;
         }
-        const page = parts[offset] ?? '';
-        const start = parts[offset + 1] ?? '';
-        const end = parts[offset + 2] ?? '';
-        const keyword = parts[offset + 3] ?? '';
-        return {
-            type,
-            entityId,
-            page,
-            start,
-            end,
-            keyword,
-        };
+
+        const page = parts[2] ?? '';
+        const start = parts[3] ?? '';
+        const end = parts[4] ?? '';
+        const keyword = parts[5] ?? '';
+
+        return { type, entityId, page, start, end, keyword };
     }
 
     private isCitationType(value?: string): value is 'L' | 'F' {
