@@ -3,12 +3,8 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,15 +18,12 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
-import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadApi;
 import de.tum.cit.aet.artemis.modeling.api.ModelingRepositoryApi;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseEditorSyncService;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
@@ -60,11 +53,9 @@ public class ExerciseVersionService {
 
     private final UserRepository userRepository;
 
-    private final ProgrammingExerciseEditorSyncService programmingExerciseEditorSyncService;
-
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
             QuizExerciseRepository quizExerciseRepository, TextExerciseRepository textExerciseRepository, Optional<ModelingRepositoryApi> modelingRepositoryApi,
-            Optional<FileUploadApi> fileUploadApi, UserRepository userRepository, ProgrammingExerciseEditorSyncService programmingExerciseEditorSyncService) {
+            Optional<FileUploadApi> fileUploadApi, UserRepository userRepository) {
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -73,7 +64,6 @@ public class ExerciseVersionService {
         this.modelingRepositoryApi = modelingRepositoryApi;
         this.fileUploadApi = fileUploadApi;
         this.userRepository = userRepository;
-        this.programmingExerciseEditorSyncService = programmingExerciseEditorSyncService;
     }
 
     public boolean isRepositoryTypeVersionable(RepositoryType repositoryType) {
@@ -132,7 +122,6 @@ public class ExerciseVersionService {
             }
             exerciseVersion.setExerciseSnapshot(exerciseSnapshot);
             ExerciseVersion savedExerciseVersion = exerciseVersionRepository.save(exerciseVersion);
-            this.determineSynchronizationForActiveEditors(exercise.getId(), exerciseSnapshot, previousVersion.map(ExerciseVersion::getExerciseSnapshot).orElse(null));
             log.info("Exercise version {} has been created for exercise {}", savedExerciseVersion.getId(), exercise.getId());
         }
         catch (Exception e) {
@@ -162,64 +151,5 @@ public class ExerciseVersionService {
             case MODELING -> modelingRepositoryApi.flatMap(api -> api.findForVersioningById(exercise.getId())).orElse(null);
             case FILE_UPLOAD -> fileUploadApi.flatMap(api -> api.findForVersioningById(exercise.getId())).orElse(null);
         };
-    }
-
-    /**
-     * Compare two exercise snapshots and broadcast synchronization messages to active editors.
-     * For repository commits (template, solution, tests, auxiliary), broadcasts a new commit alert
-     * so clients can display a notification prompting users to refresh.
-     *
-     * @param exerciseId       the exercise id
-     * @param newSnapshot      the new snapshot
-     * @param previousSnapshot the previous snapshot (optional)
-     */
-    private void determineSynchronizationForActiveEditors(Long exerciseId, ExerciseSnapshotDTO newSnapshot, ExerciseSnapshotDTO previousSnapshot) {
-        if (previousSnapshot == null || newSnapshot.programmingData() == null || previousSnapshot.programmingData() == null) {
-            return;
-        }
-
-        ProgrammingExerciseSnapshotDTO newProgrammingData = newSnapshot.programmingData();
-        ProgrammingExerciseSnapshotDTO previousProgrammingData = previousSnapshot.programmingData();
-        ProgrammingExerciseEditorSyncTarget target = null;
-        Long auxiliaryRepositoryId = null;
-
-        if (participationCommitChanged(previousProgrammingData.templateParticipation(), newProgrammingData.templateParticipation())) {
-            target = ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY;
-        }
-        else if (participationCommitChanged(previousProgrammingData.solutionParticipation(), newProgrammingData.solutionParticipation())) {
-            target = ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY;
-        }
-        else if (!Objects.equals(previousProgrammingData.testsCommitId(), newProgrammingData.testsCommitId())) {
-            target = ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY;
-        }
-        else {
-            Map<Long, String> previousAuxiliaries = Optional.ofNullable(previousProgrammingData.auxiliaryRepositories()).orElseGet(List::of).stream()
-                    .filter(auxiliary -> auxiliary.commitId() != null).collect(Collectors.toMap(ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO::id,
-                            ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO::commitId));
-            for (ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO auxiliary : Optional.ofNullable(newProgrammingData.auxiliaryRepositories()).orElseGet(List::of)) {
-                var previousCommitId = previousAuxiliaries.get(auxiliary.id());
-                if (!Objects.equals(previousCommitId, auxiliary.commitId())) {
-                    target = ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY;
-                    auxiliaryRepositoryId = auxiliary.id();
-                    break;
-                }
-            }
-        }
-
-        if (target != null) {
-            // For repository commits, send a new commit alert so clients can notify users to refresh
-            // For problem statement changes, changes are broadcasted via client-to-client messages.
-            programmingExerciseEditorSyncService.broadcastNewCommitAlert(exerciseId, target, auxiliaryRepositoryId);
-        }
-    }
-
-    private boolean participationCommitChanged(ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO previousParticipation,
-            ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO newParticipation) {
-        if (previousParticipation == null && newParticipation == null) {
-            return false;
-        }
-        String previousCommitId = previousParticipation == null ? null : previousParticipation.commitId();
-        String newCommitId = newParticipation == null ? null : newParticipation.commitId();
-        return !Objects.equals(previousCommitId, newCommitId);
     }
 }

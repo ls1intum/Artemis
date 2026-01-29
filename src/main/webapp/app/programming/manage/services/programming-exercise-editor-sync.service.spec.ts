@@ -9,13 +9,11 @@ import {
 } from 'app/programming/manage/services/programming-exercise-editor-sync.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
-import { AlertService } from 'app/shared/service/alert.service';
 
 describe('ProgrammingExerciseEditorSyncService', () => {
     let service: ProgrammingExerciseEditorSyncService;
     let websocketService: jest.Mocked<WebsocketService>;
     let receiveSubject: Subject<ProgrammingExerciseEditorSyncEvent>;
-    let alertService: jest.Mocked<AlertService>;
 
     beforeEach(() => {
         receiveSubject = new Subject<ProgrammingExerciseEditorSyncEvent>();
@@ -38,18 +36,11 @@ describe('ProgrammingExerciseEditorSyncService', () => {
                         browserInstanceId: new BehaviorSubject<string | undefined>('test-client-instance-123'),
                     },
                 },
-                {
-                    provide: AlertService,
-                    useValue: {
-                        info: jest.fn(),
-                    },
-                },
             ],
         });
 
         service = TestBed.inject(ProgrammingExerciseEditorSyncService);
         websocketService = TestBed.inject(WebsocketService) as jest.Mocked<WebsocketService>;
-        alertService = TestBed.inject(AlertService) as jest.Mocked<AlertService>;
     });
 
     it('subscribes to websocket topic and forwards updates', () => {
@@ -177,19 +168,5 @@ describe('ProgrammingExerciseEditorSyncService', () => {
         // Both subscribers should receive the message
         expect(received1).toEqual([message]);
         expect(received2).toEqual([message]);
-    });
-
-    it('shows new commit alert and does not forward the event', () => {
-        const received: ProgrammingExerciseEditorSyncEvent[] = [];
-        service.subscribeToUpdates(5).subscribe((message: ProgrammingExerciseEditorSyncEvent) => received.push(message));
-
-        receiveSubject.next({
-            eventType: ProgrammingExerciseEditorSyncEventType.NEW_COMMIT_ALERT,
-            target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
-            clientInstanceId: 'other-client',
-        });
-
-        expect(alertService.info).toHaveBeenCalledWith('artemisApp.editor.synchronization.newCommitAlert');
-        expect(received).toHaveLength(0);
     });
 });

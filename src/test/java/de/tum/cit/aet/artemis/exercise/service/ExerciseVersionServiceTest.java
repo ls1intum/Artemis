@@ -2,11 +2,6 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.exercise.util.ExerciseVersionUtilService.zonedDateTimeBiPredicate;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -317,52 +312,6 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
             default:
                 throw new IllegalArgumentException("Unsupported exercise type");
         };
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testNoSynchronizationBroadcastWhenNoPreviousVersion() {
-        ProgrammingExercise exercise = createProgrammingExercise();
-        reset(websocketMessagingService);
-
-        exerciseVersionService.createExerciseVersion(exercise);
-
-        // No synchronization should be broadcast for the initial version
-        verify(websocketMessagingService, never()).sendMessage(eq("/topic/programming-exercises/" + exercise.getId() + "/synchronization"), any());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testNoSynchronizationBroadcastWhenNoCommitChanges() {
-        ProgrammingExercise exercise = createProgrammingExercise();
-        exerciseVersionService.createExerciseVersion(exercise);
-        reset(websocketMessagingService);
-
-        // Update without changing any repository commits
-        exercise.setTitle("New Title");
-        programmingExerciseRepository.saveAndFlush(exercise);
-        exercise = programmingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
-
-        exerciseVersionService.createExerciseVersion(exercise);
-
-        // No synchronization should be broadcast when no commits have changed
-        verify(websocketMessagingService, never()).sendMessage(eq("/topic/programming-exercises/" + exercise.getId() + "/synchronization"), any());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testNoSynchronizationBroadcastForNonProgrammingExercise() {
-        TextExercise exercise = createTextExercise();
-        exerciseVersionService.createExerciseVersion(exercise);
-        reset(websocketMessagingService);
-
-        exercise.setExampleSolution("Updated solution");
-        textExerciseRepository.saveAndFlush(exercise);
-
-        exerciseVersionService.createExerciseVersion(exercise);
-
-        // No synchronization should be broadcast for non-programming exercises
-        verify(websocketMessagingService, never()).sendMessage(eq("/topic/programming-exercises/" + exercise.getId() + "/synchronization"), any());
     }
 
 }

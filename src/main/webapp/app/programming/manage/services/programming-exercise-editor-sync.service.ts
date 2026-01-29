@@ -3,19 +3,9 @@ import { Observable, Subject, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
-import { AlertService } from 'app/shared/service/alert.service';
 
 export enum ProgrammingExerciseEditorSyncTarget {
     PROBLEM_STATEMENT = 'PROBLEM_STATEMENT',
-    TEMPLATE_REPOSITORY = 'TEMPLATE_REPOSITORY',
-    SOLUTION_REPOSITORY = 'SOLUTION_REPOSITORY',
-    TESTS_REPOSITORY = 'TESTS_REPOSITORY',
-    AUXILIARY_REPOSITORY = 'AUXILIARY_REPOSITORY',
-}
-
-export interface ProgrammingExerciseEditorSyncChange {
-    target: ProgrammingExerciseEditorSyncTarget;
-    auxiliaryRepositoryId?: number;
 }
 
 export enum ProgrammingExerciseEditorSyncEventType {
@@ -23,7 +13,6 @@ export enum ProgrammingExerciseEditorSyncEventType {
     PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE = 'PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE',
     PROBLEM_STATEMENT_SYNC_UPDATE = 'PROBLEM_STATEMENT_SYNC_UPDATE',
     PROBLEM_STATEMENT_AWARENESS_UPDATE = 'PROBLEM_STATEMENT_AWARENESS_UPDATE',
-    NEW_COMMIT_ALERT = 'NEW_COMMIT_ALERT',
 }
 
 export interface ProgrammingExerciseEditorSyncEventBase {
@@ -55,26 +44,16 @@ export interface ProblemStatementAwarenessUpdateEvent extends ProgrammingExercis
     awarenessUpdate: string;
 }
 
-export interface ProgrammingExerciseNewCommitAlertEvent {
-    eventType: ProgrammingExerciseEditorSyncEventType.NEW_COMMIT_ALERT;
-    target: ProgrammingExerciseEditorSyncTarget;
-    auxiliaryRepositoryId?: number;
-    clientInstanceId?: string;
-    timestamp?: number;
-}
-
 export type ProgrammingExerciseEditorSyncEvent =
     | ProblemStatementSyncFullContentRequestEvent
     | ProblemStatementSyncFullContentResponseEvent
     | ProblemStatementSyncUpdateEvent
-    | ProblemStatementAwarenessUpdateEvent
-    | ProgrammingExerciseNewCommitAlertEvent;
+    | ProblemStatementAwarenessUpdateEvent;
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseEditorSyncService {
     private websocketService = inject(WebsocketService);
     private browserFingerprintService = inject(BrowserFingerprintService);
-    private alertService = inject(AlertService);
 
     private exerciseId?: number;
     private subject: Subject<ProgrammingExerciseEditorSyncEvent> | undefined;
@@ -152,10 +131,6 @@ export class ProgrammingExerciseEditorSyncService {
     }
 
     private handleIncomingMessage(message: ProgrammingExerciseEditorSyncEvent) {
-        if (message.eventType === ProgrammingExerciseEditorSyncEventType.NEW_COMMIT_ALERT) {
-            this.alertService.info('artemisApp.editor.synchronization.newCommitAlert');
-            return;
-        }
         this.subject?.next(message);
     }
 }
