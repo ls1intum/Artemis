@@ -43,7 +43,6 @@ import { NgClass } from '@angular/common';
 import { facSidebar } from 'app/shared/icons/icons';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
-import dayjs from 'dayjs/esm';
 
 const CITATION_REGEX = /\[cite:[^\]]+\]/g;
 
@@ -142,7 +141,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private previousMessageCount = 0;
     private previousMessageIds = new Set<number>();
     private hoverMessagesElement?: HTMLElement;
-    private injectedTestSessionId?: number;
     private readonly handleCitationMouseOver = (event: MouseEvent) => {
         const messagesElement = this.hoverMessagesElement;
         if (!messagesElement) {
@@ -191,28 +189,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         this.resetCitationGroupSummary(citation);
     };
     private readonly handleCitationNavigationClick = (event: MouseEvent) => {
-        const rawTarget = event.target as Node | null;
-        const target = rawTarget instanceof HTMLElement ? rawTarget : rawTarget?.parentElement;
-        const navButton = target?.closest('.iris-citation__nav-button') as HTMLElement | null;
+        const navButton = this.getCitationNavButton(event.target);
         if (!navButton) {
-            return;
-        }
-        const citationGroup = navButton.closest('.iris-citation-group') as HTMLElement | null;
-        if (!citationGroup) {
             return;
         }
         event.preventDefault();
         event.stopPropagation();
-        const summaryItems = Array.from(citationGroup.querySelectorAll<HTMLElement>('.iris-citation__summary-item'));
-        if (summaryItems.length === 0) {
-            return;
-        }
-        const currentIndex = summaryItems.findIndex((item) => item.classList.contains('is-active'));
-        const normalizedIndex = currentIndex < 0 ? 0 : currentIndex;
-        const isPrev = navButton.classList.contains('iris-citation__nav-button--prev');
-        const delta = isPrev ? -1 : 1;
-        const nextIndex = (normalizedIndex + delta + summaryItems.length) % summaryItems.length;
-        this.updateCitationGroupSummary(citationGroup, nextIndex);
+        this.navigateCitationGroup(navButton);
     };
     public ButtonType = ButtonType;
 
@@ -252,17 +235,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 onCleanup(() => clearTimeout(timeoutId));
             }
             this.previousSessionId = sessionId;
-        });
-
-        // TEMP: Inject a manual citation test message when a new empty session opens
-        effect(() => {
-            const sessionId = this.currentSessionId();
-            const rawMessages = this.rawMessages();
-            if (!sessionId || rawMessages.length > 0 || this.injectedTestSessionId === sessionId) {
-                return;
-            }
-            this.injectedTestSessionId = sessionId;
-            this.injectCitationTestMessage();
         });
 
         effect(() => {
@@ -354,27 +326,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
         });
         return processed;
-    }
-
-    private injectCitationTestMessage(): void {
-        const text = 'Satz eins [cite:L:101::::Intro:Kurz] Satz zwei ' + '[cite:L:102::::Alpha:Erste][cite:L:103::::Beta:Zweite][cite:L:104::::Gamma:Dritte]';
-
-        const message: IrisAssistantMessage = {
-            id: -Date.now(),
-            sender: IrisSender.LLM,
-            sentAt: dayjs(),
-            content: [new IrisTextMessageContent(text)],
-        };
-
-        const citationInfo: IrisCitationMetaDTO[] = [
-            { entityId: 101, lectureTitle: 'Test Lecture', lectureUnitTitle: 'Unit A' },
-            { entityId: 102, lectureTitle: 'Test Lecture', lectureUnitTitle: 'Unit B' },
-            { entityId: 103, lectureTitle: 'Test Lecture', lectureUnitTitle: 'Unit C' },
-            { entityId: 104, lectureTitle: 'Test Lecture', lectureUnitTitle: 'Unit D' },
-        ];
-
-        this.chatService.citationInfo.next(citationInfo);
-        this.chatService.messages.next([...this.chatService.messages.getValue(), message]);
     }
 
     renderMessageContent(content: IrisTextMessageContent): string {
@@ -547,6 +498,29 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         </span>`;
     }
 
+    private getCitationNavButton(target: EventTarget | null): HTMLElement | null {
+        const rawTarget = target as Node | null;
+        const element = rawTarget instanceof HTMLElement ? rawTarget : rawTarget?.parentElement;
+        return element?.closest('.iris-citation__nav-button') as HTMLElement | null;
+    }
+
+    private navigateCitationGroup(navButton: HTMLElement) {
+        const citationGroup = navButton.closest('.iris-citation-group') as HTMLElement | null;
+        if (!citationGroup) {
+            return;
+        }
+        const summaryItems = Array.from(citationGroup.querySelectorAll<HTMLElement>('.iris-citation__summary-item'));
+        if (summaryItems.length === 0) {
+            return;
+        }
+        const currentIndex = summaryItems.findIndex((item) => item.classList.contains('is-active'));
+        const normalizedIndex = currentIndex < 0 ? 0 : currentIndex;
+        const isPrev = navButton.classList.contains('iris-citation__nav-button--prev');
+        const delta = isPrev ? -1 : 1;
+        const nextIndex = (normalizedIndex + delta + summaryItems.length) % summaryItems.length;
+        this.updateCitationGroupSummary(citationGroup, nextIndex);
+    }
+
     private formatGroupSummaryItem(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
         const summaryText = this.formatSummary(parsed, meta);
         if (summaryText) {
@@ -572,9 +546,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             lines.push(summaryValue);
         }
 
-        const lectureTitle = parsed.type === 'L' ? this.escapeHtml(meta?.lectureTitle?.trim() ?? 'n/a') : undefined;
-        const unitTitle = parsed.type === 'L' ? this.escapeHtml(meta?.lectureUnitTitle?.trim() ?? 'n/a') : undefined;
-
         const filtered = lines.filter(Boolean);
         if (filtered.length === 0) {
             return '';
@@ -582,10 +553,18 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
         const [keywordLine, ...restLines] = filtered;
         const rest = restLines.length > 0 ? `<br />${restLines.join('<br />')}` : '';
-        const metaHtml =
-            lectureTitle && unitTitle
-                ? `<br /><span class="iris-citation__summary-meta">Lecture: "${lectureTitle}"</span><br /><span class="iris-citation__summary-meta">Unit: "${unitTitle}"</span>`
-                : '';
+        const metaLines: string[] = [];
+        if (parsed.type === 'L') {
+            const lectureTitle = meta?.lectureTitle?.trim();
+            if (lectureTitle) {
+                metaLines.push(`<span class="iris-citation__summary-meta">Lecture: "${this.escapeHtml(lectureTitle)}"</span>`);
+            }
+            const unitTitle = meta?.lectureUnitTitle?.trim();
+            if (unitTitle) {
+                metaLines.push(`<span class="iris-citation__summary-meta">Unit: "${this.escapeHtml(unitTitle)}"</span>`);
+            }
+        }
+        const metaHtml = metaLines.length > 0 ? `<br />${metaLines.join('<br />')}` : '';
 
         return `<span class="iris-citation__summary-keyword">${keywordLine}</span>${rest}${metaHtml}`;
     }
@@ -628,8 +607,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     ngAfterViewInit() {
-        // Enable animations after initial messages have loaded
-        // Delay ensures initial message batch doesn't trigger animations
         setTimeout(() => (this.shouldAnimate = true), 500);
         this.destroyRef.onDestroy(() => {
             if (!this.hoverMessagesElement) {

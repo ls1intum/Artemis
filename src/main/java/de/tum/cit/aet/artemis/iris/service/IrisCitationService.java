@@ -5,8 +5,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -19,12 +21,12 @@ import de.tum.cit.aet.artemis.iris.dto.IrisCitationMetaDTO;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
-@Lazy
-@Service
-@Profile(PROFILE_IRIS)
 /**
  * Parses Iris citation payloads from chat contents and resolves metadata for the referenced lecture units.
  */
+@Lazy
+@Service
+@Profile(PROFILE_IRIS)
 public class IrisCitationService {
 
     private static final Pattern CITATION_PATTERN = Pattern.compile("\\[cite:(?<payload>[^\\]]+)\\]");
@@ -60,9 +62,8 @@ public class IrisCitationService {
         if (messages == null || messages.isEmpty()) {
             return List.of();
         }
-        var combined = messages.stream().filter(java.util.Objects::nonNull)
-                .flatMap(message -> message.getContent() != null ? message.getContent().stream() : java.util.stream.Stream.empty()).map(IrisMessageContent::getContentAsString)
-                .filter(content -> content != null && !content.isBlank()).toList();
+        var combined = messages.stream().filter(Objects::nonNull).flatMap(message -> message.getContent() != null ? message.getContent().stream() : Stream.empty())
+                .map(IrisMessageContent::getContentAsString).filter(content -> content != null && !content.isBlank()).toList();
         if (combined.isEmpty()) {
             return List.of();
         }
