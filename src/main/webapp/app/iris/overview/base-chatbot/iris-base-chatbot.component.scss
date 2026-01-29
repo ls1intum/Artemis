@@ -237,6 +237,15 @@
             background: transparent;
         }
 
+        > div {
+            position: relative;
+            z-index: 0;
+        }
+
+        > div:hover {
+            z-index: 5;
+        }
+
         > div:first-child {
             margin-top: 5px;
         }
