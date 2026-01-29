@@ -191,7 +191,15 @@
                                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                                             jhiDeleteButton
                                             [entityTitle]="programmingExercise.title!"
+                                            entitySummaryTitle="artemisApp.programmingExercise.delete.summary.title"
+                                            [fetchEntitySummary]="fetchExerciseDeletionSummary(programmingExercise.id!)"
                                             deleteQuestion="artemisApp.programmingExercise.delete.questionLocalVC.single"
+                                            [translateValues]="{
+                                                courseTitle: course.title,
+                                                courseType: course.testCourse
+                                                    ? ('artemisApp.programmingExercise.delete.testCourse' | artemisTranslate)
+                                                    : ('artemisApp.programmingExercise.delete.realCourse' | artemisTranslate),
+                                            }"
                                             (delete)="deleteProgrammingExercise(programmingExercise.id!, $event)"
                                             [dialogError]="dialogError$"
                                             [additionalChecks]="
@@ -240,6 +248,12 @@
                         jhiDeleteButton
                         [entityTitle]="'Multiple Programming Exercises'"
                         deleteQuestion="artemisApp.programmingExercise.delete.questionLocalVC.multiple"
+                        [translateValues]="{
+                            courseTitle: course.title,
+                            courseType: course.testCourse
+                                ? ('artemisApp.programmingExercise.delete.testCourse' | artemisTranslate)
+                                : ('artemisApp.programmingExercise.delete.realCourse' | artemisTranslate),
+                        }"
                         (delete)="deleteMultipleProgrammingExercises(selectedExercises, $event)"
                         [requireConfirmationOnlyForAdditionalChecks]="true"
                         [additionalChecks]="
