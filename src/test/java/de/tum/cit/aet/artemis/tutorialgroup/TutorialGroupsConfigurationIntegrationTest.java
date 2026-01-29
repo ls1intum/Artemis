@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupConfigurationDTO;
 
 class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
@@ -115,10 +116,11 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void create_asInstructor_shouldCreateTutorialGroupsConfiguration() throws Exception {
-        var configurationFromRequest = request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId), buildExampleConfiguration(courseId),
-                TutorialGroupsConfiguration.class, HttpStatus.CREATED);
+        TutorialGroupConfigurationDTO configurationFromRequest = request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId),
+                TutorialGroupConfigurationDTO.of(buildExampleConfiguration(courseId)), TutorialGroupConfigurationDTO.class, HttpStatus.CREATED);
         assertThat(configurationFromRequest).isNotNull();
-        this.assertConfigurationStructure(configurationFromRequest, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY, courseId, true, true);
+        var persisted = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElseThrow();
+        this.assertConfigurationStructure(persisted, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY, courseId, true, true);
     }
 
     @Test
@@ -153,7 +155,8 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
 
         // when
         configuration.setTutorialPeriodEndInclusive(FIRST_SEPTEMBER_MONDAY.toString());
-        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId, configuration.getId()), configuration, TutorialGroupsConfiguration.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId, configuration.getId()), TutorialGroupConfigurationDTO.of(configuration),
+                TutorialGroupConfigurationDTO.class, HttpStatus.OK);
         // then
         configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(configuration.getId());
         this.assertConfigurationStructure(configuration, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY, courseId, true, true);
@@ -163,7 +166,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
      * Note: With this test we want to ensure that jackson can deserialize the tutorial group configuration if it is indirectly sent with another entity.
      * There was a bug that caused the deserialization to fail, as the date format checkers were put directly into the setter of date and time.
      * The problem was that jackson tried to deserialize the date and time with the date and time format checkers active, which failed. These checkers
-     * should only be active in a direct create / update case to ensure uuuu-MM-dd format in the database.
+     * should only be active in a direct creation / update case to ensure uuuu-MM-dd format in the database.
      *
      * @throws Exception if the request fails
      */
@@ -179,7 +182,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         configuration.setTutorialPeriodEndInclusive("2022-11-25T23:00:00.000Z");
 
         TextExercise textExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2), course);
-        // the exercise is now indirectly connected to the configuration and jackson will try to deserialize the configuration
+        // the exercise is now indirectly connected to the configuration, and jackson will try to deserialize the configuration
         textExercise.setCourse(course);
         textExercise.setChannelName("testchannelname");
         request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
@@ -195,7 +198,8 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroupWithSchedule);
         // when
         configuration.setUseTutorialGroupChannels(false);
-        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId, configuration.getId()), configuration, TutorialGroupsConfiguration.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId, configuration.getId()), TutorialGroupConfigurationDTO.of(configuration),
+                TutorialGroupConfigurationDTO.class, HttpStatus.OK);
         // then
         configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(configuration.getId());
         this.assertConfigurationStructure(configuration, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY, courseId, false, true);
@@ -212,7 +216,8 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroupWithSchedule);
         // when
         configuration.setUsePublicTutorialGroupChannels(false);
-        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId, configuration.getId()), configuration, TutorialGroupsConfiguration.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId, configuration.getId()), TutorialGroupConfigurationDTO.of(configuration),
+                TutorialGroupConfigurationDTO.class, HttpStatus.OK);
         // then
         configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(configuration.getId());
         this.assertConfigurationStructure(configuration, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY, courseId, true, false);
@@ -240,7 +245,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         assertThat(tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(courseId)).hasSize(1);
 
         // when
-        // change time zone to berlin and change end period
+        // change time zone to berlin and change the end period
         var course = courseRepository.findByIdForUpdateElseThrow(courseId);
         course.setTimeZone("Europe/Berlin");
         course.setTutorialGroupsConfiguration(null);
