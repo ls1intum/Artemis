@@ -1,6 +1,14 @@
 import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
+/**
+ * Checks whether a thread belongs to the currently selected repository.
+ *
+ * @param thread The comment thread to check.
+ * @param repositoryType The selected repository type.
+ * @param auxiliaryRepositoryId The selected auxiliary repository id, if any.
+ * @returns True if the thread matches the repository selection.
+ */
 export function matchesSelectedRepository(thread: CommentThread, repositoryType?: RepositoryType, auxiliaryRepositoryId?: number): boolean {
     switch (repositoryType) {
         case RepositoryType.SOLUTION:
@@ -23,6 +31,12 @@ export function matchesSelectedRepository(thread: CommentThread, repositoryType?
     }
 }
 
+/**
+ * Maps a repository type to the corresponding thread target type.
+ *
+ * @param repositoryType The repository type from the code editor.
+ * @returns The matching comment thread location type.
+ */
 export function mapRepositoryToThreadLocationType(repositoryType: RepositoryType): CommentThreadLocationType {
     switch (repositoryType) {
         case RepositoryType.SOLUTION:

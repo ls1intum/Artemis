@@ -18,6 +18,9 @@ export class ReviewCommentDraftWidgetComponent {
 
     text = '';
 
+    /**
+     * Emits the trimmed text when submission is allowed and non-empty.
+     */
     submit(): void {
         if (!this.canSubmit()) {
             return;
@@ -29,6 +32,9 @@ export class ReviewCommentDraftWidgetComponent {
         this.onSubmit.emit(trimmed);
     }
 
+    /**
+     * Cancels the draft and notifies the parent component.
+     */
     cancel(): void {
         this.onCancel.emit();
     }

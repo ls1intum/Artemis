@@ -33,6 +33,9 @@ export class ReviewCommentWidgetManager {
         private readonly config: ReviewCommentWidgetManagerConfig,
     ) {}
 
+    /**
+     * Updates the hover button visibility and callback based on configuration.
+     */
     updateHoverButton(): void {
         if (this.config.shouldShowHoverButton()) {
             this.editor.setLineDecorationsHoverButton(this.config.hoverButtonClass, (lineNumber) => this.addDraft(lineNumber));
@@ -41,16 +44,28 @@ export class ReviewCommentWidgetManager {
         }
     }
 
+    /**
+     * Renders both saved thread widgets and active draft widgets.
+     */
     renderWidgets(): void {
         this.addSavedWidgets();
         this.addDraftWidgets();
     }
 
+    /**
+     * Pushes the latest submit availability to all draft widgets.
+     */
     updateDraftInputs(): void {
         const canSubmit = this.config.canSubmit ? this.config.canSubmit() : true;
         this.draftWidgetRefs.forEach((ref) => ref.setInput('canSubmit', canSubmit));
     }
 
+    /**
+     * Updates thread inputs in-place when widgets already exist.
+     *
+     * @param threads The latest thread data to apply to widgets.
+     * @returns True if all widgets were updated, false if any were missing.
+     */
     updateThreadInputs(threads: CommentThread[]): boolean {
         let updated = true;
         for (const thread of threads) {
@@ -67,6 +82,9 @@ export class ReviewCommentWidgetManager {
         return updated;
     }
 
+    /**
+     * Disposes all widgets and clears internal tracking state.
+     */
     disposeAll(): void {
         this.disposeDraftWidgets();
         this.disposeSavedWidgets();
@@ -74,6 +92,9 @@ export class ReviewCommentWidgetManager {
         this.collapseState.clear();
     }
 
+    /**
+     * Removes draft widgets and clears draft line tracking.
+     */
     clearDrafts(): void {
         for (const [fileName, lines] of this.draftLinesByFile.entries()) {
             for (const line of lines) {
@@ -84,6 +105,11 @@ export class ReviewCommentWidgetManager {
         this.draftLinesByFile.clear();
     }
 
+    /**
+     * Creates or updates a draft widget at the given 1-based line number.
+     *
+     * @param lineNumber The 1-based line number where the draft widget should be rendered.
+     */
     private addDraft(lineNumber: number): void {
         const fileName = this.config.getDraftFileName();
         if (!fileName) {
@@ -108,6 +134,9 @@ export class ReviewCommentWidgetManager {
         this.config.onAdd?.({ lineNumber, fileName });
     }
 
+    /**
+     * Renders draft widgets for the active file based on tracked draft lines.
+     */
     private addDraftWidgets(): void {
         const activeFileName = this.config.getDraftFileName();
         if (!activeFileName) {
@@ -131,6 +160,9 @@ export class ReviewCommentWidgetManager {
         }
     }
 
+    /**
+     * Renders thread widgets, disposing stale ones and preserving collapse state.
+     */
     private addSavedWidgets(): void {
         const threads = this.config.getThreads().filter((thread) => this.config.filterThread(thread));
         const threadIds = new Set<number>();
@@ -174,11 +206,24 @@ export class ReviewCommentWidgetManager {
         }
     }
 
+    /**
+     * Emits the draft submit callback and removes the draft widget.
+     *
+     * @param fileName The file where the draft was created.
+     * @param line The zero-based line index of the draft.
+     * @param text The submitted draft text.
+     */
     private submitDraft(fileName: string, line: number, text: string): void {
         this.config.onSubmit({ lineNumber: line + 1, fileName, text });
         this.removeDraft(fileName, line);
     }
 
+    /**
+     * Removes the draft widget and tracking entry for a file/line pair.
+     *
+     * @param fileName The file where the draft was created.
+     * @param line The zero-based line index of the draft.
+     */
     private removeDraft(fileName: string, line: number): void {
         const existing = this.draftLinesByFile.get(fileName);
         if (existing) {
@@ -193,24 +238,50 @@ export class ReviewCommentWidgetManager {
         this.draftWidgetRefs.delete(widgetKey);
     }
 
+    /**
+     * Disposes all draft widget component refs.
+     */
     private disposeDraftWidgets(): void {
         this.draftWidgetRefs.forEach((ref) => ref.destroy());
         this.draftWidgetRefs.clear();
     }
 
+    /**
+     * Disposes all thread widget component refs.
+     */
     private disposeSavedWidgets(): void {
         this.threadWidgetRefs.forEach((ref) => ref.destroy());
         this.threadWidgetRefs.clear();
     }
 
+    /**
+     * Builds the Monaco widget id for a thread widget.
+     *
+     * @param threadId The thread id.
+     * @returns The widget id used for Monaco line widgets.
+     */
     private buildThreadWidgetId(threadId: number): string {
         return `review-comment-thread-${threadId}`;
     }
 
+    /**
+     * Builds the Monaco widget id for a draft widget.
+     *
+     * @param fileName The file name used for keying.
+     * @param line The zero-based line index.
+     * @returns The widget id used for Monaco line widgets.
+     */
     private buildDraftWidgetId(fileName: string, line: number): string {
         return `review-comment-${fileName}-${line}`;
     }
 
+    /**
+     * Builds the internal map key for a draft widget.
+     *
+     * @param fileName The file name used for keying.
+     * @param line The zero-based line index.
+     * @returns The internal key for draft widgets.
+     */
     private getDraftKey(fileName: string, line: number): string {
         return `${fileName}:${line}`;
     }

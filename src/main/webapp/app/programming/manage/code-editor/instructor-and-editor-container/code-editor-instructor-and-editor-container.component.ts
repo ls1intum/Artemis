@@ -143,6 +143,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         );
     }
 
+    /**
+     * Clears draft widgets and reloads review comment threads after a commit.
+     */
     onCommit(): void {
         const exerciseId = this.exercise?.id;
         if (!exerciseId) {
@@ -348,16 +351,31 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         });
     }
 
+    /**
+     * Creates a review comment thread for the current repository selection.
+     *
+     * @param event The line, file, and text of the new comment.
+     */
     onSubmitReviewComment(event: { lineNumber: number; fileName: string; text: string }): void {
         const targetType = mapRepositoryToThreadLocationType(this.selectedRepository);
         const auxiliaryRepositoryId = this.selectedRepository === RepositoryType.AUXILIARY ? this.selectedRepositoryId : undefined;
         this.createThreadWithInitialComment(targetType, event.fileName, event.lineNumber, event.text, auxiliaryRepositoryId);
     }
 
+    /**
+     * Creates a review comment thread for the problem statement.
+     *
+     * @param event The line, file, and text of the new comment.
+     */
     onSubmitProblemStatementReviewComment(event: { lineNumber: number; fileName: string; text: string }): void {
         this.createThreadWithInitialComment(CommentThreadLocationType.PROBLEM_STATEMENT, PROBLEM_STATEMENT_FILE_PATH, event.lineNumber, event.text);
     }
 
+    /**
+     * Deletes a review comment and updates the local thread state.
+     *
+     * @param commentId The id of the comment to delete.
+     */
     onDeleteReviewComment(commentId: number): void {
         const exerciseId = this.exercise?.id;
         if (!exerciseId) {
@@ -378,6 +396,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             .subscribe();
     }
 
+    /**
+     * Creates a reply comment and updates the local thread state.
+     *
+     * @param event The thread id and reply text.
+     */
     onReplyReviewComment(event: { threadId: number; text: string }): void {
         const exerciseId = this.exercise?.id;
         if (!exerciseId) {
@@ -405,6 +428,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             .subscribe();
     }
 
+    /**
+     * Updates a comment's content and refreshes it in the local thread state.
+     *
+     * @param event The comment id and updated text.
+     */
     onUpdateReviewComment(event: { commentId: number; text: string }): void {
         const exerciseId = this.exercise?.id;
         if (!exerciseId) {
@@ -430,6 +458,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             .subscribe();
     }
 
+    /**
+     * Updates the resolved state of a thread and refreshes it locally.
+     *
+     * @param event The thread id and new resolved state.
+     */
     onToggleResolveReviewThread(event: { threadId: number; resolved: boolean }): void {
         const exerciseId = this.exercise?.id;
         if (!exerciseId) {
@@ -454,6 +487,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             .subscribe();
     }
 
+    /**
+     * Loads all review comment threads for the given exercise.
+     *
+     * @param exerciseId The exercise to fetch threads for.
+     */
     private loadReviewCommentThreads(exerciseId: number): void {
         this.exerciseReviewCommentService
             .getThreads(exerciseId)
@@ -603,6 +641,15 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
     }
 
+    /**
+     * Creates a new thread with an initial user comment.
+     *
+     * @param targetType The thread location type.
+     * @param filePath The file path for the thread.
+     * @param lineNumber The line number for the thread.
+     * @param text The initial comment text.
+     * @param auxiliaryRepositoryId The auxiliary repository id, if applicable.
+     */
     private createThreadWithInitialComment(targetType: CommentThreadLocationType, filePath: string, lineNumber: number, text: string, auxiliaryRepositoryId?: number): void {
         const exerciseId = this.exercise?.id;
         if (!exerciseId) {

@@ -35,20 +35,36 @@ export class ReviewCommentThreadWidgetComponent implements OnInit {
     editingCommentId?: number;
     editText = '';
 
+    /**
+     * Emits a delete event for the given comment id.
+     *
+     * @param commentId The id of the comment to delete.
+     */
     deleteComment(commentId: number): void {
         this.onDelete.emit(commentId);
     }
 
+    /**
+     * Starts editing a comment and pre-fills the editor with formatted text.
+     *
+     * @param comment The comment to edit.
+     */
     startEditing(comment: Comment): void {
         this.editingCommentId = comment.id;
         this.editText = this.formatReviewCommentText(comment);
     }
 
+    /**
+     * Cancels the current edit and clears the editor state.
+     */
     cancelEditing(): void {
         this.editingCommentId = undefined;
         this.editText = '';
     }
 
+    /**
+     * Saves the edited comment text when non-empty and emits an update event.
+     */
     saveEditing(): void {
         const id = this.editingCommentId;
         const trimmed = this.editText.trim();
@@ -59,6 +75,9 @@ export class ReviewCommentThreadWidgetComponent implements OnInit {
         this.cancelEditing();
     }
 
+    /**
+     * Emits a reply event with trimmed text and clears the reply field.
+     */
     submitReply(): void {
         const trimmed = this.replyText.trim();
         if (!trimmed) {
@@ -68,6 +87,9 @@ export class ReviewCommentThreadWidgetComponent implements OnInit {
         this.replyText = '';
     }
 
+    /**
+     * Toggles the resolved state and collapses the thread when resolved.
+     */
     toggleResolved(): void {
         const thread = this.thread();
         const nextResolved = !thread.resolved;
@@ -78,6 +100,9 @@ export class ReviewCommentThreadWidgetComponent implements OnInit {
         }
     }
 
+    /**
+     * Toggles the thread body and emits the collapsed state.
+     */
     toggleThreadBody(): void {
         this.showThreadBody = !this.showThreadBody;
         this.onToggleCollapse.emit(!this.showThreadBody);
@@ -87,6 +112,12 @@ export class ReviewCommentThreadWidgetComponent implements OnInit {
         this.showThreadBody = !this.initialCollapsed();
     }
 
+    /**
+     * Checks whether a comment was edited by comparing timestamps.
+     *
+     * @param comment The comment to check.
+     * @returns True if the comment has been edited.
+     */
     isEdited(comment: Comment): boolean {
         if (!comment.lastModifiedDate || !comment.createdDate) {
             return false;
@@ -94,6 +125,11 @@ export class ReviewCommentThreadWidgetComponent implements OnInit {
         return comment.lastModifiedDate !== comment.createdDate;
     }
 
+    /**
+     * Returns comments ordered by creation date, falling back to id order.
+     *
+     * @returns The sorted comments for the thread.
+     */
     orderedComments(): Comment[] {
         const comments = this.thread().comments ?? [];
         return [...comments].sort((a, b) => {
@@ -106,6 +142,12 @@ export class ReviewCommentThreadWidgetComponent implements OnInit {
         });
     }
 
+    /**
+     * Formats a comment for display, handling user and consistency content types.
+     *
+     * @param comment The comment whose content should be formatted.
+     * @returns The formatted comment text.
+     */
     formatReviewCommentText(comment: Comment): string {
         const content = comment.content as CommentContent | undefined;
         if (!content) {
@@ -120,6 +162,12 @@ export class ReviewCommentThreadWidgetComponent implements OnInit {
         return [severity, category, text].filter(Boolean).join(' - ');
     }
 
+    /**
+     * Resolves the display name for a comment author.
+     *
+     * @param comment The comment whose author should be resolved.
+     * @returns The resolved author name.
+     */
     getCommentAuthorName(comment: Comment): string {
         if (comment.authorName) {
             return comment.authorName;
@@ -130,10 +178,21 @@ export class ReviewCommentThreadWidgetComponent implements OnInit {
         return '';
     }
 
+    /**
+     * Checks if the given comment is currently in edit mode.
+     *
+     * @param comment The comment to check.
+     * @returns True if the comment is currently being edited.
+     */
     isEditing(comment: Comment): boolean {
         return this.editingCommentId === comment.id;
     }
 
+    /**
+     * Returns localized metadata for the thread header based on the target type.
+     *
+     * @returns The translation key and params for the header, or undefined if none apply.
+     */
     getThreadMeta(): { key: string; params: { versionId?: number; commitSha?: string } } | undefined {
         const thread = this.thread();
         if (thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT && thread.initialVersionId) {
