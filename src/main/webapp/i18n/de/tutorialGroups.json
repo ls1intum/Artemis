@@ -258,7 +258,25 @@
                 "continueToManagement": "Weiter zur Übungsgruppen-Verwaltung"
             },
             "tutorialGroupRegistrations": {
-                "title": "Registrierungen"
+                "title": "Registrierungen",
+                "searchFieldPlaceholder": "Suche nach Name oder Login",
+                "importButtonLabel": "Importieren",
+                "exportButtonLabel": "Exportieren",
+                "addStudentsButtonLabel": "Studenten Hinzufügen",
+                "removeStudentButton": {
+                    "tooltipLabel": "Entfernen",
+                    "confirmationDialogue": {
+                        "header": "Entfernung Bestätigen",
+                        "message": "Möchtest du den Student wirklich deregistrieren?"
+                    }
+                },
+                "studentsTableHeaderLabel": {
+                    "name": "Name",
+                    "login": "Login",
+                    "email": "Email",
+                    "registrationNumber": "Registrierungsnummer",
+                    "actions": "Aktionen"
+                }
             },
             "createTutorialGroup": {
                 "title": "Übungsgruppe erstellen"

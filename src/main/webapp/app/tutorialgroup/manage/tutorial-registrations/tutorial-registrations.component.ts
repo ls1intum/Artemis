@@ -1,11 +1,17 @@
-import { Component, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
+import { TooltipModule } from 'primeng/tooltip';
 import { ButtonModule } from 'primeng/button';
 import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
+import { TranslateService } from '@ngx-translate/core';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 
 export interface DeregisterStudentEvent {
     courseId: number;
@@ -15,23 +21,55 @@ export interface DeregisterStudentEvent {
 
 @Component({
     selector: 'jhi-tutorial-registrations',
-    imports: [IconFieldModule, InputIconModule, InputTextModule, ButtonModule, ProfilePictureComponent],
+    imports: [IconFieldModule, InputIconModule, InputTextModule, TooltipModule, ConfirmDialogModule, ButtonModule, ProfilePictureComponent, TranslateDirective],
+    providers: [ConfirmationService],
     templateUrl: './tutorial-registrations.component.html',
     styleUrl: './tutorial-registrations.component.scss',
 })
 export class TutorialRegistrationsComponent {
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
+    private confirmationService = inject(ConfirmationService);
+    private translateService = inject(TranslateService);
+    private currentLocale = getCurrentLocaleSignal(this.translateService);
+
     courseId = input.required<number>();
     tutorialGroupId = input.required<number>();
     registeredStudents = input.required<TutorialGroupRegisteredStudentDTO[]>();
     onDeregisterStudent = output<DeregisterStudentEvent>();
+    removeButtonTooltip = computed<string>(() => this.computeRemoveButtonTooltip());
+    searchFieldPlaceholder = computed<string>(() => this.computeSearchFieldPlaceholder());
 
-    deregisterStudent(studentLogin: string) {
-        this.onDeregisterStudent.emit({
-            courseId: this.courseId(),
-            tutorialGroupId: this.tutorialGroupId(),
-            studentLogin: studentLogin,
+    confirmDeregistration(event: Event, studentLogin: string) {
+        this.confirmationService.confirm({
+            target: event.target as EventTarget,
+            message: this.translateService.instant('artemisApp.pages.tutorialGroupRegistrations.removeStudentButton.confirmationDialogue.message'),
+            header: this.translateService.instant('artemisApp.pages.tutorialGroupRegistrations.removeStudentButton.confirmationDialogue.header'),
+            rejectButtonProps: {
+                label: this.translateService.instant('entity.action.cancel'),
+                severity: 'secondary',
+            },
+            acceptButtonProps: {
+                label: this.translateService.instant('entity.action.remove'),
+                severity: 'danger',
+            },
+            accept: () => {
+                this.onDeregisterStudent.emit({
+                    courseId: this.courseId(),
+                    tutorialGroupId: this.tutorialGroupId(),
+                    studentLogin: studentLogin,
+                });
+            },
         });
+    }
+
+    private computeRemoveButtonTooltip(): string {
+        this.currentLocale();
+        return this.translateService.instant('artemisApp.pages.tutorialGroupRegistrations.removeStudentButton.tooltipLabel');
+    }
+
+    private computeSearchFieldPlaceholder(): string {
+        this.currentLocale();
+        return this.translateService.instant('artemisApp.pages.tutorialGroupRegistrations.searchFieldPlaceholder');
     }
 }

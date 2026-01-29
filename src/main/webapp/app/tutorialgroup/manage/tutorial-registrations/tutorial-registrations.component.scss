@@ -22,15 +22,19 @@
         border-bottom: 1px solid var(--border-color);
 
         th {
-            width: 4rem;
+            flex: 1;
+            display: flex;
+            align-items: center;
             padding-top: 0;
             padding-bottom: 0.75rem;
             white-space: normal;
             overflow-wrap: break-word;
         }
 
-        th:not(:last-child) {
-            flex: 1;
+        th:last-child {
+            flex: none;
+            width: 5rem;
+            justify-content: end;
         }
     }
 
@@ -38,16 +42,18 @@
         display: flex;
 
         td {
+            flex: 1;
             display: flex;
             align-items: center;
-            width: 4rem;
             padding-top: 0.75rem;
             white-space: normal;
             overflow-wrap: break-word;
         }
 
-        td:not(:last-child) {
-            flex: 1;
+        td:last-child {
+            flex: none;
+            width: 5rem;
+            justify-content: end;
         }
 
         .student-property {

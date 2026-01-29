@@ -258,7 +258,25 @@
                 "continueToManagement": "Continue to Tutorial Group Management"
             },
             "tutorialGroupRegistrations": {
-                "title": "Registrations"
+                "title": "Registrations",
+                "searchFieldPlaceholder": "Search by Name or Login",
+                "importButtonLabel": "Import",
+                "exportButtonLabel": "Export",
+                "addStudentsButtonLabel": "Add Students",
+                "removeStudentButton": {
+                    "tooltipLabel": "Remove",
+                    "confirmationDialogue": {
+                        "header": "Confirm Removal",
+                        "message": "Do you really want to remove this student from registrations?"
+                    }
+                },
+                "studentsTableHeaderLabel": {
+                    "name": "Name",
+                    "login": "Login",
+                    "email": "Email",
+                    "registrationNumber": "Registration Number",
+                    "actions": "Actions"
+                }
             },
             "createTutorialGroup": {
                 "title": "Create Tutorial Group"
