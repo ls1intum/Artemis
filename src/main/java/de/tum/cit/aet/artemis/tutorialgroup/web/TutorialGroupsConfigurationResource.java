@@ -90,9 +90,6 @@ public class TutorialGroupsConfigurationResource {
     public ResponseEntity<TutorialGroupConfigurationDTO> create(@PathVariable Long courseId, @RequestBody @Valid TutorialGroupConfigurationDTO tutorialGroupConfigurationDto)
             throws URISyntaxException {
         log.debug("REST request to create TutorialGroupsConfiguration: {} for course: {}", tutorialGroupConfigurationDto, courseId);
-        if (tutorialGroupConfigurationDto == null) {
-            throw new BadRequestException("Tutorial group configuration must be provided");
-        }
         if (tutorialGroupConfigurationDto.id() != null) {
             throw new BadRequestException("A new tutorial group configuration cannot already have an ID");
         }
@@ -101,8 +98,10 @@ public class TutorialGroupsConfigurationResource {
         if (tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(course.getId()).isPresent()) {
             throw new BadRequestException("A tutorial group configuration already exists for this course");
         }
-
-        ZoneId configurationZoneId = TutorialGroupConfigurationDTO.zoneOf(tutorialGroupConfigurationDto.tutorialPeriodStartInclusive());
+        if (course.getTimeZone() == null) {
+            throw new BadRequestException("The course has no time zone");
+        }
+        ZoneId configurationZoneId = ZoneId.of(course.getTimeZone());
         TutorialGroupsConfiguration configuration = TutorialGroupConfigurationDTO.from(tutorialGroupConfigurationDto, configurationZoneId);
 
         isValidTutorialGroupConfiguration(configuration);
@@ -135,18 +134,23 @@ public class TutorialGroupsConfigurationResource {
         if (updatedTutorialGroupConfigurationDto.id() == null) {
             throw new BadRequestException("A tutorial group cannot be updated without an id");
         }
-        ZoneId configurationZoneId = TutorialGroupConfigurationDTO.zoneOf(updatedTutorialGroupConfigurationDto.tutorialPeriodStartInclusive());
+
+        var configurationFromDatabase = this.tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(updatedTutorialGroupConfigurationDto.id());
+        var course = configurationFromDatabase.getCourse();
+        if (course.getTimeZone() == null) {
+            throw new BadRequestException("The course has no time zone");
+        }
+
+        ZoneId configurationZoneId = ZoneId.of(course.getTimeZone());
         TutorialGroupsConfiguration updatedTutorialGroupConfiguration = TutorialGroupConfigurationDTO.from(updatedTutorialGroupConfigurationDto, configurationZoneId);
 
         isValidTutorialGroupConfiguration(updatedTutorialGroupConfiguration);
-        var configurationFromDatabase = this.tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(updatedTutorialGroupConfiguration.getId());
 
-        var useTutorialGroupChannelSettingChanged = configurationFromDatabase.getUseTutorialGroupChannels() != updatedTutorialGroupConfiguration.getUseTutorialGroupChannels();
-        var usePublicChannelSettingChanged = configurationFromDatabase.getUsePublicTutorialGroupChannels() != updatedTutorialGroupConfiguration.getUsePublicTutorialGroupChannels();
+        boolean useTutorialGroupChannelSettingChanged = !java.util.Objects.equals(configurationFromDatabase.getUseTutorialGroupChannels(),
+                updatedTutorialGroupConfiguration.getUseTutorialGroupChannels());
+        boolean usePublicChannelSettingChanged = !java.util.Objects.equals(configurationFromDatabase.getUsePublicTutorialGroupChannels(),
+                updatedTutorialGroupConfiguration.getUsePublicTutorialGroupChannels());
 
-        if (configurationFromDatabase.getCourse().getTimeZone() == null) {
-            throw new BadRequestException("The course has no time zone");
-        }
         checkEntityIdMatchesPathIds(configurationFromDatabase, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configurationFromDatabase.getCourse(), null);
 

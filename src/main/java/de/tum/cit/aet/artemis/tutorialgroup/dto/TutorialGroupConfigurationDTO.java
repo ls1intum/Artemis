@@ -1,12 +1,11 @@
 package de.tum.cit.aet.artemis.tutorialgroup.dto;
 
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeParseException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.BadRequestException;
 
 import org.jspecify.annotations.Nullable;
 
@@ -35,8 +34,12 @@ public record TutorialGroupConfigurationDTO(Long id, @NotNull String tutorialPer
             return null;
         }
 
-        var zoneId = zoneOf(config.getTutorialPeriodStartInclusive());
+        var course = config.getCourse();
+        if (course == null || course.getTimeZone() == null) {
+            throw new BadRequestException("Tutorial group configuration is associated with a course without a time zone");
+        }
 
+        ZoneId zoneId = ZoneId.of(course.getTimeZone());
         var freePeriods = config.getTutorialGroupFreePeriods() == null ? Set.<TutorialGroupFreePeriodDTO>of()
                 : config.getTutorialGroupFreePeriods().stream().map(p -> TutorialGroupFreePeriodDTO.of(p, zoneId)).collect(Collectors.toSet());
 
@@ -82,28 +85,5 @@ public record TutorialGroupConfigurationDTO(Long id, @NotNull String tutorialPer
         }
 
         return configuration;
-    }
-
-    /**
-     * Determines the time zone of the tutorial groups configuration.
-     * <p>
-     * The time zone is derived from the ISO 8601 formatted tutorial period start date.
-     * If the date string does not contain any zone or offset information,
-     * the system default time zone is used as a fallback.
-     *
-     * @param tutorialPeriodStartInclusive the tutorial groups configuration start date
-     * @return the time zone of the configuration
-     */
-    public static ZoneId zoneOf(String tutorialPeriodStartInclusive) {
-        if (tutorialPeriodStartInclusive == null) {
-            return ZoneId.systemDefault();
-        }
-        try {
-            return ZonedDateTime.parse(tutorialPeriodStartInclusive).getZone();
-        }
-        catch (DateTimeParseException ignored) {
-            // No zone/offset information present -> fall back
-            return ZoneId.systemDefault();
-        }
     }
 }
