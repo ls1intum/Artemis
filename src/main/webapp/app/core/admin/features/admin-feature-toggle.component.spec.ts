@@ -108,7 +108,7 @@ describe('AdminFeatureToggleComponentTest', () => {
         it('ngOnInit should load profile features', () => {
             expect(comp.profileFeatures()).toHaveLength(0);
             comp.ngOnInit();
-            expect(comp.profileFeatures()).toHaveLength(11);
+            expect(comp.profileFeatures()).toHaveLength(10);
         });
 
         it('should set isActive based on active profiles', () => {
@@ -141,7 +141,7 @@ describe('AdminFeatureToggleComponentTest', () => {
         it('ngOnInit should load module features', () => {
             expect(comp.moduleFeatures()).toHaveLength(0);
             comp.ngOnInit();
-            expect(comp.moduleFeatures()).toHaveLength(12);
+            expect(comp.moduleFeatures()).toHaveLength(13);
         });
 
         it('should set isActive based on active module features', () => {

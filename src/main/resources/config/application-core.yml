@@ -27,6 +27,8 @@ artemis:
 
     tutorialgroup:
         enabled: true
+    lti:
+        enabled: false
     user-management:
         passkey:
             enabled: false # used by Constants.PASSKEY_ENABLED_PROPERTY_NAME

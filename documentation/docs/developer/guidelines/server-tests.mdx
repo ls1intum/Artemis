@@ -162,6 +162,63 @@ Follow these tips to write performant tests:
 * Limit object creation in tests and the test setup.
 
 
+## Spring Boot Server Starts and Context Configuration
+
+Spring Boot caches test application contexts and reuses them when configurations match.
+When certain annotations differ between test classes, Spring creates separate contexts, causing additional server starts.
+We enforce a maximum of **8 server starts** during test execution via the GitHub Action in `supporting_scripts/extract_number_of_server_starts.sh`.
+
+### Annotations That Can Cause Context Pollution
+
+The following annotations can cause Spring to create new application contexts if used outside base classes:
+
+| Annotation | Impact |
+|------------|--------|
+| `@MockitoSpyBean` | Creates new context when spy configuration differs |
+| `@MockitoBean` | Creates new context when mock configuration differs |
+| `@TestPropertySource` | Creates new context when properties differ |
+| `@ActiveProfiles` | Creates new context when active profiles differ |
+| `@DirtiesContext` | Marks context as dirty, forcing recreation for subsequent tests |
+| `@ContextConfiguration` | Creates new context when configuration differs |
+| `@SpringBootTest` | Creates new context when boot configuration differs |
+| `@Import` | Creates new context when imported configurations differ |
+| `@Profile` | No-op on test classes (they're not Spring beans), but checked for consistency |
+| `@Conditional*` | No-op on test classes (they're not Spring beans), but checked for consistency |
+
+### Allowed Base Test Classes
+
+Only the following abstract base test classes are permitted to define context-affecting annotations:
+
+| Base Test Class | Hazelcast Instance | Purpose |
+|-----------------|-------------------|---------|
+| `AbstractSpringIntegrationIndependentTest` | `Artemis_independent` | Independent tests without CI/CD integration |
+| `AbstractSpringIntegrationJenkinsLocalVCTest` | `Artemis_jenkins` | Jenkins + LocalVC integration |
+| `AbstractSpringIntegrationJenkinsLocalVCTemplateTest` | `Artemis_jenkins_template` | Jenkins template tests |
+| `AbstractSpringIntegrationJenkinsLocalVCBatchTest` | `Artemis_jenkins_batch` | Jenkins batch tests |
+| `AbstractSpringIntegrationLocalCILocalVCTest` | `Artemis_localci` | Local CI + LocalVC integration |
+| `AbstractSpringIntegrationLocalVCSamlTest` | `Artemis_localvc_saml` | LocalVC with SAML authentication |
+| `AbstractArtemisBuildAgentTest` | `Artemis_build_agent` | Build agent tests |
+
+**Exception:** `RedissonDistributedDataTest` is allowed to have its own `@TestPropertySource` for Redis-specific configuration, as it requires a separate context.
+
+### Rules for Test Classes
+
+1. **Never add `@MockitoSpyBean` or `@MockitoBean` to concrete test classes.** Add them to the appropriate base class instead.
+2. **Never add `@TestPropertySource` to concrete test classes.** Add properties to the appropriate base class.
+3. **Never add `@ActiveProfiles` to concrete test classes.** The profiles are defined in base classes.
+4. **Never use `@DirtiesContext`.** Clean up test state manually instead of dirtying the context.
+5. **Never add `@ContextConfiguration`, `@SpringBootTest`, or `@Import` to concrete test classes.** These are defined in base classes.
+6. **Never use `@Profile` or `@Conditional*` on test classes.** These are meant for Spring beans, not test classes.
+7. If you need a new spy bean or property, add it to the appropriate base class and update the `resetSpyBeans()` method.
+8. An architecture test (`SpringContextConfigurationArchitectureTest`) enforces these rules automatically.
+
+### Why This Matters
+
+Each additional Spring context causes:
+- Extra server startup time (~30-60 seconds per context)
+- Increased memory usage
+- Longer CI pipeline execution
+
 ## Avoid using @MockitoBean
 
 Do not use the `@MockitoSpyBean` or `@MockitoBean` annotation unless absolutely necessary or possibly in an abstract Superclass.
