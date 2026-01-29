@@ -1,9 +1,16 @@
+:host {
+    display: block;
+    width: 100%;
+}
+
 .context-selection-container {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    width: 450px;
-    max-width: 100%;
+    width: 100%;
+    max-width: 450px;
+    margin-left: auto;
+    margin-right: auto;
     padding: 16px;
     margin-top: 16px;
     box-sizing: border-box;

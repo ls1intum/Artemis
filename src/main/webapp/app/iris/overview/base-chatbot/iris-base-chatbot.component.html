@@ -230,10 +230,12 @@
         }
         @if (!messages()?.length && !isEmbeddedChat()) {
             <div class="empty-chat-message">
-                <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
-                <h3 jhiTranslate="artemisApp.iris.chat.helpOffer"></h3>
+                @if (showIconAndHelpOffer()) {
+                    <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
+                    <h3 jhiTranslate="artemisApp.iris.chat.helpOffer"></h3>
+                }
                 @if (showContextSelection()) {
-                    <jhi-context-selection [courseId]="courseId()" />
+                    <jhi-context-selection [courseId]="courseId()" (showIconAndHelpOffer)="setShowIconAndHelpOffer($event)" />
                 }
             </div>
         }

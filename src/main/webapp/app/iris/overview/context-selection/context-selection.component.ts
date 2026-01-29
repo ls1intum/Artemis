@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -9,17 +9,16 @@ import { CourseStorageService } from 'app/core/course/manage/services/course-sto
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { catchError, filter, map, of, switchMap, tap } from 'rxjs';
 
-export type ContextType = 'course' | 'lecture' | 'exercise';
+type ContextType = 'course' | 'lecture' | 'exercise';
 type ViewState = 'main' | 'lecture-selection' | 'exercise-selection';
 
 // Discriminated union for selection state
-export type Selection = { type: 'course' } | { type: 'lecture'; lecture: Lecture } | { type: 'exercise'; exercise: Exercise };
+type Selection = { type: 'course' } | { type: 'lecture'; lecture: Lecture } | { type: 'exercise'; exercise: Exercise };
 
-export interface ContextOption {
+interface ContextOption {
     type: ContextType;
     icon: IconDefinition;
     titleKey: string;
@@ -54,7 +53,7 @@ const SUPPORTED_EXERCISE_TYPES = [ExerciseType.TEXT, ExerciseType.PROGRAMMING];
     selector: 'jhi-context-selection',
     templateUrl: './context-selection.component.html',
     styleUrl: './context-selection.component.scss',
-    imports: [FaIconComponent, TranslateDirective, SearchFilterComponent, ArtemisDatePipe],
+    imports: [FaIconComponent, TranslateDirective, SearchFilterComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ContextSelectionComponent {
@@ -70,6 +69,9 @@ export class ContextSelectionComponent {
     // Inputs
     readonly courseId = input<number>();
     readonly options = input<ContextOption[]>(DEFAULT_OPTIONS);
+
+    // Outputs
+    readonly showIconAndHelpOffer = output<boolean>();
 
     // Consolidated selection state (discriminated union)
     readonly selection = signal<Selection>({ type: 'course' });
@@ -148,17 +150,15 @@ export class ContextSelectionComponent {
                 this.chatService.switchTo(ChatServiceMode.COURSE, courseId, true);
             }
         } else if (type === 'lecture') {
-            this.currentView.set('lecture-selection');
-            this.searchQuery.set('');
+            this.updateView('lecture-selection');
         } else if (type === 'exercise') {
-            this.currentView.set('exercise-selection');
-            this.searchQuery.set('');
+            this.updateView('exercise-selection');
         }
     }
 
     selectLecture(lecture: Lecture): void {
         this.selection.set({ type: 'lecture', lecture });
-        this.currentView.set('main');
+        this.updateView('main');
         if (lecture.id !== undefined) {
             this.chatService.switchTo(ChatServiceMode.LECTURE, lecture.id, true);
         }
@@ -166,7 +166,7 @@ export class ContextSelectionComponent {
 
     selectExercise(exercise: Exercise): void {
         this.selection.set({ type: 'exercise', exercise });
-        this.currentView.set('main');
+        this.updateView('main');
         if (exercise.id !== undefined) {
             const mode = exercise.type === ExerciseType.TEXT ? ChatServiceMode.TEXT_EXERCISE : ChatServiceMode.PROGRAMMING_EXERCISE;
             this.chatService.switchTo(mode, exercise.id, true);
@@ -174,8 +174,7 @@ export class ContextSelectionComponent {
     }
 
     goBack(): void {
-        this.currentView.set('main');
-        this.searchQuery.set('');
+        this.updateView('main');
     }
 
     onSearch(query: string): void {
@@ -184,5 +183,11 @@ export class ContextSelectionComponent {
 
     getExerciseIcon(exercise: Exercise): IconDefinition {
         return getIcon(exercise.type) as IconDefinition;
+    }
+
+    private updateView(view: ViewState): void {
+        this.searchQuery.set('');
+        this.currentView.set(view);
+        this.showIconAndHelpOffer.emit(view === 'main');
     }
 }
