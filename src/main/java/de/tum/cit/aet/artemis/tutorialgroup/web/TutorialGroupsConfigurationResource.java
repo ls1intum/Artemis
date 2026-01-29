@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.util.DateUtil.isIso8601DateString;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupConfigurationDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
 
@@ -64,30 +66,34 @@ public class TutorialGroupsConfigurationResource {
      * GET /courses/:courseId/tutorial-groups-configuration/: gets the tutorial groups configuration of the course with the specified id
      *
      * @param courseId the id of the course to which the tutorial groups configuration belongs
-     * @return ResponseEntity with status 200 (OK) and with body the tutorial groups configuration
+     * @return ResponseEntity with status 200 (OK) and with the body of the tutorial groups configuration dto
      */
     @GetMapping("courses/{courseId}/tutorial-groups-configuration")
     @EnforceAtLeastStudent
-    public ResponseEntity<TutorialGroupsConfiguration> getOneOfCourse(@PathVariable Long courseId) {
+    public ResponseEntity<TutorialGroupConfigurationDTO> getOneOfCourse(@PathVariable Long courseId) {
         log.debug("REST request to get tutorial groups configuration of course: {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        return ResponseEntity.ok().body(tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElse(null));
+        var configuration = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).map(TutorialGroupConfigurationDTO::of).orElse(null);
+        return ResponseEntity.ok(configuration);
     }
 
     /**
-     * POST /courses/:courseId/tutorial-groups-configuration : creates a new tutorial group configuration for the specified course and sets the timeZone on the course.
+     * POST /courses/:courseId/tutorial-groups-configuration: creates a new tutorial group configuration for the specified course and sets the timeZone on the course.
      *
-     * @param courseId                    the id of the course to which the tutorial group configuration should be added
-     * @param tutorialGroupsConfiguration the tutorial group configuration to create
+     * @param courseId                      the id of the course to which the tutorial group configuration should be added
+     * @param tutorialGroupConfigurationDTO the tutorial group configuration to create
      * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group configuration
      */
     @PostMapping("courses/{courseId}/tutorial-groups-configuration")
     @EnforceAtLeastInstructor
-    public ResponseEntity<TutorialGroupsConfiguration> create(@PathVariable Long courseId, @RequestBody @Valid TutorialGroupsConfiguration tutorialGroupsConfiguration)
+    public ResponseEntity<TutorialGroupConfigurationDTO> create(@PathVariable Long courseId, @RequestBody @Valid TutorialGroupConfigurationDTO tutorialGroupConfigurationDTO)
             throws URISyntaxException {
-        log.debug("REST request to create TutorialGroupsConfiguration: {} for course: {}", tutorialGroupsConfiguration, courseId);
-        if (tutorialGroupsConfiguration.getId() != null) {
+        log.debug("REST request to create TutorialGroupsConfiguration: {} for course: {}", tutorialGroupConfigurationDTO, courseId);
+        if (tutorialGroupConfigurationDTO == null) {
+            throw new BadRequestException("Tutorial group configuration must be provided");
+        }
+        if (tutorialGroupConfigurationDTO.id() != null) {
             throw new BadRequestException("A new tutorial group configuration cannot already have an ID");
         }
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -95,9 +101,13 @@ public class TutorialGroupsConfigurationResource {
         if (tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(course.getId()).isPresent()) {
             throw new BadRequestException("A tutorial group configuration already exists for this course");
         }
-        isValidTutorialGroupConfiguration(tutorialGroupsConfiguration);
-        tutorialGroupsConfiguration.setCourse(course);
-        var persistedConfiguration = tutorialGroupsConfigurationRepository.save(tutorialGroupsConfiguration);
+
+        ZoneId configurationZoneId = TutorialGroupConfigurationDTO.zoneOf(tutorialGroupConfigurationDTO.tutorialPeriodStartInclusive());
+        TutorialGroupsConfiguration configuration = TutorialGroupConfigurationDTO.from(tutorialGroupConfigurationDTO, configurationZoneId);
+
+        isValidTutorialGroupConfiguration(configuration);
+        configuration.setCourse(course);
+        var persistedConfiguration = tutorialGroupsConfigurationRepository.save(configuration);
         course.setTutorialGroupsConfiguration(persistedConfiguration);
         courseRepository.save(course);
 
@@ -105,8 +115,8 @@ public class TutorialGroupsConfigurationResource {
             tutorialGroupChannelManagementService.createTutorialGroupsChannelsForAllTutorialGroupsOfCourse(course);
         }
 
-        return ResponseEntity.created(new URI("/api/tutorialgroup/courses/" + courseId + "tutorial-groups-configuration/" + tutorialGroupsConfiguration.getId()))
-                .body(persistedConfiguration);
+        return ResponseEntity.created(new URI("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups-configuration/" + persistedConfiguration.getId()))
+                .body(TutorialGroupConfigurationDTO.of(persistedConfiguration));
     }
 
     /**
@@ -119,7 +129,7 @@ public class TutorialGroupsConfigurationResource {
      */
     @PutMapping("courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<TutorialGroupsConfiguration> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
+    public ResponseEntity<TutorialGroupConfigurationDTO> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
             @RequestBody @Valid TutorialGroupsConfiguration updatedTutorialGroupConfiguration) {
         log.debug("REST request to update TutorialGroupsConfiguration: {} of course: {}", updatedTutorialGroupConfiguration, courseId);
         if (updatedTutorialGroupConfiguration.getId() == null) {
@@ -159,7 +169,7 @@ public class TutorialGroupsConfigurationResource {
                 tutorialGroupChannelManagementService.changeChannelModeForCourse(configurationFromDatabase.getCourse(), persistedConfiguration.getUsePublicTutorialGroupChannels());
             }
         }
-        return ResponseEntity.ok(persistedConfiguration);
+        return ResponseEntity.ok(TutorialGroupConfigurationDTO.of(persistedConfiguration));
     }
 
     private static void isValidTutorialGroupConfiguration(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
