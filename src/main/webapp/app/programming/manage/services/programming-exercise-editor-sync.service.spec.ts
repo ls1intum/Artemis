@@ -51,7 +51,7 @@ describe('ProgrammingExerciseEditorSyncService', () => {
 
         const synchronizationMessage: ProgrammingExerciseEditorSyncEvent = {
             eventType: ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
-            target: ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY,
+            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             clientInstanceId: 'other-client',
             yjsUpdate: 'update',
         };
@@ -66,7 +66,7 @@ describe('ProgrammingExerciseEditorSyncService', () => {
 
         const ownMessage: ProgrammingExerciseEditorSyncEvent = {
             eventType: ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
-            target: ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY,
+            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             clientInstanceId: 'test-session-client-456', // Same as our session
             yjsUpdate: 'update',
         };
@@ -80,7 +80,7 @@ describe('ProgrammingExerciseEditorSyncService', () => {
 
         const message: ProgrammingExerciseEditorSyncEvent = {
             eventType: ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
-            target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
+            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             yjsUpdate: 'update',
         };
 
@@ -90,7 +90,7 @@ describe('ProgrammingExerciseEditorSyncService', () => {
             '/topic/programming-exercises/5/synchronization',
             expect.objectContaining({
                 eventType: ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
-                target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
+                target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
                 clientInstanceId: 'test-session-client-456',
                 timestamp: expect.any(Number),
             }),
@@ -100,7 +100,7 @@ describe('ProgrammingExerciseEditorSyncService', () => {
     it('throws error when sending without subscription', () => {
         const message: ProgrammingExerciseEditorSyncEvent = {
             eventType: ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
-            target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
+            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             yjsUpdate: 'update',
         };
 
@@ -127,7 +127,7 @@ describe('ProgrammingExerciseEditorSyncService', () => {
 
         const message1: ProgrammingExerciseEditorSyncEvent = {
             eventType: ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
-            target: ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY,
+            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             clientInstanceId: 'other-client',
             yjsUpdate: 'update-1',
         };
@@ -138,7 +138,7 @@ describe('ProgrammingExerciseEditorSyncService', () => {
 
         const message2: ProgrammingExerciseEditorSyncEvent = {
             eventType: ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
-            target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
+            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             clientInstanceId: 'other-client',
             yjsUpdate: 'update-2',
         };
@@ -159,7 +159,7 @@ describe('ProgrammingExerciseEditorSyncService', () => {
 
         const message: ProgrammingExerciseEditorSyncEvent = {
             eventType: ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
-            target: ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY,
+            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             clientInstanceId: 'other-client',
             yjsUpdate: 'update',
         };
