@@ -4,11 +4,14 @@ import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { Subject, of, throwError } from 'rxjs';
 
+import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ActivatedRoute, Router, provideRouter } from '@angular/router';
@@ -24,10 +27,8 @@ import { MockParticipationService } from 'test/helpers/mocks/service/mock-partic
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockProvider } from 'ng-mocks';
-import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
 import { ConsistencyCheckError, ErrorType } from 'app/programming/shared/entities/consistency-check-result.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -35,14 +36,6 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import {
-    ProgrammingExerciseEditorFileChangeType,
-    ProgrammingExerciseEditorSyncMessage,
-    ProgrammingExerciseEditorSyncService,
-    ProgrammingExerciseEditorSyncTarget,
-} from 'app/programming/manage/services/programming-exercise-editor-sync.service';
-import { FileOperation, RepositoryFileSyncService } from 'app/programming/manage/services/repository-file-sync.service';
-import { DomainType, FileType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
@@ -357,7 +350,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Consistency Checks',
     let artemisIntelligenceService: ArtemisIntelligenceService;
     let consistencyCheckService: ConsistencyCheckService;
     let alertService: AlertService;
-    let synchronizationService: ProgrammingExerciseEditorSyncService;
 
     const course = { id: 123, exercises: [] } as Course;
     const programmingExercise = new ProgrammingExercise(course, undefined);
@@ -376,16 +368,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Consistency Checks',
                 MockProvider(ParticipationService),
                 MockProvider(ProgrammingExerciseService),
                 MockProvider(CourseExerciseService),
-                MockProvider(ProgrammingExerciseEditorSyncService),
-                MockProvider(RepositoryFileSyncService, {
-                    applyRemoteOperation: jest.fn(),
-                    reset: jest.fn(),
-                    getOrCreateFileDoc: jest.fn(),
-                    requestFullFile: jest.fn(),
-                    handleLocalFileOperation: jest.fn(),
-                    init: jest.fn().mockReturnValue(of()),
-                } as any),
-                provideHttpClient(),
                 provideHttpClient(withInterceptorsFromDi()),
                 provideHttpClientTesting(),
                 provideRouter([]),
@@ -401,8 +383,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Consistency Checks',
         artemisIntelligenceService = TestBed.inject(ArtemisIntelligenceService);
         consistencyCheckService = TestBed.inject(ConsistencyCheckService);
         alertService = TestBed.inject(AlertService);
-        synchronizationService = TestBed.inject(ProgrammingExerciseEditorSyncService);
-        jest.spyOn(synchronizationService, 'subscribeToUpdates').mockReturnValue(of());
     }));
 
     afterEach(() => {
@@ -454,140 +434,5 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Consistency Checks',
 
         (artemisIntelligenceService as any).isLoading = () => false;
         expect(comp.isCheckingConsistency()).toBeFalse();
-    });
-
-    it('shows new commit alert and skips applying remote operations', () => {
-        const infoSpy = jest.spyOn(alertService, 'info');
-        const repositorySyncService = TestBed.inject(RepositoryFileSyncService) as jest.Mocked<RepositoryFileSyncService>;
-
-        (comp as any).applyRemoteFileOperation({ type: 'NEW_COMMIT_ALERT' } as FileOperation);
-
-        expect(infoSpy).toHaveBeenCalledWith('artemisApp.editor.synchronization.newCommitAlert');
-        expect(repositorySyncService.applyRemoteOperation).not.toHaveBeenCalled();
-    });
-
-    it('registers documents and requests file content on load', () => {
-        const repositorySyncService = TestBed.inject(RepositoryFileSyncService) as jest.Mocked<RepositoryFileSyncService>;
-        comp.selectedRepository = RepositoryType.AUXILIARY;
-        comp.selectedRepositoryId = 99;
-        comp.codeEditorContainer = { getFileContent: jest.fn().mockReturnValue('content') } as any;
-
-        comp.onFileLoaded('src/Main.java');
-
-        expect(repositorySyncService.getOrCreateFileDoc).toHaveBeenCalledWith(RepositoryType.AUXILIARY, 'src/Main.java', 'content', 99);
-        expect(repositorySyncService.requestFullFile).toHaveBeenCalledWith(RepositoryType.AUXILIARY, 'src/Main.java', 99);
-    });
-
-    it('requests full content when file not available locally', () => {
-        const repositorySyncService = TestBed.inject(RepositoryFileSyncService) as jest.Mocked<RepositoryFileSyncService>;
-        comp.selectedRepository = RepositoryType.TESTS;
-        comp.codeEditorContainer = { getFileContent: jest.fn().mockReturnValue(undefined) } as any;
-
-        comp.onFileLoaded('src/Main.java');
-
-        expect(repositorySyncService.getOrCreateFileDoc).not.toHaveBeenCalled();
-        expect(repositorySyncService.requestFullFile).toHaveBeenCalledWith(RepositoryType.TESTS, 'src/Main.java', undefined);
-    });
-
-    it('handles local operations only when exercise exists', () => {
-        const repositorySyncService = TestBed.inject(RepositoryFileSyncService) as jest.Mocked<RepositoryFileSyncService>;
-        comp.selectedRepository = RepositoryType.TEMPLATE;
-
-        comp.onLocalFileOperationSync({ type: ProgrammingExerciseEditorFileChangeType.DELETE, fileName: 'toDelete.java' });
-        expect(repositorySyncService.handleLocalFileOperation).not.toHaveBeenCalled();
-
-        comp.exercise = { id: 5 } as ProgrammingExercise;
-        comp.selectedRepository = RepositoryType.AUXILIARY;
-        comp.selectedRepositoryId = 7;
-
-        comp.onLocalFileOperationSync({ type: ProgrammingExerciseEditorFileChangeType.CREATE, fileName: 'new.java', content: '', fileType: FileType.FILE });
-        expect(repositorySyncService.handleLocalFileOperation).toHaveBeenCalledWith(
-            { type: ProgrammingExerciseEditorFileChangeType.CREATE, fileName: 'new.java', content: '', fileType: FileType.FILE },
-            RepositoryType.AUXILIARY,
-            7,
-        );
-    });
-
-    it('clears selected file on rename and forwards operation with repository context', () => {
-        const repositorySyncService = TestBed.inject(RepositoryFileSyncService) as jest.Mocked<RepositoryFileSyncService>;
-        comp.exercise = { id: 99 } as ProgrammingExercise;
-        comp.selectedRepository = RepositoryType.TEMPLATE;
-        comp.codeEditorContainer = { selectedFile: 'old.java' } as any;
-
-        const operation = {
-            type: ProgrammingExerciseEditorFileChangeType.RENAME,
-            fileName: 'old.java',
-            newFileName: 'new.java',
-            content: 'content',
-            fileType: FileType.FILE,
-        } as const;
-
-        comp.onLocalFileOperationSync(operation);
-
-        expect(comp.codeEditorContainer.selectedFile).toBeUndefined();
-        expect(repositorySyncService.handleLocalFileOperation).toHaveBeenCalledWith(operation, RepositoryType.TEMPLATE, undefined);
-    });
-
-    it('applies remote operations through sync service', () => {
-        const repositorySyncService = TestBed.inject(RepositoryFileSyncService) as jest.Mocked<RepositoryFileSyncService>;
-        comp.codeEditorContainer = {} as any;
-        const operation = { type: ProgrammingExerciseEditorFileChangeType.CREATE, fileName: 'new', content: '', fileType: FileType.FILE } as const;
-
-        (comp as any).applyRemoteFileOperation(operation as any);
-
-        expect(repositorySyncService.applyRemoteOperation).toHaveBeenCalledWith(operation, comp.codeEditorContainer);
-    });
-
-    it('applies domain changes for participations and tests', () => {
-        const exercise = {
-            templateParticipation: { id: 1, programmingExercise: undefined } as any,
-            solutionParticipation: { id: 2, programmingExercise: undefined } as any,
-            studentParticipations: [{ id: 3, exercise: undefined }] as any,
-        } as ProgrammingExercise;
-        comp.exercise = exercise;
-        comp.codeEditorContainer = { initializeProperties: jest.fn(), selectedRepository: undefined } as any;
-
-        (comp as any).applyDomainChange(DomainType.PARTICIPATION, { id: 2 } as any);
-        expect(comp.selectedRepository).toBe(RepositoryType.SOLUTION);
-        expect((comp.selectedParticipation as any).programmingExercise).toBe(exercise);
-
-        (comp as any).applyDomainChange(DomainType.TEST_REPOSITORY, exercise);
-        expect(comp.selectedRepository).toBe(RepositoryType.TESTS);
-    });
-
-    it('reuses loaded exercise when matching id', () => {
-        const programmingExerciseService = TestBed.inject(ProgrammingExerciseService) as jest.Mocked<ProgrammingExerciseService>;
-        programmingExerciseService.findWithTemplateAndSolutionParticipationAndResults = jest.fn();
-        const existingExercise = { id: 55 } as ProgrammingExercise;
-        comp.exercise = existingExercise;
-
-        const result$ = comp.loadExercise(55);
-        let loaded: ProgrammingExercise | undefined;
-        result$.subscribe((exercise) => (loaded = exercise));
-
-        expect(loaded).toBe(existingExercise);
-        expect(programmingExerciseService.findWithTemplateAndSolutionParticipationAndResults).not.toHaveBeenCalled();
-    });
-
-    it('filters synchronization messages by repository selection', () => {
-        comp.selectedRepository = RepositoryType.TEMPLATE;
-        expect((comp as any).isChangeRelevant({} as ProgrammingExerciseEditorSyncMessage)).toBeFalse();
-        expect((comp as any).isChangeRelevant({ target: ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY } as ProgrammingExerciseEditorSyncMessage)).toBeFalse();
-        expect((comp as any).isChangeRelevant({ target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY } as ProgrammingExerciseEditorSyncMessage)).toBeTrue();
-
-        comp.selectedRepository = RepositoryType.AUXILIARY;
-        comp.selectedRepositoryId = 3;
-        expect(
-            (comp as any).isChangeRelevant({
-                target: ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY,
-                auxiliaryRepositoryId: 99,
-            } as ProgrammingExerciseEditorSyncMessage),
-        ).toBeFalse();
-        expect(
-            (comp as any).isChangeRelevant({
-                target: ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY,
-                auxiliaryRepositoryId: 3,
-            } as ProgrammingExerciseEditorSyncMessage),
-        ).toBeTrue();
     });
 });

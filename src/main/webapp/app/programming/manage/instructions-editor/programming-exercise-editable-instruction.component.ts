@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, HostListener, Input, OnDestroy, ViewChild, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
+import { AfterViewInit, Component, HostListener, OnDestroy, ViewChild, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -98,23 +98,23 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     @ViewChild(MarkdownEditorMonacoComponent, { static: false }) markdownEditorMonaco?: MarkdownEditorMonacoComponent;
 
-    @Input() showStatus = true;
+    readonly showStatus = input<boolean>(true);
     // If the programming exercise is being created, some features have to be disabled (saving the problemStatement & querying test cases).
-    @Input() editMode = true;
-    @Input() enableResize = true;
-    @Input({ required: true }) initialEditorHeight: MarkdownEditorHeight;
+    readonly editMode = input<boolean>(true);
+    readonly enableResize = input<boolean>(true);
+    readonly initialEditorHeight = input.required<MarkdownEditorHeight>();
     /**
      * If true, the editor height is managed externally by the parent container.
      * Use this when embedding in a layout that controls height (e.g., code editor view).
      */
-    @Input() externalHeight = false;
-    @Input() showSaveButton = false;
+    readonly externalHeight = input<boolean>(false);
+    readonly showSaveButton = input<boolean>(false);
     /**
      * Whether to show the preview button and default preview in the markdown editor.
      * Set to false when using an external preview component (e.g., in the code editor).
      */
-    @Input() showPreview = true;
-    @Input() forceRender: Observable<void>;
+    readonly showPreview = input<boolean>(true);
+    readonly forceRender = input<Observable<void> | undefined>();
 
     readonly participation = input<Participation>();
     readonly exercise = input.required<ProgrammingExercise>();
@@ -142,7 +142,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
             const hasExerciseIdChanged = !this.previousExercise || this.previousExercise.id !== currentExercise.id;
             if (hasExerciseIdChanged && currentExercise.id) {
-                this.initializeProblemStatementSync(currentExercise.id, currentExercise.problemStatement);
                 this.setupTestCaseSubscription();
             }
 
@@ -170,16 +169,22 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     ngAfterViewInit() {
         // If forced to render, generate the instruction HTML.
-        if (this.forceRender) {
-            this.forceRenderSubscription = this.forceRender.subscribe(() => this.generateHtml());
+        const forceRender = this.forceRender();
+        if (forceRender) {
+            this.forceRenderSubscription = forceRender.subscribe(() => this.generateHtml());
         }
         // Trigger initial preview render after view initialization.
         // This ensures the ProgrammingExerciseInstructionComponent renders when first shown.
-        if (this.showPreview) {
+        if (this.showPreview()) {
             // Small delay to allow the instruction component to initialize
             setTimeout(() => this.generateHtmlSubject.next(), 0);
         }
-        this.trySetupProblemStatementBinding();
+
+        const exercise = this.exercise();
+        if (!exercise.id) {
+            return;
+        }
+        this.initializeProblemStatementSync(exercise.id, exercise.problemStatement ?? '');
     }
 
     /** Save the problem statement on the server.
@@ -225,6 +230,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     updateProblemStatement(problemStatement: string) {
         if (this.exercise().problemStatement !== problemStatement) {
             this.unsavedChanges = true;
+            // parent component should update `problemStatement` in `exercise`
             this.instructionChange.emit(problemStatement);
             // Trigger preview update when showPreview is enabled
             this.generateHtmlSubject.next();
@@ -244,7 +250,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         }
 
         // Only set up a subscription for test cases if the exercise already exists.
-        if (this.editMode) {
+        if (this.editMode()) {
             this.testCaseSubscription = this.testCaseService
                 .subscribeForTestCases(this.exercise().id!)
                 .pipe(
@@ -330,14 +336,21 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         return annotations;
     };
 
-    private initializeProblemStatementSync(exerciseId: number, initialContent?: string) {
-        if (!this.editMode) {
+    private initializeProblemStatementSync(exerciseId: number, initialText: string) {
+        if (!this.editMode() || this.problemStatementBinding) {
             return;
         }
         this.teardownProblemStatementSync();
-        const initialText = initialContent ?? this.exercise()?.problemStatement ?? '';
         this.problemStatementSyncState = this.problemStatementSyncService.init(exerciseId, initialText);
-        this.trySetupProblemStatementBinding();
+        if (!this.markdownEditorMonaco?.monacoEditor) {
+            return;
+        }
+        const model = this.markdownEditorMonaco.monacoEditor.getModel();
+        const editorInstance = this.markdownEditorMonaco.monacoEditor.getEditor();
+        if (!model || !editorInstance) {
+            return;
+        }
+        this.problemStatementBinding = new MonacoBinding(this.problemStatementSyncState.text, model, new Set([editorInstance]), this.problemStatementSyncState.awareness);
     }
 
     private teardownProblemStatementSync() {
@@ -345,17 +358,5 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         this.problemStatementBinding = undefined;
         this.problemStatementSyncState = undefined;
         this.problemStatementSyncService.reset();
-    }
-
-    private trySetupProblemStatementBinding() {
-        if (!this.problemStatementSyncState || !this.markdownEditorMonaco?.monacoEditor || this.problemStatementBinding) {
-            return;
-        }
-        const model = this.markdownEditorMonaco.monacoEditor.getModel();
-        const editorInstance = this.markdownEditorMonaco.monacoEditor.getEditor();
-        if (!model) {
-            return;
-        }
-        this.problemStatementBinding = new MonacoBinding(this.problemStatementSyncState.text, model, new Set([editorInstance]));
     }
 }

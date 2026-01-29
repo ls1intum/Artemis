@@ -22,11 +22,9 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
-import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorFileChangeType;
-import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorFileType;
 import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorSyncTarget;
-import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExerciseEditorFileSyncDTO;
-import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExerciseEditorSyncEventDTO;
+import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExerciseEditorSyncEventType;
+import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExerciseNewCommitAlertDTO;
 
 class ProgrammingExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
@@ -52,110 +50,28 @@ class ProgrammingExerciseEditorSyncServiceTest extends AbstractProgrammingIntegr
     }
 
     @Test
-    void broadcastFileChangesWithCreateOperation() {
-        ProgrammingExerciseEditorFileSyncDTO filePatch = ProgrammingExerciseEditorFileSyncDTO.forFileCreate("src/Main.java");
-        synchronizationService.broadcastFileChanges(42L, ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY, null, filePatch);
-
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/42/synchronization"), captor.capture());
-        var sentMessage = captor.getValue();
-
-        assertThat(sentMessage.target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY);
-        assertThat(sentMessage.auxiliaryRepositoryId()).isNull();
-        assertThat(sentMessage.filePatches()).hasSize(1);
-
-        ProgrammingExerciseEditorFileSyncDTO patch = sentMessage.filePatches().get(0);
-        assertThat(patch.fileName()).isEqualTo("src/Main.java");
-        assertThat(patch.changeType()).isEqualTo(ProgrammingExerciseEditorFileChangeType.CREATE);
-        assertThat(patch.fileType()).isEqualTo(ProgrammingExerciseEditorFileType.FILE);
-    }
-
-    @Test
-    void broadcastFileChangesWithRenameOperation() {
-        ProgrammingExerciseEditorFileSyncDTO filePatch = ProgrammingExerciseEditorFileSyncDTO.forRename("old/path.txt", "new/path.txt", ProgrammingExerciseEditorFileType.FILE);
-        synchronizationService.broadcastFileChanges(50L, ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY, null, filePatch);
-
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/50/synchronization"), captor.capture());
-        var sentMessage = captor.getValue();
-
-        assertThat(sentMessage.filePatches()).hasSize(1);
-        ProgrammingExerciseEditorFileSyncDTO patch = sentMessage.filePatches().get(0);
-        assertThat(patch.fileName()).isEqualTo("old/path.txt");
-        assertThat(patch.changeType()).isEqualTo(ProgrammingExerciseEditorFileChangeType.RENAME);
-        assertThat(patch.newFileName()).isEqualTo("new/path.txt");
-        assertThat(patch.fileType()).isEqualTo(ProgrammingExerciseEditorFileType.FILE);
-    }
-
-    @Test
-    void broadcastFileChangesWithDeleteOperation() {
-        ProgrammingExerciseEditorFileSyncDTO filePatch = ProgrammingExerciseEditorFileSyncDTO.forDelete("deleted/file.java");
-        synchronizationService.broadcastFileChanges(60L, ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY, 5L, filePatch);
-
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/60/synchronization"), captor.capture());
-        var sentMessage = captor.getValue();
-
-        assertThat(sentMessage.target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY);
-        assertThat(sentMessage.auxiliaryRepositoryId()).isEqualTo(5L);
-        assertThat(sentMessage.filePatches()).hasSize(1);
-        ProgrammingExerciseEditorFileSyncDTO patch = sentMessage.filePatches().get(0);
-        assertThat(patch.fileName()).isEqualTo("deleted/file.java");
-        assertThat(patch.changeType()).isEqualTo(ProgrammingExerciseEditorFileChangeType.DELETE);
-    }
-
-    @Test
-    void broadcastFileChangesWithNullPatch() {
-        synchronizationService.broadcastFileChanges(70L, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, null, null);
-
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/70/synchronization"), captor.capture());
-        var sentMessage = captor.getValue();
-
-        assertThat(sentMessage.target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY);
-        assertThat(sentMessage.filePatches()).isNull();
-    }
-
-    @Test
-    void broadcastFileChangesWithFolderCreate() {
-        ProgrammingExerciseEditorFileSyncDTO filePatch = ProgrammingExerciseEditorFileSyncDTO.forFolderCreate("src/main/java");
-        synchronizationService.broadcastFileChanges(80L, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, null, filePatch);
-
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/80/synchronization"), captor.capture());
-        var sentMessage = captor.getValue();
-
-        assertThat(sentMessage.filePatches()).hasSize(1);
-        ProgrammingExerciseEditorFileSyncDTO patch = sentMessage.filePatches().get(0);
-        assertThat(patch.fileName()).isEqualTo("src/main/java");
-        assertThat(patch.changeType()).isEqualTo(ProgrammingExerciseEditorFileChangeType.CREATE);
-        assertThat(patch.fileType()).isEqualTo(ProgrammingExerciseEditorFileType.FOLDER);
-    }
-
-    @Test
     void broadcastNewCommitAlert() {
         synchronizationService.broadcastNewCommitAlert(90L, ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY, null);
 
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseNewCommitAlertDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/90/synchronization"), captor.capture());
         var sentMessage = captor.getValue();
 
         assertThat(sentMessage.target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY);
-        assertThat(sentMessage.newCommitAlert()).isTrue();
+        assertThat(sentMessage.eventType()).isEqualTo(ProgrammingExerciseEditorSyncEventType.NEW_COMMIT_ALERT);
         assertThat(sentMessage.auxiliaryRepositoryId()).isNull();
-        assertThat(sentMessage.filePatches()).isNull();
     }
 
     @Test
     void broadcastNewCommitAlertForAuxiliaryRepository() {
         synchronizationService.broadcastNewCommitAlert(100L, ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY, 25L);
 
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseNewCommitAlertDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/100/synchronization"), captor.capture());
         var sentMessage = captor.getValue();
 
         assertThat(sentMessage.target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY);
-        assertThat(sentMessage.newCommitAlert()).isTrue();
+        assertThat(sentMessage.eventType()).isEqualTo(ProgrammingExerciseEditorSyncEventType.NEW_COMMIT_ALERT);
         assertThat(sentMessage.auxiliaryRepositoryId()).isEqualTo(25L);
     }
 
@@ -167,31 +83,18 @@ class ProgrammingExerciseEditorSyncServiceTest extends AbstractProgrammingIntegr
 
         synchronizationService.broadcastNewCommitAlert(101L, ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY, null);
 
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseNewCommitAlertDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/101/synchronization"), captor.capture());
         var sentMessage = captor.getValue();
 
         assertThat(sentMessage.clientInstanceId()).isEqualTo("client-commits");
-        assertThat(sentMessage.newCommitAlert()).isTrue();
+        assertThat(sentMessage.eventType()).isEqualTo(ProgrammingExerciseEditorSyncEventType.NEW_COMMIT_ALERT);
     }
 
     @Test
     void getSynchronizationTopicGeneratesCorrectTopic() {
         String topic = ProgrammingExerciseEditorSyncService.getSynchronizationTopic(123L);
         assertThat(topic).isEqualTo("/topic/programming-exercises/123/synchronization");
-    }
-
-    @Test
-    void broadcastUsesClientInstanceHeader() {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(ProgrammingExerciseEditorSyncService.CLIENT_INSTANCE_HEADER, "client-42");
-        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
-
-        synchronizationService.broadcastFileChanges(11L, ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT, null, null);
-
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/11/synchronization"), captor.capture());
-        assertThat(captor.getValue().clientInstanceId()).isEqualTo("client-42");
     }
 
     @Test

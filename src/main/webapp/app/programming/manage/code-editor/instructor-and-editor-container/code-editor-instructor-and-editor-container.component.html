@@ -22,13 +22,10 @@
             [participation]="selectedParticipation!"
             [buildable]="selectedRepository !== RepositoryType.TESTS"
             [selectedRepository]="selectedRepository"
-            [auxiliaryRepositoryId]="selectedRepository === RepositoryType.AUXILIARY ? selectedRepositoryId : undefined"
-            [enableCollaboration]="true"
             [course]="course"
             [allowHiddenFiles]="true"
             [consistencyIssues]="consistencyIssues()"
-            (fileOperationSync)="onLocalFileOperationSync($event)"
-            (onFileLoad)="onFileLoaded($event)"
+            (onFileLoad)="onFileLoad($event)"
             (onEditorLoaded)="onEditorLoaded()"
         >
             <div editorTitle>

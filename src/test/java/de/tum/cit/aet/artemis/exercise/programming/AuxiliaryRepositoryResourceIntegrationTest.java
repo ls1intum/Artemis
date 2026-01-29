@@ -1,9 +1,6 @@
 package de.tum.cit.aet.artemis.exercise.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -24,7 +21,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -35,15 +31,10 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
-import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorFileChangeType;
-import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorFileType;
-import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
-import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExerciseEditorSyncEventDTO;
 import de.tum.cit.aet.artemis.programming.service.GitService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseEditorSyncService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
@@ -180,31 +171,6 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateFileBroadcastsSynchronizationUpdate() throws Exception {
-        programmingExerciseRepository.save(programmingExercise);
-        reset(websocketMessagingService);
-
-        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("file", "newFile");
-
-        request.postWithoutResponseBody(testRepoBaseUrl + auxiliaryRepository.getId() + "/file", HttpStatus.OK, params);
-
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
-        verify(websocketMessagingService).sendMessage(eq(ProgrammingExerciseEditorSyncService.getSynchronizationTopic(programmingExercise.getId())), captor.capture());
-
-        var syncEvent = captor.getValue();
-        assertThat(syncEvent.target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY);
-        assertThat(syncEvent.auxiliaryRepositoryId()).isEqualTo(auxiliaryRepository.getId());
-        assertThat(syncEvent.filePatches()).hasSize(1);
-
-        var filePatch = syncEvent.filePatches().getFirst();
-        assertThat(filePatch.fileName()).isEqualTo("newFile");
-        assertThat(filePatch.changeType()).isEqualTo(ProgrammingExerciseEditorFileChangeType.CREATE);
-        assertThat(filePatch.fileType()).isEqualTo(ProgrammingExerciseEditorFileType.FILE);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateFile_alreadyExists() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -235,31 +201,6 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateFolderBroadcastsSynchronizationUpdate() throws Exception {
-        programmingExerciseRepository.save(programmingExercise);
-        reset(websocketMessagingService);
-
-        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("folder", "newFolder");
-
-        request.postWithoutResponseBody(testRepoBaseUrl + auxiliaryRepository.getId() + "/folder", HttpStatus.OK, params);
-
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
-        verify(websocketMessagingService).sendMessage(eq(ProgrammingExerciseEditorSyncService.getSynchronizationTopic(programmingExercise.getId())), captor.capture());
-
-        var syncEvent = captor.getValue();
-        assertThat(syncEvent.target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY);
-        assertThat(syncEvent.auxiliaryRepositoryId()).isEqualTo(auxiliaryRepository.getId());
-        assertThat(syncEvent.filePatches()).hasSize(1);
-
-        var filePatch = syncEvent.filePatches().getFirst();
-        assertThat(filePatch.fileName()).isEqualTo("newFolder");
-        assertThat(filePatch.changeType()).isEqualTo(ProgrammingExerciseEditorFileChangeType.CREATE);
-        assertThat(filePatch.fileType()).isEqualTo(ProgrammingExerciseEditorFileType.FOLDER);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRenameFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         String newLocalFileName = "newFileName";
@@ -268,30 +209,6 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         var files = request.getMap(testRepoBaseUrl + auxiliaryRepository.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).doesNotContainKey(currentLocalFileName);
         assertThat(files).containsKey(newLocalFileName);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testRenameFileBroadcastsSynchronizationUpdate() throws Exception {
-        programmingExerciseRepository.save(programmingExercise);
-        reset(websocketMessagingService);
-
-        FileMove fileMove = new FileMove(currentLocalFileName, "renamedFile");
-
-        request.postWithoutLocation(testRepoBaseUrl + auxiliaryRepository.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
-
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
-        verify(websocketMessagingService).sendMessage(eq(ProgrammingExerciseEditorSyncService.getSynchronizationTopic(programmingExercise.getId())), captor.capture());
-
-        var syncEvent = captor.getValue();
-        assertThat(syncEvent.target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY);
-        assertThat(syncEvent.auxiliaryRepositoryId()).isEqualTo(auxiliaryRepository.getId());
-        assertThat(syncEvent.filePatches()).hasSize(1);
-
-        var filePatch = syncEvent.filePatches().getFirst();
-        assertThat(filePatch.fileName()).isEqualTo(currentLocalFileName);
-        assertThat(filePatch.changeType()).isEqualTo(ProgrammingExerciseEditorFileChangeType.RENAME);
-        assertThat(filePatch.newFileName()).isEqualTo("renamedFile");
     }
 
     @Test
@@ -311,15 +228,6 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         request.postWithoutLocation(testRepoBaseUrl + auxiliaryRepository.getId() + "/rename-file", fileMove, HttpStatus.BAD_REQUEST, null);
     }
 
-    private FileMove createRenameFileMove() {
-        String newLocalFileName = "newFileName";
-
-        assertThat(Path.of(localAuxiliaryRepo.workingCopyGitRepoFile + "/" + currentLocalFileName)).exists();
-        assertThat(Path.of(localAuxiliaryRepo.workingCopyGitRepoFile + "/" + newLocalFileName)).doesNotExist();
-
-        return new FileMove(currentLocalFileName, newLocalFileName);
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRenameFolder() throws Exception {
@@ -336,31 +244,6 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testRenameFolderBroadcastsSynchronizationUpdate() throws Exception {
-        programmingExerciseRepository.save(programmingExercise);
-        reset(websocketMessagingService);
-
-        FileMove fileMove = new FileMove(currentLocalFolderName, "renamedFolder");
-
-        request.postWithoutLocation(testRepoBaseUrl + auxiliaryRepository.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
-
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
-        verify(websocketMessagingService).sendMessage(eq(ProgrammingExerciseEditorSyncService.getSynchronizationTopic(programmingExercise.getId())), captor.capture());
-
-        var syncEvent = captor.getValue();
-        assertThat(syncEvent.target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY);
-        assertThat(syncEvent.auxiliaryRepositoryId()).isEqualTo(auxiliaryRepository.getId());
-        assertThat(syncEvent.filePatches()).hasSize(1);
-
-        var filePatch = syncEvent.filePatches().getFirst();
-        assertThat(filePatch.fileName()).isEqualTo(currentLocalFolderName);
-        assertThat(filePatch.changeType()).isEqualTo(ProgrammingExerciseEditorFileChangeType.RENAME);
-        assertThat(filePatch.newFileName()).isEqualTo("renamedFolder");
-        assertThat(filePatch.fileType()).isEqualTo(ProgrammingExerciseEditorFileType.FOLDER);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -369,30 +252,6 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         request.delete(testRepoBaseUrl + auxiliaryRepository.getId() + "/file", HttpStatus.OK, params);
         var files = request.getMap(testRepoBaseUrl + auxiliaryRepository.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).doesNotContainKey(currentLocalFileName);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testDeleteFileBroadcastsSynchronizationUpdate() throws Exception {
-        programmingExerciseRepository.save(programmingExercise);
-        reset(websocketMessagingService);
-
-        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("file", currentLocalFileName);
-
-        request.delete(testRepoBaseUrl + auxiliaryRepository.getId() + "/file", HttpStatus.OK, params);
-
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
-        verify(websocketMessagingService).sendMessage(eq(ProgrammingExerciseEditorSyncService.getSynchronizationTopic(programmingExercise.getId())), captor.capture());
-
-        var syncEvent = captor.getValue();
-        assertThat(syncEvent.target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY);
-        assertThat(syncEvent.auxiliaryRepositoryId()).isEqualTo(auxiliaryRepository.getId());
-        assertThat(syncEvent.filePatches()).hasSize(1);
-
-        var filePatch = syncEvent.filePatches().getFirst();
-        assertThat(filePatch.fileName()).isEqualTo(currentLocalFileName);
-        assertThat(filePatch.changeType()).isEqualTo(ProgrammingExerciseEditorFileChangeType.DELETE);
     }
 
     @Test

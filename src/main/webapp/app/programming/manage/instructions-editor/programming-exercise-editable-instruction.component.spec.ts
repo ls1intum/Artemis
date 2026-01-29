@@ -5,7 +5,6 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import * as Y from 'yjs';
-import { Awareness } from 'y-protocols/awareness';
 import { DebugElement } from '@angular/core';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
@@ -74,9 +73,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     const yDoc = new Y.Doc();
     const yText = yDoc.getText('problem-statement');
-    const awareness = new Awareness(yDoc);
     const problemStatementSyncServiceMock = {
-        init: jest.fn().mockReturnValue({ doc: yDoc, text: yText, awareness }),
+        init: jest.fn().mockReturnValue({ doc: yDoc, text: yText }),
         reset: jest.fn(),
     };
 
@@ -158,7 +156,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     }));
 
     it('skips initializing sync when edit mode disabled', fakeAsync(() => {
-        comp.editMode = false;
+        fixture.componentRef.setInput('editMode', false);
         setRequiredInputs(fixture, { ...exercise, problemStatement: 'content' });
 
         fixture.detectChanges();
@@ -267,7 +265,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     }));
 
     it('should not try to query test cases or solution participation results if the exercise is being created (there can be no test cases yet)', fakeAsync(() => {
-        comp.editMode = false;
+        fixture.componentRef.setInput('editMode', false);
         const newExercise = { ...exercise, id: undefined };
 
         setRequiredInputs(fixture, newExercise as ProgrammingExercise);
@@ -333,7 +331,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     }));
 
     it('should save the problem statement to the server', () => {
-        comp.editMode = true;
+        fixture.componentRef.setInput('editMode', true);
         setRequiredInputs(fixture, exercise);
         fixture.detectChanges();
 
@@ -351,7 +349,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         const updateProblemStatementSpy = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(throwError(() => undefined));
         const logErrorSpy = jest.spyOn(alertService, 'error');
 
-        comp.editMode = true;
+        fixture.componentRef.setInput('editMode', true);
         setRequiredInputs(fixture, exercise);
         fixture.detectChanges();
 
@@ -362,7 +360,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     it('should save on key commands', () => {
         const saveInstructionsSpy = jest.spyOn(comp, 'saveInstructions');
-        comp.editMode = true;
+        fixture.componentRef.setInput('editMode', true);
         setRequiredInputs(fixture, exercise);
         fixture.detectChanges();
 

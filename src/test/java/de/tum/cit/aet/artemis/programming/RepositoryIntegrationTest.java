@@ -6,9 +6,6 @@ import static org.assertj.core.api.Assertions.within;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.verify;
 
 import java.io.File;
 import java.io.IOException;
@@ -72,7 +69,6 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.service.GitService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseEditorSyncService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
@@ -743,36 +739,6 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         params.add("file", currentLocalFileName);
         var updatedFile = request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.OK, byte[].class, params);
         assertThat(new String(updatedFile, StandardCharsets.UTF_8)).isEqualTo("updatedFileContent");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testTemplateSaveFilesWithEmptySubmissionsDoesNotBroadcast() throws Exception {
-        reset(websocketMessagingService);
-
-        request.put(studentRepoBaseUrl + programmingExercise.getTemplateParticipation().getId() + "/files?commit=false", List.of(), HttpStatus.OK);
-
-        verify(websocketMessagingService, never()).sendMessage(eq(ProgrammingExerciseEditorSyncService.getSynchronizationTopic(programmingExercise.getId())), any());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testSolutionSaveFilesWithEmptySubmissionsDoesNotBroadcast() throws Exception {
-        reset(websocketMessagingService);
-
-        request.put(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/files?commit=false", List.of(), HttpStatus.OK);
-
-        verify(websocketMessagingService, never()).sendMessage(eq(ProgrammingExerciseEditorSyncService.getSynchronizationTopic(programmingExercise.getId())), any());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testStudentSaveFilesDoesNotBroadcastSynchronizationUpdate() throws Exception {
-        reset(websocketMessagingService);
-
-        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
-
-        verify(websocketMessagingService, never()).sendMessage(eq(ProgrammingExerciseEditorSyncService.getSynchronizationTopic(programmingExercise.getId())), any());
     }
 
     @Disabled

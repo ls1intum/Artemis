@@ -29,8 +29,6 @@ import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/co
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { ProgrammingExerciseEditorFileChangeType } from 'app/programming/manage/services/programming-exercise-editor-sync.service';
-import { FileOperation } from 'app/programming/manage/services/repository-file-sync.service';
 import { editor } from 'monaco-editor';
 
 export enum CollapsableCodeEditorElement {
@@ -84,13 +82,9 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     disableAutoSave = input<boolean>(false);
     consistencyIssues = input<ConsistencyIssue[]>([]);
     isProblemStatementVisible = input<boolean>(true);
-
-    readonly fileOperationSync = output<FileOperation>();
-
     course = input<Course | undefined>();
     selectedRepository = input<RepositoryType>();
-    auxiliaryRepositoryId = input<number | undefined>();
-    enableCollaboration = input<boolean>(false);
+
     onCommitStateChange = output<CommitState>();
     onFileChanged = output<void>();
     onUpdateFeedback = output<Feedback[]>();
@@ -109,7 +103,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     private selectedFileValue?: string;
     unsavedFilesValue: { [fileName: string]: string }; // {[fileName]: fileContent}
     fileBadges: { [fileName: string]: FileBadge[] };
-    private isApplyingRemoteFileUpdate = false;
     get selectedFile(): string | undefined {
         return this.selectedFileValue;
     }
@@ -211,12 +204,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
                 this.selectedFile = fileChange.fileName;
                 this.commitState = CommitState.UNCOMMITTED_CHANGES;
             }
-            this.fileOperationSync.emit({
-                type: ProgrammingExerciseEditorFileChangeType.CREATE,
-                fileName: fileChange.fileName,
-                content: '',
-                fileType: fileChange.fileType,
-            });
         } else if (fileChange instanceof RenameFileChange || fileChange instanceof DeleteFileChange) {
             // Guard against PROBLEM_STATEMENT file operations - only allow FILE and FOLDER
             if (fileChange.fileType !== FileType.FILE && fileChange.fileType !== FileType.FOLDER) {
@@ -225,25 +212,13 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
             this.commitState = CommitState.UNCOMMITTED_CHANGES;
             this.unsavedFiles = this.fileService.updateFileReferences(this.unsavedFiles, fileChange);
             this.selectedFile = this.fileService.updateFileReference(this.selectedFile!, fileChange);
-
-            if (fileChange instanceof RenameFileChange) {
-                const content = this.getFileContent(fileChange.oldFileName) ?? '';
-                this.fileOperationSync.emit({
-                    type: ProgrammingExerciseEditorFileChangeType.RENAME,
-                    fileName: fileChange.oldFileName,
-                    newFileName: fileChange.newFileName,
-                    content,
-                    fileType: fileChange.fileType,
-                });
-            } else {
-                this.fileOperationSync.emit({ type: ProgrammingExerciseEditorFileChangeType.DELETE, fileName: fileChange.fileName });
-            }
         }
         // If unsavedFiles are deleted, this can mean that the editorState becomes clean
         if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.UNSAVED_CHANGES) {
             this.editorState = EditorState.CLEAN;
         }
         this.monacoEditor?.onFileChange(fileChange);
+
         this.onFileChanged.emit();
     }
 
@@ -280,25 +255,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
      */
     onFileContentChange({ fileName, text }: { fileName: string; text: string }) {
         this.unsavedFiles = { ...this.unsavedFiles, [fileName]: text };
-        if (!this.isApplyingRemoteFileUpdate && !this.enableCollaboration()) {
-            this.fileOperationSync.emit({ type: ProgrammingExerciseEditorFileChangeType.CONTENT, fileName, content: text });
-        }
         this.onFileChanged.emit();
-    }
-
-    applyRemoteFileContent(fileName: string, text: string) {
-        this.isApplyingRemoteFileUpdate = true;
-        try {
-            this.monacoEditor?.applyRemoteFileContent(fileName, text);
-            this.unsavedFiles = { ...this.unsavedFiles, [fileName]: text };
-            this.onFileChanged.emit();
-        } finally {
-            this.isApplyingRemoteFileUpdate = false;
-        }
-    }
-
-    getFileContent(fileName: string): string | undefined {
-        return this.monacoEditor?.getFileContent(fileName);
     }
 
     fileLoad(selectedFile: string) {

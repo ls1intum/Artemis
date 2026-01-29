@@ -12,7 +12,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
-import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -47,20 +46,14 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorFileType;
-import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
-import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExerciseEditorFileSyncDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseEditorSyncService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryParticipationService;
@@ -96,9 +89,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository,
             SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService,
-            RepositoryParticipationService repositoryParticipationService, ProgrammingExerciseEditorSyncService programmingExerciseEditorSyncService) {
-        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, programmingExerciseEditorSyncService,
-                localVCServletService);
+            RepositoryParticipationService repositoryParticipationService) {
+        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService);
         this.participationAuthCheckService = participationAuthCheckService;
         this.participationService = participationService;
         this.buildLogService = buildLogService;
@@ -160,25 +152,6 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new IllegalArgumentException();
         }
         return (ProgrammingExerciseParticipation) participation;
-    }
-
-    private void broadcastChangesForNonStudentRepository(Long participationId, @Nullable ProgrammingExerciseEditorFileSyncDTO filePatch) {
-        try {
-            ProgrammingExerciseParticipation participation = getProgrammingExerciseParticipation(participationId);
-            ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(participation);
-            if (programmingExercise == null) {
-                return;
-            }
-            if (participation instanceof TemplateProgrammingExerciseParticipation) {
-                this.broadcastRepositoryUpdates(programmingExercise.getId(), ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, null, filePatch);
-            }
-            else if (participation instanceof SolutionProgrammingExerciseParticipation) {
-                this.broadcastRepositoryUpdates(programmingExercise.getId(), ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY, null, filePatch);
-            }
-        }
-        catch (Exception e) {
-            log.debug("Could not broadcast participation change for participation {}", participationId, e);
-        }
     }
 
     @Override
@@ -245,8 +218,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     public ResponseEntity<Map<String, String>> getFilesAtCommit(@PathVariable String commitId, @RequestParam(required = false) Long participationId,
             @RequestParam(required = false) RepositoryType repositoryType) {
         log.debug("REST request to files for domainId {} at commitId {}", participationId, commitId);
-        ProgrammingExerciseParticipation participation = getProgrammingExerciseParticipation(participationId);
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);
+        var participation = getProgrammingExerciseParticipation(participationId);
+        var programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);
         repositoryAccessService.checkAccessRepositoryElseThrow(participation, userRepository.getUserWithGroupsAndAuthorities(), programmingExercise, RepositoryActionType.READ);
 
         return executeAndCheckForExceptions(() -> ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, repositoryType, participation)));
@@ -265,11 +238,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     public ResponseEntity<Map<String, Boolean>> getFilesWithInformationAboutChange(@PathVariable Long participationId) {
         return super.executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true, false);
-            Participation participation = participationRepository.findByIdElseThrow(participationId);
-            ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(participation.getExercise().getId());
+            var participation = participationRepository.findByIdElseThrow(participationId);
+            var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(participation.getExercise().getId());
 
             Repository templateRepository = getRepository(exercise.getTemplateParticipation().getId(), RepositoryActionType.READ, true, false);
-            Map<String, Boolean> filesWithInformationAboutChange = super.repositoryService.getFilesWithInformationAboutChange(repository, templateRepository);
+            var filesWithInformationAboutChange = super.repositoryService.getFilesWithInformationAboutChange(repository, templateRepository);
             return new ResponseEntity<>(filesWithInformationAboutChange, HttpStatus.OK);
         });
     }
@@ -314,7 +287,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             @RequestParam(value = "omitBinaries", required = false, defaultValue = "false") boolean omitBinaries) {
         return super.executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true, false);
-            Map<String, String> filesWithContent = super.repositoryService.getFilesContentFromWorkingCopy(repository, omitBinaries);
+            var filesWithContent = super.repositoryService.getFilesContentFromWorkingCopy(repository, omitBinaries);
             return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
         });
     }
@@ -324,11 +297,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @FeatureToggle(Feature.ProgrammingExercises)
     @EnforceAtLeastStudent
     public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filePath, HttpServletRequest request) {
-        ResponseEntity<Void> response = super.createFile(participationId, filePath, request);
-        if (response.getStatusCode().is2xxSuccessful()) {
-            broadcastChangesForNonStudentRepository(participationId, ProgrammingExerciseEditorFileSyncDTO.forFileCreate(filePath));
-        }
-        return response;
+        return super.createFile(participationId, filePath, request);
     }
 
     @Override
@@ -336,11 +305,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @FeatureToggle(Feature.ProgrammingExercises)
     @EnforceAtLeastStudent
     public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderPath, HttpServletRequest request) {
-        ResponseEntity<Void> response = super.createFolder(participationId, folderPath, request);
-        if (response.getStatusCode().is2xxSuccessful()) {
-            broadcastChangesForNonStudentRepository(participationId, ProgrammingExerciseEditorFileSyncDTO.forFolderCreate(folderPath));
-        }
-        return response;
+        return super.createFolder(participationId, folderPath, request);
     }
 
     @Override
@@ -348,26 +313,14 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @FeatureToggle(Feature.ProgrammingExercises)
     @EnforceAtLeastStudent
     public ResponseEntity<Void> renameFile(@PathVariable Long participationId, @RequestBody FileMove fileMove) {
-        return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(participationId, RepositoryActionType.WRITE, true, false);
-            ProgrammingExerciseEditorFileType fileType = getEditorFileType(repository, fileMove.currentFilePath());
-            String newFilePath = buildNewFilePath(fileMove.currentFilePath(), fileMove.newFilename());
-
-            repositoryService.renameFile(repository, fileMove);
-            broadcastChangesForNonStudentRepository(participationId, ProgrammingExerciseEditorFileSyncDTO.forRename(fileMove.currentFilePath(), newFilePath, fileType));
-            return new ResponseEntity<>(HttpStatus.OK);
-        });
+        return super.renameFile(participationId, fileMove);
     }
 
     @Override
     @DeleteMapping(value = "repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("file") String filename) {
-        ResponseEntity<Void> response = super.deleteFile(participationId, filename);
-        if (response.getStatusCode().is2xxSuccessful()) {
-            broadcastChangesForNonStudentRepository(participationId, ProgrammingExerciseEditorFileSyncDTO.forDelete(filename));
-        }
-        return response;
+        return super.deleteFile(participationId, filename);
     }
 
     @Override

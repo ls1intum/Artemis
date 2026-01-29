@@ -10,8 +10,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +21,6 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -37,19 +34,14 @@ import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
-import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorFileType;
-import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
-import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExerciseEditorFileSyncDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseEditorSyncService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
@@ -76,20 +68,16 @@ public abstract class RepositoryResource {
 
     protected final RepositoryAccessService repositoryAccessService;
 
-    protected final ProgrammingExerciseEditorSyncService programmingExerciseEditorSyncService;
-
     private final Optional<LocalVCServletService> localVCServletService;
 
     public RepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService, RepositoryService repositoryService,
-            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
-            ProgrammingExerciseEditorSyncService programmingExerciseEditorSyncService, Optional<LocalVCServletService> localVCServletService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService) {
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.repositoryAccessService = repositoryAccessService;
-        this.programmingExerciseEditorSyncService = programmingExerciseEditorSyncService;
         this.localVCServletService = localVCServletService;
     }
 
@@ -340,33 +328,6 @@ public abstract class RepositoryResource {
         return new ResponseEntity<>(new RepositoryStatusDTO(repositoryStatus), HttpStatus.OK);
     }
 
-    protected ProgrammingExerciseEditorFileType getEditorFileType(Repository repository, String filePath) {
-        Path repositoryRoot = repository.getLocalPath();
-        Path resolvedPath = repositoryRoot.resolve(filePath).normalize();
-
-        if (!resolvedPath.startsWith(repositoryRoot)) {
-            throw new IllegalArgumentException("File path is outside of repository");
-        }
-
-        if (!Files.exists(resolvedPath)) {
-            throw new IllegalArgumentException("File not found");
-        }
-
-        if (Files.isDirectory(resolvedPath)) {
-            return ProgrammingExerciseEditorFileType.FOLDER;
-        }
-
-        return ProgrammingExerciseEditorFileType.FILE;
-    }
-
-    protected String buildNewFilePath(String currentFilePath, String newFileName) {
-        String sanitizedNewFileName = FileUtil.sanitizeFilename(newFileName);
-        Path currentPath = Path.of(currentFilePath);
-        Path parent = currentPath.getParent();
-        Path newPath = parent != null ? parent.resolve(sanitizedNewFileName) : Path.of(sanitizedNewFileName);
-        return newPath.normalize().toString();
-    }
-
     /**
      * This method is used to check the executed statements for exceptions. Will return an appropriate ResponseEntity for every kind of possible exception.
      *
@@ -437,24 +398,6 @@ public abstract class RepositoryResource {
 
         try (var inputStream = new ByteArrayInputStream(submission.getFileContent().getBytes(StandardCharsets.UTF_8))) {
             FileUtils.copyToFile(inputStream, file.get());
-        }
-    }
-
-    /**
-     * Broadcast repository updates that include file-level operations (create/rename/delete/content).
-     *
-     * @param exerciseId            the id of the exercise
-     * @param target                the target for the synchronization messages to reach
-     * @param auxiliaryRepositoryId optional, the id of the auxiliary repository associated with this change, only needed when target is AUXILIARY_REPOSITORY
-     * @param filePatch             the file operation to broadcast
-     */
-    protected void broadcastRepositoryUpdates(Long exerciseId, ProgrammingExerciseEditorSyncTarget target, @Nullable Long auxiliaryRepositoryId,
-            @Nullable ProgrammingExerciseEditorFileSyncDTO filePatch) {
-        try {
-            programmingExerciseEditorSyncService.broadcastFileChanges(exerciseId, target, auxiliaryRepositoryId, filePatch);
-        }
-        catch (Exception e) {
-            log.error("Could not broadcast repository change for synchronization of exercise {}", exerciseId, e);
         }
     }
 }
