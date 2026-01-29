@@ -30,6 +30,8 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationResponseDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 
 @Conditional(PlagiarismEnabled.class)
@@ -90,6 +92,11 @@ public class PlagiarismPostService extends PostingService {
         plagiarismCaseService.savePostForPlagiarismCaseAndNotifyStudent(savedPost.getPlagiarismCase().getId(), savedPost);
 
         return savedPost;
+    }
+
+    public PlagiarismPostCreationResponseDTO createPost(Long courseId, PlagiarismPostCreationDTO postDto) {
+        Post created = createPost(courseId, postDto.toEntity());
+        return PlagiarismPostCreationResponseDTO.of(created);
     }
 
     /**

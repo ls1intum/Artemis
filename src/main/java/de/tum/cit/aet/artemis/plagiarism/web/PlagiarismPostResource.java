@@ -73,9 +73,9 @@ public class PlagiarismPostResource {
             throws URISyntaxException {
         log.debug("POST createPost invoked for course {} with post {}", courseId, postDto.content());
         long start = System.nanoTime();
-        Post createdPost = plagiarismPostService.createPost(courseId, postDto.toEntity());
+        PlagiarismPostCreationResponseDTO createdPost = plagiarismPostService.createPost(courseId, postDto);
         log.info("createPost took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.created(new URI("/api/plagiarism/courses/" + courseId + "/posts/" + createdPost.getId())).body(PlagiarismPostCreationResponseDTO.of(createdPost));
+        return ResponseEntity.created(new URI("/api/plagiarism/courses/" + courseId + "/posts/" + createdPost.id())).body(createdPost);
     }
 
     /**
