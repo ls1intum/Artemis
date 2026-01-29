@@ -82,18 +82,18 @@ public class TutorialGroupsConfigurationResource {
      * POST /courses/:courseId/tutorial-groups-configuration: creates a new tutorial group configuration for the specified course and sets the timeZone on the course.
      *
      * @param courseId                      the id of the course to which the tutorial group configuration should be added
-     * @param tutorialGroupConfigurationDTO the tutorial group configuration to create
+     * @param tutorialGroupConfigurationDto the tutorial group configuration to create
      * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group configuration
      */
     @PostMapping("courses/{courseId}/tutorial-groups-configuration")
     @EnforceAtLeastInstructor
-    public ResponseEntity<TutorialGroupConfigurationDTO> create(@PathVariable Long courseId, @RequestBody @Valid TutorialGroupConfigurationDTO tutorialGroupConfigurationDTO)
+    public ResponseEntity<TutorialGroupConfigurationDTO> create(@PathVariable Long courseId, @RequestBody @Valid TutorialGroupConfigurationDTO tutorialGroupConfigurationDto)
             throws URISyntaxException {
-        log.debug("REST request to create TutorialGroupsConfiguration: {} for course: {}", tutorialGroupConfigurationDTO, courseId);
-        if (tutorialGroupConfigurationDTO == null) {
+        log.debug("REST request to create TutorialGroupsConfiguration: {} for course: {}", tutorialGroupConfigurationDto, courseId);
+        if (tutorialGroupConfigurationDto == null) {
             throw new BadRequestException("Tutorial group configuration must be provided");
         }
-        if (tutorialGroupConfigurationDTO.id() != null) {
+        if (tutorialGroupConfigurationDto.id() != null) {
             throw new BadRequestException("A new tutorial group configuration cannot already have an ID");
         }
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -102,8 +102,8 @@ public class TutorialGroupsConfigurationResource {
             throw new BadRequestException("A tutorial group configuration already exists for this course");
         }
 
-        ZoneId configurationZoneId = TutorialGroupConfigurationDTO.zoneOf(tutorialGroupConfigurationDTO.tutorialPeriodStartInclusive());
-        TutorialGroupsConfiguration configuration = TutorialGroupConfigurationDTO.from(tutorialGroupConfigurationDTO, configurationZoneId);
+        ZoneId configurationZoneId = TutorialGroupConfigurationDTO.zoneOf(tutorialGroupConfigurationDto.tutorialPeriodStartInclusive());
+        TutorialGroupsConfiguration configuration = TutorialGroupConfigurationDTO.from(tutorialGroupConfigurationDto, configurationZoneId);
 
         isValidTutorialGroupConfiguration(configuration);
         configuration.setCourse(course);
@@ -122,19 +122,22 @@ public class TutorialGroupsConfigurationResource {
     /**
      * PUT /courses/:courseId/tutorial-groups-configurations/:tutorialGroupsConfigurationId : Update tutorial groups configuration.
      *
-     * @param courseId                          the id of the course to which the tutorial groups configuration belongs
-     * @param tutorialGroupsConfigurationId     the id of the tutorial groups configuration to update
-     * @param updatedTutorialGroupConfiguration the configuration to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group configuration
+     * @param courseId                             the id of the course to which the tutorial groups configuration belongs
+     * @param tutorialGroupsConfigurationId        the id of the tutorial groups configuration to update
+     * @param updatedTutorialGroupConfigurationDto the configuration dto to update
+     * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group configuration dto
      */
     @PutMapping("courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<TutorialGroupConfigurationDTO> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
-            @RequestBody @Valid TutorialGroupsConfiguration updatedTutorialGroupConfiguration) {
-        log.debug("REST request to update TutorialGroupsConfiguration: {} of course: {}", updatedTutorialGroupConfiguration, courseId);
-        if (updatedTutorialGroupConfiguration.getId() == null) {
+            @RequestBody @Valid TutorialGroupConfigurationDTO updatedTutorialGroupConfigurationDto) {
+        log.debug("REST request to update TutorialGroupsConfiguration: {} of course: {}", updatedTutorialGroupConfigurationDto, courseId);
+        if (updatedTutorialGroupConfigurationDto.id() == null) {
             throw new BadRequestException("A tutorial group cannot be updated without an id");
         }
+        ZoneId configurationZoneId = TutorialGroupConfigurationDTO.zoneOf(updatedTutorialGroupConfigurationDto.tutorialPeriodStartInclusive());
+        TutorialGroupsConfiguration updatedTutorialGroupConfiguration = TutorialGroupConfigurationDTO.from(updatedTutorialGroupConfigurationDto, configurationZoneId);
+
         isValidTutorialGroupConfiguration(updatedTutorialGroupConfiguration);
         var configurationFromDatabase = this.tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(updatedTutorialGroupConfiguration.getId());
 
