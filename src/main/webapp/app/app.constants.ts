@@ -59,6 +59,8 @@ export const MODULE_FEATURE_NEBULA = 'nebula';
 
 export const MODULE_FEATURE_SHARING = 'sharing';
 
+export const MODULE_FEATURE_LTI = 'lti';
+
 export type ModuleFeature =
     | typeof MODULE_FEATURE_PASSKEY
     | typeof MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN
@@ -72,7 +74,8 @@ export type ModuleFeature =
     | typeof MODULE_FEATURE_LECTURE
     | typeof MODULE_FEATURE_TUTORIALGROUP
     | typeof MODULE_FEATURE_NEBULA
-    | typeof MODULE_FEATURE_SHARING;
+    | typeof MODULE_FEATURE_SHARING
+    | typeof MODULE_FEATURE_LTI;
 
 export const PROFILE_LOCALCI = 'localci';
 

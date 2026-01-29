@@ -41,13 +41,13 @@
                     "allowNarrowLayouts": "Engere Layouts zulassen?",
                     "allowNarrowLayoutsTooltip": "Wenn diese Option aktiviert ist, kann Artemis die Studierenden direkt nebeneinander platzieren, falls es sonst nicht möglich ist alle Studierenden unterzubringen",
                     "searchPlaceholder": "Suche nach Zimmernummer, Name und/oder Gebäude",
-                    "number": "Nummer",
+                    "number": "Raumnummer",
                     "name": "Name",
                     "building": "Gebäude",
                     "enoughSeatsForStudents": "Du kannst alle {{ totalStudents }} Studierenden unterbringen.",
                     "notEnoughSeatsForStudents": "Du kannst nur {{ usableCapacity }} der {{ totalStudents }} Studierenden unterbringen ({{ percentage }}%).",
                     "distribute": "Verteilen",
-                    "distributeWarning": "Du hast nicht ausreichend Kapazitäten"
+                    "noRoomSelected": "Es ist kein Raum ausgewählt"
                 }
             },
             "overview": {
@@ -747,7 +747,7 @@
             "announcementCreate": {
                 "button": "Ankündigung erstellen",
                 "title": "Klausurweite Ankündigung erstellen",
-                "task": "Gib deine Ankündigung hier ein. Du kannst Markdown verwenden.",
+                "task": "Gib deine Ankündigung hier ein.",
                 "preview": "Vorschau",
                 "sendButton": "Ankündigung senden",
                 "sending": "Sende Ankündigung...",
