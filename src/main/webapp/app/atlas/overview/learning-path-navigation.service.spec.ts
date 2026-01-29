@@ -134,11 +134,11 @@ describe('LearningPathNavigationService', () => {
 
     it('should set current learning object completion to true', () => {
         learningPathNavigationService.setCurrentLearningObjectCompletion(true);
-        expect(learningPathNavigationService.isCurrentLearningObjectCompleted()).toBeTrue();
+        expect(learningPathNavigationService.isCurrentLearningObjectCompleted()).toBeTruthy();
     });
 
     it('should set current learning object completion to false', () => {
         learningPathNavigationService.setCurrentLearningObjectCompletion(false);
-        expect(learningPathNavigationService.isCurrentLearningObjectCompleted()).toBeFalse();
+        expect(learningPathNavigationService.isCurrentLearningObjectCompleted()).toBeFalsy();
     });
 });
