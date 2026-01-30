@@ -974,7 +974,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Issue Navigation', (
         expect(comp.fileToJumpOn).toBeUndefined();
     });
 
-    it('should call onFileLoad when file is already selected', () => {
+    it('should jump to line when file is loaded', () => {
         const mockCodeEditorContainer = {
             selectedFile: 'src/Main.java',
             jumpToLine: jest.fn(),
@@ -985,7 +985,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Issue Navigation', (
         comp.fileToJumpOn = 'src/Main.java';
 
         comp.onEditorLoaded();
-        comp.onFileLoad('src/Main.java');
 
         expect(mockCodeEditorContainer.jumpToLine).toHaveBeenCalledWith(10);
         expect(comp.lineJumpOnFileLoad).toBeUndefined();

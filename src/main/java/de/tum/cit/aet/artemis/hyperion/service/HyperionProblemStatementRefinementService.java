@@ -134,12 +134,12 @@ public class HyperionProblemStatementRefinementService {
 
         try {
             // Build the instruction string
-            String[] lines = originalProblemStatementText.trim().split("\n", -1);
+            String[] lines = originalProblemStatementText.split("\n", -1);
             String locationRef = buildLocationReference(request, lines);
             String targetedInstruction = locationRef + ": " + request.instruction();
 
             // Add line numbers to help the LLM identify exact lines to modify
-            String textWithLineNumbers = addLineNumbers(originalProblemStatementText.trim());
+            String textWithLineNumbers = addLineNumbers(originalProblemStatementText);
 
             // Validate total input length
             int totalLength = textWithLineNumbers.length() + targetedInstruction.length();

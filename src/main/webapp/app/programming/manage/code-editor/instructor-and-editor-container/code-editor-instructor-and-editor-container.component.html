@@ -198,7 +198,8 @@
                                     </div>
                                     <div class="refinement-prompt-body">
                                         <textarea
-                                            [(ngModel)]="refinementPrompt"
+                                            [value]="refinementPrompt()"
+                                            (input)="refinementPrompt.set($any($event.target).value)"
                                             class="form-control refinement-textarea"
                                             rows="5"
                                             cdkTrapFocus
@@ -211,7 +212,7 @@
                                         <div class="text-end text-muted small mt-1">{{ refinementPrompt()?.length || 0 }}/1000</div>
                                     </div>
                                     <div class="refinement-prompt-footer">
-                                        <button type="button" class="btn btn-primary btn-sm" [disabled]="!refinementPrompt().trim()" (click)="submitRefinement()">
+                                        <button type="button" class="btn btn-primary btn-sm" [disabled]="!refinementPrompt()?.trim()" (click)="submitRefinement()">
                                             <fa-icon [icon]="faPaperPlane" class="me-1" />
                                             <span
                                                 [jhiTranslate]="
