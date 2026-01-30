@@ -137,20 +137,20 @@
                 "parseResponse": "Ein Fehler ist beim Parsen der Antwort von Iris aufgetreten. Ursache: {{ cause }}"
             },
             "chat": {
-                "helpOffer": "Wie kann ich Dir helfen?",
-                "contextSelection": {
-                    "entireCourse": "Gesamter Kurs",
-                    "entireCourseDescription": "Kursinhalte besprechen und Fortschritt reflektieren",
-                    "selectLecture": "Vorlesung auswählen",
-                    "selectLectureDescription": "Fokus auf eine bestimmte Vorlesung",
-                    "selectExercise": "Aufgabe auswählen",
-                    "selectExerciseDescription": "Hilfe zu einer bestimmten Aufgabe erhalten",
-                    "lectureSelected": "Vorlesung ausgewählt",
-                    "exerciseSelected": "Aufgabe ausgewählt",
-                    "noLectures": "Keine Vorlesungen verfügbar",
-                    "noExercises": "Keine Aufgaben verfügbar",
-                    "loading": "Wird geladen..."
-                }
+                "helpOffer": "Wie kann ich Dir helfen?"
+            },
+            "contextSelection": {
+                "entireCourse": "Gesamter Kurs",
+                "entireCourseDescription": "Kursinhalte besprechen und Fortschritt reflektieren",
+                "selectLecture": "Vorlesung auswählen",
+                "selectLectureDescription": "Fokus auf eine bestimmte Vorlesung",
+                "selectExercise": "Aufgabe auswählen",
+                "selectExerciseDescription": "Hilfe zu einer bestimmten Aufgabe erhalten",
+                "lectureSelected": "Vorlesung ausgewählt",
+                "exerciseSelected": "Aufgabe ausgewählt",
+                "noLectures": "Keine Vorlesungen verfügbar",
+                "noExercises": "Keine Aufgaben verfügbar",
+                "loading": "Wird geladen..."
             },
             "tutorSuggestion": {
                 "loading": "Lade Vorschläge...",
