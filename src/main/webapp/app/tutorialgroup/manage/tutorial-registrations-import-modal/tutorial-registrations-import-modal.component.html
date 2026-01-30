@@ -1,0 +1,50 @@
+<p-dialog [header]="header()" [modal]="true" appendTo="body" [visible]="isOpen()" (visibleChange)="isOpen.set($event)">
+    @let step = flowStep();
+    @switch (step) {
+        @case (ImportFlowStep.EXPLANATION) {
+            <div class="explanation-frame">
+                <span jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.explanationText"></span>
+                <table class="example-table">
+                    <thead>
+                        <tr>
+                            <th>Login</th>
+                            <th>Email</th>
+                            <th>Registration Number</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>user_1</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>{{ 'user_2@artemis.org' }}</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td>ge48vol</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="controls-footer">
+                    @if (loading()) {
+                        Loading
+                    }
+                    <input type="file" class="file-upload-input" accept=".csv" (change)="onFileSelected($event)" #fileUploadInput />
+                    <button
+                        pButton
+                        class="p-button-primary p-button-sm"
+                        jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.chooseFileButtonLabel"
+                        data-testid="choose-file-button"
+                        (click)="fileUploadInput.click()"
+                    ></button>
+                </div>
+            </div>
+        }
+        @case (ImportFlowStep.IMPORT) {}
+    }
+</p-dialog>

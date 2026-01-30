@@ -13,6 +13,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { FormsModule } from '@angular/forms';
+import { TutorialRegistrationsImportModalComponent } from 'app/tutorialgroup/manage/tutorial-registrations-import-modal/tutorial-registrations-import-modal.component';
 
 export interface DeregisterStudentEvent {
     courseId: number;
@@ -22,7 +23,18 @@ export interface DeregisterStudentEvent {
 
 @Component({
     selector: 'jhi-tutorial-registrations',
-    imports: [IconFieldModule, InputIconModule, InputTextModule, TooltipModule, ConfirmDialogModule, ButtonModule, ProfilePictureComponent, TranslateDirective, FormsModule],
+    imports: [
+        IconFieldModule,
+        InputIconModule,
+        InputTextModule,
+        TooltipModule,
+        ConfirmDialogModule,
+        ButtonModule,
+        ProfilePictureComponent,
+        TranslateDirective,
+        FormsModule,
+        TutorialRegistrationsImportModalComponent,
+    ],
     providers: [ConfirmationService],
     templateUrl: './tutorial-registrations.component.html',
     styleUrl: './tutorial-registrations.component.scss',

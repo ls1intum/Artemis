@@ -276,6 +276,14 @@
                     "email": "Email",
                     "registrationNumber": "Registrierungsnummer",
                     "actions": "Aktionen"
+                },
+                "importModal": {
+                    "explanationText": "Über diesen Dialog kann man existierende Nutzer über eine .csv Datei registrieren. Jeder Eintrag der Datei muss zu mindest einen Wert für 'Login', 'Email' oder 'Registration Number' enthalten. Werte für 'First Name' und 'Last Name' sind optional. Hier ein Beispiel für einen validen Dateiinhalt:",
+                    "explanationHeader": "Studenten Importieren",
+                    "confirmImportHeader": "Importbestätigung",
+                    "chooseFileButtonLabel": "Datei Wählen",
+                    "invalidFileEntriesAlert": "Die ausgewählte Datei enthält Einträge, die nicht mindestens eines der benötigten Felder enthälten.",
+                    "noFileEntriesAlert": "Die ausgewählte Datei enthält keine Einträge."
                 }
             },
             "createTutorialGroup": {

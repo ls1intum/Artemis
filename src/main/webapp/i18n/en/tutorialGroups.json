@@ -276,6 +276,14 @@
                     "email": "Email",
                     "registrationNumber": "Registration Number",
                     "actions": "Actions"
+                },
+                "importModal": {
+                    "explanationText": "This dialog can be used to register existing users through a .csv file. Each entry in the file must contain a value for either matriculation number, login or email. Values for last and first name are optional. Here an example of valid .csv file content:",
+                    "explanationHeader": "Import Students",
+                    "confirmImportHeader": "Confirm Import",
+                    "chooseFileButtonLabel": "Choose File",
+                    "invalidFileEntriesAlert": "The chosen file contains entries that do not have at least one of the required fields.",
+                    "noFileEntriesAlert": "The chosen file contains no entries."
                 }
             },
             "createTutorialGroup": {

@@ -1,0 +1,30 @@
+.explanation-frame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    max-width: 50rem;
+
+    .example-table {
+        table-layout: fixed;
+        width: 35rem;
+        border-collapse: collapse;
+
+        th,
+        td {
+            border: 1px solid var(--border-color);
+            padding: 0.5rem;
+            text-align: left;
+        }
+    }
+
+    .controls-footer {
+        width: 100%;
+        display: flex;
+        justify-content: end;
+
+        .file-upload-input {
+            display: none;
+        }
+    }
+}
