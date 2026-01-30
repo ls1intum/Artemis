@@ -12,6 +12,7 @@ import { BuildAgentPauseAllModalComponent } from 'app/buildagent/build-agent-sum
 import { BuildAgentClearDistributedDataComponent } from 'app/buildagent/build-agent-summary/build-agent-clear-distributed-data/build-agent-clear-distributed-data.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
@@ -28,7 +29,7 @@ import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title
     templateUrl: './build-agent-summary.component.html',
     styleUrl: './build-agent-summary.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, FontAwesomeModule, RouterModule, AdminTitleBarTitleDirective, AdminTitleBarActionsDirective],
+    imports: [TranslateDirective, FontAwesomeModule, RouterModule, AdminTitleBarTitleDirective, AdminTitleBarActionsDirective, ArtemisTranslatePipe],
 })
 export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     private readonly websocketService = inject(WebsocketService);
