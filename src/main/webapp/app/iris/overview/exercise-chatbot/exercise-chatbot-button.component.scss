@@ -109,9 +109,5 @@
 :host {
     .message-bubble {
         @include citations.iris-citation-bubble-colors;
-
-        ::ng-deep {
-            @include citations.iris-citation-bubbles;
-        }
     }
 }

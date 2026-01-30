@@ -1,7 +1,7 @@
 @if (!chatOpen()) {
     <div
         #chatBubble
-        class="message-bubble"
+        class="message-bubble iris-citation-bubble"
         (click)="handleButtonClick()"
         [ngClass]="{ 'content-overflow': isOverflowing(), 'bubble-visible': newIrisMessage(), 'bubble-hidden': !newIrisMessage() }"
     >

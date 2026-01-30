@@ -1,6 +1,7 @@
 // Note: we first need to define our own customizations
 @import 'src/main/webapp/content/scss/artemis-variables';
 @import 'src/main/webapp/content/scss/_artemis-mixins.scss';
+@import 'src/main/webapp/app/iris/overview/shared/iris-citation-bubbles';
 
 // Then, we include bootstrap so that it can use some magic functions to compute new values based on those customizations
 // The order is very important, otherwise the background and the button colors might not work correctly
@@ -90,6 +91,10 @@ a.disabled {
 
 .overflow-parent {
     min-width: 0;
+}
+
+.iris-citation-bubble {
+    @include iris-citation-bubbles;
 }
 
 /*
