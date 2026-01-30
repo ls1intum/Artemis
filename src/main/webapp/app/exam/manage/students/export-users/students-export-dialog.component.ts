@@ -1,6 +1,5 @@
 import { Component, InputSignal, ModelSignal, ViewEncapsulation, WritableSignal, inject, input, model, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faBan, faFileExport } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -10,7 +9,6 @@ import { ButtonModule } from 'primeng/button';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ExportExamUserDTO } from 'app/exam/manage/students/export-users/students-export.model';
 import { TranslateService } from '@ngx-translate/core';
-import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
 import Papa from 'papaparse';
 
 @Component({
@@ -18,7 +16,7 @@ import Papa from 'papaparse';
     standalone: true,
     templateUrl: './students-export-dialog.component.html',
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, FaIconComponent, NgbTypeaheadModule, DialogModule, ButtonModule],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, DialogModule, ButtonModule],
 })
 export class StudentsExportDialogComponent {
     protected readonly faBan = faBan;
@@ -29,17 +27,16 @@ export class StudentsExportDialogComponent {
 
     private readonly translateService: TranslateService = inject(TranslateService);
     private readonly examManagementService: ExamManagementService = inject(ExamManagementService);
-    private readonly studentsRoomDistributionService: StudentsRoomDistributionService = inject(StudentsRoomDistributionService);
 
     courseId: InputSignal<number> = input.required();
     exam: InputSignal<Exam> = input.required();
 
     openDialog(): void {
         this.dialogVisible.set(true);
-        this.lastExportAttemptFailed.set(false);
     }
 
     closeDialog(): void {
+        this.lastExportAttemptFailed.set(false);
         this.dialogVisible.set(false);
     }
 
@@ -53,12 +50,11 @@ export class StudentsExportDialogComponent {
     }
 
     exportUsers(): void {
-        this.studentsRoomDistributionService.loadRoomsUsedInExam().subscribe();
         this.examManagementService.exportExamUsers(this.courseId(), this.exam().id!).subscribe({
             next: (exportExamUsers: ExportExamUserDTO[]) => {
                 const csvBlob: Blob = this.createCsv(exportExamUsers);
                 this.downloadBlob(csvBlob, `exam-${this.exam().id}-students.csv`);
-                this.lastExportAttemptFailed.set(false);
+                this.closeDialog();
             },
             error: (_error) => {
                 this.lastExportAttemptFailed.set(true);

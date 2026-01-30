@@ -169,6 +169,13 @@ public class ExamUserResource {
         return ResponseEntity.ok().body(examUserRepository.isAttendanceChecked(examId, login));
     }
 
+    /**
+     * GET courses/{courseId}/exams/{examId}/export-students : Gets all relevant information about all exam users for exporting
+     *
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
+     * @return export information for all exam users
+     */
     @GetMapping("courses/{courseId}/exams/{examId}/export-students")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<ExportExamUserDTO>> exportExamUsers(@PathVariable Long courseId, @PathVariable Long examId) {

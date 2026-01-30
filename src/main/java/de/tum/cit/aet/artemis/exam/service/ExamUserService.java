@@ -262,6 +262,12 @@ public class ExamUserService {
                 .orElseThrow(() -> new EntityNotFoundException("Exam user with id: " + examUserId + " does not exist in exam with id: " + examId));
     }
 
+    /**
+     * Gathers information about students for exporting
+     *
+     * @param examId the exam id
+     * @return all exam users with their most important data for exporting
+     */
     public List<ExportExamUserDTO> exportStudents(long examId) {
         List<ExamUser> studentsInExam = examUserRepository.findAllByExamId(examId);
         Set<ExamRoom> roomsUsedInExam = examRoomRepository.findAllByExamId(examId);
