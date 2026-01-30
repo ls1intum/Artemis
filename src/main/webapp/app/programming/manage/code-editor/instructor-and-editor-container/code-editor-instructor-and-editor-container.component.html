@@ -169,7 +169,7 @@
                         <div class="position-relative me-2">
                             <button (click)="toggleRefinementPrompt()" class="btn btn-outline-primary" [disabled]="isInlineRefining() || isAiLoading()">
                                 @if (isInlineRefining() || isAiLoading()) {
-                                    <fa-icon [icon]="faCircleNotch" animation="spin" class="me-2" />
+                                    <fa-icon [icon]="faSpinner" animation="spin" class="me-2" />
                                 } @else {
                                     <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
                                 }

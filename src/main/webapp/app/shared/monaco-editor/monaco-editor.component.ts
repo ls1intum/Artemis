@@ -37,12 +37,12 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private static readonly DEFAULT_LINE_DECORATION_BUTTON_WIDTH = '2.3ch';
     private static readonly SHRINK_TO_FIT_CLASS = 'monaco-shrink-to-fit';
 
-    private readonly _editor: monaco.editor.IStandaloneCodeEditor;
+    private _editor: monaco.editor.IStandaloneCodeEditor;
     private _diffEditor?: monaco.editor.IStandaloneDiffEditor;
 
     private textEditorAdapter: MonacoTextEditorAdapter;
-    private readonly monacoEditorContainerElement: HTMLElement;
-    private readonly diffEditorContainerElement: HTMLElement;
+    private monacoEditorContainerElement: HTMLElement;
+    private diffEditorContainerElement: HTMLElement;
 
     private readonly emojiConvertor = new EmojiConvertor();
 
@@ -80,7 +80,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     onBlurEditor = output<void>();
 
     mode = input<MonacoEditorMode>('normal');
-    private lastMode: MonacoEditorMode | null = null;
+    private lastMode: MonacoEditorMode | undefined;
     renderSideBySide = input<boolean>(true);
     diffChanged = output<{ ready: boolean; lineChange: LineChange }>();
 
@@ -112,19 +112,11 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
          * This makes the editor available immediately (not just after ngOnInit), preventing errors when the methods
          * of this component are called.
          */
-        this.monacoEditorContainerElement = this.renderer.createElement('div');
-        this.renderer.addClass(this.monacoEditorContainerElement, 'monaco-editor-container');
-        this.renderer.addClass(this.monacoEditorContainerElement, MonacoEditorComponent.SHRINK_TO_FIT_CLASS);
-        this._editor = this.monacoEditorService.createStandaloneCodeEditor(this.monacoEditorContainerElement);
-        this.renderer.appendChild(this.elementRef.nativeElement, this.monacoEditorContainerElement);
+        this.initializeMonacoEditor();
         /*
          * Diff editor: create container once in constructor (hidden by default) but init editor lazily.
          */
-        this.diffEditorContainerElement = this.renderer.createElement('div');
-        this.renderer.addClass(this.diffEditorContainerElement, 'monaco-diff-editor-container');
-        this.renderer.addClass(this.diffEditorContainerElement, MonacoEditorComponent.SHRINK_TO_FIT_CLASS);
-        this.renderer.setStyle(this.diffEditorContainerElement, 'display', 'none');
-        this.renderer.appendChild(this.elementRef.nativeElement, this.diffEditorContainerElement);
+        this.initializeDiffEditorContainer();
 
         this.emojiConvertor.replace_mode = 'unified';
         this.emojiConvertor.allow_native = true;
@@ -173,6 +165,28 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 this.leaveDiffMode(prevMode);
             }
         });
+    }
+
+    /**
+     * Initializes the normal Monaco Editor and its container.
+     */
+    private initializeMonacoEditor(): void {
+        this.monacoEditorContainerElement = this.renderer.createElement('div');
+        this.renderer.addClass(this.monacoEditorContainerElement, 'monaco-editor-container');
+        this.renderer.addClass(this.monacoEditorContainerElement, MonacoEditorComponent.SHRINK_TO_FIT_CLASS);
+        this._editor = this.monacoEditorService.createStandaloneCodeEditor(this.monacoEditorContainerElement);
+        this.renderer.appendChild(this.elementRef.nativeElement, this.monacoEditorContainerElement);
+    }
+
+    /**
+     * Initializes the Diff Editor container (hidden by default).
+     */
+    private initializeDiffEditorContainer(): void {
+        this.diffEditorContainerElement = this.renderer.createElement('div');
+        this.renderer.addClass(this.diffEditorContainerElement, 'monaco-diff-editor-container');
+        this.renderer.addClass(this.diffEditorContainerElement, MonacoEditorComponent.SHRINK_TO_FIT_CLASS);
+        this.renderer.setStyle(this.diffEditorContainerElement, 'display', 'none');
+        this.renderer.appendChild(this.elementRef.nativeElement, this.diffEditorContainerElement);
     }
 
     /**
@@ -262,7 +276,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.textChangedEmitTimeouts.clear();
     }
 
-    private enterDiffMode(prevMode: MonacoEditorMode | null): void {
+    private enterDiffMode(prevMode: MonacoEditorMode | undefined): void {
         const rect = this.monacoEditorContainerElement.getBoundingClientRect();
         const width = `${rect.width}px`;
         const height = `${rect.height}px`;
@@ -288,7 +302,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.setActiveEditorContext();
     }
 
-    private leaveDiffMode(prevMode: MonacoEditorMode | null): void {
+    private leaveDiffMode(prevMode: MonacoEditorMode | undefined): void {
         if (prevMode !== 'diff') {
             this.setContainersVisibility('normal');
             this.setActiveEditorContext();
