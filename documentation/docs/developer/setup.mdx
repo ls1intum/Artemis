@@ -250,7 +250,6 @@ The recommended way is to run the server and the client separately. This provide
 - **Artemis (Server, LocalVC & Jenkins):** The server will be started separated from the client with the profiles `dev,jenkins,localvc,artemis,scheduling,core,local`.
 - **Artemis (Server, LocalVC & LocalCI, Athena):** The server will be started separated from the client with the profiles `dev,localci,localvc,artemis,scheduling,athena,buildagent,core,local`.
 - **Artemis (Server, LocalVC & LocalCI, Iris):** The server will be started separated from the client with the profiles `dev,localci,localvc,artemis,scheduling,iris,buildagent,core,local`.
-- **Artemis (Server, LocalVC & LocalCI, Theia):** The server will be started separated from the client with the profiles `dev,localci,localvc,artemis,scheduling,buildagent,core,ldap,local` and the VM option `-Dartemis.theia.enabled=true`.
 - **Artemis (BuildAgent):** The server will be started separated from the client with the profiles `buildagent,local`. This configuration is used to run the build agent for the local CI. This configuration is rarely needed for development.
 - **Artemis (Server, Prod, LocalCI):** The server will be started separated from the client with the profiles `prod,core,ldap,localvc,localci,scheduling,local`. This configuration is used for production-like testing.
 
