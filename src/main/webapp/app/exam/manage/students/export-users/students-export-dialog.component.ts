@@ -66,6 +66,10 @@ export class StudentsExportDialogComponent {
         });
     }
 
+    private sanitizeCsvValue(value?: string): string | undefined {
+        return value && /^[=+\-@]/.test(value) ? `'${value}` : value;
+    }
+
     private createCsv(data: ExportExamUserDTO[]): Blob {
         const header: string[] = [
             this.translateService.instant('artemisApp.exam.examUsers.export.header.matriculationNumber'),
@@ -78,13 +82,13 @@ export class StudentsExportDialogComponent {
         ];
 
         const rows = data.map((examUser) => [
-            examUser.matriculationNumber,
-            examUser.login,
-            examUser.name,
-            examUser.email,
-            examUser.room,
-            examUser.seat,
-            examUser.room ? `${this.exam().title}; ${examUser.fullLocation ?? ''}: ${examUser.seat ?? ''}` : undefined,
+            this.sanitizeCsvValue(examUser.matriculationNumber),
+            this.sanitizeCsvValue(examUser.login),
+            this.sanitizeCsvValue(examUser.name),
+            this.sanitizeCsvValue(examUser.email),
+            this.sanitizeCsvValue(examUser.room),
+            this.sanitizeCsvValue(examUser.seat),
+            this.sanitizeCsvValue(examUser.room ? `${this.exam().title}; ${examUser.fullLocation ?? ''}: ${examUser.seat ?? ''}` : undefined),
         ]);
 
         const csv: string = Papa.unparse([header, ...rows], {
