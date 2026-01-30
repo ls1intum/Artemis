@@ -89,7 +89,7 @@ export class QueuedJobsTableComponent {
             return '-';
         }
         const now = dayjs();
-        const diffSeconds = now.diff(submissionDate, 'seconds');
+        const diffSeconds = Math.max(0, now.diff(submissionDate, 'seconds'));
 
         if (diffSeconds < 60) {
             return `${diffSeconds}s`;

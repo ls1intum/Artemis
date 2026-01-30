@@ -223,6 +223,12 @@ export class BuildJobStatisticsComponent implements OnInit {
             case 'MISSING':
                 updatedStats.missingBuilds++;
                 break;
+            default:
+                // Unknown status - don't increment totalBuilds to avoid statistics drift
+                updatedStats.totalBuilds--;
+                // eslint-disable-next-line no-undef
+                console.warn(`Unknown build job status received: ${status}`);
+                break;
         }
 
         this.updateDisplayedBuildJobStatistics(updatedStats);

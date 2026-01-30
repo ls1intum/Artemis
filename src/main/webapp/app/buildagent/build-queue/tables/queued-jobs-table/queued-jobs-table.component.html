@@ -50,7 +50,12 @@
                                 {{ buildJob.priority }}
                             </td>
                             <td class="build-jobs-column-tiny">
-                                <button class="btn btn-danger btn-sm" (click)="onCancelJob(buildJob.id!, $event)" [title]="'artemisApp.buildQueue.cancel' | artemisTranslate">
+                                <button
+                                    class="btn btn-danger btn-sm"
+                                    (click)="onCancelJob(buildJob.id!, $event)"
+                                    [title]="'artemisApp.buildQueue.cancel' | artemisTranslate"
+                                    [attr.aria-label]="'artemisApp.buildQueue.cancel' | artemisTranslate"
+                                >
                                     <fa-icon [icon]="faTimes" />
                                 </button>
                             </td>

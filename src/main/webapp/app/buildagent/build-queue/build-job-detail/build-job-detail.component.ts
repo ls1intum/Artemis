@@ -247,7 +247,9 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
             const blob = new Blob([this.buildLogs()], { type: 'text/plain' });
             try {
                 downloadFile(blob, `${this.buildJobId}.log`);
-            } catch {
+            } catch (error) {
+                // eslint-disable-next-line no-undef
+                console.error('Failed to download build logs:', error);
                 this.alertService.error('artemisApp.buildQueue.logs.downloadError');
             }
         }

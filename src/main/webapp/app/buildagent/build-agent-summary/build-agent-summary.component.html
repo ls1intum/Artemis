@@ -69,7 +69,11 @@
                                                 {{ job.name ?? job.id }}
                                             </a>
                                             @if (job.id) {
-                                                <button class="btn btn-danger btn-xs" (click)="cancelBuildJob(job.id)">
+                                                <button
+                                                    class="btn btn-danger btn-xs"
+                                                    (click)="cancelBuildJob(job.id)"
+                                                    [attr.aria-label]="'artemisApp.buildQueue.cancel' | translate"
+                                                >
                                                     <fa-icon [icon]="faTimes" />
                                                 </button>
                                             }

@@ -5,15 +5,15 @@
             <jhi-help-icon class="ps-1" text="artemisApp.buildQueue.statistics.titleTooltip" />
             <div class="btn-group btn-group-toggle btn-group-sm ms-2" data-toggle="buttons">
                 <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.DAY">
-                    <input type="radio" name="options" id="option1" (click)="onTabChange(SpanType.DAY)" />
+                    <input type="radio" name="options" (click)="onTabChange(SpanType.DAY)" />
                     <span jhiTranslate="artemisApp.buildQueue.statistics.daySpan"></span>
                 </label>
                 <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.WEEK">
-                    <input type="radio" name="options" id="option2" checked (click)="onTabChange(SpanType.WEEK)" />
+                    <input type="radio" name="options" checked (click)="onTabChange(SpanType.WEEK)" />
                     <span jhiTranslate="artemisApp.buildQueue.statistics.weekSpan"></span>
                 </label>
                 <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.MONTH">
-                    <input type="radio" name="options" id="option3" (click)="onTabChange(SpanType.MONTH)" />
+                    <input type="radio" name="options" (click)="onTabChange(SpanType.MONTH)" />
                     <span jhiTranslate="artemisApp.buildQueue.statistics.monthSpan"></span>
                 </label>
             </div>

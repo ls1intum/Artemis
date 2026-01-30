@@ -239,7 +239,7 @@ public class BuildJobManagementService {
      *
      * @return true if initialization succeeded, false if not connected to cluster
      */
-    private boolean tryInitialize() {
+    private synchronized boolean tryInitialize() {
         if (initialized.get()) {
             return true;
         }

@@ -69,6 +69,10 @@ public class AdminBuildJobQueueResource {
      */
     @GetMapping("build-job/{buildJobId}")
     public ResponseEntity<BuildJobDTO> getBuildJobById(@PathVariable String buildJobId) {
+        if (buildJobId == null || buildJobId.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        buildJobId = buildJobId.trim();
         log.debug("REST request to get build job by id {}", buildJobId);
 
         // Check running jobs first

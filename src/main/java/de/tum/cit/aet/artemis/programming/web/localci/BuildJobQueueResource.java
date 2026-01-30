@@ -79,6 +79,10 @@ public class BuildJobQueueResource {
     @GetMapping("courses/{courseId}/build-job/{buildJobId}")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<BuildJobDTO> getBuildJobById(@PathVariable long courseId, @PathVariable String buildJobId) {
+        if (buildJobId == null || buildJobId.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        buildJobId = buildJobId.trim();
         log.debug("REST request to get build job by id {} for course {}", buildJobId, courseId);
 
         // Check running jobs first
