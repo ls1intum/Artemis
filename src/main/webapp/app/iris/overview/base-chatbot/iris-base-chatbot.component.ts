@@ -44,6 +44,7 @@ import { NgClass } from '@angular/common';
 import { facSidebar } from 'app/shared/icons/icons';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import { Clipboard } from '@angular/cdk/clipboard';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -75,6 +76,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected chatService = inject(IrisChatService);
     protected route = inject(ActivatedRoute);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly clipboard = inject(Clipboard);
 
     // Icons
     protected readonly faTrash = faTrash;
@@ -141,6 +143,28 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly isLoading = signal(false);
     readonly isChatHistoryOpen = signal(true);
     readonly searchValue = signal('');
+    readonly filteredSessions = computed(() => {
+        const search = this.searchValue();
+        const sessions = this.chatSessions();
+        if (!search) {
+            return sessions;
+        }
+        return sessions.filter((session) => (session.title ?? '').toLowerCase().includes(search));
+    });
+    readonly newChatSessions = computed(() => {
+        const sessions = this.filteredSessions().filter((session) => this.isNewChatSession(session));
+        if (sessions.length === 0) {
+            return [];
+        }
+        const newestNewChat = sessions.reduce((latest, current) => (new Date(current.creationDate).getTime() > new Date(latest.creationDate).getTime() ? current : latest));
+        return [newestNewChat];
+    });
+    readonly filteredNonNewSessions = computed(() => this.filteredSessions().filter((session) => !this.isNewChatSession(session)));
+    readonly todaySessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), 0, 0));
+    readonly yesterdaySessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), 1, 1));
+    readonly last7DaysSessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), 2, 6));
+    readonly last30DaysSessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), 7, 29));
+    readonly olderSessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), 30, undefined, true));
     readonly userAccepted = signal(false);
     readonly isScrolledToBottom = signal(true);
     readonly resendAnimationActive = signal(false);
@@ -354,14 +378,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     private fallbackCopy(text: string, key: number | undefined) {
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
+        this.clipboard.copy(text);
         this.setCopiedKey(key);
     }
 
@@ -545,15 +562,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
     }
 
-    getNewChatSessions(): IrisSessionDTO[] {
-        const newChatSessions = this.getFilteredSessions().filter((session) => this.isNewChatSession(session));
-        if (newChatSessions.length === 0) {
-            return [];
-        }
-        const newestNewChat = newChatSessions.reduce((latest, current) => (new Date(current.creationDate).getTime() > new Date(latest.creationDate).getTime() ? current : latest));
-        return [newestNewChat];
-    }
-
     private isNewChatSession(session: IrisSessionDTO): boolean {
         const title = session.title?.trim().toLowerCase();
         return title !== undefined && IrisBaseChatbotComponent.NEW_CHAT_TITLES.has(title);
@@ -567,12 +575,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
      * @param ignoreOlderBoundary If true, only the daysAgoNewer boundary is considered (sessions newer than or on this day).
      * @returns An array of IrisSession objects matching the criteria.
      */
-    getSessionsBetween(daysAgoNewer: number, daysAgoOlder?: number, ignoreOlderBoundary = false): IrisSessionDTO[] {
+    private filterSessionsBetween(sessions: IrisSessionDTO[], daysAgoNewer: number, daysAgoOlder?: number, ignoreOlderBoundary = false): IrisSessionDTO[] {
         if (daysAgoNewer < 0 || (!ignoreOlderBoundary && (daysAgoOlder === undefined || daysAgoOlder < 0 || daysAgoNewer > daysAgoOlder))) {
             return [];
         }
-
-        const source = this.getFilteredSessions().filter((session) => !this.isNewChatSession(session));
 
         const today = new Date();
         const rangeEndDate = new Date(today);
@@ -586,7 +592,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             rangeStartDate.setHours(0, 0, 0, 0); // Set to the start of the 'daysAgoOlder' day
         }
 
-        return source.filter((session) => {
+        return sessions.filter((session) => {
             const sessionCreationDate = new Date(session.creationDate);
 
             const isAfterOrOnStartDate = ignoreOlderBoundary || (rangeStartDate && sessionCreationDate.getTime() >= rangeStartDate.getTime());
@@ -606,14 +612,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     setSearchValue(searchValue: string) {
         this.searchValue.set(searchValue.trim().toLowerCase());
-    }
-
-    private getFilteredSessions(): IrisSessionDTO[] {
-        const search = this.searchValue();
-        if (!search) {
-            return this.chatSessions();
-        }
-        return this.chatSessions().filter((s) => (s.title ?? '').toLowerCase().includes(search));
     }
 
     private computeRelatedEntityRoute(currentChatMode: ChatServiceMode | undefined, currentRelatedEntityId: number | undefined): string | undefined {

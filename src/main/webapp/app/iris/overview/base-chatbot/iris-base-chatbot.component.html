@@ -13,7 +13,7 @@
                             <jhi-search-filter class="w-100" (newSearchEvent)="setSearchValue($event)" />
                         </div>
 
-                        @let newChatSessions = getNewChatSessions();
+                        @let newChatSessions = newChatSessions();
                         @if (newChatSessions.length > 0) {
                             @for (session of newChatSessions; track session.id) {
                                 <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
@@ -23,7 +23,7 @@
                     </div>
 
                     <div class="chat-history-list">
-                        @let todaySessions = getSessionsBetween(0, 0);
+                        @let todaySessions = todaySessions();
                         @if (todaySessions.length > 0) {
                             <div class="chat-history-label">
                                 <p jhiTranslate="artemisApp.iris.chatHistory.today"></p>
@@ -33,7 +33,7 @@
                             }
                         }
 
-                        @let yesterdaySessions = getSessionsBetween(1, 1);
+                        @let yesterdaySessions = yesterdaySessions();
                         @if (yesterdaySessions.length > 0) {
                             <div class="chat-history-label">
                                 <p jhiTranslate="artemisApp.iris.chatHistory.yesterday"></p>
@@ -43,7 +43,7 @@
                             }
                         }
 
-                        @let last7DaysSessions = getSessionsBetween(2, 6);
+                        @let last7DaysSessions = last7DaysSessions();
                         @if (last7DaysSessions.length > 0) {
                             <div class="chat-history-label">
                                 <p jhiTranslate="artemisApp.iris.chatHistory.last7Days"></p>
@@ -53,7 +53,7 @@
                             }
                         }
 
-                        @let last30DaysSessions = getSessionsBetween(7, 29);
+                        @let last30DaysSessions = last30DaysSessions();
                         @if (last30DaysSessions.length > 0) {
                             <div class="chat-history-label">
                                 <p jhiTranslate="artemisApp.iris.chatHistory.last30Days"></p>
@@ -63,7 +63,7 @@
                             }
                         }
 
-                        @let olderSessions = getSessionsBetween(30, undefined, true);
+                        @let olderSessions = olderSessions();
                         @if (olderSessions.length > 0) {
                             <div class="chat-history-label">
                                 <p jhiTranslate="artemisApp.iris.chatHistory.older"></p>
@@ -180,7 +180,7 @@
                                             @if (clickedSuggestion() === suggestion) {
                                                 <fa-icon [icon]="faCircleNotch" animation="spin" />
                                             } @else {
-                                                <span [innerHTML]="suggestion"></span>
+                                                <span>{{ suggestion }}</span>
                                             }
                                         </button>
                                     }
