@@ -28,14 +28,32 @@ public class WeaviateClientConfiguration {
         this.weaviateProperties = weaviateProperties;
     }
 
+    private void validateConfiguration() {
+        if (weaviateProperties.httpHost() == null || weaviateProperties.httpHost().isBlank()) {
+            throw new IllegalStateException("artemis.weaviate.http-host must be configured when Weaviate is enabled");
+        }
+        if (weaviateProperties.httpPort() == 0) {
+            throw new IllegalStateException("artemis.weaviate.http-port must be configured when Weaviate is enabled");
+        }
+        if (weaviateProperties.grpcPort() == 0) {
+            throw new IllegalStateException("artemis.weaviate.grpc-port must be configured when Weaviate is enabled");
+        }
+        if (weaviateProperties.scheme() == null || weaviateProperties.scheme().isBlank()) {
+            throw new IllegalStateException("artemis.weaviate.scheme must be configured when Weaviate is enabled");
+        }
+    }
+
     /**
      * Creates and configures a Weaviate client bean.
      *
      * @return the configured WeaviateClient instance
+     * @throws IllegalStateException       if required configuration properties are missing
      * @throws WeaviateConnectionException if the connection to Weaviate fails
      */
     @Bean
     public WeaviateClient weaviateClient() {
+        validateConfiguration();
+
         try {
             WeaviateClient client;
             if (weaviateProperties.secure()) {
