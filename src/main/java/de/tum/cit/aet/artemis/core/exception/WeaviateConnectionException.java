@@ -14,38 +14,38 @@ public class WeaviateConnectionException extends RuntimeException {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final String host;
+    private final String httpHost;
 
-    private final int port;
+    private final int httpPort;
 
     private final int grpcPort;
 
     private final boolean secure;
 
-    public WeaviateConnectionException(String message, Throwable cause, String host, int port, int grpcPort, boolean secure) {
+    public WeaviateConnectionException(String message, Throwable cause, String httpHost, int httpPort, int grpcPort, boolean secure) {
         super(message, cause);
-        this.host = host;
-        this.port = port;
+        this.httpHost = httpHost;
+        this.httpPort = httpPort;
         this.grpcPort = grpcPort;
         this.secure = secure;
     }
 
     /**
-     * Gets the host where the connection failure occurred.
+     * Gets the HTTP host where the connection failure occurred.
      *
-     * @return the host name or IP address
+     * @return the HTTP host name or IP address
      */
-    public String getHost() {
-        return host;
+    public String getHttpHost() {
+        return httpHost;
     }
 
     /**
-     * Gets the port where the connection failure occurred.
+     * Gets the HTTP port where the connection failure occurred.
      *
      * @return the HTTP port number
      */
-    public int getPort() {
-        return port;
+    public int getHttpPort() {
+        return httpPort;
     }
 
     /**

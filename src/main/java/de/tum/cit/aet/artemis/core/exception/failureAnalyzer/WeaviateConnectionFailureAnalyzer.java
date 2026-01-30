@@ -25,7 +25,7 @@ public class WeaviateConnectionFailureAnalyzer extends AbstractFailureAnalyzer<W
         return String.format(
                 "Failed to connect to Weaviate vector database.%n%n" + "Connection details:%n" + "    Host: %s%n" + "    HTTP Port: %d (%s://%s:%d)%n" + "    gRPC Port: %d%n%n"
                         + "Error: %s%n",
-                cause.getHost(), cause.getPort(), scheme, cause.getHost(), cause.getPort(), cause.getGrpcPort(),
+                cause.getHttpHost(), cause.getHttpPort(), scheme, cause.getHttpHost(), cause.getHttpPort(), cause.getGrpcPort(),
                 cause.getCause() != null ? cause.getCause().getMessage() : cause.getMessage());
     }
 
@@ -60,7 +60,7 @@ public class WeaviateConnectionFailureAnalyzer extends AbstractFailureAnalyzer<W
                    artemis:
                      weaviate:
                        enabled: false
-                """.formatted(scheme, cause.getHost(), cause.getPort(), cause.getHost(), cause.getPort(), cause.getHost(), cause.getGrpcPort(), cause.getHost(), cause.getPort(),
-                cause.getGrpcPort());
+                """.formatted(scheme, cause.getHttpHost(), cause.getHttpPort(), cause.getHttpHost(), cause.getHttpPort(), cause.getHttpHost(), cause.getGrpcPort(),
+                cause.getHttpHost(), cause.getHttpPort(), cause.getGrpcPort());
     }
 }

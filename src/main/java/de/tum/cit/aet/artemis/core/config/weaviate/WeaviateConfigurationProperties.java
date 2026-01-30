@@ -11,15 +11,15 @@ import org.springframework.boot.context.properties.bind.ConstructorBinding;
  * Uses a Java record for immutable configuration.
  *
  * @param enabled  whether Weaviate integration is enabled
- * @param host     the Weaviate server host
- * @param port     the Weaviate HTTP port
+ * @param httpHost the Weaviate server HTTP host
+ * @param httpPort the Weaviate HTTP port
  * @param grpcPort the Weaviate gRPC port
  * @param scheme   the HTTP scheme (http/https) - determines secure connection type
  */
 @ConfigurationProperties(prefix = "artemis.weaviate")
-public record WeaviateConfigurationProperties(boolean enabled, String host, int port, int grpcPort, String scheme) {
+public record WeaviateConfigurationProperties(boolean enabled, String httpHost, int httpPort, int grpcPort, String scheme) {
 
-    private static final String DEFAULT_HOST = "localhost";
+    private static final String DEFAULT_HTTP_HOST = "localhost";
 
     private static final int DEFAULT_HTTP_PORT = 8001;
 
@@ -30,11 +30,11 @@ public record WeaviateConfigurationProperties(boolean enabled, String host, int 
      */
     @ConstructorBinding
     public WeaviateConfigurationProperties {
-        if (host == null || host.isBlank()) {
-            host = DEFAULT_HOST;
+        if (httpHost == null || httpHost.isBlank()) {
+            httpHost = DEFAULT_HTTP_HOST;
         }
-        if (port == 0) {
-            port = DEFAULT_HTTP_PORT;
+        if (httpPort == 0) {
+            httpPort = DEFAULT_HTTP_PORT;
         }
         if (grpcPort == 0) {
             grpcPort = DEFAULT_GRPC_PORT;
@@ -48,7 +48,7 @@ public record WeaviateConfigurationProperties(boolean enabled, String host, int 
      * Creates a new instance with default values.
      */
     public WeaviateConfigurationProperties() {
-        this(false, DEFAULT_HOST, DEFAULT_HTTP_PORT, DEFAULT_GRPC_PORT, HTTP_SCHEME);
+        this(false, DEFAULT_HTTP_HOST, DEFAULT_HTTP_PORT, DEFAULT_GRPC_PORT, HTTP_SCHEME);
     }
 
     /**

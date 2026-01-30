@@ -14,8 +14,8 @@ class WeaviateConfigurationPropertiesTest {
         WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "test-host", 9999, 60051, "https");
 
         assertThat(properties.enabled()).isTrue();
-        assertThat(properties.host()).isEqualTo("test-host");
-        assertThat(properties.port()).isEqualTo(9999);
+        assertThat(properties.httpHost()).isEqualTo("test-host");
+        assertThat(properties.httpPort()).isEqualTo(9999);
         assertThat(properties.grpcPort()).isEqualTo(60051);
         assertThat(properties.secure()).isTrue();
         assertThat(properties.scheme()).isEqualTo("https");
@@ -26,8 +26,8 @@ class WeaviateConfigurationPropertiesTest {
         WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties();
 
         assertThat(properties.enabled()).isFalse();
-        assertThat(properties.host()).isEqualTo("localhost");
-        assertThat(properties.port()).isEqualTo(8001);
+        assertThat(properties.httpHost()).isEqualTo("localhost");
+        assertThat(properties.httpPort()).isEqualTo(8001);
         assertThat(properties.grpcPort()).isEqualTo(50051);
         assertThat(properties.secure()).isFalse();
         assertThat(properties.scheme()).isEqualTo("http");

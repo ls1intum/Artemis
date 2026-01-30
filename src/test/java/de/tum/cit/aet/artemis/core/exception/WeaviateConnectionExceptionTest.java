@@ -13,17 +13,17 @@ class WeaviateConnectionExceptionTest {
     void testExceptionCreation() {
         String message = "Connection failed";
         Throwable cause = new RuntimeException("Network error");
-        String host = "localhost";
-        int port = 8080;
+        String httpHost = "localhost";
+        int httpPort = 8080;
         int grpcPort = 50051;
         boolean secure = false;
 
-        WeaviateConnectionException exception = new WeaviateConnectionException(message, cause, host, port, grpcPort, secure);
+        WeaviateConnectionException exception = new WeaviateConnectionException(message, cause, httpHost, httpPort, grpcPort, secure);
 
         assertThat(exception.getMessage()).isEqualTo(message);
         assertThat(exception.getCause()).isEqualTo(cause);
-        assertThat(exception.getHost()).isEqualTo(host);
-        assertThat(exception.getPort()).isEqualTo(port);
+        assertThat(exception.getHttpHost()).isEqualTo(httpHost);
+        assertThat(exception.getHttpPort()).isEqualTo(httpPort);
         assertThat(exception.getGrpcPort()).isEqualTo(grpcPort);
         assertThat(exception.isSecure()).isFalse();
     }
@@ -32,17 +32,17 @@ class WeaviateConnectionExceptionTest {
     void testExceptionCreationSecure() {
         String message = "Secure connection failed";
         Throwable cause = new RuntimeException("TLS error");
-        String host = "weaviate.example.com";
-        int port = 443;
+        String httpHost = "weaviate.example.com";
+        int httpPort = 443;
         int grpcPort = 50051;
         boolean secure = true;
 
-        WeaviateConnectionException exception = new WeaviateConnectionException(message, cause, host, port, grpcPort, secure);
+        WeaviateConnectionException exception = new WeaviateConnectionException(message, cause, httpHost, httpPort, grpcPort, secure);
 
         assertThat(exception.getMessage()).isEqualTo(message);
         assertThat(exception.getCause()).isEqualTo(cause);
-        assertThat(exception.getHost()).isEqualTo(host);
-        assertThat(exception.getPort()).isEqualTo(port);
+        assertThat(exception.getHttpHost()).isEqualTo(httpHost);
+        assertThat(exception.getHttpPort()).isEqualTo(httpPort);
         assertThat(exception.getGrpcPort()).isEqualTo(grpcPort);
         assertThat(exception.isSecure()).isTrue();
     }
@@ -50,17 +50,17 @@ class WeaviateConnectionExceptionTest {
     @Test
     void testExceptionWithNullCause() {
         String message = "Connection timeout";
-        String host = "unreachable-host";
-        int port = 8080;
+        String httpHost = "unreachable-host";
+        int httpPort = 8080;
         int grpcPort = 50051;
         boolean secure = false;
 
-        WeaviateConnectionException exception = new WeaviateConnectionException(message, null, host, port, grpcPort, secure);
+        WeaviateConnectionException exception = new WeaviateConnectionException(message, null, httpHost, httpPort, grpcPort, secure);
 
         assertThat(exception.getMessage()).isEqualTo(message);
         assertThat(exception.getCause()).isNull();
-        assertThat(exception.getHost()).isEqualTo(host);
-        assertThat(exception.getPort()).isEqualTo(port);
+        assertThat(exception.getHttpHost()).isEqualTo(httpHost);
+        assertThat(exception.getHttpPort()).isEqualTo(httpPort);
         assertThat(exception.getGrpcPort()).isEqualTo(grpcPort);
         assertThat(exception.isSecure()).isFalse();
     }

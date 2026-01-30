@@ -37,8 +37,8 @@ public class WeaviateConfigurationFailureAnalyzer extends AbstractFailureAnalyze
                     artemis:
                       weaviate:
                         enabled: true
-                        host: your-weaviate-host
-                        port: 8001
+                        http-host: your-weaviate-host
+                        http-port: 8001
                         grpc-port: 50051
 
                 Option 2: Disable Weaviate if not needed:
