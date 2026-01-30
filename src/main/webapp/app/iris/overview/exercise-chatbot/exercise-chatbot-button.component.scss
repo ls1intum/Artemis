@@ -108,15 +108,7 @@
 
 :host {
     .message-bubble {
-        --iris-citation-bg: var(--gray-300);
-        --iris-citation-agg-bg: var(--gray-500);
-        --iris-citation-agg-text: var(--gray-300);
-        --iris-citation-meta-color: var(--gray-600);
-        --iris-citation-nav-color: var(--gray-600);
-        --iris-citation-nav-hover-bg: var(--gray-200);
-        --iris-citation-icon-bg: var(--secondary);
-        --iris-citation-summary-icon-bg: var(--gray-600);
-        --iris-citation-source-color: var(--gray-600);
+        @include citations.iris-citation-bubble-colors;
 
         ::ng-deep {
             @include citations.iris-citation-bubbles;

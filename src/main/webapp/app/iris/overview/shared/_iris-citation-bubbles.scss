@@ -1,3 +1,15 @@
+@mixin iris-citation-bubble-colors {
+    --iris-citation-bg: var(--iris-rate-background);
+    --iris-citation-agg-bg: var(--iris-chat-citation-aggregation);
+    --iris-citation-agg-text: var(--iris-rate-background);
+    --iris-citation-meta-color: var(--iris-chat-history-label-color);
+    --iris-citation-nav-color: var(--iris-chat-history-label-color);
+    --iris-citation-nav-hover-bg: var(--iris-chat-header-button-background);
+    --iris-citation-icon-bg: var(--secondary);
+    --iris-citation-summary-icon-bg: var(--iris-chat-history-label-color);
+    --iris-citation-source-color: var(--iris-chat-history-label-color);
+}
+
 @mixin iris-citation-bubbles {
     .iris-citation-group {
         display: inline-flex;
