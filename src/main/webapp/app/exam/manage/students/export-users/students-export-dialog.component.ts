@@ -2,7 +2,7 @@ import { Component, InputSignal, ModelSignal, ViewEncapsulation, WritableSignal,
 import { FormsModule } from '@angular/forms';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { faBan, faThLarge } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faFileExport } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DialogModule } from 'primeng/dialog';
@@ -22,7 +22,7 @@ import Papa from 'papaparse';
 })
 export class StudentsExportDialogComponent {
     protected readonly faBan = faBan;
-    protected readonly faThLarge = faThLarge;
+    protected readonly faFileExport = faFileExport;
 
     protected dialogVisible: ModelSignal<boolean> = model(false);
     protected lastExportAttemptFailed: WritableSignal<boolean> = signal(false);
@@ -67,17 +67,25 @@ export class StudentsExportDialogComponent {
     }
 
     private createCsv(data: ExportExamUserDTO[]): Blob {
-        const header = [
-            this.translateService.instant('artemisApp.exam.export.header.matriculationNumber'),
-            this.translateService.instant('artemisApp.exam.export.header.login'),
-            this.translateService.instant('artemisApp.exam.export.header.name'),
-            this.translateService.instant('artemisApp.exam.export.header.email'),
-            this.translateService.instant('artemisApp.exam.export.header.room'),
-            this.translateService.instant('artemisApp.exam.export.header.seat'),
-            this.translateService.instant('artemisApp.exam.export.header.fullLocation'),
+        const header: string[] = [
+            this.translateService.instant('artemisApp.exam.examUsers.export.header.matriculationNumber'),
+            this.translateService.instant('artemisApp.exam.examUsers.export.header.login'),
+            this.translateService.instant('artemisApp.exam.examUsers.export.header.name'),
+            this.translateService.instant('artemisApp.exam.examUsers.export.header.email'),
+            this.translateService.instant('artemisApp.exam.examUsers.export.header.room'),
+            this.translateService.instant('artemisApp.exam.examUsers.export.header.seat'),
+            this.translateService.instant('artemisApp.exam.examUsers.export.header.fullLocation'),
         ];
 
-        const rows = data.map((examUser) => [examUser.matriculationNumber, examUser.login, examUser.name, examUser.email, examUser.room, examUser.seat, examUser.fullLocation]);
+        const rows = data.map((examUser) => [
+            examUser.matriculationNumber,
+            examUser.login,
+            examUser.name,
+            examUser.email,
+            examUser.room,
+            examUser.seat,
+            examUser.room ? `${this.exam().title}; ${examUser.fullLocation ?? ''}: ${examUser.seat ?? ''}` : undefined,
+        ]);
 
         const csv: string = Papa.unparse([header, ...rows], {
             quotes: true,
