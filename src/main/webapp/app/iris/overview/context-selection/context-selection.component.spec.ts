@@ -5,7 +5,7 @@ import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
-import { ContextOption, ContextSelectionComponent } from './context-selection.component';
+import { ContextSelectionComponent } from './context-selection.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
@@ -289,7 +289,7 @@ describe('ContextSelectionComponent', () => {
 
     describe('Custom options', () => {
         it('should accept custom options input', async () => {
-            const customOptions: ContextOption[] = [
+            const customOptions = [
                 {
                     type: 'course',
                     icon: faGraduationCap,

@@ -29,20 +29,20 @@ const DEFAULT_OPTIONS: ContextOption[] = [
     {
         type: 'course',
         icon: faGraduationCap,
-        titleKey: 'artemisApp.iris.chat.contextSelection.entireCourse',
-        descriptionKey: 'artemisApp.iris.chat.contextSelection.entireCourseDescription',
+        titleKey: 'artemisApp.iris.contextSelection.entireCourse',
+        descriptionKey: 'artemisApp.iris.contextSelection.entireCourseDescription',
     },
     {
         type: 'lecture',
         icon: faChalkboardUser,
-        titleKey: 'artemisApp.iris.chat.contextSelection.selectLecture',
-        descriptionKey: 'artemisApp.iris.chat.contextSelection.selectLectureDescription',
+        titleKey: 'artemisApp.iris.contextSelection.selectLecture',
+        descriptionKey: 'artemisApp.iris.contextSelection.selectLectureDescription',
     },
     {
         type: 'exercise',
         icon: faListAlt,
-        titleKey: 'artemisApp.iris.chat.contextSelection.selectExercise',
-        descriptionKey: 'artemisApp.iris.chat.contextSelection.selectExerciseDescription',
+        titleKey: 'artemisApp.iris.contextSelection.selectExercise',
+        descriptionKey: 'artemisApp.iris.contextSelection.selectExerciseDescription',
     },
 ];
 
@@ -52,7 +52,7 @@ const SUPPORTED_EXERCISE_TYPES = [ExerciseType.TEXT, ExerciseType.PROGRAMMING];
 @Component({
     selector: 'jhi-context-selection',
     templateUrl: './context-selection.component.html',
-    styleUrl: './context-selection.component.scss',
+    styleUrls: ['./context-selection.component.scss'],
     imports: [FaIconComponent, TranslateDirective, SearchFilterComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
