@@ -41,7 +41,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
-import { Subscription, catchError, finalize, of, take } from 'rxjs';
+import { Observable, Subscription, catchError, finalize, of, take, tap } from 'rxjs';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -59,6 +59,8 @@ import { getRepoPath } from 'app/shared/monaco-editor/model/actions/artemis-inte
 import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/buttons/button/button.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
+import { FileService } from 'app/shared/service/file.service';
+import { ProblemStatementGenerationRequest } from 'app/openapi/model/problemStatementGenerationRequest';
 
 const SEVERITY_ORDER = {
     HIGH: 0,
@@ -114,6 +116,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
     private profileService = inject(ProfileService);
     private hyperionApiService = inject(HyperionProblemStatementApiService);
+    private fileService = inject(FileService);
+
+    templateProblemStatement = signal<string>('');
+    templateLoaded = signal<boolean>(false);
+    private currentProblemStatement = signal<string>('');
 
     lineJumpOnFileLoad: number | undefined = undefined;
     fileToJumpOn: string | undefined = undefined;
@@ -187,13 +194,14 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 }
                 this.subscribeToJob(res.jobId);
             },
-            error: () => {
+            error: (err) => {
                 this.isGeneratingCode.set(false);
                 this.codeGenAlertService.addAlert({
                     type: AlertType.DANGER,
                     translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
                 });
             },
+            complete: () => {},
         });
     }
 
@@ -215,15 +223,24 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.jobSubscription = this.hyperionWs.subscribeToJob(jobId).subscribe({
             next: (event) => {
                 switch (event.type) {
+                    case 'STARTED':
+                        // spinner already on; just log
+                        break;
+
+                    case 'PROGRESS':
+                        break;
+
                     case 'FILE_UPDATED':
                     case 'NEW_FILE':
                         this.repoService
                             .pull()
                             .pipe(
                                 take(1),
-                                catchError(() => of(void 0)),
+                                catchError(() => {
+                                    return of(void 0);
+                                }),
                             )
-                            .subscribe();
+                            .subscribe(() => {});
                         break;
 
                     case 'DONE':
@@ -258,6 +275,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     translationParams: { repositoryType: this.selectedRepository },
                 });
             },
+            complete: () => {
+                // don't auto-stop spinner here; DONE/ERROR/timeout handle it
+            },
         });
 
         // Safety timeout (20 minutes)
@@ -272,8 +292,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }, 1_200_000);
     }
 
-    protected isInlineRefining = signal(false);
-    protected readonly isAiLoading = this.artemisIntelligenceService.isLoading;
+    protected isGeneratingOrRefining = signal(false);
+    protected readonly isAiApplying = computed(() => this.isGeneratingOrRefining() || this.artemisIntelligenceService.isLoading());
     private currentRefinementSubscription: Subscription | undefined;
 
     showDiff = signal(false);
@@ -341,7 +361,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     },
                 });
             },
-            error: () => {
+            error: (err) => {
                 this.alertService.error(this.translateService.instant('artemisApp.hyperion.consistencyCheck.checkFailedAlert'));
             },
         });
@@ -404,7 +424,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
 
-        this.isInlineRefining.set(true);
+        this.isGeneratingOrRefining.set(true);
 
         const request: ProblemStatementTargetedRefinementRequest = {
             problemStatementText: this.exercise.problemStatement,
@@ -419,7 +439,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             .refineProblemStatementTargeted(courseId, request)
             .pipe(
                 finalize(() => {
-                    this.isInlineRefining.set(false);
+                    this.isGeneratingOrRefining.set(false);
                     this.currentRefinementSubscription = undefined;
                 }),
             )
@@ -450,12 +470,68 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (!prompt) return;
 
         const courseId = this.exercise?.course?.id ?? this.exercise?.exerciseGroup?.exam?.course?.id;
-        if (!courseId || !this.exercise?.problemStatement?.trim()) {
+        if (!courseId) {
             this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
             return;
         }
 
-        this.isInlineRefining.set(true);
+        if (this.shouldShowGenerateButton()) {
+            this.generateProblemStatement(courseId, prompt);
+        } else {
+            this.refineProblemStatement(courseId, prompt);
+        }
+    }
+
+    private generateProblemStatement(courseId: number, prompt: string): void {
+        this.isGeneratingOrRefining.set(true);
+        this.showRefinementPrompt.set(false);
+
+        const request: ProblemStatementGenerationRequest = {
+            userPrompt: prompt,
+        };
+
+        this.currentRefinementSubscription = this.hyperionApiService
+            .generateProblemStatement(courseId, request)
+            .pipe(
+                finalize(() => {
+                    this.isGeneratingOrRefining.set(false);
+                    this.refinementPrompt.set('');
+                    this.currentRefinementSubscription = undefined;
+                }),
+            )
+            .subscribe({
+                next: (response) => {
+                    if (response.draftProblemStatement && response.draftProblemStatement.trim() !== '') {
+                        const draftContent = response.draftProblemStatement;
+
+                        // Update the editor directly
+                        this.editableInstructions.setText(draftContent);
+
+                        // Update model and trigger change
+                        if (this.exercise) {
+                            this.exercise.problemStatement = draftContent;
+                            this.onInstructionChanged(draftContent);
+                            this.currentProblemStatement.set(draftContent);
+                        }
+
+                        this.alertService.success('artemisApp.programmingExercise.problemStatement.generationSuccess');
+                    } else {
+                        this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
+                    }
+                },
+                error: () => {
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
+                },
+            });
+    }
+
+    private refineProblemStatement(courseId: number, prompt: string): void {
+        if (!this.exercise?.problemStatement?.trim()) {
+            this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
+            return;
+        }
+
+        this.isGeneratingOrRefining.set(true);
         this.showRefinementPrompt.set(false);
 
         const request: ProblemStatementGlobalRefinementRequest = {
@@ -467,7 +543,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             .refineProblemStatementGlobally(courseId, request)
             .pipe(
                 finalize(() => {
-                    this.isInlineRefining.set(false);
+                    this.isGeneratingOrRefining.set(false);
                     this.refinementPrompt.set('');
                     this.currentRefinementSubscription = undefined;
                 }),
@@ -522,7 +598,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      *
      * The method prepares the jump target (file + line), switches repositories if needed,
      * and triggers file loading. If the file is already open, the jump executes immediately;
-     * otherwise it runs after the editor's file-load event.
+     * otherwise it runs after the editor’s file-load event.
      *
      * @param {ConsistencyIssue} issue   The issue being navigated.
      * @param {1 | -1} deltaIndex        Direction of navigation (forward or backward).
@@ -610,4 +686,63 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.addedLineCount.set(event.lineChange.addedLineCount);
         this.removedLineCount.set(event.lineChange.removedLineCount);
     }
+    override loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
+        return super.loadExercise(exerciseId).pipe(
+            tap((exercise) => {
+                this.loadTemplate(exercise);
+                if (exercise.problemStatement) {
+                    this.currentProblemStatement.set(exercise.problemStatement);
+                }
+            }),
+        );
+    }
+
+    override onInstructionChanged(markdown: string) {
+        super.onInstructionChanged(markdown);
+        this.currentProblemStatement.set(markdown);
+    }
+
+    private loadTemplate(exercise: ProgrammingExercise) {
+        if (exercise?.programmingLanguage) {
+            this.fileService.getTemplateFile(exercise.programmingLanguage, exercise.projectType).subscribe({
+                next: (template) => {
+                    this.templateProblemStatement.set(template);
+                    this.templateLoaded.set(true);
+                },
+                error: () => {
+                    this.templateProblemStatement.set('');
+                    this.templateLoaded.set(false);
+                },
+            });
+        }
+    }
+
+    /**
+     * Normalizes a string by trimming whitespace and normalizing line endings.
+     */
+    private normalizeString(str: string): string {
+        if (!str) return '';
+        return str.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+    }
+
+    /**
+     * Computed signal that determines whether to show the generate or refine button.
+     */
+    shouldShowGenerateButton = computed(() => {
+        const problemStatement = this.currentProblemStatement();
+        const template = this.templateProblemStatement();
+
+        if (!problemStatement || problemStatement.trim() === '') {
+            return true;
+        }
+
+        if (!this.templateLoaded()) {
+            return true;
+        }
+
+        const normalizedProblemStatement = this.normalizeString(problemStatement);
+        const normalizedTemplate = this.normalizeString(template);
+
+        return normalizedTemplate !== '' && normalizedProblemStatement === normalizedTemplate;
+    });
 }

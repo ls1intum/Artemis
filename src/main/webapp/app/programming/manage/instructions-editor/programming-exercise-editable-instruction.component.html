@@ -1,6 +1,6 @@
 <div class="editable-instruction-container">
     <!-- AI Refinement in progress banner -->
-    @if (isRefining()) {
+    @if (isGeneratingOrRefining()) {
         <div class="alert alert-info d-flex align-items-center mb-2 py-2">
             <fa-icon [icon]="faSpinner" animation="spin" class="me-2" />
             <span jhiTranslate="artemisApp.programmingExercise.problemStatement.aiRefining"></span>
@@ -23,8 +23,8 @@
             [showDefaultPreview]="false"
             [showPreviewButton]="showPreview"
             [showEditButton]="showPreview"
-            [readOnly]="isRefining()"
-            [isAiLoading]="isAiLoading() || isRefining()"
+            [readOnly]="isGeneratingOrRefining()"
+            [isAiLoading]="isAiApplying()"
             [renderSideBySide]="renderSideBySide()"
             [consistencyIssues]="consistencyIssues()"
             (markdownChange)="updateProblemStatement($event)"
@@ -50,7 +50,7 @@
         </jhi-markdown-editor-monaco>
 
         <!-- Floating inline refinement button - hidden during active refinement -->
-        @if (inlineRefinementPosition() && hyperionEnabled && !isRefining() && selectionPositionInfo()) {
+        @if (inlineRefinementPosition() && hyperionEnabled && !isAiApplying() && selectionPositionInfo()) {
             <jhi-inline-refinement-button
                 [top]="inlineRefinementPosition()!.top"
                 [left]="inlineRefinementPosition()!.left"
@@ -59,7 +59,7 @@
                 [endLine]="selectionPositionInfo()!.endLine"
                 [startColumn]="selectionPositionInfo()!.startColumn"
                 [endColumn]="selectionPositionInfo()!.endColumn"
-                [isLoading]="isRefining() || isAiLoading()"
+                [isLoading]="isAiApplying()"
                 (refine)="onInlineRefine($event)"
                 (closeRefinement)="hideInlineRefinementButton()"
             />

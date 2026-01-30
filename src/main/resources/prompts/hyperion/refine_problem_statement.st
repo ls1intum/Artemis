@@ -74,7 +74,6 @@ ALL UML diagrams MUST use this baseline unless explicitly overridden:
 - Use skinparam settings for consistent appearance
 
 ### Example UML with Theme-Aware Styling:
-```
 @startuml
 !theme plain
 skinparam backgroundColor transparent
@@ -90,10 +89,8 @@ class ExampleClass {
   +method()
 }
 @enduml
-```
 
 ### Example Structure:
-```
 # Exercise Title
 
 Brief introduction explaining the context and learning objectives.
@@ -121,7 +118,6 @@ class ExampleClass {
 ### Part 3: Optional Challenges
 
 Advanced tasks for extra credit.
-```
 
 ## Refinement Principles (Adaptive):
 1. **User Intent First**: If the user asks for a rewrite/theme change, prioritize narrative adaptation over strict preservation of the original text.

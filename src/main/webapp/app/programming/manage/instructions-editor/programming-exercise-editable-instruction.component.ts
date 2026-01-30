@@ -109,7 +109,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         }
         return actions;
     });
-    protected readonly isAiLoading = this.artemisIntelligenceService.isLoading;
+    protected readonly isAiApplying = computed(() => this.isGeneratingOrRefining() || this.artemisIntelligenceService.isLoading());
 
     savingInstructions = false;
     unsavedChangesValue = false;
@@ -139,7 +139,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     @Input() forceRender: Observable<void>;
     readonly consistencyIssues = input<ConsistencyIssue[]>([]);
     /** Whether any refinement is in progress (makes editor read-only) */
-    readonly isRefining = input<boolean>(false);
+    readonly isGeneratingOrRefining = input<boolean>(false);
 
     /** Editor mode: 'normal' or 'diff' for showing diff view */
     readonly mode = input<MonacoEditorMode>('normal');
@@ -440,7 +440,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             | undefined,
     ): void {
         // Show/hide inline refinement button based on selection
-        if (selection && selection.selectedText && selection.selectedText.trim().length > 0 && this.hyperionEnabled && !this.isAiLoading()) {
+        if (selection && selection.selectedText && selection.selectedText.trim().length > 0 && this.hyperionEnabled && !this.isAiApplying()) {
             this.inlineRefinementPosition.set(selection.screenPosition);
             this.selectedTextForRefinement.set(selection.selectedText);
             this.selectionPositionInfo.set({

@@ -146,7 +146,7 @@
                                     <fa-icon [icon]="faSpinner" animation="spin" />
                                 </button>
                             } @else {
-                                <button class="btn btn-outline-primary" type="button" ngbDropdownToggle [disabled]="isInlineRefining() || isAiLoading()">
+                                <button class="btn btn-outline-primary" type="button" ngbDropdownToggle [disabled]="isAiApplying()">
                                     <fa-icon [icon]="facArtemisIntelligence" />
                                     <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.codeGeneration.creationAssistance">Creation Assistance</span>
                                 </button>
@@ -167,13 +167,19 @@
                     @if (exercise.isAtLeastInstructor && hyperionEnabled) {
                         <!-- Refine Problem Statement Button -->
                         <div class="position-relative me-2">
-                            <button (click)="toggleRefinementPrompt()" class="btn btn-outline-primary" [disabled]="isInlineRefining() || isAiLoading()">
-                                @if (isInlineRefining() || isAiLoading()) {
+                            <button (click)="toggleRefinementPrompt()" class="btn btn-outline-primary" [disabled]="isAiApplying()">
+                                @if (isAiApplying()) {
                                     <fa-icon [icon]="faSpinner" animation="spin" class="me-2" />
                                 } @else {
                                     <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
                                 }
-                                <span jhiTranslate="artemisApp.programmingExercise.problemStatement.refinementAssistance"></span>
+                                <span
+                                    [jhiTranslate]="
+                                        shouldShowGenerateButton()
+                                            ? 'artemisApp.programmingExercise.problemStatement.generationAssistance'
+                                            : 'artemisApp.programmingExercise.problemStatement.refinementAssistance'
+                                    "
+                                ></span>
                             </button>
                             <!-- Refinement Prompt Popup -->
                             @if (showRefinementPrompt()) {
@@ -181,7 +187,13 @@
                                 <div class="refinement-backdrop" (click)="toggleRefinementPrompt()"></div>
                                 <div class="refinement-prompt-popup" (keydown.escape)="toggleRefinementPrompt()">
                                     <div class="refinement-prompt-header">
-                                        <span jhiTranslate="artemisApp.programmingExercise.problemStatement.refinementAssistance"></span>
+                                        <span
+                                            [jhiTranslate]="
+                                                shouldShowGenerateButton()
+                                                    ? 'artemisApp.programmingExercise.problemStatement.generationAssistance'
+                                                    : 'artemisApp.programmingExercise.problemStatement.refinementAssistance'
+                                            "
+                                        ></span>
                                         <button type="button" class="btn-close" (click)="toggleRefinementPrompt()" aria-label="Close"></button>
                                     </div>
                                     <div class="refinement-prompt-body">
@@ -192,14 +204,20 @@
                                             cdkTrapFocus
                                             cdkTrapFocusAutoCapture
                                             [placeholder]="'artemisApp.programmingExercise.problemStatement.yourRequirements' | artemisTranslate"
-                                            [disabled]="isAiLoading()"
+                                            [disabled]="isAiApplying()"
                                         >
                                         </textarea>
                                     </div>
                                     <div class="refinement-prompt-footer">
                                         <button type="button" class="btn btn-primary btn-sm" [disabled]="!refinementPrompt().trim()" (click)="submitRefinement()">
                                             <fa-icon [icon]="faPaperPlane" class="me-1" />
-                                            <span jhiTranslate="artemisApp.programmingExercise.problemStatement.refine"></span>
+                                            <span
+                                                [jhiTranslate]="
+                                                    shouldShowGenerateButton()
+                                                        ? 'artemisApp.programmingExercise.problemStatement.generate'
+                                                        : 'artemisApp.programmingExercise.problemStatement.refine'
+                                                "
+                                            ></span>
                                         </button>
                                     </div>
                                 </div>
@@ -208,7 +226,7 @@
                         <!-- Consistency Check with dropdown -->
                         <div ngbDropdown class="btn-group me-2" [autoClose]="false">
                             <!-- Main action: Check Consistency -->
-                            <button class="btn btn-primary" (click)="checkConsistencies(exercise)" [disabled]="isCheckingConsistency() || isInlineRefining() || isAiLoading()">
+                            <button class="btn btn-primary" (click)="checkConsistencies(exercise)" [disabled]="isCheckingConsistency() || isAiApplying()">
                                 @if (isCheckingConsistency()) {
                                     <fa-icon [icon]="faCircleNotch" animation="spin" class="text-white me-2" />
                                 } @else {
@@ -220,7 +238,7 @@
                             <button
                                 class="btn btn-primary dropdown-toggle dropdown-toggle-split"
                                 ngbDropdownToggle
-                                [disabled]="!consistencyIssues().length || isCheckingConsistency() || isInlineRefining() || isAiLoading()"
+                                [disabled]="!consistencyIssues().length || isCheckingConsistency() || isAiApplying()"
                             ></button>
 
                             <!-- Dropdown menu with issues -->
@@ -309,21 +327,11 @@
 
                         <div class="d-flex gap-2 align-items-center">
                             <span class="text-muted small" jhiTranslate="artemisApp.programmingExercise.problemStatement.useRevertButtons"></span>
-                            <button
-                                class="btn btn-outline-danger btn-sm"
-                                type="button"
-                                (click)="revertAllRefinement()"
-                                [disabled]="isInlineRefining() || isAiLoading() || isGeneratingCode()"
-                            >
+                            <button class="btn btn-outline-danger btn-sm" type="button" (click)="revertAllRefinement()" [disabled]="isAiApplying() || isGeneratingCode()">
                                 <fa-icon [icon]="faBan" class="me-1" />
                                 <span jhiTranslate="artemisApp.programmingExercise.problemStatement.revertAll"></span>
                             </button>
-                            <button
-                                class="btn btn-success btn-sm"
-                                type="button"
-                                (click)="acceptRefinement()"
-                                [disabled]="isInlineRefining() || isAiLoading() || isGeneratingCode()"
-                            >
+                            <button class="btn btn-success btn-sm" type="button" (click)="acceptRefinement()" [disabled]="isAiApplying() || isGeneratingCode()">
                                 <fa-icon [icon]="faSave" class="me-1" />
                                 <span jhiTranslate="artemisApp.programmingExercise.problemStatement.doneReviewing"></span>
                             </button>
@@ -340,7 +348,7 @@
                         [enableResize]="false"
                         [showPreview]="false"
                         [consistencyIssues]="consistencyIssues()"
-                        [isRefining]="isInlineRefining()"
+                        [isGeneratingOrRefining]="isGeneratingOrRefining()"
                         [mode]="showDiff() ? 'diff' : 'normal'"
                         [renderSideBySide]="allowSplitView()"
                         (diffLineChange)="onDiffLineChange($event)"

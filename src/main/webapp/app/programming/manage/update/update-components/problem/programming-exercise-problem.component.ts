@@ -70,7 +70,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     programmingExerciseChange = output<ProgrammingExercise>();
 
     userPrompt = signal('');
-    isGenerating = signal(false);
+    isGeneratingOrRefining = signal(false);
     private currentGenerationSubscription: Subscription | undefined = undefined;
     private profileService = inject(ProfileService);
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
@@ -116,8 +116,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         this.problemStatementChange.emit(newProblemStatement);
     }
 
-    isRefining = signal(false);
-
     showDiff = signal(false);
     allowSplitView = signal(true);
     addedLineCount = signal(0);
@@ -133,8 +131,8 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
 
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
 
-    /** True if any AI operation is in progress (refinement or generation) */
-    protected isAnyApplying = computed(() => this.isRefining() || this.isGenerating() || this.artemisIntelligenceService.isLoading());
+    /** True if any AI operation is in progress (refinement, generation or rewriting) */
+    protected isAiApplying = computed(() => this.isGeneratingOrRefining() || this.artemisIntelligenceService.isLoading());
 
     /**
      * Lifecycle hook to capture the initial problem statement for comparison.
@@ -172,8 +170,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             this.currentGenerationSubscription = undefined;
         }
 
-        this.isGenerating.set(false);
-        this.isRefining.set(false);
+        this.isGeneratingOrRefining.set(false);
     }
 
     /**
@@ -218,7 +215,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.isGenerating.set(true);
+        this.isGeneratingOrRefining.set(true);
 
         const request: ProblemStatementGenerationRequest = {
             userPrompt: this.userPrompt().trim(),
@@ -228,7 +225,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             .generateProblemStatement(courseId, request)
             .pipe(
                 finalize(() => {
-                    this.isGenerating.set(false);
+                    this.isGeneratingOrRefining.set(false);
                     this.currentGenerationSubscription = undefined;
                 }),
             )
@@ -297,7 +294,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.isRefining.set(true);
+        this.isGeneratingOrRefining.set(true);
 
         const request: ProblemStatementGlobalRefinementRequest = {
             problemStatementText: currentContent,
@@ -308,7 +305,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             .refineProblemStatementGlobally(courseId, request)
             .pipe(
                 finalize(() => {
-                    this.isRefining.set(false);
+                    this.isGeneratingOrRefining.set(false);
                     this.currentGenerationSubscription = undefined;
                 }),
             )
@@ -408,7 +405,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.isRefining.set(true);
+        this.isGeneratingOrRefining.set(true);
 
         const request: ProblemStatementTargetedRefinementRequest = {
             problemStatementText: currentContent,
@@ -423,7 +420,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             .refineProblemStatementTargeted(courseId, request)
             .pipe(
                 finalize(() => {
-                    this.isRefining.set(false);
+                    this.isGeneratingOrRefining.set(false);
                     this.currentGenerationSubscription = undefined;
                 }),
             )

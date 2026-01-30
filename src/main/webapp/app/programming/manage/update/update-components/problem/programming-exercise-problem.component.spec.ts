@@ -146,7 +146,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.generateProblemStatement();
 
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.generationError');
-        expect(comp.isGenerating()).toBeFalse();
+        expect(comp.isGeneratingOrRefining()).toBeFalse();
     }));
 
     it('should handle empty generation response', fakeAsync(() => {
@@ -192,7 +192,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.refineProblemStatement();
 
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementError');
-        expect(comp.isRefining()).toBeFalse();
+        expect(comp.isGeneratingOrRefining()).toBeFalse();
     }));
 
     it('should accept refinement and update problem statement', () => {
@@ -222,13 +222,11 @@ describe('ProgrammingExerciseProblemComponent', () => {
     });
 
     it('should cancel generation and reset states', () => {
-        comp.isGenerating.set(true);
-        comp.isRefining.set(true);
+        comp.isGeneratingOrRefining.set(true);
 
         comp.cancelGeneration();
 
-        expect(comp.isGenerating()).toBeFalse();
-        expect(comp.isRefining()).toBeFalse();
+        expect(comp.isGeneratingOrRefining()).toBeFalse();
     });
 
     it('should handle onProblemStatementChange', () => {
@@ -328,12 +326,12 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
     it('should reset generation state on cancel', () => {
         // Set up state
-        comp.isGenerating.set(true);
+        comp.isGeneratingOrRefining.set(true);
 
         comp.cancelGeneration();
 
         // Verify state is reset
-        expect(comp.isGenerating()).toBeFalse();
+        expect(comp.isGeneratingOrRefining()).toBeFalse();
     });
 
     it('should handle inline refinement successfully', fakeAsync(() => {
@@ -430,7 +428,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.onInlineRefinement(event);
 
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
-        expect(comp.isRefining()).toBeFalse();
+        expect(comp.isGeneratingOrRefining()).toBeFalse();
     }));
 
     it('should handle inline refinement with empty response', fakeAsync(() => {

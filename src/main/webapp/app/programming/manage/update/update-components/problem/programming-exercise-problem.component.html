@@ -13,13 +13,13 @@
                 class="form-control"
                 rows="4"
                 [placeholder]="getTranslatedPlaceholder()"
-                [disabled]="isAnyApplying()"
+                [disabled]="isAiApplying()"
             >
             </textarea>
         </div>
         <div class="d-flex justify-content-start gap-2">
-            <button class="btn btn-outline-primary" type="button" [disabled]="!userPrompt()?.trim() || isAnyApplying()" (click)="handleProblemStatementAction()">
-                @if (isAnyApplying()) {
+            <button class="btn btn-outline-primary" type="button" [disabled]="!userPrompt()?.trim() || isAiApplying()" (click)="handleProblemStatementAction()">
+                @if (isAiApplying()) {
                     <fa-icon [icon]="faSpinner" animation="spin" />
                 } @else {
                     <fa-icon [icon]="facArtemisIntelligence" />
@@ -30,7 +30,7 @@
                     <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.refinementAssistance"></span>
                 }
             </button>
-            <button type="button" id="cancel-generation" class="btn btn-sm btn-secondary" (click)="cancelGeneration()" [disabled]="!(isGenerating() || isRefining())">
+            <button type="button" id="cancel-generation" class="btn btn-sm btn-secondary" (click)="cancelGeneration()" [disabled]="!isGeneratingOrRefining()">
                 <fa-icon [fixedWidth]="true" [icon]="faBan" class="sm" />
                 <span class="d-none d-sm-inline" jhiTranslate="entity.action.cancel"></span>
             </button>
@@ -69,11 +69,11 @@
 
                     <div class="d-flex gap-2 align-items-center">
                         <span class="text-muted small" jhiTranslate="artemisApp.programmingExercise.problemStatement.useRevertButtons"></span>
-                        <button class="btn btn-outline-danger btn-sm" type="button" [disabled]="isAnyApplying()" (click)="revertAllChanges()">
+                        <button class="btn btn-outline-danger btn-sm" type="button" [disabled]="isAiApplying()" (click)="revertAllChanges()">
                             <fa-icon [icon]="faBan" class="me-1" />
                             <span jhiTranslate="artemisApp.programmingExercise.problemStatement.revertAll"></span>
                         </button>
-                        <button class="btn btn-success btn-sm" type="button" [disabled]="isAnyApplying()" (click)="closeDiffView()">
+                        <button class="btn btn-success btn-sm" type="button" [disabled]="isAiApplying()" (click)="closeDiffView()">
                             <fa-icon [icon]="faSave" class="me-1" />
                             <span jhiTranslate="artemisApp.programmingExercise.problemStatement.doneReviewing"></span>
                         </button>
@@ -115,7 +115,7 @@
                     [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
                     [showStatus]="!!programmingExercise()?.id"
                     [editMode]="!!programmingExercise()?.id"
-                    [isRefining]="isRefining() || isGenerating()"
+                    [isGeneratingOrRefining]="isGeneratingOrRefining()"
                     (hasUnsavedChanges)="programmingExerciseCreationConfig().hasUnsavedChanges = $event"
                     (instructionChange)="onProblemStatementChange($event)"
                     (exerciseChange)="programmingExerciseChange.emit($event)"

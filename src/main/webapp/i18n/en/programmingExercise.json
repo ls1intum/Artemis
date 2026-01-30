@@ -262,6 +262,7 @@
                     "placeholder": "Describe how to improve this section...",
                     "submitTooltip": "Apply refinement"
                 },
+                "generate": "Generate",
                 "refine": "Refine"
             },
             "inlineRefine": {
