@@ -9,10 +9,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,7 +55,7 @@ class ProgrammingExerciseRepositoryServiceTest {
     void clearRepositorySources_removesSourcesAndAddsReadme() throws Exception {
         Path repoPath = tempDir.resolve("repo");
         Files.createDirectories(repoPath.resolve("src"));
-        Files.writeString(repoPath.resolve("src/Main.java"), "class Main {}");
+        FileUtils.writeStringToFile(repoPath.resolve("src/Main.java").toFile(), "class Main {}", StandardCharsets.UTF_8);
 
         Repository repository = mockRepository(repoPath);
         User user = new User();
