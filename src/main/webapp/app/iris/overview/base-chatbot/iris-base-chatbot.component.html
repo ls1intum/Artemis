@@ -200,7 +200,7 @@
                                                 @if (content.type === IrisMessageContentType.TEXT) {
                                                     <span class="bubble-right">
                                                         @for (line of (content | as: IrisTextMessageContent).textContent.split('\n'); track $index) {
-                                                            <div [innerHTML]="line"></div>
+                                                            <div>{{ line }}</div>
                                                         }
                                                     </span>
                                                 }
