@@ -458,7 +458,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         programmingExercise.problemStatement = 'Original';
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
-        const mockResponse: ProblemStatementRefinementResponse = {};
+        const mockResponse: ProblemStatementRefinementResponse = { refinedProblemStatement: '' };
 
         mockHyperionApiService.refineProblemStatementGlobally.mockReturnValue(of(mockResponse));
 

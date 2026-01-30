@@ -14,7 +14,6 @@ model/codeGenerationRequest.ts
 model/consistencyCheckResponse.ts
 model/consistencyIssue.ts
 model/conversationUser.ts
-model/examSeat.ts
 model/problemStatementGenerationRequest.ts
 model/problemStatementGenerationResponse.ts
 model/problemStatementGlobalRefinementRequest.ts
@@ -24,10 +23,6 @@ model/problemStatementRewriteResponse.ts
 model/problemStatementTargetedRefinementRequest.ts
 model/student.ts
 model/studentExport.ts
-model/teachingAssistant.ts
-model/tutorialGroup.ts
-model/tutorialGroupDetailGroup.ts
-model/tutorialGroupDetailSession.ts
 model/tutorialGroupExport.ts
 model/tutorialGroupFreePeriodRequest.ts
 model/tutorialGroupRegistrationImport.ts
@@ -36,5 +31,4 @@ model/tutorialGroupStatus.ts
 model/tutorialGroupUpdate.ts
 param.ts
 provide-api.ts
-query.params.ts
 variables.ts

@@ -294,6 +294,9 @@ public class HyperionProblemStatementRefinementService {
         if (e instanceof InternalServerErrorAlertException alertException) {
             throw alertException;
         }
+        if (e instanceof BadRequestAlertException badRequestException) {
+            throw badRequestException;
+        }
 
         log.error("Error refining problem statement for course [{}]. Original statement length: {}. Error: {}", course.getId(),
                 originalProblemStatementText != null ? originalProblemStatementText.length() : 0, e.getMessage(), e);
