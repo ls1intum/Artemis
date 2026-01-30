@@ -43,8 +43,7 @@ import { NgClass } from '@angular/common';
 import { facSidebar } from 'app/shared/icons/icons';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
-
-const CITATION_REGEX = /\[cite:[^\]]+\]/g;
+import { IrisCitationParsed, escapeHtml, formatCitationLabel, replaceCitationBlocks, resolveCitationTypeClass } from 'app/iris/overview/shared/iris-citation.util';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -334,120 +333,16 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     private replaceCitations(text: string, citationInfo: IrisCitationMetaDTO[]): string {
-        if (!text || !text.includes('[cite:')) {
-            return text;
-        }
-        const citationMap = new Map<number, IrisCitationMetaDTO>(citationInfo.map((citation) => [citation.entityId, citation]));
-        const tokens: Array<{ type: 'text'; value: string } | { type: 'citation'; value: string }> = [];
-        let lastIndex = 0;
-        for (const match of text.matchAll(CITATION_REGEX)) {
-            const index = match.index ?? 0;
-            if (index > lastIndex) {
-                tokens.push({ type: 'text', value: text.slice(lastIndex, index) });
-            }
-            tokens.push({ type: 'citation', value: match[0] });
-            lastIndex = index + match[0].length;
-        }
-        if (lastIndex < text.length) {
-            tokens.push({ type: 'text', value: text.slice(lastIndex) });
-        }
-
-        const rendered: string[] = [];
-        let i = 0;
-        while (i < tokens.length) {
-            const token = tokens[i];
-            if (token.type === 'text') {
-                rendered.push(token.value);
-                i += 1;
-                continue;
-            }
-            const citationGroup: string[] = [token.value];
-            let j = i + 1;
-            let pendingWhitespace = '';
-            while (j < tokens.length) {
-                const nextToken = tokens[j];
-                if (nextToken.type === 'text' && /^\s*$/.test(nextToken.value)) {
-                    pendingWhitespace += nextToken.value;
-                    j += 1;
-                    continue;
-                }
-                if (nextToken.type === 'citation') {
-                    citationGroup.push(nextToken.value);
-                    pendingWhitespace = '';
-                    j += 1;
-                    continue;
-                }
-                break;
-            }
-
-            if (citationGroup.length > 1) {
-                const parsed = citationGroup.map((raw) => this.parseCitation(raw)).filter((value): value is IrisCitationParsed => Boolean(value));
-                if (parsed.length === 0) {
-                    rendered.push(citationGroup.join(''));
-                } else if (parsed.length === 1) {
-                    const meta = parsed[0].type === 'L' ? citationMap.get(parsed[0].entityId) : undefined;
-                    rendered.push(this.renderCitationHtml(parsed[0], meta));
-                } else {
-                    const metas = parsed.map((entry) => (entry.type === 'L' ? citationMap.get(entry.entityId) : undefined));
-                    rendered.push(this.renderCitationGroupHtml(parsed, metas));
-                }
-                if (pendingWhitespace) {
-                    rendered.push(pendingWhitespace);
-                }
-                i = j;
-                continue;
-            }
-
-            const parsed = this.parseCitation(token.value);
-            if (!parsed) {
-                rendered.push(token.value);
-            } else {
-                const meta = parsed.type === 'L' ? citationMap.get(parsed.entityId) : undefined;
-                rendered.push(this.renderCitationHtml(parsed, meta));
-            }
-            if (pendingWhitespace) {
-                rendered.push(pendingWhitespace);
-            }
-            i = j;
-        }
-
-        return rendered.join('');
-    }
-
-    private parseCitation(raw: string): IrisCitationParsed | undefined {
-        const content = raw.slice(6, -1);
-        const parts = content.split(':');
-        if (parts.length < 2) {
-            return undefined;
-        }
-
-        const type = parts[0];
-        if (!this.isCitationType(type)) {
-            return undefined;
-        }
-
-        const entityId = Number(parts[1]);
-        if (!Number.isFinite(entityId)) {
-            return undefined;
-        }
-
-        const page = parts[2] ?? '';
-        const start = parts[3] ?? '';
-        const end = parts[4] ?? '';
-        const keyword = parts[5] ?? '';
-        const summary = parts.slice(6).join(':');
-
-        return { type, entityId, page, start, end, keyword, summary };
-    }
-
-    private isCitationType(value?: string): value is 'L' | 'F' {
-        return value === 'L' || value === 'F';
+        return replaceCitationBlocks(text, citationInfo, {
+            renderSingle: (parsed, meta) => this.renderCitationHtml(parsed, meta),
+            renderGroup: (parsed, metas) => this.renderCitationGroupHtml(parsed, metas),
+        });
     }
 
     private renderCitationHtml(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
         const summaryText = this.formatSummary(parsed, meta);
-        const label = this.formatCitationLabel(parsed, meta);
-        const typeClass = this.resolveCitationTypeClass(parsed);
+        const label = formatCitationLabel(parsed);
+        const typeClass = resolveCitationTypeClass(parsed);
         const hasSummary = summaryText.length > 0;
         const classes = ['iris-citation', typeClass, hasSummary ? 'iris-citation--has-summary' : undefined].filter(Boolean).join(' ');
 
@@ -460,9 +355,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     private renderCitationGroupHtml(parsed: IrisCitationParsed[], metas: Array<IrisCitationMetaDTO | undefined>): string {
         const first = parsed[0];
-        const firstMeta = metas[0];
-        const label = this.formatCitationLabel(first, firstMeta);
-        const typeClass = this.resolveCitationTypeClass(first);
+        const label = formatCitationLabel(first);
+        const typeClass = resolveCitationTypeClass(first);
         const summaryItems = parsed
             .map((entry, index) => {
                 const summaryText = this.formatGroupSummaryItem(entry, metas[index]);
@@ -526,20 +420,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         if (summaryText) {
             return summaryText;
         }
-        return this.formatCitationLabel(parsed, meta);
-    }
-
-    private formatCitationLabel(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
-        const keyword = parsed.keyword?.trim();
-        const fallback = parsed.type === 'F' ? 'FAQ' : 'Source';
-        const label = keyword || fallback;
-        return this.escapeHtml(label);
+        return formatCitationLabel(parsed);
     }
 
     private formatSummary(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
         const fallbackKeyword = parsed.type === 'F' ? 'FAQ' : 'Source';
-        const keywordValue = this.escapeHtml(parsed.keyword?.trim() || fallbackKeyword);
-        const summaryValue = parsed.summary?.trim() ? this.escapeHtml(parsed.summary!.trim()) : '';
+        const keywordValue = escapeHtml(parsed.keyword?.trim() || fallbackKeyword);
+        const summaryValue = parsed.summary?.trim() ? escapeHtml(parsed.summary!.trim()) : '';
         const lines: string[] = [keywordValue];
 
         if (summaryValue) {
@@ -557,33 +444,16 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         if (parsed.type === 'L') {
             const lectureTitle = meta?.lectureTitle?.trim();
             if (lectureTitle) {
-                metaLines.push(`<span class="iris-citation__summary-meta">Lecture: "${this.escapeHtml(lectureTitle)}"</span>`);
+                metaLines.push(`<span class="iris-citation__summary-meta">Lecture: "${escapeHtml(lectureTitle)}"</span>`);
             }
             const unitTitle = meta?.lectureUnitTitle?.trim();
             if (unitTitle) {
-                metaLines.push(`<span class="iris-citation__summary-meta">Unit: "${this.escapeHtml(unitTitle)}"</span>`);
+                metaLines.push(`<span class="iris-citation__summary-meta">Unit: "${escapeHtml(unitTitle)}"</span>`);
             }
         }
         const metaHtml = metaLines.length > 0 ? `<br />${metaLines.join('<br />')}` : '';
 
         return `<span class="iris-citation__summary-keyword">${keywordLine}</span>${rest}${metaHtml}`;
-    }
-
-    private resolveCitationTypeClass(parsed: IrisCitationParsed): string {
-        if (parsed.type === 'F') {
-            return 'iris-citation--faq';
-        }
-        if (parsed.start || parsed.end) {
-            return 'iris-citation--video';
-        }
-        if (parsed.page) {
-            return 'iris-citation--slide';
-        }
-        return 'iris-citation--source';
-    }
-
-    private escapeHtml(text: string): string {
-        return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
     private updateCitationGroupSummary(citationGroup: HTMLElement, nextIndex: number) {
@@ -898,13 +768,3 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
     }
 }
-
-type IrisCitationParsed = {
-    type: 'L' | 'F';
-    entityId: number;
-    page?: string;
-    start?: string;
-    end?: string;
-    keyword?: string;
-    summary?: string;
-};
