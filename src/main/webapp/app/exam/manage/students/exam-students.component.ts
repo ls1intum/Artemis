@@ -27,6 +27,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { StudentsRoomDistributionDialogComponent } from 'app/exam/manage/students/room-distribution/students-room-distribution-dialog.component';
 import { StudentsReseatingDialogComponent } from 'app/exam/manage/students/room-distribution/students-reseating-dialog.component';
+import { StudentsExportDialogComponent } from 'app/exam/manage/students/export-users/students-export-dialog.component';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -41,6 +42,7 @@ const cssClasses = {
     imports: [
         TranslateDirective,
         UsersImportButtonComponent,
+        StudentsExportDialogComponent,
         StudentsUploadImagesButtonComponent,
         StudentsRoomDistributionDialogComponent,
         FaIconComponent,
