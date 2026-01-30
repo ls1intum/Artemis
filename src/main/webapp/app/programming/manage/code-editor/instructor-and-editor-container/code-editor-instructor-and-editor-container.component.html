@@ -205,8 +205,10 @@
                                             cdkTrapFocusAutoCapture
                                             [placeholder]="'artemisApp.programmingExercise.problemStatement.yourRequirements' | artemisTranslate"
                                             [disabled]="isAiApplying()"
+                                            maxlength="1000"
                                         >
                                         </textarea>
+                                        <div class="text-end text-muted small mt-1">{{ refinementPrompt()?.length || 0 }}/1000</div>
                                     </div>
                                     <div class="refinement-prompt-footer">
                                         <button type="button" class="btn btn-primary btn-sm" [disabled]="!refinementPrompt().trim()" (click)="submitRefinement()">

@@ -16,10 +16,6 @@ export interface ProblemStatementRefinementResponse {
     /**
      * Refined problem statement text
      */
-    refinedProblemStatement?: string;
-    /**
-     * Original problem statement (reserved for future use)
-     */
-    originalProblemStatement?: string;
+    refinedProblemStatement: string;
 }
 

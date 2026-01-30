@@ -616,7 +616,10 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Full Refinement', ()
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [CodeEditorInstructorAndEditorContainerComponent],
-            providers: [...getBaseProviders(), { provide: HyperionProblemStatementApiService, useValue: { refineProblemStatementGlobally: jest.fn() } }],
+            providers: [
+                ...getBaseProviders(),
+                { provide: HyperionProblemStatementApiService, useValue: { refineProblemStatementGlobally: jest.fn(), generateProblemStatement: jest.fn() } },
+            ],
         })
             .overrideComponent(CodeEditorInstructorAndEditorContainerComponent, {
                 set: { template: '', imports: [] },
@@ -663,6 +666,11 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Full Refinement', ()
         const mockResponse: ProblemStatementRefinementResponse = { refinedProblemStatement: 'Refined content' };
         (hyperionApiService.refineProblemStatementGlobally as jest.Mock).mockReturnValue(of(mockResponse));
 
+        // Force refinement path
+        (comp as any).templateLoaded.set(true);
+        (comp as any).templateProblemStatement.set('Template');
+        (comp as any).currentProblemStatement.set('Original problem statement');
+
         comp.refinementPrompt.set('Improve clarity');
         comp.submitRefinement();
 
@@ -705,6 +713,11 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Full Refinement', ()
     it('should handle full refinement API error', () => {
         const errorSpy = jest.spyOn(alertService, 'error');
         (hyperionApiService.refineProblemStatementGlobally as jest.Mock).mockReturnValue(throwError(() => new Error('API error')));
+
+        // Force refinement path
+        (comp as any).templateLoaded.set(true);
+        (comp as any).templateProblemStatement.set('Template');
+        (comp as any).currentProblemStatement.set('Original problem statement');
 
         comp.refinementPrompt.set('Improve');
         comp.submitRefinement();

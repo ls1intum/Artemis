@@ -452,24 +452,6 @@ describe('ProgrammingExerciseProblemComponent', () => {
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
     }));
 
-    it('should handle refinement with only originalProblemStatement in response', fakeAsync(() => {
-        const programmingExercise = new ProgrammingExercise(undefined, undefined);
-        programmingExercise.course = { id: 42 } as any;
-        programmingExercise.problemStatement = 'Original';
-        fixture.componentRef.setInput('programmingExercise', programmingExercise);
-
-        const mockResponse: ProblemStatementRefinementResponse = {
-            originalProblemStatement: 'Original',
-        };
-
-        mockHyperionApiService.refineProblemStatementGlobally.mockReturnValue(of(mockResponse));
-
-        comp.userPrompt.set('Improve clarity');
-        comp.refineProblemStatement();
-
-        expect(mockAlertService.warning).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementFailed');
-    }));
-
     it('should handle refinement with completely empty response', fakeAsync(() => {
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.course = { id: 42 } as any;

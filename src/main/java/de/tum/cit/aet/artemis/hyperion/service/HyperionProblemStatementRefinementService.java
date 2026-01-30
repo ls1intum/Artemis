@@ -84,9 +84,12 @@ public class HyperionProblemStatementRefinementService {
                 throw new InternalServerErrorAlertException("Original problem statement is too long", "ProblemStatement", "ProblemStatementRefinement.problemStatementTooLong");
             }
 
-            GlobalRefinementPromptVariables variables = new GlobalRefinementPromptVariables(originalProblemStatementText.trim(),
-                    userPrompt != null ? userPrompt : "Refine a programming exercise problem statement", course.getTitle() != null ? course.getTitle() : "Programming Course",
-                    course.getDescription() != null ? course.getDescription() : "A programming course");
+            if (userPrompt == null || userPrompt.isBlank()) {
+                throw new BadRequestAlertException("User prompt cannot be empty", "ProblemStatement", "ProblemStatementRefinement.userPromptEmpty");
+            }
+
+            GlobalRefinementPromptVariables variables = new GlobalRefinementPromptVariables(originalProblemStatementText.trim(), userPrompt,
+                    course.getTitle() != null ? course.getTitle() : "Programming Course", course.getDescription() != null ? course.getDescription() : "A programming course");
 
             String prompt = templateService.render("/prompts/hyperion/refine_problem_statement.st", variables.asMap());
             String refinedProblemStatementText = chatClient.prompt().user(prompt).call().content();
@@ -196,7 +199,7 @@ public class HyperionProblemStatementRefinementService {
             int endLineIdx = request.endLine() - 1;
 
             if (startLineIdx < 0 || endLineIdx >= lines.length) {
-                return "[text]";
+                throw new BadRequestAlertException("Invalid line range", "ProblemStatement", "ProblemStatementRefinement.invalidLineRange");
             }
 
             if (startLineIdx == endLineIdx) {
@@ -221,10 +224,11 @@ public class HyperionProblemStatementRefinementService {
             }
         }
         catch (Exception e) {
-            // Fallback if extraction fails
-            return "[selected text]";
+            log.warn("Failed to extract selected text for targeted refinement", e);
+            throw new BadRequestAlertException("Failed to extract text for targeted refinement: " + e.getMessage(), "ProblemStatement",
+                    "ProblemStatementRefinement.textExtractionFailed");
         }
-        return "[text]";
+        throw new BadRequestAlertException("Failed to extract text for targeted refinement", "ProblemStatement", "ProblemStatementRefinement.textExtractionFailed");
     }
 
     private static @NonNull String getString(ProblemStatementTargetedRefinementRequestDTO request, String lastLine, String firstLine) {

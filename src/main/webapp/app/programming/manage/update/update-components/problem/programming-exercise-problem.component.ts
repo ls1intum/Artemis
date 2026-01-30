@@ -322,9 +322,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                         );
 
                         this.userPrompt.set('');
-                    } else if (response.originalProblemStatement) {
-                        // Refinement failed: keep the original problem statement
-                        this.alertService.warning('artemisApp.programmingExercise.problemStatement.refinementFailed');
                     } else {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
                     }

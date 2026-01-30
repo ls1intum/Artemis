@@ -50,7 +50,6 @@ class HyperionProblemStatementRefinementServiceTest {
         ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, "Make it better");
         assertThat(resp).isNotNull();
         assertThat(resp.refinedProblemStatement()).isEqualTo(refinedStatement);
-        assertThat(resp.originalProblemStatement()).isNull();
     }
 
     @Test
@@ -86,20 +85,15 @@ class HyperionProblemStatementRefinementServiceTest {
     }
 
     @Test
-    void refineProblemStatement_handlesNullUserPrompt() throws Exception {
+    void refineProblemStatement_throwsExceptionWhenUserPromptIsNull() {
         String originalStatement = "Original problem statement";
-        String refinedStatement = "Refined with default prompt";
-        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(refinedStatement)))));
-
         var course = new Course();
         course.setTitle("Test Course");
         course.setDescription("Test Description");
 
-        // Should use default refinement prompt when userPrompt is null
-        ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, null);
-        assertThat(resp).isNotNull();
-        assertThat(resp.refinedProblemStatement()).isEqualTo(refinedStatement);
-        assertThat(resp.originalProblemStatement()).isNull();
+        // Should throw exception when userPrompt is null
+        assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, null)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("User prompt cannot be empty");
     }
 
     @Test
@@ -115,7 +109,6 @@ class HyperionProblemStatementRefinementServiceTest {
         ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, "Refine this");
         assertThat(resp).isNotNull();
         assertThat(resp.refinedProblemStatement()).isEqualTo(refinedStatement);
-        assertThat(resp.originalProblemStatement()).isNull();
     }
 
     @Test
@@ -133,7 +126,6 @@ class HyperionProblemStatementRefinementServiceTest {
         ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, "Refine this");
         assertThat(resp).isNotNull();
         assertThat(resp.refinedProblemStatement()).hasSize(50_000);
-        assertThat(resp.originalProblemStatement()).isNull();
     }
 
     @Test
