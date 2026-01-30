@@ -208,9 +208,11 @@
 .chat-body {
     height: 100%;
     overflow-y: hidden;
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
     flex: 1;
+    min-width: 0;
 
     &.not-accepted {
         height: 100%;
@@ -223,6 +225,8 @@
         gap: 5px;
         flex: 1;
         overflow-y: auto;
+        overflow-x: hidden;
+        min-width: 0;
         scrollbar-width: thin;
         scrollbar-color: var(--bs-border-color) transparent;
 
