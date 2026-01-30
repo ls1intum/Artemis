@@ -160,11 +160,7 @@ public class SharedQueueProcessingService {
     @Value("${artemis.continuous-integration.build-agent.display-name:}")
     private String buildAgentDisplayName;
 
-    /**
-     * Returns whether the build agent is currently paused.
-     *
-     * @return true if the build agent is paused, false otherwise
-     */
+    /** @return true if the build agent is paused, false otherwise */
     public boolean isPaused() {
         return isPaused.get();
     }
