@@ -39,6 +39,12 @@ public class RateLimitingProperties {
      */
     private Integer authenticationRequestsPerMinute;
 
+    /**
+     * WebSocket connections per minute.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#WEBSOCKET_CONNECTION}.
+     */
+    private Integer websocketConnectionsPerMinute;
+
     public boolean isEnabled() {
         return enabled;
     }
@@ -61,5 +67,13 @@ public class RateLimitingProperties {
 
     public void setAuthenticationRequestsPerMinute(Integer authenticationRequestsPerMinute) {
         this.authenticationRequestsPerMinute = authenticationRequestsPerMinute;
+    }
+
+    public Integer getWebsocketConnectionsPerMinute() {
+        return websocketConnectionsPerMinute;
+    }
+
+    public void setWebsocketConnectionsPerMinute(Integer websocketConnectionsPerMinute) {
+        this.websocketConnectionsPerMinute = websocketConnectionsPerMinute;
     }
 }

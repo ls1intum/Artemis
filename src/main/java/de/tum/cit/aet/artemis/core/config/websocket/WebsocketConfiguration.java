@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.config.websocket;
 import static de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService.getExerciseIdFromNonPersonalExerciseResultDestination;
 import static de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService.isNonPersonalExerciseResultDestination;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.util.HttpRequestUtils.getIpAddressFromRequest;
 import static de.tum.cit.aet.artemis.exercise.web.ParticipationTeamWebsocketService.getParticipationIdFromDestination;
 import static de.tum.cit.aet.artemis.exercise.web.ParticipationTeamWebsocketService.isParticipationTeamDestination;
 import static de.tum.cit.aet.artemis.programming.service.localci.LocalCIWebsocketMessagingService.isBuildAgentDestination;
@@ -62,11 +63,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.config.InetSocketAddressValidator;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.RateLimitService;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -100,6 +104,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private final Optional<ExamRepositoryApi> examRepositoryApi;
 
+    private final Optional<RateLimitService> rateLimitService;
+
     // Split the addresses by comma
     @Value("#{'${spring.websocket.broker.addresses}'.split(',')}")
     private List<String> brokerAddresses;
@@ -112,7 +118,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
-            Optional<ExamRepositoryApi> examRepositoryApi) {
+            Optional<ExamRepositoryApi> examRepositoryApi, Optional<RateLimitService> rateLimitService) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.tokenProvider = tokenProvider;
@@ -120,6 +126,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         this.authorizationCheckService = authorizationCheckService;
         this.exerciseRepository = exerciseRepository;
         this.examRepositoryApi = examRepositoryApi;
+        this.rateLimitService = rateLimitService;
     }
 
     @Override
@@ -280,6 +287,11 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 log.debug("beforeHandshake: {}, {}, {}", request, response, wsHandler);
                 if (request instanceof ServletServerHttpRequest servletRequest) {
                     try {
+                        // Check WebSocket connection rate limit
+                        if (!checkWebSocketRateLimit(servletRequest, response)) {
+                            return false;
+                        }
+
                         attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
 
                         JwtWithSource jwtWithSource = JWTFilter.extractValidJwt(servletRequest.getServletRequest(), tokenProvider);
@@ -291,6 +303,32 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                     }
                 }
                 return false;
+            }
+
+            /**
+             * Checks if the WebSocket connection rate limit is exceeded.
+             *
+             * @param servletRequest the incoming request
+             * @param response       the response to set status on if rate limited
+             * @return true if connection is allowed, false if rate limit exceeded
+             */
+            private boolean checkWebSocketRateLimit(ServletServerHttpRequest servletRequest, ServerHttpResponse response) {
+                if (rateLimitService.isEmpty()) {
+                    return true; // Rate limiting not available, allow connection
+                }
+
+                try {
+                    var clientIp = getIpAddressFromRequest(servletRequest.getServletRequest());
+                    if (clientIp.isPresent()) {
+                        rateLimitService.get().enforcePerMinute(clientIp.get(), RateLimitType.WEBSOCKET_CONNECTION);
+                    }
+                    return true;
+                }
+                catch (RateLimitExceededException e) {
+                    log.warn("WebSocket rate limit exceeded for client, retry after {} seconds", e.getRetryAfterSeconds());
+                    response.setStatusCode(HttpStatusCode.valueOf(429));
+                    return false;
+                }
             }
 
             @Override

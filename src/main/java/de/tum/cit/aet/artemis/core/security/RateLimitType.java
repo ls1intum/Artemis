@@ -20,7 +20,15 @@ public enum RateLimitType {
      * <p>
      * Default: 30 requests per minute per client.
      */
-    AUTHENTICATION(30);
+    AUTHENTICATION(30),
+
+    /**
+     * Rate limit for WebSocket connection handshakes.
+     * Prevents clients from opening excessive concurrent connections.
+     * <p>
+     * Default: 60 connections per minute per client (allows ~20 tabs with reconnections).
+     */
+    WEBSOCKET_CONNECTION(60);
 
     private final int defaultRpm;
 
