@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseWeaviateService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -84,11 +85,13 @@ public class ProgrammingExerciseUpdateResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
+    private final ExerciseWeaviateService exerciseWeaviateService;
+
     public ProgrammingExerciseUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, Optional<AthenaApi> athenaApi, Environment environment, Optional<SlideApi> slideApi,
-            ExerciseVersionService exerciseVersionService) {
+            ExerciseVersionService exerciseVersionService, ExerciseWeaviateService exerciseWeaviateService) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -102,6 +105,7 @@ public class ProgrammingExerciseUpdateResource {
         this.environment = environment;
         this.slideApi = slideApi;
         this.exerciseVersionService = exerciseVersionService;
+        this.exerciseWeaviateService = exerciseWeaviateService;
     }
 
     /**
@@ -212,6 +216,10 @@ public class ProgrammingExerciseUpdateResource {
         exerciseService.updatePointsInRelatedParticipantScores(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
         slideApi.ifPresent(api -> api.handleDueDateChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise));
         exerciseVersionService.createExerciseVersion(updatedProgrammingExercise, user);
+
+        // Update exercise metadata in Weaviate for global search
+        exerciseWeaviateService.updateExercise(savedProgrammingExercise);
+
         return ResponseEntity.ok(savedProgrammingExercise);
     }
 

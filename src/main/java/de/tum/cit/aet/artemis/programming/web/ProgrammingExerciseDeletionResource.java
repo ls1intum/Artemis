@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseWeaviateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
@@ -73,9 +74,12 @@ public class ProgrammingExerciseDeletionResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
+    private final ExerciseWeaviateService exerciseWeaviateService;
+
     public ProgrammingExerciseDeletionResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, ExerciseService exerciseService,
-            ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseDeletionService programmingExerciseDeletionService, ExerciseVersionService exerciseVersionService) {
+            ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseDeletionService programmingExerciseDeletionService, ExerciseVersionService exerciseVersionService,
+            ExerciseWeaviateService exerciseWeaviateService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -84,6 +88,7 @@ public class ProgrammingExerciseDeletionResource {
         this.exerciseDeletionService = exerciseDeletionService;
         this.programmingExerciseDeletionService = programmingExerciseDeletionService;
         this.exerciseVersionService = exerciseVersionService;
+        this.exerciseWeaviateService = exerciseWeaviateService;
     }
 
     /**
@@ -104,6 +109,10 @@ public class ProgrammingExerciseDeletionResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
         exerciseService.logDeletion(programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseDeletionService.delete(exerciseId, deleteBaseReposBuildPlans);
+
+        // Delete exercise metadata from Weaviate for global search
+        exerciseWeaviateService.deleteExercise(exerciseId);
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).build();
     }
 
