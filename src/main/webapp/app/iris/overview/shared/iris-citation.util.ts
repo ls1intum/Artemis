@@ -15,7 +15,7 @@ export type IrisCitationParsed = {
     start: string;
     end: string;
     keyword: string;
-    summary?: string;
+    summary: string;
 };
 
 /**

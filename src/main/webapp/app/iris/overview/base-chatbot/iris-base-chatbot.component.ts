@@ -44,6 +44,7 @@ import { facSidebar } from 'app/shared/icons/icons';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { IrisCitationParsed, escapeHtml, formatCitationLabel, replaceCitationBlocks, resolveCitationTypeClass } from 'app/iris/overview/shared/iris-citation.util';
+import { map } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -115,6 +116,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly rateLimitInfo = toSignal(this.statusService.currentRatelimitInfo(), { requireSync: true });
     readonly active = toSignal(this.statusService.getActiveStatus(), { initialValue: true });
     readonly citationInfo = toSignal(this.chatService.currentCitationInfo(), { initialValue: [] as IrisCitationMetaDTO[] });
+    readonly currentLanguage = toSignal(this.translateService.onLangChange.pipe(map((event) => event.lang)), {
+        initialValue: this.translateService.getCurrentLang(),
+    });
 
     // Messages with processing
     private readonly rawMessages = toSignal(this.chatService.currentMessages(), { initialValue: [] as IrisMessage[] });
@@ -345,6 +349,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
      * @returns The rendered HTML string for display.
      */
     renderMessageContent(content: IrisTextMessageContent): string {
+        this.currentLanguage();
         const withCitations = this.replaceCitations(content.textContent ?? '', this.citationInfo());
         return htmlForMarkdown(withCitations);
     }
@@ -487,7 +492,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private formatSummary(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
         const fallbackKeyword = parsed.type === 'F' ? 'FAQ' : 'Source';
         const keywordValue = escapeHtml(parsed.keyword?.trim() || fallbackKeyword);
-        const summaryValue = parsed.summary?.trim() ? escapeHtml(parsed.summary!.trim()) : '';
+        const summaryValue = parsed.summary.trim() ? escapeHtml(parsed.summary.trim()) : '';
         const lines: string[] = [keywordValue];
 
         if (summaryValue) {
