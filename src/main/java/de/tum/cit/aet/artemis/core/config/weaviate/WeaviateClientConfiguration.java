@@ -36,11 +36,11 @@ public class WeaviateClientConfiguration {
         if (weaviateProperties.httpHost() == null || weaviateProperties.httpHost().isBlank()) {
             throw new WeaviateConfigurationException("artemis.weaviate.http-host must be configured when Weaviate is enabled", List.of("artemis.weaviate.http-host"));
         }
-        if (weaviateProperties.httpPort() < ConfigurationValidator.MIN_PORT || weaviateProperties.httpPort() > ConfigurationValidator.MAX_PORT) {
+        if (ConfigurationValidator.isValidPort(weaviateProperties.httpPort())) {
             throw new WeaviateConfigurationException("artemis.weaviate.http-port must be a valid port number (" + ConfigurationValidator.MIN_PORT + "-"
                     + ConfigurationValidator.MAX_PORT + "), got: " + weaviateProperties.httpPort(), List.of("artemis.weaviate.http-port"));
         }
-        if (weaviateProperties.grpcPort() < ConfigurationValidator.MIN_PORT || weaviateProperties.grpcPort() > ConfigurationValidator.MAX_PORT) {
+        if (ConfigurationValidator.isValidPort(weaviateProperties.grpcPort())) {
             throw new WeaviateConfigurationException("artemis.weaviate.grpc-port must be a valid port number (" + ConfigurationValidator.MIN_PORT + "-"
                     + ConfigurationValidator.MAX_PORT + "), got: " + weaviateProperties.grpcPort(), List.of("artemis.weaviate.grpc-port"));
         }

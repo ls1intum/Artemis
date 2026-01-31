@@ -219,7 +219,7 @@ public class ConfigurationValidator {
                 effectiveScheme);
     }
 
-    private boolean isValidPort(int port) {
+    public static boolean isValidPort(int port) {
         return port >= MIN_PORT && port <= MAX_PORT;
     }
 }
