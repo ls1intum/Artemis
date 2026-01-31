@@ -12,6 +12,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nonnull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -239,9 +241,10 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
     /**
      * Retrieves the addresses of all members in the Hazelcast cluster.
      *
-     * @return a set of addresses of all cluster members
+     * @return a set of addresses of all cluster members, never null (returns empty set if no members or not connected)
      */
     @Override
+    @Nonnull
     public Set<String> getClusterMemberAddresses() {
         // stream is on the copy so fine here
         return getClusterMembers().stream().map(Member::getAddress).map(Object::toString).collect(Collectors.toSet());

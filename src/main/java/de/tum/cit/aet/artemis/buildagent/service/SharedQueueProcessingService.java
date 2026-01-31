@@ -565,7 +565,7 @@ public class SharedQueueProcessingService {
      * @return true if the address appears to be a cluster member address
      */
     private boolean isClusterMemberAddress(String address, Set<String> memberAddresses) {
-        if (address == null) {
+        if (address == null || memberAddresses == null || memberAddresses.isEmpty()) {
             return false;
         }
 

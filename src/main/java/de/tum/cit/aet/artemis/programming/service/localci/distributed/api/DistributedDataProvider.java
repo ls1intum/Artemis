@@ -4,6 +4,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+import jakarta.annotation.Nonnull;
+
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.DistributedTopic;
@@ -81,8 +83,9 @@ public interface DistributedDataProvider {
     /**
      * Gets the addresses of all cluster members.
      *
-     * @return a set of addresses of all cluster members
+     * @return a set of addresses of all cluster members, never null (returns empty set if no members or not connected)
      */
+    @Nonnull
     Set<String> getClusterMemberAddresses();
 
     /**
