@@ -69,4 +69,55 @@ class ConfigurationValidatorTest {
 
         assertThatCode(validator::validateConfigurations).doesNotThrowAnyException();
     }
+
+    @Test
+    void testWeaviateHostNullShouldFailValidation() {
+        ConfigurationValidator validator = createValidator(true, null, VALID_HTTP_PORT, VALID_GRPC_PORT, "http");
+
+        assertThatThrownBy(validator::validateConfigurations).isInstanceOf(WeaviateConfigurationException.class)
+                .hasMessageContaining("artemis.weaviate.http-host (must not be empty)");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "", "   ", "\t", "\n" })
+    void testWeaviateHostBlankShouldFailValidation(String host) {
+        ConfigurationValidator validator = createValidator(true, host, VALID_HTTP_PORT, VALID_GRPC_PORT, "http");
+
+        assertThatThrownBy(validator::validateConfigurations).isInstanceOf(WeaviateConfigurationException.class)
+                .hasMessageContaining("artemis.weaviate.http-host (must not be empty)");
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 0, -1, -100, 65536, 70000 })
+    void testWeaviateHttpPortInvalidShouldFailValidation(int port) {
+        ConfigurationValidator validator = createValidator(true, VALID_HOST, port, VALID_GRPC_PORT, "http");
+
+        assertThatThrownBy(validator::validateConfigurations).isInstanceOf(WeaviateConfigurationException.class)
+                .hasMessageContaining("artemis.weaviate.http-port (must be between 1 and 65535)");
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 1, 80, 443, 8080, 65535 })
+    void testWeaviateHttpPortValidShouldPassValidation(int port) {
+        ConfigurationValidator validator = createValidator(true, VALID_HOST, port, VALID_GRPC_PORT, "http");
+
+        assertThatCode(validator::validateConfigurations).doesNotThrowAnyException();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 0, -1, -100, 65536, 70000 })
+    void testWeaviateGrpcPortInvalidShouldFailValidation(int port) {
+        ConfigurationValidator validator = createValidator(true, VALID_HOST, VALID_HTTP_PORT, port, "http");
+
+        assertThatThrownBy(validator::validateConfigurations).isInstanceOf(WeaviateConfigurationException.class)
+                .hasMessageContaining("artemis.weaviate.grpc-port (must be between 1 and 65535)");
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 1, 50051, 50052, 65535 })
+    void testWeaviateGrpcPortValidShouldPassValidation(int port) {
+        ConfigurationValidator validator = createValidator(true, VALID_HOST, VALID_HTTP_PORT, port, "http");
+
+        assertThatCode(validator::validateConfigurations).doesNotThrowAnyException();
+    }
 }
