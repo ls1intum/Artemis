@@ -218,6 +218,34 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldAllowProblemStatementThreadWithoutFilePath() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CreateCommentThreadDTO dto = new CreateCommentThreadDTO(CommentThreadLocationType.PROBLEM_STATEMENT, null, null, 1, buildUserComment("Text"));
+
+        CommentThreadDTO created = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), dto, CommentThreadDTO.class, HttpStatus.CREATED);
+        assertThat(created.initialFilePath()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectAuxiliaryRepositoryIdWhenTargetIsNotAuxiliaryRepo() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CreateCommentThreadDTO dto = new CreateCommentThreadDTO(CommentThreadLocationType.PROBLEM_STATEMENT, 1L, null, 1, buildUserComment("Text"));
+
+        assertBadRequest(reviewThreadsPath(exercise.getId()), dto, "error.auxiliaryRepositoryNotAllowed", THREAD_ENTITY_NAME);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectMissingAuxiliaryRepositoryIdForAuxiliaryTarget() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CreateCommentThreadDTO dto = new CreateCommentThreadDTO(CommentThreadLocationType.AUXILIARY_REPO, null, "file.txt", 1, buildUserComment("Text"));
+
+        assertBadRequest(reviewThreadsPath(exercise.getId()), dto, "error.auxiliaryRepositoryMissing", THREAD_ENTITY_NAME);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldUseLatestVersionForReplyCommentInitialVersion() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         long initialVersionId = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).orElseThrow().getId();

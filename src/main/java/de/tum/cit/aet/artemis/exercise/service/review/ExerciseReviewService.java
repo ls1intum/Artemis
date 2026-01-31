@@ -595,8 +595,8 @@ public class ExerciseReviewService {
         if (auxiliaryRepositoryId == null || previous.auxiliaryRepositories() == null || current.auxiliaryRepositories() == null) {
             return Optional.empty();
         }
-        var previousRepo = previous.auxiliaryRepositories().stream().filter(repo -> repo.id() == auxiliaryRepositoryId).findFirst().orElse(null);
-        var currentRepo = current.auxiliaryRepositories().stream().filter(repo -> repo.id() == auxiliaryRepositoryId).findFirst().orElse(null);
+        var previousRepo = previous.auxiliaryRepositories().stream().filter(repo -> Objects.equals(repo.id(), auxiliaryRepositoryId)).findFirst().orElse(null);
+        var currentRepo = current.auxiliaryRepositories().stream().filter(repo -> Objects.equals(repo.id(), auxiliaryRepositoryId)).findFirst().orElse(null);
         if (previousRepo == null || currentRepo == null || previousRepo.commitId() == null || currentRepo.commitId() == null || currentRepo.repositoryUri() == null) {
             return Optional.empty();
         }

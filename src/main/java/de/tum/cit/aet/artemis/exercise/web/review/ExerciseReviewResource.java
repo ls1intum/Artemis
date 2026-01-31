@@ -208,9 +208,6 @@ public class ExerciseReviewResource {
     }
 
     private void validateThreadPayload(CreateCommentThreadDTO dto) {
-        if (dto.initialLineNumber() == null) {
-            throw new BadRequestAlertException("Initial line number is required", THREAD_ENTITY_NAME, "initialLineNumberMissing");
-        }
         if (dto.targetType() != CommentThreadLocationType.PROBLEM_STATEMENT && dto.initialFilePath() == null) {
             throw new BadRequestAlertException("Initial file path is required for repository threads", THREAD_ENTITY_NAME, "initialFilePathMissing");
         }
