@@ -71,13 +71,10 @@ public class ExerciseReviewResource {
         log.debug("REST request to create exercise review thread for exercise {}", exerciseId);
 
         validateThreadPayload(createCommentThreadDTO);
-        var initialVersion = exerciseReviewService.resolveInitialVersion(createCommentThreadDTO.targetType(), exerciseId);
-        String initialCommitSha = exerciseReviewService.resolveLatestCommitSha(createCommentThreadDTO.targetType(), createCommentThreadDTO.auxiliaryRepositoryId(), exerciseId);
         CreateCommentDTO initialCommentDTO = createCommentThreadDTO.initialComment();
         validateUserComment(initialCommentDTO);
-        CommentThread thread = createCommentThreadDTO.toEntity(initialVersion, initialCommitSha);
-        CommentThread savedThread = exerciseReviewService.createThread(exerciseId, thread);
-        Comment savedComment = exerciseReviewService.createComment(savedThread.getId(), initialCommentDTO.toEntity());
+        CommentThread savedThread = exerciseReviewService.createThread(exerciseId, createCommentThreadDTO);
+        Comment savedComment = exerciseReviewService.createComment(savedThread.getId(), initialCommentDTO);
         return ResponseEntity.created(new URI("/api/exercise/exercises/" + exerciseId + "/review-threads/" + savedThread.getId()))
                 .body(new CommentThreadDTO(savedThread, List.of(new CommentDTO(savedComment))));
     }
@@ -142,8 +139,7 @@ public class ExerciseReviewResource {
             throws URISyntaxException {
         log.debug("REST request to create exercise review comment for thread {}", threadId);
         validateUserComment(createCommentDTO);
-        Comment comment = createCommentDTO.toEntity();
-        Comment savedComment = exerciseReviewService.createComment(threadId, comment);
+        Comment savedComment = exerciseReviewService.createComment(threadId, createCommentDTO);
         return ResponseEntity.created(new URI("/api/exercise/exercises/" + exerciseId + "/review-comments/" + savedComment.getId())).body(new CommentDTO(savedComment));
     }
 

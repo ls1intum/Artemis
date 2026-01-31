@@ -240,7 +240,8 @@
                                  baseColumnNames="author_id"
                                  constraintName="fk_comment_author"
                                  referencedTableName="jhi_user"
-                                 referencedColumnNames="id"/>
+                                 referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
 
         <addForeignKeyConstraint baseTableName="comment"
                                  baseColumnNames="initial_version_id"
@@ -307,7 +308,8 @@
                                  baseColumnNames="author_id"
                                  constraintName="fk_comment_author"
                                  referencedTableName="jhi_user"
-                                 referencedColumnNames="id"/>
+                                 referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
 
         <addForeignKeyConstraint baseTableName="comment"
                                  baseColumnNames="initial_version_id"

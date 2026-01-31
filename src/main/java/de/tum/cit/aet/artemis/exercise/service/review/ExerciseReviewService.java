@@ -43,6 +43,8 @@ import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadLocationType;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.ConsistencyIssueCommentContentDTO;
+import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentDTO;
+import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
@@ -205,11 +207,16 @@ public class ExerciseReviewService {
      * Create a new comment thread for an exercise.
      *
      * @param exerciseId the exercise id
-     * @param thread     the thread to create
+     * @param dto        the thread creation payload
      * @return the persisted thread
      */
-    public CommentThread createThread(long exerciseId, CommentThread thread) {
+    public CommentThread createThread(long exerciseId, CreateCommentThreadDTO dto) {
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, exerciseId);
+
+        ExerciseVersion initialVersion = resolveInitialVersion(dto.targetType(), exerciseId);
+        String initialCommitSha = resolveLatestCommitSha(dto.targetType(), dto.auxiliaryRepositoryId(), exerciseId);
+        CommentThread thread = dto.toEntity(initialVersion, initialCommitSha);
+
         if (thread.getId() != null) {
             throw new BadRequestAlertException("A new thread cannot already have an ID", THREAD_ENTITY_NAME, "idexists");
         }
@@ -227,11 +234,12 @@ public class ExerciseReviewService {
      * Create a new comment within a thread.
      *
      * @param threadId the thread id
-     * @param comment  the comment to create
+     * @param dto      the comment to create
      * @return the persisted comment
      */
-    public Comment createComment(long threadId, Comment comment) {
+    public Comment createComment(long threadId, CreateCommentDTO dto) {
         CommentThread thread = findThreadByIdElseThrow(threadId);
+        Comment comment = dto.toEntity();
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, thread.getExercise().getId());
 
         if (comment.getId() != null) {
