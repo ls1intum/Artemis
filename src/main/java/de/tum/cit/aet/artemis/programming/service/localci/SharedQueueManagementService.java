@@ -97,7 +97,10 @@ public class SharedQueueManagementService {
             distributedDataAccessService.getDistributedDockerImageCleanupInfo().clear();
             Set<DockerImageBuild> lastBuildDatesForDockerImages = buildJobRepository.findAllLastBuildDatesForDockerImages();
             for (DockerImageBuild dockerImageBuild : lastBuildDatesForDockerImages) {
-                distributedDataAccessService.getDistributedDockerImageCleanupInfo().put(dockerImageBuild.dockerImage(), dockerImageBuild.lastBuildCompletionDate());
+                // Hazelcast maps do not allow null keys or values, so skip entries with null values
+                if (dockerImageBuild.dockerImage() != null && dockerImageBuild.lastBuildCompletionDate() != null) {
+                    distributedDataAccessService.getDistributedDockerImageCleanupInfo().put(dockerImageBuild.dockerImage(), dockerImageBuild.lastBuildCompletionDate());
+                }
             }
             log.debug("pushDockerImageCleanupInfo took {}ms", System.currentTimeMillis() - startDate);
         }
