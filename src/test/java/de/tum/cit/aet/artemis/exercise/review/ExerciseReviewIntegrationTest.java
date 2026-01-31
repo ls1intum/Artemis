@@ -19,18 +19,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
+import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadGroup;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadLocationType;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentThreadDTO;
+import de.tum.cit.aet.artemis.exercise.dto.review.CommentThreadGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.ConsistencyIssueCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadDTO;
+import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UpdateCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UpdateThreadResolvedStateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentRepository;
+import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadGroupRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -61,6 +65,9 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
     @Autowired
     private CommentRepository commentRepository;
 
+    @Autowired
+    private CommentThreadGroupRepository commentThreadGroupRepository;
+
     @BeforeEach
     void initTest() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
@@ -68,7 +75,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createThread_withInitialUserComment_createsThreadAndComment() throws Exception {
+    void shouldCreateThreadWithInitialUserComment() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
 
         CreateCommentThreadDTO dto = buildThreadDTO(buildUserComment("Initial comment"));
@@ -83,7 +90,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createThread_withNonUserComment_rejected() throws Exception {
+    void shouldRejectThreadWithNonUserComment() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
 
         CreateCommentDTO invalidComment = new CreateCommentDTO(CommentType.CONSISTENCY_CHECK, buildConsistencyIssueContent());
@@ -94,7 +101,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createUserComment_withNonUserContent_rejected() throws Exception {
+    void shouldRejectUserCommentWithNonUserContent() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         CommentThreadDTO createdThread = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Initial comment")),
                 CommentThreadDTO.class, HttpStatus.CREATED);
@@ -105,7 +112,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateUserCommentContent_withNonUserContent_rejected() throws Exception {
+    void shouldRejectUpdateWithNonUserContent() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         CommentThreadDTO createdThread = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Initial comment")),
                 CommentThreadDTO.class, HttpStatus.CREATED);
@@ -117,7 +124,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createUserComment_withUserContent_succeeds() throws Exception {
+    void shouldCreateUserCommentWithUserContent() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         CommentThreadDTO createdThread = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Initial comment")),
                 CommentThreadDTO.class, HttpStatus.CREATED);
@@ -131,7 +138,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateUserCommentContent_withUserContent_succeeds() throws Exception {
+    void shouldUpdateUserCommentContentWithUserContent() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         CommentThreadDTO createdThread = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Initial comment")),
                 CommentThreadDTO.class, HttpStatus.CREATED);
@@ -146,7 +153,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deleteComment_removesThreadWhenLastComment() throws Exception {
+    void shouldDeleteThreadWhenLastCommentRemoved() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         CommentThreadDTO createdThread = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Initial comment")),
                 CommentThreadDTO.class, HttpStatus.CREATED);
@@ -160,7 +167,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getThreads_returnsCommentsAndMetadata() throws Exception {
+    void shouldReturnThreadsWithCommentsAndMetadata() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Initial comment")), CommentThreadDTO.class, HttpStatus.CREATED);
 
@@ -171,7 +178,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateThreadResolvedState_succeeds() throws Exception {
+    void shouldUpdateThreadResolvedState() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         CommentThreadDTO createdThread = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Initial comment")),
                 CommentThreadDTO.class, HttpStatus.CREATED);
@@ -184,34 +191,34 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createThread_withoutInitialComment_rejected() throws Exception {
+    void shouldRejectThreadWithoutInitialComment() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
-        CreateCommentThreadDTO dto = new CreateCommentThreadDTO(null, CommentThreadLocationType.PROBLEM_STATEMENT, null, "problem_statement.md", 1, null);
+        CreateCommentThreadDTO dto = new CreateCommentThreadDTO(CommentThreadLocationType.PROBLEM_STATEMENT, null, null, 1, null);
 
         assertBadRequest(reviewThreadsPath(exercise.getId()), dto, "error.validation", null);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createThread_missingInitialLocation_rejected() throws Exception {
+    void shouldRejectThreadWithoutInitialLineNumber() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
-        CreateCommentThreadDTO dto = new CreateCommentThreadDTO(null, CommentThreadLocationType.PROBLEM_STATEMENT, null, null, null, buildUserComment("Text"));
+        CreateCommentThreadDTO dto = new CreateCommentThreadDTO(CommentThreadLocationType.PROBLEM_STATEMENT, null, null, null, buildUserComment("Text"));
 
-        assertBadRequest(reviewThreadsPath(exercise.getId()), dto, "error.initialLocationMissing", THREAD_ENTITY_NAME);
+        assertBadRequest(reviewThreadsPath(exercise.getId()), dto, "error.validation", null);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createThread_repositoryTarget_missingLocation_rejected() throws Exception {
+    void shouldRejectRepositoryThreadWithoutInitialFilePath() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
-        CreateCommentThreadDTO dto = new CreateCommentThreadDTO(null, CommentThreadLocationType.TEMPLATE_REPO, null, null, null, buildUserComment("Text"));
+        CreateCommentThreadDTO dto = new CreateCommentThreadDTO(CommentThreadLocationType.TEMPLATE_REPO, null, null, 1, buildUserComment("Text"));
 
-        assertBadRequest(reviewThreadsPath(exercise.getId()), dto, "error.initialLocationMissing", THREAD_ENTITY_NAME);
+        assertBadRequest(reviewThreadsPath(exercise.getId()), dto, "error.initialFilePathMissing", THREAD_ENTITY_NAME);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void commentInitialVersion_followsThreadAndLatestVersion() throws Exception {
+    void shouldUseLatestVersionForReplyCommentInitialVersion() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         long initialVersionId = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).orElseThrow().getId();
 
@@ -232,7 +239,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void createThread_forbiddenForStudent() throws Exception {
+    void shouldForbidThreadCreationForStudent() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         long beforeCount = commentThreadRepository.count();
 
@@ -243,7 +250,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getThreads_forbiddenForStudent() throws Exception {
+    void shouldForbidThreadListForStudent() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
 
         request.getList(reviewThreadsPath(exercise.getId()), HttpStatus.FORBIDDEN, CommentThreadDTO.class);
@@ -253,7 +260,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void updateThreadResolvedState_forbiddenForStudent() throws Exception {
+    void shouldForbidThreadResolvedUpdateForStudent() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         CommentThreadDTO createdThread = createThreadWithComment(exercise, "Initial comment");
 
@@ -266,7 +273,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void updateComment_forbiddenForStudent() throws Exception {
+    void shouldForbidCommentUpdateForStudent() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         CommentThreadDTO createdThread = createThreadWithComment(exercise, "Initial comment");
         CommentDTO initialComment = createdThread.comments().getFirst();
@@ -281,7 +288,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void deleteComment_forbiddenForStudent() throws Exception {
+    void shouldForbidCommentDeleteForStudent() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         CommentThreadDTO createdThread = createThreadWithComment(exercise, "Initial comment");
         CommentDTO initialComment = createdThread.comments().getFirst();
@@ -294,7 +301,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deleteComment_keepsThreadWhenCommentsRemain() throws Exception {
+    void shouldKeepThreadWhenOtherCommentsRemain() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         CommentThreadDTO createdThread = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Initial comment")),
                 CommentThreadDTO.class, HttpStatus.CREATED);
@@ -308,7 +315,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getThreads_returnsCommentsInOrder() throws Exception {
+    void shouldReturnThreadsWithCommentsInOrder() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         CommentThreadDTO createdThread = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Initial comment")),
                 CommentThreadDTO.class, HttpStatus.CREATED);
@@ -321,6 +328,123 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(thread.comments().get(1).id()).isEqualTo(reply.id());
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldCreateThreadGroupWithTwoThreads() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CommentThreadDTO first = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("First")), CommentThreadDTO.class,
+                HttpStatus.CREATED);
+        CommentThreadDTO second = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Second")), CommentThreadDTO.class,
+                HttpStatus.CREATED);
+
+        CreateCommentThreadGroupDTO groupRequest = new CreateCommentThreadGroupDTO(List.of(first.id(), second.id()));
+        CommentThreadGroupDTO group = request.postWithResponseBody(reviewThreadGroupsPath(exercise.getId()), groupRequest, CommentThreadGroupDTO.class, HttpStatus.CREATED);
+
+        assertThat(group.exerciseId()).isEqualTo(exercise.getId());
+        assertThat(group.threadIds()).containsExactlyInAnyOrder(first.id(), second.id());
+
+        var threads = request.getList(reviewThreadsPath(exercise.getId()), HttpStatus.OK, CommentThreadDTO.class);
+        assertThat(threads).allMatch(thread -> thread.groupId() != null && thread.groupId().equals(group.id()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldDeleteThreadGroupKeepsThreads() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CommentThreadDTO first = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("First")), CommentThreadDTO.class,
+                HttpStatus.CREATED);
+        CommentThreadDTO second = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Second")), CommentThreadDTO.class,
+                HttpStatus.CREATED);
+
+        CreateCommentThreadGroupDTO groupRequest = new CreateCommentThreadGroupDTO(List.of(first.id(), second.id()));
+        CommentThreadGroupDTO group = request.postWithResponseBody(reviewThreadGroupsPath(exercise.getId()), groupRequest, CommentThreadGroupDTO.class, HttpStatus.CREATED);
+
+        request.delete(reviewThreadGroupPath(exercise.getId(), group.id()), HttpStatus.OK);
+
+        var threads = request.getList(reviewThreadsPath(exercise.getId()), HttpStatus.OK, CommentThreadDTO.class);
+        assertThat(threads).hasSize(2);
+        assertThat(threads).allMatch(thread -> thread.groupId() == null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectThreadGroupWithTooFewThreads() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CommentThreadDTO first = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("First")), CommentThreadDTO.class,
+                HttpStatus.CREATED);
+
+        CreateCommentThreadGroupDTO groupRequest = new CreateCommentThreadGroupDTO(List.of(first.id()));
+        assertBadRequest(reviewThreadGroupsPath(exercise.getId()), groupRequest, "error.validation", null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectThreadGroupWithThreadFromDifferentExercise() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CommentThreadDTO first = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("First")), CommentThreadDTO.class,
+                HttpStatus.CREATED);
+
+        var otherCourse = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        TextExercise otherExercise = ExerciseUtilService.getFirstExerciseWithType(otherCourse, TextExercise.class);
+        exerciseVersionService.createExerciseVersion(otherExercise);
+        CommentThreadDTO otherThread = request.postWithResponseBody(reviewThreadsPath(otherExercise.getId()), buildThreadDTO(buildUserComment("Second")), CommentThreadDTO.class,
+                HttpStatus.CREATED);
+
+        CreateCommentThreadGroupDTO groupRequest = new CreateCommentThreadGroupDTO(List.of(first.id(), otherThread.id()));
+        assertBadRequest(reviewThreadGroupsPath(exercise.getId()), groupRequest, "error.exerciseMismatch", "exerciseReviewCommentThread");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectThreadGroupWithAlreadyGroupedThread() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CommentThreadDTO first = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("First")), CommentThreadDTO.class,
+                HttpStatus.CREATED);
+        CommentThreadDTO second = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Second")), CommentThreadDTO.class,
+                HttpStatus.CREATED);
+        CommentThreadDTO third = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Third")), CommentThreadDTO.class,
+                HttpStatus.CREATED);
+
+        CreateCommentThreadGroupDTO initialGroup = new CreateCommentThreadGroupDTO(List.of(first.id(), second.id()));
+        request.postWithResponseBody(reviewThreadGroupsPath(exercise.getId()), initialGroup, CommentThreadGroupDTO.class, HttpStatus.CREATED);
+
+        CreateCommentThreadGroupDTO groupRequest = new CreateCommentThreadGroupDTO(List.of(first.id(), third.id()));
+        assertBadRequest(reviewThreadGroupsPath(exercise.getId()), groupRequest, "error.threadGrouped", "exerciseReviewCommentThread");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectThreadGroupWithMissingThread() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CommentThreadDTO first = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("First")), CommentThreadDTO.class,
+                HttpStatus.CREATED);
+
+        CreateCommentThreadGroupDTO groupRequest = new CreateCommentThreadGroupDTO(List.of(first.id(), Long.MAX_VALUE));
+        assertBadRequest(reviewThreadGroupsPath(exercise.getId()), groupRequest, "error.threadMissing", "exerciseReviewCommentThread");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldForbidThreadGroupCreationForStudent() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CreateCommentThreadGroupDTO groupRequest = new CreateCommentThreadGroupDTO(List.of(1L, 2L));
+        request.postWithResponseBody(reviewThreadGroupsPath(exercise.getId()), groupRequest, CommentThreadGroupDTO.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldForbidThreadGroupDeletionForStudent() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CommentThread first = commentThreadRepository.save(buildThreadEntity(exercise));
+        CommentThread second = commentThreadRepository.save(buildThreadEntity(exercise));
+        CommentThreadGroup group = commentThreadGroupRepository.save(buildGroupEntity(exercise, List.of(first, second)));
+        first.setGroup(group);
+        second.setGroup(group);
+        commentThreadRepository.saveAll(List.of(first, second));
+
+        request.delete(reviewThreadGroupPath(exercise.getId(), group.getId()), HttpStatus.FORBIDDEN);
+    }
+
     private TextExercise createExerciseWithVersion() {
         var course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         TextExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
@@ -329,7 +453,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     private CreateCommentThreadDTO buildThreadDTO(CreateCommentDTO initialComment) {
-        return new CreateCommentThreadDTO(null, CommentThreadLocationType.PROBLEM_STATEMENT, null, "problem_statement.md", 1, initialComment);
+        return new CreateCommentThreadDTO(CommentThreadLocationType.PROBLEM_STATEMENT, null, "problem_statement.md", 1, initialComment);
     }
 
     private CreateCommentDTO buildUserComment(String text) {
@@ -354,6 +478,14 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     private String reviewThreadResolvedPath(long exerciseId, long threadId) {
         return reviewThreadsPath(exerciseId) + "/" + threadId + "/resolved";
+    }
+
+    private String reviewThreadGroupsPath(long exerciseId) {
+        return "/api/exercise/exercises/" + exerciseId + "/review-thread-groups";
+    }
+
+    private String reviewThreadGroupPath(long exerciseId, long groupId) {
+        return reviewThreadGroupsPath(exerciseId) + "/" + groupId;
     }
 
     private void assertBadRequest(String path, Object body, String expectedMessage, String expectedParams) throws Exception {
@@ -403,5 +535,27 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         var savedComment = commentRepository.save(comment);
 
         return new CommentThreadDTO(savedThread, List.of(new CommentDTO(savedComment)));
+    }
+
+    private CommentThread buildThreadEntity(TextExercise exercise) {
+        CommentThread thread = new CommentThread();
+        thread.setExercise(exercise);
+        thread.setTargetType(CommentThreadLocationType.PROBLEM_STATEMENT);
+        thread.setInitialFilePath("problem_statement.md");
+        thread.setInitialLineNumber(1);
+        thread.setFilePath("problem_statement.md");
+        thread.setLineNumber(1);
+        thread.setOutdated(false);
+        thread.setResolved(false);
+        thread.setInitialVersion(exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).orElse(null));
+
+        return thread;
+    }
+
+    private CommentThreadGroup buildGroupEntity(TextExercise exercise, List<CommentThread> threads) {
+        CommentThreadGroup group = new CommentThreadGroup();
+        group.setExercise(exercise);
+        group.getThreads().addAll(threads);
+        return group;
     }
 }

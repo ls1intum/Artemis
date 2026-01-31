@@ -32,9 +32,10 @@ import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentRepository;
+import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadGroupRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
-import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewCommentService;
-import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewCommentService.LineMappingResult;
+import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService;
+import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService.LineMappingResult;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
 import de.tum.cit.aet.artemis.hyperion.domain.Severity;
@@ -48,12 +49,12 @@ import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExe
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
-class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
+class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "reviewcommentservice";
 
     @Autowired
-    private ExerciseReviewCommentService exerciseReviewCommentService;
+    private ExerciseReviewService exerciseReviewService;
 
     @Autowired
     private ExerciseVersionService exerciseVersionService;
@@ -66,6 +67,9 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
 
     @Autowired
     private CommentRepository commentRepository;
+
+    @Autowired
+    private CommentThreadGroupRepository commentThreadGroupRepository;
 
     @Autowired
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
@@ -98,7 +102,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         ProgrammingExercise otherExercise = ExerciseUtilService.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
         persistThread(otherExercise);
 
-        List<CommentThread> threads = exerciseReviewCommentService.findThreadsByExerciseId(programmingExercise.getId());
+        List<CommentThread> threads = exerciseReviewService.findThreadsByExerciseId(programmingExercise.getId());
 
         assertThat(threads).hasSize(1);
         assertThat(threads.getFirst().getId()).isEqualTo(thread.getId());
@@ -107,7 +111,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void shouldThrowForbiddenWhenStudentRequestsThreads() {
-        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> exerciseReviewCommentService.findThreadsByExerciseId(programmingExercise.getId()));
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> exerciseReviewService.findThreadsByExerciseId(programmingExercise.getId()));
     }
 
     @Test
@@ -118,7 +122,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         comment.setThread(thread);
         commentRepository.save(comment);
 
-        List<CommentThread> threads = exerciseReviewCommentService.findThreadsWithCommentsByExerciseId(programmingExercise.getId());
+        List<CommentThread> threads = exerciseReviewService.findThreadsWithCommentsByExerciseId(programmingExercise.getId());
 
         assertThat(threads).hasSize(1);
         CommentThread loaded = threads.getFirst();
@@ -139,7 +143,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         commentRepository.save(first);
         commentRepository.save(second);
 
-        List<Comment> comments = exerciseReviewCommentService.findCommentsByThreadId(thread.getId());
+        List<Comment> comments = exerciseReviewService.findCommentsByThreadId(thread.getId());
 
         assertThat(comments).hasSize(2);
         assertThat(comments.getFirst().getContent()).isEqualTo(first.getContent());
@@ -150,7 +154,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
     void shouldCreateThreadWhenValid() {
         CommentThread thread = buildThread();
 
-        CommentThread saved = exerciseReviewCommentService.createThread(programmingExercise.getId(), thread);
+        CommentThread saved = exerciseReviewService.createThread(programmingExercise.getId(), thread);
 
         assertThat(saved.getExercise()).isNotNull();
         assertThat(saved.getExercise().getId()).isEqualTo(programmingExercise.getId());
@@ -162,7 +166,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         CommentThread thread = buildThread();
         thread.setId(99L);
 
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exerciseReviewCommentService.createThread(programmingExercise.getId(), thread));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exerciseReviewService.createThread(programmingExercise.getId(), thread));
     }
 
     @Test
@@ -173,7 +177,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         CommentThread thread = buildThread();
         thread.setExercise(otherExercise);
 
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exerciseReviewCommentService.createThread(programmingExercise.getId(), thread));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exerciseReviewService.createThread(programmingExercise.getId(), thread));
     }
 
     @Test
@@ -182,10 +186,10 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         ExerciseVersion initialVersion = createExerciseVersion();
         CommentThread thread = buildThread();
         thread.setInitialVersion(initialVersion);
-        thread = exerciseReviewCommentService.createThread(programmingExercise.getId(), thread);
+        thread = exerciseReviewService.createThread(programmingExercise.getId(), thread);
 
         Comment comment = buildUserComment("Initial");
-        Comment saved = exerciseReviewCommentService.createComment(thread.getId(), comment);
+        Comment saved = exerciseReviewService.createComment(thread.getId(), comment);
 
         assertThat(saved.getAuthor()).isNotNull();
         assertThat(saved.getInitialVersion()).isEqualTo(initialVersion);
@@ -198,14 +202,14 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         ExerciseVersion initialVersion = createExerciseVersion();
         CommentThread thread = buildThread();
         thread.setInitialVersion(initialVersion);
-        thread = exerciseReviewCommentService.createThread(programmingExercise.getId(), thread);
-        exerciseReviewCommentService.createComment(thread.getId(), buildUserComment("Initial"));
+        thread = exerciseReviewService.createThread(programmingExercise.getId(), thread);
+        exerciseReviewService.createComment(thread.getId(), buildUserComment("Initial"));
 
         programmingExercise.setProblemStatement("New Line\nLine 1\nLine 2\nLine 3");
         programmingExerciseRepository.save(programmingExercise);
         ExerciseVersion latestVersion = createExerciseVersion();
 
-        Comment reply = exerciseReviewCommentService.createComment(thread.getId(), buildUserComment("Reply"));
+        Comment reply = exerciseReviewService.createComment(thread.getId(), buildUserComment("Reply"));
 
         assertThat(reply.getInitialVersion()).isEqualTo(latestVersion);
         assertThat(reply.getInitialVersion()).isNotEqualTo(initialVersion);
@@ -214,10 +218,10 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldDeleteThreadWhenLastCommentRemoved() {
-        CommentThread thread = exerciseReviewCommentService.createThread(programmingExercise.getId(), buildThread());
-        Comment comment = exerciseReviewCommentService.createComment(thread.getId(), buildUserComment("Only"));
+        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThread());
+        Comment comment = exerciseReviewService.createComment(thread.getId(), buildUserComment("Only"));
 
-        exerciseReviewCommentService.deleteComment(comment.getId());
+        exerciseReviewService.deleteComment(comment.getId());
 
         assertThat(commentThreadRepository.findById(thread.getId())).isEmpty();
     }
@@ -225,11 +229,11 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldKeepThreadWhenOtherCommentsExist() {
-        CommentThread thread = exerciseReviewCommentService.createThread(programmingExercise.getId(), buildThread());
-        Comment first = exerciseReviewCommentService.createComment(thread.getId(), buildUserComment("First"));
-        exerciseReviewCommentService.createComment(thread.getId(), buildUserComment("Second"));
+        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThread());
+        Comment first = exerciseReviewService.createComment(thread.getId(), buildUserComment("First"));
+        exerciseReviewService.createComment(thread.getId(), buildUserComment("Second"));
 
-        exerciseReviewCommentService.deleteComment(first.getId());
+        exerciseReviewService.deleteComment(first.getId());
 
         assertThat(commentThreadRepository.findById(thread.getId())).isPresent();
         assertThat(commentRepository.countByThreadId(thread.getId())).isEqualTo(1);
@@ -238,9 +242,9 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCountCommentsByThreadId() {
-        CommentThread thread = exerciseReviewCommentService.createThread(programmingExercise.getId(), buildThread());
-        exerciseReviewCommentService.createComment(thread.getId(), buildUserComment("First"));
-        exerciseReviewCommentService.createComment(thread.getId(), buildUserComment("Second"));
+        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThread());
+        exerciseReviewService.createComment(thread.getId(), buildUserComment("First"));
+        exerciseReviewService.createComment(thread.getId(), buildUserComment("Second"));
 
         long count = commentRepository.countByThreadId(thread.getId());
 
@@ -250,9 +254,9 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldUpdateThreadResolvedState() {
-        CommentThread thread = exerciseReviewCommentService.createThread(programmingExercise.getId(), buildThread());
+        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThread());
 
-        CommentThread updated = exerciseReviewCommentService.updateThreadResolvedState(thread.getId(), true);
+        CommentThread updated = exerciseReviewService.updateThreadResolvedState(thread.getId(), true);
 
         assertThat(updated.isResolved()).isTrue();
         CommentThread persisted = commentThreadRepository.findById(thread.getId()).orElseThrow();
@@ -261,9 +265,45 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldCreateThreadGroupWithTwoThreads() {
+        CommentThread first = exerciseReviewService.createThread(programmingExercise.getId(), buildThread());
+        CommentThread second = exerciseReviewService.createThread(programmingExercise.getId(), buildThread());
+
+        var group = exerciseReviewService.createGroup(programmingExercise.getId(), List.of(first.getId(), second.getId()));
+
+        assertThat(group.getId()).isNotNull();
+        assertThat(group.getExercise()).isEqualTo(programmingExercise);
+        assertThat(commentThreadRepository.findById(first.getId())).get().extracting(CommentThread::getGroup).isEqualTo(group);
+        assertThat(commentThreadRepository.findById(second.getId())).get().extracting(CommentThread::getGroup).isEqualTo(group);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldDeleteThreadGroupAndKeepThreads() {
+        CommentThread first = exerciseReviewService.createThread(programmingExercise.getId(), buildThread());
+        CommentThread second = exerciseReviewService.createThread(programmingExercise.getId(), buildThread());
+
+        var group = exerciseReviewService.createGroup(programmingExercise.getId(), List.of(first.getId(), second.getId()));
+        exerciseReviewService.deleteGroup(group.getId());
+
+        assertThat(commentThreadGroupRepository.findById(group.getId())).isEmpty();
+        assertThat(commentThreadRepository.findById(first.getId())).get().extracting(CommentThread::getGroup).isNull();
+        assertThat(commentThreadRepository.findById(second.getId())).get().extracting(CommentThread::getGroup).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectThreadGroupWithTooFewThreads() {
+        CommentThread first = exerciseReviewService.createThread(programmingExercise.getId(), buildThread());
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exerciseReviewService.createGroup(programmingExercise.getId(), List.of(first.getId())));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldLoadThreadWithCommentsById() {
-        CommentThread thread = exerciseReviewCommentService.createThread(programmingExercise.getId(), buildThread());
-        exerciseReviewCommentService.createComment(thread.getId(), buildUserComment("First"));
+        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThread());
+        exerciseReviewService.createComment(thread.getId(), buildUserComment("First"));
 
         Optional<CommentThread> loaded = commentThreadRepository.findWithCommentsById(thread.getId());
 
@@ -274,8 +314,8 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldLoadThreadsWithCommentsByExerciseId() {
-        CommentThread thread = exerciseReviewCommentService.createThread(programmingExercise.getId(), buildThread());
-        exerciseReviewCommentService.createComment(thread.getId(), buildUserComment("First"));
+        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThread());
+        exerciseReviewService.createComment(thread.getId(), buildUserComment("First"));
 
         List<CommentThread> threads = commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId());
 
@@ -286,8 +326,8 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldLoadCommentWithThreadAndExercise() {
-        CommentThread thread = exerciseReviewCommentService.createThread(programmingExercise.getId(), buildThread());
-        Comment comment = exerciseReviewCommentService.createComment(thread.getId(), buildUserComment("Initial"));
+        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThread());
+        Comment comment = exerciseReviewService.createComment(thread.getId(), buildUserComment("Initial"));
 
         Comment loaded = commentRepository.findWithThreadById(comment.getId()).orElseThrow();
 
@@ -300,11 +340,11 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldUpdateCommentContentAndTimestamp() {
-        CommentThread thread = exerciseReviewCommentService.createThread(programmingExercise.getId(), buildThread());
-        Comment comment = exerciseReviewCommentService.createComment(thread.getId(), buildUserComment("Initial"));
+        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThread());
+        Comment comment = exerciseReviewService.createComment(thread.getId(), buildUserComment("Initial"));
         Instant previousModified = comment.getLastModifiedDate();
 
-        Comment updated = exerciseReviewCommentService.updateCommentContent(comment.getId(), new UserCommentContentDTO("Updated"));
+        Comment updated = exerciseReviewService.updateCommentContent(comment.getId(), new UserCommentContentDTO("Updated"));
 
         assertThat(updated.getContent()).isInstanceOf(UserCommentContentDTO.class);
         assertThat(((UserCommentContentDTO) updated.getContent()).text()).isEqualTo("Updated");
@@ -314,58 +354,58 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRejectCommentWithoutType() {
-        CommentThread thread = exerciseReviewCommentService.createThread(programmingExercise.getId(), buildThread());
+        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThread());
         Comment comment = new Comment();
         comment.setContent(new UserCommentContentDTO("Missing type"));
 
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exerciseReviewCommentService.createComment(thread.getId(), comment));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exerciseReviewService.createComment(thread.getId(), comment));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRejectCommentWithMismatchedContentType() {
-        CommentThread thread = exerciseReviewCommentService.createThread(programmingExercise.getId(), buildThread());
+        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThread());
         Comment comment = new Comment();
         comment.setType(CommentType.USER);
         comment.setContent(new ConsistencyIssueCommentContentDTO(Severity.LOW, ConsistencyIssueCategory.METHOD_RETURN_TYPE_MISMATCH, "wrong", null));
 
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exerciseReviewCommentService.createComment(thread.getId(), comment));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exerciseReviewService.createComment(thread.getId(), comment));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldReturnNullCommitForProblemStatementThreads() {
-        String commitSha = exerciseReviewCommentService.resolveLatestCommitSha(CommentThreadLocationType.PROBLEM_STATEMENT, null, programmingExercise.getId());
+        String commitSha = exerciseReviewService.resolveLatestCommitSha(CommentThreadLocationType.PROBLEM_STATEMENT, null, programmingExercise.getId());
 
         assertThat(commitSha).isNull();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void resolveInitialVersion_returnsLatestForProblemStatement() {
+    void shouldResolveInitialVersionForProblemStatement() {
         ExerciseVersion initialVersion = createExerciseVersion();
 
-        ExerciseVersion resolved = exerciseReviewCommentService.resolveInitialVersion(CommentThreadLocationType.PROBLEM_STATEMENT, programmingExercise.getId());
+        ExerciseVersion resolved = exerciseReviewService.resolveInitialVersion(CommentThreadLocationType.PROBLEM_STATEMENT, programmingExercise.getId());
 
         assertThat(resolved).isEqualTo(initialVersion);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void resolveInitialVersion_returnsNullForRepositoryTargets() {
-        ExerciseVersion resolved = exerciseReviewCommentService.resolveInitialVersion(CommentThreadLocationType.TEMPLATE_REPO, programmingExercise.getId());
+    void shouldResolveInitialVersionToNullForRepositoryTargets() {
+        ExerciseVersion resolved = exerciseReviewService.resolveInitialVersion(CommentThreadLocationType.TEMPLATE_REPO, programmingExercise.getId());
 
         assertThat(resolved).isNull();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void resolveInitialVersion_throwsWhenMissingProblemStatementVersion() {
+    void shouldRejectInitialVersionWhenMissingProblemStatementVersion() {
         commentThreadRepository.deleteAll();
         exerciseVersionRepository.deleteAll();
 
         assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> exerciseReviewCommentService.resolveInitialVersion(CommentThreadLocationType.PROBLEM_STATEMENT, programmingExercise.getId()));
+                .isThrownBy(() -> exerciseReviewService.resolveInitialVersion(CommentThreadLocationType.PROBLEM_STATEMENT, programmingExercise.getId()));
     }
 
     @Test
@@ -378,7 +418,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
 
-        String commitSha = exerciseReviewCommentService.resolveLatestCommitSha(CommentThreadLocationType.TEMPLATE_REPO, null, programmingExercise.getId());
+        String commitSha = exerciseReviewService.resolveLatestCommitSha(CommentThreadLocationType.TEMPLATE_REPO, null, programmingExercise.getId());
 
         assertThat(commitSha).isEqualTo(gitService.getLastCommitHash(repositoryUri));
     }
@@ -393,7 +433,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
         programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
 
-        String commitSha = exerciseReviewCommentService.resolveLatestCommitSha(CommentThreadLocationType.SOLUTION_REPO, null, programmingExercise.getId());
+        String commitSha = exerciseReviewService.resolveLatestCommitSha(CommentThreadLocationType.SOLUTION_REPO, null, programmingExercise.getId());
 
         assertThat(commitSha).isEqualTo(gitService.getLastCommitHash(repositoryUri));
     }
@@ -406,7 +446,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         programmingExercise.setTestRepositoryUri(repositoryUri.toString());
         programmingExerciseRepository.save(programmingExercise);
 
-        String commitSha = exerciseReviewCommentService.resolveLatestCommitSha(CommentThreadLocationType.TEST_REPO, null, programmingExercise.getId());
+        String commitSha = exerciseReviewService.resolveLatestCommitSha(CommentThreadLocationType.TEST_REPO, null, programmingExercise.getId());
 
         assertThat(commitSha).isEqualTo(gitService.getLastCommitHash(repositoryUri));
     }
@@ -425,43 +465,43 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         programmingExerciseRepository.save(programmingExercise);
         auxiliaryRepository = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow().getAuxiliaryRepositories().getFirst();
 
-        String commitSha = exerciseReviewCommentService.resolveLatestCommitSha(CommentThreadLocationType.AUXILIARY_REPO, auxiliaryRepository.getId(), programmingExercise.getId());
+        String commitSha = exerciseReviewService.resolveLatestCommitSha(CommentThreadLocationType.AUXILIARY_REPO, auxiliaryRepository.getId(), programmingExercise.getId());
 
         assertThat(commitSha).isEqualTo(gitService.getLastCommitHash(repositoryUri));
     }
 
     @Test
-    void mapLineInText_shiftsLinesAfterInsertion() {
+    void shouldMapLineInTextShiftsLinesAfterInsertion() {
         String oldText = "a\nb\nc\nd\n";
         String newText = "a\nb\nx\nc\nd\n";
 
-        LineMappingResult result = exerciseReviewCommentService.mapLineInText(oldText, newText, 3);
+        LineMappingResult result = exerciseReviewService.mapLineInText(oldText, newText, 3);
 
         assertThat(result.newLine()).isEqualTo(4);
         assertThat(result.outdated()).isFalse();
     }
 
     @Test
-    void mapLineInText_marksLineOutdatedOnReplacement() {
+    void shouldMapLineInTextMarksLineOutdatedOnReplacement() {
         String oldText = "a\nb\nc\nd\n";
         String newText = "a\nb\nc2\nd\n";
 
-        LineMappingResult result = exerciseReviewCommentService.mapLineInText(oldText, newText, 3);
+        LineMappingResult result = exerciseReviewService.mapLineInText(oldText, newText, 3);
 
         assertThat(result.newLine()).isEqualTo(3);
         assertThat(result.outdated()).isTrue();
     }
 
     @Test
-    void mapLineInText_marksInvalidLineAsOutdated() {
-        LineMappingResult result = exerciseReviewCommentService.mapLineInText("a\nb\n", "a\nb\n", 0);
+    void shouldMapLineInTextMarksInvalidLineAsOutdated() {
+        LineMappingResult result = exerciseReviewService.mapLineInText("a\nb\n", "a\nb\n", 0);
 
         assertThat(result.newLine()).isNull();
         assertThat(result.outdated()).isTrue();
     }
 
     @Test
-    void mapLine_mapsLinesBetweenCommitsInRepository() throws Exception {
+    void shouldMapLineBetweenCommitsInRepository() throws Exception {
         LocalRepoWithUri repo = createLocalRepository("linemap");
         LocalVCRepositoryUri repositoryUri = repo.uri();
         LocalRepository repository = repo.repository();
@@ -481,21 +521,21 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         RevCommit newCommit = GitService.commit(repository.workingCopyGitRepo).setMessage("Update file").call();
         repository.workingCopyGitRepo.push().setRemote("origin").call();
 
-        LineMappingResult shiftedLine = exerciseReviewCommentService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 2);
+        LineMappingResult shiftedLine = exerciseReviewService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 2);
         assertThat(shiftedLine.newLine()).isEqualTo(3);
         assertThat(shiftedLine.outdated()).isFalse();
 
-        LineMappingResult editedLine = exerciseReviewCommentService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 8);
+        LineMappingResult editedLine = exerciseReviewService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 8);
         assertThat(editedLine.newLine()).isEqualTo(9);
         assertThat(editedLine.outdated()).isTrue();
 
-        LineMappingResult unchangedLine = exerciseReviewCommentService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 9);
+        LineMappingResult unchangedLine = exerciseReviewService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 9);
         assertThat(unchangedLine.newLine()).isEqualTo(10);
         assertThat(unchangedLine.outdated()).isFalse();
     }
 
     @Test
-    void mapLine_marksDeletedFileAsOutdated() throws Exception {
+    void shouldMapLineMarksDeletedFileAsOutdated() throws Exception {
         LocalRepoWithUri repo = createLocalRepository("linemap-delete");
         LocalVCRepositoryUri repositoryUri = repo.uri();
         LocalRepository repository = repo.repository();
@@ -512,13 +552,13 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         RevCommit newCommit = GitService.commit(repository.workingCopyGitRepo).setMessage("Delete file").call();
         repository.workingCopyGitRepo.push().setRemote("origin").call();
 
-        LineMappingResult result = exerciseReviewCommentService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 1);
+        LineMappingResult result = exerciseReviewService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 1);
         assertThat(result.newLine()).isNull();
         assertThat(result.outdated()).isTrue();
     }
 
     @Test
-    void mapLine_marksAddedFileAsOutdatedWhenPreviouslyMissing() throws Exception {
+    void shouldMapLineMarksAddedFileAsOutdatedWhenPreviouslyMissing() throws Exception {
         LocalRepoWithUri repo = createLocalRepository("linemap-add");
         LocalVCRepositoryUri repositoryUri = repo.uri();
         LocalRepository repository = repo.repository();
@@ -533,14 +573,14 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         RevCommit newCommit = GitService.commit(repository.workingCopyGitRepo).setMessage("Add file").call();
         repository.workingCopyGitRepo.push().setRemote("origin").call();
 
-        LineMappingResult result = exerciseReviewCommentService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 1);
+        LineMappingResult result = exerciseReviewService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 1);
         assertThat(result.newLine()).isNull();
         assertThat(result.outdated()).isTrue();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateThreadsForVersionChange_updatesTemplateRepoLines() throws Exception {
+    void shouldUpdateThreadsForVersionChangeForTemplateRepoLines() throws Exception {
         RepoHistory history = createRepoWithTwoCommits("template-map");
         CommentThread thread = buildRepoThread(CommentThreadLocationType.TEMPLATE_REPO, "src/Main.java", 2);
         thread.setExercise(programmingExercise);
@@ -553,7 +593,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
 
-        exerciseReviewCommentService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewService.updateThreadsForVersionChange(previous, current);
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(3);
@@ -562,7 +602,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateThreadsForVersionChange_skipsTemplateRepoWhenParticipationDataMissing() {
+    void shouldSkipUpdateThreadsForVersionChangeWhenTemplateRepoParticipationMissing() {
         CommentThread thread = buildRepoThread(CommentThreadLocationType.TEMPLATE_REPO, "src/Main.java", 5);
         thread.setExercise(programmingExercise);
         commentThreadRepository.save(thread);
@@ -574,7 +614,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
 
-        exerciseReviewCommentService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewService.updateThreadsForVersionChange(previous, current);
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(5);
@@ -583,7 +623,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateThreadsForVersionChange_updatesTestRepoLines() throws Exception {
+    void shouldUpdateThreadsForVersionChangeForTestRepoLines() throws Exception {
         RepoHistory history = createRepoWithTwoCommits("test-map");
         CommentThread thread = buildRepoThread(CommentThreadLocationType.TEST_REPO, "src/Main.java", 2);
         thread.setExercise(programmingExercise);
@@ -594,7 +634,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
 
-        exerciseReviewCommentService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewService.updateThreadsForVersionChange(previous, current);
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(3);
@@ -603,7 +643,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateThreadsForVersionChange_updatesAuxiliaryRepoLines() throws Exception {
+    void shouldUpdateThreadsForVersionChangeForAuxiliaryRepoLines() throws Exception {
         RepoHistory history = createRepoWithTwoCommits("aux-map");
         CommentThread thread = buildRepoThread(CommentThreadLocationType.AUXILIARY_REPO, "src/Main.java", 2);
         thread.setAuxiliaryRepositoryId(42L);
@@ -617,7 +657,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
 
-        exerciseReviewCommentService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewService.updateThreadsForVersionChange(previous, current);
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(3);
@@ -626,7 +666,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateThreadsForVersionChange_skipsAuxRepoWhenIdMissing() {
+    void shouldSkipUpdateThreadsForVersionChangeWhenAuxRepoIdMissing() {
         CommentThread thread = buildRepoThread(CommentThreadLocationType.AUXILIARY_REPO, "src/Main.java", 5);
         thread.setExercise(programmingExercise);
         commentThreadRepository.save(thread);
@@ -636,7 +676,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
 
-        exerciseReviewCommentService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewService.updateThreadsForVersionChange(previous, current);
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(5);
@@ -645,7 +685,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateThreadsForVersionChange_skipsAuxRepoWhenCommitMissing() {
+    void shouldSkipUpdateThreadsForVersionChangeWhenAuxRepoCommitMissing() {
         CommentThread thread = buildRepoThread(CommentThreadLocationType.AUXILIARY_REPO, "src/Main.java", 5);
         thread.setAuxiliaryRepositoryId(42L);
         thread.setExercise(programmingExercise);
@@ -658,7 +698,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
 
-        exerciseReviewCommentService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewService.updateThreadsForVersionChange(previous, current);
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(5);
@@ -666,32 +706,32 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
     }
 
     @Test
-    void updateThreadsForVersionChange_returnsWhenSnapshotsNull() {
+    void shouldReturnWhenUpdateThreadsForVersionChangeSnapshotsNull() {
         CommentThread thread = persistThread(programmingExercise);
         Integer originalLine = thread.getLineNumber();
 
-        exerciseReviewCommentService.updateThreadsForVersionChange(null, null);
+        exerciseReviewService.updateThreadsForVersionChange(null, null);
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(originalLine);
     }
 
     @Test
-    void updateThreadsForVersionChange_returnsWhenProgrammingDataMissing() {
+    void shouldReturnWhenUpdateThreadsForVersionChangeProgrammingDataMissing() {
         CommentThread thread = persistThread(programmingExercise);
         Integer originalLine = thread.getLineNumber();
 
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), null);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), null);
 
-        exerciseReviewCommentService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewService.updateThreadsForVersionChange(previous, current);
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(originalLine);
     }
 
     @Test
-    void updateThreadsForVersionChange_returnsWhenNoThreads() throws Exception {
+    void shouldReturnWhenUpdateThreadsForVersionChangeNoThreads() throws Exception {
         commentThreadRepository.deleteAll();
 
         RepoHistory history = createRepoWithTwoCommits("no-threads");
@@ -702,7 +742,7 @@ class ReviewCommentServiceTest extends AbstractProgrammingIntegrationLocalCILoca
         ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), previousProgramming);
         ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), programmingExercise.getProblemStatement(), currentProgramming);
 
-        exerciseReviewCommentService.updateThreadsForVersionChange(previous, current);
+        exerciseReviewService.updateThreadsForVersionChange(previous, current);
 
         assertThat(commentThreadRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
     }

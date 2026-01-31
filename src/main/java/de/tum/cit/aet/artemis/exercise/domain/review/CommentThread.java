@@ -22,8 +22,9 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 @Table(name = "comment_thread")
 public class CommentThread extends DomainObject {
 
-    @Column(name = "group_id")
-    private Long groupId;
+    @ManyToOne
+    @JoinColumn(name = "group_id")
+    private CommentThreadGroup group;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "exercise_id", nullable = false)
@@ -37,23 +38,23 @@ public class CommentThread extends DomainObject {
     private Long auxiliaryRepositoryId;
 
     @ManyToOne
-    @JoinColumn(name = "initial_version_id")
+    @JoinColumn(name = "initial_version_id", updatable = false)
     private ExerciseVersion initialVersion;
 
-    @Column(name = "initial_commit_sha")
+    @Column(name = "initial_commit_sha", length = 64, updatable = false)
     private String initialCommitSha;
 
     @Column(name = "file_path")
     private String filePath;
 
-    @Column(name = "initial_file_path", nullable = false)
+    @Column(name = "initial_file_path", length = 1024, updatable = false)
     private String initialFilePath;
 
     @Column(name = "line_number")
     private Integer lineNumber;
 
-    @Column(name = "initial_line_number", nullable = false)
-    private Integer initialLineNumber;
+    @Column(name = "initial_line_number", nullable = false, updatable = false)
+    private int initialLineNumber;
 
     @Column(name = "outdated", nullable = false)
     private boolean outdated;
@@ -64,12 +65,12 @@ public class CommentThread extends DomainObject {
     @OneToMany(mappedBy = "thread", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     private Set<Comment> comments = new HashSet<>();
 
-    public Long getGroupId() {
-        return groupId;
+    public CommentThreadGroup getGroup() {
+        return group;
     }
 
-    public void setGroupId(Long groupId) {
-        this.groupId = groupId;
+    public void setGroup(CommentThreadGroup group) {
+        this.group = group;
     }
 
     public Exercise getExercise() {
@@ -136,11 +137,11 @@ public class CommentThread extends DomainObject {
         this.lineNumber = lineNumber;
     }
 
-    public Integer getInitialLineNumber() {
+    public int getInitialLineNumber() {
         return initialLineNumber;
     }
 
-    public void setInitialLineNumber(Integer initialLineNumber) {
+    public void setInitialLineNumber(int initialLineNumber) {
         this.initialLineNumber = initialLineNumber;
     }
 

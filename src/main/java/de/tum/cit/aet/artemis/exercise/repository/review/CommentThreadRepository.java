@@ -45,4 +45,12 @@ public interface CommentThreadRepository extends ArtemisJpaRepository<CommentThr
      */
     @EntityGraph(attributePaths = { "comments", "comments.author" })
     java.util.Optional<CommentThread> findWithCommentsById(long threadId);
+
+    /**
+     * Find all comment threads for a given group.
+     *
+     * @param groupId the group id
+     * @return list of comment threads
+     */
+    List<CommentThread> findByGroupId(long groupId);
 }

@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
+import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadGroup;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadLocationType;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentContentDTO;
@@ -48,6 +49,7 @@ import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapsho
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentRepository;
+import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadGroupRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -59,13 +61,17 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
-public class ExerciseReviewCommentService {
+public class ExerciseReviewService {
 
-    private static final Logger log = LoggerFactory.getLogger(ExerciseReviewCommentService.class);
+    private static final Logger log = LoggerFactory.getLogger(ExerciseReviewService.class);
 
     private static final String COMMENT_ENTITY_NAME = "exerciseReviewComment";
 
     private static final String THREAD_ENTITY_NAME = "exerciseReviewCommentThread";
+
+    private static final String THREAD_GROUP_ENTITY_NAME = "exerciseReviewCommentThreadGroup";
+
+    private final CommentThreadGroupRepository commentThreadGroupRepository;
 
     private final CommentThreadRepository commentThreadRepository;
 
@@ -85,10 +91,11 @@ public class ExerciseReviewCommentService {
 
     private final GitService gitService;
 
-    public ExerciseReviewCommentService(CommentThreadRepository commentThreadRepository, CommentRepository commentRepository, ExerciseRepository exerciseRepository,
-            ExerciseVersionRepository exerciseVersionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+    public ExerciseReviewService(CommentThreadGroupRepository commentThreadGroupRepository, CommentThreadRepository commentThreadRepository, CommentRepository commentRepository,
+            ExerciseRepository exerciseRepository, ExerciseVersionRepository exerciseVersionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService,
             GitService gitService) {
+        this.commentThreadGroupRepository = commentThreadGroupRepository;
         this.commentThreadRepository = commentThreadRepository;
         this.commentRepository = commentRepository;
         this.exerciseRepository = exerciseRepository;
@@ -109,6 +116,66 @@ public class ExerciseReviewCommentService {
     public List<CommentThread> findThreadsByExerciseId(long exerciseId) {
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, exerciseId);
         return commentThreadRepository.findByExerciseId(exerciseId);
+    }
+
+    /**
+     * Create a new comment thread group for an exercise.
+     *
+     * @param exerciseId the exercise id
+     * @param threadIds  the ids of threads to associate, if any
+     * @return the persisted group
+     */
+    public CommentThreadGroup createGroup(long exerciseId, List<Long> threadIds) {
+        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, exerciseId);
+        Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+
+        if (threadIds == null || threadIds.size() < 2) {
+            throw new BadRequestAlertException("A thread group must contain at least two threads", THREAD_GROUP_ENTITY_NAME, "threadCountTooLow");
+        }
+
+        CommentThreadGroup group = new CommentThreadGroup();
+        group.setExercise(exercise);
+        CommentThreadGroup saved = commentThreadGroupRepository.save(group);
+
+        List<CommentThread> threads = commentThreadRepository.findAllById(threadIds);
+        if (threads.size() != threadIds.size()) {
+            throw new BadRequestAlertException("Some threads do not exist", THREAD_ENTITY_NAME, "threadMissing");
+        }
+
+        for (CommentThread thread : threads) {
+            if (thread.getExercise() == null || !Objects.equals(thread.getExercise().getId(), exerciseId)) {
+                throw new BadRequestAlertException("Thread exercise does not match request", THREAD_ENTITY_NAME, "exerciseMismatch");
+            }
+            if (thread.getGroup() != null && !Objects.equals(thread.getGroup().getId(), saved.getId())) {
+                throw new BadRequestAlertException("Thread already belongs to another group", THREAD_ENTITY_NAME, "threadGrouped");
+            }
+            thread.setGroup(saved);
+        }
+
+        commentThreadRepository.saveAll(threads);
+        saved.setThreads(new java.util.HashSet<>(threads));
+        return saved;
+    }
+
+    /**
+     * Delete a comment thread group by id.
+     *
+     * @param groupId the group id
+     */
+    public void deleteGroup(long groupId) {
+        CommentThreadGroup group = commentThreadGroupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("CommentThreadGroup", groupId));
+
+        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, group.getExercise().getId());
+
+        List<CommentThread> threads = commentThreadRepository.findByGroupId(groupId);
+        if (!threads.isEmpty()) {
+            for (CommentThread thread : threads) {
+                thread.setGroup(null);
+            }
+            commentThreadRepository.saveAll(threads);
+        }
+
+        commentThreadGroupRepository.delete(group);
     }
 
     /**
