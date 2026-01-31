@@ -160,11 +160,16 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return [newestNewChat];
     });
     readonly filteredNonNewSessions = computed(() => this.filteredSessions().filter((session) => !this.isNewChatSession(session)));
-    readonly todaySessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), 0, 0));
-    readonly yesterdaySessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), 1, 1));
-    readonly last7DaysSessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), 2, 6));
-    readonly last30DaysSessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), 7, 29));
-    readonly olderSessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), 30, undefined, true));
+    readonly todaySessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), 0, 0, false, this.dayTick()));
+    readonly yesterdaySessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), 1, 1, false, this.dayTick()));
+    readonly last7DaysSessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), 2, 6, false, this.dayTick()));
+    readonly last30DaysSessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), 7, 29, false, this.dayTick()));
+    readonly olderSessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), 30, undefined, true, this.dayTick()));
+
+    // Daily tick signal for reactive date-based session buckets
+    readonly dayTick = signal(new Date().toDateString());
+    private dayTickIntervalId: ReturnType<typeof setInterval> | undefined;
+
     readonly userAccepted = signal(false);
     readonly isScrolledToBottom = signal(true);
     readonly resendAnimationActive = signal(false);
@@ -279,6 +284,19 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         this.destroyRef.onDestroy(() => {
             if (this.copyResetTimeoutId) {
                 clearTimeout(this.copyResetTimeoutId);
+            }
+        });
+
+        // Set up daily tick interval to refresh date-based session buckets at midnight
+        this.dayTickIntervalId = setInterval(() => {
+            const currentDay = new Date().toDateString();
+            if (this.dayTick() !== currentDay) {
+                this.dayTick.set(currentDay);
+            }
+        }, 60000); // Check every minute
+        this.destroyRef.onDestroy(() => {
+            if (this.dayTickIntervalId) {
+                clearInterval(this.dayTickIntervalId);
             }
         });
     }
@@ -569,13 +587,15 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     /**
      * Retrieves chat sessions that occurred between a specified range of days ago.
+     * @param sessions The sessions to filter.
      * @param daysAgoNewer The newer boundary of the range, in days ago (e.g., 0 for today, 1 for yesterday).
      * @param daysAgoOlder The older boundary of the range, in days ago (e.g., 0 for today, 7 for 7 days ago).
      *                     Must be greater than or equal to daysAgoNewer if ignoreOlderBoundary is false.
      * @param ignoreOlderBoundary If true, only the daysAgoNewer boundary is considered (sessions newer than or on this day).
+     * @param _currentDay Used for reactive dependency tracking. Passing dayTick() ensures computed signals re-run when the day changes.
      * @returns An array of IrisSession objects matching the criteria.
      */
-    private filterSessionsBetween(sessions: IrisSessionDTO[], daysAgoNewer: number, daysAgoOlder?: number, ignoreOlderBoundary = false): IrisSessionDTO[] {
+    private filterSessionsBetween(sessions: IrisSessionDTO[], daysAgoNewer: number, daysAgoOlder?: number, ignoreOlderBoundary = false, _currentDay?: string): IrisSessionDTO[] {
         if (daysAgoNewer < 0 || (!ignoreOlderBoundary && (daysAgoOlder === undefined || daysAgoOlder < 0 || daysAgoNewer > daysAgoOlder))) {
             return [];
         }
@@ -612,6 +632,18 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     setSearchValue(searchValue: string) {
         this.searchValue.set(searchValue.trim().toLowerCase());
+    }
+
+    /**
+     * Retrieves chat sessions that occurred between a specified range of days ago.
+     * Public wrapper for filterSessionsBetween that uses the current filtered sessions.
+     * @param daysAgoNewer The newer boundary of the range, in days ago (e.g., 0 for today, 1 for yesterday).
+     * @param daysAgoOlder The older boundary of the range, in days ago (e.g., 0 for today, 7 for 7 days ago).
+     * @param ignoreOlderBoundary If true, only the daysAgoNewer boundary is considered.
+     * @returns An array of IrisSessionDTO objects matching the criteria.
+     */
+    getSessionsBetween(daysAgoNewer: number, daysAgoOlder?: number, ignoreOlderBoundary = false): IrisSessionDTO[] {
+        return this.filterSessionsBetween(this.filteredNonNewSessions(), daysAgoNewer, daysAgoOlder, ignoreOlderBoundary, this.dayTick());
     }
 
     private computeRelatedEntityRoute(currentChatMode: ChatServiceMode | undefined, currentRelatedEntityId: number | undefined): string | undefined {

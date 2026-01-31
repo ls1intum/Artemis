@@ -175,7 +175,7 @@
                         ) {
                             <div animate.enter="suggestion-entering" animate.leave="suggestion-leaving">
                                 <div class="suggestions-container">
-                                    @for (suggestion of suggestions(); track suggestion) {
+                                    @for (suggestion of suggestions(); track $index) {
                                         <button class="suggestion-button" (click)="onSuggestionClick(suggestion)" [disabled]="isLoading()">
                                             @if (clickedSuggestion() === suggestion) {
                                                 <fa-icon [icon]="faCircleNotch" animation="spin" />
@@ -187,7 +187,7 @@
                                 </div>
                             </div>
                         }
-                        @for (message of messages(); track message.id; let i = $index) {
+                        @for (message of messages(); track message.id ?? $index; let i = $index) {
                             <div
                                 animate.enter="message-entering"
                                 [class.animate-enabled]="animatingMessageIds().has(message.id!)"
@@ -275,9 +275,16 @@
                     </div>
                 </div>
             }
-            <div class="scroll-to-bottom" [hidden]="isScrolledToBottom()" (click)="scrollToBottom('smooth')" #scrollArrow>
+            <button
+                type="button"
+                class="scroll-to-bottom"
+                [hidden]="isScrolledToBottom()"
+                (click)="scrollToBottom('smooth')"
+                #scrollArrow
+                [attr.aria-label]="'artemisApp.exerciseChatbot.scrollToBottom' | artemisTranslate"
+            >
                 <fa-icon [icon]="faArrowDown" />
-            </div>
+            </button>
             @if (error()) {
                 <div class="client-chat-error">
                     {{ error() | artemisTranslate: { hours: rateLimitInfo()?.rateLimitTimeframeHours } }}
