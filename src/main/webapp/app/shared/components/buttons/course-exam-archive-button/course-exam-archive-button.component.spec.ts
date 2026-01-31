@@ -84,7 +84,7 @@ describe('Course Exam Archive Button Component', () => {
             fixture.detectChanges();
         });
 
-        // since archiveButtonText doesnt depend on ngOnInit after signal migration, we test the behavior of
+        // since archiveButtonText doesnt depend on ngOnInit after migrating Angular input decorators to signals, we test the behavior of
         // what happens if nothing is set using a spy
         it('should just return (no lang subscription) when not initialized', () => {
             // Ensure inputs are absent so currentCourse/currentExam remain empty

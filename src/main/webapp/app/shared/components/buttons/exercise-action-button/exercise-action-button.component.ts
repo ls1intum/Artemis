@@ -19,8 +19,8 @@ import { NgClass } from '@angular/common';
 })
 export class ExerciseActionButtonComponent {
     // Inputs
-    buttonIcon = input<IconProp>(undefined!);
-    buttonLabel = input<string>(undefined!);
+    buttonIcon = input<IconProp | undefined>(undefined);
+    buttonLabel = input<string | undefined>(undefined);
     hideLabelMobile = input(true);
     overwriteDisabled = input(false);
     buttonLoading = input(false);

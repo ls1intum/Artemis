@@ -62,6 +62,11 @@ describe('RepositoryViewComponent', () => {
             });
     });
 
+    afterEach(() => {
+        // in case it causes side effects in other tests
+        delete (global as any).ResizeObserver;
+    });
+
     it('should create', () => {
         expect(component).toBeTruthy();
     });
