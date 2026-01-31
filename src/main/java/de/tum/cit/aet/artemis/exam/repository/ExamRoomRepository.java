@@ -126,7 +126,7 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
                 roomPartition.name,
                 roomPartition.alternativeName,
                 roomPartition.building,
-                null
+                NULL
             )
             FROM (
                 SELECT er.id AS id, er.roomNumber AS roomNumber, er.alternativeRoomNumber AS alternativeRoomNumber, er.name AS name, er.alternativeName AS alternativeName, er.building AS building, er.createdDate AS createdDate, ROW_NUMBER() OVER (

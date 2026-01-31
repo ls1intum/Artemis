@@ -103,6 +103,9 @@ public class ExamRoomDistributionResource {
 
         List<Long> examRoomIds = examRoomDistributionRequestBody.roomIds();
         Map<Long, String> examRoomAliases = examRoomDistributionRequestBody.examRoomAliases();
+        if (examRoomAliases == null) {
+            examRoomAliases = Map.of();
+        }
 
         if (reserveFactor < 0 || reserveFactor > 1) {
             throw new BadRequestAlertException("Reserve factor outside of allowed range [0,1]", ENTITY_NAME, "reserveFactorOutOfRange");

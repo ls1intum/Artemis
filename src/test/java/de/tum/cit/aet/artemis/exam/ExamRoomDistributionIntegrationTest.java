@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.dto.room.AttendanceCheckerAppExamInformationDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDistributionRequestBodyDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ReseatInformationDTO;
@@ -92,31 +93,36 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
     void testDistributeRegisteredStudentsAsStudent() throws Exception {
-        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students", Set.of(), HttpStatus.FORBIDDEN);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students",
+                new ExamRoomDistributionRequestBodyDTO(List.of(), Map.of()), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
     void testDistributeRegisteredStudentsAsTutor() throws Exception {
-        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students", Set.of(), HttpStatus.FORBIDDEN);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students",
+                new ExamRoomDistributionRequestBodyDTO(List.of(), Map.of()), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
     void testDistributeRegisteredStudentsAsEditor() throws Exception {
-        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students", Set.of(), HttpStatus.FORBIDDEN);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students",
+                new ExamRoomDistributionRequestBodyDTO(List.of(), Map.of()), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testDistributeRegisteredStudentsAsInstructor() throws Exception {
-        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students", Set.of(), HttpStatus.BAD_REQUEST);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students",
+                new ExamRoomDistributionRequestBodyDTO(List.of(), Map.of()), HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDistributeRegisteredStudentsAsAdmin() throws Exception {
-        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students", Set.of(), HttpStatus.BAD_REQUEST);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students",
+                new ExamRoomDistributionRequestBodyDTO(List.of(), Map.of()), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -128,7 +134,8 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.OK);
 
         var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001"));
-        request.post("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students", ids, HttpStatus.BAD_REQUEST);
+        request.post("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students",
+                new ExamRoomDistributionRequestBodyDTO(List.of(), Map.of()), HttpStatus.BAD_REQUEST);
 
         verifyAllUsersAreNotDistributed(exam);
     }
@@ -166,8 +173,9 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
         request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileFourExamRooms, HttpStatus.OK);
 
-        var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001", "0101.02.179"));
-        request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students", ids, HttpStatus.OK);
+        var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001", "0101.02.179")).stream().toList();
+        request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students",
+                new ExamRoomDistributionRequestBodyDTO(ids.stream().toList(), Map.of()), HttpStatus.OK);
 
         verifyAllUsersAreDistributedAcrossExactly(exam, "5602.EG.001", "0101.02.179");
     }
@@ -180,8 +188,9 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
 
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
-        var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001", "0101.02.179"));
-        request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students", ids, HttpStatus.OK);
+        var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001", "0101.02.179")).stream().toList();
+        request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students",
+                new ExamRoomDistributionRequestBodyDTO(ids, Map.of()), HttpStatus.OK);
 
         verifyAllUsersAreDistributedAcrossExactly(exam, "5602.EG.001", "0101.02.179");
     }
@@ -194,9 +203,9 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
 
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
-        var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001"));
-        request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students?useOnlyDefaultLayouts=false", ids,
-                HttpStatus.OK);
+        var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001")).stream().toList();
+        request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students?useOnlyDefaultLayouts=false",
+                new ExamRoomDistributionRequestBodyDTO(ids, Map.of()), HttpStatus.OK);
 
         verifyAllUsersAreDistributedAcrossExactly(exam, "5602.EG.001");
     }
