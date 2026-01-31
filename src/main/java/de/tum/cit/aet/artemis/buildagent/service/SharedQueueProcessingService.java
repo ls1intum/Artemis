@@ -649,76 +649,99 @@ public class SharedQueueProcessingService {
 
         CompletableFuture<BuildResult> futureResult = buildJobManagementService.executeBuildJob(buildJob);
         futureResult.thenAccept(buildResult -> {
+            try {
+                log.debug("Build job completed: {}", buildJob);
+                JobTimingInfo jobTimingInfo = new JobTimingInfo(buildJob.jobTimingInfo().submissionDate(), buildJob.jobTimingInfo().buildStartDate(), ZonedDateTime.now(),
+                        buildJob.jobTimingInfo().estimatedCompletionDate(), buildJob.jobTimingInfo().estimatedDuration());
 
-            log.debug("Build job completed: {}", buildJob);
-            JobTimingInfo jobTimingInfo = new JobTimingInfo(buildJob.jobTimingInfo().submissionDate(), buildJob.jobTimingInfo().buildStartDate(), ZonedDateTime.now(),
-                    buildJob.jobTimingInfo().estimatedCompletionDate(), buildJob.jobTimingInfo().estimatedDuration());
+                BuildJobQueueItem finishedJob = new BuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgent(), buildJob.participationId(), buildJob.courseId(),
+                        buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildStatus.SUCCESSFUL, buildJob.repositoryInfo(), jobTimingInfo, buildJob.buildConfig(),
+                        null);
 
-            BuildJobQueueItem finishedJob = new BuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgent(), buildJob.participationId(), buildJob.courseId(),
-                    buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildStatus.SUCCESSFUL, buildJob.repositoryInfo(), jobTimingInfo, buildJob.buildConfig(),
-                    null);
+                List<BuildLogDTO> buildLogs = buildLogsMap.getAndTruncateBuildLogs(buildJob.id());
+                buildLogsMap.removeBuildLogs(buildJob.id());
 
-            List<BuildLogDTO> buildLogs = buildLogsMap.getAndTruncateBuildLogs(buildJob.id());
-            buildLogsMap.removeBuildLogs(buildJob.id());
+                ResultQueueItem resultQueueItem = new ResultQueueItem(buildResult, finishedJob, buildLogs, null);
+                enqueueBuildResult(resultQueueItem);
+                removeProcessingJob(buildJob);
 
-            ResultQueueItem resultQueueItem = new ResultQueueItem(buildResult, finishedJob, buildLogs, null);
-            enqueueBuildResult(resultQueueItem);
-            removeProcessingJob(buildJob);
+                buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(finishedJob, isPaused.get(), false, consecutiveBuildJobFailures.get());
 
-            buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(finishedJob, isPaused.get(), false, consecutiveBuildJobFailures.get());
+                consecutiveBuildJobFailures.set(0);
 
-            consecutiveBuildJobFailures.set(0);
-
-            // process next build job if node is available
-            checkAvailabilityAndProcessNextBuild();
+                // process next build job if node is available
+                checkAvailabilityAndProcessNextBuild();
+            }
+            catch (Exception e) {
+                log.error("Error in build success handler for job {}: {}. Attempting to continue processing.", buildJob.id(), e.getMessage(), e);
+                // Ensure we continue processing next builds even if cleanup/update fails
+                try {
+                    checkAvailabilityAndProcessNextBuild();
+                }
+                catch (Exception ignored) {
+                    log.error("Failed to check for next build after error in success handler", ignored);
+                }
+            }
         });
 
         futureResult.exceptionally(ex -> {
-            log.debug("Build job completed with exception: {}", buildJob, ex);
+            try {
+                log.debug("Build job completed with exception: {}", buildJob, ex);
 
-            ZonedDateTime completionDate = ZonedDateTime.now();
+                ZonedDateTime completionDate = ZonedDateTime.now();
 
-            BuildJobQueueItem finishedBuildJob;
-            BuildStatus status;
+                BuildJobQueueItem finishedBuildJob;
+                BuildStatus status;
 
-            if (isCausedByTimeoutException(ex, buildJob.id())) {
-                status = BuildStatus.TIMEOUT;
-                log.info("Build job with id {} was timed out", buildJob.id());
-                consecutiveBuildJobFailures.incrementAndGet();
-            }
-            else if (isCausedByCancelledException(ex, buildJob.id())) {
-                status = BuildStatus.CANCELLED;
-                log.info("Build job with id {} was cancelled", buildJob.id());
-            }
-            else {
-                status = BuildStatus.FAILED;
-                log.error("Error while processing build job: {}", buildJob, ex);
-                if (!isCausedByImagePullFailedException(ex)) {
+                if (isCausedByTimeoutException(ex, buildJob.id())) {
+                    status = BuildStatus.TIMEOUT;
+                    log.info("Build job with id {} was timed out", buildJob.id());
                     consecutiveBuildJobFailures.incrementAndGet();
                 }
+                else if (isCausedByCancelledException(ex, buildJob.id())) {
+                    status = BuildStatus.CANCELLED;
+                    log.info("Build job with id {} was cancelled", buildJob.id());
+                }
+                else {
+                    status = BuildStatus.FAILED;
+                    log.error("Error while processing build job: {}", buildJob, ex);
+                    if (!isCausedByImagePullFailedException(ex)) {
+                        consecutiveBuildJobFailures.incrementAndGet();
+                    }
+                }
+
+                finishedBuildJob = new BuildJobQueueItem(buildJob, completionDate, status);
+
+                List<BuildLogDTO> buildLogs = buildLogsMap.getAndTruncateBuildLogs(buildJob.id());
+                buildLogsMap.removeBuildLogs(buildJob.id());
+
+                BuildResult failedResult = new BuildResult(buildJob.buildConfig().branch(), buildJob.buildConfig().assignmentCommitHash(), buildJob.buildConfig().testCommitHash(),
+                        buildLogs, false);
+
+                ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, finishedBuildJob, buildLogs, ex);
+                enqueueBuildResult(resultQueueItem);
+                removeProcessingJob(buildJob);
+
+                buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(finishedBuildJob, isPaused.get(), false, consecutiveBuildJobFailures.get());
+
+                if (consecutiveBuildJobFailures.get() >= buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs()) {
+                    log.error("Build agent has failed to process build jobs {} times in a row. Pausing build agent.", consecutiveBuildJobFailures.get());
+                    pauseBuildAgent(true);
+                    return null;
+                }
+
+                checkAvailabilityAndProcessNextBuild();
             }
-
-            finishedBuildJob = new BuildJobQueueItem(buildJob, completionDate, status);
-
-            List<BuildLogDTO> buildLogs = buildLogsMap.getAndTruncateBuildLogs(buildJob.id());
-            buildLogsMap.removeBuildLogs(buildJob.id());
-
-            BuildResult failedResult = new BuildResult(buildJob.buildConfig().branch(), buildJob.buildConfig().assignmentCommitHash(), buildJob.buildConfig().testCommitHash(),
-                    buildLogs, false);
-
-            ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, finishedBuildJob, buildLogs, ex);
-            enqueueBuildResult(resultQueueItem);
-            removeProcessingJob(buildJob);
-
-            buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(finishedBuildJob, isPaused.get(), false, consecutiveBuildJobFailures.get());
-
-            if (consecutiveBuildJobFailures.get() >= buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs()) {
-                log.error("Build agent has failed to process build jobs {} times in a row. Pausing build agent.", consecutiveBuildJobFailures.get());
-                pauseBuildAgent(true);
-                return null;
+            catch (Exception e) {
+                log.error("Error in build exception handler for job {}: {}. Attempting to continue processing.", buildJob.id(), e.getMessage(), e);
+                // Ensure we continue processing next builds even if cleanup/update fails
+                try {
+                    checkAvailabilityAndProcessNextBuild();
+                }
+                catch (Exception ignored) {
+                    log.error("Failed to check for next build after error in exception handler", ignored);
+                }
             }
-
-            checkAvailabilityAndProcessNextBuild();
             return null;
         });
     }
