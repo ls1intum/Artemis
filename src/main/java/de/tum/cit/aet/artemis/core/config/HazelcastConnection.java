@@ -198,8 +198,12 @@ public class HazelcastConnection {
 
     /**
      * Adds a given service instance as a TCP/IP cluster member to the Hazelcast configuration.
-     * Extracts the Hazelcast port from instance metadata (or uses a default fallback) and
+     * Extracts the Hazelcast port and host from instance metadata (or uses fallbacks) and
      * constructs the full address of the peer node for inclusion in the cluster.
+     *
+     * <p>
+     * Uses the {@code hazelcast.host} metadata if available, which contains the actual
+     * Hazelcast bind address. Falls back to the Eureka registration host if not set.
      *
      * <p>
      * This method is invoked during initial cluster formation to ensure the Hazelcast
@@ -210,8 +214,13 @@ public class HazelcastConnection {
      */
     private void addHazelcastClusterMember(ServiceInstance instance, Config config) {
         var clusterMemberPort = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(hazelcastPort));
+        // Prefer hazelcast.host from metadata (the actual Hazelcast bind address)
+        String host = instance.getMetadata().get("hazelcast.host");
+        if (host == null || host.isEmpty()) {
+            host = instance.getHost();
+        }
         // Normalize the host to remove brackets that Eureka adds for IPv6 addresses
-        var host = normalizeHost(instance.getHost());
+        host = normalizeHost(host);
         var clusterMemberAddress = formatAddressForHazelcast(host, clusterMemberPort);
         log.info("Adding Hazelcast cluster member {}", clusterMemberAddress);
         config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMemberAddress);
@@ -295,13 +304,25 @@ public class HazelcastConnection {
 
     /**
      * Formats a service instance address as "host:port" for Hazelcast connection.
+     * <p>
+     * Uses the {@code hazelcast.host} metadata if available, which contains the actual
+     * Hazelcast bind address. Falls back to the Eureka registration host if not set.
+     * This is important because the Eureka host may differ from the Hazelcast bind address
+     * (e.g., when Hazelcast is bound to a specific network interface).
      *
      * @param instance the service instance
      * @return the formatted address string
      */
     private String formatInstanceAddress(ServiceInstance instance) {
+        // Prefer hazelcast.host from metadata (the actual Hazelcast bind address)
+        // over instance.getHost() (which is the Eureka registration host)
+        String host = instance.getMetadata().get("hazelcast.host");
+        if (host == null || host.isEmpty()) {
+            // Fall back to Eureka host for compatibility with older instances
+            host = instance.getHost();
+        }
         // Normalize the host to remove brackets that Eureka adds for IPv6 addresses
-        String host = normalizeHost(instance.getHost());
+        host = normalizeHost(host);
         String port = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(hazelcastPort));
         return formatAddressForHazelcast(host, port);
     }
