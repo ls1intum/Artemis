@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.config.weaviate;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -8,6 +10,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 
+import de.tum.cit.aet.artemis.core.exception.WeaviateConfigurationException;
 import de.tum.cit.aet.artemis.core.exception.WeaviateConnectionException;
 import io.weaviate.client6.v1.api.WeaviateClient;
 
@@ -30,16 +33,16 @@ public class WeaviateClientConfiguration {
 
     private void validateConfiguration() {
         if (weaviateProperties.httpHost() == null || weaviateProperties.httpHost().isBlank()) {
-            throw new IllegalStateException("artemis.weaviate.http-host must be configured when Weaviate is enabled");
+            throw new WeaviateConfigurationException("artemis.weaviate.http-host must be configured when Weaviate is enabled", List.of("artemis.weaviate.http-host"));
         }
         if (weaviateProperties.httpPort() == 0) {
-            throw new IllegalStateException("artemis.weaviate.http-port must be configured when Weaviate is enabled");
+            throw new WeaviateConfigurationException("artemis.weaviate.http-port must be configured when Weaviate is enabled", List.of("artemis.weaviate.http-port"));
         }
         if (weaviateProperties.grpcPort() == 0) {
-            throw new IllegalStateException("artemis.weaviate.grpc-port must be configured when Weaviate is enabled");
+            throw new WeaviateConfigurationException("artemis.weaviate.grpc-port must be configured when Weaviate is enabled", List.of("artemis.weaviate.grpc-port"));
         }
         if (weaviateProperties.scheme() == null || weaviateProperties.scheme().isBlank()) {
-            throw new IllegalStateException("artemis.weaviate.scheme must be configured when Weaviate is enabled");
+            throw new WeaviateConfigurationException("artemis.weaviate.scheme must be configured when Weaviate is enabled", List.of("artemis.weaviate.scheme"));
         }
     }
 
@@ -47,8 +50,8 @@ public class WeaviateClientConfiguration {
      * Creates and configures a Weaviate client bean.
      *
      * @return the configured WeaviateClient instance
-     * @throws IllegalStateException       if required configuration properties are missing
-     * @throws WeaviateConnectionException if the connection to Weaviate fails
+     * @throws WeaviateConfigurationException if required configuration properties are missing
+     * @throws WeaviateConnectionException    if the connection to Weaviate fails
      */
     @Bean
     public WeaviateClient weaviateClient() {
