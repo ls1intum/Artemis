@@ -201,6 +201,10 @@ public class DistributedDataAccessService {
      * This method is used to get a List containing all build agent information. This should be used for reading/iterating over the map.
      * If you want to write to the map or add a listener, use {@link DistributedDataAccessService#getDistributedBuildAgentInformation()} instead.
      * On core nodes (data members), this filters out disconnected build agents using Hazelcast's client tracking.
+     * <p>
+     * Important: The returned BuildAgentInformation objects are enriched with the CURRENT processing jobs
+     * from the distributed processing jobs map. This ensures the runningBuildJobs list and numberOfCurrentBuildJobs
+     * are always accurate, even if the build agent hasn't updated its information recently.
      *
      * @return a list of active build agent information (excludes disconnected agents on core nodes)
      */
@@ -208,18 +212,45 @@ public class DistributedDataAccessService {
         // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
         List<BuildAgentInformation> allAgents = new ArrayList<>(getDistributedBuildAgentInformation().values());
 
+        // Get current processing jobs to enrich agent information with accurate running jobs data
+        List<BuildJobQueueItem> currentProcessingJobs = getProcessingJobs();
+
         // Get connected client names from Hazelcast (only available on core nodes)
         Set<String> connectedClients = distributedDataProvider.getConnectedClientNames();
 
-        // If we can't get connected clients (running as client or not supported), return all agents
-        // This happens on build agent nodes and when using local/Redis providers
-        if (connectedClients.isEmpty()) {
-            return allAgents;
+        // Enrich and filter agents
+        return allAgents.stream()
+                // Filter to only connected agents if we can determine connectivity
+                .filter(agent -> connectedClients.isEmpty() || connectedClients.contains(agent.buildAgent().name()))
+                // Enrich with current processing jobs for accurate runningBuildJobs data
+                .map(agent -> enrichWithCurrentProcessingJobs(agent, currentProcessingJobs)).toList();
+    }
+
+    /**
+     * Enriches a BuildAgentInformation with the current processing jobs from the distributed map.
+     * This ensures that the runningBuildJobs list and numberOfCurrentBuildJobs are always accurate,
+     * even if the build agent hasn't updated its information recently.
+     *
+     * @param agent                 the build agent information to enrich
+     * @param currentProcessingJobs the current list of all processing jobs
+     * @return a new BuildAgentInformation with accurate running jobs data
+     */
+    private BuildAgentInformation enrichWithCurrentProcessingJobs(BuildAgentInformation agent, List<BuildJobQueueItem> currentProcessingJobs) {
+        // Filter processing jobs for this specific agent
+        List<BuildJobQueueItem> agentJobs = currentProcessingJobs.stream().filter(job -> job.buildAgent() != null && job.buildAgent().name().equals(agent.buildAgent().name()))
+                .toList();
+
+        int currentJobCount = agentJobs.size();
+
+        // Determine accurate status based on current job count
+        BuildAgentStatus status = agent.status();
+        if (status != BuildAgentStatus.PAUSED && status != BuildAgentStatus.SELF_PAUSED) {
+            status = currentJobCount > 0 ? BuildAgentStatus.ACTIVE : BuildAgentStatus.IDLE;
         }
 
-        // Filter to only include agents that are currently connected
-        // The build agent short name (map key) matches the Hazelcast client instance name
-        return allAgents.stream().filter(agent -> connectedClients.contains(agent.buildAgent().name())).toList();
+        // Return enriched agent info with current processing jobs
+        return new BuildAgentInformation(agent.buildAgent(), agent.maxNumberOfConcurrentBuildJobs(), currentJobCount, agentJobs, status, agent.publicSshKey(),
+                agent.buildAgentDetails(), agent.pauseAfterConsecutiveBuildFailures());
     }
 
     /**
