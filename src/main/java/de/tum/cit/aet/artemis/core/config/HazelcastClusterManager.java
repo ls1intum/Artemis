@@ -98,8 +98,10 @@ public class HazelcastClusterManager {
         var config = hazelcastInstance.getConfig();
 
         var instances = eurekaInstanceHelper.getServiceInstances();
-        log.info("Connecting Hazelcast instance '{}' to {} other cluster members", instanceName, instances.size());
-        for (ServiceInstance instance : instances) {
+        // Filter to only include cluster members (not clients like build agents)
+        var clusterMembers = instances.stream().filter(eurekaInstanceHelper::isClusterMember).toList();
+        log.info("Connecting Hazelcast instance '{}' to {} cluster members (filtered from {} total instances)", instanceName, clusterMembers.size(), instances.size());
+        for (ServiceInstance instance : clusterMembers) {
             addHazelcastClusterMember(instance, config);
         }
     }
@@ -139,18 +141,20 @@ public class HazelcastClusterManager {
         }).collect(Collectors.toSet());
 
         var instances = eurekaInstanceHelper.getServiceInstances();
+        // Filter to only include cluster members (not clients like build agents)
+        var clusterMemberInstances = instances.stream().filter(eurekaInstanceHelper::isClusterMember).toList();
 
         // Build set of registry member addresses (normalized for comparison)
         Set<String> registryMemberAddresses = new HashSet<>();
-        for (ServiceInstance instance : instances) {
+        for (ServiceInstance instance : clusterMemberInstances) {
             registryMemberAddresses.add(eurekaInstanceHelper.normalizeHost(instance.getHost()));
         }
 
-        log.debug("Current {} Registry members: {}", instances.size(), registryMemberAddresses);
+        log.debug("Current {} Registry cluster members: {}", clusterMemberInstances.size(), registryMemberAddresses);
         log.debug("Current {} Hazelcast members: {}", hazelcastMemberAddresses.size(), hazelcastMemberAddresses);
 
         // Check for members in registry but not in Hazelcast (need to add)
-        for (ServiceInstance instance : instances) {
+        for (ServiceInstance instance : clusterMemberInstances) {
             var instanceHostClean = eurekaInstanceHelper.normalizeHost(instance.getHost());
             if (!hazelcastMemberAddresses.contains(instanceHostClean)) {
                 addHazelcastClusterMember(instance, hazelcastInstance.getConfig());
