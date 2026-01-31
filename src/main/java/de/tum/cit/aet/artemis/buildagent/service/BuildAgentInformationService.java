@@ -102,28 +102,30 @@ public class BuildAgentInformationService {
         // Use buildAgentShortName as the stable key - memberAddress can change after Hazelcast client connects
         String agentKey = buildAgentShortName;
         try {
+            // Acquire lock before inner try block to ensure unlock() in finally only runs if lock() succeeded
             distributedDataAccessService.getDistributedBuildAgentInformation().lock(agentKey);
-            // Add/update
-            BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob, isPaused, isPausedDueToFailures, consecutiveFailures);
-
-            log.debug("Updating build agent info: key='{}', name='{}', memberAddress='{}', displayName='{}'", agentKey, info.buildAgent().name(), info.buildAgent().memberAddress(),
-                    info.buildAgent().displayName());
-
             try {
+                // Add/update
+                BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob, isPaused, isPausedDueToFailures, consecutiveFailures);
+
+                log.debug("Updating build agent info: key='{}', name='{}', memberAddress='{}', displayName='{}'", agentKey, info.buildAgent().name(),
+                        info.buildAgent().memberAddress(), info.buildAgent().displayName());
+
                 // Use the agent's short name as key for stable identification
                 distributedDataAccessService.getDistributedBuildAgentInformation().put(agentKey, info);
                 log.debug("Successfully stored build agent info with key '{}'. Current map size: {}", agentKey,
                         distributedDataAccessService.getDistributedBuildAgentInformation().size());
             }
             catch (Exception e) {
-                log.error("Error while updating build agent information for agent {} with address {}", info.buildAgent().name(), info.buildAgent().memberAddress(), e);
+                log.error("Error while updating build agent information for agent {}", agentKey, e);
+            }
+            finally {
+                distributedDataAccessService.getDistributedBuildAgentInformation().unlock(agentKey);
             }
         }
         catch (Exception e) {
-            log.error("Error while updating build agent information for agent {}", agentKey, e);
-        }
-        finally {
-            distributedDataAccessService.getDistributedBuildAgentInformation().unlock(agentKey);
+            // Lock acquisition failed (e.g., cluster disconnected) - log and continue
+            log.error("Failed to acquire lock for build agent information update for agent {}", agentKey, e);
         }
     }
 

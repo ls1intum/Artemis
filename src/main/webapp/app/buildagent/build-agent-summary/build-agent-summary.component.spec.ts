@@ -21,6 +21,7 @@ import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Router } from '@angular/router';
+import { provideRouter } from '@angular/router';
 
 describe('BuildAgentSummaryComponent', () => {
     setupTestBed({ zoneless: true });
@@ -130,6 +131,7 @@ describe('BuildAgentSummaryComponent', () => {
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideRouter([]),
             ],
         });
 

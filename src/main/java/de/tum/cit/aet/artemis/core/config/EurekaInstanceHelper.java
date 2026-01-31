@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGENT;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -178,7 +179,8 @@ public class EurekaInstanceHelper {
         }
         String ownHost = normalizeHost(registration.get().getHost());
         String instanceHost = normalizeHost(instance.getHost());
-        return ownHost.equals(instanceHost) && registration.get().getPort() == instance.getPort();
+        // Use Objects.equals for null-safe comparison (getHost() may return null)
+        return Objects.equals(ownHost, instanceHost) && registration.get().getPort() == instance.getPort();
     }
 
     /**
