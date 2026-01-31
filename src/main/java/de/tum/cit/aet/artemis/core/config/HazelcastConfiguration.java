@@ -5,8 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_INDEPENDENT;
-import static de.tum.cit.aet.artemis.core.config.EurekaInstanceHelper.HAZELCAST_MEMBER_TYPE_KEY;
-import static de.tum.cit.aet.artemis.core.config.EurekaInstanceHelper.HAZELCAST_MEMBER_TYPE_MEMBER;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
@@ -641,9 +639,7 @@ public class HazelcastConfiguration {
 
         configureNetworkInterface(config);
         configurePortAndMetadata(config);
-
-        // Mark as cluster member for service discovery
-        registration.get().getMetadata().put(HAZELCAST_MEMBER_TYPE_KEY, HAZELCAST_MEMBER_TYPE_MEMBER);
+        // Note: Cluster member metadata is set in configurePortAndMetadata via eurekaInstanceHelper.registerAsMember()
     }
 
     /**
@@ -697,27 +693,31 @@ public class HazelcastConfiguration {
      *
      * <p>
      * <strong>Metadata Registration:</strong> The Hazelcast host and port are registered as
-     * Eureka metadata, enabling other nodes to discover how to connect. The
-     * {@link EurekaInstanceHelper} reads this metadata to build connection addresses.
+     * Eureka metadata via {@link EurekaInstanceHelper#registerAsMember}, which also triggers
+     * an immediate re-registration to propagate the metadata. This ensures build agents can
+     * discover core nodes without waiting for the next heartbeat.
      *
      * @param config the Hazelcast configuration to modify
      */
     private void configurePortAndMetadata(Config config) {
         String hazelcastMetadataHost = registration.get().getHost();
+        int effectivePort;
 
         if (hazelcastLocalInstances) {
             log.info("Running with localInstances setting, Hazelcast cluster will only work with localhost instances");
-            int localPort = serverProperties.getPort() + hazelcastPort;
-            config.getNetworkConfig().setPort(localPort);
-            registration.get().getMetadata().put("hazelcast.port", String.valueOf(localPort));
+            effectivePort = serverProperties.getPort() + hazelcastPort;
+            config.getNetworkConfig().setPort(effectivePort);
         }
         else {
             config.setClusterName("prod");
             config.setInstanceName(instanceName);
-            config.getNetworkConfig().setPort(hazelcastPort);
-            registration.get().getMetadata().put("hazelcast.port", String.valueOf(hazelcastPort));
+            effectivePort = hazelcastPort;
+            config.getNetworkConfig().setPort(effectivePort);
         }
-        registration.get().getMetadata().put("hazelcast.host", hazelcastMetadataHost);
+
+        // Register as cluster member and trigger immediate Eureka re-registration
+        // This ensures build agents can discover this core node immediately
+        eurekaInstanceHelper.registerAsMember(hazelcastMetadataHost, effectivePort);
     }
 
     /**

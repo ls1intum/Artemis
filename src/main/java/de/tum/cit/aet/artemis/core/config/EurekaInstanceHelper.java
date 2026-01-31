@@ -304,6 +304,45 @@ public class EurekaInstanceHelper {
     }
 
     /**
+     * Marks this instance as a Hazelcast cluster member in the service registry.
+     * This allows build agents (Hazelcast clients) to identify core nodes for connection.
+     *
+     * <p>
+     * The metadata change is immediately propagated to the Eureka server by triggering
+     * a re-registration. This ensures build agents can identify core nodes without
+     * waiting for the next heartbeat (default interval: 30 seconds).
+     *
+     * <p>
+     * This method should be called after setting all Hazelcast-related metadata
+     * (hazelcast.host, hazelcast.port) to ensure all metadata is propagated together.
+     *
+     * @param hazelcastHost the Hazelcast bind address to store in metadata
+     * @param hazelcastPort the Hazelcast port to store in metadata
+     */
+    public void registerAsMember(String hazelcastHost, int hazelcastPort) {
+        if (registration.isPresent()) {
+            registration.get().getMetadata().put(HAZELCAST_MEMBER_TYPE_KEY, HAZELCAST_MEMBER_TYPE_MEMBER);
+            registration.get().getMetadata().put("hazelcast.host", hazelcastHost);
+            registration.get().getMetadata().put("hazelcast.port", String.valueOf(hazelcastPort));
+            log.info("Marked this instance as Hazelcast cluster member with host={}, port={}", hazelcastHost, hazelcastPort);
+
+            // Trigger immediate re-registration to propagate metadata change
+            if (serviceRegistry.isPresent()) {
+                try {
+                    serviceRegistry.get().register(registration.get());
+                    log.info("Triggered immediate Eureka re-registration for Hazelcast member metadata");
+                }
+                catch (Exception e) {
+                    log.warn("Failed to trigger immediate Eureka re-registration: {}. Metadata will propagate on next heartbeat.", e.getMessage());
+                }
+            }
+            else {
+                log.debug("ServiceRegistry not available - metadata will propagate on next Eureka heartbeat");
+            }
+        }
+    }
+
+    /**
      * Gets the default Hazelcast port from configuration.
      *
      * @return the Hazelcast port
