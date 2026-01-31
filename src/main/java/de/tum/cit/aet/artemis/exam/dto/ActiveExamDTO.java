@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotBlank;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ActiveExamDTO(long id, @NotNull String title, @NotNull ZonedDateTime startDate, @NotNull ZonedDateTime endDate, boolean testExam,
+public record ActiveExamDTO(long id, @NotBlank String title, @NotNull ZonedDateTime startDate, @NotNull ZonedDateTime endDate, boolean testExam,
         @NotNull CourseForActiveExamDTO course) {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
