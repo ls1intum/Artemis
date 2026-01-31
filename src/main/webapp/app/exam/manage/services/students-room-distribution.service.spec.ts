@@ -219,4 +219,29 @@ describe('StudentsRoomDistributionService', () => {
             req.flush(null);
         });
     });
+
+    describe('getAliases', () => {
+        it('should send GET request and return aliases', () => {
+            const courseId = 3;
+            const examId = 9;
+
+            const mockAliases: Record<string, string> = {
+                '1': 'Main Hall',
+                '2': 'Overflow Room',
+            };
+
+            let actualAliases: Record<string, string> | undefined;
+
+            service.getAliases(courseId, examId).subscribe((aliases) => {
+                actualAliases = aliases;
+            });
+
+            const req = httpMock.expectOne(`${BASE_URL}/courses/${courseId}/exams/${examId}/room-aliases`);
+            expect(req.request.method).toBe('GET');
+
+            req.flush(mockAliases);
+
+            expect(actualAliases).toEqual(mockAliases);
+        });
+    });
 });
