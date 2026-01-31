@@ -35,7 +35,6 @@ import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDistributionRequestBodyDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ReseatInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.SeatsOfExamRoomDTO;
-import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomDistributionService;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomService;
@@ -63,15 +62,12 @@ public class ExamRoomDistributionResource {
 
     private final ExamUserService examUserService;
 
-    private final ExamRoomRepository examRoomRepository;
-
     public ExamRoomDistributionResource(ExamAccessService examAccessService, ExamRoomService examRoomService, ExamRoomDistributionService examRoomDistributionService,
-            ExamUserService examUserService, ExamRoomRepository examRoomRepository) {
+            ExamUserService examUserService) {
         this.examAccessService = examAccessService;
         this.examRoomService = examRoomService;
         this.examRoomDistributionService = examRoomDistributionService;
         this.examUserService = examUserService;
-        this.examRoomRepository = examRoomRepository;
     }
 
     /**
@@ -97,7 +93,7 @@ public class ExamRoomDistributionResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> distributeRegisteredStudents(@PathVariable long courseId, @PathVariable long examId,
             @RequestParam(defaultValue = "true") boolean useOnlyDefaultLayouts, @RequestParam(defaultValue = "0.0") double reserveFactor,
-            @RequestBody ExamRoomDistributionRequestBodyDTO examRoomDistributionRequestBody) {
+            @Valid @RequestBody ExamRoomDistributionRequestBodyDTO examRoomDistributionRequestBody) {
         log.debug("REST request to distribute students across rooms for exam : {}", examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 

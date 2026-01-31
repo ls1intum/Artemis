@@ -171,7 +171,7 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
                 erea.roomAlias
             )
             FROM ExamRoom er
-            JOIN FETCH ExamRoomExamAssignment erea
+            JOIN ExamRoomExamAssignment erea
                 ON er.id = erea.examRoom.id
             WHERE erea.exam.id = :examId
             """)
