@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { EMPTY, Subject, of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { BuildJob, FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
 import dayjs from 'dayjs/esm';
 import { MockProvider } from 'ng-mocks';
@@ -531,7 +531,7 @@ describe('BuildAgentDetailsComponent', () => {
         vi.clearAllMocks();
         mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(mockFinishedJobsResponse));
 
-        component.onPageChange({ page: 2, isNext: true });
+        component.onPageChange({ page: 2, pageSize: 50, direction: 'next' });
 
         expect(component.currentPage).toBe(2);
         expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenCalled();

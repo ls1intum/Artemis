@@ -99,6 +99,12 @@ public class BuildAgentInformationService {
             return;
         }
 
+        // Guard against missing/blank buildAgentShortName to prevent key collisions or exceptions
+        if (buildAgentShortName == null || buildAgentShortName.isBlank()) {
+            log.error("Build agent short name is not configured. Cannot update build agent information.");
+            return;
+        }
+
         // Use buildAgentShortName as the stable key - memberAddress can change after Hazelcast client connects
         String agentKey = buildAgentShortName;
         try {
@@ -231,6 +237,6 @@ public class BuildAgentInformationService {
      * @return list of build jobs currently being processed by this agent
      */
     private List<BuildJobQueueItem> getProcessingJobsOfNode(String agentName) {
-        return distributedDataAccessService.getProcessingJobs().stream().filter(job -> Objects.equals(job.buildAgent().name(), agentName)).toList();
+        return distributedDataAccessService.getProcessingJobs().stream().filter(job -> job.buildAgent() != null && Objects.equals(job.buildAgent().name(), agentName)).toList();
     }
 }

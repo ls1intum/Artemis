@@ -121,11 +121,11 @@ public class EurekaInstanceHelper {
         log.info("Auto-discovering core nodes from service registry for serviceId '{}'", serviceId);
         List<ServiceInstance> instances = discoveryClient.getInstances(serviceId);
 
-        log.info("Found {} total instances in service registry for serviceId '{}'", instances.size(), serviceId);
+        log.debug("Found {} total instances in service registry for serviceId '{}'", instances.size(), serviceId);
         for (ServiceInstance instance : instances) {
             String profile = instance.getMetadata().get("profile");
             String hazelcastHost = instance.getMetadata().get("hazelcast.host");
-            log.info("Instance: host={}, hazelcast.host={}, port={}, profile={}, isCurrentInstance={}", instance.getHost(), hazelcastHost, instance.getPort(), profile,
+            log.debug("Instance: host={}, hazelcast.host={}, port={}, profile={}, isCurrentInstance={}", instance.getHost(), hazelcastHost, instance.getPort(), profile,
                     isCurrentInstance(instance));
         }
 
@@ -284,9 +284,9 @@ public class EurekaInstanceHelper {
      * and enables proper address comparison in cluster management.
      *
      * <p>
-     * The metadata change is immediately propagated to the Eureka server by triggering
-     * a re-registration. This ensures build agents can discover core nodes without
-     * waiting for the next heartbeat (default interval: 30 seconds).
+     * A re-registration is attempted to propagate the metadata change to the Eureka server.
+     * Note that Eureka discovery is eventually consistent - metadata propagation may take
+     * up to ~90 seconds (multiple heartbeat intervals) before other clients see the change.
      *
      * @param hazelcastHost the Hazelcast bind address to store in metadata
      * @param hazelcastPort the Hazelcast port to store in metadata
@@ -297,18 +297,18 @@ public class EurekaInstanceHelper {
             registration.get().getMetadata().put("hazelcast.port", String.valueOf(hazelcastPort));
             log.info("Registered Hazelcast address in service registry: host={}, port={}", hazelcastHost, hazelcastPort);
 
-            // Trigger immediate re-registration to propagate metadata change
+            // Attempt re-registration to propagate metadata change (eventually consistent, may take ~90s)
             if (serviceRegistry.isPresent()) {
                 try {
                     serviceRegistry.get().register(registration.get());
-                    log.info("Triggered immediate Eureka re-registration for Hazelcast address metadata");
+                    log.info("Attempted Eureka re-registration for Hazelcast metadata (propagation is eventually consistent)");
                 }
                 catch (Exception e) {
-                    log.warn("Failed to trigger immediate Eureka re-registration: {}. Metadata will propagate on next heartbeat.", e.getMessage());
+                    log.warn("Failed to trigger Eureka re-registration: {}. Metadata will propagate on subsequent heartbeats.", e.getMessage());
                 }
             }
             else {
-                log.debug("ServiceRegistry not available - metadata will propagate on next Eureka heartbeat");
+                log.debug("ServiceRegistry not available - metadata will propagate on subsequent Eureka heartbeats");
             }
         }
     }

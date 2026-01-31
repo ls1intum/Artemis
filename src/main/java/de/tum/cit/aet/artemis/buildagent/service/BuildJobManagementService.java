@@ -212,8 +212,8 @@ public class BuildJobManagementService {
                 initialized.set(false);
             }
             boolean initSucceeded = tryInitialize();
-            // If initialization failed after reconnection, schedule retries
-            if (!initSucceeded && !distributedDataAccessService.isConnectedToCluster()) {
+            // If initialization failed, schedule retries (handles both connection issues and transient failures)
+            if (!initSucceeded) {
                 if (connectionRetryFuture == null || connectionRetryFuture.isDone()) {
                     connectionRetryFuture = taskScheduler.scheduleAtFixedRate(() -> {
                         if (tryInitialize()) {
