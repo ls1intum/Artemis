@@ -69,9 +69,11 @@ import { Clipboard } from '@angular/cdk/clipboard';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisBaseChatbotComponent implements AfterViewInit {
-    private static readonly NEW_CHAT_TITLES = new Set(['new chat', 'neuer chat']);
     protected accountService = inject(AccountService);
     protected translateService = inject(TranslateService);
+
+    // Reactive signal for the localized "new chat" title
+    private readonly newChatTitle = toSignal(this.translateService.stream('artemisApp.iris.chatHistory.newChat'), { initialValue: '' });
     protected statusService = inject(IrisStatusService);
     protected chatService = inject(IrisChatService);
     protected route = inject(ActivatedRoute);
@@ -582,7 +584,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     private isNewChatSession(session: IrisSessionDTO): boolean {
         const title = session.title?.trim().toLowerCase();
-        return title !== undefined && IrisBaseChatbotComponent.NEW_CHAT_TITLES.has(title);
+        const translatedNewChat = this.newChatTitle()?.trim().toLowerCase();
+        return title !== undefined && translatedNewChat !== undefined && title === translatedNewChat;
     }
 
     /**

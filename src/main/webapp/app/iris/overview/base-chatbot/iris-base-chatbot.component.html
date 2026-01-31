@@ -78,7 +78,7 @@
                         <div class="chat-history-bottom">
                             <div class="chat-history-divider"></div>
                             <div class="chat-history-info-link">
-                                <a [routerLink]="'/about-iris'" target="_blank">
+                                <a [routerLink]="'/about-iris'" target="_blank" rel="noopener noreferrer">
                                     <fa-icon [icon]="faCircleInfo" class="info-button" />
                                 </a>
                             </div>
@@ -193,7 +193,7 @@
                                 [class.animate-enabled]="animatingMessageIds().has(message.id!)"
                                 [style.transform-origin]="message.sender === IrisSender.USER ? 'bottom right' : 'bottom left'"
                             >
-                                @for (content of message.content; track content.id) {
+                                @for (content of message.content; track content.id ?? $index) {
                                     <div>
                                         @if (message.sender === IrisSender.USER) {
                                             <div class="d-flex justify-content-end align-items-center">
