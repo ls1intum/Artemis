@@ -42,9 +42,9 @@ public class ConfigurationValidator {
 
     private static final Logger log = LoggerFactory.getLogger(ConfigurationValidator.class);
 
-    private static final int MIN_PORT = 1;
+    public static final int MIN_PORT = 1;
 
-    private static final int MAX_PORT = 65535;
+    public static final int MAX_PORT = 65535;
 
     public static final String HTTP_SCHEME = "http";
 

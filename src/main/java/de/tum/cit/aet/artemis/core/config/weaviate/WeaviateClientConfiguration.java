@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 
+import de.tum.cit.aet.artemis.core.config.ConfigurationValidator;
 import de.tum.cit.aet.artemis.core.exception.WeaviateConfigurationException;
 import de.tum.cit.aet.artemis.core.exception.WeaviateConnectionException;
 import io.weaviate.client6.v1.api.WeaviateClient;
@@ -35,11 +36,13 @@ public class WeaviateClientConfiguration {
         if (weaviateProperties.httpHost() == null || weaviateProperties.httpHost().isBlank()) {
             throw new WeaviateConfigurationException("artemis.weaviate.http-host must be configured when Weaviate is enabled", List.of("artemis.weaviate.http-host"));
         }
-        if (weaviateProperties.httpPort() == 0) {
-            throw new WeaviateConfigurationException("artemis.weaviate.http-port must be configured when Weaviate is enabled", List.of("artemis.weaviate.http-port"));
+        if (weaviateProperties.httpPort() < ConfigurationValidator.MIN_PORT || weaviateProperties.httpPort() > ConfigurationValidator.MAX_PORT) {
+            throw new WeaviateConfigurationException("artemis.weaviate.http-port must be a valid port number (" + ConfigurationValidator.MIN_PORT + "-"
+                    + ConfigurationValidator.MAX_PORT + "), got: " + weaviateProperties.httpPort(), List.of("artemis.weaviate.http-port"));
         }
-        if (weaviateProperties.grpcPort() == 0) {
-            throw new WeaviateConfigurationException("artemis.weaviate.grpc-port must be configured when Weaviate is enabled", List.of("artemis.weaviate.grpc-port"));
+        if (weaviateProperties.grpcPort() < ConfigurationValidator.MIN_PORT || weaviateProperties.grpcPort() > ConfigurationValidator.MAX_PORT) {
+            throw new WeaviateConfigurationException("artemis.weaviate.grpc-port must be a valid port number (" + ConfigurationValidator.MIN_PORT + "-"
+                    + ConfigurationValidator.MAX_PORT + "), got: " + weaviateProperties.grpcPort(), List.of("artemis.weaviate.grpc-port"));
         }
         if (weaviateProperties.scheme() == null || weaviateProperties.scheme().isBlank()) {
             throw new WeaviateConfigurationException("artemis.weaviate.scheme must be configured when Weaviate is enabled", List.of("artemis.weaviate.scheme"));
