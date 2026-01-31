@@ -13,9 +13,8 @@
                             <jhi-search-filter class="w-100" (newSearchEvent)="setSearchValue($event)" />
                         </div>
 
-                        @let newChatSessions = newChatSessions();
-                        @if (newChatSessions.length > 0) {
-                            @for (session of newChatSessions; track session.id) {
+                        @if (newChatSessions().length > 0) {
+                            @for (session of newChatSessions(); track session.id) {
                                 <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
                             }
                             <div class="chat-history-divider"></div>
@@ -23,52 +22,47 @@
                     </div>
 
                     <div class="chat-history-list">
-                        @let todaySessions = todaySessions();
-                        @if (todaySessions.length > 0) {
+                        @if (todaySessions().length > 0) {
                             <div class="chat-history-label">
                                 <p jhiTranslate="artemisApp.iris.chatHistory.today"></p>
                             </div>
-                            @for (session of todaySessions; track session.id; let i = $index) {
+                            @for (session of todaySessions(); track session.id; let i = $index) {
                                 <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
                             }
                         }
 
-                        @let yesterdaySessions = yesterdaySessions();
-                        @if (yesterdaySessions.length > 0) {
+                        @if (yesterdaySessions().length > 0) {
                             <div class="chat-history-label">
                                 <p jhiTranslate="artemisApp.iris.chatHistory.yesterday"></p>
                             </div>
-                            @for (session of yesterdaySessions; track session.id; let i = $index) {
+                            @for (session of yesterdaySessions(); track session.id; let i = $index) {
                                 <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
                             }
                         }
 
-                        @let last7DaysSessions = last7DaysSessions();
-                        @if (last7DaysSessions.length > 0) {
+                        @if (last7DaysSessions().length > 0) {
                             <div class="chat-history-label">
                                 <p jhiTranslate="artemisApp.iris.chatHistory.last7Days"></p>
                             </div>
-                            @for (session of last7DaysSessions; track session.id; let i = $index) {
+                            @for (session of last7DaysSessions(); track session.id; let i = $index) {
                                 <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
                             }
                         }
 
-                        @let last30DaysSessions = last30DaysSessions();
-                        @if (last30DaysSessions.length > 0) {
+                        @if (last30DaysSessions().length > 0) {
                             <div class="chat-history-label">
                                 <p jhiTranslate="artemisApp.iris.chatHistory.last30Days"></p>
                             </div>
-                            @for (session of last30DaysSessions; track session.id; let i = $index) {
+                            @for (session of last30DaysSessions(); track session.id; let i = $index) {
                                 <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
                             }
                         }
 
-                        @let olderSessions = olderSessions();
-                        @if (olderSessions.length > 0) {
+                        @if (olderSessions().length > 0) {
                             <div class="chat-history-label">
                                 <p jhiTranslate="artemisApp.iris.chatHistory.older"></p>
                             </div>
-                            @for (session of olderSessions; track session.id; let i = $index) {
+                            @for (session of olderSessions(); track session.id; let i = $index) {
                                 <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
                             }
                         }

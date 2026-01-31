@@ -10,7 +10,6 @@ import { IrisLogoLookDirection, IrisLogoSize } from 'app/iris/overview/iris-logo
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { isTextContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { NgClass } from '@angular/common';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
@@ -19,7 +18,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
     selector: 'jhi-exercise-chatbot-button',
     templateUrl: './exercise-chatbot-button.component.html',
     styleUrls: ['./exercise-chatbot-button.component.scss'],
-    imports: [NgClass, TranslateDirective, FaIconComponent, IrisLogoComponent, HtmlForMarkdownPipe],
+    imports: [NgClass, FaIconComponent, IrisLogoComponent, HtmlForMarkdownPipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisExerciseChatbotButtonComponent {
