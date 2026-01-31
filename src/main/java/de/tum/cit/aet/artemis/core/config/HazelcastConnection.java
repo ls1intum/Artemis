@@ -66,8 +66,7 @@ public class HazelcastConnection {
     private final Optional<Registration> registration;
 
     // the service registry used to trigger immediate re-registration when metadata changes
-    @SuppressWarnings("rawtypes")
-    private final Optional<ServiceRegistry> serviceRegistry;
+    private final Optional<ServiceRegistry<Registration>> serviceRegistry;
 
     private final Environment env;
 
@@ -77,8 +76,7 @@ public class HazelcastConnection {
     @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
     private String instanceName;
 
-    @SuppressWarnings("rawtypes")
-    public HazelcastConnection(DiscoveryClient discoveryClient, Optional<Registration> registration, Optional<ServiceRegistry> serviceRegistry, Environment env) {
+    public HazelcastConnection(DiscoveryClient discoveryClient, Optional<Registration> registration, Optional<ServiceRegistry<Registration>> serviceRegistry, Environment env) {
         this.discoveryClient = discoveryClient;
         this.registration = registration;
         this.serviceRegistry = serviceRegistry;
@@ -411,7 +409,6 @@ public class HazelcastConnection {
      * If the ServiceRegistry is not available (e.g., in test environments), the metadata
      * change will still be made locally and propagated on the next heartbeat.
      */
-    @SuppressWarnings("unchecked")
     public void registerAsClient() {
         if (registration.isPresent()) {
             registration.get().getMetadata().put(HAZELCAST_MEMBER_TYPE_KEY, HAZELCAST_MEMBER_TYPE_CLIENT);

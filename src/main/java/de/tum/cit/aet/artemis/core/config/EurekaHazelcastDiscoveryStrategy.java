@@ -5,6 +5,7 @@ import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,9 +50,8 @@ public class EurekaHazelcastDiscoveryStrategy extends AbstractDiscoveryStrategy 
      * Group 2: IPv4/hostname
      * Group 3: Port number
      */
-    private static final Pattern ADDRESS_PATTERN = Pattern.compile("^(?:\\[([^\\]]+)]|([^:]+)):(\\d+)$");
+    private static final Pattern ADDRESS_PATTERN = Pattern.compile("^(?:\\[([^]]+)]|([^:]+)):(\\d+)$");
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     public EurekaHazelcastDiscoveryStrategy(ILogger hazelcastLogger, Map<String, Comparable> properties) {
         super(hazelcastLogger, properties);
     }
@@ -97,7 +97,7 @@ public class EurekaHazelcastDiscoveryStrategy extends AbstractDiscoveryStrategy 
         }
 
         log.info("Discovered {} core node(s) from service registry: {}", addresses.size(), addresses);
-        List<DiscoveryNode> nodes = addresses.stream().map(this::parseAddress).filter(node -> node != null).toList();
+        List<DiscoveryNode> nodes = addresses.stream().map(this::parseAddress).filter(Objects::nonNull).toList();
         log.info("Returning {} valid discovery nodes to Hazelcast", nodes.size());
         return nodes;
     }
