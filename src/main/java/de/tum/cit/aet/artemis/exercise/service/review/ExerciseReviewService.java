@@ -414,7 +414,7 @@ public class ExerciseReviewService {
             throw new BadRequestAlertException("Initial file path is required for repository threads", THREAD_ENTITY_NAME, "initialFilePathMissing");
         }
         if (dto.targetType() == CommentThreadLocationType.PROBLEM_STATEMENT && dto.initialFilePath() != null) {
-            throw new BadRequestAlertException("Initial file path is not allowed for problem statemnt threads", THREAD_ENTITY_NAME, "initialFilePathNotAllowed");
+            throw new BadRequestAlertException("Initial file path is not allowed for problem statement threads", THREAD_ENTITY_NAME, "initialFilePathNotAllowed");
         }
         if (dto.targetType() != CommentThreadLocationType.AUXILIARY_REPO && dto.auxiliaryRepositoryId() != null) {
             throw new BadRequestAlertException("Auxiliary repository id is only allowed for auxiliary repository threads", THREAD_ENTITY_NAME, "auxiliaryRepositoryNotAllowed");

@@ -161,7 +161,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void shouldcreateUserCommentWithAuthorAndInitialVersion() {
+    void shouldCreateUserCommentWithAuthorAndInitialVersion() {
         ExerciseVersion initialVersion = createExerciseVersion();
         CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto());
 

@@ -22,7 +22,7 @@ public record CommentThreadDTO(@Schema(description = "Thread identifier.") @NotN
         @Schema(description = "Initial file path captured at thread creation.") String initialFilePath,
         @Schema(description = "Current line number for repository-based threads.") Integer lineNumber,
         @Schema(description = "Initial line number captured at thread creation.") @NotNull Integer initialLineNumber,
-        @Schema(description = "Whether the thread is outdated.") boolean outdated, @Schema(description = "Whether the thread is resolved.") boolean resolved,
+        @Schema(description = "Whether the thread is outdated.") @NotNull Boolean outdated, @Schema(description = "Whether the thread is resolved.") @NotNull Boolean resolved,
         @Schema(description = "Comments belonging to the thread.") @NotNull List<@NotNull CommentDTO> comments) {
 
     /**
