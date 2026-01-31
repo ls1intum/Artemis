@@ -74,7 +74,7 @@ public class ConfigurationValidator {
             @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures,
             @Value("${artemis.user-management.internal-admin.username:#{null}}") String internalAdminUsername,
             @Value("${artemis.user-management.internal-admin.password:#{null}}") String internalAdminPassword, @Value("${artemis.weaviate.enabled:false}") boolean weaviateEnabled,
-            @Value("${artemis.weaviate.host:#{null}}") String weaviateHost, @Value("${artemis.weaviate.port:8080}") int weaviatePort,
+            @Value("${artemis.weaviate.http-host:#{null}}") String weaviateHost, @Value("${artemis.weaviate.http-port:8080}") int weaviatePort,
             @Value("${artemis.weaviate.grpc-port:50051}") int weaviateGrpcPort, @Value("${artemis.weaviate.scheme:#{null}}") String weaviateScheme) {
         this.environment = environment;
         this.artemisConfigHelper = new ArtemisConfigHelper();
@@ -191,11 +191,11 @@ public class ConfigurationValidator {
         List<String> invalidProperties = new ArrayList<>();
 
         if (weaviateHost == null || weaviateHost.isBlank()) {
-            invalidProperties.add("artemis.weaviate.host (must not be empty)");
+            invalidProperties.add("artemis.weaviate.http-host (must not be empty)");
         }
 
         if (!isValidPort(weaviatePort)) {
-            invalidProperties.add("artemis.weaviate.port (must be between " + MIN_PORT + " and " + MAX_PORT + ")");
+            invalidProperties.add("artemis.weaviate.http-port (must be between " + MIN_PORT + " and " + MAX_PORT + ")");
         }
 
         if (!isValidPort(weaviateGrpcPort)) {
