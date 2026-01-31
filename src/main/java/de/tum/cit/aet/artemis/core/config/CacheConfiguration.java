@@ -5,6 +5,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_INDEPENDENT;
+import static de.tum.cit.aet.artemis.core.config.EurekaInstanceHelper.HAZELCAST_MEMBER_TYPE_KEY;
+import static de.tum.cit.aet.artemis.core.config.EurekaInstanceHelper.HAZELCAST_MEMBER_TYPE_MEMBER;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
@@ -91,9 +93,10 @@ import tech.jhipster.config.cache.PrefixedKeyGenerator;
  * <p>
  * <strong>Separation of Concerns:</strong>
  * This class encapsulates all Hazelcast configuration aspects, including topology, caching behavior,
- * and serialization. It is distinct from {@link HazelcastConnection}, which is responsible for
- * dynamically connecting cluster nodes at runtime based on service discovery. By decoupling static
- * configuration from runtime coordination, the system ensures better modularity, testability, and maintainability.
+ * and serialization. It uses {@link EurekaInstanceHelper} for Eureka-based service discovery and
+ * is distinct from {@link HazelcastClusterManager}, which is responsible for dynamically connecting
+ * cluster nodes at runtime. By decoupling static configuration from runtime coordination, the
+ * system ensures better modularity, testability, and maintainability.
  */
 @Conditional(CoreOrHazelcastBuildAgent.class)
 @Lazy(value = false)
@@ -102,16 +105,6 @@ import tech.jhipster.config.cache.PrefixedKeyGenerator;
 public class CacheConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(CacheConfiguration.class);
-
-    /**
-     * Metadata key used to identify the Hazelcast member type in the service registry.
-     * Core nodes are marked as "member", build agent clients are marked as "client".
-     */
-    public static final String HAZELCAST_MEMBER_TYPE_KEY = "hazelcast.member-type";
-
-    public static final String HAZELCAST_MEMBER_TYPE_MEMBER = "member";
-
-    public static final String HAZELCAST_MEMBER_TYPE_CLIENT = "client";
 
     private final ServerProperties serverProperties;
 
@@ -122,8 +115,7 @@ public class CacheConfiguration {
 
     private final Environment env;
 
-    // Lazy-injected to avoid circular dependency (HazelcastConnection depends on the HazelcastInstance we create)
-    private final HazelcastConnection hazelcastConnection;
+    private final EurekaInstanceHelper eurekaInstanceHelper;
 
     @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
     private String instanceName;
@@ -138,11 +130,11 @@ public class CacheConfiguration {
     private boolean hazelcastLocalInstances;
 
     public CacheConfiguration(ApplicationContext applicationContext, ServerProperties serverProperties, Optional<Registration> registration,
-            @Lazy HazelcastConnection hazelcastConnection, Environment env) {
+            EurekaInstanceHelper eurekaInstanceHelper, Environment env) {
         this.applicationContext = applicationContext;
         this.serverProperties = serverProperties;
         this.registration = registration;
-        this.hazelcastConnection = hazelcastConnection;
+        this.eurekaInstanceHelper = eurekaInstanceHelper;
         this.env = env;
 
         // Do not send telemetry to Hazelcast.
@@ -158,8 +150,6 @@ public class CacheConfiguration {
     @PreDestroy
     public void destroy() {
         log.info("Closing Cache Manager");
-        // Clear static references to prevent memory leaks
-        EurekaHazelcastDiscoveryStrategy.clearHazelcastConnection();
         // Shutdown all Hazelcast instances (both cluster members and clients)
         Hazelcast.shutdownAll();
         HazelcastClient.shutdownAll();
@@ -173,7 +163,7 @@ public class CacheConfiguration {
 
     /**
      * Setup the hazelcast instance based on the given jHipster properties and the enabled spring profiles.
-     * Note: It does not connect to other instances, this is done in {@link HazelcastConnection#connectToAllMembers()}.
+     * Note: It does not connect to other instances, this is done in {@link HazelcastClusterManager#connectToAllMembers()}.
      *
      * @param jHipsterProperties the jhipster properties
      * @return the created HazelcastInstance
@@ -440,14 +430,11 @@ public class CacheConfiguration {
             clientConfig.setClusterName("prod");
         }
 
-        // Set up the HazelcastConnection reference for the discovery strategy
-        // This must be done before creating the client
-        EurekaHazelcastDiscoveryStrategy.setHazelcastConnection(hazelcastConnection);
-
         // Configure Eureka-based discovery strategy for dynamic core node discovery
         // This replaces static address configuration and allows the client to discover
         // core nodes that become available after client startup
-        DiscoveryStrategyConfig discoveryStrategyConfig = new DiscoveryStrategyConfig(new EurekaHazelcastDiscoveryStrategyFactory());
+        var discoveryStrategyFactory = new EurekaHazelcastDiscoveryStrategyFactory(eurekaInstanceHelper);
+        DiscoveryStrategyConfig discoveryStrategyConfig = new DiscoveryStrategyConfig(discoveryStrategyFactory);
         DiscoveryConfig discoveryConfig = clientConfig.getNetworkConfig().getDiscoveryConfig();
         discoveryConfig.addDiscoveryStrategyConfig(discoveryStrategyConfig);
 
@@ -504,7 +491,7 @@ public class CacheConfiguration {
         clientConfig.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
 
         // Mark this instance as a client in the service registry
-        hazelcastConnection.registerAsClient();
+        eurekaInstanceHelper.registerAsClient();
 
         log.info("Creating Hazelcast client with Eureka-based dynamic discovery");
 

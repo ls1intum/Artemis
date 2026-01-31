@@ -8,65 +8,54 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.cloud.client.discovery.DiscoveryClient;
-import org.springframework.core.env.Environment;
 
+import com.hazelcast.logging.ILogger;
 import com.hazelcast.spi.discovery.DiscoveryNode;
 
 /**
  * Unit tests for {@link EurekaHazelcastDiscoveryStrategy}.
  * These tests verify the discovery strategy correctly discovers and parses node addresses
- * from the Eureka service registry via {@link HazelcastConnection}.
+ * from the Eureka service registry via {@link EurekaInstanceHelper}.
  */
 class EurekaHazelcastDiscoveryStrategyTest {
 
     private EurekaHazelcastDiscoveryStrategy discoveryStrategy;
 
-    private HazelcastConnection hazelcastConnection;
+    private EurekaInstanceHelper eurekaInstanceHelper;
 
     @BeforeEach
     void setUp() {
-        // Create mock HazelcastConnection
-        DiscoveryClient discoveryClient = mock(DiscoveryClient.class);
-        Environment env = mock(Environment.class);
-        hazelcastConnection = mock(HazelcastConnection.class);
+        // Create mock EurekaInstanceHelper
+        eurekaInstanceHelper = mock(EurekaInstanceHelper.class);
 
-        // Set the mock in the static holder
-        EurekaHazelcastDiscoveryStrategy.setHazelcastConnection(hazelcastConnection);
-
-        // Create the discovery strategy
-        discoveryStrategy = new EurekaHazelcastDiscoveryStrategy(Collections.emptyMap());
-    }
-
-    @AfterEach
-    void tearDown() {
-        // Clear the static holder to prevent test pollution
-        EurekaHazelcastDiscoveryStrategy.clearHazelcastConnection();
+        // Create the discovery strategy with a mock logger and the helper via constructor
+        ILogger mockLogger = mock(ILogger.class);
+        discoveryStrategy = new EurekaHazelcastDiscoveryStrategy(mockLogger, Collections.emptyMap(), eurekaInstanceHelper);
     }
 
     @Nested
     class DiscoverNodesTests {
 
         @Test
-        void shouldReturnEmptyWhenHazelcastConnectionNotSet() {
-            // Clear the connection
-            EurekaHazelcastDiscoveryStrategy.clearHazelcastConnection();
+        void shouldReturnEmptyWhenEurekaInstanceHelperIsNull() {
+            // Create a strategy with null helper
+            ILogger mockLogger = mock(ILogger.class);
+            EurekaHazelcastDiscoveryStrategy strategyWithNullHelper = new EurekaHazelcastDiscoveryStrategy(mockLogger, Collections.emptyMap(), null);
 
-            Iterable<DiscoveryNode> nodes = discoveryStrategy.discoverNodes();
+            Iterable<DiscoveryNode> nodes = strategyWithNullHelper.discoverNodes();
 
             assertThat(nodes).isEmpty();
         }
 
         @Test
         void shouldReturnEmptyWhenNoNodesDiscovered() {
-            when(hazelcastConnection.discoverCoreNodeAddresses()).thenReturn(Collections.emptyList());
+            when(eurekaInstanceHelper.discoverCoreNodeAddresses()).thenReturn(Collections.emptyList());
 
             Iterable<DiscoveryNode> nodes = discoveryStrategy.discoverNodes();
 
@@ -75,7 +64,7 @@ class EurekaHazelcastDiscoveryStrategyTest {
 
         @Test
         void shouldDiscoverSingleIPv4Node() {
-            when(hazelcastConnection.discoverCoreNodeAddresses()).thenReturn(List.of("192.168.1.1:5701"));
+            when(eurekaInstanceHelper.discoverCoreNodeAddresses()).thenReturn(List.of("192.168.1.1:5701"));
 
             Iterable<DiscoveryNode> nodes = discoveryStrategy.discoverNodes();
 
@@ -87,7 +76,7 @@ class EurekaHazelcastDiscoveryStrategyTest {
 
         @Test
         void shouldDiscoverSingleIPv6Node() {
-            when(hazelcastConnection.discoverCoreNodeAddresses()).thenReturn(List.of("[::1]:5701"));
+            when(eurekaInstanceHelper.discoverCoreNodeAddresses()).thenReturn(List.of("[::1]:5701"));
 
             Iterable<DiscoveryNode> nodes = discoveryStrategy.discoverNodes();
 
@@ -99,7 +88,7 @@ class EurekaHazelcastDiscoveryStrategyTest {
 
         @Test
         void shouldDiscoverMultipleNodes() {
-            when(hazelcastConnection.discoverCoreNodeAddresses()).thenReturn(List.of("192.168.1.1:5701", "192.168.1.2:5701", "192.168.1.3:5702"));
+            when(eurekaInstanceHelper.discoverCoreNodeAddresses()).thenReturn(List.of("192.168.1.1:5701", "192.168.1.2:5701", "192.168.1.3:5702"));
 
             Iterable<DiscoveryNode> nodes = discoveryStrategy.discoverNodes();
 
@@ -109,7 +98,7 @@ class EurekaHazelcastDiscoveryStrategyTest {
 
         @Test
         void shouldHandleMixedIPv4AndIPv6Nodes() {
-            when(hazelcastConnection.discoverCoreNodeAddresses()).thenReturn(List.of("192.168.1.1:5701", "[2001:db8::1]:5701"));
+            when(eurekaInstanceHelper.discoverCoreNodeAddresses()).thenReturn(List.of("192.168.1.1:5701", "[2001:db8::1]:5701"));
 
             Iterable<DiscoveryNode> nodes = discoveryStrategy.discoverNodes();
 
@@ -120,7 +109,7 @@ class EurekaHazelcastDiscoveryStrategyTest {
         @Test
         void shouldFilterOutInvalidAddresses() {
             // Mix valid and invalid addresses
-            when(hazelcastConnection.discoverCoreNodeAddresses()).thenReturn(List.of("192.168.1.1:5701", "invalid-address", "192.168.1.2:5701"));
+            when(eurekaInstanceHelper.discoverCoreNodeAddresses()).thenReturn(List.of("192.168.1.1:5701", "invalid-address", "192.168.1.2:5701"));
 
             Iterable<DiscoveryNode> nodes = discoveryStrategy.discoverNodes();
 
@@ -137,7 +126,7 @@ class EurekaHazelcastDiscoveryStrategyTest {
         @CsvSource({ "'192.168.1.1:5701', '192.168.1.1', 5701", "'10.0.0.1:5702', '10.0.0.1', 5702", "'127.0.0.1:8080', '127.0.0.1', 8080",
                 "'255.255.255.255:5701', '255.255.255.255', 5701" })
         void shouldParseIPv4Addresses(String address, String expectedHost, int expectedPort) {
-            when(hazelcastConnection.discoverCoreNodeAddresses()).thenReturn(List.of(address));
+            when(eurekaInstanceHelper.discoverCoreNodeAddresses()).thenReturn(List.of(address));
 
             Iterable<DiscoveryNode> nodes = discoveryStrategy.discoverNodes();
 
@@ -150,7 +139,7 @@ class EurekaHazelcastDiscoveryStrategyTest {
         @ParameterizedTest(name = "IPv6 address: {0}")
         @ValueSource(strings = { "[::1]:5701", "[2001:db8::1]:5701", "[fe80::1]:5701", "[0:0:0:0:0:0:0:1]:5701" })
         void shouldParseIPv6Addresses(String address) {
-            when(hazelcastConnection.discoverCoreNodeAddresses()).thenReturn(List.of(address));
+            when(eurekaInstanceHelper.discoverCoreNodeAddresses()).thenReturn(List.of(address));
 
             Iterable<DiscoveryNode> nodes = discoveryStrategy.discoverNodes();
 
@@ -168,7 +157,7 @@ class EurekaHazelcastDiscoveryStrategyTest {
                 "::1:5701" // IPv6 without brackets
         })
         void shouldSkipInvalidAddresses(String invalidAddress) {
-            when(hazelcastConnection.discoverCoreNodeAddresses()).thenReturn(List.of(invalidAddress));
+            when(eurekaInstanceHelper.discoverCoreNodeAddresses()).thenReturn(List.of(invalidAddress));
 
             Iterable<DiscoveryNode> nodes = discoveryStrategy.discoverNodes();
 
@@ -178,7 +167,7 @@ class EurekaHazelcastDiscoveryStrategyTest {
         @Test
         void shouldHandleHostnameResolutionFailure() {
             // Use an invalid hostname that cannot be resolved
-            when(hazelcastConnection.discoverCoreNodeAddresses()).thenReturn(List.of("invalid.hostname.that.does.not.exist.local:5701"));
+            when(eurekaInstanceHelper.discoverCoreNodeAddresses()).thenReturn(List.of("invalid.hostname.that.does.not.exist.local:5701"));
 
             Iterable<DiscoveryNode> nodes = discoveryStrategy.discoverNodes();
 
@@ -204,25 +193,35 @@ class EurekaHazelcastDiscoveryStrategyTest {
     }
 
     @Nested
-    class StaticHolderTests {
+    class FactoryTests {
 
         @Test
-        void shouldSetAndClearHazelcastConnection() {
-            // First verify it's set
-            when(hazelcastConnection.discoverCoreNodeAddresses()).thenReturn(List.of("192.168.1.1:5701"));
-            assertThat(discoveryStrategy.discoverNodes()).isNotEmpty();
+        void factoryShouldCreateStrategyWithHelper() {
+            EurekaHazelcastDiscoveryStrategyFactory factory = new EurekaHazelcastDiscoveryStrategyFactory(eurekaInstanceHelper);
+            ILogger mockLogger = mock(ILogger.class);
 
-            // Clear it
-            EurekaHazelcastDiscoveryStrategy.clearHazelcastConnection();
+            var strategy = factory.newDiscoveryStrategy(null, mockLogger, Collections.emptyMap());
 
-            // Now discovery should return empty
-            assertThat(discoveryStrategy.discoverNodes()).isEmpty();
+            assertThat(strategy).isInstanceOf(EurekaHazelcastDiscoveryStrategy.class);
 
-            // Set it again
-            EurekaHazelcastDiscoveryStrategy.setHazelcastConnection(hazelcastConnection);
+            // Verify the strategy can discover nodes (meaning the helper was passed correctly)
+            when(eurekaInstanceHelper.discoverCoreNodeAddresses()).thenReturn(List.of("192.168.1.1:5701"));
+            Iterable<DiscoveryNode> nodes = strategy.discoverNodes();
+            assertThat(nodes).isNotEmpty();
+        }
 
-            // Discovery should work again
-            assertThat(discoveryStrategy.discoverNodes()).isNotEmpty();
+        @Test
+        void factoryShouldReturnCorrectStrategyType() {
+            EurekaHazelcastDiscoveryStrategyFactory factory = new EurekaHazelcastDiscoveryStrategyFactory(eurekaInstanceHelper);
+
+            assertThat(factory.getDiscoveryStrategyType()).isEqualTo(EurekaHazelcastDiscoveryStrategy.class);
+        }
+
+        @Test
+        void factoryShouldReturnEmptyConfigurationProperties() {
+            EurekaHazelcastDiscoveryStrategyFactory factory = new EurekaHazelcastDiscoveryStrategyFactory(eurekaInstanceHelper);
+
+            assertThat(factory.getConfigurationProperties()).isEmpty();
         }
     }
 }

@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,24 +24,17 @@ import com.hazelcast.spi.discovery.SimpleDiscoveryNode;
  * without static address configuration.
  *
  * <p>
- * The strategy uses {@link HazelcastConnection#discoverCoreNodeAddresses()} to query the service
+ * The strategy uses {@link EurekaInstanceHelper#discoverCoreNodeAddresses()} to query the service
  * registry for available core nodes. Discovery is performed each time Hazelcast calls
  * {@link #discoverNodes()}, which happens during initial connection and reconnection attempts.
  *
  * <p>
- * <strong>Thread Safety:</strong> This class uses an {@link AtomicReference} to hold the
- * {@link HazelcastConnection} instance, which must be set via {@link #setHazelcastConnection(HazelcastConnection)}
- * before the Hazelcast client is created.
+ * The {@link EurekaInstanceHelper} is passed through constructor injection from the
+ * {@link EurekaHazelcastDiscoveryStrategyFactory}, eliminating the need for static holders.
  */
 public class EurekaHazelcastDiscoveryStrategy extends AbstractDiscoveryStrategy {
 
     private static final Logger log = LoggerFactory.getLogger(EurekaHazelcastDiscoveryStrategy.class);
-
-    /**
-     * Static holder for the HazelcastConnection instance.
-     * Must be set before creating the Hazelcast client that uses this discovery strategy.
-     */
-    private static final AtomicReference<HazelcastConnection> hazelcastConnectionHolder = new AtomicReference<>();
 
     /**
      * Pattern to parse Hazelcast address format: "host:port" or "[ipv6]:port"
@@ -52,26 +44,18 @@ public class EurekaHazelcastDiscoveryStrategy extends AbstractDiscoveryStrategy 
      */
     private static final Pattern ADDRESS_PATTERN = Pattern.compile("^(?:\\[([^]]+)]|([^:]+)):(\\d+)$");
 
-    public EurekaHazelcastDiscoveryStrategy(ILogger hazelcastLogger, Map<String, Comparable> properties) {
-        super(hazelcastLogger, properties);
-    }
+    private final EurekaInstanceHelper eurekaInstanceHelper;
 
     /**
-     * Sets the HazelcastConnection instance to use for discovery.
-     * Must be called before creating the Hazelcast client.
+     * Creates a new discovery strategy with the given Hazelcast logger, properties, and EurekaInstanceHelper.
      *
-     * @param hazelcastConnection the HazelcastConnection instance
+     * @param hazelcastLogger      the Hazelcast logger
+     * @param properties           configuration properties
+     * @param eurekaInstanceHelper the helper for discovering service instances from Eureka
      */
-    public static void setHazelcastConnection(HazelcastConnection hazelcastConnection) {
-        hazelcastConnectionHolder.set(hazelcastConnection);
-    }
-
-    /**
-     * Clears the HazelcastConnection reference.
-     * Should be called during shutdown to prevent memory leaks.
-     */
-    public static void clearHazelcastConnection() {
-        hazelcastConnectionHolder.set(null);
+    public EurekaHazelcastDiscoveryStrategy(ILogger hazelcastLogger, Map<String, Comparable> properties, EurekaInstanceHelper eurekaInstanceHelper) {
+        super(hazelcastLogger, properties);
+        this.eurekaInstanceHelper = eurekaInstanceHelper;
     }
 
     /**
@@ -83,14 +67,13 @@ public class EurekaHazelcastDiscoveryStrategy extends AbstractDiscoveryStrategy 
     @Override
     public Iterable<DiscoveryNode> discoverNodes() {
         log.info("Hazelcast discovery strategy discoverNodes() called");
-        HazelcastConnection connection = hazelcastConnectionHolder.get();
-        if (connection == null) {
-            log.warn("HazelcastConnection not set - cannot discover core nodes. Returning empty list.");
+        if (eurekaInstanceHelper == null) {
+            log.warn("EurekaInstanceHelper not available - cannot discover core nodes. Returning empty list.");
             return Collections.emptyList();
         }
 
-        log.info("HazelcastConnection is available, querying for core node addresses");
-        List<String> addresses = connection.discoverCoreNodeAddresses();
+        log.info("EurekaInstanceHelper is available, querying for core node addresses");
+        List<String> addresses = eurekaInstanceHelper.discoverCoreNodeAddresses();
         if (addresses.isEmpty()) {
             log.warn("No core nodes discovered from service registry - returning empty list which will cause Hazelcast to use default addresses");
             return Collections.emptyList();
