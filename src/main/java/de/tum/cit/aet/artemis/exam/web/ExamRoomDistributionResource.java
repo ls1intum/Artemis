@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exam.web;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import jakarta.validation.Valid;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -29,9 +31,11 @@ import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoomExamAssignment;
 import de.tum.cit.aet.artemis.exam.dto.room.AttendanceCheckerAppExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamDistributionCapacityDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDistributionRequestBodyDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ReseatInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.SeatsOfExamRoomDTO;
+import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomDistributionService;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomService;
@@ -59,12 +63,15 @@ public class ExamRoomDistributionResource {
 
     private final ExamUserService examUserService;
 
+    private final ExamRoomRepository examRoomRepository;
+
     public ExamRoomDistributionResource(ExamAccessService examAccessService, ExamRoomService examRoomService, ExamRoomDistributionService examRoomDistributionService,
-            ExamUserService examUserService) {
+            ExamUserService examUserService, ExamRoomRepository examRoomRepository) {
         this.examAccessService = examAccessService;
         this.examRoomService = examRoomService;
         this.examRoomDistributionService = examRoomDistributionService;
         this.examUserService = examUserService;
+        this.examRoomRepository = examRoomRepository;
     }
 
     /**
@@ -78,19 +85,24 @@ public class ExamRoomDistributionResource {
      * Leaving a certain amount of seats unassigned is usually recommended, as it allows students who accidentally went
      * to the wrong room to still have a seat and participate in the exam.
      *
-     * @param courseId              the id of the course
-     * @param examId                the id of the exam
-     * @param useOnlyDefaultLayouts if we want to only use 'default' layouts
-     * @param reserveFactor         how much percent of seats should remain unassigned. Defaults to 0%
-     * @param examRoomIds           the ids of all the exam rooms we want to distribute the students to, ordered
+     * @param courseId                        the id of the course
+     * @param examId                          the id of the exam
+     * @param useOnlyDefaultLayouts           if we want to only use 'default' layouts
+     * @param reserveFactor                   how much percent of seats should remain unassigned. Defaults to 0%
+     * @param examRoomDistributionRequestBody the ids of all the exam rooms we want to distribute the students to, ordered;
+     *                                            mapping of room id to alias, if specified
      * @return 200 (OK) if the distribution was successful
      */
     @PostMapping("courses/{courseId}/exams/{examId}/distribute-registered-students")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> distributeRegisteredStudents(@PathVariable long courseId, @PathVariable long examId,
-            @RequestParam(defaultValue = "true") boolean useOnlyDefaultLayouts, @RequestParam(defaultValue = "0.0") double reserveFactor, @RequestBody List<Long> examRoomIds) {
+            @RequestParam(defaultValue = "true") boolean useOnlyDefaultLayouts, @RequestParam(defaultValue = "0.0") double reserveFactor,
+            @RequestBody ExamRoomDistributionRequestBodyDTO examRoomDistributionRequestBody) {
         log.debug("REST request to distribute students across rooms for exam : {}", examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+
+        List<Long> examRoomIds = examRoomDistributionRequestBody.roomIds();
+        Map<Long, String> examRoomAliases = examRoomDistributionRequestBody.examRoomAliases();
 
         if (reserveFactor < 0 || reserveFactor > 1) {
             throw new BadRequestAlertException("Reserve factor outside of allowed range [0,1]", ENTITY_NAME, "reserveFactorOutOfRange");
@@ -104,7 +116,7 @@ public class ExamRoomDistributionResource {
             throw new BadRequestAlertException("You have invalid room IDs", ENTITY_NAME, "invalidRoomIDs");
         }
 
-        examRoomDistributionService.distributeRegisteredStudents(examId, examRoomIds, useOnlyDefaultLayouts, reserveFactor);
+        examRoomDistributionService.distributeRegisteredStudents(examId, examRoomIds, examRoomAliases, useOnlyDefaultLayouts, reserveFactor);
 
         return ResponseEntity.ok().build();
     }
@@ -247,5 +259,24 @@ public class ExamRoomDistributionResource {
 
         examRoomDistributionService.reseatStudent(reseatInformation.examUserId(), reseatInformation.newRoom(), reseatInformation.newSeat());
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * GET courses/{courseId}/exams/{examId}/aliases : Gets a mapping from the original room number to an optionally specified alias.
+     * Only returns aliases for rooms connected to the given exam.
+     *
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
+     * @return A {roomNumber => alias} mapping
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/room-aliases")
+    @EnforceAtLeastTutor
+    public ResponseEntity<Map<String, String>> getRoomAliases(@PathVariable long courseId, @PathVariable long examId) {
+        log.debug("REST request to get room aliases for exam: {}", examId);
+
+        examAccessService.checkCourseAndExamAccessForTeachingAssistantElseThrow(courseId, examId);
+
+        Map<String, String> roomAliases = examRoomDistributionService.getAliases(examId);
+        return ResponseEntity.ok(roomAliases);
     }
 }

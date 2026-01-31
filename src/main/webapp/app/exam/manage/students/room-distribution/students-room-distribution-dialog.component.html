@@ -1,4 +1,4 @@
-<p-dialog [(visible)]="dialogVisible" [modal]="true" [closable]="true" [dismissableMask]="true" (onHide)="closeDialog()" [style]="{ width: '45dvw' }">
+<p-dialog [(visible)]="dialogVisible" [modal]="true" [closable]="true" [dismissableMask]="true" (onHide)="closeDialog()" [style]="{ width: '50dvw' }">
     <ng-template pTemplate="header">
         <h4>
             <span jhiTranslate="artemisApp.exam.examUsers.rooms.dialogTitle"></span>
@@ -46,7 +46,8 @@
                             <th jhiTranslate="artemisApp.exam.examUsers.rooms.name"></th>
                             <th jhiTranslate="artemisApp.exam.examUsers.rooms.building"></th>
                             <th jhiTranslate="artemisApp.exam.examUsers.rooms.number"></th>
-                            <th></th>
+                            <th jhiTranslate="artemisApp.exam.examUsers.rooms.alias"></th>
+                            <th><!-- Remove column --></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -64,6 +65,9 @@
                                     @if (examRoom.alternativeRoomNumber) {
                                         ({{ examRoom.alternativeRoomNumber }})
                                     }
+                                </td>
+                                <td>
+                                    <input type="text" [defaultValue]="examRoom.alias ?? ''" (change)="setRoomAlias($event, examRoom.id)" />
                                 </td>
                                 <td>
                                     <button type="button" jhiTranslate="entity.action.remove" class="btn btn-sm btn-danger" (click)="removeSelectedRoom(examRoom)"></button>

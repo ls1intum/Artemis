@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.byLessThan;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -279,7 +280,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 10);
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileSingleExamRoom);
         List<Long> ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001")).stream().toList();
-        examRoomDistributionService.distributeRegisteredStudents(exam1.getId(), ids, true, 0.0);
+        examRoomDistributionService.distributeRegisteredStudents(exam1.getId(), ids, Map.of(), true, 0.0);
 
         var attendanceCheckerInformation = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.OK,
                 AttendanceCheckerAppExamInformationDTO.class);
@@ -337,7 +338,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 10);
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
         List<Long> ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("0101.01.135", "0101.02.179", "0101.Z1.090", "5602.EG.001")).stream().toList();
-        examRoomDistributionService.distributeRegisteredStudents(exam1.getId(), ids, true, 0.0);
+        examRoomDistributionService.distributeRegisteredStudents(exam1.getId(), ids, Map.of(), true, 0.0);
 
         var attendanceCheckerInformation = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.OK,
                 AttendanceCheckerAppExamInformationDTO.class);
@@ -365,7 +366,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, NUMBER_OF_STUDENTS);
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
         List<Long> ids = examRoomRepository.findAllNewestExamRoomVersions().stream().map(ExamRoom::getId).toList();
-        examRoomDistributionService.distributeRegisteredStudents(exam1.getId(), ids, true, 0.1);
+        examRoomDistributionService.distributeRegisteredStudents(exam1.getId(), ids, Map.of(), true, 0.1);
     }
 
     private void reloadExam1WithExamUsers() {

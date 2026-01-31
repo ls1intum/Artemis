@@ -75,14 +75,22 @@ export class StudentsRoomDistributionService {
      * @param courseId id of the course
      * @param examId id of the exam
      * @param roomIds ids of the rooms
+     * @param examRoomAliases a mapping from room id to room alias, if an alias is set
      * @param reserveFactor percentage of seats that should be left empty
      * @param useOnlyDefaultLayouts defines if only default layouts should be used for distribution
      */
-    distributeStudentsAcrossRooms(courseId: number, examId: number, roomIds: number[], reserveFactor: number, useOnlyDefaultLayouts: boolean): Observable<HttpResponse<void>> {
+    distributeStudentsAcrossRooms(
+        courseId: number,
+        examId: number,
+        roomIds: number[],
+        examRoomAliases: Record<number, string>,
+        reserveFactor: number,
+        useOnlyDefaultLayouts: boolean,
+    ): Observable<HttpResponse<void>> {
         const requestUrl = `${this.BASE_URL}/courses/${courseId}/exams/${examId}/distribute-registered-students`;
         const params = new HttpParams().set('reserveFactor', reserveFactor).set('useOnlyDefaultLayouts', useOnlyDefaultLayouts);
 
-        return this.http.post<void>(requestUrl, roomIds, { params, observe: 'response' });
+        return this.http.post<void>(requestUrl, { roomIds, examRoomAliases }, { params, observe: 'response' });
     }
 
     /**
@@ -143,6 +151,15 @@ export class StudentsRoomDistributionService {
             catchError((error) => {
                 return throwError(() => error);
             }),
+        );
+    }
+
+    getAliases(courseId: number, examId: number): Observable<Record<string, string>> {
+        const requestUrl = `${this.BASE_URL}/courses/${courseId}/exams/${examId}/room-aliases`;
+
+        return this.http.get<Record<string, string>>(requestUrl).pipe(
+            map((aliases) => aliases),
+            catchError((error) => throwError(() => error)),
         );
     }
 }

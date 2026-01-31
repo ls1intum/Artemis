@@ -14,6 +14,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomWithAliasDTO;
 
 /**
  * Spring Data JPA repository for the {@link ExamRoom} entity.
@@ -124,7 +125,8 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
                 roomPartition.alternativeRoomNumber,
                 roomPartition.name,
                 roomPartition.alternativeName,
-                roomPartition.building
+                roomPartition.building,
+                null
             )
             FROM (
                 SELECT er.id AS id, er.roomNumber AS roomNumber, er.alternativeRoomNumber AS alternativeRoomNumber, er.name AS name, er.alternativeName AS alternativeName, er.building AS building, er.createdDate AS createdDate, ROW_NUMBER() OVER (
@@ -137,6 +139,12 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
             """)
     Set<ExamRoomForDistributionDTO> findAllCurrentExamRoomsForDistribution();
 
+    /**
+     * Finds all room entities that are connected to the given exam.
+     *
+     * @param examId the id of the exam
+     * @return all rooms used in the exam
+     */
     @Query("""
             SELECT er
             FROM ExamRoom er
@@ -145,6 +153,29 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
             WHERE erea.exam.id = :examId
             """)
     Set<ExamRoom> findAllByExamId(@Param("examId") long examId);
+
+    /**
+     * Finds all rooms that are connected to the given exam, including their alias for this exam, if existent.
+     *
+     * @param examId the id of the exam
+     * @return base information of all rooms + their exam specific alias
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exam.dto.room.ExamRoomWithAliasDTO(
+                er.id,
+                er.roomNumber,
+                er.alternativeRoomNumber,
+                er.name,
+                er.alternativeName,
+                er.building,
+                erea.roomAlias
+            )
+            FROM ExamRoom er
+            JOIN FETCH ExamRoomExamAssignment erea
+                ON er.id = erea.examRoom.id
+            WHERE erea.exam.id = :examId
+            """)
+    Set<ExamRoomWithAliasDTO> findAllByExamIdWithAliases(@Param("examId") long examId);
 
     /**
      * Finds the exam room connected to the given exam ID with the specified room number, including its layout strategies.

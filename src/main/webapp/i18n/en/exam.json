@@ -44,6 +44,7 @@
                     "number": "Room Number",
                     "name": "Name",
                     "building": "Building",
+                    "alias": "Alias",
                     "enoughSeatsForStudents": "You can seat all {{ totalStudents }} students.",
                     "notEnoughSeatsForStudents": "You can only seat {{ usableCapacity }} of the {{ totalStudents }} students ({{ percentage }}%).",
                     "distribute": "Distribute",

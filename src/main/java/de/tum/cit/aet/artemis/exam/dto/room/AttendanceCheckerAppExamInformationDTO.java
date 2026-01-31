@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exam.dto.room;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -31,12 +32,12 @@ record ExamRoomForAttendanceCheckerDTO(
     @NotBlank String building,
     @NotNull List<ExamSeatDTO> seats
 ) {
-    static ExamRoomForAttendanceCheckerDTO from(ExamRoom examRoom) {
+    static ExamRoomForAttendanceCheckerDTO from(ExamRoom examRoom, Map<String, String> roomAliases) {
         return new ExamRoomForAttendanceCheckerDTO(
             examRoom.getId(),
             examRoom.getRoomNumber(),
             examRoom.getAlternativeRoomNumber(),
-            examRoom.getName(),
+            roomAliases.getOrDefault(examRoom.getRoomNumber(), examRoom.getName()),  // Änderung hier
             examRoom.getAlternativeName(),
             examRoom.getBuilding(),
             examRoom.getSeats()
@@ -133,9 +134,11 @@ public record AttendanceCheckerAppExamInformationDTO(
      *
      * @param exam the exam
      * @param examRooms the rooms used in the exam
+     * @param roomAliases mapping of room number to alias
+     *
      * @return information for the attendance checker app
      */
-    public static AttendanceCheckerAppExamInformationDTO from(Exam exam, Set<ExamRoom> examRooms) {
+    public static AttendanceCheckerAppExamInformationDTO from(Exam exam, Set<ExamRoom> examRooms, Map<String, String> roomAliases) {
         Set<ExamUser> examUsersWhoHaveBeenDistributed = exam.getExamUsers().stream()
             .filter(examUser -> StringUtils.hasText(examUser.getPlannedRoom()) && StringUtils.hasText(examUser.getPlannedSeat()))
             .collect(Collectors.toSet());
@@ -148,7 +151,7 @@ public record AttendanceCheckerAppExamInformationDTO(
             exam.isTestExam(),
             exam.getCourse().getId(),
             exam.getCourse().getTitle(),
-            examRooms.stream().map(ExamRoomForAttendanceCheckerDTO::from).collect(Collectors.toSet()),
+            examRooms.stream().map(room -> ExamRoomForAttendanceCheckerDTO.from(room, roomAliases)).collect(Collectors.toSet()),
             examUsersWhoHaveBeenDistributed.stream().map(ExamUserWithExamRoomAndSeatDTO::from).collect(Collectors.toSet())
         );
     }

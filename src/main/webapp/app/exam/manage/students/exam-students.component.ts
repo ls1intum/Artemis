@@ -27,6 +27,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { StudentsRoomDistributionDialogComponent } from 'app/exam/manage/students/room-distribution/students-room-distribution-dialog.component';
 import { StudentsReseatingDialogComponent } from 'app/exam/manage/students/room-distribution/students-reseating-dialog.component';
+import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -65,6 +66,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     private userService = inject(UserService);
     private accountService = inject(AccountService);
     private studentExamService = inject(StudentExamService);
+    private readonly studentsRoomDistributionService = inject(StudentsRoomDistributionService);
 
     dataTable = viewChild.required(DataTableComponent);
 
@@ -143,8 +145,26 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
                     };
                 }) || [];
         }
+
+        this.exchangeRoomsForAliasesIfPossible();
         this.isTestExam = this.exam.testExam!;
         this.isLoading = false;
+    }
+
+    private exchangeRoomsForAliasesIfPossible(): void {
+        this.studentsRoomDistributionService.getAliases(this.courseId, this.exam.id!).subscribe({
+            next: (aliases: Record<string, string>) => {
+                this.allRegisteredUsers = this.allRegisteredUsers.map((examUser) => {
+                    const plannedRoom: string = examUser.plannedRoom ?? '';
+
+                    if (plannedRoom && plannedRoom in aliases) {
+                        examUser.plannedRoom = aliases[plannedRoom];
+                    }
+
+                    return examUser;
+                });
+            },
+        });
     }
 
     ngOnDestroy() {
