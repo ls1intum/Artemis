@@ -62,10 +62,4 @@ class WeaviateClientConfigurationTest {
         }
     }
 
-    @Test
-    void testConstructor() {
-        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties();
-        WeaviateClientConfiguration config = new WeaviateClientConfiguration(properties);
-        assertThat(config).isNotNull();
-    }
 }

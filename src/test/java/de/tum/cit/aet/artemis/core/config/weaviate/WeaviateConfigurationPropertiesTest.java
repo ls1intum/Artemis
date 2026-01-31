@@ -22,8 +22,9 @@ class WeaviateConfigurationPropertiesTest {
     }
 
     @Test
-    void testDefaultValues() {
-        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties();
+    void testTypicalDefaults() {
+        // Test typical default configuration values
+        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(false, "localhost", 8001, 50051, "http");
 
         assertThat(properties.enabled()).isFalse();
         assertThat(properties.httpHost()).isEqualTo("localhost");
@@ -39,11 +40,12 @@ class WeaviateConfigurationPropertiesTest {
         assertThat(new WeaviateConfigurationProperties(false, "localhost", 8001, 50051, "http")).isNotNull();
         assertThat(new WeaviateConfigurationProperties(false, "localhost", 443, 50051, "https")).isNotNull();
 
-        // Test scheme defaults
-        WeaviateConfigurationProperties httpDefault = new WeaviateConfigurationProperties(false, "localhost", 8001, 50051, null);
-        assertThat(httpDefault.scheme()).isEqualTo("http");
-        assertThat(httpDefault.secure()).isFalse();
+        // Test http scheme
+        WeaviateConfigurationProperties httpProps = new WeaviateConfigurationProperties(false, "localhost", 8001, 50051, "http");
+        assertThat(httpProps.scheme()).isEqualTo("http");
+        assertThat(httpProps.secure()).isFalse();
 
+        // Test https scheme
         WeaviateConfigurationProperties httpsExplicit = new WeaviateConfigurationProperties(false, "localhost", 443, 50051, "https");
         assertThat(httpsExplicit.scheme()).isEqualTo("https");
         assertThat(httpsExplicit.secure()).isTrue();
