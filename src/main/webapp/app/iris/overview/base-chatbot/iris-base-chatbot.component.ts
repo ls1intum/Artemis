@@ -389,17 +389,24 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             return;
         }
         const key = this.getMessageKey(message, messageIndex);
-        this.setCopiedKey(key);
         if (navigator.clipboard?.writeText) {
-            navigator.clipboard.writeText(text).catch(() => this.fallbackCopy(text, key));
+            navigator.clipboard
+                .writeText(text)
+                .then(() => this.setCopiedKey(key))
+                .catch(() => {
+                    if (this.fallbackCopy(text)) {
+                        this.setCopiedKey(key);
+                    }
+                });
             return;
         }
-        this.fallbackCopy(text, key);
+        if (this.fallbackCopy(text)) {
+            this.setCopiedKey(key);
+        }
     }
 
-    private fallbackCopy(text: string, key: number | undefined) {
-        this.clipboard.copy(text);
-        this.setCopiedKey(key);
+    private fallbackCopy(text: string): boolean {
+        return this.clipboard.copy(text);
     }
 
     private getCopyText(message: IrisMessage): string {

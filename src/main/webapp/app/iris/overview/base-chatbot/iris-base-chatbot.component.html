@@ -184,7 +184,7 @@
                         @for (message of messages(); track message.id ?? $index; let i = $index) {
                             <div
                                 animate.enter="message-entering"
-                                [class.animate-enabled]="animatingMessageIds().has(message.id!)"
+                                [class.animate-enabled]="message.id !== undefined && animatingMessageIds().has(message.id)"
                                 [style.transform-origin]="message.sender === IrisSender.USER ? 'bottom right' : 'bottom left'"
                             >
                                 @for (content of message.content; track content.id ?? $index) {
@@ -298,7 +298,6 @@
                                 class="form-control"
                                 (input)="onInput()"
                                 (paste)="onPaste()"
-                                type="text"
                                 [disabled]="
                                     isLoading() ||
                                     !active() ||
