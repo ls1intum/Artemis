@@ -33,13 +33,13 @@ import org.springframework.stereotype.Component;
  * <p>
  * This class intentionally has no dependency on Hazelcast, making it usable by both:
  * <ul>
- * <li>{@link CacheConfiguration} - for creating Hazelcast clients with dynamic discovery</li>
+ * <li>{@link HazelcastConfiguration} - for creating Hazelcast clients with dynamic discovery</li>
  * <li>{@link HazelcastClusterManager} - for runtime cluster membership management</li>
  * </ul>
  *
  * <p>
  * <strong>Design rationale:</strong> By extracting discovery logic into this focused service,
- * we avoid a circular dependency between CacheConfiguration (which creates the Hazelcast instance)
+ * we avoid a circular dependency between HazelcastConfiguration (which creates the Hazelcast instance)
  * and HazelcastClusterManager (which manages runtime connections).
  */
 @Component

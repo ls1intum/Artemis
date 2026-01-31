@@ -35,7 +35,7 @@ public interface DistributedDataProvider {
      * Returns a priority queue with the given name.
      *
      * <p>
-     * For internal Hazelcast IQueue usage the comparator needs to be set in the config at startup, see {@link de.tum.cit.aet.artemis.core.config.CacheConfiguration}
+     * For internal Hazelcast IQueue usage the comparator needs to be set in the config at startup, see {@link de.tum.cit.aet.artemis.core.config.HazelcastConfiguration}
      * for an example.
      *
      * @param name the name of the priority queue

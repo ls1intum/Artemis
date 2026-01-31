@@ -36,7 +36,7 @@ import com.hazelcast.core.Hazelcast;
  * <p>
  * <strong>Separation of Concerns:</strong> This class is solely responsible for establishing runtime
  * connectivity between Hazelcast nodes after full application startup. The actual Hazelcast configuration (e.g., cache regions,
- * eviction policies, serialization settings) is defined separately in {@link CacheConfiguration}.
+ * eviction policies, serialization settings) is defined separately in {@link HazelcastConfiguration}.
  *
  * <p>
  * The class avoids connection logic in test environments and handles potential split-brain scenarios
