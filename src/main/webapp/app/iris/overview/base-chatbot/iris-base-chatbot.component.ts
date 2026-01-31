@@ -444,11 +444,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         if (parsed.type === 'L') {
             const lectureTitle = meta?.lectureTitle?.trim();
             if (lectureTitle) {
-                metaLines.push(`<span class="iris-citation__summary-meta">Lecture: "${escapeHtml(lectureTitle)}"</span>`);
+                const lectureLabel = this.translateService.instant('artemisApp.iris.citations.lectureLabel');
+                metaLines.push(`<span class="iris-citation__summary-meta">${lectureLabel}: "${escapeHtml(lectureTitle)}"</span>`);
             }
             const unitTitle = meta?.lectureUnitTitle?.trim();
             if (unitTitle) {
-                metaLines.push(`<span class="iris-citation__summary-meta">Unit: "${escapeHtml(unitTitle)}"</span>`);
+                const lectureUnitLabel = this.translateService.instant('artemisApp.iris.citations.lectureUnitLabel');
+                metaLines.push(`<span class="iris-citation__summary-meta">${lectureUnitLabel}: "${escapeHtml(unitTitle)}"</span>`);
             }
         }
         const metaHtml = metaLines.length > 0 ? `<br />${metaLines.join('<br />')}` : '';
