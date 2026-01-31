@@ -223,8 +223,9 @@ public class ProgrammingExerciseParticipationService {
      *
      * @param targetUri the repository where all files should be replaced
      * @param sourceUri the repository that should be used as source for all files
+     * @param user      the user that reset the repository
      */
-    public void resetRepository(LocalVCRepositoryUri targetUri, LocalVCRepositoryUri sourceUri) throws GitAPIException, IOException {
+    public void resetRepository(LocalVCRepositoryUri targetUri, LocalVCRepositoryUri sourceUri, @Nullable User user) throws GitAPIException, IOException {
         Repository targetRepo = gitService.getOrCheckoutRepository(targetUri, true, true);
         Repository sourceRepo = gitService.getOrCheckoutRepository(sourceUri, true, true);
 
@@ -245,7 +246,7 @@ public class ProgrammingExerciseParticipationService {
         }
 
         gitService.stageAllChanges(targetRepo);
-        gitService.commitAndPush(targetRepo, "Reset Exercise", true, null);
+        gitService.commitAndPush(targetRepo, "Reset Exercise", true, user);
     }
 
     /**
