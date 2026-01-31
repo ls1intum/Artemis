@@ -34,11 +34,14 @@
     padding-right: 0.75rem !important;
 }
 
-// Running jobs column
+// Running jobs column - allow multiple jobs to stack vertically
 .build-agents-column-jobs {
     min-width: 150px;
+    max-width: 350px;
     padding-left: 0.75rem !important;
     padding-right: 0.75rem !important;
+    white-space: normal;
+    vertical-align: top !important;
 }
 
 // Clickable table rows with pointer cursor

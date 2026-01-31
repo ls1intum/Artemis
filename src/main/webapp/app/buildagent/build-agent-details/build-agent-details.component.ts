@@ -22,6 +22,7 @@ import { SortingOrder } from 'app/shared/table/pageable-table';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { FormsModule } from '@angular/forms';
 import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
+import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
 import dayjs from 'dayjs/esm';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/shared/components/slice-navigator/slice-navigator.component';
@@ -51,6 +52,7 @@ import { FinishedJobsTableComponent } from 'app/buildagent/build-queue/tables/fi
         FormsModule,
         SliceNavigatorComponent,
         AdminTitleBarTitleDirective,
+        AdminTitleBarActionsDirective,
         RunningJobsTableComponent,
         FinishedJobsTableComponent,
     ],
