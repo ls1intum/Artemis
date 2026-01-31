@@ -211,7 +211,19 @@ public class BuildJobManagementService {
                 log.info("Hazelcast client reconnected to cluster. Re-initializing BuildJobManagementService listeners.");
                 initialized.set(false);
             }
-            tryInitialize();
+            boolean initSucceeded = tryInitialize();
+            // If initialization failed after reconnection, schedule retries
+            if (!initSucceeded && !distributedDataAccessService.isConnectedToCluster()) {
+                if (connectionRetryFuture == null || connectionRetryFuture.isDone()) {
+                    connectionRetryFuture = taskScheduler.scheduleAtFixedRate(() -> {
+                        if (tryInitialize()) {
+                            if (connectionRetryFuture != null) {
+                                connectionRetryFuture.cancel(false);
+                            }
+                        }
+                    }, CLUSTER_CONNECTION_RETRY_INTERVAL);
+                }
+            }
         });
 
         // If already connected, tryInitialize was called by the listener above.

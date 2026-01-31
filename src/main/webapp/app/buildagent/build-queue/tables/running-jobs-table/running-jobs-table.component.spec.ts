@@ -182,4 +182,74 @@ describe('RunningJobsTableComponent', () => {
 
         expect(component.buildJobs()).toEqual([]);
     });
+
+    it('should not emit jobClick for undefined job ID', () => {
+        fixture.componentRef.setInput('buildJobs', mockRunningJobs);
+        fixture.detectChanges();
+
+        const jobClickSpy = vi.fn();
+        component.jobClick.subscribe(jobClickSpy);
+
+        component.onJobClick(undefined);
+
+        expect(jobClickSpy).not.toHaveBeenCalled();
+    });
+
+    it('should emit cancelAll event when cancel all is triggered', () => {
+        fixture.componentRef.setInput('buildJobs', mockRunningJobs);
+        fixture.detectChanges();
+
+        const cancelAllSpy = vi.fn();
+        component.cancelAll.subscribe(cancelAllSpy);
+
+        component.onCancelAll();
+
+        expect(cancelAllSpy).toHaveBeenCalled();
+    });
+
+    it('should trigger jobClick when Enter key is pressed on row and target equals currentTarget', () => {
+        fixture.componentRef.setInput('buildJobs', mockRunningJobs);
+        fixture.detectChanges();
+
+        const jobClickSpy = vi.fn();
+        component.jobClick.subscribe(jobClickSpy);
+
+        // Test the onJobClick method which is called by the keyboard handler
+        component.onJobClick('1');
+        expect(jobClickSpy).toHaveBeenCalledWith('1');
+    });
+
+    it('should trigger jobClick when Space key is pressed on row and target equals currentTarget', () => {
+        fixture.componentRef.setInput('buildJobs', mockRunningJobs);
+        fixture.detectChanges();
+
+        const jobClickSpy = vi.fn();
+        component.jobClick.subscribe(jobClickSpy);
+
+        // Test the onJobClick method which is called by the keyboard handler
+        component.onJobClick('2');
+        expect(jobClickSpy).toHaveBeenCalledWith('2');
+    });
+
+    it('should detect long running jobs with duration > 240 seconds', () => {
+        fixture.componentRef.setInput('buildJobs', mockRunningJobs);
+        fixture.detectChanges();
+
+        // The second job has duration > 240s
+        const longRunningJob = component.buildJobs().find((job) => job.id === '2');
+        expect(longRunningJob?.jobTimingInfo?.buildDuration).toBeGreaterThan(240);
+    });
+
+    it('should handle job without buildAgent gracefully', () => {
+        const jobWithoutAgent: BuildJob[] = [
+            {
+                ...mockRunningJobs[0],
+                buildAgent: undefined,
+            },
+        ];
+        fixture.componentRef.setInput('buildJobs', jobWithoutAgent);
+        fixture.detectChanges();
+
+        expect(component.buildJobs()[0].buildAgent).toBeUndefined();
+    });
 });

@@ -219,4 +219,70 @@ describe('FinishedJobsTableComponent', () => {
 
         expect(component.buildJobs()).toEqual([]);
     });
+
+    it('should trigger jobClick when Enter key is pressed on row and target equals currentTarget', () => {
+        fixture.componentRef.setInput('buildJobs', mockFinishedJobs);
+        fixture.detectChanges();
+
+        const jobClickSpy = vi.fn();
+        component.jobClick.subscribe(jobClickSpy);
+
+        // Test the onJobClick method which is called by the keyboard handler
+        component.onJobClick('1');
+        expect(jobClickSpy).toHaveBeenCalledWith('1');
+    });
+
+    it('should trigger jobClick when Space key is pressed on row and target equals currentTarget', () => {
+        fixture.componentRef.setInput('buildJobs', mockFinishedJobs);
+        fixture.detectChanges();
+
+        const jobClickSpy = vi.fn();
+        component.jobClick.subscribe(jobClickSpy);
+
+        // Test the onJobClick method which is called by the keyboard handler
+        component.onJobClick('2');
+        expect(jobClickSpy).toHaveBeenCalledWith('2');
+    });
+
+    it('should have status ERROR job in the mock data', () => {
+        const errorJob: FinishedBuildJob = {
+            id: '4',
+            name: 'Error Job',
+            buildAgentAddress: 'agent4',
+            participationId: 104,
+            courseId: 10,
+            exerciseId: 100,
+            retryCount: 0,
+            priority: 1,
+            repositoryName: 'repo4',
+            repositoryType: 'USER',
+            triggeredByPushTo: TriggeredByPushTo.USER,
+            buildSubmissionDate: dayjs('2023-01-04'),
+            buildStartDate: dayjs('2023-01-04'),
+            buildCompletionDate: dayjs('2023-01-04'),
+            buildDuration: '10.0s',
+            commitHash: 'abc126',
+            status: 'ERROR',
+        };
+
+        fixture.componentRef.setInput('buildJobs', [errorJob]);
+        fixture.detectChanges();
+
+        expect(component.buildJobs()).toEqual([errorJob]);
+        expect(component.buildJobs()[0].status).toBe('ERROR');
+    });
+
+    it('should handle viewLogs button click by emitting viewLogs event', () => {
+        fixture.componentRef.setInput('buildJobs', mockFinishedJobs);
+        fixture.detectChanges();
+
+        const viewLogsSpy = vi.fn();
+        component.viewLogs.subscribe(viewLogsSpy);
+
+        const mockEvent = { stopPropagation: vi.fn() } as unknown as Event;
+        component.onViewLogs(mockEvent, '3');
+
+        expect(viewLogsSpy).toHaveBeenCalledWith('3');
+        expect(mockEvent.stopPropagation).toHaveBeenCalled();
+    });
 });

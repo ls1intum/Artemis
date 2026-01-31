@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -79,6 +80,9 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     @Autowired
     private ApplicationContext applicationContext;
 
+    @Autowired
+    private SharedQueueProcessingService sharedQueueProcessingService;
+
     @BeforeAll
     void init() {
         processingJobs = distributedDataAccessService.getDistributedProcessingJobs();
@@ -98,6 +102,24 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         buildJobQueue.clear();
         processingJobs.clear();
         resultQueue.clear();
+        // Ensure the build agent is not paused from a previous test
+        if (sharedQueueProcessingService.isPaused()) {
+            resumeBuildAgentTopic.publish(buildAgentShortName);
+            await().atMost(10, TimeUnit.SECONDS).until(() -> !sharedQueueProcessingService.isPaused());
+        }
+    }
+
+    @AfterEach
+    void cleanup() {
+        // Ensure the build agent is resumed after each test to not affect subsequent tests
+        if (sharedQueueProcessingService.isPaused()) {
+            resumeBuildAgentTopic.publish(buildAgentShortName);
+            await().atMost(10, TimeUnit.SECONDS).until(() -> !sharedQueueProcessingService.isPaused());
+        }
+        // Clear any remaining items
+        buildJobQueue.clear();
+        processingJobs.clear();
+        resultQueue.clear();
     }
 
     @Test
@@ -106,18 +128,18 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         buildJobQueue.add(queueItem);
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var processingJob = processingJobs.get(queueItem.id());
             return processingJob != null && processingJob.jobTimingInfo().buildStartDate() != null;
         });
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var buildAgent = buildAgentInformation.get(buildAgentShortName);
             return buildAgent.numberOfCurrentBuildJobs() == 1 && buildAgent.maxNumberOfConcurrentBuildJobs() == 2 && buildAgent.runningBuildJobs().size() == 1
                     && buildAgent.runningBuildJobs().getFirst().id().equals(queueItem.id());
         });
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var resultQueueItem = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
                     && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
@@ -153,21 +175,21 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         buildJobQueue.add(queueItem);
         buildJobQueue.add(queueItem2);
 
-        await().pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
             var processingJob = processingJobs.get(queueItem.id());
             var processingJob2 = processingJobs.get(queueItem2.id());
             return processingJob != null && processingJob.jobTimingInfo().buildStartDate() != null && processingJob2 != null
                     && processingJob2.jobTimingInfo().buildStartDate() != null;
         });
 
-        await().pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
             var buildAgent = buildAgentInformation.get(buildAgentShortName);
             return buildAgent.numberOfCurrentBuildJobs() == 2 && buildAgent.maxNumberOfConcurrentBuildJobs() == 2 && buildAgent.runningBuildJobs().size() == 2
                     && (buildAgent.runningBuildJobs().getFirst().id().equals(queueItem.id()) || buildAgent.runningBuildJobs().getFirst().id().equals(queueItem2.id()))
                     && (buildAgent.runningBuildJobs().getLast().id().equals(queueItem.id()) || buildAgent.runningBuildJobs().getLast().id().equals(queueItem2.id()));
         });
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var resultQueueItem = resultQueue.poll();
             var resultQueueItem2 = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL && resultQueueItem2 != null
@@ -187,7 +209,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         buildJobQueue.add(queueItem);
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var resultQueueItem = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id()) && resultQueueItem.buildJobQueueItem().status() == BuildStatus.FAILED;
         });
@@ -206,7 +228,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         buildJobQueue.add(queueItem);
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var resultQueueItem = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
                     && resultQueueItem.buildJobQueueItem().status() == BuildStatus.TIMEOUT;
@@ -219,7 +241,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         buildJobQueue.add(queueItem);
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var resultQueueItem = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
                     && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
@@ -241,14 +263,14 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         buildJobQueue.add(queueItem);
 
         // poll delay will slow down tests, but will remove flaky to make sure that the job was added to the map before sending the cancellation message
-        await().pollDelay(500, TimeUnit.MILLISECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).pollDelay(500, TimeUnit.MILLISECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
             var processingJob = processingJobs.get(queueItem.id());
             return processingJob != null && processingJob.jobTimingInfo().buildStartDate() != null;
         });
 
         canceledBuildJobsTopic.publish(queueItem.id());
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var resultQueueItem = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
                     && resultQueueItem.buildJobQueueItem().status() == BuildStatus.CANCELLED;
@@ -288,7 +310,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     void testPauseAndResumeBuildAgent() throws InterruptedException {
         pauseBuildAgentTopic.publish(buildAgentShortName);
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var buildAgent = buildAgentInformation.get(buildAgentShortName);
             return buildAgent.status() == BuildAgentStatus.PAUSED;
         });
@@ -297,19 +319,19 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         buildJobQueue.add(queueItem);
 
-        await().pollDelay(100, TimeUnit.MILLISECONDS).until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).pollDelay(100, TimeUnit.MILLISECONDS).until(() -> {
             var queueItemPolled = buildJobQueue.peek();
             return queueItemPolled != null && queueItemPolled.id().equals(queueItem.id());
         });
 
         resumeBuildAgentTopic.publish(buildAgentShortName);
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var buildAgent = buildAgentInformation.get(buildAgentShortName);
             return buildAgent.status() == BuildAgentStatus.ACTIVE;
         });
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var resultQueueItem = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
                     && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
@@ -377,7 +399,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         var queueItem = createBaseBuildJobQueueItemForTrigger();
         buildJobQueue.add(queueItem);
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var resultQueueItem = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
                     && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
@@ -391,7 +413,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         buildJobQueue.add(queueItem);
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var resultQueueItem = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
                     && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
@@ -406,16 +428,16 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
             buildJobQueue.add(createBaseBuildJobQueueItemForTrigger());
         }
 
-        await().until(() -> resultQueue.size() >= pauseAfterConsecutiveFailures);
+        await().atMost(30, TimeUnit.SECONDS).until(() -> resultQueue.size() >= pauseAfterConsecutiveFailures);
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var buildAgent = buildAgentInformation.get(buildAgentShortName);
             return buildAgent != null && buildAgent.status() == BuildAgentStatus.SELF_PAUSED;
         });
 
         // resume and wait for unpause not interfere with other tests
         resumeBuildAgentTopic.publish(buildAgentShortName);
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var buildAgent = buildAgentInformation.get(buildAgentShortName);
             return buildAgent.status() != BuildAgentStatus.SELF_PAUSED;
         });

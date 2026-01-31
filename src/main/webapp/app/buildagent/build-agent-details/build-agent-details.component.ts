@@ -256,8 +256,10 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
                     // Other errors (server error, network issue, etc.) - show alert but don't mark as not found
                     onError(this.alertService, error);
                 }
-                // Still load finished jobs filtered by agent name
-                this.finishedBuildJobFilter = new FinishedBuildJobFilter(this.agentName);
+                // Still load finished jobs - use existing agent address if available, otherwise no agent filter
+                // The backend filters by address, not name, so we can only filter if we have the address
+                const agentAddress = this.buildAgent()?.buildAgent?.memberAddress;
+                this.finishedBuildJobFilter = new FinishedBuildJobFilter(agentAddress);
                 this.loadFinishedBuildJobs();
             },
         });

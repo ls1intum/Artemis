@@ -42,8 +42,8 @@
                         class="clickable-row"
                         tabindex="0"
                         (click)="onJobClick(finishedBuildJob.id)"
-                        (keydown.enter)="onJobClick(finishedBuildJob.id)"
-                        (keydown.space)="onJobClick(finishedBuildJob.id)"
+                        (keydown.enter)="$event.target === $event.currentTarget && onJobClick(finishedBuildJob.id)"
+                        (keydown.space)="$event.preventDefault(); $event.target === $event.currentTarget && onJobClick(finishedBuildJob.id)"
                     >
                         <td class="finish-jobs-column-tiny">
                             <span
@@ -107,7 +107,12 @@
                             <span class="text-muted">{{ finishedBuildJob.buildCompletionDate | artemisDate: 'short' : true }}</span>
                         </td>
                         <td class="finish-jobs-column-strings">
-                            <a class="detail-link" (click)="onViewLogs($event, finishedBuildJob.id)" jhiTranslate="artemisApp.result.buildLogs.viewLogs"></a>
+                            <button
+                                type="button"
+                                class="btn btn-link detail-link p-0"
+                                (click)="onViewLogs($event, finishedBuildJob.id)"
+                                jhiTranslate="artemisApp.result.buildLogs.viewLogs"
+                            ></button>
                         </td>
                     </tr>
                 }

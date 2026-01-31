@@ -20,6 +20,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { Router } from '@angular/router';
 
 describe('BuildAgentSummaryComponent', () => {
     setupTestBed({ zoneless: true });
@@ -263,5 +264,211 @@ describe('BuildAgentSummaryComponent', () => {
 
         component.displayClearDistributedDataModal();
         expect(openSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not cancel all build jobs when buildAgent is undefined', () => {
+        const spy = vi.spyOn(mockBuildAgentsService, 'getBuildAgentSummary');
+
+        component.ngOnInit();
+        component.cancelAllBuildJobs(undefined);
+
+        // Should not call any service to cancel jobs
+        expect(spy).toHaveBeenCalledOnce(); // Only the initial load call
+    });
+
+    it('should not cancel all build jobs when buildAgent.name is undefined', () => {
+        const spy = vi.spyOn(mockBuildAgentsService, 'getBuildAgentSummary');
+
+        component.ngOnInit();
+        component.cancelAllBuildJobs({ name: '', memberAddress: 'test', displayName: 'Test' });
+
+        // Should not call any service to cancel jobs
+        expect(spy).toHaveBeenCalledOnce(); // Only the initial load call
+    });
+
+    it('should not cancel all build jobs when no matching agent found', () => {
+        mockBuildAgentsService.getBuildAgentSummary.mockReturnValue(of(mockBuildAgents));
+
+        component.ngOnInit();
+        component.cancelAllBuildJobs({ name: 'nonexistent-agent', memberAddress: 'test', displayName: 'Test' });
+
+        // The method should not throw, just not find a matching agent
+        expect(component.buildAgents()).toEqual(mockBuildAgents);
+    });
+
+    it('should call pauseAllBuildAgents when modal is confirmed', async () => {
+        mockBuildAgentsService.getBuildAgentSummary.mockReturnValue(of(mockBuildAgents));
+        mockBuildAgentsService.pauseAllBuildAgents.mockReturnValue(of({}));
+
+        const modalRef = {
+            result: Promise.resolve(true),
+        } as NgbModalRef;
+        vi.spyOn(modalService, 'open').mockReturnValue(modalRef);
+
+        component.ngOnInit();
+        component.displayPauseBuildAgentModal();
+
+        await modalRef.result;
+
+        expect(mockBuildAgentsService.pauseAllBuildAgents).toHaveBeenCalled();
+    });
+
+    it('should call clearDistributedData when modal is confirmed', async () => {
+        mockBuildAgentsService.getBuildAgentSummary.mockReturnValue(of(mockBuildAgents));
+        mockBuildAgentsService.clearDistributedData.mockReturnValue(of({}));
+
+        const modalRef = {
+            result: Promise.resolve(true),
+        } as NgbModalRef;
+        vi.spyOn(modalService, 'open').mockReturnValue(modalRef);
+
+        component.ngOnInit();
+        component.displayClearDistributedDataModal();
+
+        await modalRef.result;
+
+        expect(mockBuildAgentsService.clearDistributedData).toHaveBeenCalled();
+    });
+
+    it('should not call pauseAllBuildAgents when modal is cancelled', async () => {
+        mockBuildAgentsService.pauseAllBuildAgents.mockClear();
+
+        const modalRef = {
+            result: Promise.resolve(false),
+        } as NgbModalRef;
+        vi.spyOn(modalService, 'open').mockReturnValue(modalRef);
+
+        component.displayPauseBuildAgentModal();
+
+        await modalRef.result;
+
+        expect(mockBuildAgentsService.pauseAllBuildAgents).not.toHaveBeenCalled();
+    });
+
+    it('should not call clearDistributedData when modal is cancelled', async () => {
+        mockBuildAgentsService.clearDistributedData.mockClear();
+
+        const modalRef = {
+            result: Promise.resolve(false),
+        } as NgbModalRef;
+        vi.spyOn(modalService, 'open').mockReturnValue(modalRef);
+
+        component.displayClearDistributedDataModal();
+
+        await modalRef.result;
+
+        expect(mockBuildAgentsService.clearDistributedData).not.toHaveBeenCalled();
+    });
+
+    it('should navigate to job detail when jobId is provided', () => {
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+        component.navigateToJobDetail('test-job-123');
+
+        expect(navigateSpy).toHaveBeenCalledWith(['/admin/build-overview', 'test-job-123', 'job-details']);
+    });
+
+    it('should not navigate to job detail when jobId is undefined', () => {
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+        component.navigateToJobDetail(undefined);
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should exclude PAUSED agents from build capacity calculation', () => {
+        const agentsWithPaused: BuildAgentInformation[] = [
+            {
+                id: 1,
+                buildAgent: { name: 'buildagent1', displayName: 'Build Agent 1', memberAddress: 'agent1' },
+                maxNumberOfConcurrentBuildJobs: 2,
+                numberOfCurrentBuildJobs: 1,
+                status: BuildAgentStatus.ACTIVE,
+            },
+            {
+                id: 2,
+                buildAgent: { name: 'buildagent2', displayName: 'Build Agent 2', memberAddress: 'agent2' },
+                maxNumberOfConcurrentBuildJobs: 3,
+                numberOfCurrentBuildJobs: 0,
+                status: BuildAgentStatus.PAUSED,
+            },
+        ];
+
+        component.ngOnInit();
+        websocketSubject.next(agentsWithPaused);
+
+        expect(component.buildCapacity()).toBe(2); // Only active agent's capacity
+        expect(component.currentBuilds()).toBe(1); // All current builds counted
+    });
+
+    it('should exclude SELF_PAUSED agents from build capacity calculation', () => {
+        const agentsWithSelfPaused: BuildAgentInformation[] = [
+            {
+                id: 1,
+                buildAgent: { name: 'buildagent1', displayName: 'Build Agent 1', memberAddress: 'agent1' },
+                maxNumberOfConcurrentBuildJobs: 2,
+                numberOfCurrentBuildJobs: 1,
+                status: BuildAgentStatus.ACTIVE,
+            },
+            {
+                id: 2,
+                buildAgent: { name: 'buildagent2', displayName: 'Build Agent 2', memberAddress: 'agent2' },
+                maxNumberOfConcurrentBuildJobs: 4,
+                numberOfCurrentBuildJobs: 0,
+                status: BuildAgentStatus.SELF_PAUSED,
+            },
+        ];
+
+        component.ngOnInit();
+        websocketSubject.next(agentsWithSelfPaused);
+
+        expect(component.buildCapacity()).toBe(2); // Only active agent's capacity
+    });
+
+    it('should unsubscribe from initial load subscription on destroy', () => {
+        mockBuildAgentsService.getBuildAgentSummary.mockReturnValue(of(mockBuildAgents));
+
+        component.ngOnInit();
+        const unsubscribeSpy = vi.spyOn(component.initialLoadSubscription!, 'unsubscribe');
+
+        component.ngOnDestroy();
+
+        expect(unsubscribeSpy).toHaveBeenCalled();
+    });
+
+    it('should handle agents with undefined numberOfCurrentBuildJobs', () => {
+        const agentsWithUndefinedJobs: BuildAgentInformation[] = [
+            {
+                id: 1,
+                buildAgent: { name: 'buildagent1', displayName: 'Build Agent 1', memberAddress: 'agent1' },
+                maxNumberOfConcurrentBuildJobs: 2,
+                numberOfCurrentBuildJobs: undefined,
+                status: BuildAgentStatus.ACTIVE,
+            },
+        ];
+
+        component.ngOnInit();
+        websocketSubject.next(agentsWithUndefinedJobs);
+
+        expect(component.currentBuilds()).toBe(0);
+    });
+
+    it('should handle agents with undefined maxNumberOfConcurrentBuildJobs', () => {
+        const agentsWithUndefinedMax: BuildAgentInformation[] = [
+            {
+                id: 1,
+                buildAgent: { name: 'buildagent1', displayName: 'Build Agent 1', memberAddress: 'agent1' },
+                maxNumberOfConcurrentBuildJobs: undefined,
+                numberOfCurrentBuildJobs: 1,
+                status: BuildAgentStatus.ACTIVE,
+            },
+        ];
+
+        component.ngOnInit();
+        websocketSubject.next(agentsWithUndefinedMax);
+
+        expect(component.buildCapacity()).toBe(0);
     });
 });

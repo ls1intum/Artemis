@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { Subject, of, throwError } from 'rxjs';
+import { EMPTY, Subject, of, throwError } from 'rxjs';
 import { BuildJob, FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
 import dayjs from 'dayjs/esm';
 import { MockProvider } from 'ng-mocks';
@@ -16,7 +16,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { BuildOverviewService } from 'app/buildagent/build-queue/build-overview.service';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
@@ -429,5 +429,327 @@ describe('BuildAgentDetailsComponent', () => {
         component.navigateToJobDetail('job-123');
         expect(navigateSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledWith(['/admin', 'build-overview', 'job-123', 'job-details']);
+    });
+
+    it('should set agentNotFound to true when receiving 404 error', () => {
+        const notFoundError = new HttpErrorResponse({ status: 404, statusText: 'Not Found' });
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(throwError(() => notFoundError));
+
+        component.ngOnInit();
+
+        expect(component.agentNotFound()).toBe(true);
+        // Should still load finished jobs even on 404
+        expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenCalled();
+    });
+
+    it('should call onError for non-404 errors and not set agentNotFound', () => {
+        const serverError = new HttpErrorResponse({ status: 500, statusText: 'Internal Server Error' });
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(throwError(() => serverError));
+
+        component.ngOnInit();
+
+        expect(component.agentNotFound()).toBe(false);
+        // onError should have been triggered via alertService
+        // The component still loads finished jobs even on error
+        expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenCalled();
+    });
+
+    it('should reset agentNotFound when receiving valid agent data after 404', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+
+        // First, simulate a 404 to set agentNotFound
+        component.agentNotFound.set(true);
+
+        component.ngOnInit();
+
+        // After successful load, agentNotFound should be reset to false
+        expect(component.agentNotFound()).toBe(false);
+    });
+
+    it('should use existing agent address in filter when error occurs and agent address is available', () => {
+        const serverError = new HttpErrorResponse({ status: 500, statusText: 'Internal Server Error' });
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(throwError(() => serverError));
+
+        // Pre-set a build agent to test that its address is used in the filter
+        component.buildAgent.set(mockBuildAgent);
+
+        component.loadAgentData();
+
+        expect(component.finishedBuildJobFilter.buildAgentAddress).toBe(mockBuildAgent.buildAgent?.memberAddress);
+    });
+
+    it('should not trigger search if search term is less than 3 characters', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+
+        component.ngOnInit();
+        fixture.changeDetectorRef.detectChanges();
+
+        const finishedJobsSearchTriggerSpy = vi.spyOn(component.finishedJobsSearchTrigger, 'next');
+
+        // Set search term to 2 characters (below threshold)
+        component.searchTerm = 'ab';
+        component.triggerLoadFinishedJobs();
+
+        expect(finishedJobsSearchTriggerSpy).not.toHaveBeenCalled();
+    });
+
+    it('should trigger search if search term is empty', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+
+        component.ngOnInit();
+        fixture.changeDetectorRef.detectChanges();
+
+        const finishedJobsSearchTriggerSpy = vi.spyOn(component.finishedJobsSearchTrigger, 'next');
+
+        // Set search term to empty (should trigger)
+        component.searchTerm = '';
+        component.triggerLoadFinishedJobs();
+
+        expect(finishedJobsSearchTriggerSpy).toHaveBeenCalled();
+    });
+
+    it('should trigger search if search term is undefined', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+
+        component.ngOnInit();
+        fixture.changeDetectorRef.detectChanges();
+
+        const finishedJobsSearchTriggerSpy = vi.spyOn(component.finishedJobsSearchTrigger, 'next');
+
+        // Set search term to undefined (should trigger)
+        component.searchTerm = undefined;
+        component.triggerLoadFinishedJobs();
+
+        expect(finishedJobsSearchTriggerSpy).toHaveBeenCalled();
+    });
+
+    it('should update page and reload finished jobs on page change', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+        component.ngOnInit();
+        fixture.changeDetectorRef.detectChanges();
+
+        vi.clearAllMocks();
+        mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(mockFinishedJobsResponse));
+
+        component.onPageChange({ page: 2, isNext: true });
+
+        expect(component.currentPage).toBe(2);
+        expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenCalled();
+    });
+
+    it('should not update page if page number is undefined', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+        component.ngOnInit();
+        fixture.changeDetectorRef.detectChanges();
+
+        const initialPage = component.currentPage;
+
+        component.onPageChange({} as any);
+
+        expect(component.currentPage).toBe(initialPage);
+    });
+
+    it('should not cancel all build jobs if agent name is missing', () => {
+        component.buildAgent.set({ ...mockBuildAgent, buildAgent: undefined });
+
+        component.cancelAllBuildJobs();
+
+        expect(mockBuildQueueService.cancelAllRunningBuildJobsForAgent).not.toHaveBeenCalled();
+    });
+
+    it('should update running jobs when websocket receives jobs for this agent', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+        component.ngOnInit();
+
+        // Emit running jobs via websocket that match the current agent
+        const agentJobs: BuildJob[] = [
+            {
+                ...mockRunningJobs1[0],
+                buildAgent: { name: mockBuildAgent.buildAgent?.name, memberAddress: 'localhost:8080', displayName: 'Agent 1' },
+            },
+        ];
+        runningJobsSubject.next(agentJobs);
+
+        expect(component.runningBuildJobs().length).toBe(1);
+    });
+
+    it('should clear running jobs when websocket receives no jobs for this agent', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+        component.ngOnInit();
+
+        // Initially set some running jobs
+        component.runningBuildJobs.set(mockRunningJobs1);
+
+        // Emit running jobs via websocket that do not match the current agent
+        const otherAgentJobs: BuildJob[] = [
+            {
+                ...mockRunningJobs1[0],
+                buildAgent: { name: 'other-agent', memberAddress: 'localhost:8081', displayName: 'Other Agent' },
+            },
+        ];
+        runningJobsSubject.next(otherAgentJobs);
+
+        expect(component.runningBuildJobs()).toEqual([]);
+    });
+
+    it('should handle error when loading finished build jobs', async () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+        mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+        component.ngOnInit();
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(component.isLoading()).toBe(false);
+    });
+
+    it('should handle error in debounced search subscription', async () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+        component.ngOnInit();
+        fixture.changeDetectorRef.detectChanges();
+
+        // Clear mocks and set up error response for debounced search
+        vi.clearAllMocks();
+        mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+        // Trigger the debounced search
+        component.searchTerm = 'test';
+        component.triggerLoadFinishedJobs();
+
+        // Wait for debounce
+        await new Promise((resolve) => setTimeout(resolve, 110));
+
+        expect(component.isLoading()).toBe(false);
+    });
+
+    it('should apply filter from modal result', async () => {
+        const newFilter = new FinishedBuildJobFilter('new-address');
+        const modalRef = {
+            componentInstance: {
+                finishedBuildJobFilter: undefined,
+                buildAgentAddress: undefined,
+                finishedBuildJobs: undefined,
+            },
+            result: Promise.resolve(newFilter),
+        } as NgbModalRef;
+        vi.spyOn(modalService, 'open').mockReturnValue(modalRef);
+
+        component.buildAgent.set(mockBuildAgent);
+        component.finishedBuildJobFilter = new FinishedBuildJobFilter(mockBuildAgent.buildAgent!.memberAddress!);
+        fixture.changeDetectorRef.detectChanges();
+
+        component.openFilterModal();
+
+        await modalRef.result;
+
+        expect(component.finishedBuildJobFilter).toEqual(newFilter);
+    });
+
+    it('should handle modal dismissal gracefully', async () => {
+        const modalRef = {
+            componentInstance: {
+                finishedBuildJobFilter: undefined,
+                buildAgentAddress: undefined,
+                finishedBuildJobs: undefined,
+            },
+            result: Promise.reject('dismissed'),
+        } as NgbModalRef;
+        vi.spyOn(modalService, 'open').mockReturnValue(modalRef);
+
+        component.buildAgent.set(mockBuildAgent);
+        component.finishedBuildJobFilter = new FinishedBuildJobFilter(mockBuildAgent.buildAgent!.memberAddress!);
+        fixture.changeDetectorRef.detectChanges();
+
+        // Should not throw
+        component.openFilterModal();
+
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        // Filter should remain unchanged
+        expect(component.finishedBuildJobFilter.buildAgentAddress).toBe(mockBuildAgent.buildAgent!.memberAddress);
+    });
+
+    it('should update build agent when websocket receives agent update', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+        component.ngOnInit();
+
+        const updatedAgent: BuildAgentInformation = {
+            ...mockBuildAgent,
+            numberOfCurrentBuildJobs: 1,
+            buildAgentDetails: {
+                successfulBuilds: 10,
+                failedBuilds: 2,
+                cancelledBuilds: 1,
+                timedOutBuild: 0,
+                totalBuilds: 13,
+            },
+        };
+
+        agentTopicSubject.next(updatedAgent);
+
+        expect(component.buildAgent()).toEqual(updatedAgent);
+        expect(component.buildJobStatistics().successfulBuilds).toBe(10);
+        expect(component.buildJobStatistics().failedBuilds).toBe(2);
+        expect(component.buildJobStatistics().cancelledBuilds).toBe(1);
+        expect(component.buildJobStatistics().timeOutBuilds).toBe(0);
+        expect(component.buildJobStatistics().totalBuilds).toBe(13);
+    });
+
+    it('should handle build job without start date in duration calculation', () => {
+        const jobsWithoutStartDate: BuildJob[] = [
+            {
+                ...mockRunningJobs1[0],
+                jobTimingInfo: undefined,
+            },
+        ];
+
+        const result = component.updateBuildJobDuration(jobsWithoutStartDate);
+
+        expect(result).toHaveLength(1);
+        expect(result[0].jobTimingInfo).toBeUndefined();
+    });
+
+    it('should calculate duration for finished build jobs without dates', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+
+        const jobsWithoutDates: FinishedBuildJob[] = [
+            {
+                ...mockFinishedJobs[0],
+                buildStartDate: undefined,
+                buildCompletionDate: undefined,
+            },
+        ];
+        const responseWithoutDates = new HttpResponse({ body: jobsWithoutDates });
+        mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(responseWithoutDates));
+
+        component.ngOnInit();
+        fixture.changeDetectorRef.detectChanges();
+
+        // Should not crash, and duration should not be calculated
+        expect(component.finishedBuildJobs()).toHaveLength(1);
+    });
+
+    it('should set hasMore based on response headers', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+
+        const headers = new HttpHeaders().set('x-has-next', 'true');
+        const responseWithHeaders = new HttpResponse({ body: mockFinishedJobs, headers });
+        mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(responseWithHeaders));
+
+        component.ngOnInit();
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(component.hasMore()).toBe(true);
+    });
+
+    it('should set hasMore to false when x-has-next is false', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+
+        const headers = new HttpHeaders().set('x-has-next', 'false');
+        const responseWithHeaders = new HttpResponse({ body: mockFinishedJobs, headers });
+        mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(responseWithHeaders));
+
+        component.ngOnInit();
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(component.hasMore()).toBe(false);
     });
 });

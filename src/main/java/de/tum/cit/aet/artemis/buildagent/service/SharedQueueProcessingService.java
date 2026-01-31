@@ -221,7 +221,19 @@ public class SharedQueueProcessingService {
                 // Also cancel existing scheduled future if it's still running, as a new one will be created
                 cancelCheckAvailabilityAndProcessNextBuildScheduledFuture();
             }
-            tryInitialize();
+            boolean initSucceeded = tryInitialize();
+            // If initialization failed after reconnection, schedule retries
+            if (!initSucceeded && !distributedDataAccessService.isConnectedToCluster()) {
+                if (connectionRetryFuture == null || connectionRetryFuture.isDone()) {
+                    connectionRetryFuture = taskScheduler.scheduleAtFixedRate(() -> {
+                        if (tryInitialize()) {
+                            if (connectionRetryFuture != null) {
+                                connectionRetryFuture.cancel(false);
+                            }
+                        }
+                    }, CLUSTER_CONNECTION_RETRY_INTERVAL);
+                }
+            }
         });
 
         // If already connected, tryInitialize was called by the listener above.
@@ -342,6 +354,19 @@ public class SharedQueueProcessingService {
                 distributedDataAccessService.getResumeBuildAgentTopic().removeMessageListener(this.resumeListenerId);
             }
         }
+    }
+
+    /**
+     * Removes the queue listener and cancels the scheduled availability check without removing
+     * the pause/resume topic listeners. Used when pausing the build agent, as it should still
+     * be able to receive resume commands.
+     */
+    private void removeQueueListenerAndCancelScheduledTask() {
+        if (distributedDataAccessService.isInstanceRunning() && this.listenerId != null) {
+            distributedDataAccessService.getDistributedBuildJobQueue().removeListener(this.listenerId);
+            this.listenerId = null;
+        }
+        cancelCheckAvailabilityAndProcessNextBuildScheduledFuture();
     }
 
     /** Cancels the scheduled availability check, allowing current execution to complete gracefully. */
@@ -527,16 +552,30 @@ public class SharedQueueProcessingService {
     }
 
     /**
-     * Checks if the given address appears to be a cluster member address based on port matching.
-     * Cluster members use configured Hazelcast ports (typically 5701, 5702, etc.), while clients
-     * use ephemeral ports assigned by the OS.
+     * Checks if the given address appears to be a cluster member address.
+     * <p>
+     * For Hazelcast: Cluster members use configured ports (typically 5701, 5702, etc.), while clients
+     * use ephemeral ports assigned by the OS. We check by comparing ports.
+     * <p>
+     * For Redisson: Addresses are simple client names (e.g., "artemis-node") without ports.
+     * We check if the address is directly contained in the member addresses set.
      *
      * @param address         the address to check
      * @param memberAddresses the current set of cluster member addresses
-     * @return true if the address appears to be a cluster member address (same port as known members)
+     * @return true if the address appears to be a cluster member address
      */
     private boolean isClusterMemberAddress(String address, Set<String> memberAddresses) {
-        if (address == null || !address.contains("]:")) {
+        if (address == null) {
+            return false;
+        }
+
+        // First, check if the address is directly in the member addresses set (Redisson-style plain names)
+        if (memberAddresses.contains(address)) {
+            return true;
+        }
+
+        // For Hazelcast-style addresses with [host]:port format
+        if (!address.contains("]:")) {
             return false;
         }
         // Extract port from the address (format: [host]:port)
@@ -546,7 +585,7 @@ public class SharedQueueProcessingService {
         }
         // Check if any cluster member uses the same port - this indicates it's a cluster member address
         // Clients use random ephemeral ports, so they won't match cluster member ports
-        return memberAddresses.stream().map(this::extractPort).filter(port -> port != null).anyMatch(addressPort::equals);
+        return memberAddresses.stream().map(this::extractPort).filter(Objects::nonNull).anyMatch(addressPort::equals);
     }
 
     /**
@@ -766,7 +805,9 @@ public class SharedQueueProcessingService {
             isPaused.set(true);
 
             // Stop accepting / scheduling new work before we update the distributed state.
-            removeListenerAndCancelScheduledFuture();
+            // Note: We only remove the queue listener and scheduled task, NOT the pause/resume
+            // topic listeners - the agent must still be able to receive resume commands.
+            removeQueueListenerAndCancelScheduledTask();
 
             // Persist the paused state so other components in the system see the agent as PAUSED.
             buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get(), dueToFailures, consecutiveBuildJobFailures.get());
@@ -886,7 +927,9 @@ public class SharedQueueProcessingService {
             buildAgentDockerService.cleanUpContainers();
 
             // To avoid multiple listeners and scheduled tasks, remove any existing ones first.
-            removeListenerAndCancelScheduledFuture();
+            // Note: We only remove the queue listener and scheduled task - the topic listeners
+            // should remain intact as they were not removed during pause.
+            removeQueueListenerAndCancelScheduledTask();
 
             log.info("Re-adding item listener to distributed build job queue for build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
 

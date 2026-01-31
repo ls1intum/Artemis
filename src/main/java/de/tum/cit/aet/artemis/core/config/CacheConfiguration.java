@@ -281,9 +281,12 @@ public class CacheConfiguration {
                 hazelcastBindOnlyOnInterface("127.0.0.1", config);
             }
 
-            // Determine the Hazelcast bind host for metadata registration
-            // This is the address other nodes should use to connect to this instance
-            String hazelcastBindHost = (hazelcastInterface != null && !hazelcastInterface.isEmpty()) ? hazelcastInterface : "127.0.0.1";
+            // Determine the Hazelcast host for metadata registration
+            // This is the address other nodes should use to connect to this instance.
+            // IMPORTANT: We use the Eureka registration host (which is externally reachable)
+            // rather than the Hazelcast bind interface. The bind interface might be localhost
+            // or a specific internal interface, but the Eureka host is what other nodes can reach.
+            String hazelcastMetadataHost = registration.get().getHost();
 
             // In the local setting (e.g. for development), everything goes through 127.0.0.1, with a different port
             if (hazelcastLocalInstances) {
@@ -292,14 +295,14 @@ public class CacheConfiguration {
                 // In the local configuration, the hazelcast port is the http-port + the hazelcastPort as offset
                 config.getNetworkConfig().setPort(serverProperties.getPort() + hazelcastPort); // Own port
                 registration.get().getMetadata().put("hazelcast.port", String.valueOf(serverProperties.getPort() + hazelcastPort));
-                registration.get().getMetadata().put("hazelcast.host", hazelcastBindHost);
+                registration.get().getMetadata().put("hazelcast.host", hazelcastMetadataHost);
             }
             else { // Production configuration, one host per instance all using the configured port
                 config.setClusterName("prod");
                 config.setInstanceName(instanceName);
                 config.getNetworkConfig().setPort(hazelcastPort); // Own port
                 registration.get().getMetadata().put("hazelcast.port", String.valueOf(hazelcastPort));
-                registration.get().getMetadata().put("hazelcast.host", hazelcastBindHost);
+                registration.get().getMetadata().put("hazelcast.host", hazelcastMetadataHost);
             }
             // Mark this instance as a cluster member (not a client) for service discovery.
             // This metadata is stored in the local Registration object and propagated to Eureka

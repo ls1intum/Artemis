@@ -259,6 +259,11 @@ public class HazelcastConnection {
         String serviceId = registration.get().getServiceId();
         List<ServiceInstance> instances = discoveryClient.getInstances(serviceId);
 
+        log.debug("Found {} total instances in service registry for serviceId '{}'", instances.size(), serviceId);
+        for (ServiceInstance instance : instances) {
+            log.debug("Instance: host={}, port={}, metadata={}", instance.getHost(), instance.getPort(), instance.getMetadata());
+        }
+
         List<String> coreNodes = instances.stream()
                 // Filter to only include cluster members (not clients)
                 .filter(this::isClusterMember)
@@ -269,7 +274,7 @@ public class HazelcastConnection {
             log.info("Discovered {} core node(s) from service registry: {}", coreNodes.size(), coreNodes);
         }
         else {
-            log.warn("No core nodes found in service registry. Ensure core nodes are running and registered.");
+            log.warn("No core nodes found in service registry. Ensure core nodes are running and registered with hazelcast.member-type=member metadata.");
         }
 
         return coreNodes;

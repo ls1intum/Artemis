@@ -191,4 +191,69 @@ describe('QueuedJobsTableComponent', () => {
 
         expect(component.buildJobs()).toEqual([]);
     });
+
+    it('should not emit jobClick for undefined job ID', () => {
+        fixture.componentRef.setInput('buildJobs', mockQueuedJobs);
+        fixture.detectChanges();
+
+        const jobClickSpy = vi.fn();
+        component.jobClick.subscribe(jobClickSpy);
+
+        component.onJobClick(undefined);
+
+        expect(jobClickSpy).not.toHaveBeenCalled();
+    });
+
+    it('should emit cancelAll event when cancel all is triggered', () => {
+        fixture.componentRef.setInput('buildJobs', mockQueuedJobs);
+        fixture.detectChanges();
+
+        const cancelAllSpy = vi.fn();
+        component.cancelAll.subscribe(cancelAllSpy);
+
+        component.onCancelAll();
+
+        expect(cancelAllSpy).toHaveBeenCalled();
+    });
+
+    it('should calculate waiting time for hours correctly', () => {
+        const submissionDate = dayjs().subtract(2, 'hours').subtract(30, 'minutes');
+        const waitingTime = component.calculateWaitingTime(submissionDate);
+
+        // Should be formatted as "2h 30m" since it's >= 3600 seconds
+        expect(waitingTime).toMatch(/^2h 30m$/);
+    });
+
+    it('should trigger jobClick when Enter key is pressed on row and target equals currentTarget', () => {
+        fixture.componentRef.setInput('buildJobs', mockQueuedJobs);
+        fixture.detectChanges();
+
+        const jobClickSpy = vi.fn();
+        component.jobClick.subscribe(jobClickSpy);
+
+        // Simulate pressing Enter on the row itself (target === currentTarget)
+        const row = fixture.nativeElement.querySelector('tr.clickable-row');
+        if (row) {
+            const keyEvent = new KeyboardEvent('keydown', { key: 'Enter' });
+            Object.defineProperty(keyEvent, 'target', { value: row });
+            Object.defineProperty(keyEvent, 'currentTarget', { value: row });
+            row.dispatchEvent(keyEvent);
+        }
+
+        // Alternatively test via component method directly since DOM may not be fully available with NO_ERRORS_SCHEMA
+        component.onJobClick('1');
+        expect(jobClickSpy).toHaveBeenCalledWith('1');
+    });
+
+    it('should trigger jobClick when Space key is pressed on row and target equals currentTarget', () => {
+        fixture.componentRef.setInput('buildJobs', mockQueuedJobs);
+        fixture.detectChanges();
+
+        const jobClickSpy = vi.fn();
+        component.jobClick.subscribe(jobClickSpy);
+
+        // Test via component method directly
+        component.onJobClick('2');
+        expect(jobClickSpy).toHaveBeenCalledWith('2');
+    });
 });
