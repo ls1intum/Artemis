@@ -95,6 +95,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     forceRenderSubscription: Subscription;
     private problemStatementSyncState?: ProblemStatementSyncState;
     private problemStatementBinding?: MonacoBinding;
+    private problemStatementBindingDestroyed = false;
 
     @ViewChild(MarkdownEditorMonacoComponent, { static: false }) markdownEditorMonaco?: MarkdownEditorMonacoComponent;
 
@@ -336,6 +337,13 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         return annotations;
     };
 
+    /**
+     * Set up collaborative Yjs synchronization for the markdown editor.
+     * Creates the Yjs document/binding and wires Monaco to the shared text.
+     *
+     * @param exerciseId The exercise id to scope synchronization updates.
+     * @param initialText The initial problem statement content used for seeding.
+     */
     private initializeProblemStatementSync(exerciseId: number, initialText: string) {
         if (!this.editMode() || this.problemStatementBinding) {
             return;
@@ -350,12 +358,27 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         if (!model || !editorInstance) {
             return;
         }
-        this.problemStatementBinding = new MonacoBinding(this.problemStatementSyncState.text, model, new Set([editorInstance]), this.problemStatementSyncState.awareness);
+        const binding = new MonacoBinding(this.problemStatementSyncState.text, model, new Set([editorInstance]), this.problemStatementSyncState.awareness);
+        // Monaco may or may not dispose its model and call destroy(); this is a guard against a second call from ngOnDestroy.
+        const originalDestroy = binding.destroy.bind(binding);
+        this.problemStatementBindingDestroyed = false;
+        binding.destroy = () => {
+            if (this.problemStatementBindingDestroyed) {
+                return;
+            }
+            this.problemStatementBindingDestroyed = true;
+            originalDestroy();
+        };
+        this.problemStatementBinding = binding;
     }
 
+    /**
+     * Tear down Yjs synchronization and release Monaco binding resources.
+     */
     private teardownProblemStatementSync() {
         this.problemStatementBinding?.destroy();
         this.problemStatementBinding = undefined;
+        this.problemStatementBindingDestroyed = false;
         this.problemStatementSyncState = undefined;
         this.problemStatementSyncService.reset();
     }

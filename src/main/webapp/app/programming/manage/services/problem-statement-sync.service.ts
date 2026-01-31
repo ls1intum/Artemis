@@ -22,6 +22,9 @@ import {
     normalizeYjsOrigin,
 } from 'app/programming/manage/services/yjs-utils';
 
+/**
+ * Holds the shared Yjs primitives for the problem statement editor.
+ */
 export type ProblemStatementSyncState = {
     doc: Y.Doc;
     text: Y.Text;
@@ -47,6 +50,7 @@ export class ProblemStatementSyncService {
     private awaitingInitialSync = false;
     private localLeaderTimestamp = Date.now();
     private fallbackInitialContent = '';
+    // Track initial leader selection and buffer updates until we seed the doc.
     private pendingInitialSync?: {
         requestId: string;
         responses: ProblemStatementSyncFullContentResponseEvent[];
@@ -56,7 +60,11 @@ export class ProblemStatementSyncService {
 
     /**
      * Initialize synchronization for a specific exercise.
-     * Creates a new Yjs document and requests the current shared state from other editors.
+     * Creates a new Yjs document, wires local update propagation, and requests the current shared state.
+     *
+     * @param exerciseId The exercise id used to scope websocket updates.
+     * @param initialContent The current problem statement content used as fallback if no leader responds.
+     * @returns The Yjs document, shared text, and awareness instance.
      */
     init(exerciseId: number, initialContent: string): ProblemStatementSyncState {
         this.reset();
@@ -72,6 +80,7 @@ export class ProblemStatementSyncService {
 
     /**
      * Reset all synchronization state and dispose the Yjs document.
+     * Safe to call multiple times; clears any pending initial sync timeout.
      */
     reset() {
         this.incomingMessageSubscription?.unsubscribe();
@@ -90,8 +99,8 @@ export class ProblemStatementSyncService {
     }
 
     /**
-     * Request the newest problem statement content from other active editors (if exists).
-     * This ensures that unsaved problem statement from other editors are also synchronized.
+     * Request the newest problem statement content from other active editors (if any).
+     * Ensures unsaved edits in other sessions are synchronized before local editing starts.
      */
     requestInitialSync() {
         if (!this.exerciseId) {
@@ -110,6 +119,9 @@ export class ProblemStatementSyncService {
 
     /**
      * Respond to a full-content request with the current Yjs document state.
+     * Used by other editors to seed their initial sync.
+     *
+     * @param responseTo The request id to respond to.
      */
     private respondWithFullContent(responseTo: string) {
         if (!this.exerciseId) {
@@ -130,9 +142,9 @@ export class ProblemStatementSyncService {
     }
 
     /**
-     * Respond to a synchronization message from the websocket subscription for programming exercise problem statements.
+     * Route a synchronization message from the websocket subscription to the correct handler.
      *
-     * @param message The synchronization message to process
+     * @param message The synchronization message to process.
      */
     private handleRemoteMessage(message: ProgrammingExerciseEditorSyncEvent) {
         if (message.target !== ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT) {
@@ -157,7 +169,8 @@ export class ProblemStatementSyncService {
     }
 
     /**
-     * Initialize the Yjs document and wire up local update/awareness propagation.
+     * Initialize the Yjs document and wire up local update + awareness propagation.
+     * Local changes are emitted to the websocket; remote changes are ignored here.
      */
     private initializeYjsDocument() {
         const doc = new Y.Doc();
@@ -199,6 +212,9 @@ export class ProblemStatementSyncService {
 
     /**
      * Track full-content responses for the initial leader selection.
+     * Responses are evaluated on timeout to pick the earliest leader.
+     *
+     * @param message The incoming full-content response.
      */
     private handleSyncResponse(message: ProblemStatementSyncFullContentResponseEvent) {
         if (!this.pendingInitialSync || message.responseTo !== this.pendingInitialSync.requestId) {
@@ -209,6 +225,9 @@ export class ProblemStatementSyncService {
 
     /**
      * Apply incremental Yjs updates from other editors.
+     * While initial sync is pending, updates are buffered until initilization finalize.
+     *
+     * @param message The incoming incremental update.
      */
     private handleSyncUpdate(message: ProblemStatementSyncUpdateEvent) {
         if (!this.yDoc) {
@@ -258,6 +277,9 @@ export class ProblemStatementSyncService {
 
     /**
      * Apply awareness updates (cursor positions + user metadata) from other editors.
+     * Also registers styles for remote selections.
+     *
+     * @param message The incoming awareness update.
      */
     private handleAwarenessUpdate(message: ProblemStatementAwarenessUpdateEvent) {
         if (!this.awareness || !message.awarenessUpdate) {
@@ -270,6 +292,9 @@ export class ProblemStatementSyncService {
 
     /**
      * Populate local awareness state with a display name and color for cursor rendering.
+     * Updates the name once the user identity has been resolved.
+     *
+     * @param awareness The awareness instance to initialize.
      */
     private initializeLocalAwareness(awareness: Awareness) {
         const clientInstanceId = this.syncService.clientInstanceId;
@@ -287,6 +312,9 @@ export class ProblemStatementSyncService {
 
     /**
      * Register CSS styles for remote collaborator selections based on awareness state.
+     * Ensures a consistent color per remote client id.
+     *
+     * @param awareness The awareness instance containing remote cursor data.
      */
     private registerRemoteClientStyles(awareness: Awareness) {
         awareness.getStates().forEach((state, clientId) => {
@@ -301,6 +329,9 @@ export class ProblemStatementSyncService {
 
     /**
      * Generate a request id for full-content synchronization requests.
+     * Used to match responses to the most recent request.
+     *
+     * @returns A unique request id.
      */
     private generateRequestId(): string {
         return `${Date.now()}-${Math.random().toString(16).slice(2)}`;

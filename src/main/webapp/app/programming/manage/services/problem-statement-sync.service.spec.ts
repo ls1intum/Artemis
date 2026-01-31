@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import * as Y from 'yjs';
 import { ProblemStatementSyncService } from 'app/programming/manage/services/problem-statement-sync.service';
@@ -76,7 +76,7 @@ describe('ProblemStatementSyncService', () => {
         );
     });
 
-    it('applies incoming yjs updates to the doc', () => {
+    it('applies incoming yjs updates to the doc', fakeAsync(() => {
         const state = service.init(99, '');
 
         const doc = new Y.Doc();
@@ -89,6 +89,7 @@ describe('ProblemStatementSyncService', () => {
             timestamp: 1,
         });
 
+        tick(500);
         expect(state.text.toString()).toBe('Hello Artemis');
-    });
+    }));
 });
