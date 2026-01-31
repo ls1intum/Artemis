@@ -639,7 +639,7 @@ public class HazelcastConfiguration {
 
         configureNetworkInterface(config);
         configurePortAndMetadata(config);
-        // Note: Cluster member metadata is set in configurePortAndMetadata via eurekaInstanceHelper.registerAsMember()
+        // Note: Hazelcast address metadata is set in configurePortAndMetadata via eurekaInstanceHelper.registerHazelcastAddress()
     }
 
     /**
@@ -693,7 +693,7 @@ public class HazelcastConfiguration {
      *
      * <p>
      * <strong>Metadata Registration:</strong> The Hazelcast host and port are registered as
-     * Eureka metadata via {@link EurekaInstanceHelper#registerAsMember}, which also triggers
+     * Eureka metadata via {@link EurekaInstanceHelper#registerHazelcastAddress}, which also triggers
      * an immediate re-registration to propagate the metadata. This ensures build agents can
      * discover core nodes without waiting for the next heartbeat.
      *
@@ -715,9 +715,9 @@ public class HazelcastConfiguration {
             config.getNetworkConfig().setPort(effectivePort);
         }
 
-        // Register as cluster member and trigger immediate Eureka re-registration
+        // Register Hazelcast address and trigger immediate Eureka re-registration
         // This ensures build agents can discover this core node immediately
-        eurekaInstanceHelper.registerAsMember(hazelcastMetadataHost, effectivePort);
+        eurekaInstanceHelper.registerHazelcastAddress(hazelcastMetadataHost, effectivePort);
     }
 
     /**
@@ -995,7 +995,6 @@ public class HazelcastConfiguration {
         configureClientNetworking(clientConfig);
         clientConfig.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
 
-        eurekaInstanceHelper.registerAsClient();
         log.info("Creating Hazelcast client with Eureka-based dynamic discovery");
 
         return HazelcastClient.newHazelcastClient(clientConfig);

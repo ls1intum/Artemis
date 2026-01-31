@@ -49,16 +49,6 @@ public class EurekaInstanceHelper {
 
     private static final Logger log = LoggerFactory.getLogger(EurekaInstanceHelper.class);
 
-    /**
-     * Metadata key used to identify the Hazelcast member type in the service registry.
-     * Core nodes are marked as "member", build agent clients are marked as "client".
-     */
-    public static final String HAZELCAST_MEMBER_TYPE_KEY = "hazelcast.member-type";
-
-    public static final String HAZELCAST_MEMBER_TYPE_MEMBER = "member";
-
-    public static final String HAZELCAST_MEMBER_TYPE_CLIENT = "client";
-
     private final DiscoveryClient discoveryClient;
 
     private final Optional<Registration> registration;
@@ -133,14 +123,14 @@ public class EurekaInstanceHelper {
 
         log.info("Found {} total instances in service registry for serviceId '{}'", instances.size(), serviceId);
         for (ServiceInstance instance : instances) {
-            String memberType = instance.getMetadata().get(HAZELCAST_MEMBER_TYPE_KEY);
+            String profile = instance.getMetadata().get("profile");
             String hazelcastHost = instance.getMetadata().get("hazelcast.host");
-            log.info("Instance: host={}, hazelcast.host={}, port={}, member-type={}, isCurrentInstance={}", instance.getHost(), hazelcastHost, instance.getPort(), memberType,
+            log.info("Instance: host={}, hazelcast.host={}, port={}, profile={}, isCurrentInstance={}", instance.getHost(), hazelcastHost, instance.getPort(), profile,
                     isCurrentInstance(instance));
         }
 
         List<String> coreNodes = instances.stream()
-                // Filter to only include cluster members (not clients)
+                // Filter to only include cluster members (instances with "core" profile)
                 .filter(this::isClusterMember)
                 // Exclude the current instance
                 .filter(instance -> !isCurrentInstance(instance)).map(this::formatInstanceAddress).toList();
@@ -149,7 +139,7 @@ public class EurekaInstanceHelper {
             log.info("Discovered {} core node(s) from service registry: {}", coreNodes.size(), coreNodes);
         }
         else {
-            log.warn("No core nodes found in service registry. Ensure core nodes are running and registered with hazelcast.member-type=member metadata.");
+            log.warn("No core nodes found in service registry. Ensure core nodes are running with the 'core' profile.");
         }
 
         return coreNodes;
@@ -157,14 +147,17 @@ public class EurekaInstanceHelper {
 
     /**
      * Checks if a service instance is a Hazelcast cluster member (not a client).
+     * Uses the Spring profile metadata to determine the instance type:
+     * - Instances with the "core" profile are cluster members
+     * - Instances with only "buildagent" profile are clients
      *
      * @param instance the service instance to check
-     * @return true if the instance is a cluster member
+     * @return true if the instance is a cluster member (has "core" profile)
      */
     public boolean isClusterMember(ServiceInstance instance) {
-        String memberType = instance.getMetadata().get(HAZELCAST_MEMBER_TYPE_KEY);
-        // Include instances explicitly marked as members, or not marked at all (legacy/compatibility)
-        return memberType == null || HAZELCAST_MEMBER_TYPE_MEMBER.equals(memberType);
+        String profile = instance.getMetadata().get("profile");
+        // Core nodes have the "core" profile, build agents have only "buildagent"
+        return profile != null && profile.contains(PROFILE_CORE);
     }
 
     /**
@@ -286,67 +279,29 @@ public class EurekaInstanceHelper {
     }
 
     /**
-     * Marks this instance as a Hazelcast client in the service registry.
-     * This allows other instances to identify it as a client rather than a cluster member.
+     * Registers the Hazelcast bind address in the service registry metadata.
+     * This allows build agents (Hazelcast clients) to discover core nodes for connection,
+     * and enables proper address comparison in cluster management.
      *
      * <p>
      * The metadata change is immediately propagated to the Eureka server by triggering
-     * a re-registration. This ensures other instances can identify this node as a client
-     * without waiting for the next heartbeat (default interval: 30 seconds).
-     *
-     * <p>
-     * If the ServiceRegistry is not available (e.g., in test environments), the metadata
-     * change will still be made locally and propagated on the next heartbeat.
-     */
-    public void registerAsClient() {
-        if (registration.isPresent()) {
-            registration.get().getMetadata().put(HAZELCAST_MEMBER_TYPE_KEY, HAZELCAST_MEMBER_TYPE_CLIENT);
-            log.info("Marked this instance as Hazelcast client in service registry metadata");
-
-            // Trigger immediate re-registration to propagate metadata change
-            if (serviceRegistry.isPresent()) {
-                try {
-                    serviceRegistry.get().register(registration.get());
-                    log.info("Triggered immediate Eureka re-registration for Hazelcast client metadata");
-                }
-                catch (Exception e) {
-                    log.warn("Failed to trigger immediate Eureka re-registration: {}. Metadata will propagate on next heartbeat.", e.getMessage());
-                }
-            }
-            else {
-                log.debug("ServiceRegistry not available - metadata will propagate on next Eureka heartbeat");
-            }
-        }
-    }
-
-    /**
-     * Marks this instance as a Hazelcast cluster member in the service registry.
-     * This allows build agents (Hazelcast clients) to identify core nodes for connection.
-     *
-     * <p>
-     * The metadata change is immediately propagated to the Eureka server by triggering
-     * a re-registration. This ensures build agents can identify core nodes without
+     * a re-registration. This ensures build agents can discover core nodes without
      * waiting for the next heartbeat (default interval: 30 seconds).
-     *
-     * <p>
-     * This method should be called after setting all Hazelcast-related metadata
-     * (hazelcast.host, hazelcast.port) to ensure all metadata is propagated together.
      *
      * @param hazelcastHost the Hazelcast bind address to store in metadata
      * @param hazelcastPort the Hazelcast port to store in metadata
      */
-    public void registerAsMember(String hazelcastHost, int hazelcastPort) {
+    public void registerHazelcastAddress(String hazelcastHost, int hazelcastPort) {
         if (registration.isPresent()) {
-            registration.get().getMetadata().put(HAZELCAST_MEMBER_TYPE_KEY, HAZELCAST_MEMBER_TYPE_MEMBER);
             registration.get().getMetadata().put("hazelcast.host", hazelcastHost);
             registration.get().getMetadata().put("hazelcast.port", String.valueOf(hazelcastPort));
-            log.info("Marked this instance as Hazelcast cluster member with host={}, port={}", hazelcastHost, hazelcastPort);
+            log.info("Registered Hazelcast address in service registry: host={}, port={}", hazelcastHost, hazelcastPort);
 
             // Trigger immediate re-registration to propagate metadata change
             if (serviceRegistry.isPresent()) {
                 try {
                     serviceRegistry.get().register(registration.get());
-                    log.info("Triggered immediate Eureka re-registration for Hazelcast member metadata");
+                    log.info("Triggered immediate Eureka re-registration for Hazelcast address metadata");
                 }
                 catch (Exception e) {
                     log.warn("Failed to trigger immediate Eureka re-registration: {}. Metadata will propagate on next heartbeat.", e.getMessage());
