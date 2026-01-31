@@ -31,6 +31,8 @@ artemis:
             enabled: false
     nebula:
         enabled: false
+    weaviate:
+      enabled: false
     sharing:
         enabled: false
     lti:
