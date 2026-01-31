@@ -122,12 +122,9 @@ public class IrisCitationService {
         try {
             LectureUnit unit = lectureUnitRepositoryApi.get().findByIdElseThrow(reference.entityId());
             var lectureTitle = unit.getLecture() != null ? unit.getLecture().getTitle() : null;
-            if (lectureTitle != null && lectureTitle.isBlank()) {
-                lectureTitle = null;
-            }
             var lectureUnitTitle = unit.getName();
-            if (lectureUnitTitle != null && lectureUnitTitle.isBlank()) {
-                lectureUnitTitle = null;
+            if (lectureTitle == null || lectureTitle.isBlank() || lectureUnitTitle == null || lectureUnitTitle.isBlank()) {
+                return Optional.empty();
             }
             return Optional.of(new IrisCitationMetaDTO(reference.entityId(), lectureTitle, lectureUnitTitle));
         }

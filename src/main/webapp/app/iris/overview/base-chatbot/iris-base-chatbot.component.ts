@@ -508,12 +508,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const rest = restLines.length > 0 ? `<br />${restLines.join('<br />')}` : '';
         const metaLines: string[] = [];
         if (parsed.type === 'L') {
-            const lectureTitle = meta?.lectureTitle?.trim();
+            const lectureTitle = meta?.lectureTitle.trim();
             if (lectureTitle) {
                 const lectureLabel = this.translateService.instant('artemisApp.iris.citations.lectureLabel');
                 metaLines.push(`<span class="iris-citation__summary-meta">${lectureLabel}: "${escapeHtml(lectureTitle)}"</span>`);
             }
-            const unitTitle = meta?.lectureUnitTitle?.trim();
+            const unitTitle = meta?.lectureUnitTitle.trim();
             if (unitTitle) {
                 const lectureUnitLabel = this.translateService.instant('artemisApp.iris.citations.lectureUnitLabel');
                 metaLines.push(`<span class="iris-citation__summary-meta">${lectureUnitLabel}: "${escapeHtml(unitTitle)}"</span>`);
