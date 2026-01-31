@@ -94,7 +94,11 @@ public class LocalCIQueueWebsocketService {
         sendBuildAgentDetailsOverWebsocket(agentName);
     }
 
-    private void sendBuildAgentSummaryOverWebsocket() {
+    /**
+     * Sends the build agent summary over websocket to update the admin build agents page.
+     * This is called when build agent information changes or when processing jobs are added/removed.
+     */
+    void sendBuildAgentSummaryOverWebsocket() {
         var buildAgentSummary = removeUnnecessaryInformationFromBuildAgentInformation(distributedDataAccessService.getBuildAgentInformation());
         localCIWebsocketMessagingService.sendBuildAgentSummary(buildAgentSummary);
     }

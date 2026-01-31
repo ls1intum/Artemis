@@ -450,8 +450,8 @@ public class SharedQueueProcessingService {
             }
 
             // Cross-check distributed processing jobs against local state
-            // Get jobs in distributed map that are assigned to this agent
-            List<String> distributedJobIds = distributedDataAccessService.getProcessingJobIdsForAgent(buildAgentShortName);
+            // Get jobs in distributed map that are assigned to this agent (by agent name, not member address)
+            List<String> distributedJobIds = distributedDataAccessService.getProcessingJobIdsForAgentByName(buildAgentShortName);
 
             // Find jobs in distributed map but not tracked locally (orphaned in distributed state)
             for (String distributedJobId : distributedJobIds) {

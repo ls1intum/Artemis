@@ -178,6 +178,8 @@ public class LocalCIEventListenerService {
             log.debug("CIBuildJobQueueItem added to processing jobs: {}", event.value());
             localCIQueueWebsocketService.sendProcessingJobsOverWebsocket(event.value().courseId());
             localCIQueueWebsocketService.sendBuildJobUpdateOverWebsocket(event.value());
+            // Also update build agent summary so the admin page shows accurate running job counts
+            localCIQueueWebsocketService.sendBuildAgentSummaryOverWebsocket();
             buildJobRepository.updateBuildJobStatusWithBuildStartDate(event.value().id(), BuildStatus.BUILDING, event.value().jobTimingInfo().buildStartDate());
             notifyUserAboutBuildProcessing(event.value().exerciseId(), event.value().participationId(), event.value().buildConfig().assignmentCommitHash(),
                     event.value().jobTimingInfo().submissionDate(), event.value().jobTimingInfo().buildStartDate(), event.value().jobTimingInfo().estimatedCompletionDate());
@@ -188,6 +190,8 @@ public class LocalCIEventListenerService {
             log.debug("CIBuildJobQueueItem removed from processing jobs: {}", event.oldValue());
             localCIQueueWebsocketService.sendProcessingJobsOverWebsocket(event.oldValue().courseId());
             localCIQueueWebsocketService.sendBuildJobUpdateOverWebsocket(event.oldValue());
+            // Also update build agent summary so the admin page shows accurate running job counts
+            localCIQueueWebsocketService.sendBuildAgentSummaryOverWebsocket();
         }
 
         @Override

@@ -335,16 +335,32 @@ public class DistributedDataAccessService {
     }
 
     /**
-     * @param memberAddress the build agent to retrieve job IDs for
-     * @return a list of the processing job IDs on a specific build agent
+     * @param memberAddress the build agent member address to retrieve jobs for
+     * @return a list of the processing jobs on a specific build agent by member address
      */
     public List<BuildJobQueueItem> getProcessingJobsForAgent(String memberAddress) {
-        return getProcessingJobs().stream().filter(job -> job.buildAgent().memberAddress().equals(memberAddress)).toList();
+        return getProcessingJobs().stream().filter(job -> job.buildAgent() != null && job.buildAgent().memberAddress().equals(memberAddress)).toList();
     }
 
     /**
-     * @param memberAddress the build agent to retrieve job IDs for
-     * @return a list of the processing job IDs on a specific build agent
+     * @param agentName the build agent name (short name) to retrieve jobs for
+     * @return a list of the processing jobs on a specific build agent by name
+     */
+    public List<BuildJobQueueItem> getProcessingJobsForAgentByName(String agentName) {
+        return getProcessingJobs().stream().filter(job -> job.buildAgent() != null && job.buildAgent().name().equals(agentName)).toList();
+    }
+
+    /**
+     * @param agentName the build agent name (short name) to retrieve job IDs for
+     * @return a list of the processing job IDs on a specific build agent by name
+     */
+    public List<String> getProcessingJobIdsForAgentByName(String agentName) {
+        return getProcessingJobsForAgentByName(agentName).stream().map(BuildJobQueueItem::id).toList();
+    }
+
+    /**
+     * @param memberAddress the build agent member address to retrieve job IDs for
+     * @return a list of the processing job IDs on a specific build agent by member address
      */
     public List<String> getProcessingJobIdsForAgent(String memberAddress) {
         return getProcessingJobsForAgent(memberAddress).stream().map(BuildJobQueueItem::id).toList();
