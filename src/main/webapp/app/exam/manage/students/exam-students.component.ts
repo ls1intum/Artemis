@@ -156,9 +156,13 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
             next: (aliases: Record<string, string>) => {
                 this.allRegisteredUsers = this.allRegisteredUsers.map((examUser) => {
                     const plannedRoom: string = examUser.plannedRoom ?? '';
+                    const actualRoom: string = examUser.actualRoom ?? '';
 
                     if (plannedRoom && plannedRoom in aliases) {
                         examUser.plannedRoom = aliases[plannedRoom];
+                    }
+                    if (actualRoom && actualRoom in aliases) {
+                        examUser.actualRoom = aliases[actualRoom];
                     }
 
                     return examUser;

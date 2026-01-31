@@ -132,7 +132,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
         component.attemptDistributeAndCloseDialog();
 
-        expect(distributeSpy).toHaveBeenCalledWith(course.id, exam.id, [rooms[0].id], 0.1, true);
+        expect(distributeSpy).toHaveBeenCalledWith(course.id, exam.id, [rooms[0].id], {}, 0.1, true);
     });
 
     it('should format room name correctly', () => {

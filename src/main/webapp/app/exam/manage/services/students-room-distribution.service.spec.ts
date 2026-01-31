@@ -111,11 +111,11 @@ describe('StudentsRoomDistributionService', () => {
             const useOnlyDefaultLayouts = true;
 
             let actualResponse: HttpResponse<void> | undefined;
-            service.distributeStudentsAcrossRooms(courseId, examId, roomIds, reserveFactor, useOnlyDefaultLayouts).subscribe((resp) => (actualResponse = resp));
+            service.distributeStudentsAcrossRooms(courseId, examId, roomIds, {}, reserveFactor, useOnlyDefaultLayouts).subscribe((resp) => (actualResponse = resp));
 
             const req = httpMock.expectOne((r) => r.url === `${BASE_URL}/courses/${courseId}/exams/${examId}/distribute-registered-students` && r.method === 'POST');
 
-            expect(req.request.body).toEqual(roomIds);
+            expect(req.request.body).toEqual({ examRoomAliases: {}, roomIds: roomIds });
             expect(req.request.params.get('reserveFactor')).toBe(reserveFactor.toString());
             expect(req.request.params.get('useOnlyDefaultLayouts')).toBe('true');
 
