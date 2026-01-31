@@ -25,11 +25,8 @@ import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentThreadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentThreadGroupDTO;
-import de.tum.cit.aet.artemis.exercise.dto.review.ConsistencyIssueCommentContentDTO;
-import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadGroupDTO;
-import de.tum.cit.aet.artemis.exercise.dto.review.UpdateCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UpdateThreadResolvedStateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
@@ -38,8 +35,6 @@ import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadGroupRepos
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
-import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
-import de.tum.cit.aet.artemis.hyperion.domain.Severity;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -49,6 +44,10 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
     private static final String TEST_PREFIX = "reviewcommentresource";
 
     private static final String THREAD_ENTITY_NAME = "exerciseReviewCommentThread";
+
+    private static final String COMMENT_ENTITY_NAME = "exerciseReviewComment";
+
+    private static final String THREAD_GROUP_ENTITY_NAME = "exerciseReviewCommentThreadGroup";
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -90,36 +89,35 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void shouldRejectThreadWithNonUserComment() throws Exception {
+    void shouldRejectThreadWithMissingCommentText() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
 
-        CreateCommentDTO invalidComment = new CreateCommentDTO(CommentType.CONSISTENCY_CHECK, buildConsistencyIssueContent());
-        CreateCommentThreadDTO dto = buildThreadDTO(invalidComment);
+        CreateCommentThreadDTO dto = buildThreadDTO(new UserCommentContentDTO(null));
 
-        assertBadRequest(reviewThreadsPath(exercise.getId()), dto, "error.commentTypeNotSupported", THREAD_ENTITY_NAME);
+        assertBadRequest(reviewThreadsPath(exercise.getId()), dto, "error.http.400", null);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void shouldRejectUserCommentWithNonUserContent() throws Exception {
+    void shouldRejectUserCommentWithMissingText() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         CommentThreadDTO createdThread = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Initial comment")),
                 CommentThreadDTO.class, HttpStatus.CREATED);
 
-        CreateCommentDTO invalidComment = new CreateCommentDTO(CommentType.USER, buildConsistencyIssueContent());
-        assertBadRequest(reviewCommentsPath(exercise.getId(), createdThread.id()), invalidComment, "error.commentContentNotSupported", THREAD_ENTITY_NAME);
+        UserCommentContentDTO invalidComment = new UserCommentContentDTO(null);
+        assertBadRequest(reviewCommentsPath(exercise.getId(), createdThread.id()), invalidComment, "error.http.400", null);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void shouldRejectUpdateWithNonUserContent() throws Exception {
+    void shouldRejectUpdateWithMissingText() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         CommentThreadDTO createdThread = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Initial comment")),
                 CommentThreadDTO.class, HttpStatus.CREATED);
         CommentDTO initialComment = createdThread.comments().getFirst();
 
-        UpdateCommentContentDTO update = new UpdateCommentContentDTO(buildConsistencyIssueContent());
-        assertBadRequestWithPut(reviewCommentPath(exercise.getId(), initialComment.id()), update, "error.commentContentNotSupported", THREAD_ENTITY_NAME);
+        UserCommentContentDTO update = new UserCommentContentDTO(null);
+        assertBadRequestWithPut(reviewCommentPath(exercise.getId(), initialComment.id()), update, "error.http.400", null);
     }
 
     @Test
@@ -129,7 +127,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         CommentThreadDTO createdThread = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Initial comment")),
                 CommentThreadDTO.class, HttpStatus.CREATED);
 
-        CreateCommentDTO reply = buildUserComment("Reply comment");
+        UserCommentContentDTO reply = buildUserComment("Reply comment");
         CommentDTO savedReply = request.postWithResponseBody(reviewCommentsPath(exercise.getId(), createdThread.id()), reply, CommentDTO.class, HttpStatus.CREATED);
 
         assertThat(savedReply.type()).isEqualTo(CommentType.USER);
@@ -144,7 +142,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
                 CommentThreadDTO.class, HttpStatus.CREATED);
         CommentDTO initialComment = createdThread.comments().getFirst();
 
-        UpdateCommentContentDTO update = new UpdateCommentContentDTO(new UserCommentContentDTO("Updated text"));
+        UserCommentContentDTO update = new UserCommentContentDTO("Updated text");
         CommentDTO updated = request.putWithResponseBody(reviewCommentPath(exercise.getId(), initialComment.id()), update, CommentDTO.class, HttpStatus.OK);
 
         assertThat(updated.content()).isInstanceOf(UserCommentContentDTO.class);
@@ -195,7 +193,14 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         TextExercise exercise = createExerciseWithVersion();
         CreateCommentThreadDTO dto = new CreateCommentThreadDTO(CommentThreadLocationType.PROBLEM_STATEMENT, null, null, 1, null);
 
-        assertBadRequest(reviewThreadsPath(exercise.getId()), dto, "error.validation", null);
+        assertBadRequest(reviewThreadsPath(exercise.getId()), dto, "error.http.400", null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectThreadCreationWithNullBody() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        assertBadRequestWithNullBody(reviewThreadsPath(exercise.getId()), "error.http.400", null);
     }
 
     @Test
@@ -204,7 +209,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         TextExercise exercise = createExerciseWithVersion();
         CreateCommentThreadDTO dto = new CreateCommentThreadDTO(CommentThreadLocationType.PROBLEM_STATEMENT, null, null, null, buildUserComment("Text"));
 
-        assertBadRequest(reviewThreadsPath(exercise.getId()), dto, "error.validation", null);
+        assertBadRequest(reviewThreadsPath(exercise.getId()), dto, "error.http.400", null);
     }
 
     @Test
@@ -306,7 +311,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         CommentThreadDTO createdThread = createThreadWithComment(exercise, "Initial comment");
         CommentDTO initialComment = createdThread.comments().getFirst();
 
-        UpdateCommentContentDTO update = new UpdateCommentContentDTO(new UserCommentContentDTO("Updated text"));
+        UserCommentContentDTO update = new UserCommentContentDTO("Updated text");
         request.putWithResponseBody(reviewCommentPath(exercise.getId(), initialComment.id()), update, CommentDTO.class, HttpStatus.FORBIDDEN);
 
         Comment persisted = commentRepository.findById(initialComment.id()).orElseThrow();
@@ -402,7 +407,14 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
                 HttpStatus.CREATED);
 
         CreateCommentThreadGroupDTO groupRequest = new CreateCommentThreadGroupDTO(List.of(first.id()));
-        assertBadRequest(reviewThreadGroupsPath(exercise.getId()), groupRequest, "error.validation", null);
+        assertBadRequest(reviewThreadGroupsPath(exercise.getId()), groupRequest, "error.http.400", null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectThreadGroupCreationWithNullBody() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        assertBadRequestWithNullBody(reviewThreadGroupsPath(exercise.getId()), "error.http.400", null);
     }
 
     @Test
@@ -460,6 +472,37 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectCommentCreationWithNullBody() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CommentThreadDTO thread = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Initial comment")), CommentThreadDTO.class,
+                HttpStatus.CREATED);
+
+        assertBadRequestWithNullBody(reviewCommentsPath(exercise.getId(), thread.id()), "error.http.400", null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectResolvedUpdateWithNullBody() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CommentThreadDTO thread = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Initial comment")), CommentThreadDTO.class,
+                HttpStatus.CREATED);
+
+        assertBadRequestWithPutNullBody(reviewThreadResolvedPath(exercise.getId(), thread.id()), "error.http.400", null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectCommentUpdateWithNullBody() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CommentThreadDTO thread = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Initial comment")), CommentThreadDTO.class,
+                HttpStatus.CREATED);
+        CommentDTO comment = thread.comments().getFirst();
+
+        assertBadRequestWithPutNullBody(reviewCommentPath(exercise.getId(), comment.id()), "error.http.400", null);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldForbidThreadGroupDeletionForStudent() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
@@ -480,16 +523,12 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         return exercise;
     }
 
-    private CreateCommentThreadDTO buildThreadDTO(CreateCommentDTO initialComment) {
-        return new CreateCommentThreadDTO(CommentThreadLocationType.PROBLEM_STATEMENT, null, "problem_statement.md", 1, initialComment);
+    private CreateCommentThreadDTO buildThreadDTO(UserCommentContentDTO initialComment) {
+        return new CreateCommentThreadDTO(CommentThreadLocationType.PROBLEM_STATEMENT, null, null, 1, initialComment);
     }
 
-    private CreateCommentDTO buildUserComment(String text) {
-        return new CreateCommentDTO(CommentType.USER, new UserCommentContentDTO(text));
-    }
-
-    private ConsistencyIssueCommentContentDTO buildConsistencyIssueContent() {
-        return new ConsistencyIssueCommentContentDTO(Severity.LOW, ConsistencyIssueCategory.METHOD_RETURN_TYPE_MISMATCH, "Issue text", null);
+    private UserCommentContentDTO buildUserComment(String text) {
+        return new UserCommentContentDTO(text);
     }
 
     private String reviewThreadsPath(long exerciseId) {
@@ -542,13 +581,37 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         }
     }
 
+    private void assertBadRequestWithNullBody(String path, String expectedMessage, String expectedParams) throws Exception {
+        var result = request.performMvcRequest(MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content("null"))
+                .andExpect(status().isBadRequest()).andReturn();
+        ObjectMapper mapper = (ObjectMapper) ReflectionTestUtils.getField(request, "mapper");
+        String content = result.getResponse().getContentAsString();
+        var payload = mapper.readValue(content, java.util.Map.class);
+        assertThat(payload.get("message")).isEqualTo(expectedMessage);
+        if (expectedParams != null) {
+            assertThat(payload.get("params")).isEqualTo(expectedParams);
+        }
+    }
+
+    private void assertBadRequestWithPutNullBody(String path, String expectedMessage, String expectedParams) throws Exception {
+        var result = request.performMvcRequest(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content("null")).andExpect(status().isBadRequest())
+                .andReturn();
+        ObjectMapper mapper = (ObjectMapper) ReflectionTestUtils.getField(request, "mapper");
+        String content = result.getResponse().getContentAsString();
+        var payload = mapper.readValue(content, java.util.Map.class);
+        assertThat(payload.get("message")).isEqualTo(expectedMessage);
+        if (expectedParams != null) {
+            assertThat(payload.get("params")).isEqualTo(expectedParams);
+        }
+    }
+
     private CommentThreadDTO createThreadWithComment(TextExercise exercise, String text) {
         var thread = new CommentThread();
         thread.setExercise(exercise);
         thread.setTargetType(CommentThreadLocationType.PROBLEM_STATEMENT);
-        thread.setInitialFilePath("problem_statement.md");
+        thread.setInitialFilePath(null);
         thread.setInitialLineNumber(1);
-        thread.setFilePath("problem_statement.md");
+        thread.setFilePath(null);
         thread.setLineNumber(1);
         thread.setOutdated(false);
         thread.setResolved(false);
@@ -569,9 +632,9 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         CommentThread thread = new CommentThread();
         thread.setExercise(exercise);
         thread.setTargetType(CommentThreadLocationType.PROBLEM_STATEMENT);
-        thread.setInitialFilePath("problem_statement.md");
+        thread.setInitialFilePath(null);
         thread.setInitialLineNumber(1);
-        thread.setFilePath("problem_statement.md");
+        thread.setFilePath(null);
         thread.setLineNumber(1);
         thread.setOutdated(false);
         thread.setResolved(false);

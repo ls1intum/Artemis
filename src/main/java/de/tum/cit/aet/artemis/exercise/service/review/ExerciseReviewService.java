@@ -43,8 +43,9 @@ import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadLocationType;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.ConsistencyIssueCommentContentDTO;
-import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadDTO;
+import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadGroupDTO;
+import de.tum.cit.aet.artemis.exercise.dto.review.UpdateThreadResolvedStateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
@@ -121,16 +122,148 @@ public class ExerciseReviewService {
     }
 
     /**
+     * Retrieve all comment threads for an exercise with their comments loaded.
+     *
+     * @param exerciseId the exercise id
+     * @return list of comment threads with comments
+     */
+    public List<CommentThread> findThreadsWithCommentsByExerciseId(long exerciseId) {
+        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, exerciseId);
+        return commentThreadRepository.findWithCommentsByExerciseId(exerciseId);
+    }
+
+    /**
+     * Retrieve all comments for a thread, ordered by creation date.
+     *
+     * @param threadId the thread id
+     * @return list of comments
+     */
+    public List<Comment> findCommentsByThreadId(long threadId) {
+        CommentThread thread = findThreadByIdElseThrow(threadId);
+        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, thread.getExercise().getId());
+        return commentRepository.findByThreadIdOrderByCreatedDateAsc(threadId);
+    }
+
+    /**
+     * Create a new comment thread for an exercise.
+     *
+     * @param exerciseId the exercise id
+     * @param dto        the thread creation payload
+     * @return the persisted thread
+     */
+    public CommentThread createThread(long exerciseId, CreateCommentThreadDTO dto) {
+        if (dto == null) {
+            throw new BadRequestAlertException("Request body must be set", THREAD_ENTITY_NAME, "bodyMissing");
+        }
+        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, exerciseId);
+        validateThreadPayload(dto);
+
+        ExerciseVersion initialVersion = resolveInitialVersion(dto.targetType(), exerciseId);
+        String initialCommitSha = resolveLatestCommitSha(dto.targetType(), dto.auxiliaryRepositoryId(), exerciseId);
+        CommentThread thread = dto.toEntity(initialVersion, initialCommitSha);
+        Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+
+        if (thread.getExercise() != null && !Objects.equals(thread.getExercise().getId(), exerciseId)) {
+            throw new BadRequestAlertException("Thread exercise does not match request", THREAD_ENTITY_NAME, "exerciseMismatch");
+        }
+
+        thread.setExercise(exercise);
+        return commentThreadRepository.save(thread);
+    }
+
+    /**
+     * Create a new comment within a thread.
+     *
+     * @param threadId the thread id
+     * @param dto      the comment to create
+     * @return the persisted comment
+     */
+    public Comment createUserComment(long threadId, UserCommentContentDTO content) {
+        if (content == null) {
+            throw new BadRequestAlertException("Comment content must be set", COMMENT_ENTITY_NAME, "contentMissing");
+        }
+        CommentThread thread = findThreadByIdElseThrow(threadId);
+        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, thread.getExercise().getId());
+
+        User author = userRepository.getUserWithGroupsAndAuthorities();
+        Comment comment = new Comment();
+        comment.setType(CommentType.USER);
+        comment.setContent(content);
+        comment.setAuthor(author);
+        comment.setInitialVersion(resolveLatestVersion(thread));
+        comment.setInitialCommitSha(resolveLatestCommitSha(thread.getTargetType(), thread.getAuxiliaryRepositoryId(), thread.getExercise().getId()));
+        comment.setThread(thread);
+
+        return commentRepository.save(comment);
+    }
+
+    /**
+     * Delete a comment by id.
+     *
+     * @param commentId the comment id
+     */
+    public void deleteComment(long commentId) {
+        Comment comment = commentRepository.findWithThreadById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment", commentId));
+        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, comment.getThread().getExercise().getId());
+        CommentThread thread = comment.getThread();
+        commentRepository.delete(comment);
+        if (commentRepository.countByThreadId(thread.getId()) == 0) {
+            commentThreadRepository.delete(thread);
+        }
+    }
+
+    /**
+     * Update the resolved flag of a thread.
+     *
+     * @param threadId the thread id
+     * @param dto      whether the thread is resolved
+     * @return the updated thread
+     */
+    public CommentThread updateThreadResolvedState(long threadId, UpdateThreadResolvedStateDTO dto) {
+        if (dto == null) {
+            throw new BadRequestAlertException("Request body must be set", THREAD_ENTITY_NAME, "bodyMissing");
+        }
+        CommentThread thread = findThreadByIdElseThrow(threadId);
+        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, thread.getExercise().getId());
+        thread.setResolved(dto.resolved());
+        CommentThread saved = commentThreadRepository.save(thread);
+        return commentThreadRepository.findWithCommentsById(saved.getId()).orElse(saved);
+    }
+
+    /**
+     * Update the content of a comment.
+     *
+     * @param commentId the comment id
+     * @param content   the new content
+     * @return the updated comment
+     */
+    public Comment updateUserCommentContent(long commentId, UserCommentContentDTO content) {
+        if (content == null) {
+            throw new BadRequestAlertException("Comment content must be set", COMMENT_ENTITY_NAME, "contentMissing");
+        }
+        Comment comment = commentRepository.findWithThreadById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment", commentId));
+        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, comment.getThread().getExercise().getId());
+        validateContentMatchesType(comment.getType(), content);
+        comment.setContent(content);
+        Comment saved = commentRepository.save(comment);
+        return commentRepository.findWithThreadById(saved.getId()).orElse(saved);
+    }
+
+    /**
      * Create a new comment thread group for an exercise.
      *
      * @param exerciseId the exercise id
-     * @param threadIds  the ids of threads to associate, if any
+     * @param dto        the group creation payload
      * @return the persisted group
      */
-    public CommentThreadGroup createGroup(long exerciseId, List<Long> threadIds) {
+    public CommentThreadGroup createGroup(long exerciseId, CreateCommentThreadGroupDTO dto) {
+        if (dto == null) {
+            throw new BadRequestAlertException("Request body must be set", THREAD_GROUP_ENTITY_NAME, "bodyMissing");
+        }
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, exerciseId);
         Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
 
+        List<Long> threadIds = dto.threadIds();
         if (threadIds == null || threadIds.size() < 2) {
             throw new BadRequestAlertException("A thread group must contain at least two threads", THREAD_GROUP_ENTITY_NAME, "threadCountTooLow");
         }
@@ -178,140 +311,6 @@ public class ExerciseReviewService {
         }
 
         commentThreadGroupRepository.delete(group);
-    }
-
-    /**
-     * Retrieve all comment threads for an exercise with their comments loaded.
-     *
-     * @param exerciseId the exercise id
-     * @return list of comment threads with comments
-     */
-    public List<CommentThread> findThreadsWithCommentsByExerciseId(long exerciseId) {
-        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, exerciseId);
-        return commentThreadRepository.findWithCommentsByExerciseId(exerciseId);
-    }
-
-    /**
-     * Retrieve all comments for a thread, ordered by creation date.
-     *
-     * @param threadId the thread id
-     * @return list of comments
-     */
-    public List<Comment> findCommentsByThreadId(long threadId) {
-        CommentThread thread = findThreadByIdElseThrow(threadId);
-        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, thread.getExercise().getId());
-        return commentRepository.findByThreadIdOrderByCreatedDateAsc(threadId);
-    }
-
-    /**
-     * Create a new comment thread for an exercise.
-     *
-     * @param exerciseId the exercise id
-     * @param dto        the thread creation payload
-     * @return the persisted thread
-     */
-    public CommentThread createThread(long exerciseId, CreateCommentThreadDTO dto) {
-        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, exerciseId);
-
-        ExerciseVersion initialVersion = resolveInitialVersion(dto.targetType(), exerciseId);
-        String initialCommitSha = resolveLatestCommitSha(dto.targetType(), dto.auxiliaryRepositoryId(), exerciseId);
-        CommentThread thread = dto.toEntity(initialVersion, initialCommitSha);
-
-        if (thread.getId() != null) {
-            throw new BadRequestAlertException("A new thread cannot already have an ID", THREAD_ENTITY_NAME, "idexists");
-        }
-
-        Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
-        if (thread.getExercise() != null && !Objects.equals(thread.getExercise().getId(), exerciseId)) {
-            throw new BadRequestAlertException("Thread exercise does not match request", THREAD_ENTITY_NAME, "exerciseMismatch");
-        }
-
-        thread.setExercise(exercise);
-        return commentThreadRepository.save(thread);
-    }
-
-    /**
-     * Create a new comment within a thread.
-     *
-     * @param threadId the thread id
-     * @param dto      the comment to create
-     * @return the persisted comment
-     */
-    public Comment createComment(long threadId, CreateCommentDTO dto) {
-        CommentThread thread = findThreadByIdElseThrow(threadId);
-        Comment comment = dto.toEntity();
-        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, thread.getExercise().getId());
-
-        if (comment.getId() != null) {
-            throw new BadRequestAlertException("A new comment cannot already have an ID", COMMENT_ENTITY_NAME, "idexists");
-        }
-        if (comment.getType() == null) {
-            throw new BadRequestAlertException("Comment type must be set", COMMENT_ENTITY_NAME, "typeMissing");
-        }
-        validateContentMatchesType(comment.getType(), comment.getContent());
-
-        if (comment.getType() == CommentType.USER) {
-            User author = userRepository.getUserWithGroupsAndAuthorities();
-            comment.setAuthor(author);
-        }
-
-        if (commentRepository.countByThreadId(threadId) == 0) {
-            comment.setInitialVersion(thread.getInitialVersion());
-            comment.setInitialCommitSha(thread.getInitialCommitSha());
-        }
-        else {
-            comment.setInitialVersion(resolveLatestVersion(thread));
-            comment.setInitialCommitSha(resolveLatestCommitSha(thread.getTargetType(), thread.getAuxiliaryRepositoryId(), thread.getExercise().getId()));
-        }
-
-        comment.setThread(thread);
-        return commentRepository.save(comment);
-    }
-
-    /**
-     * Delete a comment by id.
-     *
-     * @param commentId the comment id
-     */
-    public void deleteComment(long commentId) {
-        Comment comment = commentRepository.findWithThreadById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment", commentId));
-        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, comment.getThread().getExercise().getId());
-        CommentThread thread = comment.getThread();
-        commentRepository.delete(comment);
-        if (commentRepository.countByThreadId(thread.getId()) == 0) {
-            commentThreadRepository.delete(thread);
-        }
-    }
-
-    /**
-     * Update the resolved flag of a thread.
-     *
-     * @param threadId the thread id
-     * @param resolved whether the thread is resolved
-     * @return the updated thread
-     */
-    public CommentThread updateThreadResolvedState(long threadId, boolean resolved) {
-        CommentThread thread = findThreadByIdElseThrow(threadId);
-        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, thread.getExercise().getId());
-        thread.setResolved(resolved);
-        CommentThread saved = commentThreadRepository.save(thread);
-        return commentThreadRepository.findWithCommentsById(saved.getId()).orElse(saved);
-    }
-
-    /**
-     * Update the content of a comment.
-     *
-     * @param commentId the comment id
-     * @param content   the new content
-     * @return the updated comment
-     */
-    public Comment updateCommentContent(long commentId, CommentContentDTO content) {
-        Comment comment = commentRepository.findWithThreadById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment", commentId));
-        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, comment.getThread().getExercise().getId());
-        validateContentMatchesType(comment.getType(), content);
-        comment.setContent(content);
-        Comment saved = commentRepository.save(comment);
-        return commentRepository.findWithThreadById(saved.getId()).orElse(saved);
     }
 
     /**
@@ -407,6 +406,21 @@ public class ExerciseReviewService {
 
         if (!isValid) {
             throw new BadRequestAlertException("Comment content does not match type", COMMENT_ENTITY_NAME, "contentTypeMismatch");
+        }
+    }
+
+    private void validateThreadPayload(CreateCommentThreadDTO dto) {
+        if (dto.targetType() != CommentThreadLocationType.PROBLEM_STATEMENT && dto.initialFilePath() == null) {
+            throw new BadRequestAlertException("Initial file path is required for repository threads", THREAD_ENTITY_NAME, "initialFilePathMissing");
+        }
+        if (dto.targetType() == CommentThreadLocationType.PROBLEM_STATEMENT && dto.initialFilePath() != null) {
+            throw new BadRequestAlertException("Initial file path is not allowed for problem statemnt threads", THREAD_ENTITY_NAME, "initialFilePathNotAllowed");
+        }
+        if (dto.targetType() != CommentThreadLocationType.AUXILIARY_REPO && dto.auxiliaryRepositoryId() != null) {
+            throw new BadRequestAlertException("Auxiliary repository id is only allowed for auxiliary repository threads", THREAD_ENTITY_NAME, "auxiliaryRepositoryNotAllowed");
+        }
+        if (dto.targetType() == CommentThreadLocationType.AUXILIARY_REPO && dto.auxiliaryRepositoryId() == null) {
+            throw new BadRequestAlertException("Auxiliary repository id is required for auxiliary repository threads", THREAD_ENTITY_NAME, "auxiliaryRepositoryMissing");
         }
     }
 

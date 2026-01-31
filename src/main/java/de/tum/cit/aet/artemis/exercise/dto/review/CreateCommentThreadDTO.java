@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exercise.dto.review;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -15,7 +16,7 @@ public record CreateCommentThreadDTO(@Schema(description = "Location type of the
         @Schema(description = "Identifier of the auxiliary repository, if applicable.") Long auxiliaryRepositoryId,
         @Schema(description = "Initial file path captured at thread creation.") String initialFilePath,
         @Schema(description = "Initial line number captured at thread creation.") @NotNull Integer initialLineNumber,
-        @Schema(description = "Initial user comment that populates the thread.") @NotNull CreateCommentDTO initialComment) {
+        @Schema(description = "Initial user comment that populates the thread.") @NotNull @Valid UserCommentContentDTO initialComment) {
 
     /**
      * Convert this DTO into a new comment thread entity using resolved versioning metadata.

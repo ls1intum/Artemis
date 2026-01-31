@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,20 +24,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadGroup;
-import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadLocationType;
-import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentThreadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentThreadGroupDTO;
-import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadGroupDTO;
-import de.tum.cit.aet.artemis.exercise.dto.review.UpdateCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UpdateThreadResolvedStateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService;
@@ -48,8 +44,6 @@ import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService;
 public class ExerciseReviewResource {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseReviewResource.class);
-
-    private static final String THREAD_ENTITY_NAME = "exerciseReviewCommentThread";
 
     private final ExerciseReviewService exerciseReviewService;
 
@@ -66,15 +60,12 @@ public class ExerciseReviewResource {
      */
     @PostMapping("exercises/{exerciseId}/review-threads")
     @EnforceAtLeastInstructorInExercise
-    public ResponseEntity<CommentThreadDTO> createThread(@PathVariable long exerciseId, @Valid @RequestBody CreateCommentThreadDTO createCommentThreadDTO)
+    public ResponseEntity<CommentThreadDTO> createThread(@PathVariable long exerciseId, @Valid @NotNull @RequestBody CreateCommentThreadDTO createCommentThreadDTO)
             throws URISyntaxException {
         log.debug("REST request to create exercise review thread for exercise {}", exerciseId);
-
-        validateThreadPayload(createCommentThreadDTO);
-        CreateCommentDTO initialCommentDTO = createCommentThreadDTO.initialComment();
-        validateUserComment(initialCommentDTO);
+        UserCommentContentDTO initialCommentDTO = createCommentThreadDTO.initialComment();
         CommentThread savedThread = exerciseReviewService.createThread(exerciseId, createCommentThreadDTO);
-        Comment savedComment = exerciseReviewService.createComment(savedThread.getId(), initialCommentDTO);
+        Comment savedComment = exerciseReviewService.createUserComment(savedThread.getId(), initialCommentDTO);
         return ResponseEntity.created(new URI("/api/exercise/exercises/" + exerciseId + "/review-threads/" + savedThread.getId()))
                 .body(new CommentThreadDTO(savedThread, List.of(new CommentDTO(savedComment))));
     }
@@ -103,10 +94,10 @@ public class ExerciseReviewResource {
      */
     @PostMapping("exercises/{exerciseId}/review-thread-groups")
     @EnforceAtLeastInstructorInExercise
-    public ResponseEntity<CommentThreadGroupDTO> createThreadGroup(@PathVariable long exerciseId, @Valid @RequestBody CreateCommentThreadGroupDTO createCommentThreadGroupDTO)
-            throws URISyntaxException {
+    public ResponseEntity<CommentThreadGroupDTO> createThreadGroup(@PathVariable long exerciseId,
+            @Valid @NotNull @RequestBody CreateCommentThreadGroupDTO createCommentThreadGroupDTO) throws URISyntaxException {
         log.debug("REST request to create exercise review thread group for exercise {}", exerciseId);
-        CommentThreadGroup savedGroup = exerciseReviewService.createGroup(exerciseId, createCommentThreadGroupDTO.threadIds());
+        CommentThreadGroup savedGroup = exerciseReviewService.createGroup(exerciseId, createCommentThreadGroupDTO);
         return ResponseEntity.created(new URI("/api/exercise/exercises/" + exerciseId + "/review-thread-groups/" + savedGroup.getId())).body(new CommentThreadGroupDTO(savedGroup));
     }
 
@@ -128,55 +119,18 @@ public class ExerciseReviewResource {
     /**
      * POST /exercises/:exerciseId/review-threads/:threadId/comments : Create a new user comment in a thread.
      *
-     * @param exerciseId       the exercise id
-     * @param threadId         the thread id
-     * @param createCommentDTO the comment data
+     * @param exerciseId the exercise id
+     * @param threadId   the thread id
+     * @param content    the comment content
      * @return the created comment
      */
     @PostMapping("exercises/{exerciseId}/review-threads/{threadId}/comments")
     @EnforceAtLeastInstructorInExercise
-    public ResponseEntity<CommentDTO> createUserComment(@PathVariable long exerciseId, @PathVariable long threadId, @Valid @RequestBody CreateCommentDTO createCommentDTO)
+    public ResponseEntity<CommentDTO> createUserComment(@PathVariable long exerciseId, @PathVariable long threadId, @Valid @NotNull @RequestBody UserCommentContentDTO content)
             throws URISyntaxException {
         log.debug("REST request to create exercise review comment for thread {}", threadId);
-        validateUserComment(createCommentDTO);
-        Comment savedComment = exerciseReviewService.createComment(threadId, createCommentDTO);
+        Comment savedComment = exerciseReviewService.createUserComment(threadId, content);
         return ResponseEntity.created(new URI("/api/exercise/exercises/" + exerciseId + "/review-comments/" + savedComment.getId())).body(new CommentDTO(savedComment));
-    }
-
-    /**
-     * PUT /exercises/:exerciseId/review-threads/:threadId/resolved : Update the resolved state of a thread.
-     *
-     * @param exerciseId the exercise id
-     * @param threadId   the thread id
-     * @param dto        the resolved state
-     * @return the updated thread
-     */
-    @PutMapping("exercises/{exerciseId}/review-threads/{threadId}/resolved")
-    @EnforceAtLeastInstructorInExercise
-    public ResponseEntity<CommentThreadDTO> updateThreadResolvedState(@PathVariable long exerciseId, @PathVariable long threadId,
-            @Valid @RequestBody UpdateThreadResolvedStateDTO dto) {
-        log.debug("REST request to update resolved state of thread {} for exercise {}", threadId, exerciseId);
-        CommentThread updated = exerciseReviewService.updateThreadResolvedState(threadId, dto.resolved());
-        return ResponseEntity.ok(new CommentThreadDTO(updated, mapComments(updated)));
-    }
-
-    /**
-     * PUT /exercises/:exerciseId/review-comments/:commentId : Update a user comment's content.
-     *
-     * @param exerciseId the exercise id
-     * @param commentId  the comment id
-     * @param dto        the updated content
-     * @return the updated comment
-     */
-    @PutMapping("exercises/{exerciseId}/review-comments/{commentId}")
-    @EnforceAtLeastInstructorInExercise
-    public ResponseEntity<CommentDTO> updateUserCommentContent(@PathVariable long exerciseId, @PathVariable long commentId, @Valid @RequestBody UpdateCommentContentDTO dto) {
-        log.debug("REST request to update content of comment {} for exercise {}", commentId, exerciseId);
-        if (!(dto.content() instanceof UserCommentContentDTO)) {
-            throw new BadRequestAlertException("Only user comment content can be updated via this endpoint", THREAD_ENTITY_NAME, "commentContentNotSupported");
-        }
-        Comment updated = exerciseReviewService.updateCommentContent(commentId, dto.content());
-        return ResponseEntity.ok(new CommentDTO(updated));
     }
 
     /**
@@ -194,25 +148,38 @@ public class ExerciseReviewResource {
         return ResponseEntity.ok().build();
     }
 
-    private void validateUserComment(CreateCommentDTO dto) {
-        if (dto.type() != CommentType.USER) {
-            throw new BadRequestAlertException("Only user comments can be created via this endpoint", THREAD_ENTITY_NAME, "commentTypeNotSupported");
-        }
-        if (!(dto.content() instanceof UserCommentContentDTO)) {
-            throw new BadRequestAlertException("Only user comment content can be created via this endpoint", THREAD_ENTITY_NAME, "commentContentNotSupported");
-        }
+    /**
+     * PUT /exercises/:exerciseId/review-threads/:threadId/resolved : Update the resolved state of a thread.
+     *
+     * @param exerciseId the exercise id
+     * @param threadId   the thread id
+     * @param dto        the resolved state
+     * @return the updated thread
+     */
+    @PutMapping("exercises/{exerciseId}/review-threads/{threadId}/resolved")
+    @EnforceAtLeastInstructorInExercise
+    public ResponseEntity<CommentThreadDTO> updateThreadResolvedState(@PathVariable long exerciseId, @PathVariable long threadId,
+            @Valid @NotNull @RequestBody UpdateThreadResolvedStateDTO dto) {
+        log.debug("REST request to update resolved state of thread {} for exercise {}", threadId, exerciseId);
+        CommentThread updated = exerciseReviewService.updateThreadResolvedState(threadId, dto);
+        return ResponseEntity.ok(new CommentThreadDTO(updated, mapComments(updated)));
     }
 
-    private void validateThreadPayload(CreateCommentThreadDTO dto) {
-        if (dto.targetType() != CommentThreadLocationType.PROBLEM_STATEMENT && dto.initialFilePath() == null) {
-            throw new BadRequestAlertException("Initial file path is required for repository threads", THREAD_ENTITY_NAME, "initialFilePathMissing");
-        }
-        if (dto.targetType() != CommentThreadLocationType.AUXILIARY_REPO && dto.auxiliaryRepositoryId() != null) {
-            throw new BadRequestAlertException("Auxiliary repository id is only allowed for auxiliary repository threads", THREAD_ENTITY_NAME, "auxiliaryRepositoryNotAllowed");
-        }
-        if (dto.targetType() == CommentThreadLocationType.AUXILIARY_REPO && dto.auxiliaryRepositoryId() == null) {
-            throw new BadRequestAlertException("Auxiliary repository id is required for auxiliary repository threads", THREAD_ENTITY_NAME, "auxiliaryRepositoryMissing");
-        }
+    /**
+     * PUT /exercises/:exerciseId/review-comments/:commentId : Update a user comment's content.
+     *
+     * @param exerciseId the exercise id
+     * @param commentId  the comment id
+     * @param dto        the updated content
+     * @return the updated comment
+     */
+    @PutMapping("exercises/{exerciseId}/review-comments/{commentId}")
+    @EnforceAtLeastInstructorInExercise
+    public ResponseEntity<CommentDTO> updateUserCommentContent(@PathVariable long exerciseId, @PathVariable long commentId,
+            @Valid @NotNull @RequestBody UserCommentContentDTO dto) {
+        log.debug("REST request to update content of comment {} for exercise {}", commentId, exerciseId);
+        Comment updated = exerciseReviewService.updateUserCommentContent(commentId, dto);
+        return ResponseEntity.ok(new CommentDTO(updated));
     }
 
     private List<CommentDTO> mapComments(CommentThread thread) {
