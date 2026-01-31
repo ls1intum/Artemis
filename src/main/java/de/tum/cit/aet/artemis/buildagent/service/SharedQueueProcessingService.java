@@ -264,6 +264,8 @@ public class SharedQueueProcessingService {
             if (this.listenerId != null) {
                 distributedDataAccessService.getDistributedBuildJobQueue().removeListener(this.listenerId);
             }
+            // Cancel existing scheduled task if present (for idempotency on partial failure retry)
+            cancelCheckAvailabilityAndProcessNextBuildScheduledFuture();
 
             log.info("Adding item listener to Hazelcast distributed build job queue for build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
             this.listenerId = this.distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener());

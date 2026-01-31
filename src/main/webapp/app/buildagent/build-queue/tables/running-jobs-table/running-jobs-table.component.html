@@ -25,8 +25,8 @@
                             class="clickable-row"
                             tabindex="0"
                             (click)="onJobClick(buildJob.id)"
-                            (keydown.enter)="onJobClick(buildJob.id)"
-                            (keydown.space)="onJobClick(buildJob.id)"
+                            (keydown.enter)="$event.target === $event.currentTarget && onJobClick(buildJob.id)"
+                            (keydown.space)="$event.preventDefault(); $event.target === $event.currentTarget && onJobClick(buildJob.id)"
                         >
                             <td class="build-jobs-column-tiny">
                                 <span class="text-primary">

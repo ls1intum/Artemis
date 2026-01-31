@@ -164,13 +164,17 @@ export class BuildJobStatisticsComponent implements OnInit {
         }
 
         // Update pie chart data with current statistics
-        this.pieChartData.set([
+        const chartData: NgxChartsSingleSeriesDataEntry[] = [
             { name: 'Successful', value: statistics.successfulBuilds },
             { name: 'Failed', value: statistics.failedBuilds },
             { name: 'Cancelled', value: statistics.cancelledBuilds },
             { name: 'Timeout', value: statistics.timeOutBuilds },
-            { name: 'Missing', value: statistics.missingBuilds },
-        ]);
+        ];
+        // Only include missing builds when displayMissingBuilds is enabled
+        if (this.displayMissingBuilds) {
+            chartData.push({ name: 'Missing', value: statistics.missingBuilds });
+        }
+        this.pieChartData.set(chartData);
     }
 
     /**

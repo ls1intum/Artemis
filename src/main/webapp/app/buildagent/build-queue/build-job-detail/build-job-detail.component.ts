@@ -89,7 +89,8 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
         const submissionDate = job.buildSubmissionDate || job.jobTimingInfo?.submissionDate;
         const buildStartDate = job.buildStartDate || job.jobTimingInfo?.buildStartDate;
         if (submissionDate && buildStartDate) {
-            const waitTimeSeconds = dayjs(buildStartDate).diff(dayjs(submissionDate), 'milliseconds') / 1000;
+            // Clamp to 0 to handle potential clock skew or inconsistent timestamps
+            const waitTimeSeconds = Math.max(0, dayjs(buildStartDate).diff(dayjs(submissionDate), 'milliseconds') / 1000);
             return this.formatFinishedDuration(waitTimeSeconds);
         }
         return undefined;
@@ -101,12 +102,13 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
         if (!job) return undefined;
         // For finished jobs, compute from start/completion dates
         if (job.buildStartDate && job.buildCompletionDate) {
-            const durationSeconds = dayjs(job.buildCompletionDate).diff(dayjs(job.buildStartDate), 'milliseconds') / 1000;
+            // Clamp to 0 to handle potential clock skew or inconsistent timestamps
+            const durationSeconds = Math.max(0, dayjs(job.buildCompletionDate).diff(dayjs(job.buildStartDate), 'milliseconds') / 1000);
             return this.formatFinishedDuration(durationSeconds);
         }
         // For running jobs, use jobTimingInfo.buildDuration (updated by interval)
         if (job.jobTimingInfo?.buildDuration !== undefined) {
-            return this.formatLiveDuration(job.jobTimingInfo.buildDuration);
+            return this.formatLiveDuration(Math.max(0, job.jobTimingInfo.buildDuration));
         }
         if (job.buildDuration) {
             // If buildDuration is already a string, return it; otherwise format it
@@ -156,7 +158,14 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
     });
 
     ngOnInit() {
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId') || 0);
+        const courseIdParam = this.route.snapshot.paramMap.get('courseId');
+        this.courseId = courseIdParam ? Number(courseIdParam) : 0;
+        // Guard against NaN from invalid route params
+        if (!Number.isFinite(this.courseId)) {
+            this.notFound.set(true);
+            this.isLoading.set(false);
+            return;
+        }
         this.isAdministrationView.set(this.courseId === 0);
         this.buildJobId = this.route.snapshot.paramMap.get('jobId') || '';
 
