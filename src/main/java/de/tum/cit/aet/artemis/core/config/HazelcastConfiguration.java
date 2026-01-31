@@ -988,6 +988,10 @@ public class HazelcastConfiguration {
      */
     private HazelcastInstance createHazelcastClient() {
         ClientConfig clientConfig = new ClientConfig();
+        // Use Spring's classloader to ensure all application classes are available for deserialization
+        clientConfig.setClassLoader(applicationContext.getClassLoader());
+        // Enable Spring dependency injection in Hazelcast-managed objects
+        clientConfig.setManagedContext(new SpringManagedContext(applicationContext));
         configureClientIdentity(clientConfig);
         configureClientDiscovery(clientConfig);
         configureClientConnectionStrategy(clientConfig);
