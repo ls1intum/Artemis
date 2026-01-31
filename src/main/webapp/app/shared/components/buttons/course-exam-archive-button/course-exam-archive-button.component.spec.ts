@@ -279,7 +279,7 @@ describe('Course Exam Archive Button Component', () => {
             expect(downloadStub).toHaveBeenCalledOnce();
         });
 
-        it('should archive course', () => {
+        it('should archive exam', () => {
             const response: HttpResponse<void> = new HttpResponse({ status: 200 });
             const downloadStub = vi.spyOn(examManagementService, 'archiveExam').mockReturnValue(of(response));
 
