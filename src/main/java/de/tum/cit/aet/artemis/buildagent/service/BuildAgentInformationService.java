@@ -129,7 +129,9 @@ public class BuildAgentInformationService {
 
     private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures) {
         String memberAddress = distributedDataAccessService.getLocalMemberAddress();
-        List<BuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(memberAddress);
+        // Use buildAgentShortName for filtering instead of memberAddress, because Hazelcast client connections
+        // use ephemeral ports that can change, causing memberAddress filtering to fail
+        List<BuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(buildAgentShortName);
         int numberOfCurrentBuildJobs = processingJobsOfMember.size();
         int maxNumberOfConcurrentBuilds = buildAgentConfiguration.getBuildExecutor() != null ? buildAgentConfiguration.getBuildExecutor().getMaximumPoolSize()
                 : buildAgentConfiguration.getThreadPoolSize();
@@ -218,7 +220,15 @@ public class BuildAgentInformationService {
                 + (recentBuildJob != null && recentBuildJob.status() == BuildStatus.TIMEOUT ? 1 : 0);
     }
 
-    private List<BuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
-        return distributedDataAccessService.getProcessingJobs().stream().filter(job -> Objects.equals(job.buildAgent().memberAddress(), memberAddress)).toList();
+    /**
+     * Gets the processing jobs assigned to a specific build agent by its name.
+     * Uses the agent's name (short-name) for filtering instead of memberAddress,
+     * because Hazelcast client connections use ephemeral ports that can change.
+     *
+     * @param agentName the build agent's short name (stable identifier)
+     * @return list of build jobs currently being processed by this agent
+     */
+    private List<BuildJobQueueItem> getProcessingJobsOfNode(String agentName) {
+        return distributedDataAccessService.getProcessingJobs().stream().filter(job -> Objects.equals(job.buildAgent().name(), agentName)).toList();
     }
 }
