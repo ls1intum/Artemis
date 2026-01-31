@@ -164,12 +164,14 @@ public class ArtemisConfigHelper {
 
     /**
      * Check if the Weaviate integration is enabled.
+     * Defaults to false if not configured, as this is a development feature.
      *
      * @param environment the Spring environment
      * @return true if the Weaviate integration is enabled, false otherwise
      */
     public boolean isWeaviateEnabled(Environment environment) {
-        return getPropertyOrExitArtemis(WEAVIATE_ENABLED_PROPERTY_NAME, environment);
+        // For now this is a development feature only, so we default to false instead of throwing an error if the property is missing
+        return environment.getProperty(WEAVIATE_ENABLED_PROPERTY_NAME, Boolean.class, false);
     }
 
     /**
