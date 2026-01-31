@@ -69,6 +69,10 @@ public abstract class IrisSession extends DomainObject {
     @Column(name = "latest_suggestions")
     private String latestSuggestions;
 
+    /**
+     * Citation metadata extracted from the session messages.
+     * This information is derived at runtime and not persisted.
+     */
     @Transient
     private List<IrisCitationMetaDTO> citationInfo = new ArrayList<>();
 

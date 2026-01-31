@@ -39,6 +39,9 @@ public class IrisCitationService {
 
     /**
      * Extracts citation placeholders from the given text and returns the metadata for each lecture unit found.
+     *
+     * @param text the text to parse for citation placeholders
+     * @return ordered metadata for resolved lecture unit citations
      */
     public List<IrisCitationMetaDTO> resolveCitationInfo(String text) {
         if (text == null || text.isBlank()) {
@@ -57,6 +60,9 @@ public class IrisCitationService {
 
     /**
      * Collects all contents from the supplied messages and resolves lecture unit citations contained within.
+     *
+     * @param messages the messages whose contents should be scanned for citations
+     * @return ordered metadata for resolved lecture unit citations
      */
     public List<IrisCitationMetaDTO> resolveCitationInfoFromMessages(List<IrisMessage> messages) {
         if (messages == null || messages.isEmpty()) {

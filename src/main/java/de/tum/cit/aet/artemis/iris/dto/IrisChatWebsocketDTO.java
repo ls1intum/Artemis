@@ -19,6 +19,10 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  * @param message       an IrisMessage instance if the type is MESSAGE
  * @param rateLimitInfo the rate limit information
  * @param stages        the stages of the Pyris pipeline
+ * @param sessionTitle  the chat session title
+ * @param suggestions   the suggestions to send to the client
+ * @param tokens        the token usage information for the response
+ * @param citationInfo  metadata about citations referenced in the response
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisChatWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages,
@@ -31,6 +35,10 @@ public record IrisChatWebsocketDTO(IrisWebsocketMessageType type, IrisMessage me
      * @param message       the IrisMessage (optional)
      * @param rateLimitInfo the rate limit information
      * @param stages        the stages of the Pyris pipeline
+     * @param sessionTitle  the session title to send
+     * @param suggestions   the suggestions to send
+     * @param tokens        the token usage information to send
+     * @param citationInfo  metadata about citations referenced in the response
      */
     public IrisChatWebsocketDTO(@Nullable IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages, String sessionTitle,
             List<String> suggestions, List<LLMRequest> tokens, List<IrisCitationMetaDTO> citationInfo) {
