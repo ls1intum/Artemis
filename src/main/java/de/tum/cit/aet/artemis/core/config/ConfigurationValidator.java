@@ -202,9 +202,15 @@ public class ConfigurationValidator {
             invalidProperties.add("artemis.weaviate.grpc-port (must be between " + MIN_PORT + " and " + MAX_PORT + ")");
         }
 
-        String effectiveScheme = weaviateScheme != null && !weaviateScheme.isBlank() ? weaviateScheme : HTTPS_SCHEME;
-        if (!HTTP_SCHEME.equals(effectiveScheme) && !HTTPS_SCHEME.equals(effectiveScheme)) {
+        String effectiveScheme = null;
+        if (weaviateScheme == null || weaviateScheme.isBlank()) {
+            invalidProperties.add("artemis.weaviate.scheme (must be configured when Weaviate is enabled)");
+        }
+        else if (!HTTP_SCHEME.equals(weaviateScheme) && !HTTPS_SCHEME.equals(weaviateScheme)) {
             invalidProperties.add("artemis.weaviate.scheme (must be '" + HTTP_SCHEME + "' or '" + HTTPS_SCHEME + "')");
+        }
+        else {
+            effectiveScheme = weaviateScheme;
         }
 
         if (!invalidProperties.isEmpty()) {
