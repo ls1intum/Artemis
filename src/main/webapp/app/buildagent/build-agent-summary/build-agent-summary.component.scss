@@ -23,10 +23,11 @@
     padding-right: 0.75rem !important;
 }
 
-// String columns with ellipsis for overflow text
+// String columns - name column should be wide enough for long names
 .build-agents-column-strings {
     min-width: 100px;
-    max-width: 200px;
+    max-width: 280px;
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     padding-left: 0.75rem !important;
