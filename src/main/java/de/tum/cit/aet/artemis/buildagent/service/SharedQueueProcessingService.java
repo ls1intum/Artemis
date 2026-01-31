@@ -110,6 +110,8 @@ public class SharedQueueProcessingService {
 
     private final BuildAgentDockerService buildAgentDockerService;
 
+    private final BuildJobContainerService buildJobContainerService;
+
     private final DistributedDataAccessService distributedDataAccessService;
 
     /**
@@ -160,6 +162,9 @@ public class SharedQueueProcessingService {
     @Value("${artemis.continuous-integration.build-agent.display-name:}")
     private String buildAgentDisplayName;
 
+    @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
+    private String buildContainerPrefix;
+
     /** @return true if the build agent is paused, false otherwise */
     public boolean isPaused() {
         return isPaused.get();
@@ -171,14 +176,15 @@ public class SharedQueueProcessingService {
     }
 
     public SharedQueueProcessingService(BuildAgentConfiguration buildAgentConfiguration, BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap,
-            TaskScheduler taskScheduler, BuildAgentDockerService buildAgentDockerService, BuildAgentInformationService buildAgentInformationService,
-            DistributedDataAccessService distributedDataAccessService) {
+            TaskScheduler taskScheduler, BuildAgentDockerService buildAgentDockerService, BuildJobContainerService buildJobContainerService,
+            BuildAgentInformationService buildAgentInformationService, DistributedDataAccessService distributedDataAccessService) {
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildJobManagementService = buildJobManagementService;
         this.buildLogsMap = buildLogsMap;
         this.buildAgentInformationService = buildAgentInformationService;
         this.taskScheduler = taskScheduler;
         this.buildAgentDockerService = buildAgentDockerService;
+        this.buildJobContainerService = buildJobContainerService;
         this.distributedDataAccessService = distributedDataAccessService;
     }
 
@@ -396,6 +402,71 @@ public class SharedQueueProcessingService {
         // Use buildAgentShortName as the key since that's what BuildAgentInformationService uses
         if (!distributedDataAccessService.getBuildAgentInformationMap().containsKey(buildAgentShortName)) {
             buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
+        }
+    }
+
+    /**
+     * Detects stale build jobs by verifying that running builds have corresponding Docker containers.
+     * This scheduled task runs every 5 seconds to identify and clean up orphaned/stuck builds.
+     * <p>
+     * A build job is considered stale if:
+     * <ul>
+     * <li>It is tracked as running in the local job management service, but has no Docker container</li>
+     * <li>It exists in the distributed processing jobs map but not in the local running jobs</li>
+     * </ul>
+     * <p>
+     * When a stale build is detected, the system:
+     * <ul>
+     * <li>Removes it from the distributed processing jobs map</li>
+     * <li>Updates the build agent information to reflect accurate job counts</li>
+     * </ul>
+     */
+    @Scheduled(initialDelay = 30_000, fixedRate = 5_000)
+    public void detectAndCleanupStaleBuildJobs() {
+        // Skip if not connected to cluster or if paused
+        if (!distributedDataAccessService.isConnectedToCluster() || isPaused.get()) {
+            return;
+        }
+
+        try {
+            // Get locally tracked running job IDs
+            Set<String> localRunningJobIds = buildJobManagementService.getRunningBuildJobIds();
+
+            // Check each local running job against Docker containers
+            for (String jobId : localRunningJobIds) {
+                String containerName = buildContainerPrefix + jobId;
+                String containerId = buildJobContainerService.getIDOfRunningContainer(containerName);
+
+                if (containerId == null) {
+                    // Job is tracked as running but has no container - this could be:
+                    // 1. Container was killed externally
+                    // 2. Container startup failed but job wasn't cleaned up
+                    // 3. Timing issue during normal job completion (grace period handles this)
+                    log.warn("Stale build job detected: job {} has no running Docker container '{}'", jobId, containerName);
+                    // Note: We don't force-remove the job here because it might be in the process of completing.
+                    // The job completion handler or timeout mechanism will clean it up.
+                    // We only log for visibility - a repeated warning indicates a truly stuck job.
+                }
+            }
+
+            // Cross-check distributed processing jobs against local state
+            // Get jobs in distributed map that are assigned to this agent
+            List<String> distributedJobIds = distributedDataAccessService.getProcessingJobIdsForAgent(buildAgentShortName);
+
+            // Find jobs in distributed map but not tracked locally (orphaned in distributed state)
+            for (String distributedJobId : distributedJobIds) {
+                if (!localRunningJobIds.contains(distributedJobId)) {
+                    log.warn("Orphaned job in distributed map: job {} is assigned to agent {} but not running locally. Removing from distributed map.", distributedJobId,
+                            buildAgentShortName);
+                    distributedDataAccessService.getDistributedProcessingJobs().remove(distributedJobId);
+                    // Update agent info to reflect accurate counts
+                    buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
+                }
+            }
+        }
+        catch (Exception e) {
+            // Don't let detection failures affect other operations
+            log.debug("Error during stale build detection: {}", e.getMessage());
         }
     }
 

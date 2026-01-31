@@ -61,7 +61,7 @@
                                     }
                                 </td>
                                 <td class="build-agents-column">{{ agent.maxNumberOfConcurrentBuildJobs }}</td>
-                                <td class="build-agents-column">{{ agent.numberOfCurrentBuildJobs }}</td>
+                                <td class="build-agents-column">{{ agent.runningBuildJobs?.length ?? agent.numberOfCurrentBuildJobs ?? 0 }}</td>
                                 <td class="build-agents-column-jobs" (click)="$event.stopPropagation()">
                                     @for (job of agent.runningBuildJobs; track job.id) {
                                         <div class="running-job-item">
@@ -81,7 +81,7 @@
                                     }
                                 </td>
                                 <td class="build-agents-column" (click)="$event.stopPropagation()">
-                                    @if (agent.numberOfCurrentBuildJobs && agent.numberOfCurrentBuildJobs > 0) {
+                                    @if (agent.runningBuildJobs?.length) {
                                         <button class="btn btn-danger btn-sm" (click)="cancelAllBuildJobs(agent.buildAgent)">
                                             <fa-icon [icon]="faTimes" />
                                             <span class="ms-1" jhiTranslate="artemisApp.buildQueue.cancelAll"></span>

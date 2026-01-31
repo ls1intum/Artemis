@@ -54,9 +54,12 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
 
     /**
      * Computed signal that calculates the total number of currently running builds
-     * across all agents.
+     * across all agents. Uses the actual runningBuildJobs list length for accuracy,
+     * falling back to numberOfCurrentBuildJobs for backwards compatibility.
      */
-    readonly currentBuilds = computed(() => this.buildAgents().reduce((totalBuilds, agent) => totalBuilds + (agent.numberOfCurrentBuildJobs || 0), 0));
+    readonly currentBuilds = computed(() =>
+        this.buildAgents().reduce((totalBuilds, agent) => totalBuilds + (agent.runningBuildJobs?.length ?? agent.numberOfCurrentBuildJobs ?? 0), 0),
+    );
 
     /** WebSocket topic for receiving real-time build agent updates */
     readonly buildAgentsWebsocketTopic = '/topic/admin/build-agents';
