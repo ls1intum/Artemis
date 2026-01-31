@@ -193,6 +193,11 @@ export class IrisExerciseChatbotButtonComponent {
         this.newIrisMessage.set(undefined);
     }
 
+    /**
+     * Renders the chat bubble message as HTML with citation previews.
+     * @param message The bubble message to render.
+     * @returns The rendered HTML string for display.
+     */
     renderChatBubbleMessage(message?: ChatBubbleMessage): string {
         if (!message?.text) {
             return '';
@@ -201,6 +206,12 @@ export class IrisExerciseChatbotButtonComponent {
         return htmlForMarkdown(withCitations);
     }
 
+    /**
+     * Replaces citation blocks in text with preview citation markup.
+     * @param text The raw message text.
+     * @param citationInfo Metadata used to enrich citation rendering.
+     * @returns The text with citation previews inserted.
+     */
     private replaceCitationsPreview(text: string, citationInfo: IrisCitationMetaDTO[]): string {
         return replaceCitationBlocks(text, citationInfo, {
             renderSingle: (parsed) => this.renderCitationPreviewHtml(parsed),
@@ -209,6 +220,11 @@ export class IrisExerciseChatbotButtonComponent {
         });
     }
 
+    /**
+     * Builds preview markup for a single citation.
+     * @param parsed The parsed citation token.
+     * @returns The rendered preview HTML.
+     */
     private renderCitationPreviewHtml(parsed: IrisCitationParsed): string {
         const label = formatCitationLabel(parsed);
         const typeClass = resolveCitationTypeClass(parsed);
@@ -216,6 +232,11 @@ export class IrisExerciseChatbotButtonComponent {
         return `<span class="${classes}"><span class="iris-citation__icon"></span><span class="iris-citation__text">${label}</span></span>`;
     }
 
+    /**
+     * Builds preview markup for a group of citations.
+     * @param parsed The parsed citation tokens in the group.
+     * @returns The rendered preview HTML.
+     */
     private renderCitationGroupPreviewHtml(parsed: IrisCitationParsed[]): string {
         const first = parsed[0];
         const label = formatCitationLabel(first);

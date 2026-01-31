@@ -140,6 +140,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private previousMessageCount = 0;
     private previousMessageIds = new Set<number>();
     private hoverMessagesElement?: HTMLElement;
+    /**
+     * Keeps citation summaries within the visible message boundary on hover.
+     * @param event The mouseover event.
+     */
     private readonly handleCitationMouseOver = (event: MouseEvent) => {
         const messagesElement = this.hoverMessagesElement;
         if (!messagesElement) {
@@ -170,6 +174,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             citation.style.setProperty('--iris-citation-shift', `${shift}px`);
         }
     };
+    /**
+     * Resets citation summary state when the pointer leaves a citation element.
+     * @param event The mouseout event.
+     */
     private readonly handleCitationMouseOut = (event: MouseEvent) => {
         const messagesElement = this.hoverMessagesElement;
         if (!messagesElement) {
@@ -187,6 +195,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         citation.style.setProperty('--iris-citation-shift', '0px');
         this.resetCitationGroupSummary(citation);
     };
+    /**
+     * Handles clicks on citation group navigation buttons.
+     * @param event The click event.
+     */
     private readonly handleCitationNavigationClick = (event: MouseEvent) => {
         const navButton = this.getCitationNavButton(event.target);
         if (!navButton) {
@@ -327,11 +339,22 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return processed;
     }
 
+    /**
+     * Renders a message as HTML and replaces citation blocks with markup.
+     * @param content The text content to render.
+     * @returns The rendered HTML string for display.
+     */
     renderMessageContent(content: IrisTextMessageContent): string {
         const withCitations = this.replaceCitations(content.textContent ?? '', this.citationInfo());
         return htmlForMarkdown(withCitations);
     }
 
+    /**
+     * Replaces citation blocks in text with rendered citation HTML.
+     * @param text The raw message text.
+     * @param citationInfo Metadata used to enrich citation rendering.
+     * @returns The text with citation blocks replaced by HTML.
+     */
     private replaceCitations(text: string, citationInfo: IrisCitationMetaDTO[]): string {
         return replaceCitationBlocks(text, citationInfo, {
             renderSingle: (parsed, meta) => this.renderCitationHtml(parsed, meta),
@@ -339,6 +362,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         });
     }
 
+    /**
+     * Builds the HTML for a single citation, including its summary bubble.
+     * @param parsed The parsed citation token.
+     * @param meta Optional metadata for lecture citations.
+     * @returns The rendered citation HTML.
+     */
     private renderCitationHtml(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
         const summaryText = this.formatSummary(parsed, meta);
         const label = formatCitationLabel(parsed);
@@ -353,6 +382,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return `<span class="${classes}"><span class="iris-citation__icon"></span><span class="iris-citation__text">${label}</span>${summaryHtml}</span>`;
     }
 
+    /**
+     * Builds the HTML for a group of citations with navigation controls.
+     * @param parsed The parsed citations within the group.
+     * @param metas Metadata entries mapped to the parsed citations.
+     * @returns The rendered citation group HTML.
+     */
     private renderCitationGroupHtml(parsed: IrisCitationParsed[], metas: Array<IrisCitationMetaDTO | undefined>): string {
         const first = parsed[0];
         const label = formatCitationLabel(first);
@@ -380,6 +415,11 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return `<span class="${classes}"><span class="iris-citation ${typeClass}"><span class="iris-citation__icon"></span><span class="iris-citation__text">${label}</span></span><span class="iris-citation__count">+${count}</span>${summaryHtml}</span>`;
     }
 
+    /**
+     * Generates the navigation markup for cycling through citation summaries.
+     * @param count The number of summary items in the group.
+     * @returns The rendered navigation HTML.
+     */
     private renderCitationNavHtml(count: number): string {
         return `<span class="iris-citation__nav">
             <span class="iris-citation__nav-button iris-citation__nav-button--prev" role="button" tabindex="0" aria-label="Previous citation">
@@ -392,12 +432,21 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         </span>`;
     }
 
+    /**
+     * Resolves the navigation button element from an event target.
+     * @param target The event target to inspect.
+     * @returns The matching nav button or null when not found.
+     */
     private getCitationNavButton(target: EventTarget | null): HTMLElement | null {
         const rawTarget = target as Node | null;
         const element = rawTarget instanceof HTMLElement ? rawTarget : rawTarget?.parentElement;
         return element?.closest('.iris-citation__nav-button') as HTMLElement | null;
     }
 
+    /**
+     * Moves the active summary within a citation group based on nav button direction.
+     * @param navButton The navigation button that was activated.
+     */
     private navigateCitationGroup(navButton: HTMLElement) {
         const citationGroup = navButton.closest('.iris-citation-group') as HTMLElement | null;
         if (!citationGroup) {
@@ -415,6 +464,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         this.updateCitationGroupSummary(citationGroup, nextIndex);
     }
 
+    /**
+     * Formats a summary line for a grouped citation, falling back to the label.
+     * @param parsed The parsed citation entry.
+     * @param meta Optional metadata for lecture citations.
+     * @returns The formatted summary or label.
+     */
     private formatGroupSummaryItem(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
         const summaryText = this.formatSummary(parsed, meta);
         if (summaryText) {
@@ -423,6 +478,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return formatCitationLabel(parsed);
     }
 
+    /**
+     * Formats the summary HTML for a citation, including lecture metadata.
+     * @param parsed The parsed citation entry.
+     * @param meta Optional metadata used for lecture summaries.
+     * @returns The formatted summary HTML.
+     */
     private formatSummary(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
         const fallbackKeyword = parsed.type === 'F' ? 'FAQ' : 'Source';
         const keywordValue = escapeHtml(parsed.keyword?.trim() || fallbackKeyword);
@@ -458,6 +519,11 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return `<span class="iris-citation__summary-keyword">${keywordLine}</span>${rest}${metaHtml}`;
     }
 
+    /**
+     * Updates which summary item is active and syncs the nav counter.
+     * @param citationGroup The citation group container element.
+     * @param nextIndex The index of the summary item to activate.
+     */
     private updateCitationGroupSummary(citationGroup: HTMLElement, nextIndex: number) {
         const summaryItems = Array.from(citationGroup.querySelectorAll<HTMLElement>('.iris-citation__summary-item'));
         if (summaryItems.length === 0) {
@@ -470,6 +536,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
     }
 
+    /**
+     * Resets the citation group summary to the first item.
+     * @param citationElement The citation element that triggered the reset.
+     */
     private resetCitationGroupSummary(citationElement: HTMLElement) {
         const citationGroup = citationElement.classList.contains('iris-citation-group') ? citationElement : citationElement.closest('.iris-citation-group');
         if (!(citationGroup instanceof HTMLElement)) {
@@ -478,6 +548,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         this.updateCitationGroupSummary(citationGroup, 0);
     }
 
+    /**
+     * Enables animations after view init and cleans up citation listeners on destroy.
+     */
     ngAfterViewInit() {
         setTimeout(() => (this.shouldAnimate = true), 500);
         this.destroyRef.onDestroy(() => {
