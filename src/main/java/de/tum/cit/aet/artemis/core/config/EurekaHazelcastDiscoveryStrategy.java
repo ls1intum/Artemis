@@ -9,9 +9,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.hazelcast.cluster.Address;
 import com.hazelcast.logging.ILogger;
-import com.hazelcast.logging.Logger;
 import com.hazelcast.spi.discovery.AbstractDiscoveryStrategy;
 import com.hazelcast.spi.discovery.DiscoveryNode;
 import com.hazelcast.spi.discovery.SimpleDiscoveryNode;
@@ -33,7 +35,7 @@ import com.hazelcast.spi.discovery.SimpleDiscoveryNode;
  */
 public class EurekaHazelcastDiscoveryStrategy extends AbstractDiscoveryStrategy {
 
-    private static final ILogger log = Logger.getLogger(EurekaHazelcastDiscoveryStrategy.class);
+    private static final Logger log = LoggerFactory.getLogger(EurekaHazelcastDiscoveryStrategy.class);
 
     /**
      * Static holder for the HazelcastConnection instance.
@@ -50,8 +52,8 @@ public class EurekaHazelcastDiscoveryStrategy extends AbstractDiscoveryStrategy 
     private static final Pattern ADDRESS_PATTERN = Pattern.compile("^(?:\\[([^\\]]+)]|([^:]+)):(\\d+)$");
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    public EurekaHazelcastDiscoveryStrategy(Map<String, Comparable> properties) {
-        super(log, properties);
+    public EurekaHazelcastDiscoveryStrategy(ILogger hazelcastLogger, Map<String, Comparable> properties) {
+        super(hazelcastLogger, properties);
     }
 
     /**
@@ -80,20 +82,24 @@ public class EurekaHazelcastDiscoveryStrategy extends AbstractDiscoveryStrategy 
      */
     @Override
     public Iterable<DiscoveryNode> discoverNodes() {
+        log.info("Hazelcast discovery strategy discoverNodes() called");
         HazelcastConnection connection = hazelcastConnectionHolder.get();
         if (connection == null) {
-            log.warning("HazelcastConnection not set - cannot discover core nodes");
+            log.warn("HazelcastConnection not set - cannot discover core nodes. Returning empty list.");
             return Collections.emptyList();
         }
 
+        log.info("HazelcastConnection is available, querying for core node addresses");
         List<String> addresses = connection.discoverCoreNodeAddresses();
         if (addresses.isEmpty()) {
-            log.fine("No core nodes discovered from service registry");
+            log.warn("No core nodes discovered from service registry - returning empty list which will cause Hazelcast to use default addresses");
             return Collections.emptyList();
         }
 
-        log.info("Discovered " + addresses.size() + " core node(s) from service registry");
-        return addresses.stream().map(this::parseAddress).filter(node -> node != null).toList();
+        log.info("Discovered {} core node(s) from service registry: {}", addresses.size(), addresses);
+        List<DiscoveryNode> nodes = addresses.stream().map(this::parseAddress).filter(node -> node != null).toList();
+        log.info("Returning {} valid discovery nodes to Hazelcast", nodes.size());
+        return nodes;
     }
 
     /**
@@ -106,7 +112,7 @@ public class EurekaHazelcastDiscoveryStrategy extends AbstractDiscoveryStrategy 
         try {
             Matcher matcher = ADDRESS_PATTERN.matcher(addressStr);
             if (!matcher.matches()) {
-                log.warning("Cannot parse address '" + addressStr + "' - invalid format");
+                log.warn("Cannot parse address '{}' - invalid format", addressStr);
                 return null;
             }
 
@@ -117,15 +123,15 @@ public class EurekaHazelcastDiscoveryStrategy extends AbstractDiscoveryStrategy 
             InetAddress inetAddress = InetAddress.getByName(host);
             Address hazelcastAddress = new Address(inetAddress, port);
 
-            log.fine("Parsed discovery address: " + hazelcastAddress);
+            log.debug("Parsed discovery address: {}", hazelcastAddress);
             return new SimpleDiscoveryNode(hazelcastAddress);
         }
         catch (UnknownHostException e) {
-            log.warning("Cannot resolve host in address '" + addressStr + "': " + e.getMessage());
+            log.warn("Cannot resolve host in address '{}': {}", addressStr, e.getMessage());
             return null;
         }
         catch (NumberFormatException e) {
-            log.warning("Cannot parse port in address '" + addressStr + "': " + e.getMessage());
+            log.warn("Cannot parse port in address '{}': {}", addressStr, e.getMessage());
             return null;
         }
     }

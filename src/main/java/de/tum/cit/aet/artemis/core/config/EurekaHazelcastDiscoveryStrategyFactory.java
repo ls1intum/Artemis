@@ -43,7 +43,7 @@ public class EurekaHazelcastDiscoveryStrategyFactory implements DiscoveryStrateg
     @Override
     @SuppressWarnings({ "rawtypes" })
     public DiscoveryStrategy newDiscoveryStrategy(DiscoveryNode discoveryNode, ILogger logger, Map<String, Comparable> properties) {
-        return new EurekaHazelcastDiscoveryStrategy(properties);
+        return new EurekaHazelcastDiscoveryStrategy(logger, properties);
     }
 
     /**

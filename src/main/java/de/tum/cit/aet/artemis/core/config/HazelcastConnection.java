@@ -255,13 +255,16 @@ public class HazelcastConnection {
             return List.of();
         }
 
-        log.info("Auto-discovering core nodes from service registry");
         String serviceId = registration.get().getServiceId();
+        log.info("Auto-discovering core nodes from service registry for serviceId '{}'", serviceId);
         List<ServiceInstance> instances = discoveryClient.getInstances(serviceId);
 
-        log.debug("Found {} total instances in service registry for serviceId '{}'", instances.size(), serviceId);
+        log.info("Found {} total instances in service registry for serviceId '{}'", instances.size(), serviceId);
         for (ServiceInstance instance : instances) {
-            log.debug("Instance: host={}, port={}, metadata={}", instance.getHost(), instance.getPort(), instance.getMetadata());
+            String memberType = instance.getMetadata().get(HAZELCAST_MEMBER_TYPE_KEY);
+            String hazelcastHost = instance.getMetadata().get("hazelcast.host");
+            log.info("Instance: host={}, hazelcast.host={}, port={}, member-type={}, isCurrentInstance={}", instance.getHost(), hazelcastHost, instance.getPort(), memberType,
+                    isCurrentInstance(instance));
         }
 
         List<String> coreNodes = instances.stream()

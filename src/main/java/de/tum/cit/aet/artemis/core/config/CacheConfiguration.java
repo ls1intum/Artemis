@@ -451,6 +451,10 @@ public class CacheConfiguration {
         DiscoveryConfig discoveryConfig = clientConfig.getNetworkConfig().getDiscoveryConfig();
         discoveryConfig.addDiscoveryStrategyConfig(discoveryStrategyConfig);
 
+        // Enable the Discovery SPI - without this property, Hazelcast ignores discovery strategies
+        // and falls back to default localhost addresses
+        clientConfig.setProperty("hazelcast.discovery.enabled", "true");
+
         // Connection strategy configuration for resilience:
         // - asyncStart=true: Don't block startup, connect in background
         // - reconnectMode=ON: Automatically reconnect if connection is lost
