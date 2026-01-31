@@ -123,11 +123,12 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         var submission = submissionOptional.get();
 
         // save result and transmit it over websockets to notify the client about the status
-        var automaticResult = this.submissionService.saveNewEmptyResult(submission);
+        Result automaticResult = this.submissionService.saveNewEmptyResult(submission);
         automaticResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         automaticResult.setRated(true);
-        if (submission.getLatestResult().getScore() != null) {
-            automaticResult.setScore(submission.getLatestResult().getScore());
+        Result firstResult = submission.getFirstResult();
+        if (firstResult != null && firstResult.getScore() != null) {
+            automaticResult.setScore(firstResult.getScore());
         }
         else {
             automaticResult.setScore(0.0);
