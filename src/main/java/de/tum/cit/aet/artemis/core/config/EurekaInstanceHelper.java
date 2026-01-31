@@ -184,6 +184,28 @@ public class EurekaInstanceHelper {
     }
 
     /**
+     * Gets the Hazelcast host address for a service instance.
+     * <p>
+     * Uses the {@code hazelcast.host} metadata if available, which contains the actual
+     * Hazelcast bind address. Falls back to the Eureka registration host if not set.
+     * The returned host is normalized (brackets removed for IPv6).
+     *
+     * @param instance the service instance
+     * @return the normalized Hazelcast host address
+     */
+    public String getHazelcastHost(ServiceInstance instance) {
+        // Prefer hazelcast.host from metadata (the actual Hazelcast bind address)
+        // over instance.getHost() (which is the Eureka registration host)
+        String host = instance.getMetadata().get("hazelcast.host");
+        if (host == null || host.isEmpty()) {
+            // Fall back to Eureka host for compatibility with older instances
+            host = instance.getHost();
+        }
+        // Normalize the host to remove brackets that Eureka adds for IPv6 addresses
+        return normalizeHost(host);
+    }
+
+    /**
      * Formats a service instance address as "host:port" for Hazelcast connection.
      * <p>
      * Uses the {@code hazelcast.host} metadata if available, which contains the actual
@@ -195,15 +217,7 @@ public class EurekaInstanceHelper {
      * @return the formatted address string
      */
     public String formatInstanceAddress(ServiceInstance instance) {
-        // Prefer hazelcast.host from metadata (the actual Hazelcast bind address)
-        // over instance.getHost() (which is the Eureka registration host)
-        String host = instance.getMetadata().get("hazelcast.host");
-        if (host == null || host.isEmpty()) {
-            // Fall back to Eureka host for compatibility with older instances
-            host = instance.getHost();
-        }
-        // Normalize the host to remove brackets that Eureka adds for IPv6 addresses
-        host = normalizeHost(host);
+        String host = getHazelcastHost(instance);
         String port = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(hazelcastPort));
         return formatAddressForHazelcast(host, port);
     }

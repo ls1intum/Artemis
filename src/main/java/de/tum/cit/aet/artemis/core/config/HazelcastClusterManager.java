@@ -144,10 +144,10 @@ public class HazelcastClusterManager {
         // Filter to only include cluster members (not clients like build agents)
         var clusterMemberInstances = instances.stream().filter(eurekaInstanceHelper::isClusterMember).toList();
 
-        // Build set of registry member addresses (normalized for comparison)
+        // Build set of registry member addresses using the Hazelcast host metadata for comparison
         Set<String> registryMemberAddresses = new HashSet<>();
         for (ServiceInstance instance : clusterMemberInstances) {
-            registryMemberAddresses.add(eurekaInstanceHelper.normalizeHost(instance.getHost()));
+            registryMemberAddresses.add(eurekaInstanceHelper.getHazelcastHost(instance));
         }
 
         log.debug("Current {} Registry cluster members: {}", clusterMemberInstances.size(), registryMemberAddresses);
@@ -155,8 +155,8 @@ public class HazelcastClusterManager {
 
         // Check for members in registry but not in Hazelcast (need to add)
         for (ServiceInstance instance : clusterMemberInstances) {
-            var instanceHostClean = eurekaInstanceHelper.normalizeHost(instance.getHost());
-            if (!hazelcastMemberAddresses.contains(instanceHostClean)) {
+            var instanceHazelcastHost = eurekaInstanceHelper.getHazelcastHost(instance);
+            if (!hazelcastMemberAddresses.contains(instanceHazelcastHost)) {
                 addHazelcastClusterMember(instance, hazelcastInstance.getConfig());
             }
         }
@@ -168,7 +168,7 @@ public class HazelcastClusterManager {
                 // Don't log warning for own address - get own host from first service instance that matches current port
                 var currentInstance = instances.stream().filter(eurekaInstanceHelper::isCurrentInstance).findFirst();
                 if (currentInstance.isPresent()) {
-                    String ownHost = eurekaInstanceHelper.normalizeHost(currentInstance.get().getHost());
+                    String ownHost = eurekaInstanceHelper.getHazelcastHost(currentInstance.get());
                     if (!hazelcastMember.equals(ownHost)) {
                         log.warn("Hazelcast member {} is not registered in service registry - may be a stale/zombie member. "
                                 + "If this persists, the member may have crashed without proper deregistration.", hazelcastMember);
