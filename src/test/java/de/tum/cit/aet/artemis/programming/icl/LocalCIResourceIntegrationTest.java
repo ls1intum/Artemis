@@ -452,6 +452,9 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         request.put("/api/core/admin/agents/" + URLEncoder.encode(buildAgentShortName, StandardCharsets.UTF_8) + "/pause", null, HttpStatus.NO_CONTENT);
         await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
             var agent = buildAgentInformation.get(buildAgentShortName);
+            if (agent == null) {
+                return false;
+            }
             log.info("Current status of agent after pause operation {} : {}", agent.buildAgent().displayName(), agent.status());
             return agent.status() == BuildAgentStatus.PAUSED;
         });
@@ -459,6 +462,9 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         request.put("/api/core/admin/agents/" + URLEncoder.encode(buildAgentShortName, StandardCharsets.UTF_8) + "/resume", null, HttpStatus.NO_CONTENT);
         await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
             var agent = buildAgentInformation.get(buildAgentShortName);
+            if (agent == null) {
+                return false;
+            }
             log.info("Current status of agent after resume operation {} : {}", agent.buildAgent().displayName(), agent.status());
             return agent.status() == BuildAgentStatus.IDLE;
         });
@@ -483,14 +489,14 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
             var agents = buildAgentInformation.values();
             printAgentInformation(agents);
-            return agents.stream().allMatch(agent -> agent.status() == BuildAgentStatus.PAUSED);
+            return !agents.isEmpty() && agents.stream().allMatch(agent -> agent.status() == BuildAgentStatus.PAUSED);
         });
 
         request.put("/api/core/admin/agents/resume-all", null, HttpStatus.NO_CONTENT);
         await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
             var agents = buildAgentInformation.values();
             printAgentInformation(agents);
-            return agents.stream().allMatch(agent -> agent.status() == BuildAgentStatus.IDLE);
+            return !agents.isEmpty() && agents.stream().allMatch(agent -> agent.status() == BuildAgentStatus.IDLE);
         });
     }
 

@@ -104,6 +104,10 @@ public class SharedQueueManagementService {
      * @param clientName the name of the disconnected client (build agent short name)
      */
     private void handleClientDisconnection(String clientName) {
+        if (StringUtils.isBlank(clientName)) {
+            log.warn("Build agent client disconnected with blank name. Skipping map removal.");
+            return;
+        }
         log.warn("Build agent client disconnected: {}. Removing from build agent information map.", clientName);
         var removedAgent = this.distributedDataAccessService.getDistributedBuildAgentInformation().remove(clientName);
         if (removedAgent != null) {
@@ -181,12 +185,10 @@ public class SharedQueueManagementService {
         for (BuildJobQueueItem queuedJob : queuedJobs) {
             buildJobRepository.updateBuildJobStatus(queuedJob.id(), BuildStatus.CANCELLED);
             // Send WebSocket notification for the cancelled job (only on scheduling node)
-            localCIQueueWebsocketService.ifPresent(websocketService -> {
-                buildJobRepository.findByBuildJobId(queuedJob.id()).ifPresent(buildJob -> {
-                    FinishedBuildJobDTO finishedBuildJobDTO = FinishedBuildJobDTO.of(buildJob);
-                    websocketService.sendFinishedBuildJobOverWebsocket(finishedBuildJobDTO);
-                });
-            });
+            localCIQueueWebsocketService.ifPresent(websocketService -> buildJobRepository.findByBuildJobId(queuedJob.id()).ifPresent(buildJob -> {
+                FinishedBuildJobDTO finishedBuildJobDTO = FinishedBuildJobDTO.of(buildJob);
+                websocketService.sendFinishedBuildJobOverWebsocket(finishedBuildJobDTO);
+            }));
         }
     }
 

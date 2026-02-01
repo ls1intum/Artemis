@@ -54,6 +54,11 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
     private final Map<UUID, Consumer<String>> clientDisconnectionListeners = new ConcurrentHashMap<>();
 
     /**
+     * Registered connection state listeners. The callback receives the connection state.
+     */
+    private final Map<UUID, Consumer<Boolean>> connectionStateListeners = new ConcurrentHashMap<>();
+
+    /**
      * Tracks the previously known connected clients for detecting disconnections.
      */
     private volatile Set<String> previouslyKnownClients = new HashSet<>();
@@ -144,17 +149,22 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
         // Redis doesn't have the same connection lifecycle semantics as Hazelcast clients.
         // The connection is either available or not, and Redisson handles reconnection internally.
         // We immediately invoke the callback with isInitialConnection=true if connected.
+        UUID listenerId = UUID.randomUUID();
+        connectionStateListeners.put(listenerId, callback);
         if (isConnectedToCluster()) {
-            callback.accept(true);
+            try {
+                callback.accept(true);
+            }
+            catch (Exception e) {
+                log.error("Error notifying connection state listener {}: {}", listenerId, e.getMessage(), e);
+            }
         }
-        // Return a random UUID - listeners are not tracked since Redis doesn't have lifecycle events
-        return UUID.randomUUID();
+        return listenerId;
     }
 
     @Override
     public boolean removeConnectionStateListener(UUID listenerId) {
-        // No-op for Redis - listeners are not tracked
-        return false;
+        return connectionStateListeners.remove(listenerId) != null;
     }
 
     @Override

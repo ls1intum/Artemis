@@ -36,12 +36,19 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @for (agent of buildAgents(); track agent.buildAgent?.name) {
+                        @for (agent of buildAgents(); track agent.buildAgent?.name ?? agent.buildAgent?.memberAddress ?? $index) {
                             <tr class="clickable-row">
                                 <td class="build-agents-column-strings">
                                     <!-- Stretched link enables Cmd+Click to open in new tab -->
-                                    <a class="stretched-row-link" [routerLink]="['/admin/build-agents/details']" [queryParams]="{ agentName: agent.buildAgent?.name }"></a>
-                                    <a [routerLink]="['/admin/build-agents/details']" [queryParams]="{ agentName: agent.buildAgent?.name }">
+                                    <a
+                                        class="stretched-row-link"
+                                        [routerLink]="agent.buildAgent?.name ? ['/admin/build-agents/details'] : null"
+                                        [queryParams]="agent.buildAgent?.name ? { agentName: agent.buildAgent?.name } : null"
+                                    ></a>
+                                    <a
+                                        [routerLink]="agent.buildAgent?.name ? ['/admin/build-agents/details'] : null"
+                                        [queryParams]="agent.buildAgent?.name ? { agentName: agent.buildAgent?.name } : null"
+                                    >
                                         {{ agent.buildAgent?.displayName }}
                                     </a>
                                 </td>
@@ -83,7 +90,7 @@
                                     }
                                 </td>
                                 <td class="build-agents-column" (click)="$event.stopPropagation()">
-                                    @if (agent.runningBuildJobs?.length) {
+                                    @if ((agent.runningBuildJobs?.length ?? agent.numberOfCurrentBuildJobs ?? 0) > 0) {
                                         <button class="btn btn-danger btn-sm" (click)="cancelAllBuildJobs(agent.buildAgent)">
                                             <fa-icon [icon]="faTimes" />
                                             <span class="ms-1" jhiTranslate="artemisApp.buildQueue.cancelAll"></span>
