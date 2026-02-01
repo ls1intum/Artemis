@@ -157,17 +157,15 @@ public class HazelcastClusterManager {
 
         // Check for members in Hazelcast but not in registry (potentially stale/zombie members)
         // This can indicate a member that crashed without proper deregistration
+        var currentInstance = instances.stream().filter(eurekaInstanceHelper::isCurrentInstance).findFirst();
+        String ownAddress = currentInstance.map(eurekaInstanceHelper::formatInstanceAddress).orElse(null);
+        if (ownAddress == null) {
+            log.warn("Current instance not found in service registry; stale-member detection may be incomplete.");
+        }
         for (String hazelcastMember : hazelcastMemberAddresses) {
-            if (!registryMemberAddresses.contains(hazelcastMember)) {
-                // Don't log warning for own address - get own host from first service instance that matches current port
-                var currentInstance = instances.stream().filter(eurekaInstanceHelper::isCurrentInstance).findFirst();
-                if (currentInstance.isPresent()) {
-                    String ownAddress = eurekaInstanceHelper.formatInstanceAddress(currentInstance.get());
-                    if (!hazelcastMember.equals(ownAddress)) {
-                        log.warn("Hazelcast member {} is not registered in service registry - may be a stale/zombie member. "
-                                + "If this persists, the member may have crashed without proper deregistration.", hazelcastMember);
-                    }
-                }
+            if (!registryMemberAddresses.contains(hazelcastMember) && (ownAddress == null || !hazelcastMember.equals(ownAddress))) {
+                log.warn("Hazelcast member {} is not registered in service registry - may be a stale/zombie member. "
+                        + "If this persists, the member may have crashed without proper deregistration.", hazelcastMember);
             }
         }
     }

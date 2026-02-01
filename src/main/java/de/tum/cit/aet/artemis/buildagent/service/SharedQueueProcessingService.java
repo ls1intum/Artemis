@@ -513,9 +513,9 @@ public class SharedQueueProcessingService {
                             log.error("Stale build job {} exceeded maximum retry count ({}). Not requeuing.", jobId, staleJob.retryCount());
                         }
 
-                        // Clean up local state
+                        // Clean up local state - note: localProcessingJobs will be decremented by the
+                        // exceptionally handler when the cancelled future completes, so we don't decrement here
                         staleJobDetectionCounts.remove(jobId);
-                        localProcessingJobs.decrementAndGet();
                         buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
                     }
                     else {

@@ -44,6 +44,8 @@
                                         class="stretched-row-link"
                                         [routerLink]="agent.buildAgent?.name ? ['/admin/build-agents/details'] : null"
                                         [queryParams]="agent.buildAgent?.name ? { agentName: agent.buildAgent?.name } : null"
+                                        aria-hidden="true"
+                                        tabindex="-1"
                                     ></a>
                                     <a
                                         [routerLink]="agent.buildAgent?.name ? ['/admin/build-agents/details'] : null"
@@ -72,9 +74,9 @@
                                 <td class="build-agents-column">{{ agent.maxNumberOfConcurrentBuildJobs }}</td>
                                 <td class="build-agents-column">{{ agent.runningBuildJobs?.length ?? agent.numberOfCurrentBuildJobs ?? 0 }}</td>
                                 <td class="build-agents-column-jobs" (click)="$event.stopPropagation()">
-                                    @for (job of agent.runningBuildJobs ?? []; track job.id) {
+                                    @for (job of agent.runningBuildJobs ?? []; track job.id ?? $index) {
                                         <div class="running-job-item">
-                                            <a class="job-link" [routerLink]="['/admin/build-overview', job.id, 'job-details']">
+                                            <a class="job-link" [routerLink]="job.id ? ['/admin/build-overview', job.id, 'job-details'] : null">
                                                 {{ job.name ?? job.id }}
                                             </a>
                                             @if (job.id) {

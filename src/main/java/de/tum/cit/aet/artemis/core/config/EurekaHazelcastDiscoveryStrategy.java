@@ -80,7 +80,7 @@ public class EurekaHazelcastDiscoveryStrategy extends AbstractDiscoveryStrategy 
         }
 
         log.info("Discovered {} core node(s) from service registry: {}", addresses.size(), addresses);
-        List<DiscoveryNode> nodes = addresses.stream().map(this::parseAddress).filter(Objects::nonNull).toList();
+        List<DiscoveryNode> nodes = addresses.stream().filter(Objects::nonNull).map(this::parseAddress).filter(Objects::nonNull).toList();
         log.info("Returning {} valid discovery nodes to Hazelcast", nodes.size());
         return nodes;
     }
