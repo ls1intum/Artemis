@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -68,6 +69,8 @@ public class ProgrammingExerciseParticipationService {
 
     private final GitService gitService;
 
+    private final UserService userService;
+
     private final ResultRepository resultRepository;
 
     private final SubmissionRepository submissionRepository;
@@ -75,7 +78,7 @@ public class ProgrammingExerciseParticipationService {
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
             ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService,
-            ResultRepository resultRepository, SubmissionRepository submissionRepository) {
+            ResultRepository resultRepository, SubmissionRepository submissionRepository, UserService userService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
@@ -85,6 +88,7 @@ public class ProgrammingExerciseParticipationService {
         this.gitService = gitService;
         this.resultRepository = resultRepository;
         this.submissionRepository = submissionRepository;
+        this.userService = userService;
     }
 
     /**
@@ -223,9 +227,9 @@ public class ProgrammingExerciseParticipationService {
      *
      * @param targetUri the repository where all files should be replaced
      * @param sourceUri the repository that should be used as source for all files
-     * @param user      the user that reset the repository
+     * @param login     the login of the user that reset the repository
      */
-    public void resetRepository(LocalVCRepositoryUri targetUri, LocalVCRepositoryUri sourceUri, @Nullable User user) throws GitAPIException, IOException {
+    public void resetRepository(LocalVCRepositoryUri targetUri, LocalVCRepositoryUri sourceUri, @Nullable String login) throws GitAPIException, IOException {
         Repository targetRepo = gitService.getOrCheckoutRepository(targetUri, true, true);
         Repository sourceRepo = gitService.getOrCheckoutRepository(sourceUri, true, true);
 
@@ -244,9 +248,10 @@ public class ProgrammingExerciseParticipationService {
                 FileUtils.copyFile(file, targetRepo.getLocalPath().resolve(file.toPath().getFileName()).toFile());
             }
         }
+        User coAuthor = userService.findUser(null, login, null).orElse(null);
         String commitMessage = "Reset Exercise";
-        if (user != null && user.getEmail() != null) {
-            commitMessage += "\n\nCo-authored-by: " + user.getName() + " <" + user.getEmail() + ">";
+        if (coAuthor != null && coAuthor.getEmail() != null) {
+            commitMessage += "\n\nCo-authored-by: " + coAuthor.getName() + " <" + coAuthor.getEmail() + ">";
         }
         gitService.stageAllChanges(targetRepo);
         gitService.commitAndPush(targetRepo, commitMessage, true, null);
