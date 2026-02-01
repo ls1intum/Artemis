@@ -224,7 +224,8 @@ describe('BuildJobDetailComponent', () => {
         fixture.detectChanges();
 
         expect(component.getJobName()).toBe('Finished Job');
-        expect(component.getBuildAgentName()).toBe('agent1');
+        // getBuildAgentName returns undefined for finished jobs when agent is offline (not in addressToAgentInfoMap)
+        expect(component.getBuildAgentName()).toBeUndefined();
         expect(component.getRepositoryName()).toBe('testrepo');
         expect(component.getRepositoryType()).toBe('USER');
     });
@@ -454,11 +455,12 @@ describe('BuildJobDetailComponent', () => {
         expect(component.jobStatus()).toBe('BUILDING');
     });
 
-    it('should return build agent link name from buildAgentAddress', () => {
+    it('should return undefined for build agent link name when agent is offline', () => {
         vi.mocked(buildQueueService.getBuildJobById).mockReturnValue(of(mockFinishedJob));
         fixture.detectChanges();
 
-        expect(component.getBuildAgentLinkName()).toBe('agent1');
+        // getBuildAgentLinkName returns undefined for finished jobs when agent is offline (not in addressToAgentInfoMap)
+        expect(component.getBuildAgentLinkName()).toBeUndefined();
     });
 
     it('should return build agent link name from buildAgent.name', () => {
