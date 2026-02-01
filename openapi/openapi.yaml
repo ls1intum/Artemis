@@ -655,8 +655,8 @@ components:
           example: PROBLEM_STATEMENT
         filePath: {type: string, description: 'Path to file, empty or problem_statement.md
             for problem statement', example: src/main/java/Main.java}
-        startLine: {type: integer, format: int32, description: Start line number (1-based)}
-        endLine: {type: integer, format: int32, description: End line number (1-based)}
+        startLine: {type: integer, format: int32, description: Start line number (1-based), minimum: 1}
+        endLine: {type: integer, format: int32, description: End line number (1-based), minimum: 1}
       required: [endLine, filePath, startLine, type]
     ConsistencyIssue:
       type: object
@@ -821,7 +821,7 @@ components:
         targetType: {$ref: '#/components/schemas/CommentThreadLocationType'}
         auxiliaryRepositoryId: {type: integer, format: int64, description: Identifier of the auxiliary repository, if applicable}
         initialFilePath: {type: string, description: Initial file path captured at thread creation}
-        initialLineNumber: {type: integer, format: int32, description: Initial line number captured at thread creation}
+        initialLineNumber: {type: integer, format: int32, description: Initial line number captured at thread creation, minimum: 1}
         initialComment: {$ref: '#/components/schemas/UserCommentContentDTO'}
       required: [initialComment, initialLineNumber, targetType]
     CreateCommentThreadGroupDTO:
@@ -867,8 +867,8 @@ components:
         initialCommitSha: {type: string, description: Initial commit SHA for repository-based threads, if available}
         filePath: {type: string, description: Current file path for repository-based threads}
         initialFilePath: {type: string, description: Initial file path captured at thread creation}
-        lineNumber: {type: integer, format: int32, description: Current line number for repository-based threads}
-        initialLineNumber: {type: integer, format: int32, description: Initial line number captured at thread creation}
+        lineNumber: {type: integer, format: int32, description: Current line number for repository-based threads, minimum: 1}
+        initialLineNumber: {type: integer, format: int32, description: Initial line number captured at thread creation, minimum: 1}
         outdated: {type: boolean, description: Whether the thread is outdated}
         resolved: {type: boolean, description: Whether the thread is resolved}
         comments:

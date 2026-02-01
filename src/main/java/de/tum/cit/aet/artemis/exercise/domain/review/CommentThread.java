@@ -13,6 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Min;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -51,9 +52,11 @@ public class CommentThread extends DomainObject {
     private String initialFilePath;
 
     @Column(name = "line_number")
+    @Min(1)
     private Integer lineNumber;
 
     @Column(name = "initial_line_number", nullable = false, updatable = false)
+    @Min(1)
     private int initialLineNumber;
 
     @Column(name = "outdated", nullable = false)
