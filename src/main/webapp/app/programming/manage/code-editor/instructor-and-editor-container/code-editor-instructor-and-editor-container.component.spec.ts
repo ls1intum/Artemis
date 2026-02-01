@@ -488,13 +488,16 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Diff Editor', () => 
 
     it('should revert refinement', () => {
         comp.showDiff.set(true);
-        // Mock the internal editableInstructions to have a revertAll method
-        (comp as any).editableInstructions = { revertAll: jest.fn() };
+        // Mock the internal editableInstructions to have revertAll and getCurrentContent methods
+        (comp as any).editableInstructions = {
+            revertAll: jest.fn(),
+            getCurrentContent: jest.fn().mockReturnValue('Reverted content'),
+        };
 
         comp.revertAllRefinement();
 
         expect((comp as any).editableInstructions.revertAll).toHaveBeenCalled();
-        expect(comp.showDiff()).toBeTrue();
+        expect(comp.showDiff()).toBeFalsy();
     });
 
     it('should close diff and reset public state', () => {
