@@ -101,11 +101,8 @@ export function replaceCitationBlocks(text: string, citationInfo: IrisCitationMe
                 }
             });
 
-            if (parsedGroup.length === 0) {
+            if (parsedGroup.length !== citationGroup.length) {
                 rendered.push(citationGroup.join(''));
-            } else if (parsedGroup.length === 1 && !options.preserveGroupOnSingleParsed) {
-                const meta = parsedGroup[0].type === 'L' ? citationMap.get(parsedGroup[0].entityId) : undefined;
-                rendered.push(options.renderSingle(parsedGroup[0], meta));
             } else {
                 const metas: Array<IrisCitationMetaDTO | undefined> = [];
                 parsedGroup.forEach((entry) => {
