@@ -148,8 +148,7 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
     @Query("""
             SELECT er
             FROM ExamRoom er
-            JOIN ExamRoomExamAssignment erea
-                ON er.id = erea.examRoom.id
+            JOIN er.examRoomExamAssignments erea
             WHERE erea.exam.id = :examId
             """)
     Set<ExamRoom> findAllByExamId(@Param("examId") long examId);
@@ -161,7 +160,7 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
      * @return base information of all rooms + their exam specific alias
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.exam.dto.room.ExamRoomWithAliasDTO(
+            SELECT DISTINCT new de.tum.cit.aet.artemis.exam.dto.room.ExamRoomWithAliasDTO(
                 er.id,
                 er.roomNumber,
                 er.alternativeRoomNumber,
@@ -171,8 +170,7 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
                 erea.roomAlias
             )
             FROM ExamRoom er
-            JOIN ExamRoomExamAssignment erea
-                ON er.id = erea.examRoom.id
+            JOIN er.examRoomExamAssignments erea
             WHERE erea.exam.id = :examId
             """)
     Set<ExamRoomWithAliasDTO> findAllByExamIdWithAliases(@Param("examId") long examId);

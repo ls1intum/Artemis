@@ -115,6 +115,10 @@ public class ExamRoomDistributionResource {
             throw new BadRequestAlertException("You have invalid room IDs", ENTITY_NAME, "invalidRoomIDs");
         }
 
+        if (examRoomAliases.values().stream().anyMatch(alias -> alias.length() >= 255)) {
+            throw new BadRequestAlertException("Alias name too long", ENTITY_NAME, "aliasNameTooLong");
+        }
+
         examRoomDistributionService.distributeRegisteredStudents(examId, examRoomIds, examRoomAliases, useOnlyDefaultLayouts, reserveFactor);
 
         return ResponseEntity.ok().build();

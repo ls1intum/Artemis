@@ -37,7 +37,7 @@ record ExamRoomForAttendanceCheckerDTO(
             examRoom.getId(),
             examRoom.getRoomNumber(),
             examRoom.getAlternativeRoomNumber(),
-            roomAliases.getOrDefault(examRoom.getRoomNumber(), examRoom.getName()),  // Änderung hier
+            roomAliases.getOrDefault(examRoom.getRoomNumber(), examRoom.getName()),
             examRoom.getAlternativeName(),
             examRoom.getBuilding(),
             examRoom.getSeats()
