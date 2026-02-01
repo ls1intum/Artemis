@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.util.DateUtil.isIso8601DateString;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
@@ -101,8 +100,7 @@ public class TutorialGroupsConfigurationResource {
         if (course.getTimeZone() == null) {
             throw new BadRequestException("The course has no time zone");
         }
-        ZoneId configurationZoneId = ZoneId.of(course.getTimeZone());
-        TutorialGroupsConfiguration configuration = TutorialGroupConfigurationDTO.from(tutorialGroupConfigurationDto, configurationZoneId);
+        TutorialGroupsConfiguration configuration = TutorialGroupConfigurationDTO.from(tutorialGroupConfigurationDto);
 
         isValidTutorialGroupConfiguration(configuration);
         configuration.setCourse(course);
@@ -141,8 +139,7 @@ public class TutorialGroupsConfigurationResource {
             throw new BadRequestException("The course has no time zone");
         }
 
-        ZoneId configurationZoneId = ZoneId.of(course.getTimeZone());
-        TutorialGroupsConfiguration updatedTutorialGroupConfiguration = TutorialGroupConfigurationDTO.from(updatedTutorialGroupConfigurationDto, configurationZoneId);
+        TutorialGroupsConfiguration updatedTutorialGroupConfiguration = TutorialGroupConfigurationDTO.from(updatedTutorialGroupConfigurationDto);
 
         isValidTutorialGroupConfiguration(updatedTutorialGroupConfiguration);
 
