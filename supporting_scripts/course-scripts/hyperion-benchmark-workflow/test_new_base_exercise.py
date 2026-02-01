@@ -56,6 +56,6 @@ def test_new_base_exercise():
     logging.info("Add New Exercises Script completed.")
 
 if __name__ == "__main__":
-    # create_empty_pecv_bench_course()  # Uncomment to create an empty PECV Bench Course for testing
+    create_empty_pecv_bench_course()  # Uncomment to create an empty PECV Bench Course for testing
 
     test_new_base_exercise()
