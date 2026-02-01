@@ -55,6 +55,11 @@
                     <span>{{ agent.buildAgentDetails?.gitRevision }}</span>
                 </div>
                 <div>
+                    <span class="bold" jhiTranslate="artemisApp.buildAgents.dockerVersion"></span>
+                    <span class="bold">:</span>
+                    <span>{{ agent.buildAgentDetails?.dockerVersion }}</span>
+                </div>
+                <div>
                     <span class="bold" jhiTranslate="artemisApp.buildAgents.consecutiveBuildFailures"></span>
                     <span>{{ agent.buildAgentDetails?.consecutiveBuildFailures }}</span>
                 </div>

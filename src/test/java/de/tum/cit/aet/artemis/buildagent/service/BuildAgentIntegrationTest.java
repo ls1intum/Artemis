@@ -7,6 +7,7 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -31,6 +32,7 @@ import com.github.dockerjava.api.command.CopyArchiveToContainerCmd;
 import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.command.StartContainerCmd;
+import com.github.dockerjava.api.command.VersionCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
@@ -82,6 +84,9 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
     @Autowired
     private SharedQueueProcessingService sharedQueueProcessingService;
+
+    @Autowired
+    private BuildAgentInformationService buildAgentInformationService;
 
     @BeforeAll
     void init() {
@@ -621,5 +626,103 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
             var resultQueueItem = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id()) && resultQueueItem.buildJobQueueItem().status() == BuildStatus.FAILED;
         });
+    }
+
+    /**
+     * Test that the Docker version is retrieved and stored in build agent details.
+     * The scheduled task should populate the Docker version which then appears in the distributed map.
+     */
+    @Test
+    void testDockerVersionIsRetrievedAndStoredInBuildAgentDetails() {
+        // Trigger the scheduled Docker version update manually
+        buildAgentInformationService.updateDockerVersion();
+
+        // Verify that the Docker version was retrieved and stored
+        assertThat(buildAgentInformationService.getDockerVersion()).isEqualTo("24.0.0-test");
+
+        // Verify that the build agent information in the distributed map contains the Docker version
+        await().atMost(10, TimeUnit.SECONDS).until(() -> {
+            var buildAgent = buildAgentInformation.get(buildAgentShortName);
+            return buildAgent != null && buildAgent.buildAgentDetails() != null && "24.0.0-test".equals(buildAgent.buildAgentDetails().dockerVersion());
+        });
+    }
+
+    /**
+     * Test that when the Docker version changes, the build agent information is updated in the distributed map.
+     */
+    @Test
+    void testDockerVersionChangePropagatedToDistributedMap() {
+        // First, trigger an initial update
+        buildAgentInformationService.updateDockerVersion();
+        assertThat(buildAgentInformationService.getDockerVersion()).isEqualTo("24.0.0-test");
+
+        // Now mock a version change
+        DockerClientTestService.mockVersionCmd(dockerClient, "25.0.0-updated");
+
+        // Trigger the update again
+        buildAgentInformationService.updateDockerVersion();
+
+        // Verify the version was updated
+        assertThat(buildAgentInformationService.getDockerVersion()).isEqualTo("25.0.0-updated");
+
+        // Verify the distributed map was updated with the new version
+        await().atMost(10, TimeUnit.SECONDS).until(() -> {
+            var buildAgent = buildAgentInformation.get(buildAgentShortName);
+            return buildAgent != null && buildAgent.buildAgentDetails() != null && "25.0.0-updated".equals(buildAgent.buildAgentDetails().dockerVersion());
+        });
+
+        // Reset the mock to original version for other tests
+        DockerClientTestService.mockVersionCmd(dockerClient, "24.0.0-test");
+    }
+
+    /**
+     * Test that the updateDockerVersion method handles exceptions gracefully.
+     * When Docker version retrieval fails, the method should log a warning but not throw.
+     */
+    @Test
+    void testDockerVersionRetrievalFailureHandledGracefully() {
+        // Store the current version
+        buildAgentInformationService.updateDockerVersion();
+        String originalVersion = buildAgentInformationService.getDockerVersion();
+
+        // Mock versionCmd to throw an exception
+        VersionCmd versionCmd = mock(VersionCmd.class);
+        when(dockerClient.versionCmd()).thenReturn(versionCmd);
+        doThrow(new RuntimeException("Docker daemon unavailable")).when(versionCmd).exec();
+
+        // Trigger the update - should not throw
+        buildAgentInformationService.updateDockerVersion();
+
+        // Version should remain unchanged (graceful degradation)
+        assertThat(buildAgentInformationService.getDockerVersion()).isEqualTo(originalVersion);
+
+        // Reset the mock to working state for other tests
+        DockerClientTestService.mockVersionCmd(dockerClient, "24.0.0-test");
+    }
+
+    /**
+     * Test that the Docker version is included in build agent details after a build completes.
+     */
+    @Test
+    void testDockerVersionIncludedInBuildAgentDetailsAfterBuild() {
+        // Ensure Docker version is set
+        buildAgentInformationService.updateDockerVersion();
+
+        // Run a build job
+        var queueItem = createBaseBuildJobQueueItemForTrigger();
+        buildJobQueue.add(queueItem);
+
+        // Wait for the build to complete
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
+            var resultQueueItem = resultQueue.poll();
+            return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
+                    && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
+        });
+
+        // Verify the build agent details contain the Docker version
+        var buildAgent = buildAgentInformation.get(buildAgentShortName);
+        assertThat(buildAgent).isNotNull();
+        assertThat(buildAgent.buildAgentDetails()).isNotNull();
+        assertThat(buildAgent.buildAgentDetails().dockerVersion()).isEqualTo("24.0.0-test");
     }
 }

@@ -33,4 +33,5 @@ export class BuildAgentDetails {
     public startDate?: dayjs.Dayjs;
     public gitRevision?: string;
     public consecutiveBuildFailures?: number;
+    public dockerVersion?: string;
 }

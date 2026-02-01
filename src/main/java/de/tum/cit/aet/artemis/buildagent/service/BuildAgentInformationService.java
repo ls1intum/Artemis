@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.info.GitProperties;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
@@ -36,6 +37,14 @@ public class BuildAgentInformationService {
 
     private final BuildAgentConfiguration buildAgentConfiguration;
 
+    /**
+     * The Docker version running on this build agent.
+     * Updated periodically by {@link #updateDockerVersion()} and included in build agent details.
+     * Marked as volatile to ensure visibility across threads since it's updated by the scheduler
+     * and read by request handling threads.
+     */
+    private volatile String dockerVersion;
+
     private final BuildAgentSshKeyService buildAgentSSHKeyService;
 
     private final GitProperties gitProperties;
@@ -54,6 +63,55 @@ public class BuildAgentInformationService {
         this.buildAgentSSHKeyService = buildAgentSSHKeyService;
         this.gitProperties = gitProperties;
         this.distributedDataAccessService = distributedDataAccessService;
+    }
+
+    /**
+     * Periodically retrieves and updates the Docker version from the Docker daemon.
+     * <p>
+     * This method is scheduled to run:
+     * <ul>
+     * <li>10 seconds after application startup (to avoid blocking startup)</li>
+     * <li>Every 10 minutes thereafter (to detect Docker updates while running)</li>
+     * </ul>
+     * <p>
+     * When the Docker version changes, this method:
+     * <ol>
+     * <li>Logs the new version</li>
+     * <li>Updates the local {@link #dockerVersion} field</li>
+     * <li>Calls {@link #updateLocalBuildAgentInformation(boolean)} to propagate the change to the distributed Hazelcast map</li>
+     * </ol>
+     * <p>
+     * If the Docker client is unavailable or version retrieval fails, the method logs a warning and continues
+     * without updating the version (graceful degradation).
+     */
+    @Scheduled(initialDelayString = "10000", fixedRateString = "600000")
+    public void updateDockerVersion() {
+        var dockerClient = buildAgentConfiguration.getDockerClient();
+        if (dockerClient == null) {
+            return;
+        }
+        try {
+            String newVersion = dockerClient.versionCmd().exec().getVersion();
+            if (!Objects.equals(newVersion, dockerVersion)) {
+                log.info("Docker version: {}", newVersion);
+                dockerVersion = newVersion;
+                // Update the build agent information in the distributed map
+                updateLocalBuildAgentInformation(false);
+            }
+        }
+        catch (Exception e) {
+            log.warn("Failed to retrieve Docker version: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Returns the cached Docker version.
+     * This version is periodically updated by {@link #updateDockerVersion()}.
+     *
+     * @return the Docker version string, or null if not yet retrieved or retrieval failed
+     */
+    public String getDockerVersion() {
+        return dockerVersion;
     }
 
     /**
@@ -178,7 +236,7 @@ public class BuildAgentInformationService {
         var timedOutBuilds = getTimedOutBuilds(agent, recentBuildJob);
 
         return new BuildAgentDetailsDTO(averageBuildDuration, successfulBuilds, failedBuilds, cancelledBuilds, timedOutBuilds, totalsBuilds, lastBuildDate, startDate, gitRevision,
-                consecutiveFailures);
+                consecutiveFailures, dockerVersion);
     }
 
     private ZonedDateTime getLastBuildDate(BuildAgentInformation agent, BuildJobQueueItem recentBuildJob) {
