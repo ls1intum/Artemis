@@ -18,9 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
@@ -53,19 +53,19 @@ public class LectureTranscriptionService {
 
     private final String nebulaSecretToken;
 
-    private final LectureContentProcessingApi contentProcessingApi;
+    private final Optional<ProcessingStateCallbackApi> processingStateCallbackApi;
 
     private final ConcurrentHashMap<String, Integer> failureCountMap = new ConcurrentHashMap<>();
 
     public LectureTranscriptionService(LectureTranscriptionsRepositoryApi lectureTranscriptionsRepositoryApi, LectureUnitRepositoryApi lectureUnitRepositoryApi,
             @Qualifier("nebulaRestTemplate") RestTemplate restTemplate, @Value("${artemis.nebula.url}") String nebulaBaseUrl,
-            @Value("${artemis.nebula.secret-token}") String nebulaSecretToken, @Lazy LectureContentProcessingApi contentProcessingApi) {
+            @Value("${artemis.nebula.secret-token}") String nebulaSecretToken, Optional<ProcessingStateCallbackApi> processingStateCallbackApi) {
         this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.restTemplate = restTemplate;
         this.nebulaBaseUrl = nebulaBaseUrl;
         this.nebulaSecretToken = nebulaSecretToken;
-        this.contentProcessingApi = contentProcessingApi;
+        this.processingStateCallbackApi = processingStateCallbackApi;
     }
 
     /**
@@ -145,7 +145,7 @@ public class LectureTranscriptionService {
         LectureTranscription savedTranscription = lectureTranscriptionsRepositoryApi.save(transcription);
 
         // Notify processing service to continue with ingestion
-        contentProcessingApi.handleTranscriptionComplete(savedTranscription);
+        processingStateCallbackApi.ifPresent(api -> api.handleTranscriptionComplete(savedTranscription));
     }
 
     /**
@@ -161,7 +161,7 @@ public class LectureTranscriptionService {
         log.warn("Transcription failed for jobId={}, reason: {}", transcription.getJobId(), errorMessage);
 
         // Notify processing service to handle failure
-        contentProcessingApi.handleTranscriptionComplete(savedTranscription);
+        processingStateCallbackApi.ifPresent(api -> api.handleTranscriptionComplete(savedTranscription));
     }
 
     /**

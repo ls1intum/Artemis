@@ -125,18 +125,18 @@ public class CompetencyExpertToolsService {
 
     private final CourseRepository courseRepository;
 
-    private final AtlasAgentService atlasAgentService;
+    private final AtlasAgentSessionCacheService sessionCacheService;
 
     private static final ThreadLocal<List<CompetencyPreviewDTO>> currentPreviews = ThreadLocal.withInitial(() -> null);
 
     private static final ThreadLocal<String> currentSessionId = ThreadLocal.withInitial(() -> null);
 
     public CompetencyExpertToolsService(ObjectMapper objectMapper, CompetencyRepository competencyRepository, CourseRepository courseRepository,
-            @Lazy AtlasAgentService atlasAgentService) {
+            AtlasAgentSessionCacheService sessionCacheService) {
         this.objectMapper = objectMapper;
         this.competencyRepository = competencyRepository;
         this.courseRepository = courseRepository;
-        this.atlasAgentService = atlasAgentService;
+        this.sessionCacheService = sessionCacheService;
     }
 
     /**
@@ -209,7 +209,7 @@ public class CompetencyExpertToolsService {
             return toJson(new ErrorResponse("No active session"));
         }
 
-        List<CompetencyOperation> cachedData = atlasAgentService.getCachedPendingCompetencyOperations(sessionId);
+        List<CompetencyOperation> cachedData = sessionCacheService.getCachedPendingCompetencyOperations(sessionId);
         if (cachedData == null || cachedData.isEmpty()) {
             record ErrorResponse(String error) {
             }
@@ -229,7 +229,7 @@ public class CompetencyExpertToolsService {
                     }
                 }
 
-                atlasAgentService.cachePendingCompetencyOperations(sessionId, cachedData);
+                sessionCacheService.cachePendingCompetencyOperations(sessionId, cachedData);
             }
         }
 
@@ -268,10 +268,10 @@ public class CompetencyExpertToolsService {
         String sessionId = currentSessionId.get();
         if (sessionId != null) {
             if (viewOnly) {
-                atlasAgentService.clearCachedPendingCompetencyOperations(sessionId);
+                sessionCacheService.clearCachedPendingCompetencyOperations(sessionId);
             }
             else {
-                atlasAgentService.cachePendingCompetencyOperations(sessionId, new ArrayList<>(competencies));
+                sessionCacheService.cachePendingCompetencyOperations(sessionId, new ArrayList<>(competencies));
             }
         }
 
