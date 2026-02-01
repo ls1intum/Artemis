@@ -16,6 +16,26 @@
                 </or>
             </and>
         </preConditions>
+        <createTable tableName="comment_thread_group">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="exercise_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="comment_thread_group"
+                                 baseColumnNames="exercise_id"
+                                 constraintName="fk_comment_thread_group_exercise"
+                                 referencedTableName="exercise"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+
+        <createIndex tableName="comment_thread_group" indexName="idx_comment_thread_group_exercise">
+            <column name="exercise_id"/>
+        </createIndex>
+
         <createTable tableName="comment_thread">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
@@ -31,9 +51,7 @@
             <column name="initial_version_id" type="bigint"/>
             <column name="initial_commit_sha" type="varchar(64)"/>
             <column name="file_path" type="varchar(1024)"/>
-            <column name="initial_file_path" type="varchar(1024)">
-                <constraints nullable="false"/>
-            </column>
+            <column name="initial_file_path" type="varchar(1024)"/>
             <column name="line_number" type="int"/>
             <column name="initial_line_number" type="int">
                 <constraints nullable="false"/>
@@ -57,7 +75,15 @@
                                  baseColumnNames="initial_version_id"
                                  constraintName="fk_comment_thread_initial_version"
                                  referencedTableName="exercise_version"
-                                 referencedColumnNames="id"/>
+                                 referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
+
+        <addForeignKeyConstraint baseTableName="comment_thread"
+                                 baseColumnNames="group_id"
+                                 constraintName="fk_comment_thread_group"
+                                 referencedTableName="comment_thread_group"
+                                 referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
 
         <createIndex tableName="comment_thread" indexName="idx_comment_thread_exercise">
             <column name="exercise_id"/>
@@ -82,6 +108,26 @@
                 <dbms type="postgresql"/>
             </and>
         </preConditions>
+        <createTable tableName="comment_thread_group">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="exercise_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="comment_thread_group"
+                                 baseColumnNames="exercise_id"
+                                 constraintName="fk_comment_thread_group_exercise"
+                                 referencedTableName="exercise"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+
+        <createIndex tableName="comment_thread_group" indexName="idx_comment_thread_group_exercise">
+            <column name="exercise_id"/>
+        </createIndex>
+
         <createTable tableName="comment_thread">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
@@ -97,9 +143,7 @@
             <column name="initial_version_id" type="bigint"/>
             <column name="initial_commit_sha" type="varchar(64)"/>
             <column name="file_path" type="varchar(1024)"/>
-            <column name="initial_file_path" type="varchar(1024)">
-                <constraints nullable="false"/>
-            </column>
+            <column name="initial_file_path" type="varchar(1024)"/>
             <column name="line_number" type="int"/>
             <column name="initial_line_number" type="int">
                 <constraints nullable="false"/>
@@ -123,7 +167,15 @@
                                  baseColumnNames="initial_version_id"
                                  constraintName="fk_comment_thread_initial_version"
                                  referencedTableName="exercise_version"
-                                 referencedColumnNames="id"/>
+                                 referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
+
+        <addForeignKeyConstraint baseTableName="comment_thread"
+                                 baseColumnNames="group_id"
+                                 constraintName="fk_comment_thread_group"
+                                 referencedTableName="comment_thread_group"
+                                 referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
 
         <createIndex tableName="comment_thread" indexName="idx_comment_thread_exercise">
             <column name="exercise_id"/>
@@ -188,13 +240,15 @@
                                  baseColumnNames="author_id"
                                  constraintName="fk_comment_author"
                                  referencedTableName="jhi_user"
-                                 referencedColumnNames="id"/>
+                                 referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
 
         <addForeignKeyConstraint baseTableName="comment"
                                  baseColumnNames="initial_version_id"
                                  constraintName="fk_comment_initial_version"
                                  referencedTableName="exercise_version"
-                                 referencedColumnNames="id"/>
+                                 referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
 
 
         <createIndex tableName="comment" indexName="idx_comment_thread">
@@ -254,13 +308,15 @@
                                  baseColumnNames="author_id"
                                  constraintName="fk_comment_author"
                                  referencedTableName="jhi_user"
-                                 referencedColumnNames="id"/>
+                                 referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
 
         <addForeignKeyConstraint baseTableName="comment"
                                  baseColumnNames="initial_version_id"
                                  constraintName="fk_comment_initial_version"
                                  referencedTableName="exercise_version"
-                                 referencedColumnNames="id"/>
+                                 referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
 
 
         <createIndex tableName="comment" indexName="idx_comment_thread">

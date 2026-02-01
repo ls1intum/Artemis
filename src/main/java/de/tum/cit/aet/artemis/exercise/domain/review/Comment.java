@@ -37,10 +37,10 @@ public class Comment extends AbstractAuditingEntity {
     private CommentContentDTO content;
 
     @ManyToOne
-    @JoinColumn(name = "initial_version_id")
+    @JoinColumn(name = "initial_version_id", updatable = false)
     private ExerciseVersion initialVersion;
 
-    @Column(name = "initial_commit_sha")
+    @Column(name = "initial_commit_sha", length = 64, updatable = false)
     private String initialCommitSha;
 
     public CommentThread getThread() {

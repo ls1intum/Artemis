@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
-import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewCommentService;
+import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadApi;
 import de.tum.cit.aet.artemis.modeling.api.ModelingRepositoryApi;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -54,11 +54,11 @@ public class ExerciseVersionService {
 
     private final UserRepository userRepository;
 
-    private final ExerciseReviewCommentService exerciseReviewCommentService;
+    private final ExerciseReviewService exerciseReviewService;
 
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
             QuizExerciseRepository quizExerciseRepository, TextExerciseRepository textExerciseRepository, Optional<ModelingRepositoryApi> modelingRepositoryApi,
-            Optional<FileUploadApi> fileUploadApi, UserRepository userRepository, ExerciseReviewCommentService exerciseReviewCommentService) {
+            Optional<FileUploadApi> fileUploadApi, UserRepository userRepository, ExerciseReviewService exerciseReviewService) {
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -67,7 +67,7 @@ public class ExerciseVersionService {
         this.modelingRepositoryApi = modelingRepositoryApi;
         this.fileUploadApi = fileUploadApi;
         this.userRepository = userRepository;
-        this.exerciseReviewCommentService = exerciseReviewCommentService;
+        this.exerciseReviewService = exerciseReviewService;
     }
 
     public boolean isRepositoryTypeVersionable(RepositoryType repositoryType) {
@@ -129,7 +129,7 @@ public class ExerciseVersionService {
             log.info("Exercise version {} has been created for exercise {}", savedExerciseVersion.getId(), exercise.getId());
             previousVersion.ifPresent(prev -> {
                 try {
-                    exerciseReviewCommentService.updateThreadsForVersionChange(prev.getExerciseSnapshot(), exerciseSnapshot);
+                    exerciseReviewService.updateThreadsForVersionChange(prev.getExerciseSnapshot(), exerciseSnapshot);
                 }
                 catch (Exception ex) {
                     log.warn("Could not update review threads for version {}: {}", savedExerciseVersion.getId(), ex.getMessage());

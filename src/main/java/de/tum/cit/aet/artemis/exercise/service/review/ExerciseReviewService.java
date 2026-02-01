@@ -38,16 +38,21 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
+import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadGroup;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadLocationType;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.ConsistencyIssueCommentContentDTO;
+import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadDTO;
+import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadGroupDTO;
+import de.tum.cit.aet.artemis.exercise.dto.review.UpdateThreadResolvedStateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentRepository;
+import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadGroupRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -59,13 +64,17 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
-public class ExerciseReviewCommentService {
+public class ExerciseReviewService {
 
-    private static final Logger log = LoggerFactory.getLogger(ExerciseReviewCommentService.class);
+    private static final Logger log = LoggerFactory.getLogger(ExerciseReviewService.class);
 
     private static final String COMMENT_ENTITY_NAME = "exerciseReviewComment";
 
     private static final String THREAD_ENTITY_NAME = "exerciseReviewCommentThread";
+
+    private static final String THREAD_GROUP_ENTITY_NAME = "exerciseReviewCommentThreadGroup";
+
+    private final CommentThreadGroupRepository commentThreadGroupRepository;
 
     private final CommentThreadRepository commentThreadRepository;
 
@@ -85,10 +94,11 @@ public class ExerciseReviewCommentService {
 
     private final GitService gitService;
 
-    public ExerciseReviewCommentService(CommentThreadRepository commentThreadRepository, CommentRepository commentRepository, ExerciseRepository exerciseRepository,
-            ExerciseVersionRepository exerciseVersionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+    public ExerciseReviewService(CommentThreadGroupRepository commentThreadGroupRepository, CommentThreadRepository commentThreadRepository, CommentRepository commentRepository,
+            ExerciseRepository exerciseRepository, ExerciseVersionRepository exerciseVersionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService,
             GitService gitService) {
+        this.commentThreadGroupRepository = commentThreadGroupRepository;
         this.commentThreadRepository = commentThreadRepository;
         this.commentRepository = commentRepository;
         this.exerciseRepository = exerciseRepository;
@@ -138,19 +148,20 @@ public class ExerciseReviewCommentService {
      * Create a new comment thread for an exercise.
      *
      * @param exerciseId the exercise id
-     * @param thread     the thread to create
+     * @param dto        the thread creation payload
      * @return the persisted thread
      */
-    public CommentThread createThread(long exerciseId, CommentThread thread) {
+    public CommentThread createThread(long exerciseId, CreateCommentThreadDTO dto) {
+        if (dto == null) {
+            throw new BadRequestAlertException("Request body must be set", THREAD_ENTITY_NAME, "bodyMissing");
+        }
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, exerciseId);
-        if (thread.getId() != null) {
-            throw new BadRequestAlertException("A new thread cannot already have an ID", THREAD_ENTITY_NAME, "idexists");
-        }
+        validateThreadPayload(dto);
 
+        ExerciseVersion initialVersion = resolveInitialVersion(dto.targetType(), exerciseId);
+        String initialCommitSha = resolveLatestCommitSha(dto.targetType(), dto.auxiliaryRepositoryId(), exerciseId);
+        CommentThread thread = dto.toEntity(initialVersion, initialCommitSha);
         Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
-        if (thread.getExercise() != null && !Objects.equals(thread.getExercise().getId(), exerciseId)) {
-            throw new BadRequestAlertException("Thread exercise does not match request", THREAD_ENTITY_NAME, "exerciseMismatch");
-        }
 
         thread.setExercise(exercise);
         return commentThreadRepository.save(thread);
@@ -160,36 +171,25 @@ public class ExerciseReviewCommentService {
      * Create a new comment within a thread.
      *
      * @param threadId the thread id
-     * @param comment  the comment to create
+     * @param dto      the comment content to create
      * @return the persisted comment
      */
-    public Comment createComment(long threadId, Comment comment) {
+    public Comment createUserComment(long threadId, UserCommentContentDTO dto) {
+        if (dto == null) {
+            throw new BadRequestAlertException("Comment content must be set", COMMENT_ENTITY_NAME, "contentMissing");
+        }
         CommentThread thread = findThreadByIdElseThrow(threadId);
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, thread.getExercise().getId());
 
-        if (comment.getId() != null) {
-            throw new BadRequestAlertException("A new comment cannot already have an ID", COMMENT_ENTITY_NAME, "idexists");
-        }
-        if (comment.getType() == null) {
-            throw new BadRequestAlertException("Comment type must be set", COMMENT_ENTITY_NAME, "typeMissing");
-        }
-        validateContentMatchesType(comment.getType(), comment.getContent());
-
-        if (comment.getType() == CommentType.USER) {
-            User author = userRepository.getUserWithGroupsAndAuthorities();
-            comment.setAuthor(author);
-        }
-
-        if (commentRepository.countByThreadId(threadId) == 0) {
-            comment.setInitialVersion(thread.getInitialVersion());
-            comment.setInitialCommitSha(thread.getInitialCommitSha());
-        }
-        else {
-            comment.setInitialVersion(resolveLatestVersion(thread));
-            comment.setInitialCommitSha(resolveLatestCommitSha(thread.getTargetType(), thread.getAuxiliaryRepositoryId(), thread.getExercise().getId()));
-        }
-
+        User author = userRepository.getUserWithGroupsAndAuthorities();
+        Comment comment = new Comment();
+        comment.setType(CommentType.USER);
+        comment.setContent(dto);
+        comment.setAuthor(author);
+        comment.setInitialVersion(resolveLatestVersion(thread));
+        comment.setInitialCommitSha(resolveLatestCommitSha(thread.getTargetType(), thread.getAuxiliaryRepositoryId(), thread.getExercise().getId()));
         comment.setThread(thread);
+
         return commentRepository.save(comment);
     }
 
@@ -212,13 +212,16 @@ public class ExerciseReviewCommentService {
      * Update the resolved flag of a thread.
      *
      * @param threadId the thread id
-     * @param resolved whether the thread is resolved
+     * @param dto      whether the thread is resolved
      * @return the updated thread
      */
-    public CommentThread updateThreadResolvedState(long threadId, boolean resolved) {
+    public CommentThread updateThreadResolvedState(long threadId, UpdateThreadResolvedStateDTO dto) {
+        if (dto == null) {
+            throw new BadRequestAlertException("Request body must be set", THREAD_ENTITY_NAME, "bodyMissing");
+        }
         CommentThread thread = findThreadByIdElseThrow(threadId);
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, thread.getExercise().getId());
-        thread.setResolved(resolved);
+        thread.setResolved(dto.resolved());
         CommentThread saved = commentThreadRepository.save(thread);
         return commentThreadRepository.findWithCommentsById(saved.getId()).orElse(saved);
     }
@@ -227,16 +230,138 @@ public class ExerciseReviewCommentService {
      * Update the content of a comment.
      *
      * @param commentId the comment id
-     * @param content   the new content
+     * @param dto       the new comment content
      * @return the updated comment
      */
-    public Comment updateCommentContent(long commentId, CommentContentDTO content) {
+    public Comment updateUserCommentContent(long commentId, UserCommentContentDTO dto) {
+        if (dto == null) {
+            throw new BadRequestAlertException("Comment content must be set", COMMENT_ENTITY_NAME, "contentMissing");
+        }
         Comment comment = commentRepository.findWithThreadById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment", commentId));
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, comment.getThread().getExercise().getId());
-        validateContentMatchesType(comment.getType(), content);
-        comment.setContent(content);
+        validateContentMatchesType(comment.getType(), dto);
+        comment.setContent(dto);
         Comment saved = commentRepository.save(comment);
         return commentRepository.findWithThreadById(saved.getId()).orElse(saved);
+    }
+
+    /**
+     * Create a new comment thread group for an exercise.
+     *
+     * @param exerciseId the exercise id
+     * @param dto        the group creation payload
+     * @return the persisted group
+     */
+    public CommentThreadGroup createGroup(long exerciseId, CreateCommentThreadGroupDTO dto) {
+        if (dto == null) {
+            throw new BadRequestAlertException("Request body must be set", THREAD_GROUP_ENTITY_NAME, "bodyMissing");
+        }
+        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, exerciseId);
+        Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+
+        List<Long> threadIds = dto.threadIds();
+        if (threadIds == null || threadIds.size() < 2) {
+            throw new BadRequestAlertException("A thread group must contain at least two threads", THREAD_GROUP_ENTITY_NAME, "threadCountTooLow");
+        }
+
+        List<CommentThread> threads = commentThreadRepository.findAllById(threadIds);
+        if (threads.size() != threadIds.size()) {
+            throw new BadRequestAlertException("Some threads do not exist", THREAD_ENTITY_NAME, "threadMissing");
+        }
+
+        for (CommentThread thread : threads) {
+            if (thread.getExercise() == null || !Objects.equals(thread.getExercise().getId(), exerciseId)) {
+                throw new BadRequestAlertException("Thread exercise does not match request", THREAD_ENTITY_NAME, "exerciseMismatch");
+            }
+            if (thread.getGroup() != null) {
+                throw new BadRequestAlertException("Thread already belongs to another group", THREAD_ENTITY_NAME, "threadGrouped");
+            }
+        }
+
+        CommentThreadGroup group = new CommentThreadGroup();
+        group.setExercise(exercise);
+        CommentThreadGroup saved = commentThreadGroupRepository.save(group);
+        for (CommentThread thread : threads) {
+            thread.setGroup(saved);
+        }
+        commentThreadRepository.saveAll(threads);
+        saved.setThreads(new java.util.HashSet<>(threads));
+        return saved;
+    }
+
+    /**
+     * Delete a comment thread group by id.
+     *
+     * @param groupId the group id
+     */
+    public void deleteGroup(long groupId) {
+        CommentThreadGroup group = commentThreadGroupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("CommentThreadGroup", groupId));
+
+        authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, group.getExercise().getId());
+
+        List<CommentThread> threads = commentThreadRepository.findByGroupId(groupId);
+        if (!threads.isEmpty()) {
+            for (CommentThread thread : threads) {
+                thread.setGroup(null);
+            }
+            commentThreadRepository.saveAll(threads);
+        }
+
+        commentThreadGroupRepository.delete(group);
+    }
+
+    /**
+     * Finds a comment thread by id or throws an {@link EntityNotFoundException}.
+     *
+     * @param threadId the thread id
+     * @return the found thread
+     */
+    private CommentThread findThreadByIdElseThrow(long threadId) {
+        return commentThreadRepository.findById(threadId).orElseThrow(() -> new EntityNotFoundException("CommentThread", threadId));
+    }
+
+    /**
+     * Validates that the comment content matches the given comment type.
+     *
+     * @param type    the comment type to validate against
+     * @param content the content payload to validate
+     */
+    private void validateContentMatchesType(CommentType type, CommentContentDTO content) {
+        if (type == null || content == null) {
+            throw new BadRequestAlertException("Comment content and type must be set", COMMENT_ENTITY_NAME, "contentOrTypeMissing");
+        }
+
+        boolean isValid = switch (type) {
+            case USER -> content instanceof UserCommentContentDTO;
+            case CONSISTENCY_CHECK -> content instanceof ConsistencyIssueCommentContentDTO;
+        };
+
+        if (!isValid) {
+            throw new BadRequestAlertException("Comment content does not match type", COMMENT_ENTITY_NAME, "contentTypeMismatch");
+        }
+    }
+
+    /**
+     * Validates thread payload invariants based on target type (problem statement vs repository targets).
+     *
+     * @param dto the thread creation payload to validate
+     */
+    private void validateThreadPayload(CreateCommentThreadDTO dto) {
+        if (dto == null) {
+            throw new BadRequestAlertException("Thread DTO must be set", THREAD_ENTITY_NAME, "bodyMissing");
+        }
+        if (dto.targetType() != CommentThreadLocationType.PROBLEM_STATEMENT && dto.initialFilePath() == null) {
+            throw new BadRequestAlertException("Initial file path is required for repository threads", THREAD_ENTITY_NAME, "initialFilePathMissing");
+        }
+        if (dto.targetType() == CommentThreadLocationType.PROBLEM_STATEMENT && dto.initialFilePath() != null) {
+            throw new BadRequestAlertException("Initial file path is not allowed for problem statement threads", THREAD_ENTITY_NAME, "initialFilePathNotAllowed");
+        }
+        if (dto.targetType() != CommentThreadLocationType.AUXILIARY_REPO && dto.auxiliaryRepositoryId() != null) {
+            throw new BadRequestAlertException("Auxiliary repository id is only allowed for auxiliary repository threads", THREAD_ENTITY_NAME, "auxiliaryRepositoryNotAllowed");
+        }
+        if (dto.targetType() == CommentThreadLocationType.AUXILIARY_REPO && dto.auxiliaryRepositoryId() == null) {
+            throw new BadRequestAlertException("Auxiliary repository id is required for auxiliary repository threads", THREAD_ENTITY_NAME, "auxiliaryRepositoryMissing");
+        }
     }
 
     /**
@@ -252,7 +377,7 @@ public class ExerciseReviewCommentService {
 
         ProgrammingExerciseSnapshotDTO previousProgramming = previousSnapshot.programmingData();
         ProgrammingExerciseSnapshotDTO currentProgramming = currentSnapshot.programmingData();
-        if (previousProgramming == null || currentProgramming == null) {
+        if (previousProgramming == null || currentProgramming == null || !Objects.equals(previousSnapshot.id(), currentSnapshot.id())) {
             return;
         }
 
@@ -312,73 +437,6 @@ public class ExerciseReviewCommentService {
         if (updated) {
             commentThreadRepository.saveAll(threads);
         }
-    }
-
-    /**
-     * Validates that the comment content matches the given comment type.
-     *
-     * @param type    the comment type to validate against
-     * @param content the content payload to validate
-     */
-    private void validateContentMatchesType(CommentType type, CommentContentDTO content) {
-        if (content == null) {
-            throw new BadRequestAlertException("Comment content must be set", COMMENT_ENTITY_NAME, "contentMissing");
-        }
-
-        boolean isValid = switch (type) {
-            case USER -> content instanceof UserCommentContentDTO;
-            case CONSISTENCY_CHECK -> content instanceof ConsistencyIssueCommentContentDTO;
-        };
-
-        if (!isValid) {
-            throw new BadRequestAlertException("Comment content does not match type", COMMENT_ENTITY_NAME, "contentTypeMismatch");
-        }
-    }
-
-    /**
-     * Finds a comment thread by id or throws an {@link EntityNotFoundException}.
-     *
-     * @param threadId the thread id
-     * @return the found thread
-     */
-    private CommentThread findThreadByIdElseThrow(long threadId) {
-        return commentThreadRepository.findById(threadId).orElseThrow(() -> new EntityNotFoundException("CommentThread", threadId));
-    }
-
-    /**
-     * Resolves repository diff information for a thread target based on exercise snapshots.
-     *
-     * @param previous the previous programming exercise snapshot
-     * @param current  the current programming exercise snapshot
-     * @param thread   the thread whose target determines the repository mapping
-     * @return the diff info if applicable, otherwise empty
-     */
-    private Optional<RepoDiffInfo> resolveRepoDiffInfo(ProgrammingExerciseSnapshotDTO previous, ProgrammingExerciseSnapshotDTO current, CommentThread thread) {
-        return switch (thread.getTargetType()) {
-            case TEMPLATE_REPO -> mapParticipationRepo(previous.templateParticipation(), current.templateParticipation());
-            case SOLUTION_REPO -> mapParticipationRepo(previous.solutionParticipation(), current.solutionParticipation());
-            case TEST_REPO -> mapTestRepo(previous, current);
-            case AUXILIARY_REPO -> mapAuxRepo(previous, current, thread.getAuxiliaryRepositoryId());
-            case PROBLEM_STATEMENT -> Optional.empty();
-        };
-    }
-
-    /**
-     * Maps a participation-based repository to diff info if both snapshots contain commit and URI data.
-     *
-     * @param previous the previous participation snapshot
-     * @param current  the current participation snapshot
-     * @return the diff info if available, otherwise empty
-     */
-    private Optional<RepoDiffInfo> mapParticipationRepo(ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO previous,
-            ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO current) {
-        if (previous == null || current == null) {
-            return Optional.empty();
-        }
-        if (previous.commitId() == null || current.commitId() == null || current.repositoryUri() == null) {
-            return Optional.empty();
-        }
-        return Optional.of(new RepoDiffInfo(new LocalVCRepositoryUri(current.repositoryUri()), previous.commitId(), current.commitId()));
     }
 
     /**
@@ -503,6 +561,46 @@ public class ExerciseReviewCommentService {
     }
 
     /**
+     * Resolves repository diff information for a thread target based on exercise snapshots.
+     *
+     * @param previous the previous programming exercise snapshot
+     * @param current  the current programming exercise snapshot
+     * @param thread   the thread whose target determines the repository mapping
+     * @return the diff info if applicable, otherwise empty
+     */
+    private Optional<RepoDiffInfo> resolveRepoDiffInfo(ProgrammingExerciseSnapshotDTO previous, ProgrammingExerciseSnapshotDTO current, CommentThread thread) {
+        if (previous == null || current == null) {
+            return Optional.empty();
+        }
+
+        return switch (thread.getTargetType()) {
+            case TEMPLATE_REPO -> mapParticipationRepo(previous.templateParticipation(), current.templateParticipation());
+            case SOLUTION_REPO -> mapParticipationRepo(previous.solutionParticipation(), current.solutionParticipation());
+            case TEST_REPO -> mapTestRepo(previous, current);
+            case AUXILIARY_REPO -> mapAuxRepo(previous, current, thread.getAuxiliaryRepositoryId());
+            case PROBLEM_STATEMENT -> Optional.empty();
+        };
+    }
+
+    /**
+     * Maps a participation-based repository to diff info if both snapshots contain commit and URI data.
+     *
+     * @param previous the previous participation snapshot
+     * @param current  the current participation snapshot
+     * @return the diff info if available, otherwise empty
+     */
+    private Optional<RepoDiffInfo> mapParticipationRepo(ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO previous,
+            ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO current) {
+        if (previous == null || current == null) {
+            return Optional.empty();
+        }
+        if (previous.commitId() == null || current.commitId() == null || current.repositoryUri() == null) {
+            return Optional.empty();
+        }
+        return Optional.of(new RepoDiffInfo(new LocalVCRepositoryUri(current.repositoryUri()), previous.commitId(), current.commitId()));
+    }
+
+    /**
      * Maps the test repository between snapshots to diff info when commit data exists.
      *
      * @param previous the previous programming exercise snapshot
@@ -528,8 +626,8 @@ public class ExerciseReviewCommentService {
         if (auxiliaryRepositoryId == null || previous.auxiliaryRepositories() == null || current.auxiliaryRepositories() == null) {
             return Optional.empty();
         }
-        var previousRepo = previous.auxiliaryRepositories().stream().filter(repo -> repo.id() == auxiliaryRepositoryId).findFirst().orElse(null);
-        var currentRepo = current.auxiliaryRepositories().stream().filter(repo -> repo.id() == auxiliaryRepositoryId).findFirst().orElse(null);
+        var previousRepo = previous.auxiliaryRepositories().stream().filter(repo -> Objects.equals(repo.id(), auxiliaryRepositoryId)).findFirst().orElse(null);
+        var currentRepo = current.auxiliaryRepositories().stream().filter(repo -> Objects.equals(repo.id(), auxiliaryRepositoryId)).findFirst().orElse(null);
         if (previousRepo == null || currentRepo == null || previousRepo.commitId() == null || currentRepo.commitId() == null || currentRepo.repositoryUri() == null) {
             return Optional.empty();
         }

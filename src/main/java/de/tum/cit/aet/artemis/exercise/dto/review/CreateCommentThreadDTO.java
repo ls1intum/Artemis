@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.dto.review;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -11,12 +13,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Request payload to create a new comment thread.")
-public record CreateCommentThreadDTO(@Schema(description = "Grouping identifier for related threads.") Long groupId,
-        @Schema(description = "Location type of the thread.") @NotNull CommentThreadLocationType targetType,
+public record CreateCommentThreadDTO(@Schema(description = "Location type of the thread.") @NotNull CommentThreadLocationType targetType,
         @Schema(description = "Identifier of the auxiliary repository, if applicable.") Long auxiliaryRepositoryId,
         @Schema(description = "Initial file path captured at thread creation.") String initialFilePath,
-        @Schema(description = "Initial line number captured at thread creation.") Integer initialLineNumber,
-        @Schema(description = "Initial user comment that populates the thread.") @NotNull CreateCommentDTO initialComment) {
+        @Schema(description = "Initial line number captured at thread creation.") @NotNull @Min(1) Integer initialLineNumber,
+        @Schema(description = "Initial user comment that populates the thread.") @NotNull @Valid UserCommentContentDTO initialComment) {
 
     /**
      * Convert this DTO into a new comment thread entity using resolved versioning metadata.
@@ -27,7 +28,6 @@ public record CreateCommentThreadDTO(@Schema(description = "Grouping identifier 
      */
     public CommentThread toEntity(ExerciseVersion initialVersion, String initialCommitSha) {
         CommentThread thread = new CommentThread();
-        thread.setGroupId(groupId);
         thread.setTargetType(targetType);
         thread.setAuxiliaryRepositoryId(auxiliaryRepositoryId);
         thread.setInitialVersion(initialVersion);
