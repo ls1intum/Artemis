@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, ViewEncapsulation, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -8,6 +8,9 @@ import { faArrowUpRightFromSquare, faPen, faTrash } from '@fortawesome/free-soli
 import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { Comment } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
+import { Subject } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-review-comment-thread-widget',
@@ -18,7 +21,7 @@ import { CommentContent } from 'app/exercise/shared/entities/review/comment-cont
     standalone: true,
     imports: [FormsModule, ArtemisTranslatePipe, ArtemisDatePipe, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, FaIconComponent],
 })
-export class ReviewCommentThreadWidgetComponent implements OnInit {
+export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly thread = input.required<CommentThread>();
     readonly initialCollapsed = input<boolean>(false);
     readonly showLocation = input<boolean>(false);
@@ -37,6 +40,10 @@ export class ReviewCommentThreadWidgetComponent implements OnInit {
     showThreadBody = true;
     editingCommentId?: number;
     editText = '';
+
+    private readonly destroyed$ = new Subject<void>();
+    private readonly translateService = inject(TranslateService);
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     /**
      * Emits a delete event for the given comment id.
@@ -117,6 +124,12 @@ export class ReviewCommentThreadWidgetComponent implements OnInit {
 
     ngOnInit(): void {
         this.showThreadBody = !this.initialCollapsed();
+        this.translateService.onLangChange.pipe(takeUntil(this.destroyed$)).subscribe(() => this.changeDetectorRef.markForCheck());
+    }
+
+    ngOnDestroy(): void {
+        this.destroyed$.next();
+        this.destroyed$.complete();
     }
 
     /**

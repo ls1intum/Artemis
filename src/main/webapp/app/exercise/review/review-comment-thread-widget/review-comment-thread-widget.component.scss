@@ -183,6 +183,8 @@
     font-size: 0.7rem;
     padding: 0;
     cursor: pointer;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .monaco-review-comment-thread-location-text {
