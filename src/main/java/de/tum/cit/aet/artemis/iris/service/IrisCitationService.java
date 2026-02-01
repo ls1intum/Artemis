@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.iris.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,11 +8,12 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.dto.IrisCitationMetaDTO;
@@ -26,7 +25,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
  */
 @Lazy
 @Service
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 public class IrisCitationService {
 
     private static final Pattern CITATION_PATTERN = Pattern.compile("\\[cite:(?<payload>[^\\]]+)\\]");
