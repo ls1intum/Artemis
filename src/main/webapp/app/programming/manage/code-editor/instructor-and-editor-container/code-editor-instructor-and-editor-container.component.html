@@ -147,7 +147,7 @@
                                 </button>
                             } @else {
                                 <button class="btn btn-outline-primary" type="button" ngbDropdownToggle [disabled]="isAiApplying()">
-                                    @if (isGeneratingOrRefining()) {
+                                    @if (isAiApplying()) {
                                         <fa-icon [icon]="faSpinner" animation="spin" />
                                     } @else {
                                         <fa-icon [icon]="facArtemisIntelligence" />
