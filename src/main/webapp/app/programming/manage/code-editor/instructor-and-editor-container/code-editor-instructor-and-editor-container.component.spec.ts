@@ -510,25 +510,29 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Diff Editor', () => 
     });
 });
 
-describe('CodeEditorInstructorAndEditorContainerComponent - Inline Refinement', () => {
+describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Refinement', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let comp: CodeEditorInstructorAndEditorContainerComponent;
     let alertService: AlertService;
-    let hyperionApiService: jest.Mocked<Pick<HyperionProblemStatementApiService, 'refineProblemStatementTargeted'>>;
+    let hyperionApiService: jest.Mocked<Pick<HyperionProblemStatementApiService, 'refineProblemStatementTargeted' | 'refineProblemStatementGlobally' | 'generateProblemStatement'>>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [CodeEditorInstructorAndEditorContainerComponent],
-            providers: [...getBaseProviders(), { provide: HyperionProblemStatementApiService, useValue: { refineProblemStatementTargeted: jest.fn() } }],
+            providers: [
+                ...getBaseProviders(),
+                {
+                    provide: HyperionProblemStatementApiService,
+                    useValue: { refineProblemStatementTargeted: jest.fn(), refineProblemStatementGlobally: jest.fn(), generateProblemStatement: jest.fn() },
+                },
+            ],
         })
-            .overrideComponent(CodeEditorInstructorAndEditorContainerComponent, {
-                set: { template: '', imports: [] },
-            })
+            .overrideComponent(CodeEditorInstructorAndEditorContainerComponent, { set: { template: '', imports: [] } })
             .compileComponents();
 
         alertService = TestBed.inject(AlertService);
         hyperionApiService = TestBed.inject(HyperionProblemStatementApiService) as unknown as jest.Mocked<
-            Pick<HyperionProblemStatementApiService, 'refineProblemStatementTargeted'>
+            Pick<HyperionProblemStatementApiService, 'refineProblemStatementTargeted' | 'refineProblemStatementGlobally' | 'generateProblemStatement'>
         >;
 
         fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
@@ -541,20 +545,14 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Refinement', 
         jest.clearAllMocks();
     });
 
+    // Inline Refinement Tests
+
     it('should handle inline refinement successfully', () => {
         const successSpy = jest.spyOn(alertService, 'success');
         const mockResponse: ProblemStatementRefinementResponse = { refinedProblemStatement: 'Refined content' };
         (hyperionApiService.refineProblemStatementTargeted as jest.Mock).mockReturnValue(of(mockResponse));
 
-        const event = {
-            instruction: 'Improve this section',
-            startLine: 1,
-            endLine: 2,
-            startColumn: 0,
-            endColumn: 10,
-        };
-
-        comp.onInlineRefinement(event);
+        comp.onInlineRefinement({ instruction: 'Improve this section', startLine: 1, endLine: 2, startColumn: 0, endColumn: 10 });
 
         expect(hyperionApiService.refineProblemStatementTargeted).toHaveBeenCalledWith(
             1,
@@ -578,7 +576,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Refinement', 
 
         comp.onInlineRefinement({ instruction: 'Test', startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
 
-        // Service returns with inlineRefine.error when courseId is missing
         expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
     });
 
@@ -602,55 +599,19 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Refinement', 
 
     it('should handle inline refinement with empty response', () => {
         const errorSpy = jest.spyOn(alertService, 'error');
-        const mockResponse: ProblemStatementRefinementResponse = { refinedProblemStatement: '' };
-        (hyperionApiService.refineProblemStatementTargeted as jest.Mock).mockReturnValue(of(mockResponse));
+        (hyperionApiService.refineProblemStatementTargeted as jest.Mock).mockReturnValue(of({ refinedProblemStatement: '' }));
 
         comp.onInlineRefinement({ instruction: 'Test', startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
 
         expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
     });
-});
 
-describe('CodeEditorInstructorAndEditorContainerComponent - Full Refinement', () => {
-    let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
-    let comp: CodeEditorInstructorAndEditorContainerComponent;
-    let alertService: AlertService;
-    let hyperionApiService: jest.Mocked<Pick<HyperionProblemStatementApiService, 'refineProblemStatementGlobally'>>;
-
-    beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            imports: [CodeEditorInstructorAndEditorContainerComponent],
-            providers: [
-                ...getBaseProviders(),
-                { provide: HyperionProblemStatementApiService, useValue: { refineProblemStatementGlobally: jest.fn(), generateProblemStatement: jest.fn() } },
-            ],
-        })
-            .overrideComponent(CodeEditorInstructorAndEditorContainerComponent, {
-                set: { template: '', imports: [] },
-            })
-            .compileComponents();
-
-        alertService = TestBed.inject(AlertService);
-        hyperionApiService = TestBed.inject(HyperionProblemStatementApiService) as unknown as jest.Mocked<
-            Pick<HyperionProblemStatementApiService, 'refineProblemStatementGlobally'>
-        >;
-
-        fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
-        comp = fixture.componentInstance;
-        comp.exercise = createMockExercise({ problemStatement: 'Original problem statement' });
-    });
-
-    afterEach(() => {
-        fixture?.destroy();
-        jest.clearAllMocks();
-    });
+    // Full Refinement Tests
 
     it('should toggle refinement prompt visibility', () => {
         expect(comp.showRefinementPrompt()).toBeFalse();
-
         comp.toggleRefinementPrompt();
         expect(comp.showRefinementPrompt()).toBeTrue();
-
         comp.toggleRefinementPrompt();
         expect(comp.showRefinementPrompt()).toBeFalse();
     });
@@ -658,9 +619,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Full Refinement', ()
     it('should clear refinement prompt when closing', () => {
         comp.showRefinementPrompt.set(true);
         comp.refinementPrompt.set('Some prompt');
-
         comp.toggleRefinementPrompt();
-
         expect(comp.showRefinementPrompt()).toBeFalse();
         expect(comp.refinementPrompt()).toBe('');
     });
@@ -670,7 +629,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Full Refinement', ()
         const mockResponse: ProblemStatementRefinementResponse = { refinedProblemStatement: 'Refined content' };
         (hyperionApiService.refineProblemStatementGlobally as jest.Mock).mockReturnValue(of(mockResponse));
 
-        // Force refinement path
         (comp as any).templateLoaded.set(true);
         (comp as any).templateProblemStatement.set('Template');
         (comp as any).currentProblemStatement.set('Original problem statement');
@@ -680,37 +638,27 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Full Refinement', ()
 
         expect(hyperionApiService.refineProblemStatementGlobally).toHaveBeenCalledWith(
             1,
-            expect.objectContaining({
-                problemStatementText: 'Original problem statement',
-                userPrompt: 'Improve clarity',
-            }),
+            expect.objectContaining({ problemStatementText: 'Original problem statement', userPrompt: 'Improve clarity' }),
         );
         expect(comp.showDiff()).toBeTrue();
         expect(successSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.success');
     });
 
-    it('should not submit when prompt is empty', () => {
+    it('should not submit when prompt is empty or whitespace', () => {
         comp.refinementPrompt.set('');
         comp.submitRefinement();
-
         expect(hyperionApiService.refineProblemStatementGlobally).not.toHaveBeenCalled();
-    });
 
-    it('should not submit when prompt is whitespace only', () => {
         comp.refinementPrompt.set('   ');
         comp.submitRefinement();
-
         expect(hyperionApiService.refineProblemStatementGlobally).not.toHaveBeenCalled();
     });
 
     it('should not submit when no courseId for full refinement', () => {
         comp.exercise = createMockExercise({ problemStatement: 'Test' });
         comp.exercise.course = undefined;
-
         comp.refinementPrompt.set('Improve');
         comp.submitRefinement();
-
-        // Service returns silently with success: false when courseId is missing
         expect(hyperionApiService.refineProblemStatementGlobally).not.toHaveBeenCalled();
     });
 
@@ -718,7 +666,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Full Refinement', ()
         const errorSpy = jest.spyOn(alertService, 'error');
         (hyperionApiService.refineProblemStatementGlobally as jest.Mock).mockReturnValue(throwError(() => new Error('API error')));
 
-        // Force refinement path
         (comp as any).templateLoaded.set(true);
         (comp as any).templateProblemStatement.set('Template');
         (comp as any).currentProblemStatement.set('Original problem statement');

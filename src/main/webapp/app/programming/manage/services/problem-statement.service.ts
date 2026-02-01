@@ -1,11 +1,9 @@
 import { Injectable, WritableSignal, inject } from '@angular/core';
-import { Observable, catchError, finalize, map, of, tap } from 'rxjs';
+import { Observable, OperatorFunction, catchError, finalize, map, of, tap } from 'rxjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileService } from 'app/shared/service/file.service';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ProblemStatementRefinementResponse } from 'app/openapi/model/problemStatementRefinementResponse';
-import { ProblemStatementGenerationResponse } from 'app/openapi/model/problemStatementGenerationResponse';
 import {
     InlineRefinementEvent,
     buildGenerationRequest,
@@ -16,57 +14,33 @@ import {
     isValidRefinementResponse,
 } from 'app/programming/manage/shared/problem-statement.utils';
 
-/**
- * Result of a problem statement generation operation.
- */
-export interface GenerationResult {
+/** Result of a problem statement operation (generation or refinement). */
+export interface OperationResult {
     success: boolean;
     content?: string;
 }
 
-/**
- * Result of a problem statement refinement operation.
- */
-export interface RefinementResult {
-    success: boolean;
-    content?: string;
-}
+// Type aliases for backward compatibility
+export type GenerationResult = OperationResult;
+export type RefinementResult = OperationResult;
 
 /**
  * Service that centralizes problem statement generation, refinement, and template loading operations.
- * This eliminates duplicate API subscription logic across components.
- *
- * Components call these methods and handle the result to update their local state.
- * The service handles:
- * - Request building
- * - API calls
- * - Response validation
- * - Alert messages (success/error)
- * - Loading state signal management (via finalize)
+ * Eliminates duplicate API subscription logic across components.
  */
-@Injectable({
-    providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class ProblemStatementService {
     private readonly fileService = inject(FileService);
     private readonly hyperionApiService = inject(HyperionProblemStatementApiService);
     private readonly alertService = inject(AlertService);
 
-    /**
-     * Loads the template problem statement for the given exercise.
-     * Updates the provided signals with the result.
-     *
-     * @param exercise The programming exercise to load the template for
-     * @param templateSignal Signal to update with the template content
-     * @param loadedSignal Signal to update with the loaded state
-     */
+    /** Loads the template problem statement for the given exercise. */
     loadTemplate(exercise: ProgrammingExercise | undefined, templateSignal: WritableSignal<string>, loadedSignal: WritableSignal<boolean>): void {
         if (!exercise?.programmingLanguage) {
             templateSignal.set('');
             loadedSignal.set(false);
             return;
         }
-
         this.fileService.getTemplateFile(exercise.programmingLanguage, exercise.projectType).subscribe({
             next: (template) => {
                 templateSignal.set(template);
@@ -79,104 +53,50 @@ export class ProblemStatementService {
         });
     }
 
-    /**
-     * Generates a problem statement using the provided prompt.
-     * Handles API call, validation, alerts, and loading state.
-     *
-     * @param exercise The programming exercise
-     * @param prompt The user's prompt for generation
-     * @param loadingSignal Signal to update during the operation
-     * @returns Observable of GenerationResult - caller handles the state updates
-     */
+    /** Generates a problem statement using the provided prompt. */
     generateProblemStatement(exercise: ProgrammingExercise | undefined, prompt: string, loadingSignal: WritableSignal<boolean>): Observable<GenerationResult> {
         const courseId = getCourseId(exercise);
-
         if (!courseId || !prompt?.trim()) {
             return of({ success: false });
         }
-
         loadingSignal.set(true);
-        const request = buildGenerationRequest(prompt);
-
-        return this.hyperionApiService.generateProblemStatement(courseId, request).pipe(
-            finalize(() => loadingSignal.set(false)),
-            map((response: ProblemStatementGenerationResponse) => {
-                const success = isValidGenerationResponse(response);
-                if (success) {
-                    this.alertService.success('artemisApp.programmingExercise.problemStatement.generationSuccess');
-                } else {
-                    this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
-                }
-                return {
-                    success,
-                    content: response?.draftProblemStatement,
-                };
-            }),
-            tap({
-                error: () => {
-                    this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
-                },
-            }),
-            catchError(() => of({ success: false })),
-        );
+        return this.hyperionApiService
+            .generateProblemStatement(courseId, buildGenerationRequest(prompt))
+            .pipe(
+                this.handleApiResponse(
+                    loadingSignal,
+                    'artemisApp.programmingExercise.problemStatement.generationSuccess',
+                    'artemisApp.programmingExercise.problemStatement.generationError',
+                    isValidGenerationResponse,
+                    (r) => r?.draftProblemStatement,
+                ),
+            );
     }
 
-    /**
-     * Refines a problem statement globally using the provided prompt.
-     * Handles API call, validation, alerts, and loading state.
-     *
-     * @param exercise The programming exercise
-     * @param currentContent The current problem statement content
-     * @param prompt The user's refinement prompt
-     * @param loadingSignal Signal to update during the operation
-     * @returns Observable of RefinementResult - caller handles the state updates
-     */
+    /** Refines a problem statement globally using the provided prompt. */
     refineGlobally(exercise: ProgrammingExercise | undefined, currentContent: string, prompt: string, loadingSignal: WritableSignal<boolean>): Observable<RefinementResult> {
         const courseId = getCourseId(exercise);
-
         if (!courseId || !prompt?.trim() || !currentContent?.trim()) {
             if (!currentContent?.trim()) {
                 this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
             }
             return of({ success: false });
         }
-
         loadingSignal.set(true);
-        const request = buildGlobalRefinementRequest(currentContent, prompt);
-
-        return this.hyperionApiService.refineProblemStatementGlobally(courseId, request).pipe(
-            finalize(() => loadingSignal.set(false)),
-            map((response: ProblemStatementRefinementResponse) => {
-                const success = isValidRefinementResponse(response);
-                if (success) {
-                    this.alertService.success('artemisApp.programmingExercise.inlineRefine.success');
-                } else {
-                    this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
-                }
-                return {
-                    success,
-                    content: response?.refinedProblemStatement,
-                };
-            }),
-            tap({
-                error: () => {
-                    this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
-                },
-            }),
-            catchError(() => of({ success: false })),
-        );
+        return this.hyperionApiService
+            .refineProblemStatementGlobally(courseId, buildGlobalRefinementRequest(currentContent, prompt))
+            .pipe(
+                this.handleApiResponse(
+                    loadingSignal,
+                    'artemisApp.programmingExercise.inlineRefine.success',
+                    'artemisApp.programmingExercise.inlineRefine.error',
+                    isValidRefinementResponse,
+                    (r) => r?.refinedProblemStatement,
+                ),
+            );
     }
 
-    /**
-     * Refines a problem statement with targeted selection-based instructions.
-     * Handles API call, validation, alerts, and loading state.
-     *
-     * @param exercise The programming exercise
-     * @param currentContent The current problem statement content
-     * @param event The inline refinement event with selection details
-     * @param loadingSignal Signal to update during the operation
-     * @returns Observable of RefinementResult - caller handles the state updates
-     */
+    /** Refines a problem statement with targeted selection-based instructions. */
     refineTargeted(
         exercise: ProgrammingExercise | undefined,
         currentContent: string,
@@ -184,35 +104,42 @@ export class ProblemStatementService {
         loadingSignal: WritableSignal<boolean>,
     ): Observable<RefinementResult> {
         const courseId = getCourseId(exercise);
-
         if (!courseId || !currentContent?.trim()) {
             this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
             return of({ success: false });
         }
-
         loadingSignal.set(true);
-        const request = buildTargetedRefinementRequest(currentContent, event);
+        return this.hyperionApiService
+            .refineProblemStatementTargeted(courseId, buildTargetedRefinementRequest(currentContent, event))
+            .pipe(
+                this.handleApiResponse(
+                    loadingSignal,
+                    'artemisApp.programmingExercise.inlineRefine.success',
+                    'artemisApp.programmingExercise.inlineRefine.error',
+                    isValidRefinementResponse,
+                    (r) => r?.refinedProblemStatement,
+                ),
+            );
+    }
 
-        return this.hyperionApiService.refineProblemStatementTargeted(courseId, request).pipe(
-            finalize(() => loadingSignal.set(false)),
-            map((response: ProblemStatementRefinementResponse) => {
-                const success = isValidRefinementResponse(response);
-                if (success) {
-                    this.alertService.success('artemisApp.programmingExercise.inlineRefine.success');
-                } else {
-                    this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
-                }
-                return {
-                    success,
-                    content: response?.refinedProblemStatement,
-                };
-            }),
-            tap({
-                error: () => {
-                    this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
-                },
-            }),
-            catchError(() => of({ success: false })),
-        );
+    /** Shared pipe operator for handling API responses with consistent loading, alerts, and error handling. */
+    private handleApiResponse<T>(
+        loadingSignal: WritableSignal<boolean>,
+        successKey: string,
+        errorKey: string,
+        isValid: (response: T) => boolean,
+        getContent: (response: T) => string | undefined,
+    ): OperatorFunction<T, OperationResult> {
+        return (source) =>
+            source.pipe(
+                finalize(() => loadingSignal.set(false)),
+                map((response) => {
+                    const success = isValid(response);
+                    this.alertService[success ? 'success' : 'error'](success ? successKey : errorKey);
+                    return { success, content: getContent(response) };
+                }),
+                tap({ error: () => this.alertService.error(errorKey) }),
+                catchError(() => of({ success: false })),
+            );
     }
 }
