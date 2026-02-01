@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -22,13 +23,19 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.dto.ArtifactLocationDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionConsistencyCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -76,6 +83,8 @@ public class HyperionCodeGenerationExecutionService {
 
     private final HyperionTestRepositoryService testStrategy;
 
+    private final HyperionConsistencyCheckService consistencyCheckService;
+
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
@@ -98,7 +107,7 @@ public class HyperionCodeGenerationExecutionService {
             ResultRepository resultRepository, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, HyperionProgrammingExerciseContextRendererService repositoryStructureService,
             HyperionSolutionRepositoryService solutionStrategy, HyperionTemplateRepositoryService templateStrategy, HyperionTestRepositoryService testStrategy,
-            ProgrammingSubmissionService programmingSubmissionService) {
+            ProgrammingSubmissionService programmingSubmissionService, HyperionConsistencyCheckService consistencyCheckService) {
         this.defaultBranch = defaultBranch;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
@@ -113,6 +122,7 @@ public class HyperionCodeGenerationExecutionService {
         this.templateStrategy = templateStrategy;
         this.testStrategy = testStrategy;
         this.programmingSubmissionService = programmingSubmissionService;
+        this.consistencyCheckService = consistencyCheckService;
     }
 
     /**
@@ -139,7 +149,7 @@ public class HyperionCodeGenerationExecutionService {
      * @return repository setup result containing repository and commit hash
      */
     private RepositorySetupResult setupRepository(ProgrammingExercise exercise, RepositoryType repositoryType) {
-        var repositoryUri = exercise.getRepositoryURI(repositoryType);
+        LocalVCRepositoryUri repositoryUri = exercise.getRepositoryURI(repositoryType);
         if (repositoryUri == null) {
             log.error("Could not get {} repository URI for exercise {}", repositoryType, exercise.getId());
             return new RepositorySetupResult(null, null, false);
@@ -283,18 +293,19 @@ public class HyperionCodeGenerationExecutionService {
         }
         log.info("Setup Repo success");
 
-        var repositoryUri = exercise.getRepositoryURI(repositoryType);
+        LocalVCRepositoryUri repositoryUri = exercise.getRepositoryURI(repositoryType);
         String lastBuildLogs = null;
         Result result = null;
         String lastCommitHash = null;
         int attemptsUsed = 0;
+        String consistencyIssues = buildConsistencyIssuesPrompt(exercise);
 
         try {
             HyperionCodeGenerationService strategy = resolveStrategy(repositoryType);
             for (int i = 0; i < MAX_ITERATIONS; i++) {
                 attemptsUsed = i + 1;
                 String repositoryStructure = repositoryStructureService.getRepositoryStructure(setupResult.repository());
-                List<GeneratedFileDTO> generatedFiles = strategy.generateCode(user, exercise, lastBuildLogs, repositoryStructure);
+                List<GeneratedFileDTO> generatedFiles = strategy.generateCode(user, exercise, lastBuildLogs, repositoryStructure, consistencyIssues);
 
                 if (generatedFiles != null && !generatedFiles.isEmpty()) {
 
@@ -352,6 +363,67 @@ public class HyperionCodeGenerationExecutionService {
     }
 
     /**
+     * Builds a prompt-friendly summary of consistency check issues for the given exercise.
+     *
+     * @param exercise the programming exercise to analyze
+     * @return formatted consistency issues or {@code "None"} when no issues are found or the check fails
+     */
+    private String buildConsistencyIssuesPrompt(ProgrammingExercise exercise) {
+        try {
+            ConsistencyCheckResponseDTO response = consistencyCheckService.checkConsistency(exercise);
+            if (response == null || response.issues() == null || response.issues().isEmpty()) {
+                return "None";
+            }
+
+            StringBuilder builder = new StringBuilder();
+            int index = 1;
+            for (ConsistencyIssueDTO issue : response.issues()) {
+                if (issue == null) {
+                    continue;
+                }
+                builder.append(index++).append(". [").append(issue.severity()).append("] ").append(issue.category()).append(": ").append(issue.description()).append('\n');
+                if (issue.suggestedFix() != null && !issue.suggestedFix().isBlank()) {
+                    builder.append("   Suggested fix: ").append(issue.suggestedFix()).append('\n');
+                }
+                if (issue.relatedLocations() != null && !issue.relatedLocations().isEmpty()) {
+                    String locations = issue.relatedLocations().stream().filter(Objects::nonNull).map(this::formatLocation).filter(l -> !l.isBlank())
+                            .collect(Collectors.joining("; "));
+                    if (!locations.isBlank()) {
+                        builder.append("   Locations: ").append(locations).append('\n');
+                    }
+                }
+            }
+            return builder.toString().trim();
+        }
+        catch (RuntimeException e) {
+            log.warn("Consistency check failed for exercise {}: {}", exercise.getId(), e.getMessage(), e);
+            return "None";
+        }
+    }
+
+    /**
+     * Formats an artifact location for prompt inclusion.
+     *
+     * @param location the artifact location data
+     * @return formatted location string
+     */
+    private String formatLocation(ArtifactLocationDTO location) {
+        if (location == null) {
+            return "";
+        }
+        // Default to problem_statement.md when the location doesn't specify a concrete file path.
+        String path = location.filePath() != null && !location.filePath().isBlank() ? location.filePath() : "problem_statement.md";
+        String lineSuffix = "";
+        if (location.startLine() != null && location.endLine() != null) {
+            lineSuffix = ":" + location.startLine() + "-" + location.endLine();
+        }
+        else if (location.startLine() != null) {
+            lineSuffix = ":" + location.startLine();
+        }
+        return location.type() + ":" + path + lineSuffix;
+    }
+
+    /**
      * Waits until the remote head matches the expected commit hash or timeout.
      *
      * @param repositoryUri target repository
@@ -384,8 +456,10 @@ public class HyperionCodeGenerationExecutionService {
      */
     private Result waitForBuildResult(ProgrammingExercise exercise, String commitHash, RepositoryType repositoryType) throws InterruptedException {
         long startTime = System.currentTimeMillis();
-        var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElse(null);
-        var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElse(null);
+        TemplateProgrammingExerciseParticipation templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())
+                .orElse(null);
+        SolutionProgrammingExerciseParticipation solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())
+                .orElse(null);
         ProgrammingExerciseParticipation participation = switch (repositoryType) {
             case TEMPLATE -> templateParticipation;
             case SOLUTION -> solutionParticipation;

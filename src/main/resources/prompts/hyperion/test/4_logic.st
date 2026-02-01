@@ -13,6 +13,11 @@ Your task is to implement the core logic for each test method based on the testi
 **Current Repository Structure:**
 {{repositoryStructure}}
 
+**Consistency Check Issues (if any):**
+{{consistencyIssues}}
+
+Use the issues above to keep the tests consistent with the problem statement and repositories.
+
 **Important:** Only modify files in the `/test/` directory. Do not change source code, build files, or configuration files.
 First, think step-by-step for each test method.
 1.  **Understand the test case:** Read the method's docstring and the relevant part of the testing plan.

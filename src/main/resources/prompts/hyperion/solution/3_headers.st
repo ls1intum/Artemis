@@ -13,6 +13,11 @@ Your task is to generate the boilerplate code for each file based on the solutio
 **Current Repository Structure:**
 {{repositoryStructure}}
 
+**Consistency Check Issues (if any):**
+{{consistencyIssues}}
+
+Use the issues above to align class and method headers with the problem statement and repositories.
+
 **Important:** Only modify files in the `/src/` directory. Do not change build files, write tests, configuration files, or any files outside the source directory.
 First, think step-by-step for each file.
 1.  **Create classes:** For each source file, define the public class.

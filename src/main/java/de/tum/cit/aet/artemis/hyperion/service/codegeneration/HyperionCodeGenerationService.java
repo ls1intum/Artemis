@@ -57,14 +57,16 @@ public abstract class HyperionCodeGenerationService {
      * @param exercise            the programming exercise to generate code for
      * @param previousBuildLogs   build failure logs from previous attempts for iterative improvement
      * @param repositoryStructure tree-format representation of current repository structure
+     * @param consistencyIssues   formatted consistency issues to inform the generation prompts
      * @return list of generated code files
      * @throws NetworkingException if AI service communication fails
      */
-    public List<GeneratedFileDTO> generateCode(User user, ProgrammingExercise exercise, String previousBuildLogs, String repositoryStructure) throws NetworkingException {
-        var solutionPlanResponse = generateSolutionPlan(user, exercise, previousBuildLogs, repositoryStructure);
-        defineFileStructure(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure);
-        generateClassAndMethodHeaders(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure);
-        var coreLogicResponse = generateCoreLogic(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure);
+    public List<GeneratedFileDTO> generateCode(User user, ProgrammingExercise exercise, String previousBuildLogs, String repositoryStructure, String consistencyIssues)
+            throws NetworkingException {
+        CodeGenerationResponseDTO solutionPlanResponse = generateSolutionPlan(user, exercise, previousBuildLogs, repositoryStructure, consistencyIssues);
+        defineFileStructure(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure, consistencyIssues);
+        generateClassAndMethodHeaders(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure, consistencyIssues);
+        CodeGenerationResponseDTO coreLogicResponse = generateCoreLogic(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure, consistencyIssues);
 
         return coreLogicResponse.getFiles();
     }
@@ -81,7 +83,7 @@ public abstract class HyperionCodeGenerationService {
     protected CodeGenerationResponseDTO callChatClient(String prompt, Map<String, Object> templateVariables) throws NetworkingException {
         String rendered = templates.renderObject(prompt, templateVariables);
         try {
-            var response = chatClient.prompt().user(rendered).call().entity(CodeGenerationResponseDTO.class);
+            CodeGenerationResponseDTO response = chatClient.prompt().user(rendered).call().entity(CodeGenerationResponseDTO.class);
             return response;
         }
         catch (TransientAiException e) {
@@ -100,11 +102,12 @@ public abstract class HyperionCodeGenerationService {
      * @param exercise            the programming exercise to analyze
      * @param previousBuildLogs   build failure logs from previous attempts for correction
      * @param repositoryStructure tree-format representation of current repository structure
+     * @param consistencyIssues   formatted consistency issues to inform the generation prompts
      * @return AI response containing the solution plan
      * @throws NetworkingException if AI service communication fails
      */
-    protected abstract CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, String previousBuildLogs, String repositoryStructure)
-            throws NetworkingException;
+    protected abstract CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, String previousBuildLogs, String repositoryStructure,
+            String consistencyIssues) throws NetworkingException;
 
     /**
      * Defines the file structure and organization for the solution.
@@ -114,11 +117,12 @@ public abstract class HyperionCodeGenerationService {
      * @param exercise            the programming exercise to structure
      * @param solutionPlan        the high-level solution plan from step 1
      * @param repositoryStructure tree-format representation of current repository structure
+     * @param consistencyIssues   formatted consistency issues to inform the generation prompts
      * @return AI response containing file structure definitions
      * @throws NetworkingException if AI service communication fails
      */
-    protected abstract CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure)
-            throws NetworkingException;
+    protected abstract CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure,
+            String consistencyIssues) throws NetworkingException;
 
     /**
      * Generates class definitions and method signatures.
@@ -128,11 +132,12 @@ public abstract class HyperionCodeGenerationService {
      * @param exercise            the programming exercise to create headers for
      * @param solutionPlan        the high-level solution plan from step 1
      * @param repositoryStructure tree-format representation of current repository structure
+     * @param consistencyIssues   formatted consistency issues to inform the generation prompts
      * @return AI response containing class and method headers
      * @throws NetworkingException if AI service communication fails
      */
-    protected abstract CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure)
-            throws NetworkingException;
+    protected abstract CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure,
+            String consistencyIssues) throws NetworkingException;
 
     /**
      * Generates the core implementation logic for the solution.
@@ -142,11 +147,12 @@ public abstract class HyperionCodeGenerationService {
      * @param exercise            the programming exercise to implement
      * @param solutionPlan        the high-level solution plan from step 1
      * @param repositoryStructure tree-format representation of current repository structure
+     * @param consistencyIssues   formatted consistency issues to inform the generation prompts
      * @return AI response containing complete implementation with generated files
      * @throws NetworkingException if AI service communication fails
      */
-    protected abstract CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure)
-            throws NetworkingException;
+    protected abstract CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure,
+            String consistencyIssues) throws NetworkingException;
 
     /**
      * Returns the repository type that this strategy generates code for.

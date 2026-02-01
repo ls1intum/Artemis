@@ -27,7 +27,14 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
+import de.tum.cit.aet.artemis.hyperion.domain.ArtifactType;
+import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
+import de.tum.cit.aet.artemis.hyperion.domain.Severity;
+import de.tum.cit.aet.artemis.hyperion.dto.ArtifactLocationDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionConsistencyCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -88,6 +95,9 @@ class HyperionCodeGenerationExecutionServiceTest {
     @Mock
     private ProgrammingSubmissionService programmingSubmissionService;
 
+    @Mock
+    private HyperionConsistencyCheckService consistencyCheckService;
+
     private HyperionCodeGenerationExecutionService service;
 
     private User user;
@@ -99,7 +109,8 @@ class HyperionCodeGenerationExecutionServiceTest {
         MockitoAnnotations.openMocks(this);
         this.service = new HyperionCodeGenerationExecutionService("main", gitService, repositoryService, solutionProgrammingExerciseParticipationRepository,
                 templateProgrammingExerciseParticipationRepository, programmingSubmissionRepository, resultRepository, continuousIntegrationTriggerService,
-                programmingExerciseParticipationService, repositoryStructureService, solutionStrategy, templateStrategy, testStrategy, programmingSubmissionService);
+                programmingExerciseParticipationService, repositoryStructureService, solutionStrategy, templateStrategy, testStrategy, programmingSubmissionService,
+                consistencyCheckService);
 
         this.user = new User();
         user.setLogin("testuser");
@@ -179,6 +190,30 @@ class HyperionCodeGenerationExecutionServiceTest {
         Object result = ReflectionTestUtils.invokeMethod(service, "setupRepository", exercise, RepositoryType.SOLUTION);
 
         assertThat(result).hasFieldOrPropertyWithValue("success", false);
+    }
+
+    @Test
+    void buildConsistencyIssuesPrompt_withNoIssues_returnsNone() {
+        when(consistencyCheckService.checkConsistency(exercise)).thenReturn(new ConsistencyCheckResponseDTO(List.of()));
+
+        String result = ReflectionTestUtils.invokeMethod(service, "buildConsistencyIssuesPrompt", exercise);
+
+        assertThat(result).isEqualTo("None");
+    }
+
+    @Test
+    void buildConsistencyIssuesPrompt_withLocations_formatsAndDefaultsMissingPath() {
+        ArtifactLocationDTO problemStatementLocation = new ArtifactLocationDTO(ArtifactType.PROBLEM_STATEMENT, "", 1, 2);
+        ArtifactLocationDTO templateLocation = new ArtifactLocationDTO(ArtifactType.TEMPLATE_REPOSITORY, "src/Main.java", 5, 7);
+        ConsistencyIssueDTO issue = new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_RETURN_TYPE_MISMATCH, "desc", "fix",
+                List.of(problemStatementLocation, templateLocation));
+
+        when(consistencyCheckService.checkConsistency(exercise)).thenReturn(new ConsistencyCheckResponseDTO(List.of(issue)));
+
+        String result = ReflectionTestUtils.invokeMethod(service, "buildConsistencyIssuesPrompt", exercise);
+
+        assertThat(result).isEqualTo(
+                "1. [HIGH] METHOD_RETURN_TYPE_MISMATCH: desc\n   Suggested fix: fix\n   Locations: PROBLEM_STATEMENT:problem_statement.md:1-2; TEMPLATE_REPOSITORY:src/Main.java:5-7");
     }
 
     @Test

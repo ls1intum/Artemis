@@ -13,6 +13,11 @@ Your task is to create a detailed testing plan based on the problem statement an
 **Current Repository Structure:**
 {{repositoryStructure}}
 
+**Consistency Check Issues (if any):**
+{{consistencyIssues}}
+
+Use the issues above to align the test plan with the problem statement and repositories.
+
 **Important:** Only modify files in the `/test/` directory. Do not change source code, build files, or configuration files.
 
 **Previous Build Errors:**

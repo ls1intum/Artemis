@@ -10,6 +10,11 @@ Based on the following testing plan and programming language, determine the nece
 **Current Repository Structure:**
 {{repositoryStructure}}
 
+**Consistency Check Issues (if any):**
+{{consistencyIssues}}
+
+Use the issues above to align the test file structure with the problem statement and repositories.
+
 **Important:** Only modify files in the `/test/` directory. Do not change source code, build files, or configuration files.
 First, think step-by-step.
 1.  **Analyze the plan:** Review the test classes and cases mentioned in the testing plan.

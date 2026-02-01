@@ -13,6 +13,11 @@ Your task is to implement the core logic for each method based on the solution p
 **Current Repository Structure:**
 {{repositoryStructure}}
 
+**Consistency Check Issues (if any):**
+{{consistencyIssues}}
+
+Use the issues above to keep the implementation consistent with the problem statement and repositories.
+
 **Important:** Only modify files in the `/src/` directory. Do not change build files, write tests, configuration files, or any files outside the source directory.
 First, think step-by-step for each method.
 1.  **Understand the goal:** Read the method's docstring and the relevant part of the solution plan.

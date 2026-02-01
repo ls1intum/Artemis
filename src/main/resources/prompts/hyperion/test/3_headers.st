@@ -13,6 +13,11 @@ Your task is to generate the boilerplate code for each test file based on the te
 **Current Repository Structure:**
 {{repositoryStructure}}
 
+**Consistency Check Issues (if any):**
+{{consistencyIssues}}
+
+Use the issues above to align test headers with the problem statement and repositories.
+
 **Important:** Only modify files in the `/test/` directory. Do not change source code, build files, or configuration files.
 First, think step-by-step for each test file.
 1.  **Create test classes:** For each source file, define the public test class.

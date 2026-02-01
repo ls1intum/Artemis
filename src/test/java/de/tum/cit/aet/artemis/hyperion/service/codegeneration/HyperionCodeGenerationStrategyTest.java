@@ -73,7 +73,7 @@ class HyperionCodeGenerationServiceTest {
 
         setupMockTemplateAndChatResponses(coreLogicJson);
 
-        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, "build logs", "repo structure");
+        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, "build logs", "repo structure", "consistency issues");
 
         assertThat(result).hasSize(2);
         assertThat(result.get(0).path()).isEqualTo("Sort.java");
@@ -92,7 +92,7 @@ class HyperionCodeGenerationServiceTest {
         String coreLogicJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Test.java\",\"content\":\"class Test {}\"}]}";
         setupMockTemplateAndChatResponses(coreLogicJson);
 
-        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, null, "repo structure");
+        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, null, "repo structure", "consistency issues");
 
         assertThat(result).hasSize(1);
         verify(chatModel, times(4)).call(any(Prompt.class));
@@ -103,7 +103,7 @@ class HyperionCodeGenerationServiceTest {
         String coreLogicJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Test.java\",\"content\":\"class Test {}\"}]}";
         setupMockTemplateAndChatResponses(coreLogicJson);
 
-        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, "logs", null);
+        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, "logs", null, "consistency issues");
 
         assertThat(result).hasSize(1);
         verify(chatModel, times(4)).call(any(Prompt.class));
@@ -173,28 +173,29 @@ class HyperionCodeGenerationServiceTest {
         }
 
         @Override
-        protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, String previousBuildLogs, String repositoryStructure)
-                throws NetworkingException {
+        protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, String previousBuildLogs, String repositoryStructure,
+                String consistencyIssues) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "plan");
             return callChatClient("test-plan-template", variables);
         }
 
         @Override
-        protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure)
+        protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure, String consistencyIssues)
                 throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "structure");
             return callChatClient("test-structure-template", variables);
         }
 
         @Override
-        protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure)
-                throws NetworkingException {
+        protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure,
+                String consistencyIssues) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "headers");
             return callChatClient("test-headers-template", variables);
         }
 
         @Override
-        protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure) throws NetworkingException {
+        protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure, String consistencyIssues)
+                throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "logic");
             return callChatClient("test-logic-template", variables);
         }

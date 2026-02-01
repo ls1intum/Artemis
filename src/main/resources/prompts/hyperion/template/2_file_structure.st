@@ -10,6 +10,11 @@ Based on the following template plan and programming language, determine the nec
 **Current Repository Structure:**
 {{repositoryStructure}}
 
+**Consistency Check Issues (if any):**
+{{consistencyIssues}}
+
+Use the issues above to align the file structure with the problem statement and repositories.
+
 **Important:** Only modify files in the `/src/` directory. Do not change build files, write tests, configuration files, or any files outside the source directory.
 First, think step-by-step.
 1.  **Analyze the plan:** Review the template structure mentioned in the template plan - what classes, interfaces, and components should be scaffolded for students.

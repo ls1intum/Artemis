@@ -13,6 +13,11 @@ Your task is to create a detailed plan for generating template code that provide
 **Current Repository Structure:**
 {{repositoryStructure}}
 
+**Consistency Check Issues (if any):**
+{{consistencyIssues}}
+
+Use the issues above to align the template plan with the problem statement and repositories.
+
 **Important:** Only modify files in the `/src/` directory. Do not change build files, write tests, configuration files, or any files outside the source directory.
 
 **Previous Build Errors:**
