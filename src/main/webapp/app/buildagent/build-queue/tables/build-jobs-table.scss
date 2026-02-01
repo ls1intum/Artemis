@@ -86,10 +86,11 @@
         }
     }
 
-    // Ensure interactive elements (buttons, links) appear above the stretched link
+    // Ensure interactive elements (buttons, links, result badges) appear above the stretched link
     a:not(.stretched-row-link),
     button,
-    .btn {
+    .btn,
+    jhi-result {
         position: relative;
         z-index: 2;
     }
