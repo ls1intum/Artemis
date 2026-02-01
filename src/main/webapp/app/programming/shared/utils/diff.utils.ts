@@ -625,6 +625,27 @@ function hashLine(line: string): number {
     return hash;
 }
 
+/**
+ * Converts Monaco line changes to a LineChange object.
+ * @param monacoLineChanges The Monaco line changes to convert.
+ * @returns The converted LineChange object with added and removed line counts.
+ */
+export function convertMonacoLineChanges(monacoLineChanges: monaco.editor.ILineChange[]): LineChange {
+    const lineChange: LineChange = { addedLineCount: 0, removedLineCount: 0 };
+    if (!monacoLineChanges) {
+        return lineChange;
+    }
+
+    for (const change of monacoLineChanges) {
+        const addedLines = change.modifiedEndLineNumber >= change.modifiedStartLineNumber ? change.modifiedEndLineNumber - change.modifiedStartLineNumber + 1 : 0;
+        const removedLines = change.originalEndLineNumber >= change.originalStartLineNumber ? change.originalEndLineNumber - change.originalStartLineNumber + 1 : 0;
+        lineChange.addedLineCount += addedLines;
+        lineChange.removedLineCount += removedLines;
+    }
+
+    return lineChange;
+}
+
 export const __diffUtilsTesting = {
     calculateStringSimilarity,
     jaccardNGramSimilarity,
