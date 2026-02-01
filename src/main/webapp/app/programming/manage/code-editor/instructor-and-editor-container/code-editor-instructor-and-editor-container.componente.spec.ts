@@ -217,6 +217,24 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         expect(comp.isCheckingConsistency()).toBeFalse();
     });
 
+    it('updates exercise problem statement on instruction change', fakeAsync(() => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        comp.exercise = exercise;
+
+        let previewCount = 0;
+        const subscription = comp.previewEvents$.subscribe(() => {
+            previewCount += 1;
+        });
+
+        comp.onInstructionChanged('Updated statement');
+        expect(exercise.problemStatement).toBe('Updated statement');
+
+        tick(201);
+        expect(previewCount).toBe(1);
+
+        subscription.unsubscribe();
+    }));
+
     it('returns right icon', () => {
         expect(comp.getSeverityIcon('HIGH')).toBe(faCircleExclamation);
         expect(comp.getSeverityIcon('MEDIUM')).toBe(faTriangleExclamation);

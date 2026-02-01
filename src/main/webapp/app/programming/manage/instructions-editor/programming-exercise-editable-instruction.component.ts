@@ -348,8 +348,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         if (!this.editMode() || this.problemStatementBinding) {
             return;
         }
-        this.teardownProblemStatementSync();
-        this.problemStatementSyncState = this.problemStatementSyncService.init(exerciseId, initialText);
         if (!this.markdownEditorMonaco?.monacoEditor) {
             return;
         }
@@ -358,6 +356,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         if (!model || !editorInstance) {
             return;
         }
+        this.teardownProblemStatementSync();
+        this.problemStatementSyncState = this.problemStatementSyncService.init(exerciseId, initialText);
         const binding = new MonacoBinding(this.problemStatementSyncState.text, model, new Set([editorInstance]), this.problemStatementSyncState.awareness);
         // Monaco may or may not dispose its model and call destroy(); this is a guard against a second call from ngOnDestroy.
         const originalDestroy = binding.destroy.bind(binding);

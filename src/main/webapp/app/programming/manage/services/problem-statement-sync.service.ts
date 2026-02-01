@@ -19,7 +19,6 @@ import {
     encodeUint8ArrayToBase64,
     ensureRemoteSelectionStyle,
     getColorForClientId,
-    normalizeYjsOrigin,
 } from 'app/programming/manage/services/yjs-utils';
 
 /**
@@ -176,12 +175,12 @@ export class ProblemStatementSyncService {
         const doc = new Y.Doc();
         const text = doc.getText('problem-statement');
         const awareness = new Awareness(doc);
-        doc.on('update', (update, origin: unknown) => {
+        doc.on('update', (update, origin: ProblemStatementSyncOrigin | unknown) => {
             if (!this.exerciseId) {
                 return;
             }
-            const originTag = normalizeYjsOrigin(origin);
-            if (originTag === ProblemStatementSyncOrigin.Remote || originTag === ProblemStatementSyncOrigin.Init) {
+            // do not rebroadcast updates made from remote
+            if (origin === ProblemStatementSyncOrigin.Remote) {
                 return;
             }
             const updateEvent: ProblemStatementSyncUpdateEvent = {
@@ -191,9 +190,8 @@ export class ProblemStatementSyncService {
             };
             this.syncService.sendSynchronizationUpdate(this.exerciseId, updateEvent);
         });
-        awareness.on('update', ({ added, updated, removed }: AwarenessUpdatePayload, origin: unknown) => {
-            const originTag = normalizeYjsOrigin(origin);
-            if (!this.exerciseId || originTag === ProblemStatementSyncOrigin.Remote) {
+        awareness.on('update', ({ added, updated, removed }: AwarenessUpdatePayload, origin: ProblemStatementSyncOrigin | unknown) => {
+            if (!this.exerciseId || origin === ProblemStatementSyncOrigin.Remote) {
                 return;
             }
             const update = encodeAwarenessUpdate(awareness, [...added, ...updated, ...removed]);
@@ -259,14 +257,15 @@ export class ProblemStatementSyncService {
             if (this.yDoc) {
                 Y.applyUpdate(this.yDoc, update, ProblemStatementSyncOrigin.Remote);
             }
-        } else if (this.pendingInitialSync.bufferedUpdates.length && this.yDoc) {
-            this.pendingInitialSync.bufferedUpdates.forEach((update) => {
-                Y.applyUpdate(this.yDoc!, update, ProblemStatementSyncOrigin.Remote);
-            });
         } else if (this.fallbackInitialContent && this.yDoc && this.yText) {
             this.yDoc.transact(() => {
                 this.yText?.insert(0, this.fallbackInitialContent);
             }, ProblemStatementSyncOrigin.Seed);
+        }
+        if (this.pendingInitialSync.bufferedUpdates.length && this.yDoc) {
+            this.pendingInitialSync.bufferedUpdates.forEach((update) => {
+                Y.applyUpdate(this.yDoc!, update, ProblemStatementSyncOrigin.Remote);
+            });
         }
         this.awaitingInitialSync = false;
         if (this.pendingInitialSync.timeoutId) {

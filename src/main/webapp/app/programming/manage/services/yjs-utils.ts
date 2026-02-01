@@ -22,15 +22,6 @@ export type AwarenessUpdatePayload = {
     removed: number[];
 };
 
-export type YjsOrigin = 'remote' | 'init' | 'local' | 'timeout' | 'unknown';
-
-export const normalizeYjsOrigin = (origin: unknown): YjsOrigin => {
-    if (origin === 'remote' || origin === 'init' || origin === 'local' || origin === 'timeout') {
-        return origin;
-    }
-    return 'unknown';
-};
-
 type RemoteClientStyle = {
     color: string;
     name?: string;
@@ -95,7 +86,7 @@ const renderRemoteSelectionStyles = () => {
     box-shadow:inset 0 0 0 9999px ${safeColor}22;
 }
 .yRemoteSelectionHead-${clientId} {
-    border-left:2px solid ${safeColor};
+    border-right:2px solid ${safeColor};
     position:relative;
 }
 .yRemoteSelectionHead-${clientId}::after {

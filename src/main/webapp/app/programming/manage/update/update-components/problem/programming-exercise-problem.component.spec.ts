@@ -171,4 +171,18 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         expect(unsubscribeSpy).toHaveBeenCalled();
     });
+
+    it('updates exercise and emits changes on instruction change', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        fixture.componentRef.setInput('programmingExercise', exercise);
+
+        const problemStatementSpy = jest.spyOn(comp.problemStatementChange, 'emit');
+        const programmingExerciseSpy = jest.spyOn(comp.programmingExerciseChange, 'emit');
+
+        comp.onInstructionChange('Updated statement');
+
+        expect(exercise.problemStatement).toBe('Updated statement');
+        expect(problemStatementSpy).toHaveBeenCalledWith('Updated statement');
+        expect(programmingExerciseSpy).toHaveBeenCalledWith(exercise);
+    });
 });
