@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,6 +45,10 @@ public class EurekaHazelcastDiscoveryStrategy extends AbstractDiscoveryStrategy 
      */
     private static final Pattern ADDRESS_PATTERN = Pattern.compile("^(?:\\[([^]]+)]|([^:]+)):(\\d+)$");
 
+    private static final int MAX_DISCOVERY_RETRIES = 3;
+
+    private static final long DISCOVERY_RETRY_DELAY_MILLIS = 1000L;
+
     private final EurekaInstanceHelper eurekaInstanceHelper;
 
     /**
@@ -73,9 +78,9 @@ public class EurekaHazelcastDiscoveryStrategy extends AbstractDiscoveryStrategy 
         }
 
         log.info("EurekaInstanceHelper is available, querying for core node addresses");
-        List<String> addresses = eurekaInstanceHelper.discoverCoreNodeAddresses();
+        List<String> addresses = discoverCoreNodesWithRetry();
         if (addresses.isEmpty()) {
-            log.warn("No core nodes discovered from service registry - returning empty list which will cause Hazelcast to use default addresses");
+            log.warn("No core nodes discovered from service registry after {} attempt(s). Returning empty list.", MAX_DISCOVERY_RETRIES);
             return Collections.emptyList();
         }
 
@@ -83,6 +88,31 @@ public class EurekaHazelcastDiscoveryStrategy extends AbstractDiscoveryStrategy 
         List<DiscoveryNode> nodes = addresses.stream().map(this::parseAddress).filter(Objects::nonNull).toList();
         log.info("Returning {} valid discovery nodes to Hazelcast", nodes.size());
         return nodes;
+    }
+
+    private List<String> discoverCoreNodesWithRetry() {
+        List<String> addresses = List.of();
+        for (int attempt = 1; attempt <= MAX_DISCOVERY_RETRIES; attempt++) {
+            addresses = eurekaInstanceHelper.discoverCoreNodeAddresses();
+            if (!addresses.isEmpty()) {
+                if (attempt > 1) {
+                    log.info("Discovered core nodes after {} attempt(s)", attempt);
+                }
+                return addresses;
+            }
+            if (attempt < MAX_DISCOVERY_RETRIES) {
+                log.info("No core nodes discovered yet, retrying in {} ms (attempt {}/{})", DISCOVERY_RETRY_DELAY_MILLIS, attempt, MAX_DISCOVERY_RETRIES);
+                try {
+                    TimeUnit.MILLISECONDS.sleep(DISCOVERY_RETRY_DELAY_MILLIS);
+                }
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    log.warn("Discovery retry interrupted; returning empty list");
+                    return List.of();
+                }
+            }
+        }
+        return addresses;
     }
 
     /**

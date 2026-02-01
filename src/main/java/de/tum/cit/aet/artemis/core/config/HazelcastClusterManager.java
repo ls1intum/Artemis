@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
-import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -131,23 +130,18 @@ public class HazelcastClusterManager {
             return;
         }
 
-        var hazelcastMemberAddresses = hazelcastInstance.getCluster().getMembers().stream().map(member -> {
-            try {
-                return member.getAddress().getInetAddress().getHostAddress();
-            }
-            catch (UnknownHostException e) {
-                return "unknown";
-            }
-        }).collect(Collectors.toSet());
+        var hazelcastMemberAddresses = hazelcastInstance.getCluster().getMembers().stream()
+                .map(member -> eurekaInstanceHelper.formatAddressForHazelcast(member.getAddress().getHost(), String.valueOf(member.getAddress().getPort())))
+                .collect(Collectors.toSet());
 
         var instances = eurekaInstanceHelper.getServiceInstances();
         // Filter to only include cluster members (not clients like build agents)
         var clusterMemberInstances = instances.stream().filter(eurekaInstanceHelper::isClusterMember).toList();
 
-        // Build set of registry member addresses using the Hazelcast host metadata for comparison
+        // Build set of registry member addresses using the Hazelcast host/port metadata for comparison
         Set<String> registryMemberAddresses = new HashSet<>();
         for (ServiceInstance instance : clusterMemberInstances) {
-            registryMemberAddresses.add(eurekaInstanceHelper.getHazelcastHost(instance));
+            registryMemberAddresses.add(eurekaInstanceHelper.formatInstanceAddress(instance));
         }
 
         log.debug("Current {} Registry cluster members: {}", clusterMemberInstances.size(), registryMemberAddresses);
@@ -155,8 +149,8 @@ public class HazelcastClusterManager {
 
         // Check for members in registry but not in Hazelcast (need to add)
         for (ServiceInstance instance : clusterMemberInstances) {
-            var instanceHazelcastHost = eurekaInstanceHelper.getHazelcastHost(instance);
-            if (!hazelcastMemberAddresses.contains(instanceHazelcastHost)) {
+            var instanceHazelcastAddress = eurekaInstanceHelper.formatInstanceAddress(instance);
+            if (!hazelcastMemberAddresses.contains(instanceHazelcastAddress)) {
                 addHazelcastClusterMember(instance, hazelcastInstance.getConfig());
             }
         }
@@ -164,12 +158,12 @@ public class HazelcastClusterManager {
         // Check for members in Hazelcast but not in registry (potentially stale/zombie members)
         // This can indicate a member that crashed without proper deregistration
         for (String hazelcastMember : hazelcastMemberAddresses) {
-            if (!"unknown".equals(hazelcastMember) && !registryMemberAddresses.contains(hazelcastMember)) {
+            if (!registryMemberAddresses.contains(hazelcastMember)) {
                 // Don't log warning for own address - get own host from first service instance that matches current port
                 var currentInstance = instances.stream().filter(eurekaInstanceHelper::isCurrentInstance).findFirst();
                 if (currentInstance.isPresent()) {
-                    String ownHost = eurekaInstanceHelper.getHazelcastHost(currentInstance.get());
-                    if (!hazelcastMember.equals(ownHost)) {
+                    String ownAddress = eurekaInstanceHelper.formatInstanceAddress(currentInstance.get());
+                    if (!hazelcastMember.equals(ownAddress)) {
                         log.warn("Hazelcast member {} is not registered in service registry - may be a stale/zombie member. "
                                 + "If this persists, the member may have crashed without proper deregistration.", hazelcastMember);
                     }
