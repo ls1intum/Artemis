@@ -12,8 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nonnull;
-
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -21,6 +20,8 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import com.hazelcast.client.Client;
+import com.hazelcast.client.ClientListener;
 import com.hazelcast.client.impl.clientside.HazelcastClientProxy;
 import com.hazelcast.cluster.Member;
 import com.hazelcast.core.HazelcastInstance;
@@ -49,15 +50,21 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
     private final Map<UUID, Consumer<Boolean>> connectionStateListeners = new ConcurrentHashMap<>();
 
     /**
+     * Registered client disconnection listeners. The callback receives the disconnected client's name.
+     */
+    private final Map<UUID, Consumer<String>> clientDisconnectionListeners = new ConcurrentHashMap<>();
+
+    /**
      * Tracks whether a successful connection has been established at least once.
      * Used to distinguish initial connection from reconnection in lifecycle events.
      */
     private final AtomicBoolean hasConnectedBefore = new AtomicBoolean(false);
 
     /**
-     * The Hazelcast lifecycle listener registration ID, used for cleanup.
+     * The Hazelcast client listener registration ID for tracking client disconnections.
+     * Only used on cluster members (core nodes), null on clients (build agents).
      */
-    private UUID hazelcastLifecycleListenerId;
+    private volatile UUID hazelcastClientListenerId;
 
     public HazelcastDistributedDataProviderService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.hazelcastInstance = hazelcastInstance;
@@ -80,10 +87,8 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
                     log.info("Hazelcast client connected to cluster (initial={})", isInitialConnection);
                     notifyConnectionStateListeners(isInitialConnection);
                 }
-                case CLIENT_DISCONNECTED -> {
-                    // Client lost connection - listeners will need to re-register on reconnection
+                case CLIENT_DISCONNECTED -> // Client lost connection - listeners will need to re-register on reconnection
                     log.warn("Hazelcast client disconnected from cluster");
-                }
                 case STARTED -> {
                     // For cluster members, STARTED indicates the instance is ready
                     if (!(hazelcastInstance instanceof HazelcastClientProxy)) {
@@ -98,7 +103,7 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
             }
         };
 
-        hazelcastLifecycleListenerId = hazelcastInstance.getLifecycleService().addLifecycleListener(listener);
+        hazelcastInstance.getLifecycleService().addLifecycleListener(listener);
     }
 
     /**
@@ -244,7 +249,7 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
      * @return a set of addresses of all cluster members, never null (returns empty set if no members or not connected)
      */
     @Override
-    @Nonnull
+    @NonNull
     public Set<String> getClusterMemberAddresses() {
         // stream is on the copy so fine here
         return getClusterMembers().stream().map(Member::getAddress).map(Object::toString).collect(Collectors.toSet());
@@ -294,7 +299,7 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
 
         try {
             var clientService = hazelcastInstance.getClientService();
-            return clientService.getConnectedClients().stream().map(client -> client.getName()).collect(Collectors.toSet());
+            return clientService.getConnectedClients().stream().map(Client::getName).collect(Collectors.toSet());
         }
         catch (UnsupportedOperationException e) {
             // Client service not available
@@ -328,7 +333,7 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
             // isRunning() returns true even for async clients that haven't connected yet
             // We need to check if we can actually perform operations
             // The safest way is to check if the cluster is accessible
-            return lifecycleService.isRunning() && clientProxy.getCluster().getMembers().size() > 0;
+            return lifecycleService.isRunning() && !clientProxy.getCluster().getMembers().isEmpty();
         }
         catch (Exception e) {
             // Any exception means we're not properly connected
@@ -381,5 +386,75 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
     @Override
     public boolean removeConnectionStateListener(UUID listenerId) {
         return connectionStateListeners.remove(listenerId) != null;
+    }
+
+    /**
+     * Registers a callback that will be invoked when a client (build agent) disconnects from the cluster.
+     * This is only available on data members (core nodes), not on clients (build agents).
+     * On clients, this method returns null and the callback is never invoked.
+     *
+     * @param callback a consumer that receives the disconnected client's name
+     * @return a unique identifier that can be used to remove the listener later, or null if not supported
+     */
+    @Override
+    public UUID addClientDisconnectionListener(Consumer<String> callback) {
+        // Client disconnection tracking is only available on cluster members, not on clients
+        if (hazelcastInstance instanceof HazelcastClientProxy) {
+            return null;
+        }
+
+        // Lazy initialization: register the Hazelcast client listener only once
+        if (hazelcastClientListenerId == null) {
+            synchronized (this) {
+                if (hazelcastClientListenerId == null) {
+                    ClientListener clientListener = new ClientListener() {
+
+                        @Override
+                        public void clientConnected(Client client) {
+                            // Not used - we only track disconnections
+                        }
+
+                        @Override
+                        public void clientDisconnected(Client client) {
+                            String clientName = client.getName();
+                            log.info("Hazelcast client disconnected: {}", clientName);
+                            notifyClientDisconnectionListeners(clientName);
+                        }
+                    };
+                    hazelcastClientListenerId = hazelcastInstance.getClientService().addClientListener(clientListener);
+                }
+            }
+        }
+
+        UUID listenerId = UUID.randomUUID();
+        clientDisconnectionListeners.put(listenerId, callback);
+        return listenerId;
+    }
+
+    /**
+     * Notifies all registered client disconnection listeners about a client disconnection.
+     *
+     * @param clientName the name of the disconnected client
+     */
+    private void notifyClientDisconnectionListeners(String clientName) {
+        for (var entry : clientDisconnectionListeners.entrySet()) {
+            try {
+                entry.getValue().accept(clientName);
+            }
+            catch (Exception e) {
+                log.error("Error notifying client disconnection listener {}: {}", entry.getKey(), e.getMessage(), e);
+            }
+        }
+    }
+
+    /**
+     * Removes a previously registered client disconnection listener.
+     *
+     * @param listenerId the unique identifier returned by {@link #addClientDisconnectionListener}
+     * @return true if the listener was found and removed, false otherwise
+     */
+    @Override
+    public boolean removeClientDisconnectionListener(UUID listenerId) {
+        return clientDisconnectionListeners.remove(listenerId) != null;
     }
 }

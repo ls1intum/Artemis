@@ -4,7 +4,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import jakarta.annotation.Nonnull;
+import org.jspecify.annotations.NonNull;
 
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
@@ -85,7 +85,7 @@ public interface DistributedDataProvider {
      *
      * @return a set of addresses of all cluster members, never null (returns empty set if no members or not connected)
      */
-    @Nonnull
+    @NonNull
     Set<String> getClusterMemberAddresses();
 
     /**
@@ -146,4 +146,26 @@ public interface DistributedDataProvider {
      * @return true if the listener was found and removed, false otherwise
      */
     boolean removeConnectionStateListener(UUID listenerId);
+
+    /**
+     * Registers a callback that will be invoked when a client (build agent) disconnects from the cluster.
+     * This is only available on data members (core nodes), not on clients (build agents).
+     * On clients, this method returns null and the callback is never invoked.
+     *
+     * <p>
+     * This is important for cleaning up stale data when build agents crash or disconnect
+     * unexpectedly. The callback receives the client name (build agent short name) that disconnected.
+     *
+     * @param callback a consumer that receives the disconnected client's name
+     * @return a unique identifier that can be used to remove the listener later, or null if not supported
+     */
+    UUID addClientDisconnectionListener(Consumer<String> callback);
+
+    /**
+     * Removes a previously registered client disconnection listener.
+     *
+     * @param listenerId the unique identifier returned by {@link #addClientDisconnectionListener}
+     * @return true if the listener was found and removed, false otherwise
+     */
+    boolean removeClientDisconnectionListener(UUID listenerId);
 }

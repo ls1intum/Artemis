@@ -85,6 +85,33 @@ public class SharedQueueManagementService {
     public void init() {
         this.distributedDataAccessService.getDistributedBuildAgentInformation().addEntryListener(new BuildAgentListener());
         this.updateBuildAgentCapacity();
+
+        // Register a listener for client (build agent) disconnections.
+        // When a build agent disconnects, we remove its entry from the map which triggers
+        // the MapEntryRemovedEvent and subsequently the orphan job handling.
+        // This is only active on core nodes (cluster members), not on build agents (clients).
+        var listenerId = this.distributedDataAccessService.addClientDisconnectionListener(this::handleClientDisconnection);
+        if (listenerId != null) {
+            log.info("Registered client disconnection listener for build agent cleanup");
+        }
+    }
+
+    /**
+     * Handles the disconnection of a client (build agent) from the cluster.
+     * Removes the build agent's entry from the distributed map, which triggers
+     * the MapEntryRemovedEvent and the orphan job handling.
+     *
+     * @param clientName the name of the disconnected client (build agent short name)
+     */
+    private void handleClientDisconnection(String clientName) {
+        log.warn("Build agent client disconnected: {}. Removing from build agent information map.", clientName);
+        var removedAgent = this.distributedDataAccessService.getDistributedBuildAgentInformation().remove(clientName);
+        if (removedAgent != null) {
+            log.info("Removed build agent {} from distributed map. MapEntryRemovedEvent will trigger orphan job handling.", clientName);
+        }
+        else {
+            log.debug("Build agent {} was not found in the distributed map (may have already been removed).", clientName);
+        }
     }
 
     /**

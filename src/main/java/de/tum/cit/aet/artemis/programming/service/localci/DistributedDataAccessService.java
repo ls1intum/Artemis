@@ -476,4 +476,30 @@ public class DistributedDataAccessService {
     public boolean removeConnectionStateListener(UUID listenerId) {
         return distributedDataProvider.removeConnectionStateListener(listenerId);
     }
+
+    /**
+     * Registers a callback that will be invoked when a client (build agent) disconnects from the cluster.
+     * This is only available on data members (core nodes), not on clients (build agents).
+     * On clients, this method returns null and the callback is never invoked.
+     *
+     * <p>
+     * This is important for cleaning up stale data when build agents crash or disconnect
+     * unexpectedly. The callback receives the client name (build agent short name) that disconnected.
+     *
+     * @param callback a consumer that receives the disconnected client's name
+     * @return a unique identifier that can be used to remove the listener later, or null if not supported
+     */
+    public UUID addClientDisconnectionListener(Consumer<String> callback) {
+        return distributedDataProvider.addClientDisconnectionListener(callback);
+    }
+
+    /**
+     * Removes a previously registered client disconnection listener.
+     *
+     * @param listenerId the unique identifier returned by {@link #addClientDisconnectionListener}
+     * @return true if the listener was found and removed, false otherwise
+     */
+    public boolean removeClientDisconnectionListener(UUID listenerId) {
+        return distributedDataProvider.removeClientDisconnectionListener(listenerId);
+    }
 }

@@ -31,25 +31,25 @@ public class LocalDataProviderService implements DistributedDataProvider {
     @Override
     public <T> DistributedQueue<T> getQueue(String name) {
         // noinspection unchecked
-        return (DistributedQueue<T>) queues.computeIfAbsent(name, n -> new LocalQueue<T>(new ConcurrentLinkedQueue<T>(), n));
+        return (DistributedQueue<T>) queues.computeIfAbsent(name, n -> new LocalQueue<>(new ConcurrentLinkedQueue<T>(), n));
     }
 
     @Override
     public <T extends Comparable<T>> DistributedQueue<T> getPriorityQueue(String name) {
         // noinspection unchecked
-        return (DistributedQueue<T>) queues.computeIfAbsent(name, n -> new LocalQueue<T>(new PriorityQueue<T>(), n));
+        return (DistributedQueue<T>) queues.computeIfAbsent(name, n -> new LocalQueue<>(new PriorityQueue<T>(), n));
     }
 
     @Override
     public <K, V> DistributedMap<K, V> getMap(String name) {
         // noinspection unchecked
-        return (DistributedMap<K, V>) maps.computeIfAbsent(name, n -> new LocalMap<K, V>());
+        return (DistributedMap<K, V>) maps.computeIfAbsent(name, _ -> new LocalMap<K, V>());
     }
 
     @Override
     public <T> DistributedTopic<T> getTopic(String name) {
         // noinspection unchecked
-        return (DistributedTopic<T>) topics.computeIfAbsent(name, n -> new LocalTopic<T>());
+        return (DistributedTopic<T>) topics.computeIfAbsent(name, _ -> new LocalTopic<T>());
     }
 
     @Override
@@ -94,6 +94,18 @@ public class LocalDataProviderService implements DistributedDataProvider {
 
     @Override
     public boolean removeConnectionStateListener(UUID listenerId) {
+        // No-op for local provider - listeners are not tracked
+        return false;
+    }
+
+    @Override
+    public UUID addClientDisconnectionListener(Consumer<String> callback) {
+        // Local provider doesn't support client disconnection tracking - return null
+        return null;
+    }
+
+    @Override
+    public boolean removeClientDisconnectionListener(UUID listenerId) {
         // No-op for local provider - listeners are not tracked
         return false;
     }

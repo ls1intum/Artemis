@@ -16,6 +16,7 @@ import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.cloud.client.serviceregistry.ServiceRegistry;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Component;
@@ -43,6 +44,7 @@ import org.springframework.stereotype.Component;
  * we avoid a circular dependency between HazelcastConfiguration (which creates the Hazelcast instance)
  * and HazelcastClusterManager (which manages runtime connections).
  */
+@Lazy
 @Component
 @Conditional(CoreOrHazelcastBuildAgent.class)
 public class EurekaInstanceHelper {

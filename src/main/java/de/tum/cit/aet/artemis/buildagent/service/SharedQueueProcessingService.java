@@ -175,6 +175,16 @@ public class SharedQueueProcessingService {
         isPaused.set(false);
     }
 
+    /**
+     * Resets the initialized state so that init() will re-register all listeners.
+     * This is useful for tests that need to re-initialize the service after calling
+     * removeListenerAndCancelScheduledFuture().
+     * (for tests only)
+     */
+    public void resetInitializedState() {
+        initialized.set(false);
+    }
+
     public SharedQueueProcessingService(BuildAgentConfiguration buildAgentConfiguration, BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap,
             TaskScheduler taskScheduler, BuildAgentDockerService buildAgentDockerService, BuildJobContainerService buildJobContainerService,
             BuildAgentInformationService buildAgentInformationService, DistributedDataAccessService distributedDataAccessService) {
