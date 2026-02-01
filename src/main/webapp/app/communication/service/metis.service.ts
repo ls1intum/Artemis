@@ -38,6 +38,7 @@ import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { BehaviorSubject, Observable, ReplaySubject, Subscription, catchError, forkJoin, map, of, switchMap, tap, throwError } from 'rxjs';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { PlagiarismAnswerPostCreationDTO } from 'app/plagiarism/shared/entities/PlagiarismAnswerPostCreationDTO';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -267,6 +268,40 @@ export class MetisService implements OnDestroy {
                             this.cachedPosts[indexOfCachedPost] = { ...this.cachedPosts[indexOfCachedPost], answers: [], reactions: [] };
                         }
                         this.cachedPosts[indexOfCachedPost].answers!.push(createdAnswerPost);
+                        this.posts$.next(this.cachedPosts);
+                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
+                    }
+                }
+            }),
+        );
+    }
+
+    createPlagiarismAnswerPost(dto: PlagiarismAnswerPostCreationDTO): Observable<AnswerPost> {
+        if (!dto.postId) {
+            return throwError(() => new Error('PlagiarismAnswerPostCreationDTO.postId must be defined'));
+        }
+
+        const url = `api/plagiarism/courses/${this.courseId}/answer-posts`;
+
+        return this.http.post<AnswerPost>(url, dto, { observe: 'response' }).pipe(
+            map((res: HttpResponse<AnswerPost>) => res.body!),
+            tap((createdAnswerPost: AnswerPost) => {
+                const postId = dto.postId!;
+                const indexOfCachedPost = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === postId);
+
+                if (indexOfCachedPost > -1) {
+                    const cachedPost = this.cachedPosts[indexOfCachedPost];
+                    const existingAnswers = cachedPost.answers ?? [];
+
+                    const alreadyThere = existingAnswers.some((a) => a.id === createdAnswerPost.id);
+                    if (!alreadyThere) {
+                        const updatedPost: Post = {
+                            ...cachedPost,
+                            answers: [...existingAnswers, createdAnswerPost],
+                            reactions: cachedPost.reactions ?? [],
+                        };
+                        this.cachedPosts = [...this.cachedPosts.slice(0, indexOfCachedPost), updatedPost, ...this.cachedPosts.slice(indexOfCachedPost + 1)];
+
                         this.posts$.next(this.cachedPosts);
                         this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }

@@ -22,7 +22,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PostComponent } from 'app/communication/post/post.component';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { PlagiarismAnswerPostCreationDTO } from 'app/plagiarism/shared/entities/PlagiarismAnswerPostCreationDTO';
-import { PlagiarismAnswerPostService } from 'app/plagiarism/shared/services/plagiarism-answer-post.service';
 
 @Component({
     selector: 'jhi-plagiarism-case-student-detail-view',
@@ -35,8 +34,6 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
     private metisService = inject(MetisService);
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private activatedRoute = inject(ActivatedRoute);
-    private plagiarismAnswerPostService = inject(PlagiarismAnswerPostService);
-
     readonly postComponent = viewChild.required<PostComponent>('post');
     readonly ButtonType = ButtonType;
 
@@ -106,6 +103,6 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
 
     createPlagiarismAnswerPost = (answerPost: AnswerPost): Observable<AnswerPost> => {
         const dto = PlagiarismAnswerPostCreationDTO.of(answerPost);
-        return this.plagiarismAnswerPostService.createAnswerPost(this.courseId, dto);
+        return this.metisService.createPlagiarismAnswerPost(dto);
     };
 }

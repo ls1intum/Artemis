@@ -42,7 +42,6 @@ import { FormsModule } from '@angular/forms';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
-import { PlagiarismAnswerPostService } from 'app/plagiarism/shared/services/plagiarism-answer-post.service';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { PlagiarismAnswerPostCreationDTO } from 'app/plagiarism/shared/entities/PlagiarismAnswerPostCreationDTO';
 
@@ -82,8 +81,6 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     private translateService = inject(TranslateService);
     private themeService = inject(ThemeService);
     private accountService = inject(AccountService);
-    private plagiarismAnswerPostService = inject(PlagiarismAnswerPostService);
-
     courseId: number;
     plagiarismCaseId: number;
     plagiarismCase: PlagiarismCase;
@@ -273,6 +270,6 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
 
     createPlagiarismAnswerPost = (answerPost: AnswerPost): Observable<AnswerPost> => {
         const dto = PlagiarismAnswerPostCreationDTO.of(answerPost);
-        return this.plagiarismAnswerPostService.createAnswerPost(this.courseId, dto);
+        return this.metisService.createPlagiarismAnswerPost(dto);
     };
 }
