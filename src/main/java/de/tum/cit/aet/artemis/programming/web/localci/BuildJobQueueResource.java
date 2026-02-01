@@ -245,7 +245,7 @@ public class BuildJobQueueResource {
     public ResponseEntity<ZonedDateTime> getBuildJobEstimatedStartDate(@RequestParam long participationId) {
         var start = System.nanoTime();
         if (participationId <= 0) {
-            ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().build();
         }
         ZonedDateTime estimatedJobQueueReleaseTime = localCIBuildJobQueueService.getBuildJobEstimatedStartDate(participationId);
         log.debug("Queue duration estimation took {} ms", TimeLogUtil.formatDurationFrom(start));
