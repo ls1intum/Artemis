@@ -204,6 +204,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
         citation.style.setProperty('--iris-citation-shift', '0px');
         this.resetCitationGroupSummary(citation);
+        this.clearCitationFocus(citation);
     };
     /**
      * Handles clicks on citation group navigation buttons.
@@ -565,6 +566,17 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             return;
         }
         this.updateCitationGroupSummary(citationGroup, 0);
+    }
+
+    /**
+     * Clears focus from citation navigation to prevent sticky summaries after mouseout.
+     * @param citationElement The citation element that is losing hover state.
+     */
+    private clearCitationFocus(citationElement: HTMLElement) {
+        const activeElement = document.activeElement;
+        if (activeElement instanceof HTMLElement && citationElement.contains(activeElement)) {
+            activeElement.blur();
+        }
     }
 
     /**
