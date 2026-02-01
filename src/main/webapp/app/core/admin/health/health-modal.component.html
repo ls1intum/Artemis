@@ -37,12 +37,12 @@
                                                         <span>{{ agent.memberAddress }}</span>
                                                     </div>
                                                     <div class="mb-1">
-                                                        <span class="me-2">Jobs:</span>
+                                                        <span class="me-2" jhiTranslate="health.details.jobs"></span>
                                                         <strong>{{ agent.currentJobs }}</strong> / {{ agent.maxJobs }}
                                                     </div>
                                                     @if (agent.runningJobNames.length > 0) {
                                                         <div class="small">
-                                                            <span class="text-muted">Running:</span>
+                                                            <span class="text-muted" jhiTranslate="health.details.running"></span>
                                                             @for (jobName of agent.runningJobNames; track jobName; let last = $last) {
                                                                 <span class="ms-1">{{ jobName }}{{ last ? '' : ',' }}</span>
                                                             }
@@ -50,15 +50,17 @@
                                                     }
                                                     @if (agent.gitRevision) {
                                                         <div class="small text-muted mt-1">
-                                                            <span>Version: {{ agent.gitRevision }}</span>
+                                                            <span jhiTranslate="health.details.version"></span> <span>{{ agent.gitRevision }}</span>
                                                             @if (agent.startDate) {
-                                                                <span class="ms-2">| Started: {{ agent.startDate }}</span>
+                                                                <span class="ms-2">| </span>
+                                                                <span jhiTranslate="health.details.started"></span>
+                                                                <span>{{ agent.startDate }}</span>
                                                             }
                                                         </div>
                                                     }
                                                 </div>
                                             } @empty {
-                                                <div class="text-muted small">No build agents reported.</div>
+                                                <div class="text-muted small" jhiTranslate="health.details.noBuildAgents"></div>
                                             }
                                         </div>
                                     } @else {

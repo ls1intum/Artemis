@@ -88,7 +88,7 @@ export class HealthModalComponent {
             return false;
         }
         if (detailKey === 'buildAgents') {
-            return true;
+            return value.length === 0 || value.every((entry) => this.isRecord(entry));
         }
         if (value.length === 0) {
             return false;
@@ -178,7 +178,7 @@ export class HealthModalComponent {
     }
 
     private isRecord(value: unknown): value is Record<string, unknown> {
-        return value !== null && typeof value === 'object';
+        return value !== null && typeof value === 'object' && !Array.isArray(value);
     }
 
     private isSimplifiedBuildAgent(agent: BuildAgentDetail): agent is SimplifiedBuildAgent {
