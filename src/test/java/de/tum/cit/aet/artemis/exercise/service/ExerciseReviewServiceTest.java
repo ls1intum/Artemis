@@ -22,6 +22,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
@@ -43,7 +44,6 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
@@ -72,13 +72,13 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     private CommentThreadGroupRepository commentThreadGroupRepository;
 
     @Autowired
-    private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
-
-    @Autowired
     private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationRepository;
 
     @Autowired
     private LocalVCService localVCService;
+
+    @Autowired
+    private TempFileUtilService tempFileUtilService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -831,7 +831,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         localVCService.createProjectForExercise(programmingExercise);
         localVCService.createRepository(programmingExercise.getProjectKey(), repositorySlug);
         LocalVCRepositoryUri repositoryUri = new LocalVCRepositoryUri(localVCBaseUri, programmingExercise.getProjectKey(), repositorySlug);
-        Path workingCopyPath = Files.createTempDirectory("review-repo-" + suffix + "-");
+        Path workingCopyPath = tempFileUtilService.createTempDirectory("review-repo-" + suffix + "-");
         String localRepositoryUri = repositoryUri.getLocalRepositoryPath(localVCBasePath).toUri().toString();
         Git git = Git.cloneRepository().setURI(localRepositoryUri).setDirectory(workingCopyPath.toFile()).call();
         return new LocalRepoWithGit(repositoryUri, workingCopyPath, git);
