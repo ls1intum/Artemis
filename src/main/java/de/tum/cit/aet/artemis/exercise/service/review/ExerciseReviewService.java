@@ -202,9 +202,13 @@ public class ExerciseReviewService {
         Comment comment = commentRepository.findWithThreadById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment", commentId));
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, comment.getThread().getExercise().getId());
         CommentThread thread = comment.getThread();
+        CommentThreadGroup group = thread.getGroup();
         commentRepository.delete(comment);
         if (commentRepository.countByThreadId(thread.getId()) == 0) {
             commentThreadRepository.delete(thread);
+            if (group != null && commentThreadRepository.countByGroupId(group.getId()) == 0) {
+                commentThreadGroupRepository.delete(group);
+            }
         }
     }
 
