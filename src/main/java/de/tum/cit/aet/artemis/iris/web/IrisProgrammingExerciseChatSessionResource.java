@@ -1,13 +1,11 @@
 package de.tum.cit.aet.artemis.iris.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
@@ -34,7 +33,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 /**
  * REST controller for managing {@link IrisProgrammingExerciseChatSession}.
  */
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 @Lazy
 @RestController
 @RequestMapping("api/iris/programming-exercise-chat/")

@@ -49,7 +49,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -508,8 +508,8 @@ describe('TextEditorComponent', () => {
         expect(textSubmissionService.update).toHaveBeenCalled();
     });
 
-    it('should load Iris settings when Iris profile is active and not in exam mode', async () => {
-        vi.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+    it('should load Iris settings when Iris module feature is active and not in exam mode', async () => {
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
 
         // Set up course with ID
         comp.course = { id: 123 } as any;
@@ -534,13 +534,13 @@ describe('TextEditorComponent', () => {
         comp['loadIrisSettings']();
         await fixture.whenStable();
 
-        expect(profileService.isProfileActive).toHaveBeenCalledWith(PROFILE_IRIS);
+        expect(profileService.isModuleFeatureActive).toHaveBeenCalledWith(MODULE_FEATURE_IRIS);
         expect(irisSettingsService.getCourseSettingsWithRateLimit).toHaveBeenCalledWith(123);
         expect(comp.irisSettings).toEqual(mockIrisSettings);
     });
 
     it('should not load Iris settings when in exam mode', () => {
-        vi.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
         vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
 
         // Set up exercise and exam mode
@@ -549,13 +549,13 @@ describe('TextEditorComponent', () => {
 
         comp['loadIrisSettings']();
 
-        expect(profileService.isProfileActive).toHaveBeenCalledWith(PROFILE_IRIS);
+        expect(profileService.isModuleFeatureActive).toHaveBeenCalledWith(MODULE_FEATURE_IRIS);
         expect(irisSettingsService.getCourseSettingsWithRateLimit).not.toHaveBeenCalled();
         expect(comp.irisSettings).toBeUndefined();
     });
 
-    it('should not load Iris settings when Iris profile is not active', () => {
-        vi.spyOn(profileService, 'isProfileActive').mockReturnValue(false);
+    it('should not load Iris settings when Iris module feature is not active', () => {
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
         vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
 
         comp.textExercise = textExercise;
@@ -563,7 +563,7 @@ describe('TextEditorComponent', () => {
 
         comp['loadIrisSettings']();
 
-        expect(profileService.isProfileActive).toHaveBeenCalledWith(PROFILE_IRIS);
+        expect(profileService.isModuleFeatureActive).toHaveBeenCalledWith(MODULE_FEATURE_IRIS);
         expect(irisSettingsService.getCourseSettingsWithRateLimit).not.toHaveBeenCalled();
         expect(comp.irisSettings).toBeUndefined();
     });
