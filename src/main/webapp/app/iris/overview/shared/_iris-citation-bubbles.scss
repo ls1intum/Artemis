@@ -100,17 +100,23 @@
     }
 
     .iris-citation--has-summary:hover,
-    .iris-citation-group--has-summary:hover {
+    .iris-citation--has-summary:focus-within,
+    .iris-citation-group--has-summary:hover,
+    .iris-citation-group--has-summary:focus-within {
         z-index: 20;
     }
 
     .iris-citation--has-summary:hover .iris-citation__text,
-    .iris-citation-group--has-summary:hover .iris-citation__text {
+    .iris-citation--has-summary:focus-within .iris-citation__text,
+    .iris-citation-group--has-summary:hover .iris-citation__text,
+    .iris-citation-group--has-summary:focus-within .iris-citation__text {
         visibility: hidden;
     }
 
     .iris-citation--has-summary:hover .iris-citation__summary,
-    .iris-citation-group--has-summary:hover .iris-citation__summary {
+    .iris-citation--has-summary:focus-within .iris-citation__summary,
+    .iris-citation-group--has-summary:hover .iris-citation__summary,
+    .iris-citation-group--has-summary:focus-within .iris-citation__summary {
         opacity: 1;
         visibility: visible;
         pointer-events: auto;
