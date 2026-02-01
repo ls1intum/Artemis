@@ -57,17 +57,19 @@ public class HyperionTestRepositoryService extends HyperionCodeGenerationService
             String consistencyIssues) throws NetworkingException {
         // Get existing solution code from repository instead of generating new code
         String solutionCode = contextRenderer.getExistingSolutionCode(exercise, gitService);
+        String normalizedConsistencyIssues = consistencyIssues != null ? consistencyIssues : "";
         Map<String, Object> templateVariables = Map.<String, Object>of("problemStatement", exercise.getProblemStatement(), "solutionCode", solutionCode, "programmingLanguage",
                 exercise.getProgrammingLanguage(), "previousBuildLogs", previousBuildLogs != null ? previousBuildLogs : "", "repositoryStructure",
-                repositoryStructure != null ? repositoryStructure : "", "consistencyIssues", consistencyIssues);
+                repositoryStructure != null ? repositoryStructure : "", "consistencyIssues", normalizedConsistencyIssues);
         return callChatClient("/prompts/hyperion/test/1_plan.st", templateVariables);
     }
 
     @Override
     protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure, String consistencyIssues)
             throws NetworkingException {
+        String normalizedConsistencyIssues = consistencyIssues != null ? consistencyIssues : "";
         Map<String, Object> templateVariables = Map.<String, Object>of("solutionPlan", solutionPlan, "programmingLanguage", exercise.getProgrammingLanguage(),
-                "repositoryStructure", repositoryStructure != null ? repositoryStructure : "", "consistencyIssues", consistencyIssues);
+                "repositoryStructure", repositoryStructure != null ? repositoryStructure : "", "consistencyIssues", normalizedConsistencyIssues);
         return callChatClient("/prompts/hyperion/test/2_file_structure.st", templateVariables);
     }
 
@@ -75,8 +77,9 @@ public class HyperionTestRepositoryService extends HyperionCodeGenerationService
     protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure,
             String consistencyIssues) throws NetworkingException {
         CodeGenerationResponseDTO fileStructure = defineFileStructure(user, exercise, solutionPlan, repositoryStructure, consistencyIssues);
+        String normalizedConsistencyIssues = consistencyIssues != null ? consistencyIssues : "";
         Map<String, Object> templateVariables = Map.<String, Object>of("solutionPlan", solutionPlan, "fileStructure", fileStructure.getFiles(), "programmingLanguage",
-                exercise.getProgrammingLanguage(), "repositoryStructure", repositoryStructure != null ? repositoryStructure : "", "consistencyIssues", consistencyIssues);
+                exercise.getProgrammingLanguage(), "repositoryStructure", repositoryStructure != null ? repositoryStructure : "", "consistencyIssues", normalizedConsistencyIssues);
         return callChatClient("/prompts/hyperion/test/3_headers.st", templateVariables);
     }
 
@@ -84,8 +87,9 @@ public class HyperionTestRepositoryService extends HyperionCodeGenerationService
     protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure, String consistencyIssues)
             throws NetworkingException {
         CodeGenerationResponseDTO headers = generateClassAndMethodHeaders(user, exercise, solutionPlan, repositoryStructure, consistencyIssues);
+        String normalizedConsistencyIssues = consistencyIssues != null ? consistencyIssues : "";
         Map<String, Object> templateVariables = Map.<String, Object>of("solutionPlan", solutionPlan, "filesWithHeaders", headers.getFiles(), "programmingLanguage",
-                exercise.getProgrammingLanguage(), "repositoryStructure", repositoryStructure != null ? repositoryStructure : "", "consistencyIssues", consistencyIssues);
+                exercise.getProgrammingLanguage(), "repositoryStructure", repositoryStructure != null ? repositoryStructure : "", "consistencyIssues", normalizedConsistencyIssues);
         return callChatClient("/prompts/hyperion/test/4_logic.st", templateVariables);
     }
 

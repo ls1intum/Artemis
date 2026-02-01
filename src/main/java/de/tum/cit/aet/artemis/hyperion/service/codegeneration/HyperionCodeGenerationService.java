@@ -36,6 +36,8 @@ public abstract class HyperionCodeGenerationService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionCodeGenerationService.class);
 
+    private static final int MAX_CONSISTENCY_ISSUES_LENGTH = 10000;
+
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ChatClient chatClient;
@@ -63,12 +65,28 @@ public abstract class HyperionCodeGenerationService {
      */
     public List<GeneratedFileDTO> generateCode(User user, ProgrammingExercise exercise, String previousBuildLogs, String repositoryStructure, String consistencyIssues)
             throws NetworkingException {
-        CodeGenerationResponseDTO solutionPlanResponse = generateSolutionPlan(user, exercise, previousBuildLogs, repositoryStructure, consistencyIssues);
-        defineFileStructure(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure, consistencyIssues);
-        generateClassAndMethodHeaders(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure, consistencyIssues);
-        CodeGenerationResponseDTO coreLogicResponse = generateCoreLogic(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure, consistencyIssues);
+        String normalizedConsistencyIssues = normalizeConsistencyIssues(consistencyIssues);
+        CodeGenerationResponseDTO solutionPlanResponse = generateSolutionPlan(user, exercise, previousBuildLogs, repositoryStructure, normalizedConsistencyIssues);
+        defineFileStructure(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure, normalizedConsistencyIssues);
+        generateClassAndMethodHeaders(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure, normalizedConsistencyIssues);
+        CodeGenerationResponseDTO coreLogicResponse = generateCoreLogic(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure, normalizedConsistencyIssues);
 
         return coreLogicResponse.getFiles();
+    }
+
+    private String normalizeConsistencyIssues(String consistencyIssues) {
+        if (consistencyIssues == null) {
+            return "";
+        }
+        String trimmed = consistencyIssues.trim();
+        if (trimmed.isEmpty()) {
+            return "";
+        }
+        String sanitized = trimmed.replaceAll("[\\p{Cntrl}&&[^\r\n\t]]", "").trim();
+        if (sanitized.length() > MAX_CONSISTENCY_ISSUES_LENGTH) {
+            return sanitized.substring(0, MAX_CONSISTENCY_ISSUES_LENGTH);
+        }
+        return sanitized;
     }
 
     /**
