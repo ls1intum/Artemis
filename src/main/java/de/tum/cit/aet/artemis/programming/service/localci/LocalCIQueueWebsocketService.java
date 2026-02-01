@@ -69,6 +69,9 @@ public class LocalCIQueueWebsocketService {
      * @param buildJob the build job to send the update for
      */
     void sendBuildJobUpdateOverWebsocket(BuildJobQueueItem buildJob) {
+        if (buildJob == null) {
+            return;
+        }
         localCIWebsocketMessagingService.sendBuildJobUpdate(buildJob);
     }
 
@@ -79,6 +82,9 @@ public class LocalCIQueueWebsocketService {
      * @param finishedBuildJob the finished build job DTO to send
      */
     void sendFinishedBuildJobOverWebsocket(FinishedBuildJobDTO finishedBuildJob) {
+        if (finishedBuildJob == null) {
+            return;
+        }
         localCIWebsocketMessagingService.sendFinishedBuildJobUpdate(finishedBuildJob);
         // Also send to the individual build job topic for the build job detail page
         localCIWebsocketMessagingService.sendFinishedBuildJobDetailUpdate(finishedBuildJob);

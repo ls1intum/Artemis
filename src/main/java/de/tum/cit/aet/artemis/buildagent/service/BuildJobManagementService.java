@@ -18,6 +18,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
@@ -100,8 +101,9 @@ public class BuildJobManagementService {
     /**
      * Scheduled future for retrying cluster connection and initialization.
      * This is used when the build agent starts before any core node is available.
+     * Uses AtomicReference for thread-safe check-then-act operations.
      */
-    private ScheduledFuture<?> connectionRetryFuture;
+    private final AtomicReference<ScheduledFuture<?>> connectionRetryFuture = new AtomicReference<>();
 
     /**
      * Flag to track whether initialization has completed successfully.
@@ -214,15 +216,7 @@ public class BuildJobManagementService {
             boolean initSucceeded = tryInitialize();
             // If initialization failed, schedule retries (handles both connection issues and transient failures)
             if (!initSucceeded) {
-                if (connectionRetryFuture == null || connectionRetryFuture.isDone()) {
-                    connectionRetryFuture = taskScheduler.scheduleAtFixedRate(() -> {
-                        if (tryInitialize()) {
-                            if (connectionRetryFuture != null) {
-                                connectionRetryFuture.cancel(false);
-                            }
-                        }
-                    }, CLUSTER_CONNECTION_RETRY_INTERVAL);
-                }
+                scheduleConnectionRetryIfNeeded();
             }
         });
 
@@ -230,16 +224,30 @@ public class BuildJobManagementService {
         // If not connected yet, schedule periodic retries as a fallback.
         if (!initialized.get() && !distributedDataAccessService.isConnectedToCluster()) {
             log.info("Hazelcast client not yet connected to cluster. Scheduling periodic initialization retries every {} seconds.", CLUSTER_CONNECTION_RETRY_INTERVAL.toSeconds());
-
-            connectionRetryFuture = taskScheduler.scheduleAtFixedRate(() -> {
-                if (tryInitialize()) {
-                    // Initialization succeeded - cancel the retry task
-                    if (connectionRetryFuture != null) {
-                        connectionRetryFuture.cancel(false);
-                    }
-                }
-            }, CLUSTER_CONNECTION_RETRY_INTERVAL);
+            scheduleConnectionRetryIfNeeded();
         }
+    }
+
+    /**
+     * Atomically schedules a connection retry task if one is not already running.
+     * Uses AtomicReference.updateAndGet to prevent race conditions where multiple
+     * threads could schedule duplicate retry tasks.
+     */
+    private void scheduleConnectionRetryIfNeeded() {
+        connectionRetryFuture.updateAndGet(current -> {
+            if (current == null || current.isDone()) {
+                return taskScheduler.scheduleAtFixedRate(() -> {
+                    if (tryInitialize()) {
+                        // Initialization succeeded - cancel the retry task
+                        ScheduledFuture<?> future = connectionRetryFuture.get();
+                        if (future != null) {
+                            future.cancel(false);
+                        }
+                    }
+                }, CLUSTER_CONNECTION_RETRY_INTERVAL);
+            }
+            return current;
+        });
     }
 
     /**

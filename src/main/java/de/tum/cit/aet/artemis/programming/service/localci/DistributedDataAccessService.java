@@ -220,6 +220,8 @@ public class DistributedDataAccessService {
 
         // Enrich and filter agents
         return allAgents.stream()
+                // Guard against null entries from distributed map
+                .filter(agent -> agent != null && agent.buildAgent() != null)
                 // Filter to only connected agents if we can determine connectivity
                 .filter(agent -> connectedClients.isEmpty() || connectedClients.contains(agent.buildAgent().name()))
                 // Enrich with current processing jobs for accurate runningBuildJobs data
