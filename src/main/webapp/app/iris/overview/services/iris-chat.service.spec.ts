@@ -34,6 +34,8 @@ import { IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat
 import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
+import * as Sentry from '@sentry/angular';
+import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 
 describe('IrisChatService', () => {
     setupTestBed({ zoneless: true });
@@ -451,5 +453,60 @@ describe('IrisChatService', () => {
 
             expect(courseId).toBeUndefined();
         });
+    });
+
+    it('should reset new message indicators when messages are read', async () => {
+        service.numNewMessages.next(3);
+        service.newIrisMessage.next(mockServerMessage);
+
+        service.messagesRead();
+
+        const num = await firstValueFrom(service.currentNumNewMessages());
+        expect(num).toBe(0);
+        expect(service.newIrisMessage.getValue()).toBeUndefined();
+    });
+
+    it('should merge citation info entries by entityId', () => {
+        const existing: IrisCitationMetaDTO[] = [
+            { entityId: 1, lectureTitle: 'Old', lectureUnitTitle: 'Unit A' },
+            { entityId: 2, lectureTitle: 'Keep', lectureUnitTitle: 'Unit B' },
+        ];
+        const incoming: IrisCitationMetaDTO[] = [
+            { entityId: 1, lectureTitle: 'New', lectureUnitTitle: 'Unit A2' },
+            { entityId: 3, lectureTitle: 'Added', lectureUnitTitle: 'Unit C' },
+        ];
+
+        const merged = (service as any).mergeCitationInfo(existing, incoming) as IrisCitationMetaDTO[];
+        const mergedById = new Map<number, IrisCitationMetaDTO>();
+        merged.forEach((entry) => mergedById.set(entry.entityId, entry));
+
+        expect(mergedById.size).toBe(3);
+        expect(mergedById.get(1)?.lectureTitle).toBe('New');
+        expect(mergedById.get(2)?.lectureTitle).toBe('Keep');
+        expect(mergedById.get(3)?.lectureTitle).toBe('Added');
+    });
+
+    it('should capture an error when switching sessions without a course id', () => {
+        const captureSpy = vi.spyOn(Sentry, 'captureException').mockImplementation(() => 'event-id');
+
+        service.setCourseId(undefined);
+        routerMock.url = '/invalid-url';
+
+        const session = { id: 99, chatMode: ChatServiceMode.COURSE, creationDate: new Date(), entityId: 1 } as IrisSessionDTO;
+        service.switchToSession(session);
+
+        expect(captureSpy).toHaveBeenCalled();
+    });
+
+    it('should throw when creating a session without an identifier', () => {
+        service['sessionCreationIdentifier'] = undefined;
+
+        expect(() => (service as any).createNewSession()).toThrow('Session creation identifier not set');
+    });
+
+    it('should throw when sending a message without an active session', async () => {
+        service.sessionId = undefined;
+
+        await expect(firstValueFrom(service.sendMessage('Hello'))).rejects.toThrow('Not initialized');
     });
 });

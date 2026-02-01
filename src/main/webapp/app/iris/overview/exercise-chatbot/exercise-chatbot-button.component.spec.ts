@@ -240,4 +240,46 @@ describe('ExerciseChatbotButtonComponent', () => {
         // then - chatOpen should still be false
         expect(component.chatOpen()).toBe(false);
     });
+
+    it('should detect bubble overflow', () => {
+        const bubble = fixture.nativeElement.querySelector('.message-bubble') as HTMLElement;
+        Object.defineProperty(bubble, 'scrollHeight', { value: 200, configurable: true });
+        Object.defineProperty(bubble, 'clientHeight', { value: 100, configurable: true });
+
+        component.checkOverflow();
+
+        expect(component.isOverflowing()).toBe(true);
+    });
+
+    it('should reset state when opening and closing the chat dialog', () => {
+        component.newIrisMessage.set({ text: 'Hello' });
+        component.isOverflowing.set(true);
+
+        component.openChat();
+
+        expect(component.chatOpen()).toBe(true);
+        expect(component.newIrisMessage()).toBeUndefined();
+        expect(component.isOverflowing()).toBe(false);
+        expect(mockDialog.open).toHaveBeenCalled();
+
+        mockDialogAfterClosed.next();
+        mockDialogAfterClosed.complete();
+
+        expect(component.chatOpen()).toBe(false);
+        expect(component.newIrisMessage()).toBeUndefined();
+    });
+
+    it('should render a chat bubble message with citation previews', () => {
+        const html = component.renderChatBubbleMessage({ text: 'Check [cite:L:1::::Hint:Summary]' });
+
+        expect(html).toContain('iris-citation__text');
+        expect(html).toContain('Hint');
+    });
+
+    it('should render a citation group preview for adjacent citations', () => {
+        const html = component.renderChatBubbleMessage({ text: '[cite:L:1::::One:First] [cite:L:2::::Two:Second]' });
+
+        expect(html).toContain('iris-citation-group');
+        expect(html).toContain('+1');
+    });
 });

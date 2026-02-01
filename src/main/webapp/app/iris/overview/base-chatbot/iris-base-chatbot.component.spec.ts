@@ -39,6 +39,8 @@ import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
+import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
+import { IrisCitationParsed } from 'app/iris/overview/shared/iris-citation.util';
 
 describe('IrisBaseChatbotComponent', () => {
     setupTestBed({ zoneless: true });
@@ -866,5 +868,84 @@ describe('IrisBaseChatbotComponent', () => {
             expect(relatedEntityButton).not.toBeNull();
             expect(component.relatedEntityRoute()).toBe('../exercises/99');
         });
+    });
+
+    it('should update scroll state based on the chat body scroll position', () => {
+        chatService.messages.next([mockClientMessage]);
+        fixture.detectChanges();
+
+        const messagesElement = component.messagesElement()?.nativeElement as HTMLElement;
+        messagesElement.scrollTop = 10;
+        component.checkChatScroll();
+        expect(component.isScrolledToBottom()).toBe(true);
+
+        messagesElement.scrollTop = 120;
+        component.checkChatScroll();
+        expect(component.isScrolledToBottom()).toBe(false);
+    });
+
+    it('should return undefined for unrelated entity labels and routes', () => {
+        const route = (component as any).computeRelatedEntityRoute(ChatServiceMode.COURSE, 101);
+        const label = (component as any).computeRelatedEntityLinkButtonLabel(ChatServiceMode.COURSE);
+
+        expect(route).toBeUndefined();
+        expect(label).toBeUndefined();
+    });
+
+    it('should render citation HTML with lecture metadata', () => {
+        const parsed: IrisCitationParsed = {
+            type: 'L',
+            entityId: 1,
+            page: '4',
+            start: '',
+            end: '',
+            keyword: 'Keyword',
+            summary: 'Summary',
+        };
+        const meta: IrisCitationMetaDTO = {
+            entityId: 1,
+            lectureTitle: 'Intro',
+            lectureUnitTitle: 'Unit 1',
+        };
+
+        const html = (component as any).renderCitationHtml(parsed, meta);
+
+        expect(html).toContain('iris-citation--slide');
+        expect(html).toContain('artemisApp.iris.citations.lectureLabel');
+        expect(html).toContain('artemisApp.iris.citations.lectureUnitLabel');
+    });
+
+    it('should render citation group HTML with navigation', () => {
+        const parsed: IrisCitationParsed[] = [
+            { type: 'L', entityId: 1, page: '', start: '', end: '', keyword: 'One', summary: 'First' },
+            { type: 'L', entityId: 2, page: '', start: '', end: '', keyword: 'Two', summary: 'Second' },
+        ];
+        const metas: IrisCitationMetaDTO[] = [
+            { entityId: 1, lectureTitle: 'Lecture 1', lectureUnitTitle: 'Unit 1' },
+            { entityId: 2, lectureTitle: 'Lecture 2', lectureUnitTitle: 'Unit 2' },
+        ];
+
+        const html = (component as any).renderCitationGroupHtml(parsed, metas);
+
+        expect(html).toContain('iris-citation-group');
+        expect(html).toContain('iris-citation__nav-count');
+        expect(html).toContain('+1');
+    });
+
+    it('should update citation group summaries and nav counter', () => {
+        const group = document.createElement('span');
+        group.innerHTML =
+            '<span class="iris-citation__summary-item is-active">First</span>' +
+            '<span class="iris-citation__summary-item">Second</span>' +
+            '<span class="iris-citation__nav-count"></span>';
+
+        (component as any).updateCitationGroupSummary(group, 1);
+
+        const items = Array.from(group.querySelectorAll<HTMLElement>('.iris-citation__summary-item'));
+        const navCount = group.querySelector<HTMLElement>('.iris-citation__nav-count');
+
+        expect(items[0].classList.contains('is-active')).toBe(false);
+        expect(items[1].classList.contains('is-active')).toBe(true);
+        expect(navCount?.textContent).toBe('2/2');
     });
 });
