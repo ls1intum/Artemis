@@ -268,6 +268,16 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetBuildAgentDetails_byMemberAddress_returnsAgent() throws Exception {
+        // Test that we can also look up an agent by its memberAddress (used when navigating from finished jobs)
+        var retrievedAgent = request.get("/api/core/admin/build-agent?agentName=" + URLEncoder.encode(agent1.buildAgent().memberAddress(), StandardCharsets.UTF_8), HttpStatus.OK,
+                BuildAgentInformation.class);
+        assertThat(retrievedAgent.buildAgent().name()).isEqualTo(agent1.buildAgent().name());
+        assertThat(retrievedAgent.buildAgent().memberAddress()).isEqualTo(agent1.buildAgent().memberAddress());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testCancelProcessingBuildJob() throws Exception {
         BuildJobQueueItem buildJob = processingJobs.get(job1.id());
         request.delete("/api/core/admin/cancel-job/" + buildJob.id(), HttpStatus.NO_CONTENT);

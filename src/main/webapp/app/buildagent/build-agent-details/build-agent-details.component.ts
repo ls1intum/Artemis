@@ -246,8 +246,15 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         this.agentDetailsSubscription = this.buildAgentsService.getBuildAgentDetails(this.agentName).subscribe({
             next: (buildAgent) => {
                 this.updateBuildAgent(buildAgent);
+                // If we queried by address but got a different name, update for correct WebSocket subscription
+                const actualName = buildAgent.buildAgent?.name;
+                if (actualName && this.agentName !== actualName) {
+                    this.agentName = actualName;
+                    // Re-subscribe to the correct WebSocket channel
+                    this.resubscribeWebsocket();
+                }
                 // Initialize filter with this agent's address to show only its finished jobs
-                this.finishedBuildJobFilter = new FinishedBuildJobFilter(this.buildAgent()?.buildAgent?.memberAddress);
+                this.finishedBuildJobFilter = new FinishedBuildJobFilter(buildAgent.buildAgent?.memberAddress);
                 this.loadFinishedBuildJobs();
             },
             error: (error: HttpErrorResponse) => {
@@ -258,13 +265,26 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
                     // Other errors (server error, network issue, etc.) - show alert but don't mark as not found
                     onError(this.alertService, error);
                 }
-                // Still load finished jobs - use existing agent address if available, otherwise no agent filter
-                // The backend filters by address, not name, so we can only filter if we have the address
-                const agentAddress = this.buildAgent()?.buildAgent?.memberAddress;
-                this.finishedBuildJobFilter = new FinishedBuildJobFilter(agentAddress);
+                // Use the query param directly for filtering - it's likely the address when navigating from finished jobs
+                // When agent is offline, buildAgent() is empty, so use this.agentName instead
+                this.finishedBuildJobFilter = new FinishedBuildJobFilter(this.agentName);
                 this.loadFinishedBuildJobs();
             },
         });
+    }
+
+    /**
+     * Re-subscribes to WebSocket channels with the updated agent name.
+     * Called when we navigate by address but need to subscribe to name-based channels.
+     */
+    private resubscribeWebsocket() {
+        // Unsubscribe from old channels
+        this.agentDetailsWebsocketSubscription?.unsubscribe();
+        this.runningJobsWebsocketSubscription?.unsubscribe();
+
+        // Update channel and re-subscribe
+        this.agentDetailsWebsocketChannel = this.agentUpdatesChannel + '/' + this.agentName;
+        this.initWebsocketSubscription();
     }
 
     private updateBuildAgent(buildAgent: BuildAgentInformation) {

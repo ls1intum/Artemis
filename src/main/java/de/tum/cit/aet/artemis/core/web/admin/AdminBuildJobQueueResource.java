@@ -148,14 +148,22 @@ public class AdminBuildJobQueueResource {
     /**
      * Returns detailed information on a specific build agent
      *
-     * @param agentName the name of the agent
+     * @param agentName the name or memberAddress of the agent
      * @return the build agent information
      */
     @GetMapping("build-agent")
     public ResponseEntity<BuildAgentInformation> getBuildAgentDetails(@RequestParam String agentName) {
         log.debug("REST request to get information on build agent {}", agentName);
-        Optional<BuildAgentInformation> buildAgentDetails = distributedDataAccessService.getBuildAgentInformation().stream()
-                .filter(agent -> agent.buildAgent().name().equals(agentName)).findFirst();
+        List<BuildAgentInformation> agents = distributedDataAccessService.getBuildAgentInformation();
+
+        // First try to match by name (primary identifier)
+        Optional<BuildAgentInformation> buildAgentDetails = agents.stream().filter(agent -> agent.buildAgent().name().equals(agentName)).findFirst();
+
+        // If not found by name, try to match by memberAddress (for finished jobs navigation)
+        if (buildAgentDetails.isEmpty()) {
+            buildAgentDetails = agents.stream().filter(agent -> agent.buildAgent().memberAddress().equals(agentName)).findFirst();
+        }
+
         return buildAgentDetails.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 

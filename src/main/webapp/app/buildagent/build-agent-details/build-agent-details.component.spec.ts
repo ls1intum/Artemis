@@ -466,16 +466,36 @@ describe('BuildAgentDetailsComponent', () => {
         expect(component.agentNotFound()).toBe(false);
     });
 
-    it('should use existing agent address in filter when error occurs and agent address is available', () => {
-        const serverError = new HttpErrorResponse({ status: 500, statusText: 'Internal Server Error' });
-        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(throwError(() => serverError));
+    it('should use query param (agentName) directly for filtering when agent lookup returns 404', () => {
+        const notFoundError = new HttpErrorResponse({ status: 404, statusText: 'Not Found' });
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(throwError(() => notFoundError));
 
-        // Pre-set a build agent to test that its address is used in the filter
-        component.buildAgent.set(mockBuildAgent);
+        // Set the agentName to simulate navigation from finished jobs with an address
+        component.agentName = '[127.0.0.1]:8080';
 
         component.loadAgentData();
 
-        expect(component.finishedBuildJobFilter.buildAgentAddress).toBe(mockBuildAgent.buildAgent?.memberAddress);
+        // When 404, the component should use the query param (agentName) directly for filtering
+        expect(component.finishedBuildJobFilter.buildAgentAddress).toBe('[127.0.0.1]:8080');
+        expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenCalled();
+    });
+
+    it('should re-subscribe to WebSocket when agent name differs from query param (address-based navigation)', () => {
+        // Simulate navigation by address - the query param contains an address, not a name
+        const addressBasedAgent: BuildAgentInformation = {
+            ...mockBuildAgent,
+            buildAgent: { name: 'actual-agent-name', memberAddress: '[127.0.0.1]:8080', displayName: 'Agent 1' },
+        };
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(addressBasedAgent));
+
+        // Set initial agentName to the address (simulating navigation from finished jobs)
+        activatedRoute.setParameters({ agentName: '[127.0.0.1]:8080' });
+        component.ngOnInit();
+
+        // After loading, agentName should be updated to the actual name
+        expect(component.agentName).toBe('actual-agent-name');
+        // WebSocket should be re-subscribed with the correct channel
+        expect(mockWebsocketService.subscribe).toHaveBeenCalledWith('/topic/admin/build-agent/actual-agent-name');
     });
 
     it('should not trigger search if search term is less than 3 characters', () => {
