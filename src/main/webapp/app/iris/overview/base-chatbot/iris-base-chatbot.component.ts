@@ -18,6 +18,7 @@ import {
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
@@ -25,7 +26,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
-import { IrisMessageContentType, IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
+import { IrisMessageContentType, IrisTextMessageContent, isTextContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
@@ -73,6 +74,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected statusService = inject(IrisStatusService);
     protected chatService = inject(IrisChatService);
     protected route = inject(ActivatedRoute);
+    private readonly sanitizer = inject(DomSanitizer);
     private readonly destroyRef = inject(DestroyRef);
 
     // Icons
@@ -122,7 +124,11 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     // Messages with processing
     private readonly rawMessages = toSignal(this.chatService.currentMessages(), { initialValue: [] as IrisMessage[] });
-    readonly messages = computed(() => this.processMessages(this.rawMessages()));
+    readonly messages = computed(() => {
+        const citationInfo = this.citationInfo();
+        this.currentLanguage();
+        return this.processMessages(this.rawMessages(), citationInfo);
+    });
 
     // Computed state
     readonly hasActiveStage = computed(() => this.stages()?.some((stage) => [IrisStageStateDTO.IN_PROGRESS, IrisStageStateDTO.NOT_STARTED].includes(stage.state)) ?? false);
@@ -331,27 +337,33 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     /**
      * Process messages for display (clone, reverse, format)
      */
-    private processMessages(rawMessages: IrisMessage[]): IrisMessage[] {
+    private processMessages(rawMessages: IrisMessage[], citationInfo: IrisCitationMetaDTO[]): IrisMessage[] {
         const processed = _.cloneDeep(rawMessages).reverse();
         processed.forEach((message) => {
-            if (message.content?.[0] && 'textContent' in message.content[0]) {
-                const cnt = message.content[0] as IrisTextMessageContent;
-                cnt.textContent = cnt.textContent.replace(/\n\n/g, '\n\u00A0\n');
-                cnt.textContent = cnt.textContent.replace(/\n/g, '\n\n');
-            }
+            message.content?.forEach((content) => {
+                if (!isTextContent(content)) {
+                    return;
+                }
+                content.textContent = content.textContent.replace(/\n\n/g, '\n\u00A0\n');
+                content.textContent = content.textContent.replace(/\n/g, '\n\n');
+                if (message.sender === IrisSender.LLM) {
+                    content.renderedContent = this.renderMessageContent(content, citationInfo);
+                }
+            });
         });
         return processed;
     }
 
     /**
-     * Renders a message as HTML and replaces citation blocks with markup.
+     * Renders a message as sanitized HTML and marks it safe for binding.
      * @param content The text content to render.
-     * @returns The rendered HTML string for display.
+     * @param citationInfo Metadata used to enrich citation rendering.
+     * @returns The rendered HTML marked as SafeHtml for display.
      */
-    renderMessageContent(content: IrisTextMessageContent): string {
-        this.currentLanguage();
-        const withCitations = this.replaceCitations(content.textContent ?? '', this.citationInfo());
-        return htmlForMarkdown(withCitations);
+    private renderMessageContent(content: IrisTextMessageContent, citationInfo: IrisCitationMetaDTO[]): SafeHtml {
+        const withCitations = this.replaceCitations(content.textContent ?? '', citationInfo);
+        const renderedHtml = htmlForMarkdown(withCitations);
+        return this.sanitizer.bypassSecurityTrustHtml(renderedHtml);
     }
 
     /**

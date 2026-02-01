@@ -1,3 +1,5 @@
+import type { SafeHtml } from '@angular/platform-browser';
+
 export enum IrisMessageContentType {
     TEXT = 'text',
 }
@@ -10,6 +12,8 @@ export abstract class IrisMessageContent {
 }
 
 export class IrisTextMessageContent extends IrisMessageContent {
+    renderedContent?: SafeHtml;
+
     constructor(public textContent: string) {
         super(IrisMessageContentType.TEXT);
     }
