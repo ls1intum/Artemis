@@ -28,12 +28,14 @@
             [enableExerciseReviewComments]="true"
             [reviewCommentThreads]="reviewCommentThreads()"
             [selectedAuxiliaryRepositoryId]="selectedRepositoryId"
+            [enableLeftSidebarTabs]="true"
             (onCommit)="onCommit()"
             (onSubmitReviewComment)="onSubmitReviewComment($event)"
             (onDeleteReviewComment)="onDeleteReviewComment($event)"
             (onReplyReviewComment)="onReplyReviewComment($event)"
             (onUpdateReviewComment)="onUpdateReviewComment($event)"
             (onToggleResolveReviewThread)="onToggleResolveReviewThread($event)"
+            (onNavigateReviewThread)="onNavigateReviewThread($event)"
             (onFileLoad)="onFileLoad($event)"
             (onEditorLoaded)="onEditorLoaded()"
         >
@@ -262,7 +264,6 @@
                 (onUpdateReviewComment)="onUpdateReviewComment($event)"
                 (onToggleResolveReviewThread)="onToggleResolveReviewThread($event)"
             />
-            <!-- Preview-only component for right sidebar -->
             <jhi-programming-exercise-instructions
                 editorSidebar
                 id="previewMonaco"

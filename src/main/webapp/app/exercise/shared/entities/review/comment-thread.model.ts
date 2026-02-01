@@ -19,20 +19,17 @@ export interface CommentThread {
     filePath?: string;
     initialFilePath?: string;
     lineNumber?: number;
-    initialLineNumber?: number;
+    initialLineNumber: number;
     outdated: boolean;
     resolved: boolean;
     comments?: Comment[];
 }
 
 export interface CreateCommentThread {
-    groupId?: number;
     targetType: CommentThreadLocationType;
     auxiliaryRepositoryId?: number;
-    filePath?: string;
     initialFilePath?: string;
-    lineNumber?: number;
-    initialLineNumber?: number;
+    initialLineNumber: number;
     initialComment: CreateComment;
 }
 

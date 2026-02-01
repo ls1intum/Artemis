@@ -1,4 +1,4 @@
-import { CommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
+import { CommentContent, UserCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
 
 export enum CommentType {
     USER = 'USER',
@@ -8,10 +8,7 @@ export enum CommentType {
 export interface Comment {
     id: number;
     threadId: number;
-    authorId?: number;
     authorName?: string;
-    createdBy?: string;
-    lastModifiedBy?: string;
     type: CommentType;
     content: CommentContent;
     initialVersionId?: number;
@@ -20,11 +17,6 @@ export interface Comment {
     lastModifiedDate?: string;
 }
 
-export interface CreateComment {
-    type: CommentType;
-    content: CommentContent;
-}
+export type CreateComment = UserCommentContent;
 
-export interface UpdateCommentContent {
-    content: CommentContent;
-}
+export type UpdateCommentContent = UserCommentContent;

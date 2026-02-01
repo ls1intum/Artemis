@@ -36,11 +36,13 @@
             display: flex;
             height: inherit;
             min-width: 0; /* allow middle strip to shrink */
+            align-items: stretch;
 
             .editor-sidebar-left {
                 flex: 0 1 auto;
                 display: flex;
                 width: 310px;
+                height: 100%;
 
                 > *:first-child {
                     flex: 1 1 auto;

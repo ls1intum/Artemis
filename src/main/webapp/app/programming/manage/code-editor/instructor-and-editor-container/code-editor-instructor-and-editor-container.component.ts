@@ -47,8 +47,7 @@ import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResp
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
 import { ExerciseReviewCommentService } from 'app/exercise/services/exercise-review-comment.service';
 import { CommentThread, CommentThreadLocationType, CreateCommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { CommentType, CreateComment } from 'app/exercise/shared/entities/review/comment.model';
-import { UserCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
+import { CreateComment } from 'app/exercise/shared/entities/review/comment.model';
 
 const PROBLEM_STATEMENT_FILE_PATH = 'problem_statement.md';
 import { getRepoPath } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
@@ -407,8 +406,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
 
-        const commentContent: UserCommentContent = { contentType: 'USER', text: event.text };
-        const createComment: CreateComment = { type: CommentType.USER, content: commentContent };
+        const createComment: CreateComment = { contentType: 'USER', text: event.text };
 
         this.exerciseReviewCommentService
             .createUserComment(exerciseId, event.threadId, createComment)
@@ -439,9 +437,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
 
-        const commentContent: UserCommentContent = { contentType: 'USER', text: event.text };
         this.exerciseReviewCommentService
-            .updateUserCommentContent(exerciseId, event.commentId, { content: commentContent })
+            .updateUserCommentContent(exerciseId, event.commentId, { contentType: 'USER', text: event.text })
             .pipe(
                 tap((response) => {
                     const updatedComment = response.body;
@@ -572,39 +569,86 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             this.locationIndex = deltaIndex === 1 ? 0 : issue.relatedLocations.length - 1;
         }
 
-        // We can always jump to the problem statement
-        if (issue.relatedLocations[this.locationIndex].type === 'PROBLEM_STATEMENT') {
+        const location = issue.relatedLocations[this.locationIndex];
+        const targetType = (() => {
+            switch (location.type) {
+                case 'TEMPLATE_REPOSITORY':
+                    return CommentThreadLocationType.TEMPLATE_REPO;
+                case 'SOLUTION_REPOSITORY':
+                    return CommentThreadLocationType.SOLUTION_REPO;
+                case 'TESTS_REPOSITORY':
+                    return CommentThreadLocationType.TEST_REPO;
+                case 'PROBLEM_STATEMENT':
+                default:
+                    return CommentThreadLocationType.PROBLEM_STATEMENT;
+            }
+        })();
+        this.navigateToLocation({
+            targetType,
+            filePath: targetType === CommentThreadLocationType.PROBLEM_STATEMENT ? undefined : getRepoPath(location),
+            lineNumber: location.endLine,
+        });
+    }
+
+    onNavigateReviewThread(thread: CommentThread): void {
+        this.navigateToLocation({
+            targetType: thread.targetType,
+            filePath: thread.filePath ?? thread.initialFilePath,
+            lineNumber: thread.lineNumber ?? thread.initialLineNumber,
+            auxiliaryRepositoryId: thread.auxiliaryRepositoryId,
+        });
+    }
+
+    private navigateToLocation(location: { targetType: CommentThreadLocationType; filePath?: string; lineNumber?: number; auxiliaryRepositoryId?: number }): void {
+        if (location.targetType === CommentThreadLocationType.PROBLEM_STATEMENT) {
             this.codeEditorContainer.selectedFile = this.codeEditorContainer.problemStatementIdentifier;
-            this.editableInstructions.jumpToLine(issue.relatedLocations[this.locationIndex].endLine);
+            if (location.lineNumber !== undefined) {
+                this.editableInstructions.jumpToLine(location.lineNumber);
+            }
             return;
         }
 
-        // Set parameters for when fileLoad is called
-        this.lineJumpOnFileLoad = issue.relatedLocations[this.locationIndex].endLine;
-        this.fileToJumpOn = getRepoPath(issue.relatedLocations[this.locationIndex]);
+        if (!location.filePath) {
+            return;
+        }
 
-        // Jump to the right repo
-        // This signals onEditorLoaded if successful
+        this.lineJumpOnFileLoad = location.lineNumber;
+        this.fileToJumpOn = location.filePath;
+
         try {
-            if (issue.relatedLocations[this.locationIndex].type === 'TEMPLATE_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TEMPLATE') {
-                this.selectTemplateParticipation();
-                return;
-            } else if (issue.relatedLocations[this.locationIndex].type === 'SOLUTION_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'SOLUTION') {
-                this.selectSolutionParticipation();
-                return;
-            } else if (issue.relatedLocations[this.locationIndex].type === 'TESTS_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TESTS') {
-                this.selectTestRepository();
-                return;
+            switch (location.targetType) {
+                case CommentThreadLocationType.TEMPLATE_REPO:
+                    if (this.codeEditorContainer.selectedRepository() !== RepositoryType.TEMPLATE) {
+                        this.selectTemplateParticipation();
+                        return;
+                    }
+                    break;
+                case CommentThreadLocationType.SOLUTION_REPO:
+                    if (this.codeEditorContainer.selectedRepository() !== RepositoryType.SOLUTION) {
+                        this.selectSolutionParticipation();
+                        return;
+                    }
+                    break;
+                case CommentThreadLocationType.TEST_REPO:
+                    if (this.codeEditorContainer.selectedRepository() !== RepositoryType.TESTS) {
+                        this.selectTestRepository();
+                        return;
+                    }
+                    break;
+                case CommentThreadLocationType.AUXILIARY_REPO:
+                    if (this.codeEditorContainer.selectedRepository() !== RepositoryType.AUXILIARY && location.auxiliaryRepositoryId) {
+                        this.selectAuxiliaryRepository(location.auxiliaryRepositoryId);
+                        return;
+                    }
+                    break;
+                default:
             }
-        } catch (error) {
-            this.alertService.error(this.translateService.instant('artemisApp.hyperion.consistencyCheck.navigationFailed'));
+        } catch {
             this.lineJumpOnFileLoad = undefined;
             this.fileToJumpOn = undefined;
             return;
         }
 
-        // We were already in the right repo, no jump, so the editor did not reload
-        // So call the function manually
         this.onEditorLoaded();
     }
 
@@ -620,11 +664,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             // File already loaded, file load event will not fire
             if (this.codeEditorContainer.selectedFile === this.fileToJumpOn) {
                 this.onFileLoad(this.fileToJumpOn!);
+                this.fileToJumpOn = undefined;
                 return;
             }
 
             // Will load file and signal to fileLoad when finished loading
             this.codeEditorContainer.selectedFile = this.fileToJumpOn;
+            this.fileToJumpOn = undefined;
         }
     }
 
@@ -656,13 +702,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
 
-        const commentContent: UserCommentContent = { contentType: 'USER', text };
-        const createComment: CreateComment = { type: CommentType.USER, content: commentContent };
+        const createComment: CreateComment = { contentType: 'USER', text };
         const createThread: CreateCommentThread = {
             targetType,
-            filePath,
-            initialFilePath: filePath,
-            lineNumber,
+            initialFilePath: targetType === CommentThreadLocationType.PROBLEM_STATEMENT ? undefined : filePath,
             initialLineNumber: lineNumber,
             auxiliaryRepositoryId,
             initialComment: createComment,

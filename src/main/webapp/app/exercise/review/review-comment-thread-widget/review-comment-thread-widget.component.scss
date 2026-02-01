@@ -173,6 +173,40 @@
     vertical-align: bottom;
 }
 
+.monaco-review-comment-thread-location {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border: 0;
+    background: transparent;
+    color: var(--secondary-text-color);
+    font-size: 0.7rem;
+    padding: 0;
+    cursor: pointer;
+}
+
+.monaco-review-comment-thread-location-text {
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.monaco-review-comment-thread-location-repo {
+    flex: 0 0 auto;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.1rem 0.35rem;
+    line-height: 1.2;
+    border-radius: 999px;
+    background-color: var(--border-color);
+    color: var(--secondary-text-color);
+}
+
+.monaco-review-comment-thread-location-icon {
+    font-size: 0.7rem;
+}
+
 .monaco-review-comment-thread-toggle {
     text-decoration: none;
     line-height: 1;

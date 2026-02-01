@@ -38,7 +38,6 @@ import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ExerciseReviewCommentService } from 'app/exercise/services/exercise-review-comment.service';
 import { CommentThreadLocationType, CreateCommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 
 describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
@@ -443,14 +442,14 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Review Comments', ()
     });
 
     it('should create a reply and append it to threads', () => {
-        const createdComment = { id: 7, threadId: 9, type: CommentType.USER, content: { contentType: 'USER', text: 'reply' } } as any;
+        const createdComment = { id: 7, threadId: 9, type: 'USER', content: { contentType: 'USER', text: 'reply' } } as any;
         const updatedThreads = [{ id: 9, comments: [createdComment] }] as any;
         reviewService.createUserComment.mockReturnValue(of({ body: createdComment } as any));
         reviewService.appendCommentToThreads.mockReturnValue(updatedThreads);
 
         comp.onReplyReviewComment({ threadId: 9, text: 'reply' });
 
-        expect(reviewService.createUserComment).toHaveBeenCalledWith(1, 9, expect.objectContaining({ type: CommentType.USER, content: { contentType: 'USER', text: 'reply' } }));
+        expect(reviewService.createUserComment).toHaveBeenCalledWith(1, 9, expect.objectContaining({ contentType: 'USER', text: 'reply' }));
         expect(reviewService.appendCommentToThreads).toHaveBeenCalledWith([], createdComment);
         expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
     });
@@ -465,14 +464,14 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Review Comments', ()
     });
 
     it('should update a comment and update threads', () => {
-        const updatedComment = { id: 7, threadId: 9, type: CommentType.USER, content: { contentType: 'USER', text: 'updated' } } as any;
+        const updatedComment = { id: 7, threadId: 9, type: 'USER', content: { contentType: 'USER', text: 'updated' } } as any;
         const updatedThreads = [{ id: 9, comments: [updatedComment] }] as any;
         reviewService.updateUserCommentContent.mockReturnValue(of({ body: updatedComment } as any));
         reviewService.updateCommentInThreads.mockReturnValue(updatedThreads);
 
         comp.onUpdateReviewComment({ commentId: 7, text: 'updated' });
 
-        expect(reviewService.updateUserCommentContent).toHaveBeenCalledWith(1, 7, { content: { contentType: 'USER', text: 'updated' } });
+        expect(reviewService.updateUserCommentContent).toHaveBeenCalledWith(1, 7, { contentType: 'USER', text: 'updated' });
         expect(reviewService.updateCommentInThreads).toHaveBeenCalledWith([], updatedComment);
         expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
     });
@@ -522,12 +521,10 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Review Comments', ()
             1,
             expect.objectContaining({
                 targetType: CommentThreadLocationType.AUXILIARY_REPO,
-                filePath: 'file.java',
                 initialFilePath: 'file.java',
-                lineNumber: 5,
                 initialLineNumber: 5,
                 auxiliaryRepositoryId: 42,
-                initialComment: expect.objectContaining({ type: CommentType.USER }),
+                initialComment: expect.objectContaining({ contentType: 'USER', text: 'text' }),
             }) as CreateCommentThread,
         );
         expect(reviewService.appendThreadToThreads).toHaveBeenCalledWith([], createdThread);

@@ -4,7 +4,13 @@
             <span class="monaco-review-comment-thread-title-text">
                 {{ 'artemisApp.review.threadTitle' | artemisTranslate }}
             </span>
-            @if (getThreadMeta(); as meta) {
+            @if (showLocation()) {
+                <button type="button" class="monaco-review-comment-thread-meta monaco-review-comment-meta monaco-review-comment-thread-location" (click)="navigateToThread()">
+                    <span class="monaco-review-comment-thread-location-text">{{ getThreadLocationPath() }}</span>
+                    <span class="monaco-review-comment-thread-location-repo">{{ getThreadRepositoryLabel() }}</span>
+                    <fa-icon [icon]="faArrowUpRightFromSquare" class="monaco-review-comment-thread-location-icon" />
+                </button>
+            } @else if (getThreadMeta(); as meta) {
                 <span
                     class="monaco-review-comment-thread-meta monaco-review-comment-meta"
                     [class.monaco-review-comment-thread-meta--truncate]="meta.key === 'artemisApp.review.threadCommit'"

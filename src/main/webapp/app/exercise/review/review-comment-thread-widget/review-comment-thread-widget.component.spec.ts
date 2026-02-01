@@ -3,7 +3,6 @@ import { ReviewCommentThreadWidgetComponent } from 'app/exercise/review/review-c
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 
 describe('ReviewCommentThreadWidgetComponent', () => {
     let fixture: ComponentFixture<ReviewCommentThreadWidgetComponent>;
@@ -146,11 +145,9 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
     it('should return author name or fallback', () => {
         const withName = { authorName: 'Alice' } as any;
-        const withId = { authorId: 5 } as any;
         const empty = {} as any;
 
         expect(comp.getCommentAuthorName(withName)).toBe('Alice');
-        expect(comp.getCommentAuthorName(withId)).toBe('User 5');
         expect(comp.getCommentAuthorName(empty)).toBe('');
     });
 
@@ -171,7 +168,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
     it('should set edit text when starting editing', () => {
         const comment = {
             id: 1,
-            type: CommentType.USER,
+            type: 'USER',
             content: { contentType: 'USER', text: 'note' },
         } as any;
 

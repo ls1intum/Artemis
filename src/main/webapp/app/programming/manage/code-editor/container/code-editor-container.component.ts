@@ -30,6 +30,8 @@ import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { ReviewCommentThreadWidgetComponent } from 'app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component';
+import { CodeEditorSidebarTabsComponent } from 'app/programming/manage/code-editor/container/sidebar-tabs/code-editor-sidebar-tabs.component';
 import { editor } from 'monaco-editor';
 
 export enum CollapsableCodeEditorElement {
@@ -50,6 +52,8 @@ export enum CollapsableCodeEditorElement {
         CodeEditorMonacoComponent,
         CodeEditorInstructionsComponent,
         CodeEditorBuildOutputComponent,
+        ReviewCommentThreadWidgetComponent,
+        CodeEditorSidebarTabsComponent,
         KeysPipe,
     ],
 })
@@ -82,6 +86,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     highlightDifferences = input<boolean>(false);
     disableAutoSave = input<boolean>(false);
     consistencyIssues = input<ConsistencyIssue[]>([]);
+    enableLeftSidebarTabs = input<boolean>(false);
 
     readonly enableExerciseReviewComments = input<boolean>(false);
     readonly reviewCommentThreads = input<CommentThread[]>([]);
@@ -103,6 +108,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     readonly onReplyReviewComment = output<{ threadId: number; text: string }>();
     readonly onUpdateReviewComment = output<{ commentId: number; text: string }>();
     readonly onToggleResolveReviewThread = output<{ threadId: number; resolved: boolean }>();
+    readonly onNavigateReviewThread = output<CommentThread>();
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     onEditorLoaded = output<void>();
 
@@ -311,6 +317,13 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
 
     onToggleCollapse(event: InteractableEvent, collapsableElement: CollapsableCodeEditorElement) {
         this.grid.toggleCollapse(event, collapsableElement);
+    }
+
+    toggleFileBrowserCollapsed() {
+        if (!this.fileBrowser) {
+            return;
+        }
+        this.fileBrowser.toggleEditorCollapse({ target: { blur: () => undefined } } as any);
     }
 
     readonly feedbackForSubmission = computed<Feedback[]>(() => {

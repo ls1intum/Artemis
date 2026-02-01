@@ -1,0 +1,74 @@
+<div class="review-sidebar d-flex">
+    <div class="review-sidebar__rail">
+        <button
+            type="button"
+            class="review-sidebar__rail-button"
+            [class.is-active]="leftSidebarTab() === 'FILES' && !isCollapsed()"
+            (click)="selectTab('FILES')"
+            [title]="'artemisApp.editor.fileBrowser.fileBrowser' | artemisTranslate"
+        >
+            <fa-icon [icon]="faFolder" [fixedWidth]="true" />
+        </button>
+        <button
+            type="button"
+            class="review-sidebar__rail-button"
+            [class.is-active]="leftSidebarTab() === 'PROBLEM_STATEMENT' && !isCollapsed()"
+            (click)="selectTab('PROBLEM_STATEMENT')"
+            [title]="'artemisApp.exercise.problemStatement' | artemisTranslate"
+        >
+            <fa-icon [icon]="faListAlt" [fixedWidth]="true" />
+        </button>
+        <button
+            type="button"
+            class="review-sidebar__rail-button"
+            [class.is-active]="leftSidebarTab() === 'COMMENTS' && !isCollapsed()"
+            (click)="selectTab('COMMENTS')"
+            [title]="'artemisApp.review.threadTitle' | artemisTranslate"
+        >
+            <fa-icon [icon]="faComments" [fixedWidth]="true" />
+        </button>
+    </div>
+    <div class="review-sidebar__main flex-grow-1">
+        <div class="review-sidebar__content">
+            @if (leftSidebarTab() === 'FILES') {
+                <div class="review-sidebar__panel review-sidebar__panel--files">
+                    <ng-content select="[sidebarFiles]" />
+                </div>
+            } @else if (leftSidebarTab() === 'PROBLEM_STATEMENT') {
+                <div class="review-sidebar__panel">
+                    <div class="review-sidebar__card card resizable-filebrowser file-browser">
+                        <div class="card-header d-flex justify-content-center bg-primary text-white" (click)="onToggleCollapseClick($event)">
+                            <h3 class="card-title justify-content-center">
+                                <span>
+                                    <fa-icon [icon]="faListAlt" />
+                                    <span class="ms-2">{{ 'artemisApp.exercise.problemStatement' | artemisTranslate }}</span>
+                                </span>
+                            </h3>
+                            <fa-icon class="ms-auto clickable" [icon]="faChevronLeft" />
+                        </div>
+                        <div class="review-sidebar__panel-body card-body">
+                            <ng-content select="[sidebarProblemStatement]" />
+                        </div>
+                    </div>
+                </div>
+            } @else {
+                <div class="review-sidebar__panel">
+                    <div class="review-sidebar__card card resizable-filebrowser file-browser">
+                        <div class="card-header d-flex justify-content-center bg-primary text-white" (click)="onToggleCollapseClick($event)">
+                            <h3 class="card-title justify-content-center">
+                                <span>
+                                    <fa-icon [icon]="faComments" />
+                                    <span class="ms-2">{{ 'artemisApp.review.threadTitle' | artemisTranslate }}</span>
+                                </span>
+                            </h3>
+                            <fa-icon class="ms-auto clickable" [icon]="faChevronLeft" />
+                        </div>
+                        <div class="review-sidebar__panel-body review-sidebar__panel-body--comments card-body">
+                            <ng-content select="[sidebarComments]" />
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

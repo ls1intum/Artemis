@@ -3,7 +3,6 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 import { ExerciseReviewCommentService } from 'app/exercise/services/exercise-review-comment.service';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 
 describe('ExerciseReviewCommentService', () => {
     let service: ExerciseReviewCommentService;
@@ -27,7 +26,7 @@ describe('ExerciseReviewCommentService', () => {
             targetType: CommentThreadLocationType.TEMPLATE_REPO,
             initialLineNumber: 1,
             initialFilePath: 'file.java',
-            comment: { type: CommentType.USER, content: { contentType: 'USER', text: 'hi' } },
+            initialComment: { contentType: 'USER', text: 'hi' },
         } as any;
 
         service.createThread(1, payload).subscribe();
@@ -47,7 +46,7 @@ describe('ExerciseReviewCommentService', () => {
     });
 
     it('should create a user comment', () => {
-        const payload = { type: CommentType.USER, content: { contentType: 'USER', text: 'reply' } } as any;
+        const payload = { contentType: 'USER', text: 'reply' } as any;
 
         service.createUserComment(3, 5, payload).subscribe();
 
@@ -67,7 +66,7 @@ describe('ExerciseReviewCommentService', () => {
     });
 
     it('should update comment content', () => {
-        const payload = { content: { contentType: 'USER', text: 'update' } } as any;
+        const payload = { contentType: 'USER', text: 'update' } as any;
 
         service.updateUserCommentContent(8, 9, payload).subscribe();
 
@@ -112,8 +111,8 @@ describe('ExerciseReviewCommentService', () => {
     });
 
     it('should update a comment in its thread', () => {
-        const threads = [{ id: 1, comments: [{ id: 5, content: { contentType: 'USER', text: 'old' } }] }] as any;
-        const updated = { id: 5, threadId: 1, content: { contentType: 'USER', text: 'new' } } as any;
+        const threads = [{ id: 1, comments: [{ id: 5, content: { text: 'old' } }] }] as any;
+        const updated = { id: 5, threadId: 1, content: { text: 'new' } } as any;
 
         const result = service.updateCommentInThreads(threads, updated);
 

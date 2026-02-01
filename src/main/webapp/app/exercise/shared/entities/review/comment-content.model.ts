@@ -2,11 +2,7 @@ import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 
 export type CommentContentType = 'USER' | 'CONSISTENCY_CHECK';
 
-export interface BaseCommentContent {
-    contentType: CommentContentType;
-}
-
-export interface UserCommentContent extends BaseCommentContent {
+export interface UserCommentContent {
     contentType: 'USER';
     text: string;
 }
@@ -19,7 +15,7 @@ export interface InlineCodeChange {
     applied?: boolean;
 }
 
-export interface ConsistencyIssueCommentContent extends BaseCommentContent {
+export interface ConsistencyIssueCommentContent {
     contentType: 'CONSISTENCY_CHECK';
     severity: ConsistencyIssue.SeverityEnum;
     category: ConsistencyIssue.CategoryEnum;

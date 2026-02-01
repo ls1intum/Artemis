@@ -4,7 +4,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faPen, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUpRightFromSquare, faPen, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { Comment } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
@@ -21,16 +21,19 @@ import { CommentContent } from 'app/exercise/shared/entities/review/comment-cont
 export class ReviewCommentThreadWidgetComponent implements OnInit {
     readonly thread = input.required<CommentThread>();
     readonly initialCollapsed = input<boolean>(false);
+    readonly showLocation = input<boolean>(false);
 
     readonly onDelete = output<number>();
     readonly onReply = output<string>();
     readonly onUpdate = output<{ commentId: number; text: string }>();
     readonly onToggleResolved = output<boolean>();
     readonly onToggleCollapse = output<boolean>();
+    readonly onNavigateToThread = output<CommentThread>();
 
     replyText = '';
     protected readonly faTrash = faTrash;
     protected readonly faPen = faPen;
+    protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
     showThreadBody = true;
     editingCommentId?: number;
     editText = '';
@@ -108,6 +111,10 @@ export class ReviewCommentThreadWidgetComponent implements OnInit {
         this.onToggleCollapse.emit(!this.showThreadBody);
     }
 
+    navigateToThread(): void {
+        this.onNavigateToThread.emit(this.thread());
+    }
+
     ngOnInit(): void {
         this.showThreadBody = !this.initialCollapsed();
     }
@@ -153,13 +160,13 @@ export class ReviewCommentThreadWidgetComponent implements OnInit {
         if (!content) {
             return '';
         }
-        if (content.contentType === 'USER') {
-            return content.text ?? '';
+        if ('contentType' in content && content.contentType === 'CONSISTENCY_CHECK') {
+            const severity = content.severity ?? '';
+            const category = content.category ?? '';
+            const text = content.text ?? '';
+            return [severity, category, text].filter(Boolean).join(' - ');
         }
-        const severity = content.severity ?? '';
-        const category = content.category ?? '';
-        const text = content.text ?? '';
-        return [severity, category, text].filter(Boolean).join(' - ');
+        return content.text ?? '';
     }
 
     /**
@@ -171,9 +178,6 @@ export class ReviewCommentThreadWidgetComponent implements OnInit {
     getCommentAuthorName(comment: Comment): string {
         if (comment.authorName) {
             return comment.authorName;
-        }
-        if (comment.authorId !== undefined && comment.authorId !== null) {
-            return `User ${comment.authorId}`;
         }
         return '';
     }
@@ -202,5 +206,27 @@ export class ReviewCommentThreadWidgetComponent implements OnInit {
             return { key: 'artemisApp.review.threadCommit', params: { commitSha: thread.initialCommitSha } };
         }
         return undefined;
+    }
+
+    getThreadLocationPath(): string {
+        const thread = this.thread();
+        return thread.filePath ?? thread.initialFilePath ?? 'problem_statement.md';
+    }
+
+    getThreadRepositoryLabel(): string {
+        const targetType = this.thread().targetType;
+        switch (targetType) {
+            case CommentThreadLocationType.TEMPLATE_REPO:
+                return 'Template';
+            case CommentThreadLocationType.SOLUTION_REPO:
+                return 'Solution';
+            case CommentThreadLocationType.TEST_REPO:
+                return 'Tests';
+            case CommentThreadLocationType.AUXILIARY_REPO:
+                return 'Auxiliary';
+            case CommentThreadLocationType.PROBLEM_STATEMENT:
+            default:
+                return 'Problem Statement';
+        }
     }
 }
