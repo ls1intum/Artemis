@@ -39,8 +39,6 @@ import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGe
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
-import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Creates a typed mock ProgrammingExercise for testing.
