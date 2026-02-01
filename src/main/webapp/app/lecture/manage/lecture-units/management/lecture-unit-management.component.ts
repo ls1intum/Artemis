@@ -102,6 +102,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     };
 
     private resolvedLectureId: number | undefined;
+    private isDestroyed = false;
+    private retryProcessingTimeouts = new Map<number, ReturnType<typeof setTimeout>>();
 
     ngOnInit(): void {
         this.resolvedLectureId = this.lectureId() ?? Number(this.activatedRoute?.parent?.snapshot.paramMap.get('lectureId'));
@@ -113,6 +115,11 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
+        this.isDestroyed = true;
+        for (const timeoutId of this.retryProcessingTimeouts.values()) {
+            clearTimeout(timeoutId);
+        }
+        this.retryProcessingTimeouts.clear();
         this.dialogErrorSource.unsubscribe();
     }
 
@@ -419,11 +426,16 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             next: () => {
                 this.alertService.success('artemisApp.lectureUnit.processingRetryStarted');
                 // Reload both statuses after a short delay to show updated state
-                setTimeout(() => {
+                const timeoutId = setTimeout(() => {
+                    if (this.isDestroyed) {
+                        return;
+                    }
                     this.loadTranscriptionStatus(lectureUnit.id!);
                     this.loadProcessingStatus(lectureUnit.id!);
                     this.isRetryingProcessing.update((current) => ({ ...current, [lectureUnit.id!]: false }));
+                    this.retryProcessingTimeouts.delete(lectureUnit.id!);
                 }, 1000);
+                this.retryProcessingTimeouts.set(lectureUnit.id!, timeoutId);
             },
             error: (errorResponse: HttpErrorResponse) => {
                 onError(this.alertService, errorResponse);
