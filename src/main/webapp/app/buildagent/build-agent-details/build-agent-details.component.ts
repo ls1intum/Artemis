@@ -304,6 +304,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
      * Loads agent details from the API.
      */
     private loadAgentDetails() {
+        this.agentDetailsSubscription?.unsubscribe();
         this.agentDetailsSubscription = this.buildAgentsService.getBuildAgentDetails(this.agentName).subscribe({
             next: (buildAgent) => {
                 this.updateBuildAgent(buildAgent);
