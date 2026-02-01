@@ -354,6 +354,18 @@ public class ExerciseReviewService {
         if (dto == null) {
             throw new BadRequestAlertException("Thread DTO must be set", THREAD_ENTITY_NAME, "bodyMissing");
         }
+        if (dto.targetType() == null) {
+            throw new BadRequestAlertException("Thread target type must be set", THREAD_ENTITY_NAME, "targetTypeMissing");
+        }
+        if (dto.initialLineNumber() == null) {
+            throw new BadRequestAlertException("Initial line number must be set", THREAD_ENTITY_NAME, "initialLineNumberMissing");
+        }
+        if (dto.initialLineNumber() < 1) {
+            throw new BadRequestAlertException("Initial line number must be at least 1", THREAD_ENTITY_NAME, "initialLineNumberInvalid");
+        }
+        if (dto.initialComment() == null) {
+            throw new BadRequestAlertException("Initial comment must be set", THREAD_ENTITY_NAME, "initialCommentMissing");
+        }
         if (dto.targetType() != CommentThreadLocationType.PROBLEM_STATEMENT && dto.initialFilePath() == null) {
             throw new BadRequestAlertException("Initial file path is required for repository threads", THREAD_ENTITY_NAME, "initialFilePathMissing");
         }
