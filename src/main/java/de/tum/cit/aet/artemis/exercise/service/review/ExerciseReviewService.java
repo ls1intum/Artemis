@@ -175,11 +175,11 @@ public class ExerciseReviewService {
      * Create a new comment within a thread.
      *
      * @param threadId the thread id
-     * @param dto      the comment to create
+     * @param dto      the comment content to create
      * @return the persisted comment
      */
-    public Comment createUserComment(long threadId, UserCommentContentDTO content) {
-        if (content == null) {
+    public Comment createUserComment(long threadId, UserCommentContentDTO dto) {
+        if (dto == null) {
             throw new BadRequestAlertException("Comment content must be set", COMMENT_ENTITY_NAME, "contentMissing");
         }
         CommentThread thread = findThreadByIdElseThrow(threadId);
@@ -188,7 +188,7 @@ public class ExerciseReviewService {
         User author = userRepository.getUserWithGroupsAndAuthorities();
         Comment comment = new Comment();
         comment.setType(CommentType.USER);
-        comment.setContent(content);
+        comment.setContent(dto);
         comment.setAuthor(author);
         comment.setInitialVersion(resolveLatestVersion(thread));
         comment.setInitialCommitSha(resolveLatestCommitSha(thread.getTargetType(), thread.getAuxiliaryRepositoryId(), thread.getExercise().getId()));
@@ -234,17 +234,17 @@ public class ExerciseReviewService {
      * Update the content of a comment.
      *
      * @param commentId the comment id
-     * @param content   the new content
+     * @param dto       the new comment content
      * @return the updated comment
      */
-    public Comment updateUserCommentContent(long commentId, UserCommentContentDTO content) {
-        if (content == null) {
+    public Comment updateUserCommentContent(long commentId, UserCommentContentDTO dto) {
+        if (dto == null) {
             throw new BadRequestAlertException("Comment content must be set", COMMENT_ENTITY_NAME, "contentMissing");
         }
         Comment comment = commentRepository.findWithThreadById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment", commentId));
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, comment.getThread().getExercise().getId());
-        validateContentMatchesType(comment.getType(), content);
-        comment.setContent(content);
+        validateContentMatchesType(comment.getType(), dto);
+        comment.setContent(dto);
         Comment saved = commentRepository.save(comment);
         return commentRepository.findWithThreadById(saved.getId()).orElse(saved);
     }
@@ -409,6 +409,11 @@ public class ExerciseReviewService {
         }
     }
 
+    /**
+     * Validates thread payload invariants based on target type (problem statement vs repository targets).
+     *
+     * @param dto the thread creation payload to validate
+     */
     private void validateThreadPayload(CreateCommentThreadDTO dto) {
         if (dto.targetType() != CommentThreadLocationType.PROBLEM_STATEMENT && dto.initialFilePath() == null) {
             throw new BadRequestAlertException("Initial file path is required for repository threads", THREAD_ENTITY_NAME, "initialFilePathMissing");
