@@ -5,11 +5,13 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
@@ -93,6 +95,27 @@ public class SharedQueueProcessingService {
      * Uses the same interval as the availability check for consistency.
      */
     private static final Duration CLUSTER_CONNECTION_RETRY_INTERVAL = Duration.ofSeconds(5);
+
+    /**
+     * Maximum number of consecutive stale detections before force-cleaning a job.
+     * With a 5-second detection interval, 6 detections = 30 seconds grace period.
+     * This only applies AFTER the minimum job age has been reached.
+     */
+    private static final int MAX_CONSECUTIVE_STALE_DETECTIONS = 6;
+
+    /**
+     * Minimum job age in seconds before stale detection applies.
+     * This grace period allows for slow Docker image pulls and repository cloning.
+     * Jobs younger than this won't be considered stale even without a container.
+     */
+    private static final int STALE_DETECTION_MIN_JOB_AGE_SECONDS = 120;
+
+    /**
+     * Tracks consecutive stale detection counts per job ID.
+     * Used to identify truly stuck jobs vs jobs that are still starting up.
+     * Jobs are removed from this map when they complete or are force-cleaned.
+     */
+    private final Map<String, Integer> staleJobDetectionCounts = new ConcurrentHashMap<>();
 
     private final BuildAgentConfiguration buildAgentConfiguration;
 
@@ -442,6 +465,9 @@ public class SharedQueueProcessingService {
             // Get locally tracked running job IDs
             Set<String> localRunningJobIds = buildJobManagementService.getRunningBuildJobIds();
 
+            // Clean up tracking for jobs that are no longer running
+            staleJobDetectionCounts.keySet().removeIf(jobId -> !localRunningJobIds.contains(jobId));
+
             // Check each local running job against Docker containers
             for (String jobId : localRunningJobIds) {
                 String containerName = buildContainerPrefix + jobId;
@@ -451,11 +477,57 @@ public class SharedQueueProcessingService {
                     // Job is tracked as running but has no container - this could be:
                     // 1. Container was killed externally
                     // 2. Container startup failed but job wasn't cleaned up
-                    // 3. Timing issue during normal job completion (grace period handles this)
-                    log.warn("Stale build job detected: job {} has no running Docker container '{}'", jobId, containerName);
-                    // Note: We don't force-remove the job here because it might be in the process of completing.
-                    // The job completion handler or timeout mechanism will clean it up.
-                    // We only log for visibility - a repeated warning indicates a truly stuck job.
+                    // 3. Job is still starting up (image pull, repo clone in progress)
+
+                    // Check job age - don't consider jobs stale during startup grace period
+                    // This allows time for Docker image pulls and repository cloning
+                    BuildJobQueueItem job = distributedDataAccessService.getDistributedProcessingJobs().get(jobId);
+                    if (job != null && job.jobTimingInfo() != null && job.jobTimingInfo().buildStartDate() != null) {
+                        long jobAgeSeconds = Duration.between(job.jobTimingInfo().buildStartDate(), ZonedDateTime.now()).getSeconds();
+                        if (jobAgeSeconds < STALE_DETECTION_MIN_JOB_AGE_SECONDS) {
+                            // Job is still in startup grace period - skip stale detection
+                            log.debug("Job {} is {} seconds old (< {} min grace period), skipping stale detection", jobId, jobAgeSeconds, STALE_DETECTION_MIN_JOB_AGE_SECONDS / 60);
+                            continue;
+                        }
+                    }
+
+                    int consecutiveCount = staleJobDetectionCounts.merge(jobId, 1, Integer::sum);
+
+                    if (consecutiveCount >= MAX_CONSECUTIVE_STALE_DETECTIONS) {
+                        // Job has been stale for too long - force cleanup and requeue
+                        log.error("Build job {} has been stale for {} consecutive checks (~{} seconds). Force-cancelling and requeuing.", jobId, consecutiveCount,
+                                consecutiveCount * 5);
+
+                        // Cancel the Future to interrupt any blocked operations
+                        CompletableFuture<?> future = buildJobManagementService.getRunningBuildJobFutureWrapper(jobId);
+                        if (future != null) {
+                            future.cancel(true);
+                        }
+
+                        // Remove from distributed processing jobs and requeue
+                        BuildJobQueueItem staleJob = distributedDataAccessService.getDistributedProcessingJobs().remove(jobId);
+                        if (staleJob != null && staleJob.retryCount() < 5) {
+                            BuildJobQueueItem requeuedJob = new BuildJobQueueItem(staleJob, new BuildAgentDTO("", "", ""), staleJob.retryCount() + 1);
+                            log.info("Requeuing stale build job {} with retry count {}", jobId, requeuedJob.retryCount());
+                            distributedDataAccessService.getDistributedBuildJobQueue().add(requeuedJob);
+                        }
+                        else if (staleJob != null) {
+                            log.error("Stale build job {} exceeded maximum retry count ({}). Not requeuing.", jobId, staleJob.retryCount());
+                        }
+
+                        // Clean up local state
+                        staleJobDetectionCounts.remove(jobId);
+                        localProcessingJobs.decrementAndGet();
+                        buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
+                    }
+                    else {
+                        log.warn("Stale build job detected: job {} has no running Docker container '{}' (detection count: {}/{})", jobId, containerName, consecutiveCount,
+                                MAX_CONSECUTIVE_STALE_DETECTIONS);
+                    }
+                }
+                else {
+                    // Job has a container - reset stale detection count
+                    staleJobDetectionCounts.remove(jobId);
                 }
             }
 
