@@ -33,7 +33,6 @@ import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { throwError } from 'rxjs';
 import { PdfDropZoneComponent } from '../../pdf-drop-zone/pdf-drop-zone.component';
@@ -61,7 +60,6 @@ describe('LectureUnitManagementComponent', () => {
     let lectureUnitManagementComponentFixture: ComponentFixture<LectureUnitManagementComponent>;
     let lectureService: LectureService;
     let lectureUnitService: LectureUnitService;
-    let lectureTranscriptionService: LectureTranscriptionService;
     let alertService: AlertService;
     let attachmentVideoUnitService: AttachmentVideoUnitService;
     let findLectureWithDetailsSpy: ReturnType<typeof vi.spyOn>;
@@ -99,7 +97,6 @@ describe('LectureUnitManagementComponent', () => {
                 MockProvider(LectureUnitService),
                 MockProvider(LectureService),
                 MockProvider(AlertService),
-                MockProvider(LectureTranscriptionService),
                 MockProvider(AttachmentVideoUnitService),
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: route },
@@ -116,7 +113,6 @@ describe('LectureUnitManagementComponent', () => {
         lectureUnitManagementComponent = lectureUnitManagementComponentFixture.componentInstance;
         lectureService = TestBed.inject(LectureService);
         lectureUnitService = TestBed.inject(LectureUnitService);
-        lectureTranscriptionService = TestBed.inject(LectureTranscriptionService);
         alertService = TestBed.inject(AlertService);
         attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
         findLectureWithDetailsSpy = vi.spyOn(lectureService, 'findWithDetails');
@@ -148,9 +144,6 @@ describe('LectureUnitManagementComponent', () => {
             },
         ];
         vi.spyOn(lectureUnitService, 'getUnitStatuses').mockReturnValue(of(combinedStatuses));
-        // Also mock individual status methods for retry flow tests
-        vi.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(TranscriptionStatus.COMPLETED));
-        vi.spyOn(lectureUnitService, 'getProcessingStatus').mockReturnValue(of({ lectureUnitId: attachmentVideoUnit.id!, phase: ProcessingPhase.DONE, retryCount: 0 }));
         lectureUnitManagementComponentFixture.detectChanges();
     });
 
@@ -502,7 +495,13 @@ describe('LectureUnitManagementComponent', () => {
 
     describe('retryProcessing', () => {
         it('should call retryProcessing on lectureUnitService and show success message', () => {
-            const retryProcessingSpy = vi.spyOn(lectureUnitService, 'retryProcessing').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+            const returnedStatus: LectureUnitCombinedStatus = {
+                lectureUnitId: attachmentVideoUnit.id!,
+                processingPhase: ProcessingPhase.TRANSCRIBING,
+                retryCount: 1,
+                transcriptionStatus: TranscriptionStatus.PENDING,
+            };
+            const retryProcessingSpy = vi.spyOn(lectureUnitService, 'retryProcessing').mockReturnValue(of(returnedStatus));
             const alertSpy = vi.spyOn(alertService, 'success');
             lectureUnitManagementComponent.lecture.set(lecture);
             lectureUnitManagementComponentFixture.componentRef.setInput('lectureId', 5);
@@ -511,8 +510,11 @@ describe('LectureUnitManagementComponent', () => {
             lectureUnitManagementComponent.retryProcessing(attachmentVideoUnit);
 
             expect(retryProcessingSpy).toHaveBeenCalledWith(5, attachmentVideoUnit.id);
-            expect(lectureUnitManagementComponent.isRetryingProcessing()[attachmentVideoUnit.id!]).toBe(true);
+            expect(lectureUnitManagementComponent.isRetryingProcessing()[attachmentVideoUnit.id!]).toBe(false);
             expect(alertSpy).toHaveBeenCalledWith('artemisApp.lectureUnit.processingRetryStarted');
+            // Verify status was updated from returned value
+            expect(lectureUnitManagementComponent.processingStatus()[attachmentVideoUnit.id!]?.phase).toBe(ProcessingPhase.TRANSCRIBING);
+            expect(lectureUnitManagementComponent.transcriptionStatus()[attachmentVideoUnit.id!]).toBe(TranscriptionStatus.PENDING);
         });
 
         it('should not call retryProcessing if lectureId is missing', () => {
@@ -547,6 +549,28 @@ describe('LectureUnitManagementComponent', () => {
             lectureUnitManagementComponent.retryProcessing(attachmentVideoUnit);
 
             expect(lectureUnitManagementComponent.isRetryingProcessing()[attachmentVideoUnit.id!]).toBe(false);
+        });
+
+        it('should clear transcription status when retry returns null transcriptionStatus', () => {
+            // Set up initial transcription status (e.g., FAILED)
+            lectureUnitManagementComponent.transcriptionStatus.set({ [attachmentVideoUnit.id!]: TranscriptionStatus.FAILED });
+
+            // Mock retry returning null transcriptionStatus (transcription was deleted during retry)
+            const returnedStatus: LectureUnitCombinedStatus = {
+                lectureUnitId: attachmentVideoUnit.id!,
+                processingPhase: ProcessingPhase.TRANSCRIBING,
+                retryCount: 0,
+                transcriptionStatus: undefined,
+            };
+            vi.spyOn(lectureUnitService, 'retryProcessing').mockReturnValue(of(returnedStatus));
+            lectureUnitManagementComponent.lecture.set(lecture);
+            lectureUnitManagementComponentFixture.componentRef.setInput('lectureId', 5);
+            lectureUnitManagementComponent.ngOnInit();
+
+            lectureUnitManagementComponent.retryProcessing(attachmentVideoUnit);
+
+            // Verify the old FAILED status was cleared
+            expect(lectureUnitManagementComponent.transcriptionStatus()[attachmentVideoUnit.id!]).toBeUndefined();
         });
     });
 

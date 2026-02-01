@@ -36,7 +36,8 @@ public interface LectureTranscriptionRepository extends ArtemisJpaRepository<Lec
      */
     @Query("""
             SELECT t FROM LectureTranscription t
-            WHERE t.lectureUnit.lecture.id = :lectureId
+            JOIN FETCH t.lectureUnit lu
+            WHERE lu.lecture.id = :lectureId
             """)
     List<LectureTranscription> findByLectureId(@Param("lectureId") Long lectureId);
 }

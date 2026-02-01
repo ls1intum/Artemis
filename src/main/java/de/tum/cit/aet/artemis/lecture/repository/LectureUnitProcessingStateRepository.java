@@ -94,7 +94,7 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      */
     @Query("""
             SELECT ps FROM LectureUnitProcessingState ps
-            JOIN ps.lectureUnit lu
+            JOIN FETCH ps.lectureUnit lu
             WHERE lu.lecture.id = :lectureId
             """)
     List<LectureUnitProcessingState> findByLectureId(@Param("lectureId") Long lectureId);

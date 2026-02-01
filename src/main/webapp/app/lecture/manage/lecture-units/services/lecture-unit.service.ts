@@ -167,23 +167,13 @@ export class LectureUnitService {
     }
 
     /**
-     * Get the processing status of a lecture unit.
-     * @param lectureId the ID of the lecture
-     * @param lectureUnitId the ID of the lecture unit
-     * @returns Observable with the processing status
-     */
-    getProcessingStatus(lectureId: number, lectureUnitId: number): Observable<LectureUnitProcessingStatus> {
-        return this.httpClient.get<LectureUnitProcessingStatus>(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}/processing-status`);
-    }
-
-    /**
      * Retry processing for a failed lecture unit.
      * @param lectureId the ID of the lecture
      * @param lectureUnitId the ID of the lecture unit
-     * @returns Observable with the response
+     * @returns Observable with the updated combined status
      */
-    retryProcessing(lectureId: number, lectureUnitId: number): Observable<HttpResponse<void>> {
-        return this.httpClient.post<void>(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}/retry-processing`, null, { observe: 'response' });
+    retryProcessing(lectureId: number, lectureUnitId: number): Observable<LectureUnitCombinedStatus> {
+        return this.httpClient.post<LectureUnitCombinedStatus>(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}/retry-processing`, null);
     }
 
     /**

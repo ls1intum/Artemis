@@ -16,7 +16,6 @@ import { faClock, faExclamationTriangle, faEye, faFileLines, faPencilAlt, faRepe
 import dayjs from 'dayjs/esm';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { UnitCreationCardComponent } from '../unit-creation-card/unit-creation-card.component';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
@@ -73,7 +72,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     private readonly lectureService = inject(LectureService);
     private readonly alertService = inject(AlertService);
     protected readonly lectureUnitService = inject(LectureUnitService);
-    private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
 
     showCreationCard = input<boolean>(true);
@@ -276,35 +274,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     protected readonly AttachmentVideoUnit = AttachmentVideoUnit;
 
-    private loadTranscriptionStatus(lectureUnitId: number) {
-        this.lectureTranscriptionService.getTranscriptionStatus(lectureUnitId).subscribe({
-            next: (status) => {
-                this.transcriptionStatus.update((current) => {
-                    const updated = { ...current };
-                    if (status) {
-                        updated[lectureUnitId] = status;
-                    } else {
-                        delete updated[lectureUnitId];
-                    }
-                    return updated;
-                });
-            },
-        });
-    }
-
-    private loadProcessingStatus(lectureUnitId: number) {
-        if (!this.resolvedLectureId) {
-            return;
-        }
-        this.lectureUnitService.getProcessingStatus(this.resolvedLectureId, lectureUnitId).subscribe({
-            next: (status) => {
-                if (status) {
-                    this.processingStatus.update((current) => ({ ...current, [lectureUnitId]: status }));
-                }
-            },
-        });
-    }
-
     /**
      * Load all processing and transcription statuses for attachment video units in a single bulk request.
      * This reduces the number of HTTP requests from 2N to 1 when loading the lecture unit management view.
@@ -462,14 +431,30 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
         this.isRetryingProcessing.update((current) => ({ ...current, [lectureUnit.id!]: true }));
         this.lectureUnitService.retryProcessing(this.resolvedLectureId, lectureUnit.id).subscribe({
-            next: () => {
+            next: (status) => {
                 this.alertService.success('artemisApp.lectureUnit.processingRetryStarted');
-                // Reload both statuses after a short delay to show updated state
-                setTimeout(() => {
-                    this.loadTranscriptionStatus(lectureUnit.id!);
-                    this.loadProcessingStatus(lectureUnit.id!);
-                    this.isRetryingProcessing.update((current) => ({ ...current, [lectureUnit.id!]: false }));
-                }, 1000);
+                // Update status from the returned value
+                this.processingStatus.update((current) => ({
+                    ...current,
+                    [status.lectureUnitId]: {
+                        lectureUnitId: status.lectureUnitId,
+                        phase: status.processingPhase,
+                        retryCount: status.retryCount,
+                        startedAt: status.startedAt,
+                        errorKey: status.processingErrorKey,
+                    },
+                }));
+                // Update transcription status - clear old entry if null (e.g., transcription deleted during retry)
+                this.transcriptionStatus.update((current) => {
+                    const updated = { ...current };
+                    if (status.transcriptionStatus) {
+                        updated[status.lectureUnitId] = status.transcriptionStatus;
+                    } else {
+                        delete updated[status.lectureUnitId];
+                    }
+                    return updated;
+                });
+                this.isRetryingProcessing.update((current) => ({ ...current, [lectureUnit.id!]: false }));
             },
             error: (errorResponse: HttpErrorResponse) => {
                 onError(this.alertService, errorResponse);

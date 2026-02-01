@@ -46,7 +46,6 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitForLearningPathNodeDetailsDTO;
-import de.tum.cit.aet.artemis.lecture.dto.LectureUnitProcessingStatusDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
@@ -223,33 +222,6 @@ public class LectureUnitResource {
     }
 
     /**
-     * GET /lectures/:lectureId/lecture-units/:lectureUnitId/processing-status
-     * Gets the processing status of a lecture unit.
-     *
-     * @param lectureId     the id of the lecture to which the unit belongs
-     * @param lectureUnitId the id of the lecture unit
-     * @return the ResponseEntity with status 200 (OK) and the processing status
-     */
-    @GetMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}/processing-status")
-    @EnforceAtLeastEditorInLecture
-    public ResponseEntity<LectureUnitProcessingStatusDTO> getProcessingStatus(@PathVariable Long lectureId, @PathVariable Long lectureUnitId) {
-        log.debug("REST request to get processing status of lecture unit: {}", lectureUnitId);
-        LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
-
-        if (lectureUnit.getLecture() == null || !lectureUnit.getLecture().getId().equals(lectureId)) {
-            throw new BadRequestAlertException("Requested lecture unit is not part of the specified lecture", ENTITY_NAME, "lectureIdMismatch");
-        }
-
-        if (lectureContentProcessingService.isEmpty()) {
-            throw new AccessForbiddenException("Lecture content processing is not enabled");
-        }
-
-        var status = lectureContentProcessingService.get().getProcessingState(lectureUnitId).map(LectureUnitProcessingStatusDTO::of)
-                .orElse(LectureUnitProcessingStatusDTO.idle(lectureUnitId));
-        return ResponseEntity.ok(status);
-    }
-
-    /**
      * GET /lectures/:lectureId/lecture-units/statuses
      * Gets the combined processing and transcription status for all attachment video units in a lecture.
      * This bulk endpoint reduces the number of HTTP requests from 2N to 1 when loading the lecture unit management view.
@@ -261,6 +233,13 @@ public class LectureUnitResource {
     @EnforceAtLeastEditorInLecture
     public ResponseEntity<List<LectureUnitCombinedStatusDTO>> getUnitStatuses(@PathVariable Long lectureId) {
         log.debug("REST request to get combined statuses for all lecture units in lecture: {}", lectureId);
+
+        // If processing is not enabled (Iris/Nebula disabled), return empty list
+        // This prevents the UI from showing "Awaiting Processing" when processing will never happen
+        if (lectureContentProcessingService.isEmpty()) {
+            return ResponseEntity.ok(List.of());
+        }
+
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
 
         // Bulk fetch processing states for all units in the lecture
@@ -288,11 +267,11 @@ public class LectureUnitResource {
      *
      * @param lectureId     the id of the lecture to which the unit belongs
      * @param lectureUnitId the id of the lecture unit to retry processing for
-     * @return the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with status 200 (OK) and the updated combined status
      */
     @PostMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}/retry-processing")
     @EnforceAtLeastEditorInLectureUnit
-    public ResponseEntity<Void> retryProcessing(@PathVariable Long lectureId, @PathVariable Long lectureUnitId) {
+    public ResponseEntity<LectureUnitCombinedStatusDTO> retryProcessing(@PathVariable Long lectureId, @PathVariable Long lectureUnitId) {
         log.info("REST request to retry processing of lecture unit: {}", lectureUnitId);
         LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
 
@@ -314,8 +293,13 @@ public class LectureUnitResource {
             throw new BadRequestAlertException("Cannot retry processing for a unit that is not in failed state", ENTITY_NAME, "notInFailedState");
         }
 
-        lectureContentProcessingService.get().retryProcessing(attachmentVideoUnit);
-        return ResponseEntity.ok().build();
+        // Retry processing - creates initial state synchronously
+        var newState = lectureContentProcessingService.get().retryProcessing(attachmentVideoUnit);
+
+        // Return the actual state (or IDLE if nothing could be processed)
+        var transcription = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).orElse(null);
+        var transcriptionStatus = transcription != null ? transcription.getTranscriptionStatus() : null;
+        return ResponseEntity.ok(LectureUnitCombinedStatusDTO.of(lectureUnitId, newState, transcriptionStatus));
     }
 
 }

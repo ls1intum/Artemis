@@ -298,22 +298,109 @@ public class LectureContentProcessingService {
 
     /**
      * Manually retry processing for a unit that failed.
+     * This is synchronous - the external API calls (Nebula/Pyris) are just job submissions
+     * which are fast. The actual processing happens on those external systems.
      *
-     * @param lectureUnit the unit to retry
+     * @param lectureUnit the unit to retry (must be in FAILED state)
+     * @return the processing state after retry attempt, or null if retry not possible
      */
-    @Async
-    public void retryProcessing(AttachmentVideoUnit lectureUnit) {
-        // Set auth context due to @Async
-        SecurityUtils.setAuthorizationObject();
-        processingStateRepository.findByLectureUnit_Id(lectureUnit.getId()).ifPresent(state -> {
-            if (state.getPhase() == ProcessingPhase.FAILED) {
-                log.info("Retrying processing for unit {}", lectureUnit.getId());
-                // Delete the failed state - triggerProcessing will create fresh
-                // (hash/version will be set correctly for the new state)
-                processingStateRepository.delete(state);
-                triggerProcessing(lectureUnit);
+    public LectureUnitProcessingState retryProcessing(AttachmentVideoUnit lectureUnit) {
+        var existingState = processingStateRepository.findByLectureUnit_Id(lectureUnit.getId());
+        if (existingState.isEmpty() || existingState.get().getPhase() != ProcessingPhase.FAILED) {
+            return null;
+        }
+
+        log.info("Retrying processing for unit {}", lectureUnit.getId());
+
+        // Delete the old failed state
+        processingStateRepository.delete(existingState.get());
+
+        // Determine what processing is possible
+        boolean hasVideo = lectureUnit.getVideoSource() != null && !lectureUnit.getVideoSource().isBlank();
+        boolean hasPdf = lectureUnit.getAttachment() != null && lectureUnit.getAttachment().getLink() != null && lectureUnit.getAttachment().getLink().endsWith(".pdf");
+        boolean canTranscribe = hasVideo && transcriptionApi.isPresent() && tumLiveApi.isPresent();
+        boolean canIngest = hasPdf && irisLectureApi.isPresent();
+
+        if (!canTranscribe && !canIngest) {
+            log.debug("No processing possible for unit {} during retry", lectureUnit.getId());
+            return null;
+        }
+
+        // Create new state
+        var newState = new LectureUnitProcessingState(lectureUnit);
+        if (hasVideo) {
+            newState.setVideoSourceHash(computeHash(lectureUnit.getVideoSource()));
+        }
+        if (hasPdf) {
+            newState.setAttachmentVersion(lectureUnit.getAttachment().getVersion());
+        }
+
+        // Try to start processing - external API calls are just job submissions (fast)
+        if (canTranscribe) {
+            Optional<String> playlistUrl = fetchPlaylistUrl(lectureUnit);
+            if (playlistUrl.isPresent()) {
+                try {
+                    NebulaTranscriptionRequestDTO request = new NebulaTranscriptionRequestDTO(playlistUrl.get(), lectureUnit.getLecture().getId(), lectureUnit.getId());
+                    transcriptionApi.get().startNebulaTranscription(lectureUnit.getLecture().getId(), lectureUnit.getId(), request);
+                    newState.transitionTo(ProcessingPhase.TRANSCRIBING);
+                    processingStateRepository.save(newState);
+                    log.info("Transcription retry started for unit {}", lectureUnit.getId());
+                    return newState;
+                }
+                catch (Exception e) {
+                    log.error("Failed to start transcription for unit {}: {}", lectureUnit.getId(), e.getMessage());
+                    // Fall through to try PDF ingestion if available
+                }
             }
-        });
+            // No playlist or transcription failed - try PDF fallback
+            if (canIngest) {
+                log.info("Falling back to PDF ingestion for unit {}", lectureUnit.getId());
+                return startIngestionForRetry(newState);
+            }
+            else {
+                newState.markFailed("artemisApp.attachmentVideoUnit.processing.error.noPlaylist");
+                processingStateRepository.save(newState);
+                return newState;
+            }
+        }
+        else if (canIngest) {
+            return startIngestionForRetry(newState);
+        }
+
+        return null;
+    }
+
+    /**
+     * Start ingestion for a retry attempt and return the state.
+     */
+    private LectureUnitProcessingState startIngestionForRetry(LectureUnitProcessingState state) {
+        LectureUnit unit = state.getLectureUnit();
+        if (!(unit instanceof AttachmentVideoUnit attachmentUnit)) {
+            state.markFailed("artemisApp.attachmentVideoUnit.processing.error.invalidUnitType");
+            processingStateRepository.save(state);
+            return state;
+        }
+
+        try {
+            String jobToken = irisLectureApi.get().addLectureUnitToPyrisDB(attachmentUnit);
+            if (jobToken == null) {
+                // Not applicable - mark as done
+                state.transitionTo(ProcessingPhase.DONE);
+                processingStateRepository.save(state);
+                return state;
+            }
+            state.transitionTo(ProcessingPhase.INGESTING);
+            state.setIngestionJobToken(jobToken);
+            processingStateRepository.save(state);
+            log.info("Ingestion retry started for unit {}", unit.getId());
+            return state;
+        }
+        catch (Exception e) {
+            log.error("Failed to start ingestion for unit {}: {}", unit.getId(), e.getMessage());
+            state.markFailed("artemisApp.attachmentVideoUnit.processing.error.ingestionFailed");
+            processingStateRepository.save(state);
+            return state;
+        }
     }
 
     /**
