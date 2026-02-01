@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.hyperion.service;
 
 import java.util.Map;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +37,21 @@ public class HyperionProblemStatementRefinementService {
      */
     private static final int MAX_PROBLEM_STATEMENT_LENGTH = 50_000;
 
+    /**
+     * Maximum length for displaying selected text in prompts.
+     */
+    private static final int MAX_SELECTED_TEXT_DISPLAY_LENGTH = 100;
+
+    /**
+     * Default course title when not specified.
+     */
+    private static final String DEFAULT_COURSE_TITLE = "Programming Course";
+
+    /**
+     * Default course description when not specified.
+     */
+    private static final String DEFAULT_COURSE_DESCRIPTION = "A programming course";
+
     @Nullable
     private final ChatClient chatClient;
 
@@ -70,13 +84,8 @@ public class HyperionProblemStatementRefinementService {
     public ProblemStatementRefinementResponseDTO refineProblemStatement(Course course, String originalProblemStatementText, String userPrompt) {
         log.debug("Refining problem statement for course [{}]", course.getId());
 
-        if (originalProblemStatementText == null || originalProblemStatementText.isBlank()) {
-            throw new BadRequestAlertException("Cannot refine empty problem statement", "ProblemStatement", "ProblemStatementRefinement.problemStatementEmpty");
-        }
-
-        if (chatClient == null) {
-            throw new InternalServerErrorAlertException("AI chat client is not configured", "Hyperion", "ProblemStatementRefinement.chatClientNotConfigured");
-        }
+        validateRefinementPrerequisites(originalProblemStatementText);
+        validateUserPrompt(userPrompt);
 
         try {
             // Validate input length
@@ -88,8 +97,8 @@ public class HyperionProblemStatementRefinementService {
                 throw new BadRequestAlertException("User prompt cannot be empty", "ProblemStatement", "ProblemStatementRefinement.userPromptEmpty");
             }
 
-            GlobalRefinementPromptVariables variables = new GlobalRefinementPromptVariables(originalProblemStatementText.trim(), userPrompt,
-                    course.getTitle() != null ? course.getTitle() : "Programming Course", course.getDescription() != null ? course.getDescription() : "A programming course");
+            GlobalRefinementPromptVariables variables = new GlobalRefinementPromptVariables(originalProblemStatementText.trim(), userPrompt, getCourseTitleOrDefault(course),
+                    getCourseDescriptionOrDefault(course));
 
             String prompt = templateService.render("/prompts/hyperion/refine_problem_statement.st", variables.asMap());
             String refinedProblemStatementText = chatClient.prompt().user(prompt).call().content();
@@ -124,13 +133,7 @@ public class HyperionProblemStatementRefinementService {
         log.debug("Refining problem statement with targeted instruction for course [{}]", course.getId());
 
         String originalProblemStatementText = request.problemStatementText();
-        if (originalProblemStatementText == null || originalProblemStatementText.isBlank()) {
-            throw new BadRequestAlertException("Cannot refine empty problem statement", "ProblemStatement", "ProblemStatementRefinement.problemStatementEmpty");
-        }
-
-        if (chatClient == null) {
-            throw new InternalServerErrorAlertException("AI chat client is not configured", "Hyperion", "ProblemStatementRefinement.chatClientNotConfigured");
-        }
+        validateRefinementPrerequisites(originalProblemStatementText);
 
         try {
             // Build the instruction string
@@ -147,8 +150,8 @@ public class HyperionProblemStatementRefinementService {
                 throw new InternalServerErrorAlertException("Input is too long (including instructions)", "ProblemStatement", "ProblemStatementRefinement.problemStatementTooLong");
             }
 
-            TargetedRefinementPromptVariables variables = new TargetedRefinementPromptVariables(textWithLineNumbers, targetedInstruction,
-                    course.getTitle() != null ? course.getTitle() : "Programming Course", course.getDescription() != null ? course.getDescription() : "A programming course");
+            TargetedRefinementPromptVariables variables = new TargetedRefinementPromptVariables(textWithLineNumbers, targetedInstruction, getCourseTitleOrDefault(course),
+                    getCourseDescriptionOrDefault(course));
 
             // Use the targeted refinement template for selection-based instructions
             String prompt = templateService.render("/prompts/hyperion/refine_problem_statement_targeted.st", variables.asMap());
@@ -194,54 +197,63 @@ public class HyperionProblemStatementRefinementService {
      * positions.
      */
     private String extractSelectedText(ProblemStatementTargetedRefinementRequestDTO request, String[] lines) {
-        try {
-            int startLineIdx = request.startLine() - 1;
-            int endLineIdx = request.endLine() - 1;
+        int startLineIdx = request.startLine() - 1;
+        int endLineIdx = request.endLine() - 1;
 
-            if (startLineIdx < 0 || endLineIdx >= lines.length) {
-                throw new BadRequestAlertException("Invalid line range", "ProblemStatement", "ProblemStatementRefinement.invalidLineRange");
-            }
+        validateLineRange(startLineIdx, endLineIdx, lines.length);
 
-            if (startLineIdx == endLineIdx) {
-                // Single line selection
-                String line = lines[startLineIdx];
-                Integer startColObj = request.startColumn();
-                Integer endColObj = request.endColumn();
-                int startCol = Math.max(0, (startColObj != null ? startColObj : 1) - 1);
-                int endCol = Math.min(line.length(), endColObj != null ? endColObj : 1);
-                if (startCol < endCol && startCol < line.length()) {
-                    String text = line.substring(startCol, endCol);
-                    // Truncate if too long for the prompt
-                    return text.length() > 100 ? text.substring(0, 97) + "..." : text;
-                }
-            }
-            else {
-                // Multi-line selection - just return first and last parts
-                String firstLine = lines[startLineIdx];
-                String lastLine = lines[endLineIdx];
-                String combined = getString(request, lastLine, firstLine);
-                return combined.length() > 100 ? combined.substring(0, 97) + "..." : combined;
-            }
+        if (startLineIdx == endLineIdx) {
+            return extractSingleLineSelection(lines[startLineIdx], request.startColumn(), request.endColumn());
         }
-        catch (Exception e) {
-            log.warn("Failed to extract selected text for targeted refinement", e);
-            throw new BadRequestAlertException("Failed to extract text for targeted refinement: " + e.getMessage(), "ProblemStatement",
-                    "ProblemStatementRefinement.textExtractionFailed");
+        else {
+            return extractMultiLineSelection(lines[startLineIdx], lines[endLineIdx], request.startColumn(), request.endColumn());
+        }
+    }
+
+    /**
+     * Validates that the line range is within bounds.
+     */
+    private void validateLineRange(int startLineIdx, int endLineIdx, int totalLines) {
+        if (startLineIdx < 0 || endLineIdx >= totalLines) {
+            throw new BadRequestAlertException("Invalid line range", "ProblemStatement", "ProblemStatementRefinement.invalidLineRange");
+        }
+    }
+
+    /**
+     * Extracts selected text from a single line.
+     */
+    private String extractSingleLineSelection(String line, Integer startColObj, Integer endColObj) {
+        int startCol = Math.max(0, (startColObj != null ? startColObj : 1) - 1);
+        int endCol = Math.min(line.length(), endColObj != null ? endColObj : 1);
+
+        if (startCol < endCol && startCol < line.length()) {
+            String text = line.substring(startCol, endCol);
+            return truncateForDisplay(text);
         }
         throw new BadRequestAlertException("Failed to extract text for targeted refinement", "ProblemStatement", "ProblemStatementRefinement.textExtractionFailed");
     }
 
-    private static @NonNull String getString(ProblemStatementTargetedRefinementRequestDTO request, String lastLine, String firstLine) {
-        Integer startColObj = request.startColumn();
-        Integer endColObj = request.endColumn();
+    /**
+     * Extracts selected text spanning multiple lines.
+     */
+    private String extractMultiLineSelection(String firstLine, String lastLine, Integer startColObj, Integer endColObj) {
         int startCol = Math.max(0, (startColObj != null ? startColObj : 1) - 1);
         int endCol = Math.min(lastLine.length(), endColObj != null ? endColObj : 1);
 
         String startPart = startCol < firstLine.length() ? firstLine.substring(startCol) : "";
         String endPart = endCol <= lastLine.length() ? lastLine.substring(0, endCol) : lastLine;
 
-        String combined = startPart + "..." + endPart;
-        return combined;
+        return truncateForDisplay(startPart + "..." + endPart);
+    }
+
+    /**
+     * Truncates text for display in prompts if it exceeds the maximum length.
+     */
+    private String truncateForDisplay(String text) {
+        if (text.length() > MAX_SELECTED_TEXT_DISPLAY_LENGTH) {
+            return text.substring(0, MAX_SELECTED_TEXT_DISPLAY_LENGTH - 3) + "...";
+        }
+        return text;
     }
 
     /**
@@ -303,6 +315,42 @@ public class HyperionProblemStatementRefinementService {
 
         String errorMessage = "Failed to refine problem statement: " + e.getMessage();
         throw new InternalServerErrorAlertException(errorMessage, "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementFailed");
+    }
+
+    /**
+     * Validates that the problem statement and chat client are ready for
+     * refinement.
+     */
+    private void validateRefinementPrerequisites(String problemStatementText) {
+        if (problemStatementText == null || problemStatementText.isBlank()) {
+            throw new BadRequestAlertException("Cannot refine empty problem statement", "ProblemStatement", "ProblemStatementRefinement.problemStatementEmpty");
+        }
+        if (chatClient == null) {
+            throw new InternalServerErrorAlertException("AI chat client is not configured", "Hyperion", "ProblemStatementRefinement.chatClientNotConfigured");
+        }
+    }
+
+    /**
+     * Validates that the user prompt is not empty.
+     */
+    private void validateUserPrompt(String userPrompt) {
+        if (userPrompt == null || userPrompt.isBlank()) {
+            throw new BadRequestAlertException("User prompt cannot be empty", "ProblemStatement", "ProblemStatementRefinement.userPromptEmpty");
+        }
+    }
+
+    /**
+     * Returns the course title or a default value if not set.
+     */
+    private String getCourseTitleOrDefault(Course course) {
+        return course.getTitle() != null ? course.getTitle() : DEFAULT_COURSE_TITLE;
+    }
+
+    /**
+     * Returns the course description or a default value if not set.
+     */
+    private String getCourseDescriptionOrDefault(Course course) {
+        return course.getDescription() != null ? course.getDescription() : DEFAULT_COURSE_DESCRIPTION;
     }
 
     private interface RefinementPromptVariables {

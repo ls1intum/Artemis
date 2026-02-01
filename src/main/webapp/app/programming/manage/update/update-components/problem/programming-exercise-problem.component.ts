@@ -18,21 +18,17 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { PopoverModule } from 'primeng/popover';
 import { ButtonModule } from 'primeng/button';
-import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
-import { ProblemStatementGenerationRequest } from 'app/openapi/model/problemStatementGenerationRequest';
-import { ProblemStatementGlobalRefinementRequest } from 'app/openapi/model/problemStatementGlobalRefinementRequest';
-import { ProblemStatementTargetedRefinementRequest } from 'app/openapi/model/problemStatementTargetedRefinementRequest';
-import { Subscription, finalize } from 'rxjs';
+import { Subscription } from 'rxjs';
+import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
+import { InlineRefinementEvent, isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/shared/service/alert.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
-import { FileService } from 'app/shared/service/file.service';
 import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/buttons/button/button.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
@@ -86,9 +82,8 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     readonly ButtonType = ButtonType;
     readonly TooltipPlacement = TooltipPlacement;
 
-    private hyperionApiService = inject(HyperionProblemStatementApiService);
     private translateService = inject(TranslateService);
-    private alertService = inject(AlertService);
+    private problemStatementService = inject(ProblemStatementService);
     private injector = inject(Injector);
 
     /**
@@ -125,8 +120,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     private templateLoaded = signal<boolean>(false);
     private currentProblemStatement = signal<string>('');
 
-    private fileService = inject(FileService);
-
     readonly editableInstructions = viewChild<ProgrammingExerciseEditableInstructionComponent>('editableInstructions');
 
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
@@ -145,18 +138,8 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             this.currentProblemStatement.set(exercise.problemStatement);
         }
 
-        if (exercise?.programmingLanguage) {
-            this.fileService.getTemplateFile(exercise.programmingLanguage, exercise.projectType).subscribe({
-                next: (template) => {
-                    this.templateProblemStatement.set(template);
-                    this.templateLoaded.set(true);
-                },
-                error: () => {
-                    this.templateProblemStatement.set('');
-                    this.templateLoaded.set(false);
-                },
-            });
-        }
+        // Use shared service to load template
+        this.problemStatementService.loadTemplate(exercise, this.templateProblemStatement, this.templateLoaded);
     }
 
     /**
@@ -174,110 +157,54 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Normalizes a string by trimming whitespace and normalizing line endings.
-     * This helps compare problem statements that might have formatting differences.
-     */
-    private normalizeString(str: string): string {
-        if (!str) return '';
-        // Normalize line endings to \n and trim
-        return str.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
-    }
-
-    /**
      * Computed signal that determines whether to show the generate or refine button.
      * Reacts to changes in the problem statement.
      */
-    shouldShowGenerateButton = computed(() => {
-        const problemStatement = this.currentProblemStatement();
-        const template = this.templateProblemStatement();
-
-        if (!problemStatement || problemStatement.trim() === '') {
-            return true;
-        }
-
-        if (!this.templateLoaded()) {
-            return true;
-        }
-
-        const normalizedProblemStatement = this.normalizeString(problemStatement);
-        const normalizedTemplate = this.normalizeString(template);
-
-        return normalizedTemplate !== '' && normalizedProblemStatement === normalizedTemplate;
-    });
+    shouldShowGenerateButton = computed(() => isTemplateOrEmpty(this.currentProblemStatement(), this.templateProblemStatement(), this.templateLoaded()));
 
     /**
      * Generates a draft problem statement using the user's prompt
      */
     generateProblemStatement(): void {
         const exercise = this.programmingExercise();
-        const courseId = exercise?.course?.id ?? exercise?.exerciseGroup?.exam?.course?.id;
-        if (!this.userPrompt()?.trim() || !courseId) {
+        const prompt = this.userPrompt();
+
+        if (!prompt?.trim()) {
             return;
         }
 
-        this.isGeneratingOrRefining.set(true);
+        this.currentGenerationSubscription = this.problemStatementService.generateProblemStatement(exercise, prompt, this.isGeneratingOrRefining).subscribe({
+            next: (result) => {
+                if (result.success && result.content && exercise) {
+                    const draftContent = result.content;
+                    const editorComponent = this.editableInstructions();
 
-        const request: ProblemStatementGenerationRequest = {
-            userPrompt: this.userPrompt().trim(),
-        };
-
-        this.currentGenerationSubscription = this.hyperionApiService
-            .generateProblemStatement(courseId, request)
-            .pipe(
-                finalize(() => {
-                    this.isGeneratingOrRefining.set(false);
-                    this.currentGenerationSubscription = undefined;
-                }),
-            )
-            .subscribe({
-                next: (response) => {
-                    if (!response.draftProblemStatement || response.draftProblemStatement.trim() === '') {
-                        this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
-                        return;
+                    // Update the editor using the facade method
+                    if (editorComponent) {
+                        editorComponent.setText(draftContent);
                     }
 
-                    if (response.draftProblemStatement && exercise) {
-                        const draftContent = response.draftProblemStatement;
-                        const editorComponent = this.editableInstructions();
-                        const monacoEditor = editorComponent?.markdownEditorMonaco?.monacoEditor;
+                    // Always update the model/state
+                    exercise.problemStatement = draftContent;
+                    this.currentProblemStatement.set(draftContent);
+                    this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
+                    this.problemStatementChange.emit(draftContent);
+                    this.programmingExerciseChange.emit(exercise);
 
-                        // Try to update the editor first with explicit success detection
-                        let editorUpdated = false;
-                        if (monacoEditor) {
-                            try {
-                                monacoEditor.setText(draftContent);
-                                editorUpdated = true;
-                            } catch {
-                                editorUpdated = false;
-                            }
-                        }
-
-                        // Always update the model/state
-                        exercise.problemStatement = draftContent;
-                        this.currentProblemStatement.set(draftContent);
-                        this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
-                        this.problemStatementChange.emit(draftContent);
-                        this.programmingExerciseChange.emit(exercise);
-
-                        // If editor update failed or was unavailable, schedule a retry when ready
-                        if (!editorUpdated && editorComponent) {
-                            afterNextRender(
-                                () => {
-                                    editorComponent.markdownEditorMonaco?.monacoEditor?.setText(draftContent);
-                                },
-                                { injector: this.injector },
-                            );
-                        }
+                    // If editor was unavailable, schedule a retry when ready
+                    if (!editorComponent) {
+                        afterNextRender(
+                            () => {
+                                this.editableInstructions()?.setText(draftContent);
+                            },
+                            { injector: this.injector },
+                        );
                     }
-                    this.userPrompt.set('');
-
-                    // Show success alert
-                    this.alertService.success('artemisApp.programmingExercise.problemStatement.generationSuccess');
-                },
-                error: () => {
-                    this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
-                },
-            });
+                }
+                this.userPrompt.set('');
+                this.currentGenerationSubscription = undefined;
+            },
+        });
     }
 
     /**
@@ -287,49 +214,30 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
      */
     refineProblemStatement(): void {
         const exercise = this.programmingExercise();
-        const courseId = exercise?.course?.id ?? exercise?.exerciseGroup?.exam?.course?.id;
         const currentContent = this.editableInstructions()?.getCurrentContent() ?? exercise?.problemStatement;
+        const prompt = this.userPrompt();
 
-        if (!this.userPrompt()?.trim() || !courseId || !currentContent) {
+        if (!prompt?.trim() || !currentContent) {
             return;
         }
 
-        this.isGeneratingOrRefining.set(true);
+        this.currentGenerationSubscription = this.problemStatementService.refineGlobally(exercise, currentContent, prompt, this.isGeneratingOrRefining).subscribe({
+            next: (result) => {
+                if (result.success && result.content) {
+                    this.showDiff.set(true);
+                    const refinedContent = result.content;
+                    afterNextRender(
+                        () => {
+                            this.editableInstructions()?.applyRefinedContent(refinedContent);
+                        },
+                        { injector: this.injector },
+                    );
 
-        const request: ProblemStatementGlobalRefinementRequest = {
-            problemStatementText: currentContent,
-            userPrompt: this.userPrompt().trim(),
-        };
-
-        this.currentGenerationSubscription = this.hyperionApiService
-            .refineProblemStatementGlobally(courseId, request)
-            .pipe(
-                finalize(() => {
-                    this.isGeneratingOrRefining.set(false);
-                    this.currentGenerationSubscription = undefined;
-                }),
-            )
-            .subscribe({
-                next: (response) => {
-                    if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
-                        this.showDiff.set(true);
-                        const refinedContent = response.refinedProblemStatement;
-                        afterNextRender(
-                            () => {
-                                this.editableInstructions()?.applyRefinedContent(refinedContent);
-                            },
-                            { injector: this.injector },
-                        );
-
-                        this.userPrompt.set('');
-                    } else {
-                        this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
-                    }
-                },
-                error: () => {
-                    this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
-                },
-            });
+                    this.userPrompt.set('');
+                }
+                this.currentGenerationSubscription = undefined;
+            },
+        });
     }
 
     /**
@@ -392,57 +300,29 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
      * Handles inline refinement request from editor selection.
      * Calls the Hyperion API with the selected text and instruction, then applies changes directly.
      */
-    onInlineRefinement(event: { instruction: string; startLine: number; endLine: number; startColumn: number; endColumn: number }): void {
+    onInlineRefinement(event: InlineRefinementEvent): void {
         const exercise = this.programmingExercise();
-        const courseId = exercise?.course?.id ?? exercise?.exerciseGroup?.exam?.course?.id;
         const currentContent = this.editableInstructions()?.getCurrentContent() ?? exercise?.problemStatement;
 
-        if (!courseId || !currentContent?.trim()) {
-            this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
+        if (!currentContent?.trim()) {
             return;
         }
 
-        this.isGeneratingOrRefining.set(true);
-
-        const request: ProblemStatementTargetedRefinementRequest = {
-            problemStatementText: currentContent,
-            startLine: event.startLine,
-            endLine: event.endLine,
-            startColumn: event.startColumn,
-            endColumn: event.endColumn,
-            instruction: event.instruction,
-        };
-
-        this.currentGenerationSubscription = this.hyperionApiService
-            .refineProblemStatementTargeted(courseId, request)
-            .pipe(
-                finalize(() => {
-                    this.isGeneratingOrRefining.set(false);
-                    this.currentGenerationSubscription = undefined;
-                }),
-            )
-            .subscribe({
-                next: (response) => {
-                    if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
-                        this.showDiff.set(true);
-
-                        const refinedContent = response.refinedProblemStatement;
-                        afterNextRender(
-                            () => {
-                                this.editableInstructions()?.applyRefinedContent(refinedContent);
-                            },
-                            { injector: this.injector },
-                        );
-
-                        this.alertService.success('artemisApp.programmingExercise.inlineRefine.success');
-                    } else {
-                        this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
-                    }
-                },
-                error: () => {
-                    this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
-                },
-            });
+        this.currentGenerationSubscription = this.problemStatementService.refineTargeted(exercise, currentContent, event, this.isGeneratingOrRefining).subscribe({
+            next: (result) => {
+                if (result.success && result.content) {
+                    this.showDiff.set(true);
+                    const refinedContent = result.content;
+                    afterNextRender(
+                        () => {
+                            this.editableInstructions()?.applyRefinedContent(refinedContent);
+                        },
+                        { injector: this.injector },
+                    );
+                }
+                this.currentGenerationSubscription = undefined;
+            },
+        });
     }
 
     onDiffLineChange(event: { ready: boolean; lineChange: LineChange }): void {

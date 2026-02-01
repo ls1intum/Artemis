@@ -41,7 +41,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
-import { Observable, Subscription, catchError, finalize, of, take, tap } from 'rxjs';
+import { Observable, Subscription, catchError, of, take, tap } from 'rxjs';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -50,23 +50,23 @@ import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actio
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
-import { ProblemStatementRefinementResponse } from 'app/openapi/model/problemStatementRefinementResponse';
-import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
-import { ProblemStatementGlobalRefinementRequest } from 'app/openapi/model/problemStatementGlobalRefinementRequest';
-import { ProblemStatementTargetedRefinementRequest } from 'app/openapi/model/problemStatementTargetedRefinementRequest';
+
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
 import { getRepoPath } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/buttons/button/button.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
-import { FileService } from 'app/shared/service/file.service';
-import { ProblemStatementGenerationRequest } from 'app/openapi/model/problemStatementGenerationRequest';
+import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
+import { InlineRefinementEvent, isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
 
 const SEVERITY_ORDER = {
     HIGH: 0,
     MEDIUM: 1,
     LOW: 2,
 } as const;
+
+/** Delay before applying refined content to ensure diff view is ready */
+const REFINEMENT_APPLY_DELAY_MS = 50;
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -115,8 +115,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private consistencyCheckService = inject(ConsistencyCheckService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
     private profileService = inject(ProfileService);
-    private hyperionApiService = inject(HyperionProblemStatementApiService);
-    private fileService = inject(FileService);
+    private problemStatementService = inject(ProblemStatementService);
 
     templateProblemStatement = signal<string>('');
     templateLoaded = signal<boolean>(false);
@@ -412,37 +411,23 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Handles inline refinement request from editor selection.
      * Calls the Hyperion API with the selected text and instruction, then shows diff.
      */
-    onInlineRefinement(event: { instruction: string; startLine: number; endLine: number; startColumn: number; endColumn: number }): void {
-        const courseId = this.exercise?.course?.id ?? this.exercise?.exerciseGroup?.exam?.course?.id;
-
-        if (!courseId || !this.exercise?.problemStatement?.trim()) {
+    onInlineRefinement(event: InlineRefinementEvent): void {
+        if (!this.exercise?.problemStatement?.trim()) {
             this.alertService.error('artemisApp.programmingExercise.inlineComment.applyError');
             return;
         }
 
-        this.isGeneratingOrRefining.set(true);
-
-        const request: ProblemStatementTargetedRefinementRequest = {
-            problemStatementText: this.exercise.problemStatement,
-            startLine: event.startLine,
-            endLine: event.endLine,
-            startColumn: event.startColumn,
-            endColumn: event.endColumn,
-            instruction: event.instruction,
-        };
-
-        this.currentRefinementSubscription = this.hyperionApiService
-            .refineProblemStatementTargeted(courseId, request)
-            .pipe(
-                finalize(() => {
-                    this.isGeneratingOrRefining.set(false);
-                    this.currentRefinementSubscription = undefined;
-                }),
-            )
+        this.currentRefinementSubscription = this.problemStatementService
+            .refineTargeted(this.exercise, this.exercise.problemStatement, event, this.isGeneratingOrRefining)
             .subscribe({
-                next: (response) => this.handleRefinementResponse(response),
-                error: () => {
-                    this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
+                next: (result) => {
+                    if (result.success && result.content) {
+                        this.showDiff.set(true);
+                        setTimeout(() => {
+                            this.editableInstructions.applyRefinedContent(result.content!);
+                        }, REFINEMENT_APPLY_DELAY_MS);
+                    }
+                    this.currentRefinementSubscription = undefined;
                 },
             });
     }
@@ -465,103 +450,59 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         const prompt = this.refinementPrompt().trim();
         if (!prompt) return;
 
-        const courseId = this.exercise?.course?.id ?? this.exercise?.exerciseGroup?.exam?.course?.id;
-        if (!courseId) {
-            this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
-            return;
-        }
-
         if (this.shouldShowGenerateButton()) {
-            this.generateProblemStatement(courseId, prompt);
+            this.generateProblemStatement(prompt);
         } else {
-            this.refineProblemStatement(courseId, prompt);
+            this.refineProblemStatement(prompt);
         }
     }
 
-    private generateProblemStatement(courseId: number, prompt: string): void {
-        this.isGeneratingOrRefining.set(true);
+    private generateProblemStatement(prompt: string): void {
         this.showRefinementPrompt.set(false);
 
-        const request: ProblemStatementGenerationRequest = {
-            userPrompt: prompt,
-        };
+        this.currentRefinementSubscription = this.problemStatementService.generateProblemStatement(this.exercise, prompt, this.isGeneratingOrRefining).subscribe({
+            next: (result) => {
+                if (result.success && result.content) {
+                    const draftContent = result.content;
 
-        this.currentRefinementSubscription = this.hyperionApiService
-            .generateProblemStatement(courseId, request)
-            .pipe(
-                finalize(() => {
-                    this.isGeneratingOrRefining.set(false);
-                    this.refinementPrompt.set('');
-                    this.currentRefinementSubscription = undefined;
-                }),
-            )
-            .subscribe({
-                next: (response) => {
-                    if (response.draftProblemStatement && response.draftProblemStatement.trim() !== '') {
-                        const draftContent = response.draftProblemStatement;
+                    // Update the editor directly
+                    this.editableInstructions.setText(draftContent);
 
-                        // Update the editor directly
-                        this.editableInstructions.setText(draftContent);
-
-                        // Update model and trigger change
-                        if (this.exercise) {
-                            this.exercise.problemStatement = draftContent;
-                            this.onInstructionChanged(draftContent);
-                            this.currentProblemStatement.set(draftContent);
-                        }
-
-                        this.alertService.success('artemisApp.programmingExercise.problemStatement.generationSuccess');
-                    } else {
-                        this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
+                    // Update model and trigger change
+                    if (this.exercise) {
+                        this.exercise.problemStatement = draftContent;
+                        this.onInstructionChanged(draftContent);
+                        this.currentProblemStatement.set(draftContent);
                     }
-                },
-                error: () => {
-                    this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
-                },
-            });
+                }
+                this.refinementPrompt.set('');
+                this.currentRefinementSubscription = undefined;
+            },
+        });
     }
 
-    private refineProblemStatement(courseId: number, prompt: string): void {
+    private refineProblemStatement(prompt: string): void {
         if (!this.exercise?.problemStatement?.trim()) {
             this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
             return;
         }
 
-        this.isGeneratingOrRefining.set(true);
         this.showRefinementPrompt.set(false);
 
-        const request: ProblemStatementGlobalRefinementRequest = {
-            problemStatementText: this.exercise.problemStatement,
-            userPrompt: prompt,
-        };
-
-        this.currentRefinementSubscription = this.hyperionApiService
-            .refineProblemStatementGlobally(courseId, request)
-            .pipe(
-                finalize(() => {
-                    this.isGeneratingOrRefining.set(false);
+        this.currentRefinementSubscription = this.problemStatementService
+            .refineGlobally(this.exercise, this.exercise.problemStatement, prompt, this.isGeneratingOrRefining)
+            .subscribe({
+                next: (result) => {
+                    if (result.success && result.content) {
+                        this.showDiff.set(true);
+                        setTimeout(() => {
+                            this.editableInstructions.applyRefinedContent(result.content!);
+                        }, REFINEMENT_APPLY_DELAY_MS);
+                    }
                     this.refinementPrompt.set('');
                     this.currentRefinementSubscription = undefined;
-                }),
-            )
-            .subscribe({
-                next: (response) => this.handleRefinementResponse(response),
-                error: () => {
-                    this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
                 },
             });
-    }
-
-    private handleRefinementResponse(response: ProblemStatementRefinementResponse): void {
-        if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
-            this.showDiff.set(true);
-            setTimeout(() => {
-                this.editableInstructions.applyRefinedContent(response.refinedProblemStatement!);
-            }, 50);
-            this.alertService.success('artemisApp.programmingExercise.inlineRefine.success');
-        } else {
-            this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
-        }
     }
 
     /**
@@ -699,46 +640,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private loadTemplate(exercise: ProgrammingExercise) {
-        if (exercise?.programmingLanguage) {
-            this.fileService.getTemplateFile(exercise.programmingLanguage, exercise.projectType).subscribe({
-                next: (template) => {
-                    this.templateProblemStatement.set(template);
-                    this.templateLoaded.set(true);
-                },
-                error: () => {
-                    this.templateProblemStatement.set('');
-                    this.templateLoaded.set(false);
-                },
-            });
-        }
-    }
-
-    /**
-     * Normalizes a string by trimming whitespace and normalizing line endings.
-     */
-    private normalizeString(str: string): string {
-        if (!str) return '';
-        return str.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+        this.problemStatementService.loadTemplate(exercise, this.templateProblemStatement, this.templateLoaded);
     }
 
     /**
      * Computed signal that determines whether to show the generate or refine button.
      */
-    shouldShowGenerateButton = computed(() => {
-        const problemStatement = this.currentProblemStatement();
-        const template = this.templateProblemStatement();
-
-        if (!problemStatement || problemStatement.trim() === '') {
-            return true;
-        }
-
-        if (!this.templateLoaded()) {
-            return true;
-        }
-
-        const normalizedProblemStatement = this.normalizeString(problemStatement);
-        const normalizedTemplate = this.normalizeString(template);
-
-        return normalizedTemplate !== '' && normalizedProblemStatement === normalizedTemplate;
-    });
+    shouldShowGenerateButton = computed(() => isTemplateOrEmpty(this.currentProblemStatement(), this.templateProblemStatement(), this.templateLoaded()));
 }
