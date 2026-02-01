@@ -593,10 +593,177 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
 
             // When
-            service.retryProcessing(testUnit);
+            LectureUnitProcessingState result = service.retryProcessing(testUnit);
 
             // Then: Should not restart
+            assertThat(result).isNull();
             verify(transcriptionApi, never()).startNebulaTranscription(anyLong(), anyLong(), any());
+        }
+
+        @Test
+        void shouldReturnNullWhenNoStateExists() {
+            // Given: No existing state
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+
+            // When
+            LectureUnitProcessingState result = service.retryProcessing(testUnit);
+
+            // Then
+            assertThat(result).isNull();
+            verify(processingStateRepository, never()).delete(any());
+        }
+
+        @Test
+        void shouldReturnNullWhenNoProcessingPossible() {
+            // Given: Failed state but unit has no content
+            testState.setPhase(ProcessingPhase.FAILED);
+            testState.setId(42L);
+            testUnit.setVideoSource(null);
+            testUnit.setAttachment(null);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+
+            // When
+            LectureUnitProcessingState result = service.retryProcessing(testUnit);
+
+            // Then
+            assertThat(result).isNull();
+            verify(processingStateRepository).delete(testState);
+        }
+
+        @Test
+        void shouldReturnActualStateWhenTranscriptionStarts() {
+            // Given: Failed state with video
+            testState.setPhase(ProcessingPhase.FAILED);
+            testState.setId(42L);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://playlist.m3u8"));
+            when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("job-123");
+
+            // When
+            LectureUnitProcessingState result = service.retryProcessing(testUnit);
+
+            // Then: Should return actual state in TRANSCRIBING phase
+            assertThat(result).isNotNull();
+            assertThat(result.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
+        }
+
+        @Test
+        void shouldFallbackToIngestionWhenTranscriptionFails() {
+            // Given: Failed state with video AND PDF, transcription throws exception
+            testState.setPhase(ProcessingPhase.FAILED);
+            testState.setId(42L);
+            Attachment pdfAttachment = new Attachment();
+            pdfAttachment.setLink("/path/to/file.pdf");
+            pdfAttachment.setVersion(1);
+            testUnit.setAttachment(pdfAttachment);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://playlist.m3u8"));
+            when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenThrow(new RuntimeException("Nebula error"));
+            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
+
+            // When
+            LectureUnitProcessingState result = service.retryProcessing(testUnit);
+
+            // Then: Should fallback to ingestion
+            assertThat(result).isNotNull();
+            assertThat(result.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+            verify(irisLectureApi).addLectureUnitToPyrisDB(any());
+        }
+
+        @Test
+        void shouldFailWhenNoPlaylistAndNoPdf() {
+            // Given: Failed state with video but no playlist found and no PDF
+            testState.setPhase(ProcessingPhase.FAILED);
+            testState.setId(42L);
+            testUnit.setAttachment(null);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.empty());
+
+            // When
+            LectureUnitProcessingState result = service.retryProcessing(testUnit);
+
+            // Then: Should return failed state
+            assertThat(result).isNotNull();
+            assertThat(result.getPhase()).isEqualTo(ProcessingPhase.FAILED);
+            assertThat(result.getErrorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.noPlaylist");
+        }
+
+        @Test
+        void shouldRetryPdfOnlyUnit() {
+            // Given: Failed state with PDF only (no video)
+            testState.setPhase(ProcessingPhase.FAILED);
+            testState.setId(42L);
+            testUnit.setVideoSource(null);
+            Attachment pdfAttachment = new Attachment();
+            pdfAttachment.setLink("/path/to/file.pdf");
+            pdfAttachment.setVersion(1);
+            testUnit.setAttachment(pdfAttachment);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
+
+            // When
+            LectureUnitProcessingState result = service.retryProcessing(testUnit);
+
+            // Then: Should go directly to ingestion
+            assertThat(result).isNotNull();
+            assertThat(result.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+            verify(tumLiveApi, never()).getTumLivePlaylistLink(any());
+        }
+
+        @Test
+        void shouldReturnDoneWhenIngestionReturnsNull() {
+            // Given: Failed state with PDF only, ingestion returns null (not applicable)
+            testState.setPhase(ProcessingPhase.FAILED);
+            testState.setId(42L);
+            testUnit.setVideoSource(null);
+            Attachment pdfAttachment = new Attachment();
+            pdfAttachment.setLink("/path/to/file.pdf");
+            pdfAttachment.setVersion(1);
+            testUnit.setAttachment(pdfAttachment);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn(null);
+
+            // When
+            LectureUnitProcessingState result = service.retryProcessing(testUnit);
+
+            // Then: Should mark as DONE (nothing to do)
+            assertThat(result).isNotNull();
+            assertThat(result.getPhase()).isEqualTo(ProcessingPhase.DONE);
+        }
+
+        @Test
+        void shouldReturnFailedWhenIngestionThrows() {
+            // Given: Failed state with PDF only, ingestion throws
+            testState.setPhase(ProcessingPhase.FAILED);
+            testState.setId(42L);
+            testUnit.setVideoSource(null);
+            Attachment pdfAttachment = new Attachment();
+            pdfAttachment.setLink("/path/to/file.pdf");
+            pdfAttachment.setVersion(1);
+            testUnit.setAttachment(pdfAttachment);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenThrow(new RuntimeException("Pyris error"));
+
+            // When
+            LectureUnitProcessingState result = service.retryProcessing(testUnit);
+
+            // Then: Should return failed state
+            assertThat(result).isNotNull();
+            assertThat(result.getPhase()).isEqualTo(ProcessingPhase.FAILED);
+            assertThat(result.getErrorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.ingestionFailed");
         }
     }
 
