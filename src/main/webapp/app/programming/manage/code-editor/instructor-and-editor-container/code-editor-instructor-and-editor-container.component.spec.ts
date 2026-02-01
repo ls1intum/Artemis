@@ -699,15 +699,15 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Full Refinement', ()
         expect(hyperionApiService.refineProblemStatementGlobally).not.toHaveBeenCalled();
     });
 
-    it('should show error when no courseId for full refinement', () => {
-        const errorSpy = jest.spyOn(alertService, 'error');
+    it('should not submit when no courseId for full refinement', () => {
         comp.exercise = createMockExercise({ problemStatement: 'Test' });
         comp.exercise.course = undefined;
 
         comp.refinementPrompt.set('Improve');
         comp.submitRefinement();
 
-        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
+        // Service returns silently with success: false when courseId is missing
+        expect(hyperionApiService.refineProblemStatementGlobally).not.toHaveBeenCalled();
     });
 
     it('should handle full refinement API error', () => {

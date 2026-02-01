@@ -1,4 +1,4 @@
-import { Component, OnDestroy, ViewChild, computed, inject, model, signal } from '@angular/core';
+import { Component, Injector, OnDestroy, ViewChild, afterNextRender, computed, inject, model, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
@@ -65,9 +65,6 @@ const SEVERITY_ORDER = {
     LOW: 2,
 } as const;
 
-/** Delay before applying refined content to ensure diff view is ready */
-const REFINEMENT_APPLY_DELAY_MS = 50;
-
 @Component({
     selector: 'jhi-code-editor-instructor',
     templateUrl: './code-editor-instructor-and-editor-container.component.html',
@@ -116,6 +113,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
     private profileService = inject(ProfileService);
     private problemStatementService = inject(ProblemStatementService);
+    private injector = inject(Injector);
 
     templateProblemStatement = signal<string>('');
     templateLoaded = signal<boolean>(false);
@@ -398,13 +396,33 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     /**
      * Reverts all changes made during the refinement session and restores the original/snapshot state.
+     * Syncs the reverted content back to the model.
      */
     revertAllRefinement(): void {
         this.editableInstructions.revertAll();
+        this.syncEditorToProblemStatement();
+        this.showDiff.set(false);
     }
 
+    /**
+     * Closes the diff view after syncing the current editor content to the model.
+     */
     closeDiff(): void {
+        this.syncEditorToProblemStatement();
         this.showDiff.set(false);
+    }
+
+    /**
+     * Syncs the current editor content to the problem statement model.
+     * Extracted as helper to be used by both closeDiff and revertAllRefinement.
+     */
+    private syncEditorToProblemStatement(): void {
+        const currentContent = this.editableInstructions?.getCurrentContent();
+        if (this.exercise && currentContent != null) {
+            this.exercise.problemStatement = currentContent;
+            this.onInstructionChanged(currentContent);
+            this.currentProblemStatement.set(currentContent);
+        }
     }
 
     /**
@@ -423,9 +441,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 next: (result) => {
                     if (result.success && result.content) {
                         this.showDiff.set(true);
-                        setTimeout(() => {
-                            this.editableInstructions.applyRefinedContent(result.content!);
-                        }, REFINEMENT_APPLY_DELAY_MS);
+                        const refinedContent = result.content;
+                        afterNextRender(() => this.editableInstructions.applyRefinedContent(refinedContent), { injector: this.injector });
                     }
                     this.currentRefinementSubscription = undefined;
                 },
@@ -495,9 +512,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 next: (result) => {
                     if (result.success && result.content) {
                         this.showDiff.set(true);
-                        setTimeout(() => {
-                            this.editableInstructions.applyRefinedContent(result.content!);
-                        }, REFINEMENT_APPLY_DELAY_MS);
+                        const refinedContent = result.content;
+                        afterNextRender(() => this.editableInstructions.applyRefinedContent(refinedContent), { injector: this.injector });
                     }
                     this.refinementPrompt.set('');
                     this.currentRefinementSubscription = undefined;

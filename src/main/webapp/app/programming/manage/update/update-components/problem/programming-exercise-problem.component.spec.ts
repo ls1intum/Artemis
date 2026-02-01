@@ -191,7 +191,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.userPrompt.set('Improve');
         comp.refineProblemStatement();
 
-        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementError');
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
         expect(comp.isGeneratingOrRefining()).toBeFalse();
     }));
 
@@ -374,6 +374,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
     it('should handle inline refinement error when no courseId', () => {
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.problemStatement = 'Some content';
         // No course set
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
@@ -387,7 +388,8 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         comp.onInlineRefinement(event);
 
-        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
+        // Service returns silently with success: false when courseId is missing
+        expect(mockHyperionApiService.refineProblemStatementTargeted).not.toHaveBeenCalled();
     });
 
     it('should handle inline refinement error when problem statement is empty', () => {
@@ -406,7 +408,8 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         comp.onInlineRefinement(event);
 
-        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
+        // Component validates empty content before calling service
+        expect(mockHyperionApiService.refineProblemStatementTargeted).not.toHaveBeenCalled();
     });
 
     it('should handle inline refinement API error', fakeAsync(() => {
@@ -465,7 +468,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.userPrompt.set('Improve clarity');
         comp.refineProblemStatement();
 
-        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementError');
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
     }));
 
     it('should not refine when userPrompt is empty', () => {

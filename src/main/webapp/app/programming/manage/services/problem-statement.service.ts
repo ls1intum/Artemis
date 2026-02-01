@@ -1,5 +1,5 @@
 import { Injectable, WritableSignal, inject } from '@angular/core';
-import { Observable, finalize, map, of, tap } from 'rxjs';
+import { Observable, catchError, finalize, map, of, tap } from 'rxjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileService } from 'app/shared/service/file.service';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
@@ -117,6 +117,7 @@ export class ProblemStatementService {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
                 },
             }),
+            catchError(() => of({ success: false })),
         );
     }
 
@@ -162,6 +163,7 @@ export class ProblemStatementService {
                     this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
                 },
             }),
+            catchError(() => of({ success: false })),
         );
     }
 
@@ -210,6 +212,7 @@ export class ProblemStatementService {
                     this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
                 },
             }),
+            catchError(() => of({ success: false })),
         );
     }
 }

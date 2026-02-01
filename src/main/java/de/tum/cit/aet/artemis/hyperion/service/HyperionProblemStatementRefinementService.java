@@ -93,10 +93,6 @@ public class HyperionProblemStatementRefinementService {
                 throw new InternalServerErrorAlertException("Original problem statement is too long", "ProblemStatement", "ProblemStatementRefinement.problemStatementTooLong");
             }
 
-            if (userPrompt == null || userPrompt.isBlank()) {
-                throw new BadRequestAlertException("User prompt cannot be empty", "ProblemStatement", "ProblemStatementRefinement.userPromptEmpty");
-            }
-
             GlobalRefinementPromptVariables variables = new GlobalRefinementPromptVariables(originalProblemStatementText.trim(), userPrompt, getCourseTitleOrDefault(course),
                     getCourseDescriptionOrDefault(course));
 
