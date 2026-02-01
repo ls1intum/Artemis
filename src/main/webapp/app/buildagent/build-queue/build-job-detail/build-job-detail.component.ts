@@ -20,7 +20,7 @@ import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-in
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 import { BuildAgentInformation } from 'app/buildagent/shared/entities/build-agent-information.model';
-import { createAddressToNameMap, getAgentNameByAddress } from 'app/buildagent/shared/build-agent-address.utils';
+import { createAddressToAgentInfoMap, getAgentInfoByAddress } from 'app/buildagent/shared/build-agent-address.utils';
 
 @Component({
     selector: 'jhi-build-job-detail',
@@ -84,8 +84,8 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
     /** Available build agents for address-to-name mapping */
     buildAgents = signal<BuildAgentInformation[]>([]);
 
-    /** Computed mapping from build agent host to agent name */
-    addressToNameMap = computed(() => createAddressToNameMap(this.buildAgents()));
+    /** Computed mapping from build agent host to agent info (name and displayName) */
+    addressToAgentInfoMap = computed(() => createAddressToAgentInfoMap(this.buildAgents()));
 
     /** Whether the job is finished */
     isFinished = computed(() => {
@@ -295,9 +295,10 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
         if (job.buildAgent?.displayName || job.buildAgent?.name) {
             return job.buildAgent.displayName || job.buildAgent.name;
         }
-        // For finished jobs, try to resolve address to name using online agents
+        // For finished jobs, try to resolve address to displayName using online agents
         if (job.buildAgentAddress) {
-            return getAgentNameByAddress(job.buildAgentAddress, this.addressToNameMap()) || undefined;
+            const agentInfo = getAgentInfoByAddress(job.buildAgentAddress, this.addressToAgentInfoMap());
+            return agentInfo?.displayName ?? undefined;
         }
         return undefined;
     }
@@ -310,9 +311,10 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
         if (job.buildAgent?.name) {
             return job.buildAgent.name;
         }
-        // For finished jobs, try to resolve address to name using online agents
+        // For finished jobs, try to resolve address to short name using online agents
         if (job.buildAgentAddress) {
-            return getAgentNameByAddress(job.buildAgentAddress, this.addressToNameMap()) || undefined;
+            const agentInfo = getAgentInfoByAddress(job.buildAgentAddress, this.addressToAgentInfoMap());
+            return agentInfo?.name ?? undefined;
         }
         return undefined;
     }

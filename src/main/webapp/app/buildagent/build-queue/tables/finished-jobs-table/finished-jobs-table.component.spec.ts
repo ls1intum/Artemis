@@ -287,7 +287,7 @@ describe('FinishedJobsTableComponent', () => {
         expect(mockEvent.stopPropagation).toHaveBeenCalled();
     });
 
-    describe('address to name mapping', () => {
+    describe('address to agent info mapping', () => {
         const mockBuildAgents: BuildAgentInformation[] = [
             {
                 buildAgent: {
@@ -305,12 +305,12 @@ describe('FinishedJobsTableComponent', () => {
             },
         ];
 
-        it('should return agent name for getAgentDisplayName when agent is online', () => {
+        it('should return agent displayName for getAgentDisplayName when agent is online', () => {
             fixture.componentRef.setInput('buildAgents', mockBuildAgents);
             fixture.detectChanges();
 
-            expect(component.getAgentDisplayName('[192.168.1.1]:5701')).toBe('build-agent-1');
-            expect(component.getAgentDisplayName('[2001:db8::1]:5702')).toBe('build-agent-2');
+            expect(component.getAgentDisplayName('[192.168.1.1]:5701')).toBe('Build Agent 1');
+            expect(component.getAgentDisplayName('[2001:db8::1]:5702')).toBe('Build Agent 2');
         });
 
         it('should return address for getAgentDisplayName when agent is offline', () => {
@@ -327,7 +327,7 @@ describe('FinishedJobsTableComponent', () => {
             expect(component.getAgentDisplayName(undefined)).toBe('');
         });
 
-        it('should return agent name for getAgentLinkParam when agent is online', () => {
+        it('should return agent short name for getAgentLinkParam when agent is online', () => {
             fixture.componentRef.setInput('buildAgents', mockBuildAgents);
             fixture.detectChanges();
 
@@ -349,23 +349,39 @@ describe('FinishedJobsTableComponent', () => {
             expect(component.getAgentLinkParam(undefined)).toBe('');
         });
 
-        it('should create correct address to name mapping by host', () => {
+        it('should create correct address to agent info mapping by host', () => {
             fixture.componentRef.setInput('buildAgents', mockBuildAgents);
             fixture.detectChanges();
 
             // The mapping uses host only (without port) to handle ephemeral ports
-            const map = component.addressToNameMap();
+            const map = component.addressToAgentInfoMap();
             expect(map.size).toBe(2);
-            expect(map.get('192.168.1.1')).toBe('build-agent-1');
-            expect(map.get('2001:db8::1')).toBe('build-agent-2');
+            expect(map.get('192.168.1.1')).toEqual({ name: 'build-agent-1', displayName: 'Build Agent 1' });
+            expect(map.get('2001:db8::1')).toEqual({ name: 'build-agent-2', displayName: 'Build Agent 2' });
         });
 
         it('should handle empty build agents list', () => {
             fixture.componentRef.setInput('buildAgents', []);
             fixture.detectChanges();
 
-            expect(component.addressToNameMap().size).toBe(0);
+            expect(component.addressToAgentInfoMap().size).toBe(0);
             expect(component.getAgentDisplayName('[192.168.1.1]:5701')).toBe('[192.168.1.1]:5701');
+        });
+
+        it('should use name as displayName when displayName is not set', () => {
+            const agentsWithoutDisplayName: BuildAgentInformation[] = [
+                {
+                    buildAgent: {
+                        name: 'agent-no-display',
+                        memberAddress: '[10.0.0.1]:5703',
+                    },
+                },
+            ];
+            fixture.componentRef.setInput('buildAgents', agentsWithoutDisplayName);
+            fixture.detectChanges();
+
+            // When displayName is not set, should fallback to name
+            expect(component.getAgentDisplayName('[10.0.0.1]:5703')).toBe('agent-no-display');
         });
     });
 });

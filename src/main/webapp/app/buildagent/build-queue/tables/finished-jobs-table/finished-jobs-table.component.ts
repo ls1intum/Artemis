@@ -10,7 +10,7 @@ import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { BuildAgentInformation } from 'app/buildagent/shared/entities/build-agent-information.model';
-import { createAddressToNameMap, getAgentNameByAddress } from 'app/buildagent/shared/build-agent-address.utils';
+import { createAddressToAgentInfoMap, getAgentInfoByAddress } from 'app/buildagent/shared/build-agent-address.utils';
 
 @Component({
     selector: 'jhi-finished-jobs-table',
@@ -30,10 +30,10 @@ export class FinishedJobsTableComponent {
     buildAgents = input<BuildAgentInformation[]>([]);
 
     /**
-     * Computed mapping from build agent host to agent name.
+     * Computed mapping from build agent host to agent info (name and displayName).
      * Uses host-only matching to handle Hazelcast ephemeral ports.
      */
-    addressToNameMap = computed(() => createAddressToNameMap(this.buildAgents()));
+    addressToAgentInfoMap = computed(() => createAddressToAgentInfoMap(this.buildAgents()));
 
     // Two-way bindings
     predicate = model<string>('buildCompletionDate');
@@ -97,17 +97,19 @@ export class FinishedJobsTableComponent {
 
     /**
      * Gets the display name for a build agent.
-     * Returns the agent name if the agent is online, otherwise returns the address.
+     * Returns the agent's displayName if online, otherwise returns the address.
      */
     getAgentDisplayName(address: string | undefined): string {
-        return getAgentNameByAddress(address, this.addressToNameMap());
+        const agentInfo = getAgentInfoByAddress(address, this.addressToAgentInfoMap());
+        return agentInfo?.displayName ?? address ?? '';
     }
 
     /**
      * Gets the query parameter value for navigating to build agent details.
-     * Returns the agent name if available (more stable due to ephemeral ports).
+     * Returns the agent's short name (stable identifier) if available.
      */
     getAgentLinkParam(address: string | undefined): string {
-        return getAgentNameByAddress(address, this.addressToNameMap());
+        const agentInfo = getAgentInfoByAddress(address, this.addressToAgentInfoMap());
+        return agentInfo?.name ?? address ?? '';
     }
 }

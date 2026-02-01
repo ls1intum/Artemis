@@ -159,12 +159,37 @@ public class AdminBuildJobQueueResource {
         // First try to match by name (primary identifier)
         Optional<BuildAgentInformation> buildAgentDetails = agents.stream().filter(agent -> agent.buildAgent().name().equals(agentName)).findFirst();
 
-        // If not found by name, try to match by memberAddress (for finished jobs navigation)
+        // If not found by name, try to match by memberAddress using host-only comparison
+        // to handle Hazelcast addresses like "[192.168.1.1]:5701" where the port may differ
         if (buildAgentDetails.isEmpty()) {
-            buildAgentDetails = agents.stream().filter(agent -> agent.buildAgent().memberAddress().equals(agentName)).findFirst();
+            String lookupHost = extractHostFromAddress(agentName);
+            buildAgentDetails = agents.stream().filter(agent -> {
+                String agentHost = extractHostFromAddress(agent.buildAgent().memberAddress());
+                return agentHost.equals(lookupHost);
+            }).findFirst();
         }
 
         return buildAgentDetails.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Extracts the host portion from a Hazelcast member address.
+     * Handles formats like "[192.168.1.1]:5701" (returns "192.168.1.1"),
+     * "[2001:db8::1]:5702" (returns "2001:db8::1"), or plain host strings.
+     *
+     * @param address the address string to parse
+     * @return the host portion without brackets or port, or the original string if not in expected format
+     */
+    private String extractHostFromAddress(String address) {
+        if (address == null) {
+            return "";
+        }
+        // Match Hazelcast address format: [host]:port
+        var matcher = java.util.regex.Pattern.compile("^\\[(.+)]:\\d+$").matcher(address);
+        if (matcher.matches()) {
+            return matcher.group(1);
+        }
+        return address;
     }
 
     /**
