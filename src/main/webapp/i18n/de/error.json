@@ -220,7 +220,7 @@
             "onlySuperAdminCanManageSuperAdmins": "Du bist kein Super-Administrator und kannst daher keine Super-Administratoren-Accounts verwalten."
         },
         "PlagiarismAnswerPost": {
-            "postIdMissing": "Der Antwortbeitrag muss einem Beitrag zugeordnet sein."
+            "postIdMissing": "Der Antwortbeitrag muss einem Beitrag zugeordnet sein.",
             "onlySuperAdminCanManageAdmins": "Du bist kein Super-Administrator und kannst daher keine Administrator-Accounts verwalten.",
             "cannotRemoveDefaultAdminRights": "Du kannst die Super-Admin-Rechte des Standard-Admin-Benutzers nicht entfernen."
         }

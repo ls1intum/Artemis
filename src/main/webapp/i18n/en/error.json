@@ -220,7 +220,7 @@
             "onlySuperAdminCanManageSuperAdmins": "You are not a super administrator and therefore not allowed to manage super administrator accounts."
         },
         "PlagiarismAnswerPost": {
-            "postIdMissing": "The answer post must be associated with a post."
+            "postIdMissing": "The answer post must be associated with a post.",
             "onlySuperAdminCanManageAdmins": "You are not a super administrator and therefore not allowed to manage administrator accounts.",
             "cannotRemoveDefaultAdminRights": "You cannot remove super admin rights from the default admin user."
         }
