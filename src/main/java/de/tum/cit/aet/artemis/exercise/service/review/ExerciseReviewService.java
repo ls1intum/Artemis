@@ -163,10 +163,6 @@ public class ExerciseReviewService {
         CommentThread thread = dto.toEntity(initialVersion, initialCommitSha);
         Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
 
-        if (thread.getExercise() != null && !Objects.equals(thread.getExercise().getId(), exerciseId)) {
-            throw new BadRequestAlertException("Thread exercise does not match request", THREAD_ENTITY_NAME, "exerciseMismatch");
-        }
-
         thread.setExercise(exercise);
         return commentThreadRepository.save(thread);
     }
