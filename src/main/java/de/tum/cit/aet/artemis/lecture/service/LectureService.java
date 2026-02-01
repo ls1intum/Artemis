@@ -70,7 +70,7 @@ public class LectureService {
 
     private final ChannelService channelService;
 
-    private final LectureContentProcessingApi contentProcessingApi;
+    private final Optional<LectureContentProcessingApi> contentProcessingApi;
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
@@ -83,8 +83,9 @@ public class LectureService {
     private final LectureUnitRepository lectureUnitRepository;
 
     public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
-            LectureContentProcessingApi contentProcessingApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CompetencyRelationApi> competencyRelationApi,
-            Optional<CompetencyApi> competencyApi, ExerciseService exerciseService, LectureUnitRepository lectureUnitRepository) {
+            Optional<LectureContentProcessingApi> contentProcessingApi, Optional<CompetencyProgressApi> competencyProgressApi,
+            Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyApi> competencyApi, ExerciseService exerciseService,
+            LectureUnitRepository lectureUnitRepository) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
@@ -178,7 +179,7 @@ public class LectureService {
                 .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).toList();
 
         if (!attachmentVideoUnitList.isEmpty()) {
-            contentProcessingApi.handleUnitsDeletion(attachmentVideoUnitList);
+            contentProcessingApi.ifPresent(api -> api.handleUnitsDeletion(attachmentVideoUnitList));
         }
 
         if (updateCompetencyProgress && competencyProgressApi.isPresent()) {

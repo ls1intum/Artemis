@@ -233,7 +233,7 @@ public class LectureContentProcessingScheduler {
         }
         else {
             // Schedule retry with exponential backoff
-            long backoffMinutes = LectureContentProcessingService.calculateBackoffMinutes(freshState.getRetryCount());
+            long backoffMinutes = ProcessingStateCallbackService.calculateBackoffMinutes(freshState.getRetryCount());
             freshState.scheduleRetry(backoffMinutes);
             log.info("Stuck state for unit {} scheduled for retry in {} minutes (attempt {}/{})", freshState.getLectureUnit().getId(), backoffMinutes, freshState.getRetryCount(),
                     MAX_PROCESSING_RETRIES);
