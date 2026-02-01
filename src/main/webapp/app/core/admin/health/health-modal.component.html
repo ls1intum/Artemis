@@ -21,8 +21,50 @@
                     <tbody>
                         @for (healthDetail of h.value.details! | keyvalue; track healthDetail) {
                             <tr>
-                                <td class="text-left">{{ healthDetail.key }}</td>
-                                <td class="text-left" [ngStyle]="{ 'white-space': 'pre-line' }">{{ readableValue(healthDetail.value) }}</td>
+                                <td class="text-left align-top">{{ healthDetail.key }}</td>
+                                <td class="text-left">
+                                    @if (isBuildAgentsArray(healthDetail.value, healthDetail.key)) {
+                                        <!-- Special formatting for LocalCI build agents -->
+                                        <div class="build-agents-health">
+                                            @for (agent of formatBuildAgents(healthDetail.value, healthDetail.key); track agent.name) {
+                                                <div class="build-agent-card mb-3 p-2 border rounded">
+                                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                                        <strong>{{ agent.displayName }}</strong>
+                                                        <span class="badge" [ngClass]="getStatusBadgeClass(agent.status)">{{ agent.status }}</span>
+                                                    </div>
+                                                    <div class="small text-muted mb-1">
+                                                        <span class="me-3">{{ agent.name }}</span>
+                                                        <span>{{ agent.memberAddress }}</span>
+                                                    </div>
+                                                    <div class="mb-1">
+                                                        <span class="me-2">Jobs:</span>
+                                                        <strong>{{ agent.currentJobs }}</strong> / {{ agent.maxJobs }}
+                                                    </div>
+                                                    @if (agent.runningJobNames.length > 0) {
+                                                        <div class="small">
+                                                            <span class="text-muted">Running:</span>
+                                                            @for (jobName of agent.runningJobNames; track jobName; let last = $last) {
+                                                                <span class="ms-1">{{ jobName }}{{ last ? '' : ',' }}</span>
+                                                            }
+                                                        </div>
+                                                    }
+                                                    @if (agent.gitRevision) {
+                                                        <div class="small text-muted mt-1">
+                                                            <span>Version: {{ agent.gitRevision }}</span>
+                                                            @if (agent.startDate) {
+                                                                <span class="ms-2">| Started: {{ agent.startDate }}</span>
+                                                            }
+                                                        </div>
+                                                    }
+                                                </div>
+                                            } @empty {
+                                                <div class="text-muted small">No build agents reported.</div>
+                                            }
+                                        </div>
+                                    } @else {
+                                        <span [ngStyle]="{ 'white-space': 'pre-line' }">{{ readableValue(healthDetail.value) }}</span>
+                                    }
+                                </td>
                             </tr>
                         }
                     </tbody>
