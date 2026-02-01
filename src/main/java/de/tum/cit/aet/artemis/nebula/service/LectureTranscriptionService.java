@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.nebula.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -11,7 +9,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -40,7 +37,6 @@ import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 @Conditional(NebulaEnabled.class)
 @Service
 @Lazy
-@Profile(PROFILE_CORE)
 public class LectureTranscriptionService {
 
     private static final Logger log = LoggerFactory.getLogger(LectureTranscriptionService.class);
