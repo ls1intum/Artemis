@@ -498,11 +498,9 @@ public class SharedQueueProcessingService {
                         log.error("Build job {} has been stale for {} consecutive checks (~{} seconds). Force-cancelling and requeuing.", jobId, consecutiveCount,
                                 consecutiveCount * 5);
 
-                        // Cancel the Future to interrupt any blocked operations
-                        CompletableFuture<?> future = buildJobManagementService.getRunningBuildJobFutureWrapper(jobId);
-                        if (future != null) {
-                            future.cancel(true);
-                        }
+                        // Cancel the build job properly so it's recognized as CANCELLED, not FAILED
+                        // This adds the job to cancelledBuildJobs set which the exception handler checks
+                        buildJobManagementService.cancelBuildJob(jobId);
 
                         // Remove from distributed processing jobs and requeue
                         BuildJobQueueItem staleJob = distributedDataAccessService.getDistributedProcessingJobs().remove(jobId);
