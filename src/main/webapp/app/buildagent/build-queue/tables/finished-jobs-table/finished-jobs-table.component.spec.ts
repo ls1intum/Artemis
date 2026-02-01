@@ -10,6 +10,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { BuildAgentInformation } from 'app/buildagent/shared/entities/build-agent-information.model';
 
 describe('FinishedJobsTableComponent', () => {
     setupTestBed({ zoneless: true });
@@ -284,5 +285,87 @@ describe('FinishedJobsTableComponent', () => {
 
         expect(viewLogsSpy).toHaveBeenCalledWith('3');
         expect(mockEvent.stopPropagation).toHaveBeenCalled();
+    });
+
+    describe('address to name mapping', () => {
+        const mockBuildAgents: BuildAgentInformation[] = [
+            {
+                buildAgent: {
+                    name: 'build-agent-1',
+                    memberAddress: '[192.168.1.1]:5701',
+                    displayName: 'Build Agent 1',
+                },
+            },
+            {
+                buildAgent: {
+                    name: 'build-agent-2',
+                    memberAddress: '[2001:db8::1]:5702',
+                    displayName: 'Build Agent 2',
+                },
+            },
+        ];
+
+        it('should return agent name for getAgentDisplayName when agent is online', () => {
+            fixture.componentRef.setInput('buildAgents', mockBuildAgents);
+            fixture.detectChanges();
+
+            expect(component.getAgentDisplayName('[192.168.1.1]:5701')).toBe('build-agent-1');
+            expect(component.getAgentDisplayName('[2001:db8::1]:5702')).toBe('build-agent-2');
+        });
+
+        it('should return address for getAgentDisplayName when agent is offline', () => {
+            fixture.componentRef.setInput('buildAgents', mockBuildAgents);
+            fixture.detectChanges();
+
+            expect(component.getAgentDisplayName('[10.0.0.1]:9999')).toBe('[10.0.0.1]:9999');
+        });
+
+        it('should return empty string for getAgentDisplayName when address is undefined', () => {
+            fixture.componentRef.setInput('buildAgents', mockBuildAgents);
+            fixture.detectChanges();
+
+            expect(component.getAgentDisplayName(undefined)).toBe('');
+        });
+
+        it('should return agent name for getAgentLinkParam when agent is online', () => {
+            fixture.componentRef.setInput('buildAgents', mockBuildAgents);
+            fixture.detectChanges();
+
+            expect(component.getAgentLinkParam('[192.168.1.1]:5701')).toBe('build-agent-1');
+            expect(component.getAgentLinkParam('[2001:db8::1]:5702')).toBe('build-agent-2');
+        });
+
+        it('should return address for getAgentLinkParam when agent is offline', () => {
+            fixture.componentRef.setInput('buildAgents', mockBuildAgents);
+            fixture.detectChanges();
+
+            expect(component.getAgentLinkParam('[10.0.0.1]:9999')).toBe('[10.0.0.1]:9999');
+        });
+
+        it('should return empty string for getAgentLinkParam when address is undefined', () => {
+            fixture.componentRef.setInput('buildAgents', mockBuildAgents);
+            fixture.detectChanges();
+
+            expect(component.getAgentLinkParam(undefined)).toBe('');
+        });
+
+        it('should create correct address to name mapping by host', () => {
+            fixture.componentRef.setInput('buildAgents', mockBuildAgents);
+            fixture.detectChanges();
+
+            // The mapping uses host only (without port) to handle ephemeral ports
+            const map = component.addressToNameMap();
+            expect(map.size).toBe(2);
+            expect(map.get('192.168.1.1')).toBe('build-agent-1');
+            expect(map.get('2001:db8::1')).toBe('build-agent-2');
+        });
+
+        it('should handle empty build agents list', () => {
+            fixture.componentRef.setInput('buildAgents', []);
+            fixture.detectChanges();
+
+            expect(component.addressToNameMap().size).toBe(0);
+            expect(component.getAgentDisplayName('[192.168.1.1]:5701')).toBe('[192.168.1.1]:5701');
+        });
     });
 });

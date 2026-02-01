@@ -28,6 +28,7 @@ import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/shared/components/slice-navigator/slice-navigator.component';
 import { RunningJobsTableComponent } from 'app/buildagent/build-queue/tables/running-jobs-table/running-jobs-table.component';
 import { FinishedJobsTableComponent } from 'app/buildagent/build-queue/tables/finished-jobs-table/finished-jobs-table.component';
+import { extractHost, looksLikeAddress } from 'app/buildagent/shared/build-agent-address.utils';
 
 /**
  * Component that displays detailed information about a specific build agent.
@@ -235,6 +236,11 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
      * Loads initial agent data from the REST API.
      * This provides immediate data display while WebSocket connections are being established.
      * Loads both running jobs and agent details in parallel for faster initial render.
+     *
+     * If the query param looks like an address (contains brackets and port), first tries to
+     * resolve it to an agent name using the list of online agents. This handles the case where
+     * the address in the URL has a different port than the current agent address (due to
+     * ephemeral Hazelcast client ports that change on reconnection).
      */
     loadAgentData() {
         // Load running jobs for this agent
@@ -242,7 +248,53 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
             this.runningBuildJobs.set(this.updateBuildJobDuration(runningBuildJobs));
         });
 
-        // Load agent details including status and statistics
+        // Check if agentName looks like an address (e.g., [192.168.1.1]:5701 or [2001:db8::1]:5701)
+        // If so, try to resolve it to the actual agent name first
+        if (looksLikeAddress(this.agentName)) {
+            this.resolveAddressToNameThenLoadDetails();
+        } else {
+            this.loadAgentDetails();
+        }
+    }
+
+    /**
+     * Tries to resolve an address to an agent name using the list of online agents,
+     * then loads the agent details.
+     * This handles the case where the URL contains an old address with a different port.
+     */
+    private resolveAddressToNameThenLoadDetails() {
+        this.buildAgentsService.getBuildAgentSummary().subscribe({
+            next: (agents) => {
+                const urlHost = extractHost(this.agentName);
+                // Try to find an online agent whose address host matches
+                const matchingAgent = agents.find((agent) => {
+                    const agentAddress = agent.buildAgent?.memberAddress;
+                    if (agentAddress) {
+                        const agentHost = extractHost(agentAddress);
+                        return agentHost === urlHost;
+                    }
+                    return false;
+                });
+
+                if (matchingAgent?.buildAgent?.name) {
+                    // Found a matching online agent - use its name instead of the address
+                    this.agentName = matchingAgent.buildAgent.name;
+                    this.resubscribeWebsocket();
+                }
+                // Now load the agent details (either with resolved name or original address)
+                this.loadAgentDetails();
+            },
+            error: () => {
+                // If we can't get the agent list, just try with the original address
+                this.loadAgentDetails();
+            },
+        });
+    }
+
+    /**
+     * Loads agent details from the API.
+     */
+    private loadAgentDetails() {
         this.agentDetailsSubscription = this.buildAgentsService.getBuildAgentDetails(this.agentName).subscribe({
             next: (buildAgent) => {
                 this.updateBuildAgent(buildAgent);

@@ -18,6 +18,9 @@ import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-b
 import { downloadFile } from 'app/shared/util/download.util';
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { BuildAgentsService } from 'app/buildagent/build-agents.service';
+import { BuildAgentInformation } from 'app/buildagent/shared/entities/build-agent-information.model';
+import { createAddressToNameMap, getAgentNameByAddress } from 'app/buildagent/shared/build-agent-address.utils';
 
 @Component({
     selector: 'jhi-build-job-detail',
@@ -29,6 +32,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 export class BuildJobDetailComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private buildQueueService = inject(BuildOverviewService);
+    private buildAgentsService = inject(BuildAgentsService);
     private websocketService = inject(WebsocketService);
     private alertService = inject(AlertService);
 
@@ -71,6 +75,12 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
 
     /** Whether this is admin view */
     isAdministrationView = signal(false);
+
+    /** Available build agents for address-to-name mapping */
+    buildAgents = signal<BuildAgentInformation[]>([]);
+
+    /** Computed mapping from build agent host to agent name */
+    addressToNameMap = computed(() => createAddressToNameMap(this.buildAgents()));
 
     /** Whether the job is finished */
     isFinished = computed(() => {
@@ -177,6 +187,7 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
 
         this.loadBuildJob();
         this.initWebsocketSubscription();
+        this.loadBuildAgents();
 
         // Update running build duration every second
         this.durationInterval = setInterval(() => {
@@ -236,6 +247,12 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
         });
     }
 
+    private loadBuildAgents() {
+        this.buildAgentsService.getBuildAgentSummary().subscribe({
+            next: (agents) => this.buildAgents.set(agents),
+        });
+    }
+
     loadBuildLogs() {
         if (this.isLoadingLogs() || !this.buildJobId) return;
         this.isLoadingLogs.set(true);
@@ -268,14 +285,30 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
     getBuildAgentName(): string | undefined {
         const job = this.buildJob();
         if (!job) return undefined;
-        return job.buildAgentAddress || job.buildAgent?.displayName || job.buildAgent?.name;
+        // First try to get from buildAgent object (for running jobs)
+        if (job.buildAgent?.displayName || job.buildAgent?.name) {
+            return job.buildAgent.displayName || job.buildAgent.name;
+        }
+        // For finished jobs, try to resolve address to name using online agents
+        if (job.buildAgentAddress) {
+            return getAgentNameByAddress(job.buildAgentAddress, this.addressToNameMap()) || undefined;
+        }
+        return undefined;
     }
 
     /** Helper to get the build agent name for linking */
     getBuildAgentLinkName(): string | undefined {
         const job = this.buildJob();
         if (!job) return undefined;
-        return job.buildAgentAddress || job.buildAgent?.name;
+        // First try to get from buildAgent object (for running jobs)
+        if (job.buildAgent?.name) {
+            return job.buildAgent.name;
+        }
+        // For finished jobs, try to resolve address to name using online agents
+        if (job.buildAgentAddress) {
+            return getAgentNameByAddress(job.buildAgentAddress, this.addressToNameMap()) || undefined;
+        }
+        return undefined;
     }
 
     /** Get participation ID */

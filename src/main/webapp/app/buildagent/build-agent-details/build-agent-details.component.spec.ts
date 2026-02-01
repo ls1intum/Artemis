@@ -41,6 +41,7 @@ describe('BuildAgentDetailsComponent', () => {
 
     const mockBuildAgentsService = {
         getBuildAgentDetails: vi.fn().mockReturnValue(of([])),
+        getBuildAgentSummary: vi.fn().mockReturnValue(of([])),
         pauseBuildAgent: vi.fn().mockReturnValue(of({})),
         resumeBuildAgent: vi.fn().mockReturnValue(of({})),
         getFinishedBuildJobs: vi.fn().mockReturnValue(of({})),
@@ -468,6 +469,8 @@ describe('BuildAgentDetailsComponent', () => {
 
     it('should use query param (agentName) directly for filtering when agent lookup returns 404', () => {
         const notFoundError = new HttpErrorResponse({ status: 404, statusText: 'Not Found' });
+        // Simulate agent being offline - no matching agent in the summary
+        mockBuildAgentsService.getBuildAgentSummary.mockReturnValue(of([]));
         mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(throwError(() => notFoundError));
 
         // Set the agentName to simulate navigation from finished jobs with an address
@@ -486,13 +489,15 @@ describe('BuildAgentDetailsComponent', () => {
             ...mockBuildAgent,
             buildAgent: { name: 'actual-agent-name', memberAddress: '[127.0.0.1]:8080', displayName: 'Agent 1' },
         };
+        // Mock getBuildAgentSummary to return the matching agent (agent is online)
+        mockBuildAgentsService.getBuildAgentSummary.mockReturnValue(of([addressBasedAgent]));
         mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(addressBasedAgent));
 
         // Set initial agentName to the address (simulating navigation from finished jobs)
         activatedRoute.setParameters({ agentName: '[127.0.0.1]:8080' });
         component.ngOnInit();
 
-        // After loading, agentName should be updated to the actual name
+        // After resolution, agentName should be updated to the actual name
         expect(component.agentName).toBe('actual-agent-name');
         // WebSocket should be re-subscribed with the correct channel
         expect(mockWebsocketService.subscribe).toHaveBeenCalledWith('/topic/admin/build-agent/actual-agent-name');

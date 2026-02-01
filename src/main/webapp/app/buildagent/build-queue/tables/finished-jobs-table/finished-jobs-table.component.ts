@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, model, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, model, output } from '@angular/core';
 import { FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
 import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faSort } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -9,6 +9,8 @@ import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { BuildAgentInformation } from 'app/buildagent/shared/entities/build-agent-information.model';
+import { createAddressToNameMap, getAgentNameByAddress } from 'app/buildagent/shared/build-agent-address.utils';
 
 @Component({
     selector: 'jhi-finished-jobs-table',
@@ -24,6 +26,14 @@ export class FinishedJobsTableComponent {
     isAdminView = input<boolean>(false);
     /** Course ID for building navigation routes (undefined for admin view) */
     courseId = input<number | undefined>(undefined);
+    /** List of online build agents for address-to-name mapping */
+    buildAgents = input<BuildAgentInformation[]>([]);
+
+    /**
+     * Computed mapping from build agent host to agent name.
+     * Uses host-only matching to handle Hazelcast ephemeral ports.
+     */
+    addressToNameMap = computed(() => createAddressToNameMap(this.buildAgents()));
 
     // Two-way bindings
     predicate = model<string>('buildCompletionDate');
@@ -83,5 +93,21 @@ export class FinishedJobsTableComponent {
             return ['/course-management', String(courseId), 'build-overview', jobId, 'job-details'];
         }
         return ['/admin', 'build-overview', jobId, 'job-details'];
+    }
+
+    /**
+     * Gets the display name for a build agent.
+     * Returns the agent name if the agent is online, otherwise returns the address.
+     */
+    getAgentDisplayName(address: string | undefined): string {
+        return getAgentNameByAddress(address, this.addressToNameMap());
+    }
+
+    /**
+     * Gets the query parameter value for navigating to build agent details.
+     * Returns the agent name if available (more stable due to ephemeral ports).
+     */
+    getAgentLinkParam(address: string | undefined): string {
+        return getAgentNameByAddress(address, this.addressToNameMap());
     }
 }
