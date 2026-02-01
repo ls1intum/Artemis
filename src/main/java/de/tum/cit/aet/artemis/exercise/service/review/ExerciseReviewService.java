@@ -311,6 +311,60 @@ public class ExerciseReviewService {
     }
 
     /**
+     * Finds a comment thread by id or throws an {@link EntityNotFoundException}.
+     *
+     * @param threadId the thread id
+     * @return the found thread
+     */
+    private CommentThread findThreadByIdElseThrow(long threadId) {
+        return commentThreadRepository.findById(threadId).orElseThrow(() -> new EntityNotFoundException("CommentThread", threadId));
+    }
+
+    /**
+     * Validates that the comment content matches the given comment type.
+     *
+     * @param type    the comment type to validate against
+     * @param content the content payload to validate
+     */
+    private void validateContentMatchesType(CommentType type, CommentContentDTO content) {
+        if (type == null || content == null) {
+            throw new BadRequestAlertException("Comment content and type must be set", COMMENT_ENTITY_NAME, "contentOrTypeMissing");
+        }
+
+        boolean isValid = switch (type) {
+            case USER -> content instanceof UserCommentContentDTO;
+            case CONSISTENCY_CHECK -> content instanceof ConsistencyIssueCommentContentDTO;
+        };
+
+        if (!isValid) {
+            throw new BadRequestAlertException("Comment content does not match type", COMMENT_ENTITY_NAME, "contentTypeMismatch");
+        }
+    }
+
+    /**
+     * Validates thread payload invariants based on target type (problem statement vs repository targets).
+     *
+     * @param dto the thread creation payload to validate
+     */
+    private void validateThreadPayload(CreateCommentThreadDTO dto) {
+        if (dto == null) {
+            throw new BadRequestAlertException("Thread DTO must be set", THREAD_ENTITY_NAME, "bodyMissing");
+        }
+        if (dto.targetType() != CommentThreadLocationType.PROBLEM_STATEMENT && dto.initialFilePath() == null) {
+            throw new BadRequestAlertException("Initial file path is required for repository threads", THREAD_ENTITY_NAME, "initialFilePathMissing");
+        }
+        if (dto.targetType() == CommentThreadLocationType.PROBLEM_STATEMENT && dto.initialFilePath() != null) {
+            throw new BadRequestAlertException("Initial file path is not allowed for problem statement threads", THREAD_ENTITY_NAME, "initialFilePathNotAllowed");
+        }
+        if (dto.targetType() != CommentThreadLocationType.AUXILIARY_REPO && dto.auxiliaryRepositoryId() != null) {
+            throw new BadRequestAlertException("Auxiliary repository id is only allowed for auxiliary repository threads", THREAD_ENTITY_NAME, "auxiliaryRepositoryNotAllowed");
+        }
+        if (dto.targetType() == CommentThreadLocationType.AUXILIARY_REPO && dto.auxiliaryRepositoryId() == null) {
+            throw new BadRequestAlertException("Auxiliary repository id is required for auxiliary repository threads", THREAD_ENTITY_NAME, "auxiliaryRepositoryMissing");
+        }
+    }
+
+    /**
      * Update thread line numbers and outdated state based on a new exercise version (repository threads only).
      *
      * @param previousSnapshot the previous exercise snapshot
@@ -323,7 +377,7 @@ public class ExerciseReviewService {
 
         ProgrammingExerciseSnapshotDTO previousProgramming = previousSnapshot.programmingData();
         ProgrammingExerciseSnapshotDTO currentProgramming = currentSnapshot.programmingData();
-        if (previousProgramming == null || currentProgramming == null) {
+        if (previousProgramming == null || currentProgramming == null || !Objects.equals(previousSnapshot.id(), currentSnapshot.id())) {
             return;
         }
 
@@ -383,93 +437,6 @@ public class ExerciseReviewService {
         if (updated) {
             commentThreadRepository.saveAll(threads);
         }
-    }
-
-    /**
-     * Validates that the comment content matches the given comment type.
-     *
-     * @param type    the comment type to validate against
-     * @param content the content payload to validate
-     */
-    private void validateContentMatchesType(CommentType type, CommentContentDTO content) {
-        if (content == null) {
-            throw new BadRequestAlertException("Comment content must be set", COMMENT_ENTITY_NAME, "contentMissing");
-        }
-
-        boolean isValid = switch (type) {
-            case USER -> content instanceof UserCommentContentDTO;
-            case CONSISTENCY_CHECK -> content instanceof ConsistencyIssueCommentContentDTO;
-        };
-
-        if (!isValid) {
-            throw new BadRequestAlertException("Comment content does not match type", COMMENT_ENTITY_NAME, "contentTypeMismatch");
-        }
-    }
-
-    /**
-     * Validates thread payload invariants based on target type (problem statement vs repository targets).
-     *
-     * @param dto the thread creation payload to validate
-     */
-    private void validateThreadPayload(CreateCommentThreadDTO dto) {
-        if (dto.targetType() != CommentThreadLocationType.PROBLEM_STATEMENT && dto.initialFilePath() == null) {
-            throw new BadRequestAlertException("Initial file path is required for repository threads", THREAD_ENTITY_NAME, "initialFilePathMissing");
-        }
-        if (dto.targetType() == CommentThreadLocationType.PROBLEM_STATEMENT && dto.initialFilePath() != null) {
-            throw new BadRequestAlertException("Initial file path is not allowed for problem statement threads", THREAD_ENTITY_NAME, "initialFilePathNotAllowed");
-        }
-        if (dto.targetType() != CommentThreadLocationType.AUXILIARY_REPO && dto.auxiliaryRepositoryId() != null) {
-            throw new BadRequestAlertException("Auxiliary repository id is only allowed for auxiliary repository threads", THREAD_ENTITY_NAME, "auxiliaryRepositoryNotAllowed");
-        }
-        if (dto.targetType() == CommentThreadLocationType.AUXILIARY_REPO && dto.auxiliaryRepositoryId() == null) {
-            throw new BadRequestAlertException("Auxiliary repository id is required for auxiliary repository threads", THREAD_ENTITY_NAME, "auxiliaryRepositoryMissing");
-        }
-    }
-
-    /**
-     * Finds a comment thread by id or throws an {@link EntityNotFoundException}.
-     *
-     * @param threadId the thread id
-     * @return the found thread
-     */
-    private CommentThread findThreadByIdElseThrow(long threadId) {
-        return commentThreadRepository.findById(threadId).orElseThrow(() -> new EntityNotFoundException("CommentThread", threadId));
-    }
-
-    /**
-     * Resolves repository diff information for a thread target based on exercise snapshots.
-     *
-     * @param previous the previous programming exercise snapshot
-     * @param current  the current programming exercise snapshot
-     * @param thread   the thread whose target determines the repository mapping
-     * @return the diff info if applicable, otherwise empty
-     */
-    private Optional<RepoDiffInfo> resolveRepoDiffInfo(ProgrammingExerciseSnapshotDTO previous, ProgrammingExerciseSnapshotDTO current, CommentThread thread) {
-        return switch (thread.getTargetType()) {
-            case TEMPLATE_REPO -> mapParticipationRepo(previous.templateParticipation(), current.templateParticipation());
-            case SOLUTION_REPO -> mapParticipationRepo(previous.solutionParticipation(), current.solutionParticipation());
-            case TEST_REPO -> mapTestRepo(previous, current);
-            case AUXILIARY_REPO -> mapAuxRepo(previous, current, thread.getAuxiliaryRepositoryId());
-            case PROBLEM_STATEMENT -> Optional.empty();
-        };
-    }
-
-    /**
-     * Maps a participation-based repository to diff info if both snapshots contain commit and URI data.
-     *
-     * @param previous the previous participation snapshot
-     * @param current  the current participation snapshot
-     * @return the diff info if available, otherwise empty
-     */
-    private Optional<RepoDiffInfo> mapParticipationRepo(ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO previous,
-            ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO current) {
-        if (previous == null || current == null) {
-            return Optional.empty();
-        }
-        if (previous.commitId() == null || current.commitId() == null || current.repositoryUri() == null) {
-            return Optional.empty();
-        }
-        return Optional.of(new RepoDiffInfo(new LocalVCRepositoryUri(current.repositoryUri()), previous.commitId(), current.commitId()));
     }
 
     /**
@@ -591,6 +558,46 @@ public class ExerciseReviewService {
      * @param outdated whether the original line was modified by the change
      */
     public record LineMappingResult(@Nullable Integer newLine, boolean outdated) {
+    }
+
+    /**
+     * Resolves repository diff information for a thread target based on exercise snapshots.
+     *
+     * @param previous the previous programming exercise snapshot
+     * @param current  the current programming exercise snapshot
+     * @param thread   the thread whose target determines the repository mapping
+     * @return the diff info if applicable, otherwise empty
+     */
+    private Optional<RepoDiffInfo> resolveRepoDiffInfo(ProgrammingExerciseSnapshotDTO previous, ProgrammingExerciseSnapshotDTO current, CommentThread thread) {
+        if (previous == null || current == null) {
+            return Optional.empty();
+        }
+
+        return switch (thread.getTargetType()) {
+            case TEMPLATE_REPO -> mapParticipationRepo(previous.templateParticipation(), current.templateParticipation());
+            case SOLUTION_REPO -> mapParticipationRepo(previous.solutionParticipation(), current.solutionParticipation());
+            case TEST_REPO -> mapTestRepo(previous, current);
+            case AUXILIARY_REPO -> mapAuxRepo(previous, current, thread.getAuxiliaryRepositoryId());
+            case PROBLEM_STATEMENT -> Optional.empty();
+        };
+    }
+
+    /**
+     * Maps a participation-based repository to diff info if both snapshots contain commit and URI data.
+     *
+     * @param previous the previous participation snapshot
+     * @param current  the current participation snapshot
+     * @return the diff info if available, otherwise empty
+     */
+    private Optional<RepoDiffInfo> mapParticipationRepo(ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO previous,
+            ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO current) {
+        if (previous == null || current == null) {
+            return Optional.empty();
+        }
+        if (previous.commitId() == null || current.commitId() == null || current.repositoryUri() == null) {
+            return Optional.empty();
+        }
+        return Optional.of(new RepoDiffInfo(new LocalVCRepositoryUri(current.repositoryUri()), previous.commitId(), current.commitId()));
     }
 
     /**
