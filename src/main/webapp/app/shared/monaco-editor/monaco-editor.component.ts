@@ -271,7 +271,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.disposeDiffSnapshotModel();
 
         // Clean up all per-model debounce timeouts
-        this.textChangedEmitTimeouts.forEach((timeout) => clearTimeout(timeout));
+        this.textChangedEmitTimeouts.forEach((timeout) => {
+            clearTimeout(timeout);
+        });
         this.textChangedEmitTimeouts.clear();
     }
 
@@ -651,7 +653,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     private disposeAndClear<T extends Disposable>(items: T[]): void {
-        items.forEach((item) => item.dispose());
+        items.forEach((item) => {
+            item.dispose();
+        });
         items.length = 0;
     }
 

@@ -3,6 +3,7 @@ import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-obser
 import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/diff-editor/monaco-diff-editor.component';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
+import { convertMonacoLineChanges } from 'app/programming/shared/utils/diff.utils';
 import * as monaco from 'monaco-editor';
 
 describe('MonacoDiffEditorComponent', () => {
@@ -97,7 +98,7 @@ describe('MonacoDiffEditorComponent', () => {
             },
         ];
 
-        const result = comp.convertMonacoLineChanges(mockLineChanges);
+        const result = convertMonacoLineChanges(mockLineChanges);
         expect(result.addedLineCount).toBe(3); // 3 - 1 + 1 = 3
         expect(result.removedLineCount).toBe(2); // 2 - 1 + 1 = 2
     });
@@ -105,7 +106,7 @@ describe('MonacoDiffEditorComponent', () => {
     it('should handle null monaco line changes', () => {
         fixture.detectChanges();
         // Test the if (!monacoLineChanges) branch
-        const result = comp.convertMonacoLineChanges(null!);
+        const result = convertMonacoLineChanges(null!);
         expect(result.addedLineCount).toBe(0);
         expect(result.removedLineCount).toBe(0);
     });
@@ -113,14 +114,14 @@ describe('MonacoDiffEditorComponent', () => {
     it('should handle undefined monaco line changes', () => {
         fixture.detectChanges();
         // Test the if (!monacoLineChanges) branch with undefined
-        const result = comp.convertMonacoLineChanges(undefined!);
+        const result = convertMonacoLineChanges(undefined!);
         expect(result.addedLineCount).toBe(0);
         expect(result.removedLineCount).toBe(0);
     });
 
     it('should handle empty monaco line changes array', () => {
         fixture.detectChanges();
-        const result = comp.convertMonacoLineChanges([]);
+        const result = convertMonacoLineChanges([]);
         expect(result.addedLineCount).toBe(0);
         expect(result.removedLineCount).toBe(0);
     });
@@ -137,7 +138,7 @@ describe('MonacoDiffEditorComponent', () => {
             },
         ];
 
-        const result = comp.convertMonacoLineChanges(mockLineChanges);
+        const result = convertMonacoLineChanges(mockLineChanges);
         expect(result.addedLineCount).toBe(0); // Should use the ternary fallback : 0
         expect(result.removedLineCount).toBe(2);
     });
@@ -154,7 +155,7 @@ describe('MonacoDiffEditorComponent', () => {
             },
         ];
 
-        const result = comp.convertMonacoLineChanges(mockLineChanges);
+        const result = convertMonacoLineChanges(mockLineChanges);
         expect(result.addedLineCount).toBe(2);
         expect(result.removedLineCount).toBe(0); // Should use the ternary fallback : 0
     });
