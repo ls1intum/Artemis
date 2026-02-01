@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Observable } from 'rxjs';
 import { PlagiarismCaseReviewComponent } from 'app/plagiarism/shared/review/plagiarism-case-review.component';
 import { PlagiarismCaseVerdictComponent } from 'app/plagiarism/shared/verdict/plagiarism-case-verdict.component';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
@@ -41,6 +42,9 @@ import { FormsModule } from '@angular/forms';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
+import { PlagiarismAnswerPostService } from 'app/plagiarism/shared/services/plagiarism-answer-post.service';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { PlagiarismAnswerPostCreationDTO } from 'app/plagiarism/shared/entities/PlagiarismAnswerPostCreationDTO';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
@@ -78,6 +82,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     private translateService = inject(TranslateService);
     private themeService = inject(ThemeService);
     private accountService = inject(AccountService);
+    private plagiarismAnswerPostService = inject(PlagiarismAnswerPostService);
 
     courseId: number;
     plagiarismCaseId: number;
@@ -265,4 +270,9 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     async printPlagiarismCase() {
         return await this.themeService.print();
     }
+
+    createPlagiarismAnswerPost = (answerPost: AnswerPost): Observable<AnswerPost> => {
+        const dto = PlagiarismAnswerPostCreationDTO.of(answerPost);
+        return this.plagiarismAnswerPostService.createAnswerPost(this.courseId, dto);
+    };
 }

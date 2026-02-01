@@ -52,7 +52,7 @@
             <section>
                 <h3 jhiTranslate="artemisApp.plagiarism.plagiarismCases.conversation"></h3>
                 @if (posts && posts.length > 0) {
-                    <jhi-posting-thread [post]="posts[0]" [showAnswers]="true" />
+                    <jhi-posting-thread [post]="posts[0]" [showAnswers]="true" [createAnswerOverride]="createPlagiarismAnswerPost" />
                 }
                 @if ((!posts || posts.length === 0) && createdPost) {
                     <div>
