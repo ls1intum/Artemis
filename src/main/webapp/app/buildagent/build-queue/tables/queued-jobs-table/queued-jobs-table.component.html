@@ -29,7 +29,7 @@
                         >
                             <td class="build-jobs-column-tiny">
                                 <!-- Stretched link enables Cmd+Click to open in new tab -->
-                                <a class="stretched-row-link" [routerLink]="getJobDetailRoute(buildJob.id)"></a>
+                                <a class="stretched-row-link" [routerLink]="getJobDetailRoute(buildJob.id)" aria-hidden="true" tabindex="-1"></a>
                                 <span class="text-secondary">
                                     <fa-icon [icon]="faClock" />
                                 </span>

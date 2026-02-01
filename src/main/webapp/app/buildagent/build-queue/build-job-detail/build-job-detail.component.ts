@@ -46,7 +46,12 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
     readonly faHourglass = faHourglass;
     readonly faSpinner = faSpinner;
 
-    /** The build job data - either a BuildJob (queued/running) or FinishedBuildJob */
+    /**
+     * The build job data - either a BuildJob (queued/running) or FinishedBuildJob.
+     * Uses 'any' type because BuildJob and FinishedBuildJob have incompatible structures
+     * and this component accesses properties from both types dynamically.
+     */
+
     buildJob = signal<any | undefined>(undefined);
 
     /** Build log content */
@@ -195,7 +200,8 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
             if (job?.jobTimingInfo?.buildStartDate && !this.isFinished()) {
                 const start = dayjs(job.jobTimingInfo.buildStartDate);
                 const now = dayjs();
-                const updatedJob = { ...job, jobTimingInfo: { ...job.jobTimingInfo, buildDuration: now.diff(start, 'seconds') } };
+                const updatedTimingInfo = Object.assign({}, job.jobTimingInfo, { buildDuration: now.diff(start, 'seconds') });
+                const updatedJob = Object.assign({}, job, { jobTimingInfo: updatedTimingInfo });
                 this.buildJob.set(updatedJob);
             }
         }, 1000);

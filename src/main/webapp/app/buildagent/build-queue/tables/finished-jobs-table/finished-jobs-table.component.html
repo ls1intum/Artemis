@@ -47,7 +47,7 @@
                     >
                         <td class="finish-jobs-column-tiny">
                             <!-- Stretched link enables Cmd+Click to open in new tab -->
-                            <a class="stretched-row-link" [routerLink]="getJobDetailRoute(finishedBuildJob.id)"></a>
+                            <a class="stretched-row-link" [routerLink]="getJobDetailRoute(finishedBuildJob.id)" aria-hidden="true" tabindex="-1"></a>
                             <span
                                 [ngClass]="{
                                     'text-success': finishedBuildJob.status === 'SUCCESSFUL',

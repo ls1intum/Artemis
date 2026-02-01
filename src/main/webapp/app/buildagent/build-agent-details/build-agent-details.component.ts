@@ -243,18 +243,25 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
      * ephemeral Hazelcast client ports that change on reconnection).
      */
     loadAgentData() {
-        // Load running jobs for this agent
-        this.runningJobsSubscription = this.buildQueueService.getRunningBuildJobs(this.agentName).subscribe((runningBuildJobs) => {
-            this.runningBuildJobs.set(this.updateBuildJobDuration(runningBuildJobs));
-        });
-
         // Check if agentName looks like an address (e.g., [192.168.1.1]:5701 or [2001:db8::1]:5701)
-        // If so, try to resolve it to the actual agent name first
+        // If so, try to resolve it to the actual agent name first before loading data
         if (looksLikeAddress(this.agentName)) {
             this.resolveAddressToNameThenLoadDetails();
         } else {
+            this.loadRunningJobs();
             this.loadAgentDetails();
         }
+    }
+
+    /**
+     * Loads running jobs for this agent.
+     * Should be called after agentName is resolved to ensure correct filtering.
+     */
+    private loadRunningJobs() {
+        this.runningJobsSubscription?.unsubscribe();
+        this.runningJobsSubscription = this.buildQueueService.getRunningBuildJobs(this.agentName).subscribe((runningBuildJobs) => {
+            this.runningBuildJobs.set(this.updateBuildJobDuration(runningBuildJobs));
+        });
     }
 
     /**
@@ -281,11 +288,13 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
                     this.agentName = matchingAgent.buildAgent.name;
                     this.resubscribeWebsocket();
                 }
-                // Now load the agent details (either with resolved name or original address)
+                // Now load running jobs and agent details with the resolved name
+                this.loadRunningJobs();
                 this.loadAgentDetails();
             },
             error: () => {
                 // If we can't get the agent list, just try with the original address
+                this.loadRunningJobs();
                 this.loadAgentDetails();
             },
         });
