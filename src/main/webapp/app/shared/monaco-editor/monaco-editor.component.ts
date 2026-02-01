@@ -317,7 +317,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
         if (this._diffEditor) {
             this._diffEditor.dispose();
-            this._diffEditor = undefined as any;
+            this._diffEditor = undefined;
         }
 
         this.disposeDiffSnapshotModel();

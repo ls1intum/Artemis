@@ -234,7 +234,7 @@
                         <div ngbDropdown class="btn-group me-2" [autoClose]="false">
                             <!-- Main action: Check Consistency -->
                             <button class="btn btn-primary" (click)="checkConsistencies(exercise)" [disabled]="isCheckingConsistency() || isAiApplying()">
-                                @if (isCheckingConsistency() || isGeneratingOrRefining()) {
+                                @if (isCheckingConsistency() || isAiApplying()) {
                                     <fa-icon [icon]="faSpinner" animation="spin" class="text-white me-2" />
                                 } @else {
                                     <fa-icon [icon]="faCheckDouble" class="text-white me-2" />
@@ -345,10 +345,10 @@
                         </div>
                     </div>
                 }
-                @if (exercise.templateParticipation) {
+                @if (exercise.templateParticipation && selectedParticipation) {
                     <jhi-programming-exercise-editable-instructions
                         [(exercise)]="exercise"
-                        [(participation)]="selectedParticipation!"
+                        [(participation)]="selectedParticipation"
                         [templateParticipation]="exercise.templateParticipation"
                         [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
                         [externalHeight]="true"
