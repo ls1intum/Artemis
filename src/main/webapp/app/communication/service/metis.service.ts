@@ -293,6 +293,10 @@ export class MetisService implements OnDestroy {
                     const cachedPost = this.cachedPosts[indexOfCachedPost];
                     const existingAnswers = cachedPost.answers ?? [];
 
+                    createdAnswerPost.creationDate = dayjs(createdAnswerPost.creationDate ?? dayjs());
+                    createdAnswerPost.author = this.user;
+                    createdAnswerPost.post = { ...cachedPost, answers: [], reactions: [] };
+
                     const alreadyThere = existingAnswers.some((a) => a.id === createdAnswerPost.id);
                     if (!alreadyThere) {
                         const updatedPost: Post = {
@@ -300,8 +304,8 @@ export class MetisService implements OnDestroy {
                             answers: [...existingAnswers, createdAnswerPost],
                             reactions: cachedPost.reactions ?? [],
                         };
-                        this.cachedPosts = [...this.cachedPosts.slice(0, indexOfCachedPost), updatedPost, ...this.cachedPosts.slice(indexOfCachedPost + 1)];
 
+                        this.cachedPosts = [...this.cachedPosts.slice(0, indexOfCachedPost), updatedPost, ...this.cachedPosts.slice(indexOfCachedPost + 1)];
                         this.posts$.next(this.cachedPosts);
                         this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
