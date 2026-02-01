@@ -498,11 +498,17 @@ public class SharedQueueProcessingService {
                         log.error("Build job {} has been stale for {} consecutive checks (~{} seconds). Force-cancelling and requeuing.", jobId, consecutiveCount,
                                 consecutiveCount * 5);
 
-                        // Cancel the build job properly so it's recognized as CANCELLED, not FAILED
-                        // This adds the job to cancelledBuildJobs set which the exception handler checks
+                        // Cancel the build job properly so it's recognized as CANCELLED, not FAILED.
+                        // This adds the job to cancelledBuildJobs set which the exceptionally handler checks.
+                        // IMPORTANT: cancelBuildJob() calls future.cancel(true), which completes the future
+                        // with a CancellationException. This triggers the exceptionally handler (see processBuild),
+                        // which calls removeProcessingJob() to decrement localProcessingJobs.
+                        // We must NOT decrement localProcessingJobs here to avoid a double decrement.
                         buildJobManagementService.cancelBuildJob(jobId);
 
-                        // Remove from distributed processing jobs and requeue
+                        // Remove from distributed processing jobs map immediately (don't wait for exceptionally handler).
+                        // The exceptionally handler's removeProcessingJob() will call remove() again, but that's
+                        // a no-op since the job is already removed from the map.
                         BuildJobQueueItem staleJob = distributedDataAccessService.getDistributedProcessingJobs().remove(jobId);
                         if (staleJob != null && staleJob.retryCount() < 5) {
                             BuildJobQueueItem requeuedJob = new BuildJobQueueItem(staleJob, new BuildAgentDTO("", "", ""), staleJob.retryCount() + 1);
@@ -513,8 +519,9 @@ public class SharedQueueProcessingService {
                             log.error("Stale build job {} exceeded maximum retry count ({}). Not requeuing.", jobId, staleJob.retryCount());
                         }
 
-                        // Clean up local state - note: localProcessingJobs will be decremented by the
-                        // exceptionally handler when the cancelled future completes, so we don't decrement here
+                        // Clean up stale detection state. Note: We do NOT decrement localProcessingJobs here
+                        // because the exceptionally handler will do it when the cancelled future completes.
+                        // See the documentation on removeProcessingJob() for the counter management contract.
                         staleJobDetectionCounts.remove(jobId);
                         buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
                     }
@@ -814,6 +821,8 @@ public class SharedQueueProcessingService {
 
                 ResultQueueItem resultQueueItem = new ResultQueueItem(buildResult, finishedJob, buildLogs, null);
                 enqueueBuildResult(resultQueueItem);
+                // This is the single point where localProcessingJobs is decremented for successful jobs.
+                // Other code (e.g., stale job cleanup) must NOT decrement the counter directly.
                 removeProcessingJob(buildJob);
 
                 buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(finishedJob, isPaused.get(), false, consecutiveBuildJobFailures.get());
@@ -871,6 +880,8 @@ public class SharedQueueProcessingService {
 
                 ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, finishedBuildJob, buildLogs, ex);
                 enqueueBuildResult(resultQueueItem);
+                // This is the single point where localProcessingJobs is decremented for failed/cancelled jobs.
+                // Other code (e.g., stale job cleanup) must NOT decrement the counter directly.
                 removeProcessingJob(buildJob);
 
                 buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(finishedBuildJob, isPaused.get(), false, consecutiveBuildJobFailures.get());
@@ -915,7 +926,23 @@ public class SharedQueueProcessingService {
     }
 
     /**
-     * Remove the processing job from the distributed processing jobs map and decrement the local processing jobs counter.
+     * Removes a processing job from the distributed map and decrements the local job counter.
+     * <p>
+     * <b>Counter Management Contract:</b> This method is the single point of responsibility for
+     * decrementing {@code localProcessingJobs} when a build job completes (successfully, with error,
+     * or via cancellation). It is called from:
+     * <ul>
+     * <li>The {@code thenAccept} handler when a build completes successfully</li>
+     * <li>The {@code exceptionally} handler when a build fails, times out, or is cancelled</li>
+     * </ul>
+     * <p>
+     * <b>Important:</b> Other code paths (such as stale job cleanup) must NOT decrement
+     * {@code localProcessingJobs} directly. Instead, they should trigger job cancellation via
+     * {@link BuildJobManagementService#cancelBuildJob(String)}, which will eventually cause the
+     * {@code exceptionally} handler to call this method.
+     * <p>
+     * The distributed map removal is idempotent - if the job was already removed by another code path,
+     * the remove operation simply returns null.
      *
      * @param buildJob the build job to remove
      */
