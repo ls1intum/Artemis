@@ -7,7 +7,7 @@ jest.mock('monaco-editor', () => ({
 }));
 
 import * as monaco from 'monaco-editor';
-import { DiffInformation, FileStatus, __diffUtilsTesting, processRepositoryDiff } from './diff.utils';
+import { DiffInformation, FileStatus, __diffUtilsTesting, convertMonacoLineChanges, processRepositoryDiff } from './diff.utils';
 
 describe('DiffUtils', () => {
     let mockOriginalModel: monaco.editor.ITextModel;
@@ -622,6 +622,74 @@ describe('DiffUtils', () => {
         it('should generate stable hashes for identical lines', () => {
             expect(hashLine('same line')).toBe(hashLine('same line'));
             expect(hashLine('same line')).not.toBe(hashLine('different line'));
+        });
+    });
+
+    describe('convertMonacoLineChanges', () => {
+        it('should convert monaco line changes correctly', () => {
+            const mockLineChanges: monaco.editor.ILineChange[] = [
+                {
+                    originalStartLineNumber: 1,
+                    originalEndLineNumber: 2,
+                    modifiedStartLineNumber: 1,
+                    modifiedEndLineNumber: 3,
+                    charChanges: undefined,
+                },
+            ];
+
+            const result = convertMonacoLineChanges(mockLineChanges);
+            expect(result.addedLineCount).toBe(3); // 3 - 1 + 1 = 3
+            expect(result.removedLineCount).toBe(2); // 2 - 1 + 1 = 2
+        });
+
+        it('should handle null monaco line changes', () => {
+            const result = convertMonacoLineChanges(null!);
+            expect(result.addedLineCount).toBe(0);
+            expect(result.removedLineCount).toBe(0);
+        });
+
+        it('should handle undefined monaco line changes', () => {
+            const result = convertMonacoLineChanges(undefined!);
+            expect(result.addedLineCount).toBe(0);
+            expect(result.removedLineCount).toBe(0);
+        });
+
+        it('should handle empty monaco line changes array', () => {
+            const result = convertMonacoLineChanges([]);
+            expect(result.addedLineCount).toBe(0);
+            expect(result.removedLineCount).toBe(0);
+        });
+
+        it('should handle edge case where modified end line is less than start line', () => {
+            const mockLineChanges: monaco.editor.ILineChange[] = [
+                {
+                    originalStartLineNumber: 1,
+                    originalEndLineNumber: 2,
+                    modifiedStartLineNumber: 5,
+                    modifiedEndLineNumber: 3, // End line < start line
+                    charChanges: undefined,
+                },
+            ];
+
+            const result = convertMonacoLineChanges(mockLineChanges);
+            expect(result.addedLineCount).toBe(0); // Should use the ternary fallback : 0
+            expect(result.removedLineCount).toBe(2);
+        });
+
+        it('should handle edge case where original end line is less than start line', () => {
+            const mockLineChanges: monaco.editor.ILineChange[] = [
+                {
+                    originalStartLineNumber: 5,
+                    originalEndLineNumber: 3, // End line < start line
+                    modifiedStartLineNumber: 1,
+                    modifiedEndLineNumber: 2,
+                    charChanges: undefined,
+                },
+            ];
+
+            const result = convertMonacoLineChanges(mockLineChanges);
+            expect(result.addedLineCount).toBe(2);
+            expect(result.removedLineCount).toBe(0); // Should use the ternary fallback : 0
         });
     });
 });

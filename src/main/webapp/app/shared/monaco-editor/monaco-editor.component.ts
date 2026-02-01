@@ -59,7 +59,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * Diff/editor switching state.
      */
     private selectionChangeListeners: {
-        listener: (selection: EditorRange | null) => void;
+        listener: (selection: EditorRange | undefined) => void;
         disposable?: Disposable;
     }[] = [];
     private diffSnapshotModel?: monaco.editor.ITextModel;
@@ -220,6 +220,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         const resizeObserver = new ResizeObserver(() => {
             if (this.mode() === 'diff' && this._diffEditor) {
+                // Recalculate and apply container dimensions to prevent stale sizing
+                const rect = this.monacoEditorContainerElement.getBoundingClientRect();
+                this.renderer.setStyle(this.diffEditorContainerElement, 'width', `${rect.width}px`);
+                this.renderer.setStyle(this.diffEditorContainerElement, 'height', `${rect.height}px`);
                 this._diffEditor.layout();
             } else {
                 this._editor.layout();
@@ -349,7 +353,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
         const snapshotUri = monaco.Uri.parse(`inmemory://model/snapshot-${this._editor.getId()}/${Date.now()}`);
         this.diffSnapshotModel = monaco.editor.createModel(currentContent, currentLanguage, snapshotUri);
-        this.models.push(this.diffSnapshotModel as any);
+        this.models.push(this.diffSnapshotModel);
 
         if (currentModel) {
             this._diffEditor.setModel({
@@ -366,7 +370,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private disposeDiffSnapshotModel(): void {
         if (!this.diffSnapshotModel) return;
 
-        const idx = this.models.indexOf(this.diffSnapshotModel as any);
+        const idx = this.models.indexOf(this.diffSnapshotModel);
         if (idx !== -1) this.models.splice(idx, 1);
 
         this.diffSnapshotModel.dispose();
@@ -809,12 +813,12 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         }
     }
 
-    private registerSelectionListenerOnEditor(editor: monaco.editor.IStandaloneCodeEditor, listener: (selection: EditorRange | null) => void): Disposable {
+    private registerSelectionListenerOnEditor(editor: monaco.editor.IStandaloneCodeEditor, listener: (selection: EditorRange | undefined) => void): Disposable {
         return this.ngZone.runOutsideAngular(() => {
             return editor.onDidChangeCursorSelection((e) => {
                 const selection = e.selection;
                 if (selection.isEmpty()) {
-                    this.ngZone.run(() => listener(null));
+                    this.ngZone.run(() => listener(undefined));
                 } else {
                     this.ngZone.run(() =>
                         listener({
@@ -829,7 +833,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
     }
 
-    onSelectionChange(listener: (selection: EditorRange | null) => void): Disposable {
+    onSelectionChange(listener: (selection: EditorRange | undefined) => void): Disposable {
         const disposable = this.registerSelectionListenerOnEditor(this.getActiveEditor(), listener);
         const listenerEntry = { listener, disposable };
         this.selectionChangeListeners.push(listenerEntry);
@@ -845,10 +849,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         };
     }
 
-    getSelection(): EditorRange | null {
+    getSelection(): EditorRange | undefined {
         const selection = this.getActiveEditor().getSelection();
         if (!selection || selection.isEmpty()) {
-            return null;
+            return undefined;
         }
         return {
             startLineNumber: selection.startLineNumber,
