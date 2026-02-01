@@ -139,6 +139,7 @@ public class ArtemisApp {
             log.warn("The host name could not be determined, using `localhost` as fallback");
         }
         List<String> activeFeatures = getActiveFeatures(env);
+        activeFeatures.sort(String::compareTo);
         log.info("""
 
                 ----------------------------------------------------------

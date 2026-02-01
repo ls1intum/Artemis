@@ -18,8 +18,6 @@ import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -57,13 +55,7 @@ public class AtlasAgentService {
 
     private static final String PREVIEW_DATA_END_MARKER = "%%PREVIEW_DATA_END%%";
 
-    /**
-     * Cache name for tracking pending competency operations for each session.
-     * Must be configured in HazelcastConfiguration with appropriate TTL (2 hours recommended).
-     */
-    public static final String ATLAS_SESSION_PENDING_OPERATIONS_CACHE = "atlas-session-pending-operations";
-
-    private final CacheManager cacheManager;
+    private final AtlasAgentSessionCacheService sessionCacheService;
 
     private final ChatClient chatClient;
 
@@ -95,54 +87,11 @@ public class AtlasAgentService {
 
     private static final ThreadLocal<Boolean> competencyModifiedInCurrentRequest = ThreadLocal.withInitial(() -> false);
 
-    /**
-     * Get the cached pending competency operations for a session.
-     * Used by Competency Expert to retrieve previous preview data for refinement.
-     *
-     * @param sessionId the session ID
-     * @return the cached pending competency operations, or null if none exist
-     */
-
-    public List<CompetencyOperation> getCachedPendingCompetencyOperations(String sessionId) {
-        Cache cache = cacheManager.getCache(ATLAS_SESSION_PENDING_OPERATIONS_CACHE);
-        if (cache == null) {
-            return null;
-        }
-        return (List<CompetencyOperation>) cache.get(sessionId, List.class);
-    }
-
-    /**
-     * Cache pending competency operations for a session.
-     * Called after preview generation to enable deterministic refinements.
-     *
-     * @param sessionId  the session ID
-     * @param operations the competency operations to cache
-     */
-    public void cachePendingCompetencyOperations(String sessionId, List<CompetencyOperation> operations) {
-        Cache cache = cacheManager.getCache(ATLAS_SESSION_PENDING_OPERATIONS_CACHE);
-        if (cache != null) {
-            cache.put(sessionId, operations);
-        }
-    }
-
-    /**
-     * Clear cached pending competency operations for a session.
-     * Called after successful save or when starting a new competency flow.
-     *
-     * @param sessionId the session ID
-     */
-    public void clearCachedPendingCompetencyOperations(String sessionId) {
-        Cache cache = cacheManager.getCache(ATLAS_SESSION_PENDING_OPERATIONS_CACHE);
-        if (cache != null) {
-            cache.evict(sessionId);
-        }
-    }
-
-    public AtlasAgentService(CacheManager cacheManager, @Autowired(required = false) ChatClient chatClient, AtlasPromptTemplateService templateService,
+    public AtlasAgentService(AtlasAgentSessionCacheService sessionCacheService, @Autowired(required = false) ChatClient chatClient, AtlasPromptTemplateService templateService,
             @Autowired(required = false) ToolCallbackProvider mainAgentToolCallbackProvider, @Autowired(required = false) ToolCallbackProvider competencyExpertToolCallbackProvider,
             @Autowired(required = false) ChatMemory chatMemory, @Value("${atlas.chat-model:gpt-4o}") String deploymentName,
             @Value("${atlas.chat-temperature:0.2}") double temperature) {
-        this.cacheManager = cacheManager;
+        this.sessionCacheService = sessionCacheService;
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.mainAgentToolCallbackProvider = mainAgentToolCallbackProvider;
@@ -188,14 +137,14 @@ public class AtlasAgentService {
                 return new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews);
             }
             else if (response.contains(CREATE_APPROVED_COMPETENCY)) {
-                List<CompetencyOperation> cachedData = getCachedPendingCompetencyOperations(sessionId);
+                List<CompetencyOperation> cachedData = sessionCacheService.getCachedPendingCompetencyOperations(sessionId);
 
                 String creationResponse = delegateToAgent(AgentType.COMPETENCY_EXPERT, CREATE_APPROVED_COMPETENCY, courseId, sessionId);
                 List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getAndClearPreviews();
                 String responseWithEmbeddedData = embedPreviewDataInResponse(creationResponse, previews);
 
                 if (cachedData != null && !cachedData.isEmpty()) {
-                    clearCachedPendingCompetencyOperations(sessionId);
+                    sessionCacheService.clearCachedPendingCompetencyOperations(sessionId);
                 }
 
                 updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, creationResponse);
