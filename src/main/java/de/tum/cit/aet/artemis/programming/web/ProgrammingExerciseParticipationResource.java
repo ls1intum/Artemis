@@ -386,10 +386,10 @@ public class ProgrammingExerciseParticipationResource {
         }
 
         var login = SecurityUtils.getCurrentUserLogin().orElse(null);
-        User user = login != null ? userService.findUser(null, login, null).orElse(null) : null;
+        User coAuthor = login != null ? userService.findUser(null, login, null).orElse(null) : null;
 
-        programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUri(), sourceUri, user);
-        log.warn("Reset repo by {} ({})", user != null ? user.getName() : "unknown", login);
+        programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUri(), sourceUri, coAuthor);
+        log.warn("Reset repo by {} ({})", coAuthor != null ? coAuthor.getName() : "unknown", login);
 
         continuousIntegrationTriggerService
                 .orElseThrow(() -> new UnsupportedOperationException(

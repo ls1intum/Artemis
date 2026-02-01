@@ -244,9 +244,12 @@ public class ProgrammingExerciseParticipationService {
                 FileUtils.copyFile(file, targetRepo.getLocalPath().resolve(file.toPath().getFileName()).toFile());
             }
         }
-
+        String commitMessage = "Reset Exercise";
+        if (user != null && user.getEmail() != null) {
+            commitMessage += "\n\nCo-authored-by: " + user.getName() + " <" + user.getEmail() + ">";
+        }
         gitService.stageAllChanges(targetRepo);
-        gitService.commitAndPush(targetRepo, "Reset Exercise", true, user);
+        gitService.commitAndPush(targetRepo, commitMessage, true, null);
     }
 
     /**
