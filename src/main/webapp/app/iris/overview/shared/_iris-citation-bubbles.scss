@@ -37,7 +37,6 @@
         text-overflow: ellipsis;
         position: relative;
         z-index: 1;
-
         --iris-citation-shift: 0px;
     }
 
@@ -158,7 +157,6 @@
         cursor: pointer;
         user-select: none;
         color: var(--iris-citation-nav-color);
-        font-size: 0;
         font: inherit;
     }
 
