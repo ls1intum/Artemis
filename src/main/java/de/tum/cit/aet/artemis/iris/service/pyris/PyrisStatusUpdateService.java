@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionServic
 import de.tum.cit.aet.artemis.iris.service.session.IrisLectureChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTextExerciseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
-import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
+import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
 
 @Lazy
 @Service
@@ -58,12 +58,12 @@ public class PyrisStatusUpdateService {
 
     private final IrisTutorSuggestionSessionService irisTutorSuggestionSessionService;
 
-    private final Optional<LectureContentProcessingApi> lectureContentProcessingApi;
+    private final Optional<ProcessingStateCallbackApi> processingStateCallbackApi;
 
     public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisExerciseChatSessionService irisExerciseChatSessionService,
             IrisTextExerciseChatSessionService irisTextExerciseChatSessionService, IrisCourseChatSessionService courseChatSessionService,
             IrisCompetencyGenerationService competencyGenerationService, IrisLectureChatSessionService irisLectureChatSessionService, IrisRewritingService rewritingService,
-            IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, Optional<LectureContentProcessingApi> lectureContentProcessingApi) {
+            IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, Optional<ProcessingStateCallbackApi> processingStateCallbackApi) {
         this.pyrisJobService = pyrisJobService;
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
         this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
@@ -72,7 +72,7 @@ public class PyrisStatusUpdateService {
         this.irisLectureChatSessionService = irisLectureChatSessionService;
         this.rewritingService = rewritingService;
         this.irisTutorSuggestionSessionService = irisTutorSuggestionSessionService;
-        this.lectureContentProcessingApi = lectureContentProcessingApi;
+        this.processingStateCallbackApi = processingStateCallbackApi;
     }
 
     /**
@@ -174,7 +174,7 @@ public class PyrisStatusUpdateService {
 
             // Notify the lecture content processing service with token for validation
             boolean success = statusUpdate.stages().stream().map(PyrisStageDTO::state).noneMatch(state -> state == PyrisStageState.ERROR);
-            lectureContentProcessingApi.ifPresent(api -> api.handleIngestionComplete(job.lectureUnitId(), job.jobId(), success));
+            processingStateCallbackApi.ifPresent(api -> api.handleIngestionComplete(job.lectureUnitId(), job.jobId(), success));
         }
         else {
             pyrisJobService.updateJob(job);
