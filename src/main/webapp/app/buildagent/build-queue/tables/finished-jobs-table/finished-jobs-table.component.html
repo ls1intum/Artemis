@@ -73,7 +73,10 @@
                         </td>
                         <td class="finish-jobs-column-status">
                             @if (finishedBuildJob.status === 'SUCCESSFUL') {
-                                <jhi-result [result]="finishedBuildJob.submissionResult" [showUngradedResults]="true" [showBadge]="true" />
+                                <!-- Stop propagation to prevent row click when clicking result link -->
+                                <span (click)="$event.stopPropagation()">
+                                    <jhi-result [result]="finishedBuildJob.submissionResult" [showUngradedResults]="true" [showBadge]="true" />
+                                </span>
                             } @else {
                                 <span
                                     [ngClass]="{
