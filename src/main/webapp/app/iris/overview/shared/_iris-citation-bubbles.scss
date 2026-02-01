@@ -151,12 +151,15 @@
         align-items: center;
         justify-content: center;
         border-radius: 6px;
+        border: none;
+        background: transparent;
         padding: 0 6px;
         line-height: 1.4;
         cursor: pointer;
         user-select: none;
         color: var(--iris-citation-nav-color);
         font-size: 0;
+        font: inherit;
     }
 
     .iris-citation__nav-icon {

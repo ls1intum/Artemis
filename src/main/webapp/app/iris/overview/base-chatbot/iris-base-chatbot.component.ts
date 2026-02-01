@@ -440,13 +440,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
      */
     private renderCitationNavHtml(count: number): string {
         return `<span class="iris-citation__nav">
-            <span class="iris-citation__nav-button iris-citation__nav-button--prev" role="button" tabindex="0" aria-label="Previous citation">
+            <button class="iris-citation__nav-button iris-citation__nav-button--prev" type="button" aria-label="Previous citation">
                 <span class="iris-citation__nav-icon iris-citation__nav-icon--prev" aria-hidden="true"></span>
-            </span>
-            <span class="iris-citation__nav-count">1/${count}</span>
-            <span class="iris-citation__nav-button iris-citation__nav-button--next" role="button" tabindex="0" aria-label="Next citation">
+            </button>
+            <span class="iris-citation__nav-count" aria-live="polite" aria-atomic="true">1/${count}</span>
+            <button class="iris-citation__nav-button iris-citation__nav-button--next" type="button" aria-label="Next citation">
                 <span class="iris-citation__nav-icon iris-citation__nav-icon--next" aria-hidden="true"></span>
-            </span>
+            </button>
         </span>`;
     }
 
@@ -458,7 +458,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private getCitationNavButton(target: EventTarget | null): HTMLElement | null {
         const rawTarget = target as Node | null;
         const element = rawTarget instanceof HTMLElement ? rawTarget : rawTarget?.parentElement;
-        return element?.closest('.iris-citation__nav-button') as HTMLElement | null;
+        return element?.closest('button.iris-citation__nav-button') as HTMLElement | null;
     }
 
     /**
