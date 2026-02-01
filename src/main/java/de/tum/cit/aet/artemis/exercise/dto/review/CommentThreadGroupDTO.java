@@ -17,6 +17,11 @@ public record CommentThreadGroupDTO(@Schema(description = "Group identifier.") @
         @Schema(description = "Identifier of the owning exercise.") @NotNull Long exerciseId,
         @Schema(description = "Thread identifiers associated with the group.") @NotNull List<@NotNull Long> threadIds) {
 
+    /**
+     * Maps a CommentThreadGroup entity to a DTO.
+     *
+     * @param group the comment thread group entity
+     */
     public CommentThreadGroupDTO(CommentThreadGroup group) {
         this(group.getId(), group.getExercise().getId(), mapThreadIds(group));
     }

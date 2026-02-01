@@ -268,10 +268,6 @@ public class ExerciseReviewService {
             throw new BadRequestAlertException("A thread group must contain at least two threads", THREAD_GROUP_ENTITY_NAME, "threadCountTooLow");
         }
 
-        CommentThreadGroup group = new CommentThreadGroup();
-        group.setExercise(exercise);
-        CommentThreadGroup saved = commentThreadGroupRepository.save(group);
-
         List<CommentThread> threads = commentThreadRepository.findAllById(threadIds);
         if (threads.size() != threadIds.size()) {
             throw new BadRequestAlertException("Some threads do not exist", THREAD_ENTITY_NAME, "threadMissing");
@@ -281,12 +277,17 @@ public class ExerciseReviewService {
             if (thread.getExercise() == null || !Objects.equals(thread.getExercise().getId(), exerciseId)) {
                 throw new BadRequestAlertException("Thread exercise does not match request", THREAD_ENTITY_NAME, "exerciseMismatch");
             }
-            if (thread.getGroup() != null && !Objects.equals(thread.getGroup().getId(), saved.getId())) {
+            if (thread.getGroup() != null) {
                 throw new BadRequestAlertException("Thread already belongs to another group", THREAD_ENTITY_NAME, "threadGrouped");
             }
-            thread.setGroup(saved);
         }
 
+        CommentThreadGroup group = new CommentThreadGroup();
+        group.setExercise(exercise);
+        CommentThreadGroup saved = commentThreadGroupRepository.save(group);
+        for (CommentThread thread : threads) {
+            thread.setGroup(saved);
+        }
         commentThreadRepository.saveAll(threads);
         saved.setThreads(new java.util.HashSet<>(threads));
         return saved;
