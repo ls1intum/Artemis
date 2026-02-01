@@ -578,7 +578,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Refinement', 
 
         comp.onInlineRefinement({ instruction: 'Test', startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
 
-        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineComment.applyError');
+        // Service returns with inlineRefine.error when courseId is missing
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
     });
 
     it('should show error when inline refinement has empty problem statement', () => {
