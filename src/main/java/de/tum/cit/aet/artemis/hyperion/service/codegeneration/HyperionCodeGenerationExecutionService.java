@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ArtifactLocationDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
@@ -101,13 +102,15 @@ public class HyperionCodeGenerationExecutionService {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
+    private final ExerciseVersionService exerciseVersionService;
+
     public HyperionCodeGenerationExecutionService(@Value("${artemis.version-control.default-branch:main}") String defaultBranch, GitService gitService,
             RepositoryService repositoryService, SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ResultRepository resultRepository, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, HyperionProgrammingExerciseContextRendererService repositoryStructureService,
             HyperionSolutionRepositoryService solutionStrategy, HyperionTemplateRepositoryService templateStrategy, HyperionTestRepositoryService testStrategy,
-            ProgrammingSubmissionService programmingSubmissionService, HyperionConsistencyCheckService consistencyCheckService) {
+            ProgrammingSubmissionService programmingSubmissionService, HyperionConsistencyCheckService consistencyCheckService, ExerciseVersionService exerciseVersionService) {
         this.defaultBranch = defaultBranch;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
@@ -123,6 +126,7 @@ public class HyperionCodeGenerationExecutionService {
         this.testStrategy = testStrategy;
         this.programmingSubmissionService = programmingSubmissionService;
         this.consistencyCheckService = consistencyCheckService;
+        this.exerciseVersionService = exerciseVersionService;
     }
 
     /**
@@ -353,6 +357,10 @@ public class HyperionCodeGenerationExecutionService {
             }
         }
         catch (InterruptedException ignored) {
+        }
+
+        if (lastCommitHash != null && exerciseVersionService.isRepositoryTypeVersionable(repositoryType)) {
+            exerciseVersionService.createExerciseVersion(exercise, user);
         }
 
         boolean success = result != null && result.isSuccessful();

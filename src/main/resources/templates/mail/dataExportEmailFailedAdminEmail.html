@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="#{email.dataExportEmailFailedAdmin.title(${dataExport.user.login})}">Data export notification email failed</title>
+    <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
+    <th:block th:replace="~{mail/notification/fragments :: css}"/>
+</head>
+<body>
+<th:block th:replace="~{mail/notification/fragments :: header}"/>
+<!-- Message Body Start -->
+<div id="message-body">
+    <span th:text="#{email.dataExportEmailFailedAdmin.message(${dataExport.user.login})}">The data export notification email for [Username] failed to send.</span>
+
+    <p th:text="#{email.dataExportEmailFailedAdmin.reason(${reason})}">The error message </p>
+    <p
+        th:text="#{email.dataExportEmailFailedAdmin.actionItemList}">
+    </p>
+    <p th:text="#{email.dataExportEmailFailedAdmin.actionItem1}">Check the configuration of the instance</p>
+    <p th:text="#{email.dataExportEmailFailedAdmin.actionItem2}">Contact the development team</p>
+    <p>
+        <a th:href="${baseUrl} + '/admin/data-exports'" th:text="#{email.dataExportEmailFailedAdmin.dataExportsLink}">View data exports in Artemis</a>
+    </p>
+    <p>
+        <a th:href="@{https://github.com/ls1intum/Artemis/issues/new/choose}" th:text="#{email.dataExportEmailFailedAdmin.githubLink}">Create an issue on Github</a>
+    </p>
+
+</div>
+</body>
+</html>

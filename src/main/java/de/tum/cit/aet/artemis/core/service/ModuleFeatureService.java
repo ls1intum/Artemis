@@ -62,6 +62,15 @@ public class ModuleFeatureService {
     }
 
     /**
+     * Check if the Iris module is enabled.
+     *
+     * @return true if the Iris module is enabled, false otherwise
+     */
+    public boolean isIrisEnabled() {
+        return artemisConfigHelper.isIrisEnabled(environment);
+    }
+
+    /**
      * Check if the exam module is enabled.
      *
      * @return true if the exam module is enabled, false otherwise
@@ -104,5 +113,14 @@ public class ModuleFeatureService {
      */
     public boolean isNebulaEnabled() {
         return artemisConfigHelper.isNebulaEnabled(environment);
+    }
+
+    /**
+     * Check if the LTI module is enabled.
+     *
+     * @return true if the LTI module is enabled, false otherwise
+     */
+    public boolean isLtiEnabled() {
+        return artemisConfigHelper.isLtiEnabled(environment);
     }
 }
