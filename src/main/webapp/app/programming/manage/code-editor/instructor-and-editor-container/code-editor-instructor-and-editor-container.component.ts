@@ -371,10 +371,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Accepts the refined problem statement and applies the changes.
      * Gets the actual content from the editor (which may have been modified by the user in diff mode).
      */
-    /**
-     * Accepts the refined problem statement and applies the changes.
-     * Gets the actual content from the editor (which may have been modified by the user in diff mode).
-     */
     acceptRefinement(): void {
         this.closeDiff();
     }
