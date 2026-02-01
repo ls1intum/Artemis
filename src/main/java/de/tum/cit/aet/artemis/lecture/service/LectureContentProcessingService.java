@@ -307,15 +307,18 @@ public class LectureContentProcessingService {
      */
     @Nullable
     public LectureUnitProcessingState retryProcessing(AttachmentVideoUnit lectureUnit) {
+        // Defensive null checks for input validation
+        if (lectureUnit == null || lectureUnit.getId() == null || lectureUnit.getLecture() == null || lectureUnit.getLecture().getId() == null) {
+            log.warn("Cannot retry processing for null or unsaved lecture unit");
+            return null;
+        }
+
         var existingState = processingStateRepository.findByLectureUnit_Id(lectureUnit.getId());
         if (existingState.isEmpty() || existingState.get().getPhase() != ProcessingPhase.FAILED) {
             return null;
         }
 
         log.info("Retrying processing for unit {}", lectureUnit.getId());
-
-        // Delete the old failed state
-        processingStateRepository.delete(existingState.get());
 
         // Determine what processing is possible
         boolean hasVideo = lectureUnit.getVideoSource() != null && !lectureUnit.getVideoSource().isBlank();
@@ -327,6 +330,9 @@ public class LectureContentProcessingService {
             log.debug("No processing possible for unit {} during retry", lectureUnit.getId());
             return null;
         }
+
+        // Delete the old failed state only after confirming retry can proceed
+        processingStateRepository.delete(existingState.get());
 
         // Create new state
         var newState = new LectureUnitProcessingState(lectureUnit);

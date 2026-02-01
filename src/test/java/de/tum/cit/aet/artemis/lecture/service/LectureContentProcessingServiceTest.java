@@ -626,9 +626,33 @@ class LectureContentProcessingServiceTest {
             // When
             LectureUnitProcessingState result = service.retryProcessing(testUnit);
 
+            // Then: Should return null without deleting state (preserves error context)
+            assertThat(result).isNull();
+            verify(processingStateRepository, never()).delete(any());
+        }
+
+        @Test
+        void shouldReturnNullForNullInput() {
+            // Given: null input
+            // When
+            LectureUnitProcessingState result = service.retryProcessing(null);
+
             // Then
             assertThat(result).isNull();
-            verify(processingStateRepository).delete(testState);
+            verify(processingStateRepository, never()).findByLectureUnit_Id(anyLong());
+        }
+
+        @Test
+        void shouldReturnNullForUnsavedUnit() {
+            // Given: unit without ID
+            testUnit.setId(null);
+
+            // When
+            LectureUnitProcessingState result = service.retryProcessing(testUnit);
+
+            // Then
+            assertThat(result).isNull();
+            verify(processingStateRepository, never()).findByLectureUnit_Id(anyLong());
         }
 
         @Test
