@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -304,6 +305,7 @@ public class LectureContentProcessingService {
      * @param lectureUnit the unit to retry (must be in FAILED state)
      * @return the processing state after retry attempt, or null if retry not possible
      */
+    @Nullable
     public LectureUnitProcessingState retryProcessing(AttachmentVideoUnit lectureUnit) {
         var existingState = processingStateRepository.findByLectureUnit_Id(lectureUnit.getId());
         if (existingState.isEmpty() || existingState.get().getPhase() != ProcessingPhase.FAILED) {
