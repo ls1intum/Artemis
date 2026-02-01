@@ -45,7 +45,9 @@ export function replaceCitationBlocks(text: string, citationInfo: IrisCitationMe
     }
 
     const citationMap = new Map<number, IrisCitationMetaDTO>();
-    citationInfo.forEach((citation) => citationMap.set(citation.entityId, citation));
+    citationInfo.forEach((citation) => {
+        citationMap.set(citation.entityId, citation);
+    });
 
     const tokens: CitationToken[] = [];
     let lastIndex = 0;

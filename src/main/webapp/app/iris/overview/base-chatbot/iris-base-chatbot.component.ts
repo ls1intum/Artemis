@@ -546,7 +546,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         if (summaryItems.length === 0) {
             return;
         }
-        summaryItems.forEach((item, index) => item.classList.toggle('is-active', index === nextIndex));
+        summaryItems.forEach((item, index) => {
+            item.classList.toggle('is-active', index === nextIndex);
+        });
         const navCount = citationGroup.querySelector<HTMLElement>('.iris-citation__nav-count');
         if (navCount) {
             navCount.textContent = `${nextIndex + 1}/${summaryItems.length}`;

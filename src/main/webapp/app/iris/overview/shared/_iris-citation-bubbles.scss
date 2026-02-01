@@ -16,6 +16,7 @@
         align-items: center;
         position: relative;
         padding-right: 10px;
+
         --iris-citation-shift: 0px;
     }
 
@@ -93,14 +94,14 @@
         color: var(--iris-citation-meta-color);
     }
 
-    .iris-citation--has-summary:hover,
-    .iris-citation-group--has-summary:hover {
-        z-index: 20;
-    }
-
     .iris-citation--has-summary,
     .iris-citation-group--has-summary {
         overflow: visible;
+    }
+
+    .iris-citation--has-summary:hover,
+    .iris-citation-group--has-summary:hover {
+        z-index: 20;
     }
 
     .iris-citation--has-summary:hover .iris-citation__text,

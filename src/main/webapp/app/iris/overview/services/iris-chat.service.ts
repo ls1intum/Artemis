@@ -632,8 +632,12 @@ export class IrisChatService implements OnDestroy {
 
     private mergeCitationInfo(existing: IrisCitationMetaDTO[], incoming: IrisCitationMetaDTO[]): IrisCitationMetaDTO[] {
         const merged = new Map<number, IrisCitationMetaDTO>();
-        existing.forEach((citation) => merged.set(citation.entityId, citation));
-        incoming.forEach((citation) => merged.set(citation.entityId, citation));
+        existing.forEach((citation) => {
+            merged.set(citation.entityId, citation);
+        });
+        incoming.forEach((citation) => {
+            merged.set(citation.entityId, citation);
+        });
         return Array.from(merged.values());
     }
 
