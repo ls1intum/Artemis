@@ -108,9 +108,9 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         // given
         var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY);
         // when
-        var configurationFromRequest = request.get(this.getTutorialGroupsConfigurationPath(courseId), HttpStatus.OK, TutorialGroupsConfiguration.class);
+        var configurationFromRequest = request.get(this.getTutorialGroupsConfigurationPath(courseId), HttpStatus.OK, TutorialGroupConfigurationDTO.class);
         // then
-        assertThat(configurationFromRequest).isEqualTo(configuration);
+        assertThat(TutorialGroupConfigurationDTO.of(configuration)).isEqualTo(configurationFromRequest);
     }
 
     @Test
@@ -119,6 +119,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         TutorialGroupConfigurationDTO configurationFromRequest = request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId),
                 TutorialGroupConfigurationDTO.of(buildExampleConfiguration(courseId)), TutorialGroupConfigurationDTO.class, HttpStatus.CREATED);
         assertThat(configurationFromRequest).isNotNull();
+        assertThat(configurationFromRequest.id()).isNotNull();
         var persisted = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElseThrow();
         this.assertConfigurationStructure(persisted, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY, courseId, true, true);
     }
@@ -129,11 +130,13 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         var exampleConfig = buildExampleConfiguration(courseId);
         // not in correct uuuu-MM-dd format
         exampleConfig.setTutorialPeriodStartInclusive("2022-11-25T23:00:00.000Z");
-        request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId), exampleConfig, TutorialGroupsConfiguration.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId), TutorialGroupConfigurationDTO.of(exampleConfig), TutorialGroupConfigurationDTO.class,
+                HttpStatus.BAD_REQUEST);
         exampleConfig = buildExampleConfiguration(courseId);
         // not in correct uuuu-MM-dd format
         exampleConfig.setTutorialPeriodEndInclusive("2022-11-25T23:00:00.000Z");
-        request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId), exampleConfig, TutorialGroupsConfiguration.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId), TutorialGroupConfigurationDTO.of(exampleConfig), TutorialGroupConfigurationDTO.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -142,7 +145,8 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         // given
         tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY);
         // when
-        request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId), buildExampleConfiguration(courseId), TutorialGroupsConfiguration.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId), TutorialGroupConfigurationDTO.of(buildExampleConfiguration(courseId)),
+                TutorialGroupConfigurationDTO.class, HttpStatus.BAD_REQUEST);
         // then
         assertThat(tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId)).isNotEmpty();
     }
@@ -271,5 +275,4 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         assertThat(tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(courseId)).hasSize(0);
 
     }
-
 }
