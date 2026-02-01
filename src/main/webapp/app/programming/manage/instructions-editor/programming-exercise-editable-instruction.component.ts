@@ -45,7 +45,7 @@ import { ProgrammingExerciseInstructionAnalysisComponent } from './analysis/prog
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
-import { MODULE_FEATURE_HYPERION, PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS } from 'app/app.constants';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
@@ -93,7 +93,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     courseId: number;
     exerciseId: number;
-    irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+    irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
     artemisIntelligenceActions = computed(() => {
         const actions = [];
