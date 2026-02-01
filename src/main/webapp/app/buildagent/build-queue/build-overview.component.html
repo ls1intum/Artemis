@@ -71,6 +71,7 @@
                 [buildJobs]="runningBuildJobs()"
                 [showCourseId]="isAdministrationView()"
                 [isAdminView]="isAdministrationView()"
+                [courseId]="courseId"
                 (cancelJob)="cancelBuildJob($event)"
                 (jobClick)="navigateToJobDetail($event)"
             />
@@ -91,6 +92,7 @@
             <jhi-queued-jobs-table
                 [buildJobs]="queuedBuildJobs()"
                 [showCourseId]="isAdministrationView()"
+                [courseId]="courseId"
                 (cancelJob)="cancelBuildJob($event)"
                 (jobClick)="navigateToJobDetail($event)"
             />
@@ -134,6 +136,7 @@
                 [buildJobs]="finishedBuildJobs()"
                 [showCourseId]="isAdministrationView()"
                 [isAdminView]="isAdministrationView()"
+                [courseId]="courseId"
                 [(predicate)]="predicate"
                 [(ascending)]="ascending"
                 (sortChange)="loadFinishedBuildJobs()"

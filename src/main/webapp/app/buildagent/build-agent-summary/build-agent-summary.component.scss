@@ -45,12 +45,43 @@
 }
 
 // Clickable table rows with pointer cursor
+// Uses a "stretched link" pattern to enable Cmd+Click for opening in new tab
 .clickable-row {
     cursor: pointer;
+    position: relative;
 
     td {
         font-size: 0.85rem;
         vertical-align: middle;
+    }
+
+    // The stretched link covers the entire row, enabling native browser link behavior
+    // This allows Cmd+Click (Mac) or Ctrl+Click (Windows) to open in a new tab
+    .stretched-row-link {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 1;
+
+        // Make the link invisible but still clickable
+        &::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+        }
+    }
+
+    // Ensure interactive elements (buttons, links) appear above the stretched link
+    a:not(.stretched-row-link),
+    button,
+    .btn {
+        position: relative;
+        z-index: 2;
     }
 }
 

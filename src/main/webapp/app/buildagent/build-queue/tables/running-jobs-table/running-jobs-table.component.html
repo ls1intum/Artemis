@@ -29,6 +29,8 @@
                             (keydown.space)="$event.preventDefault(); $event.target === $event.currentTarget && onJobClick(buildJob.id)"
                         >
                             <td class="build-jobs-column-tiny">
+                                <!-- Stretched link enables Cmd+Click to open in new tab -->
+                                <a class="stretched-row-link" [routerLink]="getJobDetailRoute(buildJob.id)"></a>
                                 <span class="text-primary">
                                     <fa-icon [icon]="faSpinner" animation="spin" />
                                 </span>

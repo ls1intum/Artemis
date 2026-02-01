@@ -46,6 +46,8 @@
                         (keydown.space)="$event.preventDefault(); $event.target === $event.currentTarget && onJobClick(finishedBuildJob.id)"
                     >
                         <td class="finish-jobs-column-tiny">
+                            <!-- Stretched link enables Cmd+Click to open in new tab -->
+                            <a class="stretched-row-link" [routerLink]="getJobDetailRoute(finishedBuildJob.id)"></a>
                             <span
                                 [ngClass]="{
                                     'text-success': finishedBuildJob.status === 'SUCCESSFUL',

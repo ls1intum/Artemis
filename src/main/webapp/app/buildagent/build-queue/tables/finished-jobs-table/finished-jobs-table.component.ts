@@ -22,6 +22,8 @@ export class FinishedJobsTableComponent {
     buildJobs = input<FinishedBuildJob[]>([]);
     showCourseId = input<boolean>(false);
     isAdminView = input<boolean>(false);
+    /** Course ID for building navigation routes (undefined for admin view) */
+    courseId = input<number | undefined>(undefined);
 
     // Two-way bindings
     predicate = model<string>('buildCompletionDate');
@@ -65,5 +67,21 @@ export class FinishedJobsTableComponent {
      */
     onSortChange(): void {
         this.sortChange.emit();
+    }
+
+    /**
+     * Builds the router link array for navigating to job details.
+     * Uses course-specific route when courseId is provided, otherwise admin route.
+     * @param jobId The ID of the build job
+     */
+    getJobDetailRoute(jobId: string | undefined): string[] {
+        if (!jobId) {
+            return [];
+        }
+        const courseId = this.courseId();
+        if (courseId) {
+            return ['/course-management', String(courseId), 'build-overview', jobId, 'job-details'];
+        }
+        return ['/admin', 'build-overview', jobId, 'job-details'];
     }
 }

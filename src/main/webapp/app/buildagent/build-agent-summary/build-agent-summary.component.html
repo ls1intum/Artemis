@@ -37,9 +37,11 @@
                     </thead>
                     <tbody>
                         @for (agent of buildAgents(); track agent.buildAgent?.name) {
-                            <tr class="clickable-row" [routerLink]="['/admin/build-agents/details']" [queryParams]="{ agentName: agent.buildAgent?.name }">
+                            <tr class="clickable-row">
                                 <td class="build-agents-column-strings">
-                                    <a [routerLink]="['/admin/build-agents/details']" [queryParams]="{ agentName: agent.buildAgent?.name }" (click)="$event.stopPropagation()">
+                                    <!-- Stretched link enables Cmd+Click to open in new tab -->
+                                    <a class="stretched-row-link" [routerLink]="['/admin/build-agents/details']" [queryParams]="{ agentName: agent.buildAgent?.name }"></a>
+                                    <a [routerLink]="['/admin/build-agents/details']" [queryParams]="{ agentName: agent.buildAgent?.name }">
                                         {{ agent.buildAgent?.displayName }}
                                     </a>
                                 </td>

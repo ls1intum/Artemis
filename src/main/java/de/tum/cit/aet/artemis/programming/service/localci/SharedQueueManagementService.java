@@ -487,8 +487,16 @@ public class SharedQueueManagementService {
 
         for (BuildJobQueueItem job : orphanedJobs) {
             try {
-                // Remove the job from the processing jobs map
-                distributedDataAccessService.getDistributedProcessingJobs().remove(job.id());
+                // Atomically remove the job from the processing jobs map.
+                // IMPORTANT: Only the node that successfully removes the job should re-queue it.
+                // When multiple core nodes receive the entryRemoved event, all will try to handle
+                // the orphaned jobs. By checking the return value, we ensure only one node re-queues.
+                BuildJobQueueItem removedJob = distributedDataAccessService.getDistributedProcessingJobs().remove(job.id());
+                if (removedJob == null) {
+                    // Job was already removed by another node - skip to avoid duplicate re-queuing
+                    log.debug("Orphaned job {} was already removed from processing jobs (handled by another node). Skipping.", job.id());
+                    continue;
+                }
 
                 if (job.retryCount() >= MAX_ORPHANED_JOB_RETRIES) {
                     // Max retries exceeded - mark as failed
