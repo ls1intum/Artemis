@@ -41,6 +41,8 @@ export const MODULE_FEATURE_ATLAS = 'atlas';
 
 export const MODULE_FEATURE_HYPERION = 'hyperion';
 
+export const MODULE_FEATURE_IRIS = 'iris';
+
 export const MODULE_FEATURE_EXAM = 'exam';
 
 export const MODULE_FEATURE_PLAGIARISM = 'plagiarism';
@@ -68,6 +70,7 @@ export type ModuleFeature =
     | typeof MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN
     | typeof MODULE_FEATURE_ATLAS
     | typeof MODULE_FEATURE_HYPERION
+    | typeof MODULE_FEATURE_IRIS
     | typeof MODULE_FEATURE_EXAM
     | typeof MODULE_FEATURE_PLAGIARISM
     | typeof MODULE_FEATURE_TEXT
@@ -85,8 +88,6 @@ export const PROFILE_LOCALCI = 'localci';
 export const PROFILE_BUILDAGENT = 'buildagent';
 
 export const PROFILE_AEOLUS = 'aeolus';
-
-export const PROFILE_IRIS = 'iris';
 
 export const PROFILE_LTI = 'lti';
 
@@ -112,7 +113,6 @@ export type ProfileFeature =
     | typeof PROFILE_LOCALCI
     | typeof PROFILE_BUILDAGENT
     | typeof PROFILE_AEOLUS
-    | typeof PROFILE_IRIS
     | typeof PROFILE_LTI
     | typeof PROFILE_PROD
     | typeof PROFILE_DEV

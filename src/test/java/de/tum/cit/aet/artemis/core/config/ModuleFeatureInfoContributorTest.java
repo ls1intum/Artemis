@@ -33,6 +33,7 @@ class ModuleFeatureInfoContributorTest {
         Constants.NEBULA_ENABLED_PROPERTY_NAME,
         Constants.SHARING_ENABLED_PROPERTY_NAME,
         Constants.VIDEO_UPLOAD_ENABLED_PROPERTY_NAME,
+        Constants.IRIS_ENABLED_PROPERTY_NAME,
         Constants.LTI_ENABLED_PROPERTY_NAME
     );
     // @formatter:on
@@ -52,6 +53,7 @@ class ModuleFeatureInfoContributorTest {
         Constants.MODULE_FEATURE_NEBULA,
         Constants.MODULE_FEATURE_SHARING,
         Constants.MODULE_FEATURE_VIDEO_UPLOAD,
+        Constants.MODULE_FEATURE_IRIS,
         Constants.MODULE_FEATURE_LTI
     );
     // @formatter:on

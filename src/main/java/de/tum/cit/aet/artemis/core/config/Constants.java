@@ -317,11 +317,6 @@ public final class Constants {
     public static final String PROFILE_CORE = "core";
 
     /**
-     * The name of the Spring profile used for Iris / Pyris functionality.
-     */
-    public static final String PROFILE_IRIS = "iris";
-
-    /**
      * The name of the Spring profile used for Athena functionality.
      */
     public static final String PROFILE_ATHENA = "athena";
@@ -405,6 +400,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_HYPERION = "hyperion";
 
     /**
+     * The name of the module feature used for Iris / Pyris functionality.
+     */
+    public static final String MODULE_FEATURE_IRIS = "iris";
+
+    /**
      * The name of the module feature used for Exam functionality.
      */
     public static final String MODULE_FEATURE_EXAM = "exam";
@@ -468,6 +468,11 @@ public final class Constants {
      * The name of the property used to enable or disable Hyperion functionality.
      */
     public static final String HYPERION_ENABLED_PROPERTY_NAME = "artemis.hyperion.enabled";
+
+    /**
+     * The name of the property used to enable or disable Iris / Pyris functionality.
+     */
+    public static final String IRIS_ENABLED_PROPERTY_NAME = "artemis.iris.enabled";
 
     /**
      * The name of the property used to enable or disable exam functionality.

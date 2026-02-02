@@ -15,6 +15,7 @@ import {
     MODULE_FEATURE_EXAM,
     MODULE_FEATURE_FILEUPLOAD,
     MODULE_FEATURE_HYPERION,
+    MODULE_FEATURE_IRIS,
     MODULE_FEATURE_LECTURE,
     MODULE_FEATURE_LTI,
     MODULE_FEATURE_MODELING,
@@ -30,7 +31,6 @@ import {
     PROFILE_APOLLON,
     PROFILE_ATHENA,
     PROFILE_BUILDAGENT,
-    PROFILE_IRIS,
     PROFILE_JENKINS,
     PROFILE_LDAP,
     PROFILE_LOCALCI,
@@ -89,7 +89,6 @@ export class AdminFeatureToggleComponent implements OnInit {
 
     /** Profiles to display (excluding internal profiles like dev, prod, test) */
     private readonly displayedProfiles: ProfileFeature[] = [
-        PROFILE_IRIS,
         PROFILE_ATHENA,
         PROFILE_APOLLON,
         PROFILE_THEIA,
@@ -103,6 +102,7 @@ export class AdminFeatureToggleComponent implements OnInit {
 
     /** Module features to display */
     private readonly displayedModuleFeatures: ModuleFeature[] = [
+        MODULE_FEATURE_IRIS,
         MODULE_FEATURE_ATLAS,
         MODULE_FEATURE_HYPERION,
         MODULE_FEATURE_EXAM,
@@ -137,7 +137,6 @@ export class AdminFeatureToggleComponent implements OnInit {
 
     /** Documentation links for profile-based features */
     private readonly profileDocumentationLinks: Partial<Record<ProfileFeature, string>> = {
-        [PROFILE_IRIS]: 'https://docs.artemis.tum.de/admin/extensions-setup#iris--pyris-setup-guide',
         [PROFILE_ATHENA]: 'https://docs.artemis.tum.de/admin/extensions-setup#athena-service',
         [PROFILE_APOLLON]: 'https://docs.artemis.tum.de/instructor/exercises/modeling-exercise',
         [PROFILE_THEIA]: 'https://docs.artemis.tum.de/developer/setup#run-the-server-via-a-run-configuration-in-intellij',
@@ -151,6 +150,7 @@ export class AdminFeatureToggleComponent implements OnInit {
 
     /** Documentation links for module features */
     private readonly moduleDocumentationLinks: Partial<Record<ModuleFeature, string>> = {
+        [MODULE_FEATURE_IRIS]: 'https://docs.artemis.tum.de/admin/extensions-setup#iris--pyris-setup-guide',
         [MODULE_FEATURE_ATLAS]: 'https://docs.artemis.tum.de/instructor/adaptive-learning',
         [MODULE_FEATURE_HYPERION]: 'https://docs.artemis.tum.de/admin/hyperion',
         [MODULE_FEATURE_EXAM]: 'https://docs.artemis.tum.de/instructor/exams/intro',

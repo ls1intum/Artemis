@@ -43,7 +43,7 @@ describe('FaqUpdateComponent', () => {
         faq1.questionAnswer = 'questionAnswer';
         faq1.categories = [new FaqCategory('category1', '#94a11c')];
         courseId = 1;
-        const mockProfileInfo = { activeProfiles: ['iris'] } as ProfileInfo;
+        const mockProfileInfo = { activeModuleFeatures: ['iris'] } as ProfileInfo;
         TestBed.configureTestingModule({
             imports: [FaIconComponent],
             declarations: [
@@ -284,14 +284,14 @@ describe('FaqUpdateComponent', () => {
     });
 
     it('should have intelligence action when IRIS is active', () => {
-        const isProfileActiveSpy = jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+        const isModuleFeatureActiveSpy = jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
 
         faqUpdateComponentFixture = TestBed.createComponent(FaqUpdateComponent);
         faqUpdateComponent = faqUpdateComponentFixture.componentInstance;
         faqUpdateComponent.courseId = 1;
         faqUpdateComponentFixture.detectChanges();
 
-        expect(isProfileActiveSpy).toHaveBeenCalledWith('iris');
+        expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith('iris');
 
         const actions = faqUpdateComponent.artemisIntelligenceActions();
         expect(actions).toHaveLength(1);
