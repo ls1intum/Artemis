@@ -163,17 +163,64 @@ For detailed information about passkey authentication, configuration, and the ap
 
 ## Lectures
 
-| Feature                  | Instructor | Editor | Teaching Assistant |
-|--------------------------|------------|--------|--------------------|
-| Add attachment (in unit) | ✔          | ✔      |                    |
-| Edit attachment          | ✔          | ✔      |                    |
-| Delete attachment        | ✔          |        |                    |
-| Add Lecture Unit         | ✔          | ✔      |                    |
-| Edit Lecture Unit        | ✔          | ✔      |                    |
-| Delete Lecture Unit      | ✔          |        |                    |
-| Create Lecture           | ✔          | ✔      |                    |
-| Edit Lecture             | ✔          | ✔      |                    |
-| Delete Lecture           | ✔          |        |                    |
+| Feature                          | Instructor       | Editor           | Teaching Assistant | Student         |
+|----------------------------------|------------------|------------------|--------------------|-----------------|
+| View Lecture                     | ✔                | ✔                | ✔                  | ✔ (if enrolled) |
+| View Lecture Details             | ✔                | ✔                | ✔                  | ✔ (if enrolled) |
+| Create Lecture                   | ✔                | ✔                |                    |                 |
+| Edit Lecture                     | ✔                | ✔                |                    |                 |
+| Delete Lecture                   | ✔                |                  |                    |                 |
+| Import Lecture                   | ✔ (both courses) | ✔ (both courses) |                    |                 |
+| Search Lectures                  | ✔                | ✔                |                    |                 |
+| View Lecture Unit                | ✔                | ✔                | ✔                  | ✔ (if visible)  |
+| Add Lecture Unit                 | ✔                | ✔                |                    |                 |
+| Edit Lecture Unit                | ✔                | ✔                |                    |                 |
+| Delete Lecture Unit              | ✔                |                  |                    |                 |
+| Complete Lecture Unit            | ✔                | ✔                | ✔                  | ✔ (if visible)  |
+| View Lecture Unit Processing     | ✔                | ✔                |                    |                 |
+| Retry Lecture Unit Processing    | ✔                | ✔                |                    |                 |
+| View Attachment                  | ✔                | ✔                | ✔                  | ✔ (if visible)  |
+| View all Attachments for Lecture | ✔                | ✔                | ✔                  |                 |
+| Add Attachment (in unit)         | ✔                | ✔                |                    |                 |
+| Edit Attachment                  | ✔                | ✔                |                    |                 |
+| Delete Attachment                | ✔                |                  |                    |                 |
+
+<Callout variant={CalloutVariant.info}>
+    **Import Lecture** requires at least Editor role in **both** the source and target course.
+</Callout>
+
+
+### Summary
+
+| Role       | Capabilities                                                     |
+|------------|------------------------------------------------------------------|
+| Student    | View lectures/units in enrolled courses (after release date)     |
+| TA         | Same as Student + see all units regardless of release date       |
+| Editor     | Same as TA + create/update lectures, units, and attachments      |
+| Instructor | Same as Editor + delete lectures, units, and attachments         |
+| Admin      | Full access to all lectures                                      |
+
+### Prerequisites
+
+- **Course Enrollment**: All lecture access requires enrollment in the course (except for Admins)
+- **Admin Override**: Admins can access all lectures regardless of course membership
+
+### Visibility Rules
+
+Visibility conditions marked as "(if visible)" or "(if enrolled)" in the table above are defined as follows:
+
+**Lecture Units and Attachments:**
+- Visible to students if `releaseDate` is `null` OR `releaseDate` is in the past
+- Teaching Assistants and above can see all units/attachments regardless of release date
+
+**Search Lectures:**
+- Non-admin users only see lectures from courses where they have at least Editor role
+
+<Callout variant={CalloutVariant.warning}>
+  The `visibleDate` field on the `Lecture` entity is deprecated and will be removed.
+  All visibility control is managed at the lecture unit and attachment level via their `releaseDate` fields.
+</Callout>
+
 
 ## Exam
 
@@ -193,87 +240,3 @@ For detailed information about passkey authentication, configuration, and the ap
 | Test Run              | ✔          |        |                    |
 | Student Exams         | ✔          |        |                    |
 | Students              | ✔          |        |                    |
-
----
-
-## Entity-Based Access Rights
-
-The previous sections describe access rights from a use-case perspective.
-This section documents access rights on an entity basis, describing the conditions under which different roles can access specific entities.
-
-### Lectures
-
-#### Prerequisites
-
-- **Course Enrollment**: All lecture access requires enrollment in the course (except for Admins)
-- **Admin Override**: Admins can access all lectures regardless of course membership
-
-#### Lecture Entity Access
-
-| Operation            | Admin   | Instructor      | Editor                       | Teaching Assistant | Student         |
-|----------------------|---------|-----------------|------------------------------|--------------------|-----------------|
-| View lecture         | ✔       | ✔               | ✔                            | ✔                  | ✔ (if enrolled) |
-| View lecture details | ✔       | ✔               | ✔                            | ✔                  | ✔ (if enrolled) |
-| View lecture title   | ✔       | ✔               | ✔                            | ✔                  | ✔               |
-| Create lecture       | ✔       | ✔               | ✔                            |                    |                 |
-| Update lecture       | ✔       | ✔               | ✔                            |                    |                 |
-| Import lecture       | ✔       | ✔               | ✔ (source and target course) |                    |                 |
-| Search lectures      | ✔ (all) | ✔ (own courses) | ✔ (own courses)              |                    |                 |
-| Delete lecture       | ✔       | ✔               |                              |                    |                 |
-
-<Callout variant={CalloutVariant.info}>
-    Importing a lecture requires at least Editor role in **both** the source and target course.
-</Callout>
-
-#### Lecture Unit Access
-
-| Operation              | Admin | Instructor | Editor | Teaching Assistant | Student        |
-|------------------------|-------|------------|--------|--------------------|----------------|
-| View lecture unit      | ✔     | ✔          | ✔      | ✔                  | ✔ (if visible) |
-| Complete lecture unit  | ✔     | ✔          | ✔      | ✔                  | ✔ (if visible) |
-| Create lecture unit    | ✔     | ✔          | ✔      |                    |                |
-| Update lecture unit    | ✔     | ✔          | ✔      |                    |                |
-| Update unit order      | ✔     | ✔          | ✔      |                    |                |
-| View processing status | ✔     | ✔          | ✔      |                    |                |
-| Retry processing       | ✔     | ✔          | ✔      |                    |                |
-| Delete lecture unit    | ✔     | ✔          |        |                    |                |
-
-**Lecture Unit Visibility for Students:**
-- A lecture unit is visible to students if `releaseDate` is `null` OR `releaseDate` is in the past
-- Teaching Assistants and above can see all lecture units regardless of release date
-
-#### Attachment Access
-
-| Operation                        | Admin | Instructor | Editor | Teaching Assistant | Student        |
-|----------------------------------|-------|------------|--------|--------------------|----------------|
-| View attachment                  | ✔     | ✔          | ✔      | ✔                  | ✔ (if visible) |
-| View all attachments for lecture | ✔     | ✔          | ✔      | ✔                  |                |
-| Create attachment                | ✔     | ✔          | ✔      |                    |                |
-| Update attachment                | ✔     | ✔          | ✔      |                    |                |
-| Delete attachment                | ✔     | ✔          |        |                    |                |
-
-**Attachment Visibility for Students:**
-- An attachment is visible to students if `releaseDate` is `null` OR `releaseDate` is in the past
-- Teaching Assistants and above can see all attachments regardless of release date
-
-#### Attachment Video Unit Access
-
-| Operation                    | Admin | Instructor | Editor | Teaching Assistant | Student |
-|------------------------------|-------|------------|--------|--------------------|---------|
-| View attachment video unit   | ✔     | ✔          | ✔      |                    |         |
-| Create attachment video unit | ✔     | ✔          | ✔      |                    |         |
-| Update attachment video unit | ✔     | ✔          | ✔      |                    |         |
-
-#### Access Control Layers
-
-Lecture access control is enforced through multiple layers:
-
-1. **Annotation Layer**: Security annotations (`@EnforceAtLeastStudentInLecture`, `@EnforceAtLeastEditorInLecture`, etc.) on REST endpoints
-2. **Service Layer**: Role-based permission checks via `AuthorizationCheckService`
-3. **Repository Layer**: SQL-level filtering for search queries (non-admin users only see lectures from courses they can edit/instruct)
-4. **Domain Layer**: Time-based visibility checks via `releaseDate` fields on `LectureUnit` and `Attachment` entities
-
-<Callout variant={CalloutVariant.warning}>
-    The `visibleDate` field on the `Lecture` entity is deprecated and will be removed.
-    All visibility control is managed at the lecture unit and attachment level via their `releaseDate` fields.
-</Callout>
