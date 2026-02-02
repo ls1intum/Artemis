@@ -586,10 +586,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * The height of the editor is the height of the wrapper (or the full element, if the height is external) minus the height of the file upload footer and the action palette.
      */
     getEditorHeight(): number {
-        const elementHeight = this.getElementClientHeight(this.isHeightManagedExternally() ? this.fullElement : this.wrapper);
+        // We always use the wrapper height, as it is correctly sized by the flexbox layout in all cases (external or internal height).
+        const elementHeight = this.getElementClientHeight(this.wrapper);
         const fileUploadFooterHeight = this.getElementClientHeight(this.fileUploadFooter);
         const actionPaletteHeight = this.getElementClientHeight(this.actionPalette);
-        return elementHeight - fileUploadFooterHeight - actionPaletteHeight - BORDER_HEIGHT_OFFSET;
+        return Math.max(0, elementHeight - fileUploadFooterHeight - actionPaletteHeight - BORDER_HEIGHT_OFFSET);
     }
 
     /**
