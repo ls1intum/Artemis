@@ -89,15 +89,6 @@ public class ProfileService {
     }
 
     /**
-     * Checks if the IRIS profile is active
-     *
-     * @return true if the aeolus profile is active, false otherwise
-     */
-    public boolean isIrisActive() {
-        return isProfileActive(Constants.PROFILE_IRIS);
-    }
-
-    /**
      * Checks if the production profile is active
      *
      * @return true if the production profile is active, false otherwise

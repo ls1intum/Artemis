@@ -351,13 +351,16 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testMissingBuildJobRetry() {
+        // Stop the build agent to prevent the build job from being processed
+        sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
+
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository(), userTestRepository.getUserWithGroupsAndAuthorities());
 
-        // Wait for build job to appear - on fast systems it might complete quickly
+        // Wait for build job to appear with QUEUED status
         await().atMost(60, TimeUnit.SECONDS).pollInterval(500, TimeUnit.MILLISECONDS).until(() -> {
             Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
-            return buildJobOptional.isPresent();
+            return buildJobOptional.isPresent() && buildJobOptional.get().getBuildStatus() == BuildStatus.QUEUED;
         });
 
         BuildJob buildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId()).orElseThrow();
@@ -368,13 +371,19 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         buildJob.setBuildSubmissionDate(ZonedDateTime.now().minusMinutes(10));
         buildJobRepository.saveAndFlush(buildJob);
 
+        // Clear the queue so the retry service doesn't find it there
+        queuedJobs.clear();
+
         localCIMissingJobService.retryMissingJobs();
 
         // Verify: The original job should now have retryCount incremented
-        BuildJob updatedOriginalJob = buildJobRepository.findByBuildJobId(originalBuildJobId).orElseThrow();
-        assertThat(updatedOriginalJob.getRetryCount()).isEqualTo(1);
+        // Use Awaitility because incrementRetryCount is a database operation that may need time to propagate
+        await().atMost(5, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+            BuildJob updatedOriginalJob = buildJobRepository.findByBuildJobId(originalBuildJobId).orElseThrow();
+            assertThat(updatedOriginalJob.getRetryCount()).isEqualTo(1);
+        });
 
-        // Verify: A new job should exist with retryCount=1
+        // Verify: A new job should exist with retryCount=1 (the retried job)
         await().atMost(60, TimeUnit.SECONDS).pollInterval(500, TimeUnit.MILLISECONDS).until(() -> {
             List<BuildJob> allJobsForParticipation = buildJobRepository.findAll().stream()
                     .filter(j -> j.getParticipationId() != null && j.getParticipationId().equals(studentParticipation.getId())).toList();
@@ -382,6 +391,8 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
             return allJobsForParticipation.size() >= 2 && allJobsForParticipation.stream().anyMatch(j -> j.getRetryCount() == 1 && !j.getBuildJobId().equals(originalBuildJobId));
         });
 
+        // Resume the build agent
+        sharedQueueProcessingService.init();
         processingJobs.clear();
         queuedJobs.clear();
     }
