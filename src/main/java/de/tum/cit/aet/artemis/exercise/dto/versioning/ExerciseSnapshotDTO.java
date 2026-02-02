@@ -30,8 +30,10 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseSnapshotDTO(
         // fields of BaseExercise class
-        long id, String title, String shortName, Double maxPoints, Double bonusPoints, AssessmentType assessmentType, ZonedDateTime releaseDate, ZonedDateTime startDate,
-        ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, DifficultyLevel difficulty, ExerciseMode mode,
+        long id, String title, String shortName,
+        // channelName is transient on Exercise and is included here so metadata sync can detect and apply channel updates across editors.
+        String channelName, Double maxPoints, Double bonusPoints, AssessmentType assessmentType, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate,
+        ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, DifficultyLevel difficulty, ExerciseMode mode,
 
         // fields of Exercise class
         // not included fields: teams, studentParticipations, tutorParticipations, exampleSubmission, attachment, course, exerciseGroup
@@ -62,8 +64,8 @@ public record ExerciseSnapshotDTO(
         var modelingData = exercise instanceof ModelingExercise ? ModelingExerciseSnapshotDTO.of((ModelingExercise) exercise) : null;
         var quizData = exercise instanceof QuizExercise ? QuizExerciseSnapshotDTO.of((QuizExercise) exercise) : null;
         var fileUploadData = exercise instanceof FileUploadExercise ? FileUploadExerciseSnapshotDTO.of((FileUploadExercise) exercise) : null;
-        return new ExerciseSnapshotDTO(exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getMaxPoints(), exercise.getBonusPoints(),
-                exercise.getAssessmentType(), toUtc(exercise.getReleaseDate()), toUtc(exercise.getStartDate()), toUtc(exercise.getDueDate()),
+        return new ExerciseSnapshotDTO(exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getChannelName(), exercise.getMaxPoints(),
+                exercise.getBonusPoints(), exercise.getAssessmentType(), toUtc(exercise.getReleaseDate()), toUtc(exercise.getStartDate()), toUtc(exercise.getDueDate()),
                 toUtc(exercise.getAssessmentDueDate()), toUtc(exercise.getExampleSolutionPublicationDate()), exercise.getDifficulty(), exercise.getMode(), competencyLinks,
                 exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getIncludedInOverallScore(), exercise.getProblemStatement(),
                 exercise.getGradingInstructions(), categories, TeamAssignmentConfigSnapshotDTO.of(exercise.getTeamAssignmentConfig()), exercise.getPresentationScoreEnabled(),

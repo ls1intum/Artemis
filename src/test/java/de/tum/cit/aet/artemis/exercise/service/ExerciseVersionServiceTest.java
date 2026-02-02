@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
@@ -95,6 +96,9 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
 
     @Autowired
     private ExerciseVersionUtilService exerciseVersionUtilService;
+
+    @Autowired
+    private ChannelRepository channelRepository;
 
     @Override
     protected String getTestPrefix() {
@@ -277,7 +281,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     }
 
     private Exercise fetchExerciseForComparison(Exercise exercise) {
-        return switch (exercise) {
+        Exercise fetched = switch (exercise) {
             case ProgrammingExercise pExercise -> programmingExerciseRepository.findForVersioningById(exercise.getId()).orElse(pExercise);
             case QuizExercise qExercise -> quizExerciseRepository.findForVersioningById(exercise.getId()).orElse(qExercise);
             case TextExercise tExercise -> textExerciseRepository.findForVersioningById(exercise.getId()).orElse(tExercise);
@@ -285,6 +289,11 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
             case FileUploadExercise fExercise -> fileUploadExerciseRepository.findForVersioningById(exercise.getId()).orElse(fExercise);
             default -> exercise;
         };
+        var channel = channelRepository.findChannelByExerciseId(fetched.getId());
+        if (channel != null) {
+            fetched.setChannelName(channel.getName());
+        }
+        return fetched;
     }
 
     private void saveExerciseByType(Exercise exercise) {
@@ -358,6 +367,26 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         assertThat(payload.target()).isEqualTo(ExerciseEditorSyncTarget.EXERCISE_METADATA);
         assertThat(payload.author()).isNotNull();
         assertThat(payload.changedFields()).contains("title");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testMetadataSynchronizationBroadcastWhenChannelNameChanges() {
+        ProgrammingExercise exercise = createProgrammingExercise();
+        exerciseVersionService.createExerciseVersion(exercise);
+        reset(websocketMessagingService);
+
+        var channel = channelRepository.findChannelByExerciseId(exercise.getId());
+        assertThat(channel).isNotNull();
+        channel.setName("exercise-updated-channel");
+        channelRepository.saveAndFlush(channel);
+
+        exerciseVersionService.createExerciseVersion(exercise);
+
+        var captor = ArgumentCaptor.forClass(ExerciseNewVersionAlertDTO.class);
+        verify(websocketMessagingService, times(1)).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
+        var payload = captor.getValue();
+        assertThat(payload.changedFields()).contains("channelName");
     }
 
     @Test

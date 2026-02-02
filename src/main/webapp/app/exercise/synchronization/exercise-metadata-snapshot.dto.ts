@@ -9,6 +9,8 @@ export interface ExerciseSnapshotDTO {
     id: number;
     title?: string;
     shortName?: string;
+    channelName?: string;
+    competencyLinks?: CompetencyExerciseLinkSnapshotDTO[];
     maxPoints?: number;
     bonusPoints?: number;
     assessmentType?: AssessmentType;
@@ -42,6 +44,16 @@ export interface TeamAssignmentConfigSnapshot {
     id?: number;
     minTeamSize?: number;
     maxTeamSize?: number;
+}
+
+export interface CompetencyExerciseLinkSnapshotDTO {
+    competencyId?: CompetencyExerciseIdSnapshotDTO;
+    weight?: number;
+}
+
+export interface CompetencyExerciseIdSnapshotDTO {
+    exerciseId?: number;
+    competencyId?: number;
 }
 
 export interface ProgrammingExerciseSnapshotDTO {

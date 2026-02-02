@@ -237,6 +237,8 @@
                 "fields": {
                     "title": "Title",
                     "shortName": "Short name",
+                    "channelName": "Channel name",
+                    "competencyLinks": "Competency links",
                     "maxPoints": "Points",
                     "bonusPoints": "Bonus points",
                     "assessmentType": "Assessment type",

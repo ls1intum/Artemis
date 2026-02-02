@@ -1,6 +1,7 @@
 import dayjs from 'dayjs/esm';
 
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { CompetencyExerciseLink, CourseCompetency, MEDIUM_COMPETENCY_LINK_WEIGHT } from 'app/atlas/shared/entities/competency.model';
 import { DifficultyLevel, Exercise, ExerciseMode, ExerciseType, IncludedInOverallScore, PlagiarismDetectionConfig } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
@@ -14,7 +15,12 @@ import { AuxiliaryRepository } from 'app/programming/shared/entities/programming
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 
 import { convertDateFromServer } from 'app/shared/util/date.utils';
-import { ExerciseSnapshotDTO, ParticipationSnapshotDTO, TeamAssignmentConfigSnapshot } from 'app/exercise/synchronization/exercise-metadata-snapshot.dto';
+import {
+    CompetencyExerciseLinkSnapshotDTO,
+    ExerciseSnapshotDTO,
+    ParticipationSnapshotDTO,
+    TeamAssignmentConfigSnapshot,
+} from 'app/exercise/synchronization/exercise-metadata-snapshot.dto';
 import { toExerciseCategories, toTeamAssignmentConfig } from 'app/exercise/synchronization/exercise-metadata-snapshot-shared.mapper';
 import {
     toAuxiliaryRepositories,
@@ -34,6 +40,8 @@ export interface ExerciseMetadataFieldHandler<T extends Exercise> {
     applyValue: (exercise: T, value: unknown) => void;
 }
 
+type ExerciseResolver = () => Exercise;
+
 const baseHandler = (
     key: string,
     labelKey: string,
@@ -48,6 +56,39 @@ const baseHandler = (
         getIncomingValue: (snapshot) => snapshot[key as keyof ExerciseSnapshotDTO],
         applyValue: setter,
     };
+};
+
+const toCompetencyLinks = (exercise: Exercise, snapshotLinks: CompetencyExerciseLinkSnapshotDTO[] | undefined): CompetencyExerciseLink[] | undefined => {
+    if (!snapshotLinks) {
+        return undefined;
+    }
+    const competencyById = new Map<number, CourseCompetency>();
+    const existingLinks = exercise.competencyLinks ?? [];
+    for (const link of existingLinks) {
+        if (link.competency?.id != undefined) {
+            competencyById.set(link.competency.id, link.competency);
+        }
+    }
+    const courseCompetencies = exercise.course?.competencies ?? [];
+    const coursePrerequisites = exercise.course?.prerequisites ?? [];
+    for (const competency of [...courseCompetencies, ...coursePrerequisites]) {
+        if (competency.id != undefined) {
+            competencyById.set(competency.id, competency);
+        }
+    }
+    const mapped: CompetencyExerciseLink[] = [];
+    for (const link of snapshotLinks) {
+        const competencyId = link.competencyId?.competencyId;
+        if (competencyId == undefined) {
+            continue;
+        }
+        const competency = competencyById.get(competencyId);
+        if (!competency) {
+            continue;
+        }
+        mapped.push(new CompetencyExerciseLink(competency, exercise, link.weight ?? MEDIUM_COMPETENCY_LINK_WEIGHT));
+    }
+    return mapped.length > 0 ? mapped : undefined;
 };
 
 const dateHandler = (
@@ -66,7 +107,7 @@ const dateHandler = (
     };
 };
 
-export const createBaseHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] => {
+export const createBaseHandlers = (resolveExercise?: ExerciseResolver): ExerciseMetadataFieldHandler<Exercise>[] => {
     return [
         baseHandler(
             'title',
@@ -79,6 +120,20 @@ export const createBaseHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] =
             'artemisApp.exercise.metadataSync.fields.shortName',
             (exercise) => exercise.shortName,
             (exercise, value) => (exercise.shortName = value as string | undefined),
+        ),
+        {
+            key: 'competencyLinks',
+            labelKey: 'artemisApp.exercise.metadataSync.fields.competencyLinks',
+            getCurrentValue: (exercise) => exercise.competencyLinks,
+            getBaselineValue: (exercise) => exercise.competencyLinks,
+            getIncomingValue: (snapshot) => (resolveExercise ? toCompetencyLinks(resolveExercise(), snapshot.competencyLinks) : snapshot.competencyLinks),
+            applyValue: (exercise, value) => (exercise.competencyLinks = value as CompetencyExerciseLink[] | undefined),
+        },
+        baseHandler(
+            'channelName',
+            'artemisApp.exercise.metadataSync.fields.channelName',
+            (exercise) => exercise.channelName,
+            (exercise, value) => (exercise.channelName = value as string | undefined),
         ),
         baseHandler(
             'maxPoints',
@@ -489,6 +544,6 @@ export const createHandlersByType = (exerciseType: ExerciseType): ExerciseMetada
     }
 };
 
-export const createExerciseMetadataHandlers = (exerciseType: ExerciseType): ExerciseMetadataFieldHandler<Exercise>[] => {
-    return createBaseHandlers().concat(createHandlersByType(exerciseType));
+export const createExerciseMetadataHandlers = (exerciseType: ExerciseType, resolveExercise?: ExerciseResolver): ExerciseMetadataFieldHandler<Exercise>[] => {
+    return createBaseHandlers(resolveExercise).concat(createHandlersByType(exerciseType));
 };
