@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { CanActivate } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_HYPERION, PROFILE_ATHENA, MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS, PROFILE_ATHENA } from 'app/app.constants';
 
 /**
  * Guard to check if the route "/user-settings/external-data" can be activated.
