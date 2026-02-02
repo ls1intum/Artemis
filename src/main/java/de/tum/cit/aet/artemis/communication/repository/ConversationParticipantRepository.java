@@ -75,15 +75,12 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
                     WHERE p.conversation.id = cp.conversation.id
                     AND p.creationDate >= :messageDate
                     AND p.author.id <> :userId
-                ), cp.lastRead = (
-                    SELECT MIN(p.creationDate) FROM Post p
-                    WHERE p.conversation.id = cp.conversation.id
-                    AND p.creationDate < :messageDate
-                )
+                ), cp.lastRead = :lastRead
                 WHERE cp.conversation.id = :conversationId
                 AND cp.user.id = :userId
             """)
-    void markFromMessageAsUnread(@Param("conversationId") Long conversationId, @Param("userId") Long userId, @Param("messageDate") ZonedDateTime messageDate);
+    void markFromMessageAsUnread(@Param("conversationId") Long conversationId, @Param("userId") Long userId, @Param("messageDate") ZonedDateTime messageDate,
+            @Param("lastRead") ZonedDateTime lastRead);
 
     @Async
     @Transactional // ok because of modifying query

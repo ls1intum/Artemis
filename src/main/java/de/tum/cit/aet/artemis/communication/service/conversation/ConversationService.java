@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
+import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
@@ -235,8 +236,10 @@ public class ConversationService {
 
     public void markAsUnread(Long conversationId, Long userId, Long messageId) {
         Post post = postRepository.findByIdElseThrow(messageId);
+        ZonedDateTime messageDate = post.getCreationDate();
+        ZonedDateTime lastRead = messageDate.minusNanos(1_000_000); // set last read to 1ms before the message date
         // Recalculate unread count from this message onwards
-        conversationParticipantRepository.markFromMessageAsUnread(conversationId, userId, post.getCreationDate());
+        conversationParticipantRepository.markFromMessageAsUnread(conversationId, userId, messageDate, lastRead);
     }
 
     /**
