@@ -178,7 +178,12 @@
             >
                 <fa-icon [icon]="faShare" cdkOverlayOrigin />
             </button>
-            <button class="reaction-button clickable px-2 fs-small forward" [disabled]="isReadOnlyMode()" (click)="markMessageAsUnread()" ngbTooltip="Mark as Unread">
+            <button
+                class="reaction-button clickable px-2 fs-small"
+                [disabled]="isReadOnlyMode()"
+                (click)="markMessageAsUnread()"
+                ngbTooltip="'artemisApp.metis.post.markAsUnread' | artemisTranslate"
+            >
                 <fa-icon [icon]="faCircle" cdkOverlayOrigin />
             </button>
         }
