@@ -40,7 +40,7 @@ jobs:
 
       - name: Find PR
         id: pr
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const head = context.payload.workflow_run.head_repository.owner.login + ':' + context.payload.workflow_run.head_branch;
@@ -60,7 +60,7 @@ jobs:
 
       - name: Download Jest coverage
         if: steps.pr.outputs.found == 'true'
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v4
         with:
           name: Jest Coverage Summary
           path: build/test-results/jest
@@ -70,7 +70,7 @@ jobs:
 
       - name: Download Vitest coverage
         if: steps.pr.outputs.found == 'true'
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v4
         with:
           name: Vitest Coverage Report
           path: build/test-results/vitest/coverage
@@ -80,7 +80,7 @@ jobs:
 
       - name: Download Server coverage
         if: steps.pr.outputs.found == 'true'
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v4
         with:
           name: Server Coverage XML
           path: build/reports/jacoco
@@ -115,7 +115,7 @@ jobs:
 
       - name: Update PR description
         if: steps.pr.outputs.found == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           PR_NUMBER: ${{ steps.pr.outputs.number }}
           TEST_RESULT: ${{ github.event.workflow_run.conclusion }}

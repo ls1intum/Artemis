@@ -92,7 +92,7 @@ describe('CodeEditorInstructorIntegration', () => {
     let findWithParticipationsSubject: Subject<{ body: ProgrammingExercise }>;
     let routeSubject: Subject<Params>;
 
-    const mockProfileInfo = { activeProfiles: ['iris'] } as ProfileInfo;
+    const mockProfileInfo = { activeModuleFeatures: ['iris'] } as ProfileInfo;
 
     // Workaround for an error with MockComponent(). You can remove this once https://github.com/help-me-mom/ng-mocks/issues/8634 is resolved.
     mockCodeEditorMonacoViewChildren();
@@ -339,7 +339,7 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(comp.editableInstructions).toBeDefined(); // Have to use this as it's a component
         expect(comp.resultComp).toBeDefined(); // Have to use this as it's a component
         expect(comp.codeEditorContainer.buildOutput).toBeDefined(); // Have to use this as it's a component
-        expect(comp.codeEditorContainer.buildOutput.participation).toEqual(exercise.solutionParticipation);
+        expect(comp.codeEditorContainer.buildOutput.participation()).toEqual(exercise.solutionParticipation);
         expect(comp.editableInstructions.participation).toEqual(exercise.solutionParticipation);
     };
 
@@ -387,7 +387,7 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(comp.editableInstructions).toBeDefined(); // Have to use this as it's a component
         expect(comp.resultComp).toBeDefined(); // Have to use this as it's a component
         expect(comp.codeEditorContainer.buildOutput).toBeDefined(); // Have to use this as it's a component
-        expect(comp.codeEditorContainer.buildOutput.participation).toEqual(exercise.studentParticipations[0]);
+        expect(comp.codeEditorContainer.buildOutput.participation()).toEqual(exercise.studentParticipations[0]);
         expect(comp.editableInstructions.participation).toEqual(exercise.studentParticipations[0]);
 
         // New select solution repository
