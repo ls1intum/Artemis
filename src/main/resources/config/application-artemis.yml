@@ -119,6 +119,11 @@ artemis:
     url: <your-nebula-url>
     secret-token: <your-secret>
 
+  iris: # The iris module is used for AI-powered features via Pyris
+    enabled: false
+    url: <your-pyris-url>
+    secret-token: <your-secret>
+
 # Configure Spring AI, if you want to use Hyperion or Atlas
 spring:
   ai:
