@@ -99,27 +99,54 @@ For detailed information about passkey authentication, configuration, and the ap
 
 ### Programming Exercises
 
-| Feature                        | Instructor | Editor | Teaching Assistant |
-|--------------------------------|------------|--------|--------------------|
-| Clone Repository               | ✔          | ✔      | ✔                  |
-| Download Repo                  | ✔          | ✔      | ✔                  |
-| Edit in editor                 | ✔          | ✔      |                    |
-| Mange Hints                    | ✔          | ✔      |                    |
-| Update Structure Test Oracle   | ✔          | ✔      |                    |
-| Show Template Submissions      | ✔          | ✔      |                    |
-| Show Solution Submissions      | ✔          | ✔      |                    |
-| Trigger Template Participation | ✔          | ✔      |                    |
-| Trigger Solution Participation | ✔          | ✔      |                    |
-| Grading                        | ✔          | ✔      |                    |
-| Manage Submission Policies     | ✔          |        |                    |
-| Re-evaluate all                | ✔          |        |                    |
-| Trigger all                    | ✔          |        |                    |
-| Unlock all repositories        | ✔          |        |                    |
-| Lock all repositories          | ✔          |        |                    |
-| Add External Submission        | ✔          |        |                    |
-| Download Repos                 | ✔          |        |                    |
-| Cleanup                        | ✔          |        |                    |
-| Build Plan Access              | R + W      | R + W  | R                  |
+| Feature                           | Instructor       | Editor           | Teaching Assistant | Student              |
+|-----------------------------------|------------------|------------------|--------------------|----------------------|
+| View Exercise (course)            | ✔                | ✔                | ✔                  | ✔ (if released)      |
+| View Exercise (exam)              | ✔                | ✔                |                    |                      |
+| Create Exercise                   | ✔                | ✔                |                    |                      |
+| Edit Exercise                     | ✔                | ✔                |                    |                      |
+| Delete Exercise                   | ✔                |                  |                    |                      |
+| Import Exercise                   | ✔ (both courses) | ✔ (both courses) |                    |                      |
+| Clone Repository                  | ✔                | ✔                | ✔                  |                      |
+| Download Repo                     | ✔                | ✔                | ✔                  |                      |
+| Export Instructor Repository      | ✔                | ✔                | ✔                  |                      |
+| Export Student Repository         | ✔                | ✔                | ✔                  | ✔ (own only)         |
+| Export Solution (if published)    | ✔                | ✔                | ✔                  | ✔                    |
+| Edit in Editor                    | ✔                | ✔                |                    |                      |
+| Manage Hints                      | ✔                | ✔                |                    |                      |
+| Update Structure Test Oracle      | ✔                | ✔                |                    |                      |
+| View Template/Solution Repos      | ✔                | ✔                |                    |                      |
+| Trigger Template/Solution Build   | ✔                | ✔                |                    |                      |
+| View/Edit Test Cases              | ✔                | ✔                |                    |                      |
+| View Test Cases                   | ✔                | ✔                | ✔                  |                      |
+| View Grading Statistics           | ✔                | ✔                |                    |                      |
+| Manage SCA Categories             | ✔                | ✔                |                    |                      |
+| Import SCA Configuration          | ✔ (both courses) | ✔ (both courses) |                    |                      |
+| Manage Submission Policies        | ✔                |                  |                    |                      |
+| View Submission Policy            | ✔                | ✔                | ✔                  | ✔                    |
+| Re-evaluate All Results           | ✔                |                  |                    |                      |
+| Trigger All Builds                | ✔                |                  |                    |                      |
+| Unlock All Repositories           | ✔                |                  |                    |                      |
+| Lock All Repositories             | ✔                |                  |                    |                      |
+| Add External Submission           | ✔                |                  |                    |                      |
+| Download All Repos                | ✔                |                  |                    |                      |
+| Cleanup                           | ✔                |                  |                    |                      |
+| Check Plagiarism                  | ✔                | ✔                |                    |                      |
+| Build Plan Access                 | R + W            | R + W            | R                  |                      |
+| Participate in Exercise           | ✔                | ✔                | ✔                  | ✔ (if released)      |
+| Trigger Own Build                 | ✔                | ✔                | ✔                  | ✔                    |
+| View Own Results                  | ✔                | ✔                | ✔                  | ✔                    |
+| Assess Submissions                | ✔                | ✔                | ✔                  |                      |
+| View All Submissions              | ✔                | ✔                |                    |                      |
+| Get Exercise Tasks                | ✔                | ✔                | ✔                  |                      |
+
+<Callout variant={CalloutVariant.info}>
+    **Import Exercise** and **Import SCA Configuration** require at least Editor role in **both** the source and target course.
+</Callout>
+
+<Callout variant={CalloutVariant.warning}>
+    **Exam exercises** require Editor role for viewing details, while **course exercises** only require Teaching Assistant role.
+</Callout>
 
 ### Programming Exercises - Repository Access
 
@@ -146,6 +173,39 @@ For detailed information about passkey authentication, configuration, and the ap
 <Callout variant={CalloutVariant.info}>
     **Practice** repositories also allow *WRITE* and *RESET* access after the due date.
 </Callout>
+
+### Programming Exercises - Summary
+
+| Role       | Capabilities                                                               |
+|------------|----------------------------------------------------------------------------|
+| Student    | Participate, view own results, trigger own builds, export own repository   |
+| TA         | Same as Student + view all submissions, assess, export repositories        |
+| Editor     | Same as TA + create/edit exercises, manage test cases, SCA, plagiarism     |
+| Instructor | Same as Editor + delete exercises, manage submission policies, re-evaluate |
+| Admin      | Full access to all programming exercises                                   |
+
+### Programming Exercises - Prerequisites
+
+- **Course Enrollment**: All exercise access requires enrollment in the course (except for Admins)
+- **Admin Override**: Admins can access all programming exercises regardless of course membership
+- **Exam vs Course**: Exam exercises require Editor role for viewing details; course exercises only require TA role
+
+### Programming Exercises - Visibility Rules
+
+Visibility conditions marked as "(if released)" in the tables above are defined as follows:
+
+**Exercise Release:**
+- Students can only view and participate in exercises after the `releaseDate` has passed
+- Teaching Assistants and above can view exercises before release
+
+**Test Case Visibility:**
+- Test case visibility is controlled per test case via the `Visibility` enum: `ALWAYS`, `AFTER_DUE_DATE`, `NEVER`
+- Exam exercises default to `AFTER_DUE_DATE`; course exercises default to `ALWAYS`
+- The `releaseTestsWithExampleSolution` flag controls when tests are revealed
+
+**Solution Repository:**
+- Students can export the solution repository only after the example solution has been published
+- Before publication, Teaching Assistant role is required
 
 ### Quiz Exercises
 
