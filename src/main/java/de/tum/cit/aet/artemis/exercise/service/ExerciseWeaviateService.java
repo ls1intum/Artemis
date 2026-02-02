@@ -2,6 +2,9 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -133,5 +136,32 @@ public class ExerciseWeaviateService {
      */
     public boolean isWeaviateAvailable() {
         return weaviateService.isPresent();
+    }
+
+    /**
+     * Fetches programming exercises for a course from Weaviate.
+     * The results are filtered based on the user's role:
+     * - Students: Only exercises with release_date in the past
+     * - Tutors and above: All exercises
+     *
+     * @param courseId       the course ID to fetch exercises for
+     * @param isAtLeastTutor true if the user is at least a tutor in the course
+     * @return list of exercise properties as maps, or empty list if Weaviate is not available
+     */
+    public List<Map<String, Object>> fetchProgrammingExercisesForCourse(long courseId, boolean isAtLeastTutor) {
+        if (weaviateService.isEmpty()) {
+            log.trace("Weaviate is not enabled, returning empty list for course {}", courseId);
+            return Collections.emptyList();
+        }
+
+        try {
+            // Students only see released exercises, tutors+ see all exercises
+            boolean filterReleasedOnly = !isAtLeastTutor;
+            return weaviateService.get().fetchProgrammingExercisesByCourseId(courseId, filterReleasedOnly);
+        }
+        catch (Exception e) {
+            log.error("Failed to fetch programming exercises for course {} from Weaviate: {}", courseId, e.getMessage(), e);
+            return Collections.emptyList();
+        }
     }
 }

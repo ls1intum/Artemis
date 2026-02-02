@@ -1,9 +1,12 @@
 package de.tum.cit.aet.artemis.core.service.weaviate;
 
 import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import jakarta.annotation.PostConstruct;
@@ -288,6 +291,47 @@ public class WeaviateService {
         // Insert the updated data
         insertExercise(exerciseId, courseId, courseName, title, shortName, problemStatement, releaseDate, startDate, dueDate, exerciseType, programmingLanguage, difficulty,
                 maxPoints, baseUrl);
+    }
+
+    /**
+     * Fetches programming exercises for a course from the Exercises collection.
+     * Optionally filters by release date for student visibility.
+     *
+     * @param courseId           the course ID to filter by
+     * @param filterReleasedOnly if true, only return exercises with release_date in the past or null
+     * @return list of exercise properties as maps
+     */
+    public List<Map<String, Object>> fetchProgrammingExercisesByCourseId(long courseId, boolean filterReleasedOnly) {
+        var collection = getCollection(WeaviateSchemas.EXERCISES_COLLECTION);
+
+        // Build the filter: course_id = courseId AND exercise_type = "programming"
+        var courseFilter = Filter.property(WeaviateSchemas.ExercisesProperties.COURSE_ID).eq(courseId);
+        var typeFilter = Filter.property(WeaviateSchemas.ExercisesProperties.EXERCISE_TYPE).eq("programming");
+        var baseFilter = courseFilter.and(typeFilter);
+
+        Filter finalFilter;
+        if (filterReleasedOnly) {
+            // For students: only show exercises where release_date <= now
+            var releaseDateFilter = Filter.property(WeaviateSchemas.ExercisesProperties.RELEASE_DATE).lte(OffsetDateTime.now());
+            finalFilter = Filter.and(baseFilter, releaseDateFilter);
+        }
+        else {
+            finalFilter = baseFilter;
+        }
+
+        try {
+            var response = collection.query.fetchObjects(q -> q.filters(finalFilter));
+            List<Map<String, Object>> results = new ArrayList<>();
+            for (var obj : response.objects()) {
+                results.add(obj.properties());
+            }
+            log.debug("Fetched {} programming exercises for course {} (filterReleasedOnly={})", results.size(), courseId, filterReleasedOnly);
+            return results;
+        }
+        catch (Exception e) {
+            log.error("Failed to fetch programming exercises for course {}: {}", courseId, e.getMessage(), e);
+            throw new WeaviateException("Failed to fetch programming exercises", e);
+        }
     }
 
     /**
