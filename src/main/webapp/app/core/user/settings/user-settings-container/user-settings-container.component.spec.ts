@@ -11,7 +11,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { UserSettingsContainerComponent } from 'app/core/user/settings/user-settings-container/user-settings-container.component';
-import { PROFILE_ATHENA, PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS, PROFILE_ATHENA } from 'app/app.constants';
 
 describe('UserSettingsContainerComponent', () => {
     let fixture: ComponentFixture<UserSettingsContainerComponent>;
@@ -55,9 +55,11 @@ describe('UserSettingsContainerComponent', () => {
     describe('isUsingLLM behavior', () => {
         /**
          * @param activeProfiles for which true should be returned when calling isProfileActive
+         * @param activeModuleFeatures for which true should be returned when calling isModuleFeatureActive
          */
-        const spyOnProfileService = (activeProfiles: string[]) => {
+        const spyOnProfileService = (activeProfiles: string[], activeModuleFeatures: string[] = []) => {
             jest.spyOn(component['profileService'], 'isProfileActive').mockImplementation((profile) => activeProfiles.includes(profile));
+            jest.spyOn(component['profileService'], 'isModuleFeatureActive').mockImplementation((feature) => activeModuleFeatures.includes(feature));
         };
 
         /**
@@ -69,27 +71,27 @@ describe('UserSettingsContainerComponent', () => {
         };
 
         it('should not display the LLM usage link when neither athena nor iris is active', () => {
-            spyOnProfileService([]);
+            spyOnProfileService([], []);
             const LLMLink = queryLLMLink();
             expect(LLMLink).toBeFalsy();
         });
 
         it('should display the LLM usage link when athena is active', () => {
-            spyOnProfileService([PROFILE_ATHENA]);
+            spyOnProfileService([PROFILE_ATHENA], []);
             const LLMLink = queryLLMLink();
             expect(LLMLink).toBeTruthy();
             expect(LLMLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.LLMUsage');
         });
 
         it('should display the LLM usage link when iris is active', () => {
-            spyOnProfileService([PROFILE_IRIS]);
+            spyOnProfileService([], [MODULE_FEATURE_IRIS]);
             const LLMLink = queryLLMLink();
             expect(LLMLink).toBeTruthy();
             expect(LLMLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.LLMUsage');
         });
 
         it('should display the LLM usage link when athena and iris are active', () => {
-            spyOnProfileService([PROFILE_ATHENA, PROFILE_IRIS]);
+            spyOnProfileService([PROFILE_ATHENA], [MODULE_FEATURE_IRIS]);
             const LLMLink = queryLLMLink();
             expect(LLMLink).toBeTruthy();
             expect(LLMLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.LLMUsage');
