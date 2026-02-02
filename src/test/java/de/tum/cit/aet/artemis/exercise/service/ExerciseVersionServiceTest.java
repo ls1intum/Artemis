@@ -332,6 +332,9 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         };
     }
 
+    /**
+     * Ensures no synchronization messages are sent for the initial version.
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testNoSynchronizationBroadcastWhenNoPreviousVersion() {
@@ -344,6 +347,9 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         verify(websocketMessagingService, never()).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), any());
     }
 
+    /**
+     * Ensures metadata alerts are broadcast when metadata changes without commit changes.
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testMetadataSynchronizationBroadcastWhenNoCommitChanges() {
@@ -369,6 +375,9 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         assertThat(payload.changedFields()).contains("title");
     }
 
+    /**
+     * Ensures channel name changes are reported via metadata alerts.
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testMetadataSynchronizationBroadcastWhenChannelNameChanges() {
@@ -389,6 +398,9 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         assertThat(payload.changedFields()).contains("channelName");
     }
 
+    /**
+     * Ensures metadata alerts are broadcast for non-programming exercises.
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testMetadataSynchronizationBroadcastForNonProgrammingExercise() {

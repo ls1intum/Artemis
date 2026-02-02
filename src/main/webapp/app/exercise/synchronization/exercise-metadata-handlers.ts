@@ -6,31 +6,20 @@ import { DifficultyLevel, Exercise, ExerciseMode, ExerciseType, IncludedInOveral
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
-import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
-
 import { convertDateFromServer } from 'app/shared/util/date.utils';
-import {
-    CompetencyExerciseLinkSnapshotDTO,
-    ExerciseSnapshotDTO,
-    ParticipationSnapshotDTO,
-    TeamAssignmentConfigSnapshot,
-} from 'app/exercise/synchronization/exercise-metadata-snapshot.dto';
+import { CompetencyExerciseLinkSnapshotDTO, ExerciseSnapshotDTO, TeamAssignmentConfigSnapshot } from 'app/exercise/synchronization/exercise-metadata-snapshot.dto';
 import { toExerciseCategories, toTeamAssignmentConfig } from 'app/exercise/synchronization/exercise-metadata-snapshot-shared.mapper';
-import {
-    toAuxiliaryRepositories,
-    toBuildConfig,
-    toSolutionParticipation,
-    toSubmissionPolicy,
-    toTemplateParticipation,
-} from 'app/exercise/synchronization/exercise-metadata-snapshot-programming.mapper';
+import { toBuildConfig } from 'app/exercise/synchronization/exercise-metadata-snapshot-programming.mapper';
 import { toQuizQuestions } from 'app/exercise/synchronization/exercise-metadata-snapshot-quiz.mapper';
 
+/**
+ * Defines how a specific exercise field is read, compared, and applied.
+ */
 export interface ExerciseMetadataFieldHandler<T extends Exercise> {
     key: string;
     labelKey: string;
@@ -42,6 +31,9 @@ export interface ExerciseMetadataFieldHandler<T extends Exercise> {
 
 type ExerciseResolver = () => Exercise;
 
+/**
+ * Creates a basic handler for scalar exercise fields stored directly on the snapshot.
+ */
 const baseHandler = (
     key: string,
     labelKey: string,
@@ -58,6 +50,9 @@ const baseHandler = (
     };
 };
 
+/**
+ * Maps competency link snapshots onto the current exercise's resolved competencies.
+ */
 const toCompetencyLinks = (exercise: Exercise, snapshotLinks: CompetencyExerciseLinkSnapshotDTO[] | undefined): CompetencyExerciseLink[] | undefined => {
     if (!snapshotLinks) {
         return undefined;
@@ -91,6 +86,9 @@ const toCompetencyLinks = (exercise: Exercise, snapshotLinks: CompetencyExercise
     return mapped.length > 0 ? mapped : undefined;
 };
 
+/**
+ * Creates a handler for date fields with server-date normalization.
+ */
 const dateHandler = (
     key: string,
     labelKey: string,
@@ -107,6 +105,9 @@ const dateHandler = (
     };
 };
 
+/**
+ * Builds handlers for exercise fields shared across all exercise types.
+ */
 export const createBaseHandlers = (resolveExercise?: ExerciseResolver): ExerciseMetadataFieldHandler<Exercise>[] => {
     return [
         baseHandler(
@@ -270,6 +271,9 @@ export const createBaseHandlers = (resolveExercise?: ExerciseResolver): Exercise
     ];
 };
 
+/**
+ * Builds handlers for text exercise-specific fields.
+ */
 const createTextHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] => {
     return [
         {
@@ -283,6 +287,9 @@ const createTextHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] => {
     ];
 };
 
+/**
+ * Builds handlers for modeling exercise-specific fields.
+ */
 const createModelingHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] => {
     return [
         {
@@ -312,6 +319,9 @@ const createModelingHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] => {
     ];
 };
 
+/**
+ * Builds handlers for file upload exercise-specific fields.
+ */
 const createFileUploadHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] => {
     return [
         {
@@ -333,6 +343,9 @@ const createFileUploadHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] =>
     ];
 };
 
+/**
+ * Builds handlers for quiz exercise-specific fields.
+ */
 const createQuizHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] => {
     return [
         {
@@ -378,24 +391,11 @@ const createQuizHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] => {
     ];
 };
 
+/**
+ * Builds handlers for programming exercise-specific fields.
+ */
 const createProgrammingHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] => {
     return [
-        {
-            key: 'programmingData.testRepositoryUri',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.programmingTestRepositoryUri',
-            getCurrentValue: (exercise) => (exercise as ProgrammingExercise).testRepositoryUri,
-            getBaselineValue: (exercise) => (exercise as ProgrammingExercise).testRepositoryUri,
-            getIncomingValue: (snapshot) => snapshot.programmingData?.testRepositoryUri,
-            applyValue: (exercise, value) => ((exercise as ProgrammingExercise).testRepositoryUri = value as string | undefined),
-        },
-        {
-            key: 'programmingData.auxiliaryRepositories',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.programmingAuxiliaryRepositories',
-            getCurrentValue: (exercise) => (exercise as ProgrammingExercise).auxiliaryRepositories,
-            getBaselineValue: (exercise) => (exercise as ProgrammingExercise).auxiliaryRepositories,
-            getIncomingValue: (snapshot) => toAuxiliaryRepositories(snapshot.programmingData?.auxiliaryRepositories),
-            applyValue: (exercise, value) => ((exercise as ProgrammingExercise).auxiliaryRepositories = value as AuxiliaryRepository[] | undefined),
-        },
         {
             key: 'programmingData.allowOnlineEditor',
             labelKey: 'artemisApp.exercise.metadataSync.fields.programmingAllowOnlineEditor',
@@ -421,36 +421,12 @@ const createProgrammingHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] =
             applyValue: (exercise, value) => ((exercise as ProgrammingExercise).allowOnlineIde = value as boolean | undefined),
         },
         {
-            key: 'programmingData.staticCodeAnalysisEnabled',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.programmingStaticCodeAnalysisEnabled',
-            getCurrentValue: (exercise) => (exercise as ProgrammingExercise).staticCodeAnalysisEnabled,
-            getBaselineValue: (exercise) => (exercise as ProgrammingExercise).staticCodeAnalysisEnabled,
-            getIncomingValue: (snapshot) => snapshot.programmingData?.staticCodeAnalysisEnabled,
-            applyValue: (exercise, value) => ((exercise as ProgrammingExercise).staticCodeAnalysisEnabled = value as boolean | undefined),
-        },
-        {
             key: 'programmingData.maxStaticCodeAnalysisPenalty',
             labelKey: 'artemisApp.exercise.metadataSync.fields.programmingMaxStaticCodeAnalysisPenalty',
             getCurrentValue: (exercise) => (exercise as ProgrammingExercise).maxStaticCodeAnalysisPenalty,
             getBaselineValue: (exercise) => (exercise as ProgrammingExercise).maxStaticCodeAnalysisPenalty,
             getIncomingValue: (snapshot) => snapshot.programmingData?.maxStaticCodeAnalysisPenalty,
             applyValue: (exercise, value) => ((exercise as ProgrammingExercise).maxStaticCodeAnalysisPenalty = value as number | undefined),
-        },
-        {
-            key: 'programmingData.programmingLanguage',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.programmingLanguage',
-            getCurrentValue: (exercise) => (exercise as ProgrammingExercise).programmingLanguage,
-            getBaselineValue: (exercise) => (exercise as ProgrammingExercise).programmingLanguage,
-            getIncomingValue: (snapshot) => snapshot.programmingData?.programmingLanguage,
-            applyValue: (exercise, value) => ((exercise as ProgrammingExercise).programmingLanguage = value as ProgrammingLanguage | undefined),
-        },
-        {
-            key: 'programmingData.packageName',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.programmingPackageName',
-            getCurrentValue: (exercise) => (exercise as ProgrammingExercise).packageName,
-            getBaselineValue: (exercise) => (exercise as ProgrammingExercise).packageName,
-            getIncomingValue: (snapshot) => snapshot.programmingData?.packageName,
-            applyValue: (exercise, value) => ((exercise as ProgrammingExercise).packageName = value as string | undefined),
         },
         {
             key: 'programmingData.showTestNamesToStudents',
@@ -469,46 +445,6 @@ const createProgrammingHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] =
             applyValue: (exercise, value) => ((exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate = value as dayjs.Dayjs | undefined),
         },
         {
-            key: 'programmingData.projectKey',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.programmingProjectKey',
-            getCurrentValue: (exercise) => (exercise as ProgrammingExercise).projectKey,
-            getBaselineValue: (exercise) => (exercise as ProgrammingExercise).projectKey,
-            getIncomingValue: (snapshot) => snapshot.programmingData?.projectKey,
-            applyValue: (exercise, value) => ((exercise as ProgrammingExercise).projectKey = value as string | undefined),
-        },
-        {
-            key: 'programmingData.templateParticipation',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.programmingTemplateParticipation',
-            getCurrentValue: (exercise) => (exercise as ProgrammingExercise).templateParticipation,
-            getBaselineValue: (exercise) => (exercise as ProgrammingExercise).templateParticipation,
-            getIncomingValue: (snapshot) => snapshot.programmingData?.templateParticipation,
-            applyValue: (exercise, value) => ((exercise as ProgrammingExercise).templateParticipation = toTemplateParticipation(value as ParticipationSnapshotDTO | undefined)),
-        },
-        {
-            key: 'programmingData.solutionParticipation',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.programmingSolutionParticipation',
-            getCurrentValue: (exercise) => (exercise as ProgrammingExercise).solutionParticipation,
-            getBaselineValue: (exercise) => (exercise as ProgrammingExercise).solutionParticipation,
-            getIncomingValue: (snapshot) => snapshot.programmingData?.solutionParticipation,
-            applyValue: (exercise, value) => ((exercise as ProgrammingExercise).solutionParticipation = toSolutionParticipation(value as ParticipationSnapshotDTO | undefined)),
-        },
-        {
-            key: 'programmingData.submissionPolicy',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.programmingSubmissionPolicy',
-            getCurrentValue: (exercise) => (exercise as ProgrammingExercise).submissionPolicy,
-            getBaselineValue: (exercise) => (exercise as ProgrammingExercise).submissionPolicy,
-            getIncomingValue: (snapshot) => toSubmissionPolicy(snapshot.programmingData?.submissionPolicy),
-            applyValue: (exercise, value) => ((exercise as ProgrammingExercise).submissionPolicy = value as SubmissionPolicy | undefined),
-        },
-        {
-            key: 'programmingData.projectType',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.programmingProjectType',
-            getCurrentValue: (exercise) => (exercise as ProgrammingExercise).projectType,
-            getBaselineValue: (exercise) => (exercise as ProgrammingExercise).projectType,
-            getIncomingValue: (snapshot) => snapshot.programmingData?.projectType,
-            applyValue: (exercise, value) => ((exercise as ProgrammingExercise).projectType = value as ProjectType | undefined),
-        },
-        {
             key: 'programmingData.releaseTestsWithExampleSolution',
             labelKey: 'artemisApp.exercise.metadataSync.fields.programmingReleaseTestsWithExampleSolution',
             getCurrentValue: (exercise) => (exercise as ProgrammingExercise).releaseTestsWithExampleSolution,
@@ -522,11 +458,21 @@ const createProgrammingHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] =
             getCurrentValue: (exercise) => (exercise as ProgrammingExercise).buildConfig,
             getBaselineValue: (exercise) => (exercise as ProgrammingExercise).buildConfig,
             getIncomingValue: (snapshot) => toBuildConfig(snapshot.programmingData?.buildConfig),
-            applyValue: (exercise, value) => ((exercise as ProgrammingExercise).buildConfig = value as ProgrammingExerciseBuildConfig | undefined),
+            applyValue: (exercise, value) => {
+                const programmingExercise = exercise as ProgrammingExercise;
+                const incoming = value as ProgrammingExerciseBuildConfig | undefined;
+                if (incoming && programmingExercise.buildConfig) {
+                    incoming.sequentialTestRuns = programmingExercise.buildConfig.sequentialTestRuns;
+                }
+                programmingExercise.buildConfig = incoming;
+            },
         },
     ];
 };
 
+/**
+ * Returns handlers for the given exercise type.
+ */
 export const createHandlersByType = (exerciseType: ExerciseType): ExerciseMetadataFieldHandler<Exercise>[] => {
     switch (exerciseType) {
         case ExerciseType.TEXT:
@@ -544,6 +490,9 @@ export const createHandlersByType = (exerciseType: ExerciseType): ExerciseMetada
     }
 };
 
+/**
+ * Builds the full set of handlers for a specific exercise type.
+ */
 export const createExerciseMetadataHandlers = (exerciseType: ExerciseType, resolveExercise?: ExerciseResolver): ExerciseMetadataFieldHandler<Exercise>[] => {
     return createBaseHandlers(resolveExercise).concat(createHandlersByType(exerciseType));
 };

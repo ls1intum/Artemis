@@ -5,6 +5,9 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 
+/**
+ * Synchronization targets used to scope editor sync events.
+ */
 export enum ExerciseEditorSyncTarget {
     PROBLEM_STATEMENT = 'PROBLEM_STATEMENT',
     TEMPLATE_REPOSITORY = 'TEMPLATE_REPOSITORY',
@@ -14,6 +17,9 @@ export enum ExerciseEditorSyncTarget {
     EXERCISE_METADATA = 'EXERCISE_METADATA',
 }
 
+/**
+ * Discriminator for synchronization event payloads.
+ */
 export enum ExerciseEditorSyncEventType {
     PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST = 'PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST',
     PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE = 'PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE',
@@ -23,6 +29,9 @@ export enum ExerciseEditorSyncEventType {
     NEW_EXERCISE_VERSION_ALERT = 'NEW_EXERCISE_VERSION_ALERT',
 }
 
+/**
+ * Shared fields for synchronization events received over websocket.
+ */
 export interface ExerciseEditorSyncEventBase {
     eventType: ExerciseEditorSyncEventType;
     target: ExerciseEditorSyncTarget;
@@ -52,6 +61,9 @@ export interface ProblemStatementAwarenessUpdateEvent extends ExerciseEditorSync
     awarenessUpdate: string;
 }
 
+/**
+ * Event payload indicating a repository commit was pushed.
+ */
 export interface ExerciseNewCommitAlertEvent {
     eventType: ExerciseEditorSyncEventType.NEW_COMMIT_ALERT;
     target: ExerciseEditorSyncTarget;
@@ -60,6 +72,9 @@ export interface ExerciseNewCommitAlertEvent {
     timestamp?: number;
 }
 
+/**
+ * Event payload indicating a new exercise version (metadata) was saved.
+ */
 export interface ExerciseNewVersionAlertEvent {
     eventType: ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT;
     target: ExerciseEditorSyncTarget;
@@ -69,6 +84,9 @@ export interface ExerciseNewVersionAlertEvent {
     sessionId?: string;
 }
 
+/**
+ * Union of all synchronization events received by the editor.
+ */
 export type ExerciseEditorSyncEvent =
     | ProblemStatementSyncFullContentRequestEvent
     | ProblemStatementSyncFullContentResponseEvent
@@ -77,6 +95,9 @@ export type ExerciseEditorSyncEvent =
     | ExerciseNewVersionAlertEvent
     | ExerciseNewCommitAlertEvent;
 
+/**
+ * Subscribes to exercise editor synchronization events and filters loopback updates.
+ */
 @Injectable({ providedIn: 'root' })
 export class ExerciseEditorSyncService {
     private websocketService = inject(WebsocketService);
@@ -86,10 +107,19 @@ export class ExerciseEditorSyncService {
     private subject: Subject<ExerciseEditorSyncEvent> | undefined;
     private subscription: Subscription | undefined;
 
+    /**
+     * Builds the websocket topic for a given exercise id.
+     *
+     * @param exerciseId the exercise id
+     * @returns the websocket topic string
+     */
     private getTopic(exerciseId: number): string {
         return `/topic/exercises/${exerciseId}/synchronization`;
     }
 
+    /**
+     * Returns the current browser tab session id used to filter out loopback events.
+     */
     get sessionId(): string | undefined {
         return this.browserFingerprintService.browserSessionId.value;
     }
@@ -102,6 +132,12 @@ export class ExerciseEditorSyncService {
         this.websocketService.send(topic, { ...message, timestamp: message.timestamp ?? Date.now(), sessionId: this.sessionId });
     }
 
+    /**
+     * Subscribes to websocket updates for an exercise and returns a stream of sync events.
+     *
+     * @param exerciseId the exercise id to subscribe to
+     * @returns observable of incoming synchronization events
+     */
     subscribeToUpdates(exerciseId: number): Observable<ExerciseEditorSyncEvent> {
         if (this.subject && this.exerciseId !== undefined && this.exerciseId !== exerciseId) {
             this.unsubscribe();
@@ -144,6 +180,11 @@ export class ExerciseEditorSyncService {
         delete this.exerciseId;
     }
 
+    /**
+     * Emits a received websocket message to observers.
+     *
+     * @param message the incoming synchronization event
+     */
     private handleIncomingMessage(message: ExerciseEditorSyncEvent) {
         this.subject?.next(message);
     }

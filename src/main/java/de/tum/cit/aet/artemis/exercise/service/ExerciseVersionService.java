@@ -84,6 +84,12 @@ public class ExerciseVersionService {
         this.channelRepository = channelRepository;
     }
 
+    /**
+     * Determines whether a repository type triggers exercise versioning.
+     *
+     * @param repositoryType the repository type
+     * @return true if the repository type is versionable
+     */
     public boolean isRepositoryTypeVersionable(RepositoryType repositoryType) {
         return REPO_TYPES_TRIGGERING_EXERCISE_VERSIONING.contains(repositoryType);
     }
@@ -188,9 +194,11 @@ public class ExerciseVersionService {
      * new commit alert
      * so clients can display a notification prompting users to refresh.
      *
-     * @param exerciseId       the exercise id
-     * @param newSnapshot      the new snapshot
-     * @param previousSnapshot the previous snapshot (optional)
+     * @param exerciseId           the exercise id
+     * @param newSnapshot          the new snapshot
+     * @param previousSnapshot     the previous snapshot (optional)
+     * @param author               the author of the new version
+     * @param newExerciseVersionId the id of the new exercise version
      */
     private void determineSynchronizationForActiveEditors(Long exerciseId, ExerciseSnapshotDTO newSnapshot, ExerciseSnapshotDTO previousSnapshot, User author,
             Long newExerciseVersionId) {
@@ -244,6 +252,13 @@ public class ExerciseVersionService {
         }
     }
 
+    /**
+     * Collects the set of changed exercise fields between two snapshots.
+     *
+     * @param newSnapshot      the new snapshot
+     * @param previousSnapshot the previous snapshot
+     * @return the set of changed field identifiers
+     */
     private Set<String> collectChangedFields(ExerciseSnapshotDTO newSnapshot, ExerciseSnapshotDTO previousSnapshot) {
         Set<String> changedFields = new HashSet<>();
         addIfChanged(changedFields, "title", newSnapshot.title(), previousSnapshot.title());
@@ -283,6 +298,13 @@ public class ExerciseVersionService {
         return changedFields;
     }
 
+    /**
+     * Collects changed fields for programming exercise snapshot data.
+     *
+     * @param changedFields the set to update with changed fields
+     * @param newData       the new programming snapshot data
+     * @param previousData  the previous programming snapshot data
+     */
     private void collectProgrammingChanges(Set<String> changedFields, ProgrammingExerciseSnapshotDTO newData, ProgrammingExerciseSnapshotDTO previousData) {
         if (newData == null && previousData == null) {
             return;
@@ -291,60 +313,29 @@ public class ExerciseVersionService {
             changedFields.add("programmingData");
             return;
         }
-        addIfChanged(changedFields, "programmingData.testRepositoryUri", newData.testRepositoryUri(), previousData.testRepositoryUri());
-        if (!auxiliaryRepositoriesEqualIgnoringCommit(newData.auxiliaryRepositories(), previousData.auxiliaryRepositories())) {
-            changedFields.add("programmingData.auxiliaryRepositories");
-        }
+        // Note: repository URLs, auxiliary repositories, submission policy, programming language, project type, package name,
+        // static code analysis enablement, and project keys are not editable on the exercise edit page.
+        // Sequential test runs are configured elsewhere and are excluded from conflict detection.
         addIfChanged(changedFields, "programmingData.allowOnlineEditor", newData.allowOnlineEditor(), previousData.allowOnlineEditor());
         addIfChanged(changedFields, "programmingData.allowOfflineIde", newData.allowOfflineIde(), previousData.allowOfflineIde());
         addIfChanged(changedFields, "programmingData.allowOnlineIde", newData.allowOnlineIde(), previousData.allowOnlineIde());
-        addIfChanged(changedFields, "programmingData.staticCodeAnalysisEnabled", newData.staticCodeAnalysisEnabled(), previousData.staticCodeAnalysisEnabled());
         addIfChanged(changedFields, "programmingData.maxStaticCodeAnalysisPenalty", newData.maxStaticCodeAnalysisPenalty(), previousData.maxStaticCodeAnalysisPenalty());
-        addIfChanged(changedFields, "programmingData.programmingLanguage", newData.programmingLanguage(), previousData.programmingLanguage());
-        addIfChanged(changedFields, "programmingData.packageName", newData.packageName(), previousData.packageName());
         addIfChanged(changedFields, "programmingData.showTestNamesToStudents", newData.showTestNamesToStudents(), previousData.showTestNamesToStudents());
         addIfChanged(changedFields, "programmingData.buildAndTestStudentSubmissionsAfterDueDate", newData.buildAndTestStudentSubmissionsAfterDueDate(),
                 previousData.buildAndTestStudentSubmissionsAfterDueDate());
-        addIfChanged(changedFields, "programmingData.projectKey", newData.projectKey(), previousData.projectKey());
-        if (!participationMetadataEqual(newData.templateParticipation(), previousData.templateParticipation())) {
-            changedFields.add("programmingData.templateParticipation");
-        }
-        if (!participationMetadataEqual(newData.solutionParticipation(), previousData.solutionParticipation())) {
-            changedFields.add("programmingData.solutionParticipation");
-        }
-        addIfChanged(changedFields, "programmingData.submissionPolicy", newData.submissionPolicy(), previousData.submissionPolicy());
-        addIfChanged(changedFields, "programmingData.projectType", newData.projectType(), previousData.projectType());
         addIfChanged(changedFields, "programmingData.releaseTestsWithExampleSolution", newData.releaseTestsWithExampleSolution(), previousData.releaseTestsWithExampleSolution());
-        addIfChanged(changedFields, "programmingData.buildConfig", newData.buildConfig(), previousData.buildConfig());
-    }
-
-    private boolean auxiliaryRepositoriesEqualIgnoringCommit(List<ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO> newRepositories,
-            List<ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO> previousRepositories) {
-        Map<Long, String> newMap = toAuxiliaryRepositoryMap(newRepositories);
-        Map<Long, String> previousMap = toAuxiliaryRepositoryMap(previousRepositories);
-        return Objects.equals(newMap, previousMap);
-    }
-
-    private Map<Long, String> toAuxiliaryRepositoryMap(List<ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO> repositories) {
-        if (repositories == null) {
-            return null;
+        if (buildConfigChangedIgnoringSequentialTestRuns(newData.buildConfig(), previousData.buildConfig())) {
+            changedFields.add("programmingData.buildConfig");
         }
-        return repositories.stream().collect(
-                Collectors.toMap(ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO::id, ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO::repositoryUri));
     }
 
-    private boolean participationMetadataEqual(ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO newParticipation,
-            ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO previousParticipation) {
-        if (newParticipation == null && previousParticipation == null) {
-            return true;
-        }
-        if (newParticipation == null || previousParticipation == null) {
-            return false;
-        }
-        return Objects.equals(newParticipation.id(), previousParticipation.id()) && Objects.equals(newParticipation.repositoryUri(), previousParticipation.repositoryUri())
-                && Objects.equals(newParticipation.buildPlanId(), previousParticipation.buildPlanId());
-    }
-
+    /**
+     * Collects changed fields for text exercise snapshot data.
+     *
+     * @param changedFields the set to update with changed fields
+     * @param newData       the new text snapshot data
+     * @param previousData  the previous text snapshot data
+     */
     private void collectTextChanges(Set<String> changedFields, TextExerciseSnapshotDTO newData, TextExerciseSnapshotDTO previousData) {
         if (newData == null && previousData == null) {
             return;
@@ -356,6 +347,13 @@ public class ExerciseVersionService {
         addIfChanged(changedFields, "textData.exampleSolution", newData.exampleSolution(), previousData.exampleSolution());
     }
 
+    /**
+     * Collects changed fields for modeling exercise snapshot data.
+     *
+     * @param changedFields the set to update with changed fields
+     * @param newData       the new modeling snapshot data
+     * @param previousData  the previous modeling snapshot data
+     */
     private void collectModelingChanges(Set<String> changedFields, ModelingExerciseSnapshotDTO newData, ModelingExerciseSnapshotDTO previousData) {
         if (newData == null && previousData == null) {
             return;
@@ -369,6 +367,13 @@ public class ExerciseVersionService {
         addIfChanged(changedFields, "modelingData.exampleSolutionExplanation", newData.exampleSolutionExplanation(), previousData.exampleSolutionExplanation());
     }
 
+    /**
+     * Collects changed fields for quiz exercise snapshot data.
+     *
+     * @param changedFields the set to update with changed fields
+     * @param newData       the new quiz snapshot data
+     * @param previousData  the previous quiz snapshot data
+     */
     private void collectQuizChanges(Set<String> changedFields, QuizExerciseSnapshotDTO newData, QuizExerciseSnapshotDTO previousData) {
         if (newData == null && previousData == null) {
             return;
@@ -384,6 +389,13 @@ public class ExerciseVersionService {
         addIfChanged(changedFields, "quizData.quizQuestions", newData.quizQuestions(), previousData.quizQuestions());
     }
 
+    /**
+     * Collects changed fields for file upload exercise snapshot data.
+     *
+     * @param changedFields the set to update with changed fields
+     * @param newData       the new file upload snapshot data
+     * @param previousData  the previous file upload snapshot data
+     */
     private void collectFileUploadChanges(Set<String> changedFields, FileUploadExerciseSnapshotDTO newData, FileUploadExerciseSnapshotDTO previousData) {
         if (newData == null && previousData == null) {
             return;
@@ -396,12 +408,53 @@ public class ExerciseVersionService {
         addIfChanged(changedFields, "fileUploadData.filePattern", newData.filePattern(), previousData.filePattern());
     }
 
+    /**
+     * Adds the field identifier to the set if the values differ.
+     *
+     * @param changedFields the set to update
+     * @param field         the field identifier
+     * @param newValue      the new value
+     * @param previousValue the previous value
+     */
     private void addIfChanged(Set<String> changedFields, String field, Object newValue, Object previousValue) {
         if (!Objects.equals(newValue, previousValue)) {
             changedFields.add(field);
         }
     }
 
+    /**
+     * Compares build configuration fields while ignoring sequential test runs.
+     *
+     * @param newConfig      the new build config snapshot
+     * @param previousConfig the previous build config snapshot
+     * @return true if any relevant build config attribute changed
+     */
+    private boolean buildConfigChangedIgnoringSequentialTestRuns(ProgrammingExerciseSnapshotDTO.ProgrammingExerciseBuildConfigSnapshotDTO newConfig,
+            ProgrammingExerciseSnapshotDTO.ProgrammingExerciseBuildConfigSnapshotDTO previousConfig) {
+        if (newConfig == null && previousConfig == null) {
+            return false;
+        }
+        if (newConfig == null || previousConfig == null) {
+            return true;
+        }
+        return !Objects.equals(newConfig.branch(), previousConfig.branch()) || !Objects.equals(newConfig.buildPlanConfiguration(), previousConfig.buildPlanConfiguration())
+                || !Objects.equals(newConfig.buildScript(), previousConfig.buildScript())
+                || !Objects.equals(newConfig.checkoutSolutionRepository(), previousConfig.checkoutSolutionRepository())
+                || !Objects.equals(newConfig.testCheckoutPath(), previousConfig.testCheckoutPath())
+                || !Objects.equals(newConfig.assignmentCheckoutPath(), previousConfig.assignmentCheckoutPath())
+                || !Objects.equals(newConfig.solutionCheckoutPath(), previousConfig.solutionCheckoutPath())
+                || !Objects.equals(newConfig.timeoutSeconds(), previousConfig.timeoutSeconds()) || !Objects.equals(newConfig.dockerFlags(), previousConfig.dockerFlags())
+                || !Objects.equals(newConfig.theiaImage(), previousConfig.theiaImage()) || !Objects.equals(newConfig.allowBranching(), previousConfig.allowBranching())
+                || !Objects.equals(newConfig.branchRegex(), previousConfig.branchRegex());
+    }
+
+    /**
+     * Checks whether the commit id changed for a participation snapshot.
+     *
+     * @param previousParticipation the previous participation snapshot
+     * @param newParticipation      the new participation snapshot
+     * @return true if the commit id changed
+     */
     private boolean participationCommitChanged(ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO previousParticipation,
             ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO newParticipation) {
         if (previousParticipation == null && newParticipation == null) {

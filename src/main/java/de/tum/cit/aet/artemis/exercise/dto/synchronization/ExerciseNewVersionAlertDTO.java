@@ -8,6 +8,9 @@ import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.exercise.domain.synchronization.ExerciseEditorSyncTarget;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+/**
+ * Websocket payload notifying clients about a new exercise metadata version.
+ */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Alert/notification that a new exercise version was pushed.")
 public record ExerciseNewVersionAlertDTO(@Schema(description = "Event type discriminator.", requiredMode = Schema.RequiredMode.REQUIRED) ExerciseEditorSyncEventType eventType,

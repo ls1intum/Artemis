@@ -37,6 +37,12 @@ public class ExerciseEditorSyncService {
         this.websocketMessagingService = websocketMessagingService;
     }
 
+    /**
+     * Builds the websocket topic used for exercise editor synchronization.
+     *
+     * @param exerciseId the exercise id
+     * @return the topic for exercise synchronization events
+     */
     public static String getSynchronizationTopic(long exerciseId) {
         return "/topic/exercises/" + exerciseId + "/synchronization";
     }
@@ -77,6 +83,14 @@ public class ExerciseEditorSyncService {
         });
     }
 
+    /**
+     * Broadcast a new exercise version alert to active editors for metadata changes.
+     *
+     * @param exerciseId        the exercise id
+     * @param exerciseVersionId the id of the newly created exercise version
+     * @param author            the author of the new version
+     * @param changedFields     the changed metadata fields compared to the previous version
+     */
     public void broadcastNewExerciseVersionAlert(Long exerciseId, Long exerciseVersionId, User author, Set<String> changedFields) {
         ExerciseNewVersionAlertDTO payload = new ExerciseNewVersionAlertDTO(ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT, ExerciseEditorSyncTarget.EXERCISE_METADATA,
                 exerciseVersionId, new UserPublicInfoDTO(author), changedFields, getClientSessionId());

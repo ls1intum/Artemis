@@ -19,21 +19,168 @@
     <div class="conflict-list">
         @for (conflict of conflicts(); track conflict.field) {
             <div class="conflict-item">
-                <label class="form-check">
-                    <input class="form-check-input" type="checkbox" [ngModel]="decisions()[conflict.field]" (ngModelChange)="updateDecision(conflict.field, $event)" />
-                    <span class="form-check-label" jhiTranslate="artemisApp.exercise.metadataSync.useIncoming"></span>
-                    <span class="field-name" [jhiTranslate]="conflict.labelKey"></span>
-                </label>
-                <div class="conflict-values">
-                    <div class="value-block">
-                        <div class="value-label" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
-                        <div class="value-text">{{ formatValue(conflict.currentValue) }}</div>
-                    </div>
-                    <div class="value-block">
-                        <div class="value-label" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
-                        <div class="value-text">{{ formatValue(conflict.incomingValue) }}</div>
-                    </div>
+                <div class="conflict-header">
+                    @if (!isEditableDiffField(conflict.field)) {
+                        <label class="form-check">
+                            <input class="form-check-input" type="checkbox" [ngModel]="decisions()[conflict.field]" (ngModelChange)="updateDecision(conflict.field, $event)" />
+                            <span class="form-check-label" jhiTranslate="artemisApp.exercise.metadataSync.useIncoming"></span>
+                            <span class="field-name" [jhiTranslate]="conflict.labelKey"></span>
+                        </label>
+                    } @else {
+                        <span class="field-name" [jhiTranslate]="conflict.labelKey"></span>
+                    }
                 </div>
+
+                @if (isEditableDiffField(conflict.field)) {
+                    <div class="conflict-diff">
+                        <div class="diff-labels">
+                            <span jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></span>
+                            <span jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></span>
+                        </div>
+                        <jhi-exercise-metadata-conflict-diff
+                            [original]="toDisplayText(conflict.field, conflict.currentValue)"
+                            [modified]="getResolvedText(conflict.field, toDisplayText(conflict.field, conflict.incomingValue))"
+                            [fileNameBase]="getDiffFileBase(conflict.field)"
+                            (modifiedChange)="onDiffModified(conflict.field, $event)"
+                        />
+                        <div class="resolved-actions">
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-outline-secondary"
+                                (click)="useCurrentResolvedText(conflict.field, conflict.currentValue)"
+                                jhiTranslate="artemisApp.exercise.metadataSync.useCurrentValue"
+                            ></button>
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-outline-secondary"
+                                (click)="useIncomingResolvedText(conflict.field, conflict.incomingValue)"
+                                jhiTranslate="artemisApp.exercise.metadataSync.useIncomingValue"
+                            ></button>
+                        </div>
+                    </div>
+                } @else if (isQuizQuestionsField(conflict.field)) {
+                    <div class="conflict-quiz">
+                        @for (card of getQuizQuestionCards(conflict.currentValue, conflict.incomingValue); track card.key) {
+                            <div class="quiz-card">
+                                <div class="quiz-card-header">
+                                    <span class="quiz-card-title">{{ card.title }}</span>
+                                    <span class="quiz-card-type" [jhiTranslate]="card.typeKey"></span>
+                                </div>
+                                <div class="quiz-card-grid">
+                                    <div class="quiz-card-labels"></div>
+                                    <div class="quiz-card-labels" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
+                                    <div class="quiz-card-labels" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
+                                    @for (field of card.fields; track field.labelKey) {
+                                        <div class="quiz-field-label" [jhiTranslate]="field.labelKey"></div>
+                                        <div class="quiz-field-value">
+                                            @if (isListValue(field.current)) {
+                                                <div class="quiz-list">
+                                                    @for (item of field.current; track item) {
+                                                        <div class="quiz-list-item">{{ item }}</div>
+                                                    }
+                                                </div>
+                                            } @else if (field.current !== undefined) {
+                                                @if (isTranslationKey(field.current)) {
+                                                    <span [jhiTranslate]="field.current"></span>
+                                                } @else {
+                                                    <span>{{ field.current }}</span>
+                                                }
+                                            } @else {
+                                                <span>—</span>
+                                            }
+                                        </div>
+                                        <div class="quiz-field-value">
+                                            @if (isListValue(field.incoming)) {
+                                                <div class="quiz-list">
+                                                    @for (item of field.incoming; track item) {
+                                                        <div class="quiz-list-item">{{ item }}</div>
+                                                    }
+                                                </div>
+                                            } @else if (field.incoming !== undefined) {
+                                                @if (isTranslationKey(field.incoming)) {
+                                                    <span [jhiTranslate]="field.incoming"></span>
+                                                } @else {
+                                                    <span>{{ field.incoming }}</span>
+                                                }
+                                            } @else {
+                                                <span>—</span>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                } @else if (isBuildConfigField(conflict.field)) {
+                    <div class="conflict-build-config">
+                        <div class="diff-labels">
+                            <span jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></span>
+                            <span jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></span>
+                        </div>
+                        <div class="build-config-grid">
+                            @for (entry of getBuildConfigEntries(conflict.currentValue, conflict.incomingValue); track entry.labelKey) {
+                                <div class="build-config-label" [jhiTranslate]="entry.labelKey"></div>
+                                <div class="build-config-value">{{ formatValue(entry.current) }}</div>
+                                <div class="build-config-value">{{ formatValue(entry.incoming) }}</div>
+                            }
+                        </div>
+                    </div>
+                } @else if (isCategoriesField(conflict.field)) {
+                    <div class="conflict-categories">
+                        <div class="diff-labels">
+                            <span jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></span>
+                            <span jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></span>
+                        </div>
+                        <div class="category-grid">
+                            <div class="category-list">
+                                @for (category of toCategoryList(conflict.currentValue); track category) {
+                                    <span class="category-pill">{{ category }}</span>
+                                }
+                            </div>
+                            <div class="category-list">
+                                @for (category of toCategoryList(conflict.incomingValue); track category) {
+                                    <span class="category-pill">{{ category }}</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                } @else if (isCompetencyLinksField(conflict.field)) {
+                    <div class="conflict-competencies">
+                        <div class="diff-labels">
+                            <span jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></span>
+                            <span jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></span>
+                        </div>
+                        <div class="competency-grid">
+                            <div class="competency-list">
+                                @for (entry of toCompetencyDisplay(conflict.currentValue); track entry.title) {
+                                    <div class="competency-item">
+                                        <span class="competency-title">{{ entry.title }}</span>
+                                        <span class="competency-weight">{{ formatValue(entry.weight) }}</span>
+                                    </div>
+                                }
+                            </div>
+                            <div class="competency-list">
+                                @for (entry of toCompetencyDisplay(conflict.incomingValue); track entry.title) {
+                                    <div class="competency-item">
+                                        <span class="competency-title">{{ entry.title }}</span>
+                                        <span class="competency-weight">{{ formatValue(entry.weight) }}</span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                } @else {
+                    <div class="conflict-values">
+                        <div class="value-block">
+                            <div class="value-label" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
+                            <div class="value-text">{{ formatValue(conflict.currentValue) }}</div>
+                        </div>
+                        <div class="value-block">
+                            <div class="value-label" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
+                            <div class="value-text">{{ formatValue(conflict.incomingValue) }}</div>
+                        </div>
+                    </div>
+                }
             </div>
         }
     </div>
