@@ -38,17 +38,26 @@ class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalC
     @Autowired
     private ExerciseEditorSyncService synchronizationService;
 
+    /**
+     * Stubs websocket messaging to avoid real async behavior during tests.
+     */
     @BeforeEach
     void setUp() {
         doReturn(CompletableFuture.completedFuture(null)).when(websocketMessagingService).sendMessage(anyString(), any(Object.class));
         clearInvocations(websocketMessagingService);
     }
 
+    /**
+     * Clears request context to avoid cross-test leakage.
+     */
     @AfterEach
     void resetRequestContext() {
         RequestContextHolder.resetRequestAttributes();
     }
 
+    /**
+     * Verifies that commit alerts are broadcast with expected payload fields.
+     */
     @Test
     void broadcastNewCommitAlert() {
         synchronizationService.broadcastNewCommitAlert(90L, ExerciseEditorSyncTarget.TESTS_REPOSITORY, null);
@@ -62,6 +71,9 @@ class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalC
         assertThat(sentMessage.auxiliaryRepositoryId()).isNull();
     }
 
+    /**
+     * Verifies that auxiliary repository commit alerts include the repository id.
+     */
     @Test
     void broadcastNewCommitAlertForAuxiliaryRepository() {
         synchronizationService.broadcastNewCommitAlert(100L, ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY, 25L);
@@ -75,6 +87,9 @@ class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalC
         assertThat(sentMessage.auxiliaryRepositoryId()).isEqualTo(25L);
     }
 
+    /**
+     * Verifies that the client session header is forwarded into the alert payload.
+     */
     @Test
     void broadcastNewCommitAlertUsesClientSessionHeader() {
         MockHttpServletRequest request = new MockHttpServletRequest();
@@ -91,17 +106,26 @@ class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalC
         assertThat(sentMessage.eventType()).isEqualTo(ExerciseEditorSyncEventType.NEW_COMMIT_ALERT);
     }
 
+    /**
+     * Verifies that synchronization topics are generated consistently.
+     */
     @Test
     void getSynchronizationTopicGeneratesCorrectTopic() {
         String topic = ExerciseEditorSyncService.getSynchronizationTopic(123L);
         assertThat(topic).isEqualTo("/topic/exercises/123/synchronization");
     }
 
+    /**
+     * Verifies that the client session id is null without a request context.
+     */
     @Test
     void getClientSessionIdReturnsNullWhenNoRequest() {
         assertThat(ExerciseEditorSyncService.getClientSessionId()).isNull();
     }
 
+    /**
+     * Verifies that non-servlet request attributes yield no client session id.
+     */
     @Test
     void getClientSessionIdReturnsNullForNonServletAttributes() {
         RequestAttributes nonServletAttributes = mock(RequestAttributes.class);

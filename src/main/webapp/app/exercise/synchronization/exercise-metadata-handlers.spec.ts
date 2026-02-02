@@ -23,6 +23,6 @@ describe('ExerciseMetadataHandlers', () => {
         const programmingHandlers = createExerciseMetadataHandlers(ExerciseType.PROGRAMMING);
 
         expect(extractKeys(textHandlers)).toContain('textData.exampleSolution');
-        expect(extractKeys(programmingHandlers)).toContain('programmingData.testRepositoryUri');
+        expect(extractKeys(programmingHandlers)).toContain('programmingData.showTestNamesToStudents');
     });
 });

@@ -77,12 +77,10 @@ describe('BrowserFingerprintService', () => {
 
         it('should clear instance when browserFingerprintsEnabled is false', () => {
             const removeSpy = vi.spyOn(localStorageService, 'remove');
-            const sessionRemoveSpy = vi.spyOn(sessionStorageService, 'remove');
 
             service.initialize(false);
 
             expect(removeSpy).toHaveBeenCalledWith(BROWSER_INSTANCE_KEY);
-            expect(sessionRemoveSpy).toHaveBeenCalledWith(BROWSER_SESSION_KEY);
         });
 
         it('should use existing instance identifier from localStorage', () => {

@@ -19,6 +19,9 @@ import { ExerciseMetadataConflictModalComponent, ExerciseMetadataConflictModalRe
 import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/exercise-metadata-snapshot.dto';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 
+/**
+ * Context required to apply metadata synchronization to a live exercise editor.
+ */
 export interface ExerciseMetadataSyncContext<T extends Exercise> {
     exerciseId: number;
     exerciseType: ExerciseType;
@@ -46,6 +49,12 @@ export class ExerciseMetadataSyncService {
     private readonly pendingAlerts = signal<ExerciseNewVersionAlertEvent[]>([]);
     private readonly processing = signal<boolean>(false);
 
+    /**
+     * Initializes metadata synchronization for an exercise update context.
+     * Subsequent calls are ignored while a subscription is active.
+     *
+     * @param context the metadata synchronization context
+     */
     initialize<T extends Exercise>(context: ExerciseMetadataSyncContext<T>): void {
         this.context = context as ExerciseMetadataSyncContext<Exercise>;
         if (this.subscriptionActive) {
@@ -55,6 +64,9 @@ export class ExerciseMetadataSyncService {
         this.updateSubscription = this.exerciseEditorSyncService.subscribeToUpdates(context.exerciseId).subscribe((event: ExerciseEditorSyncEvent) => this.handleEvent(event));
     }
 
+    /**
+     * Cleans up the websocket subscription and resets internal state.
+     */
     destroy(): void {
         if (this.updateSubscription) {
             this.updateSubscription.unsubscribe();
@@ -67,6 +79,11 @@ export class ExerciseMetadataSyncService {
         this.exerciseEditorSyncService.unsubscribe();
     }
 
+    /**
+     * Filters incoming events and enqueues relevant metadata alerts.
+     *
+     * @param event the incoming synchronization event
+     */
     private handleEvent(event: ExerciseEditorSyncEvent): void {
         if (event.eventType !== ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT || event.target !== ExerciseEditorSyncTarget.EXERCISE_METADATA) {
             return;
@@ -74,6 +91,11 @@ export class ExerciseMetadataSyncService {
         this.enqueueAlert(event);
     }
 
+    /**
+     * Adds an alert to the processing queue.
+     *
+     * @param event the new version alert event
+     */
     private enqueueAlert(event: ExerciseNewVersionAlertEvent): void {
         const queued = this.pendingAlerts();
         const updated = queued.slice();
@@ -82,6 +104,9 @@ export class ExerciseMetadataSyncService {
         this.processQueue();
     }
 
+    /**
+     * Processes the next queued alert if none is currently in progress.
+     */
     private processQueue(): void {
         if (this.processing() || !this.context) {
             return;
@@ -102,6 +127,11 @@ export class ExerciseMetadataSyncService {
         });
     }
 
+    /**
+     * Processes a single metadata alert by fetching the snapshot and applying updates.
+     *
+     * @param alert the alert to process
+     */
     private async processAlert(alert: ExerciseNewVersionAlertEvent): Promise<void> {
         const context = this.context;
         if (!context) {
@@ -137,6 +167,13 @@ export class ExerciseMetadataSyncService {
         this.applyConflictResolution(context, snapshot, resolution);
     }
 
+    /**
+     * Fetches an exercise snapshot for a given version.
+     *
+     * @param exerciseId the exercise id
+     * @param versionId the version id
+     * @returns the snapshot or undefined if the request fails
+     */
     private async fetchSnapshot(exerciseId: number, versionId: number): Promise<ExerciseSnapshotDTO | undefined> {
         try {
             return await firstValueFrom(this.http.get<ExerciseSnapshotDTO>(`api/exercise/${exerciseId}/version/${versionId}`));
@@ -145,6 +182,14 @@ export class ExerciseMetadataSyncService {
         }
     }
 
+    /**
+     * Collects conflicts by comparing current, baseline, and incoming values.
+     *
+     * @param context the metadata synchronization context
+     * @param snapshot the incoming exercise snapshot
+     * @param handlers handlers used to resolve metadata fields
+     * @returns a list of conflicting fields
+     */
     private collectConflicts<T extends Exercise>(
         context: ExerciseMetadataSyncContext<T>,
         snapshot: ExerciseSnapshotDTO,
@@ -175,6 +220,14 @@ export class ExerciseMetadataSyncService {
         return conflicts;
     }
 
+    /**
+     * Applies incoming changes for fields without conflicts.
+     *
+     * @param context the metadata synchronization context
+     * @param snapshot the incoming exercise snapshot
+     * @param handlers handlers used to resolve metadata fields
+     * @param conflicts list of conflict candidates
+     */
     private applyNonConflictingChanges<T extends Exercise>(
         context: ExerciseMetadataSyncContext<T>,
         snapshot: ExerciseSnapshotDTO,
@@ -193,6 +246,14 @@ export class ExerciseMetadataSyncService {
         }
     }
 
+    /**
+     * Updates the baseline snapshot for changed fields.
+     *
+     * @param context the metadata synchronization context
+     * @param snapshot the incoming exercise snapshot
+     * @param handlers handlers used to resolve metadata fields
+     * @param changedFields list of changed field identifiers
+     */
     private applySnapshotToBaseline<T extends Exercise>(
         context: ExerciseMetadataSyncContext<T>,
         snapshot: ExerciseSnapshotDTO,
@@ -211,11 +272,28 @@ export class ExerciseMetadataSyncService {
         context.setBaselineExercise(baselineExercise);
     }
 
+    /**
+     * Opens the conflict resolution modal for conflicting fields.
+     *
+     * @param conflicts the list of conflicts to display
+     * @param author the author of the incoming version
+     * @param versionId the incoming version id
+     * @returns the modal result or undefined if dismissed
+     */
     private async openConflictModal(conflicts: ConflictCandidate[], author: UserPublicInfoDTO, versionId: number): Promise<ExerciseMetadataConflictModalResult | undefined> {
-        const modalRef = this.modalService.open(ExerciseMetadataConflictModalComponent, { size: 'lg', backdrop: 'static', keyboard: false });
+        const modalRef = this.modalService.open(ExerciseMetadataConflictModalComponent, {
+            size: 'xl',
+            windowClass: 'exercise-metadata-conflict-modal',
+            backdrop: 'static',
+            keyboard: false,
+        });
         modalRef.componentInstance.setConflicts(conflicts);
         modalRef.componentInstance.setAuthor(author);
         modalRef.componentInstance.setVersionId(versionId);
+        if (this.context) {
+            modalRef.componentInstance.setExerciseId(this.context.exerciseId);
+            modalRef.componentInstance.setExerciseType(this.context.exerciseType);
+        }
 
         try {
             return (await modalRef.result) as ExerciseMetadataConflictModalResult;
@@ -224,6 +302,13 @@ export class ExerciseMetadataSyncService {
         }
     }
 
+    /**
+     * Applies conflict resolution decisions to the current exercise.
+     *
+     * @param context the metadata synchronization context
+     * @param snapshot the incoming exercise snapshot
+     * @param resolution the modal resolution with per-field decisions
+     */
     private applyConflictResolution<T extends Exercise>(
         context: ExerciseMetadataSyncContext<T>,
         snapshot: ExerciseSnapshotDTO,
@@ -234,11 +319,15 @@ export class ExerciseMetadataSyncService {
         const handlerMap = new Map(handlers.map((handler) => [handler.key, handler]));
 
         for (const decision of resolution.decisions) {
-            if (!decision.useIncoming) {
-                continue;
-            }
             const handler = handlerMap.get(decision.field);
             if (!handler) {
+                continue;
+            }
+            if (decision.resolvedValue !== undefined) {
+                handler.applyValue(currentExercise, decision.resolvedValue);
+                continue;
+            }
+            if (!decision.useIncoming) {
                 continue;
             }
             const incomingValue = handler.getIncomingValue(snapshot);
@@ -246,6 +335,13 @@ export class ExerciseMetadataSyncService {
         }
     }
 
+    /**
+     * Compares values including dayjs timestamps with normalized server dates.
+     *
+     * @param value the left value
+     * @param otherValue the right value
+     * @returns true if the values are considered equal
+     */
     private valuesEqual(value: unknown, otherValue: unknown): boolean {
         if (dayjs.isDayjs(value) || dayjs.isDayjs(otherValue)) {
             const normalizedLeft = dayjs.isDayjs(value) ? value : convertDateFromServer(value as any);
@@ -258,6 +354,12 @@ export class ExerciseMetadataSyncService {
         return isEqual(value, otherValue);
     }
 
+    /**
+     * Creates the metadata handlers for a given exercise type.
+     *
+     * @param context the metadata synchronization context
+     * @returns the handlers used for metadata resolution
+     */
     private getHandlers(context: ExerciseMetadataSyncContext<Exercise>): ExerciseMetadataFieldHandler<Exercise>[] {
         return createExerciseMetadataHandlers(context.exerciseType, () => context.getCurrentExercise());
     }
