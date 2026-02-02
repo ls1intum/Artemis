@@ -878,6 +878,16 @@ public class HazelcastConfiguration {
 
         // Connection timeout
         config.setProperty(ClusterProperty.SOCKET_CONNECT_TIMEOUT_SECONDS.getName(), "5");
+
+        // Client (build agent) heartbeat detection - detect unresponsive clients faster
+        // This is the SERVER-SIDE timeout for detecting unresponsive Hazelcast clients.
+        // When a build agent is frozen (e.g., kill -STOP), the core node uses this timeout
+        // to detect the client is gone. Default is 300 seconds (5 minutes), which is too slow.
+        // Set to 30 seconds to provide 2x buffer over client-side timeout (15s) for network
+        // jitter tolerance while still detecting frozen build agents within a reasonable timeframe.
+        // Note: The client-side properties (hazelcast.client.heartbeat.*) configured in
+        // configureClientHeartbeat() control how clients detect server disconnection, not the reverse.
+        config.setProperty(ClusterProperty.CLIENT_HEARTBEAT_TIMEOUT_SECONDS.getName(), "30");
     }
 
     /**
