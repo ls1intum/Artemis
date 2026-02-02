@@ -1,5 +1,3 @@
-import SwiftSyntax
-import SwiftParser
 import Foundation
 
 // MARK: - Source File Reading
@@ -20,19 +18,7 @@ public func sourceFileExists(for className: String) -> Bool {
     return getSourceFileContents(for: className) != nil
 }
 
-// MARK: - AST Parsing
-
-/// Parses a Swift source file and returns the syntax tree
-/// - Parameter className: The name of the class to parse
-/// - Returns: The parsed SourceFileSyntax, or nil if parsing fails
-public func getParsedSyntax(for className: String) -> SourceFileSyntax? {
-    guard let source = getSourceFileContents(for: className) else {
-        return nil
-    }
-    return Parser.parse(source: source)
-}
-
-// MARK: - Structural Analysis
+// MARK: - Structural Analysis (Regex-based)
 
 /// Collects structural information from a Swift source file
 public struct SourceFileStructure: Sendable {
@@ -49,75 +35,61 @@ public struct SourceFileStructure: Sendable {
     }
 }
 
-/// Visitor that collects structural information from Swift syntax
-/// Note: Marked @unchecked Sendable because it's only used synchronously within a single function
-private final class StructureCollector: SyntaxVisitor, @unchecked Sendable {
-    var classes: [String] = []
-    var structs: [String] = []
-    var protocols: [String] = []
-    var enums: [String] = []
-    var functions: [String] = []
-    var properties: [String] = []
-
-    init() {
-        super.init(viewMode: .sourceAccurate)
-    }
-
-    override func visit(_ node: ClassDeclSyntax) -> SyntaxVisitorContinueKind {
-        classes.append(node.name.text)
-        return .visitChildren
-    }
-
-    override func visit(_ node: StructDeclSyntax) -> SyntaxVisitorContinueKind {
-        structs.append(node.name.text)
-        return .visitChildren
-    }
-
-    override func visit(_ node: ProtocolDeclSyntax) -> SyntaxVisitorContinueKind {
-        protocols.append(node.name.text)
-        return .visitChildren
-    }
-
-    override func visit(_ node: EnumDeclSyntax) -> SyntaxVisitorContinueKind {
-        enums.append(node.name.text)
-        return .visitChildren
-    }
-
-    override func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
-        functions.append(node.name.text)
-        return .visitChildren
-    }
-
-    override func visit(_ node: VariableDeclSyntax) -> SyntaxVisitorContinueKind {
-        // Extract variable names from pattern bindings
-        for binding in node.bindings {
-            if let identifier = binding.pattern.as(IdentifierPatternSyntax.self) {
-                properties.append(identifier.identifier.text)
-            }
-        }
-        return .visitChildren
-    }
-}
-
-/// Analyzes a source file and returns its structural information
+/// Analyzes a source file and returns its structural information using regex
 /// - Parameter className: The name of the class file to analyze
-/// - Returns: SourceFileStructure containing all declarations, or nil if parsing fails
+/// - Returns: SourceFileStructure containing all declarations, or nil if file doesn't exist
 public func getSourceFileStructure(for className: String) -> SourceFileStructure? {
-    guard let syntax = getParsedSyntax(for: className) else {
+    guard let source = getSourceFileContents(for: className) else {
         return nil
     }
 
-    let collector = StructureCollector()
-    collector.walk(syntax)
-
     return SourceFileStructure(
-        classes: collector.classes,
-        structs: collector.structs,
-        protocols: collector.protocols,
-        enums: collector.enums,
-        functions: collector.functions,
-        properties: collector.properties
+        classes: findDeclarations(in: source, pattern: #"class\s+([A-Za-z_][A-Za-z0-9_]*)"#),
+        structs: findDeclarations(in: source, pattern: #"struct\s+([A-Za-z_][A-Za-z0-9_]*)"#),
+        protocols: findDeclarations(in: source, pattern: #"protocol\s+([A-Za-z_][A-Za-z0-9_]*)"#),
+        enums: findDeclarations(in: source, pattern: #"enum\s+([A-Za-z_][A-Za-z0-9_]*)"#),
+        functions: findDeclarations(in: source, pattern: #"func\s+([A-Za-z_][A-Za-z0-9_]*)"#),
+        properties: findPropertyDeclarations(in: source)
     )
+}
+
+/// Finds all matches for a declaration pattern and returns the captured names
+private func findDeclarations(in source: String, pattern: String) -> [String] {
+    guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
+        return []
+    }
+
+    let range = NSRange(source.startIndex..., in: source)
+    let matches = regex.matches(in: source, options: [], range: range)
+
+    return matches.compactMap { match -> String? in
+        guard match.numberOfRanges >= 2,
+              let nameRange = Range(match.range(at: 1), in: source) else {
+            return nil
+        }
+        return String(source[nameRange])
+    }
+}
+
+/// Finds property declarations (var and let) in source code
+private func findPropertyDeclarations(in source: String) -> [String] {
+    // Match: var/let identifier followed by : or = (but not in function parameters)
+    let pattern = #"(?:^|\n)\s*(?:public\s+|private\s+|internal\s+|fileprivate\s+)?(?:static\s+)?(?:var|let)\s+([A-Za-z_][A-Za-z0-9_]*)\s*[:\=]"#
+
+    guard let regex = try? NSRegularExpression(pattern: pattern, options: [.anchorsMatchLines]) else {
+        return []
+    }
+
+    let range = NSRange(source.startIndex..., in: source)
+    let matches = regex.matches(in: source, options: [], range: range)
+
+    return matches.compactMap { match -> String? in
+        guard match.numberOfRanges >= 2,
+              let nameRange = Range(match.range(at: 1), in: source) else {
+            return nil
+        }
+        return String(source[nameRange])
+    }
 }
 
 // MARK: - Convenience Methods for Tests
