@@ -22,7 +22,7 @@ import { ImportAllCompetenciesComponent } from 'app/atlas/manage/competency-mana
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-management/competency-management-table.component';
 import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
@@ -131,7 +131,7 @@ describe('CompetencyManagementComponent', () => {
         ]);
 
         const profileInfoResponse = {
-            activeProfiles: [PROFILE_IRIS],
+            activeModuleFeatures: [MODULE_FEATURE_IRIS],
         } as ProfileInfo;
         getProfileInfoSpy = vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoResponse);
 
