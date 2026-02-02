@@ -421,7 +421,7 @@ public class HazelcastConfiguration {
         configureCacheMaps(config, jHipsterProperties);
         config.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
 
-        configureIsolatedNetworking(config);
+        configureIsolatedNetworkingForTests(config);
 
         return Hazelcast.newHazelcastInstance(config);
     }
@@ -452,14 +452,16 @@ public class HazelcastConfiguration {
      *
      * @param config the Hazelcast configuration to modify
      */
-    private void configureIsolatedNetworking(Config config) {
+    private void configureIsolatedNetworkingForTests(Config config) {
         var joinConfig = config.getNetworkConfig().getJoin();
         joinConfig.getMulticastConfig().setEnabled(false);
         joinConfig.getTcpIpConfig().setEnabled(false);
         joinConfig.getAwsConfig().setEnabled(false);
         joinConfig.getKubernetesConfig().setEnabled(false);
         joinConfig.getEurekaConfig().setEnabled(false);
+        joinConfig.getAutoDetectionConfig().setEnabled(false);
 
+        config.setProperty("hazelcast.discovery.enabled", "false");
         config.getNetworkConfig().setPort(findAvailablePort());
         config.getNetworkConfig().setPortAutoIncrement(false);
         config.setProperty("hazelcast.local.localAddress", "127.0.0.1");
@@ -1032,7 +1034,10 @@ public class HazelcastConfiguration {
      * @param clientConfig the client configuration to modify
      */
     private void configureClientIdentity(ClientConfig clientConfig) {
-        String buildAgentShortName = env.getProperty("artemis.continuous-integration.build-agent.short-name", instanceName + "-client");
+        String buildAgentShortName = env.getProperty("artemis.continuous-integration.build-agent.short-name");
+        if (buildAgentShortName == null || buildAgentShortName.trim().isEmpty()) {
+            buildAgentShortName = instanceName + "-client";
+        }
         clientConfig.setInstanceName(buildAgentShortName);
 
         if (!hazelcastLocalInstances) {
