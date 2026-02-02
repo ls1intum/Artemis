@@ -27,13 +27,13 @@ plugins {
     id "org.owasp.dependencycheck" version "12.2.0"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
-    id "org.openapi.generator" version "7.18.0"
+    id "org.openapi.generator" version "7.19.0"
     id "com.google.osdetector" version "1.7.3"
     id "org.cyclonedx.bom" version "3.1.0"
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.7.3"
+version = "8.8.0"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -196,7 +196,7 @@ dependencies {
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
 
     implementation "jakarta.ws.rs:jakarta.ws.rs-api:4.0.0"
-    implementation "org.glassfish.jersey.core:jersey-common:4.0.0"
+    implementation "org.glassfish.jersey.core:jersey-common:4.0.1"
 
     implementation "de.jplag:jplag:${jplag_version}"
 
@@ -363,9 +363,9 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client"
 
-    implementation "org.springframework.data:spring-data-jpa:3.5.6"
-    implementation "org.springframework.data:spring-data-ldap:3.5.6"
-    implementation "org.springframework.ldap:spring-ldap-core:3.3.4"
+    implementation "org.springframework.data:spring-data-jpa:3.5.8"
+    implementation "org.springframework.data:spring-data-ldap:3.5.8"
+    implementation "org.springframework.ldap:spring-ldap-core:3.3.5"
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-starter-config:${spring_cloud_version}"
@@ -442,7 +442,7 @@ dependencies {
 
     implementation "com.google.errorprone:error_prone_annotations:2.46.0"
     // needed for OpenAPI generation
-    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.15"
 
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
@@ -516,7 +516,7 @@ apply from: "gradle/openapi.gradle"
 
 dependencyManagement {
     imports {
-        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:17.2.0"
+        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:18.1.0"
     }
 }
 

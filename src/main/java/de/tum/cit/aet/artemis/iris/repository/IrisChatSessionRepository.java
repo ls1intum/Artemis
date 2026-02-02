@@ -1,22 +1,23 @@
 package de.tum.cit.aet.artemis.iris.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dao.IrisChatSessionDAO;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 
 @Lazy
 @Repository
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChatSession, Long> {
 
     /**
@@ -57,19 +58,36 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
     List<IrisChatSessionDAO> findByCourseIdAndUserId(@Param("courseId") long courseId, @Param("userId") long userId);
 
     /**
-     * Finds all chat sessions for a user with their messages loaded, ordered by creation date.
-     * Used for GDPR data export to retrieve all AI tutor interactions for a user.
+     * Finds all chat session IDs for a user, ordered by creation date.
+     * Used internally to fetch sessions in a two-step process to avoid PostgreSQL
+     * JSON equality comparison issues with DISTINCT.
      *
      * @param userId the ID of the user
-     * @return a list of all chat sessions with messages for the user
+     * @return a set of session IDs for the user
      */
     @Query("""
-            SELECT DISTINCT s
+            SELECT s.id
+            FROM IrisChatSession s
+            WHERE s.userId = :userId
+            """)
+    Set<Long> findSessionIdsByUserId(@Param("userId") long userId);
+
+    /**
+     * Finds all chat sessions by their IDs with messages and content eagerly loaded.
+     * Used internally as the second step of a two-query approach to load sessions
+     * with their messages while avoiding PostgreSQL JSON equality comparison issues.
+     * Note: This query intentionally does not use DISTINCT because PostgreSQL cannot
+     * compare JSON columns for equality. Deduplication must be done in the service layer.
+     *
+     * @param sessionIds the IDs of the sessions to fetch
+     * @return a set of chat sessions with messages (may contain duplicates due to LEFT JOIN FETCH)
+     */
+    @Query("""
+            SELECT s
             FROM IrisChatSession s
                 LEFT JOIN FETCH s.messages m
                 LEFT JOIN FETCH m.content
-            WHERE s.userId = :userId
-            ORDER BY s.creationDate ASC
+            WHERE s.id IN :sessionIds
             """)
-    List<IrisChatSession> findAllWithMessagesByUserId(@Param("userId") long userId);
+    Set<IrisChatSession> findAllWithMessagesByIds(@Param("sessionIds") Collection<Long> sessionIds);
 }
