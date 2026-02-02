@@ -84,7 +84,7 @@ import { MockScienceService } from 'test/helpers/mocks/service/mock-science-serv
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
@@ -458,7 +458,7 @@ describe('CourseExerciseDetailsComponent', () => {
         participationWebsocketBehaviorSubject.next({ ...newParticipation, exercise: programmingExercise });
     });
 
-    it.each<[string[]]>([[[]], [[PROFILE_IRIS]]])('should load iris settings only if profile iris is active', async (activeProfiles: string[]) => {
+    it.each<[string[]]>([[[]], [[MODULE_FEATURE_IRIS]]])('should load iris settings only if module feature iris is active', async (activeModuleFeatures: string[]) => {
         vi.useFakeTimers();
         // Setup
         const submissionPolicy = new LockRepositoryPolicy();
@@ -475,8 +475,8 @@ describe('CourseExerciseDetailsComponent', () => {
         getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: programmingExercise } }));
 
         const profileService = TestBed.inject(ProfileService);
-        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles } as any as ProfileInfo);
-        vi.spyOn(profileService, 'isProfileActive').mockReturnValue(activeProfiles.includes(PROFILE_IRIS));
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeModuleFeatures } as any as ProfileInfo);
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(activeModuleFeatures.includes(MODULE_FEATURE_IRIS));
 
         const irisSettingsService = TestBed.inject(IrisSettingsService);
         const getCourseSettingsSpy = vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(fakeSettings));
@@ -485,7 +485,7 @@ describe('CourseExerciseDetailsComponent', () => {
         comp.ngOnInit();
         await vi.advanceTimersByTimeAsync(0);
 
-        if (activeProfiles.includes(PROFILE_IRIS)) {
+        if (activeModuleFeatures.includes(MODULE_FEATURE_IRIS)) {
             // Should have called getCourseSettings if 'iris' is active
             expect(getCourseSettingsSpy).toHaveBeenCalledWith(1);
             expect(comp.irisEnabled).toBe(true);
