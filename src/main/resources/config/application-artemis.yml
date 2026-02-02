@@ -12,7 +12,7 @@ artemis:
   bcrypt-salt-rounds: 11  # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
   # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
   user-management:
-    use-external: false # enables ldap authentication
+    use-external: true # enables ldap authentication
     password-reset:
       links: # The password reset links for different languages
         en: '<link>'
@@ -53,13 +53,11 @@ artemis:
     default-branch: main            # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
     repository-authentication-mechanisms: password,token,ssh # the order of authentication mechanisms in the code button pop up. Removing parts removes them from the drop-down
   continuous-integration:
-    user: admin
-    password: admin
+    user: <username>
+    password: <password>
     token: <token>                  # Enter a valid token generated in the CI system giving Artemis full Admin access
-    url: "http://localhost:8082" # The URL of the CI system, e.g. http://localhost:8081
-
-    # Key of the saved credentials for the VCS service:w
-
+    url: <url>
+    # Key of the saved credentials for the VCS service:
     # Jenkins: You have to specify the key from the credentials page in Jenkins under which the user and
     #          password for the VCS are stored
     vcs-credentials: myCredentialsKey #must be changed to a secure value

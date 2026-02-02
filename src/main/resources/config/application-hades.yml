@@ -5,8 +5,11 @@
 # ===================================================================
 artemis:
   continuous-integration:
-    url: http://localhost:8082
-    artemis-authentication-token-value: ""
+    url: http://localhost:8081
+    artemis-authentication-token-value: superduperlongtestingsecrettoken
     hades:
       images:
-        clone-image: ghcr.io/mtze/hades/hades-clone-container:latest
+        clone-image: ghcr.io/ls1intum/hades/hades-clone-container:latest
+        result-parser-image: ghcr.io/ls1intum/hades/junit-result-parser:latest
+      adapter:
+        endpoint: http://host.docker.internal:8083/adapter/test-results

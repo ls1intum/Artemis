@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.hades.dto;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -26,8 +25,13 @@ public record HadesBuildStepDTO(Integer id, String name, String image, List<Volu
     }
 
     // Execute Step constructor
-    public HadesBuildStepDTO(Integer id, String name, String image, String script) {
-        this(id, name, image, new ArrayList<>(), "", new HashMap<>(), script);
+    public HadesBuildStepDTO(Integer id, String name, String image, List<VolumeMount> volumeMounts, String script) {
+        this(id, name, image, volumeMounts, "", new HashMap<>(), script);
+    }
+
+    // Result Parse Step constructor
+    public HadesBuildStepDTO(Integer id, String name, String image, List<VolumeMount> volumeMounts, HashMap<String, String> metadata) {
+        this(id, name, image, volumeMounts, "", metadata, "");
     }
 
     @Override

@@ -68,6 +68,14 @@ public class HadesService implements StatelessCIService {
 
     private String assignmentOrder = "2";
 
+    @Value("${artemis.continuous-integration.hades.images.result-parser-image}")
+    private String resultParserImage;
+
+    @Value("${artemis.continuous-integration.hades.adapter.endpoint}")
+    private String adapterEndPoint;
+
+    private String ingestDir = "/shared/example/build/test-results/test";
+
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
     public HadesService(RestTemplate restTemplate, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
@@ -155,7 +163,13 @@ public class HadesService implements StatelessCIService {
         var image = programmingLanguageConfiguration.getImage(ProgrammingLanguage.valueOf(buildTriggerRequestDTO.programmingLanguage()), Optional.ofNullable(projectType));
         var script = buildTriggerRequestDTO.buildScript();
         var fullScript = "set -e && cd /shared && " + script;
-        steps.add(new HadesBuildStepDTO(2, "Execute", image, fullScript));
+        steps.add(new HadesBuildStepDTO(2, "Execute", image, volumeMounts, fullScript));
+
+        // Create Parse Result Step
+        var parseResultMetadata = new HashMap<String, String>();
+        parseResultMetadata.put("API_ENDPOINT", adapterEndPoint);
+        parseResultMetadata.put("INGEST_DIR", ingestDir);
+        steps.add(new HadesBuildStepDTO(3, "Parse Result", resultParserImage, volumeMounts, parseResultMetadata));
 
         // Create Hades Job
         var timestamp = java.time.Instant.now().toString();

@@ -69,8 +69,8 @@ public class StatelessJenkinsCITriggerService implements ContinuousIntegrationTr
             // Create the test repository DTO based on the corresponding exercise
             var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getTestRepositoryUri().toString(), null, null, vscAccessToken);
 
-            // Choose if script is bash or groovy
-            String scriptType = BuildTriggerRequestDTO.ScriptType.SHELL.getValue();
+            // Jenkins uses groovy script
+            String scriptType = BuildTriggerRequestDTO.ScriptType.GROOVY.getValue();
 
             var auxiliaryRepository = new ArrayList<RepositoryDTO>();
             var additionalProperties = new HashMap<String, String>();
