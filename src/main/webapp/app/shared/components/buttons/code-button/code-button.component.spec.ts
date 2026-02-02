@@ -27,7 +27,7 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PROFILE_THEIA } from '../../../../app.constants';
-import { expectedProfileInfo } from '../../../../core/layouts/profiles/shared/profile-for-tests.constants.';
+import { expectedProfileInfo } from 'app/core/layouts/profiles/shared/profile-for-tests.constants';
 
 describe('CodeButtonComponent', () => {
     setupTestBed({ zoneless: true });
@@ -213,7 +213,6 @@ describe('CodeButtonComponent', () => {
         localStorageState = RepositoryAuthenticationMethod.Token;
 
         await component.ngOnInit();
-        fixture.detectChanges();
         fixture.detectChanges();
         await fixture.whenStable();
 

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { expectedProfileInfo } from '../profiles/shared/profile-for-tests.constants.';
+import { expectedProfileInfo } from '../profiles/shared/profile-for-tests.constants';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RouterModule } from '@angular/router';
