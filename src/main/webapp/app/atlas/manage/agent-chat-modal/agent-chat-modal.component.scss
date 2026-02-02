@@ -241,7 +241,8 @@
         max-height: 90vh;
 
         .messages-container {
-            max-height: calc(90vh - 11.25rem); /* account for header and footer on mobile */
+            /* account for header and footer on mobile */
+            max-height: calc(90vh - 11.25rem);
 
             .message-wrapper {
                 &.user-message .message-content,
