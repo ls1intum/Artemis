@@ -61,6 +61,7 @@ artemis:
         name: Artemis
         email: artemis@in.tum.de
     athena:
+        enabled: true # Athena AI-assisted feedback service
         url: http://localhost:5100
         secret: abcdef12345
         restricted-modules: module_text_test_restricted,module_programming_test_restricted

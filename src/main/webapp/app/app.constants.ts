@@ -102,8 +102,6 @@ export const PROFILE_TEST = 'test';
 
 export const PROFILE_JENKINS = 'jenkins';
 
-export const PROFILE_ATHENA = 'athena';
-
 export const PROFILE_THEIA = 'theia';
 
 export const PROFILE_LDAP = 'ldap';
@@ -119,7 +117,6 @@ export type ProfileFeature =
     | typeof PROFILE_DEV
     | typeof PROFILE_TEST
     | typeof PROFILE_JENKINS
-    | typeof PROFILE_ATHENA
     | typeof PROFILE_THEIA
     | typeof PROFILE_LDAP
     | typeof PROFILE_SAML2;

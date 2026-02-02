@@ -12,7 +12,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_IRIS, PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_IRIS, PROFILE_LDAP, PROFILE_THEIA } from 'app/app.constants';
 
 describe('AdminFeatureToggleComponentTest', () => {
     setupTestBed({ zoneless: true });
@@ -114,13 +114,13 @@ describe('AdminFeatureToggleComponentTest', () => {
         it('should set isActive based on active profiles', () => {
             // Mock profile service to return some active profiles
             vi.spyOn(mockProfileService, 'isProfileActive').mockImplementation((profile: string) => {
-                return profile === PROFILE_IRIS;
+                return profile === PROFILE_THEIA;
             });
 
             comp.ngOnInit();
             const profiles = comp.profileFeatures();
 
-            const iris = profiles.find((p) => p.profile === PROFILE_IRIS);
+            const iris = profiles.find((p) => p.profile === PROFILE_THEIA);
             expect(iris?.isActive).toBe(true);
         });
 
@@ -128,7 +128,7 @@ describe('AdminFeatureToggleComponentTest', () => {
             comp.ngOnInit();
             const profiles = comp.profileFeatures();
 
-            const iris = profiles.find((p) => p.profile === PROFILE_IRIS);
+            const iris = profiles.find((p) => p.profile === PROFILE_THEIA);
             expect(iris?.documentationLink).toBeDefined();
             expect(iris?.documentationLink).toContain('docs.artemis.tum.de');
         });
@@ -184,13 +184,13 @@ describe('AdminFeatureToggleComponentTest', () => {
         });
 
         it('getProfileNameKey should return correct translation key', () => {
-            const key = comp.getProfileNameKey(PROFILE_ATHENA);
-            expect(key).toBe('artemisApp.features.profiles.athena.name');
+            const key = comp.getProfileNameKey(PROFILE_LDAP);
+            expect(key).toBe('artemisApp.features.profiles.ldap.name');
         });
 
         it('getProfileDescriptionKey should return correct translation key', () => {
-            const key = comp.getProfileDescriptionKey(PROFILE_IRIS);
-            expect(key).toBe('artemisApp.features.profiles.iris.description');
+            const key = comp.getProfileDescriptionKey(PROFILE_THEIA);
+            expect(key).toBe('artemisApp.features.profiles.theia.description');
         });
 
         it('getModuleFeatureNameKey should return correct translation key', () => {
