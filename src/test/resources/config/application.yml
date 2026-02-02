@@ -107,6 +107,10 @@ artemis:
         matlab:
             license-server: "1234@license-server"
 
+    # Iris configuration - disabled by default, enabled in application-artemis.yml for tests
+    iris:
+        enabled: false
+
     # Nebula configuration for tests
     nebula:
         enabled: true
