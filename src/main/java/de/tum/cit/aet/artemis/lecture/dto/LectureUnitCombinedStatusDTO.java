@@ -31,14 +31,4 @@ public record LectureUnitCombinedStatusDTO(Long lectureUnitId, ProcessingPhase p
         }
         return new LectureUnitCombinedStatusDTO(unitId, ProcessingPhase.IDLE, 0, null, null, transcriptionStatus);
     }
-
-    /**
-     * Create a DTO for a lecture unit with no processing state (idle) and no transcription.
-     *
-     * @param lectureUnitId the ID of the lecture unit
-     * @return the DTO
-     */
-    public static LectureUnitCombinedStatusDTO idle(Long lectureUnitId) {
-        return new LectureUnitCombinedStatusDTO(lectureUnitId, ProcessingPhase.IDLE, 0, null, null, null);
-    }
 }
