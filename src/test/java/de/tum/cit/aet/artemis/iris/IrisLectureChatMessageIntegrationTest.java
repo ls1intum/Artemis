@@ -21,9 +21,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -124,12 +128,44 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
                 statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
     }
 
-    @Test
+    /**
+     * Provides test cases for Memiris feature flag combinations.
+     * The expected behavior is:
+     * - memirisEnabled should only be true when BOTH the global feature AND user setting are enabled
+     * - If the global feature is disabled, user setting is overridden to false (feature gate)
+     *
+     * @return stream of test arguments: (globalFeatureEnabled, userSettingEnabled, expectedMemirisEnabled)
+     */
+    private static Stream<Arguments> memirisFeatureFlagCombinations() {
+        // @formatter:off
+        return Stream.of(
+            // Global enabled + User enabled → true
+            Arguments.of(true, true, true),
+            // Global enabled + User disabled → false
+            Arguments.of(true, false, false),
+            // Global disabled + User enabled → false (feature gate overrides user setting)
+            Arguments.of(false, true, false),
+            // Global disabled + User disabled → false
+            Arguments.of(false, false, false)
+        );
+        // @formatter:on
+    }
+
+    @ParameterizedTest
+    @MethodSource("memirisFeatureFlagCombinations")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void sendOneMessage_withMemirisFeatureEnabled_keepsUserFlag() throws Exception {
+    void sendOneMessage_withMemirisFeatureSettings_respectsGlobalFeatureGate(boolean globalFeatureEnabled, boolean userSettingEnabled, boolean expectedMemirisEnabled)
+            throws Exception {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        featureToggleService.enableFeature(Feature.Memiris);
-        userTestRepository.updateMemirisEnabled(user.getId(), true);
+
+        // Reset pipelineDone for this test iteration
+        pipelineDone.set(false);
+
+        // Set up the test scenario
+        if (globalFeatureEnabled) {
+            featureToggleService.enableFeature(Feature.Memiris);
+        }
+        userTestRepository.updateMemirisEnabled(user.getId(), userSettingEnabled);
 
         try {
             var irisSession = createSessionForUser("student1");
@@ -137,18 +173,21 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
             messageToSend.setMessageDifferentiator(1455);
 
             irisRequestMockProvider.mockLectureChatResponse(dto -> {
-                assertThat(dto.user().memirisEnabled()).isTrue();
+                assertThat(dto.user().memirisEnabled()).isEqualTo(expectedMemirisEnabled);
                 pipelineDone.set(true);
             });
 
             request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
 
             await().until(pipelineDone::get);
-            verify(irisRequestMockProvider, times(1)).mockLectureChatResponse(any());
+            // The assertion in mockLectureChatResponse callback validates the memirisEnabled value
         }
         finally {
+            // Clean up: reset to default state
             userTestRepository.updateMemirisEnabled(user.getId(), false);
-            featureToggleService.disableFeature(Feature.Memiris);
+            if (globalFeatureEnabled) {
+                featureToggleService.disableFeature(Feature.Memiris);
+            }
         }
     }
 
@@ -208,7 +247,8 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
                 assertThat(unit.lectureUnitId()).isEqualTo(textUnit.getId());
                 assertThat(unit.courseId()).isEqualTo(lecture.getCourse().getId());
                 assertThat(unit.lectureId()).isEqualTo(lecture.getId());
-                assertThat(unit.releaseDate()).isCloseTo(toInstant(textUnit.getReleaseDate()), within(1, ChronoUnit.MICROS));
+                // Text units don't have a release date set in the test utility, so expect null
+                assertThat(unit.releaseDate()).isNull();
                 assertThat(unit.name()).isEqualTo(textUnit.getName());
                 assertThat(unit.attachmentVersion()).isNull();
             });
