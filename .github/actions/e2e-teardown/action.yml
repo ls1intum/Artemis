@@ -20,7 +20,9 @@ runs:
       with:
         name: JUnit Test Results${{ inputs.artifact-name-suffix && format(' {0}', inputs.artifact-name-suffix) || '' }}
         if-no-files-found: ${{ inputs.require-tests }}
-        path: src/test/playwright/test-reports/*.xml
+        path: |
+          src/test/playwright/test-reports/*.xml
+          src/test/playwright/test-reports/**/*.xml
 
     - name: Upload Client Test Coverage Report
       if: success() || failure()

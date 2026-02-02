@@ -91,6 +91,12 @@ jobs:
             "${{ env.STATUSES_REQUEST_URL }}" \
             -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"Phase 1: Running relevant tests (${{ needs.determine-tests.outputs.relevant_count }} test paths)...","target_url":"${{ env.TARGET_URL }}"}'
 
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+          fetch-depth: 0
+
       - name: E2E Setup
         uses: ./.github/actions/e2e-setup
         with:
@@ -105,6 +111,14 @@ jobs:
         run: .ci/E2E-tests/execute.sh mysql-localci playwright "${{ needs.determine-tests.outputs.relevant_tests }}"
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
+
+      - name: Organize Phase 1 results
+        if: success() || failure()
+        shell: bash
+        run: |
+          mkdir -p src/test/playwright/test-reports/phase1
+          mv src/test/playwright/test-reports/*.xml src/test/playwright/test-reports/phase1/ 2>/dev/null || true
+          echo "✓ Phase 1 results organized"
 
       - name: E2E Teardown
         if: success() || failure()
@@ -145,6 +159,12 @@ jobs:
             "${{ env.STATUSES_REQUEST_URL }}" \
             -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"Phase 2: Running remaining tests (${{ needs.determine-tests.outputs.remaining_count }} test paths)...","target_url":"${{ env.TARGET_URL }}"}'
 
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+          fetch-depth: 0
+
       - name: E2E Setup
         uses: ./.github/actions/e2e-setup
         with:
@@ -159,6 +179,14 @@ jobs:
         run: .ci/E2E-tests/execute.sh mysql-localci playwright "${{ needs.determine-tests.outputs.remaining_tests }}" "${{ needs.determine-tests.outputs.ignore_tests }}"
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
+
+      - name: Organize Phase 2 results
+        if: success() || failure()
+        shell: bash
+        run: |
+          mkdir -p src/test/playwright/test-reports/phase2
+          mv src/test/playwright/test-reports/*.xml src/test/playwright/test-reports/phase2/ 2>/dev/null || true
+          echo "✓ Phase 2 results organized"
 
       - name: E2E Teardown
         if: success() || failure()
@@ -196,6 +224,12 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             "${{ env.STATUSES_REQUEST_URL }}" \
             -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"E2E tests are running (all tests - infrastructure changes detected)...","target_url":"${{ env.TARGET_URL }}"}'
+
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+          fetch-depth: 0
 
       - name: E2E Setup
         uses: ./.github/actions/e2e-setup
@@ -243,6 +277,12 @@ jobs:
             "${{ env.STATUSES_REQUEST_URL }}" \
             -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"E2E tests are running (all tests - multi-node)...","target_url":"${{ env.TARGET_URL }}"}'
 
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+          fetch-depth: 0
+
       - name: E2E Setup
         uses: ./.github/actions/e2e-setup
         with:
@@ -269,6 +309,12 @@ jobs:
     if: always() && github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+          fetch-depth: 0
+
       - name: Download Phase 1 test results
         if: needs.run-e2e-relevant.result == 'success' || needs.run-e2e-relevant.result == 'failure'
         uses: actions/download-artifact@v6
@@ -293,26 +339,100 @@ jobs:
           name: JUnit Test Results
           path: test-results-all
 
-      - name: Merge test results
+      - name: Organize test results
         run: |
+          # Create separate directories for phase-specific and merged results
           mkdir -p merged-results
-          cp test-results-phase1/*.xml merged-results/ 2>/dev/null || true
-          cp test-results-phase2/*.xml merged-results/ 2>/dev/null || true
-          cp test-results-all/*.xml merged-results/ 2>/dev/null || true
-          
-          # List what we have
-          echo "Merged results directory contents:"
-          ls -la merged-results/ || echo "No files found"
+          mkdir -p phase1-results
+          mkdir -p phase2-results
 
-      - name: Test Report
+          # Copy Phase 1 results to both phase-specific and merged directories
+          if [ -d test-results-phase1/phase1 ]; then
+            cp test-results-phase1/phase1/*.xml phase1-results/ 2>/dev/null || true
+            for file in test-results-phase1/phase1/*.xml; do
+              if [ -f "$file" ]; then
+                basename=$(basename "$file")
+                cp "$file" "merged-results/phase1-${basename}"
+              fi
+            done
+            echo "✓ Organized Phase 1 results"
+          fi
+
+          # Copy Phase 2 results to both phase-specific and merged directories
+          if [ -d test-results-phase2/phase2 ]; then
+            cp test-results-phase2/phase2/*.xml phase2-results/ 2>/dev/null || true
+            for file in test-results-phase2/phase2/*.xml; do
+              if [ -f "$file" ]; then
+                basename=$(basename "$file")
+                cp "$file" "merged-results/phase2-${basename}"
+              fi
+            done
+            echo "✓ Organized Phase 2 results"
+          fi
+
+          # Copy all-tests results to merged (no prefix needed - single run)
+          if [ -d test-results-all ]; then
+            cp test-results-all/*.xml merged-results/ 2>/dev/null || true
+            echo "✓ Organized all-tests results"
+          fi
+
+          # Report what we have
+          echo "Phase 1 results:"
+          ls -la phase1-results/ 2>/dev/null || echo "  No Phase 1 results"
+          echo "Phase 2 results:"
+          ls -la phase2-results/ 2>/dev/null || echo "  No Phase 2 results"
+          echo "Merged results:"
+          ls -la merged-results/ 2>/dev/null || echo "  No merged results"
+
+      - name: Test Report - Phase 1 (Relevant Tests)
         uses: mikepenz/action-junit-report@v5.6.2
-        id: test-reporter
+        id: test-reporter-phase1
+        if: always()
+        continue-on-error: true
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
+        with:
+          commit: ${{ github.event.workflow_run.head_sha }}
+          check_name: "E2E Test Report - Phase 1 (Relevant)"
+          fail_on_failure: false
+          require_tests: false
+          require_passed_tests: false
+          annotate_only: true
+          detailed_summary: true
+          include_time_in_summary: true
+          group_suite: true
+          updateComment: false
+          report_paths: 'phase1-results/*.xml'
+
+      - name: Test Report - Phase 2 (Remaining Tests)
+        uses: mikepenz/action-junit-report@v5.6.2
+        id: test-reporter-phase2
+        if: always()
+        continue-on-error: true
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
+        with:
+          commit: ${{ github.event.workflow_run.head_sha }}
+          check_name: "E2E Test Report - Phase 2 (Remaining)"
+          fail_on_failure: false
+          require_tests: false
+          require_passed_tests: false
+          annotate_only: true
+          detailed_summary: true
+          include_time_in_summary: true
+          group_suite: true
+          updateComment: false
+          report_paths: 'phase2-results/*.xml'
+
+      - name: Test Report - Overall (All Tests)
+        uses: mikepenz/action-junit-report@v5.6.2
+        id: test-reporter-overall
         if: always()
         env:
           NODE_OPTIONS: "--max_old_space_size=4096"
         with:
           commit: ${{ github.event.workflow_run.head_sha }}
-          check_name: "End-to-End (E2E) Test Report"
+          check_name: "E2E Test Report - Overall"
           fail_on_failure: true
           require_tests: false
           require_passed_tests: false
@@ -377,10 +497,10 @@ jobs:
           DESCRIPTION="${{ steps.overall-status.outputs.description }}"
 
           # Get test results if available
-          TOTAL="${{ steps.test-reporter.outputs.total || 0 }}"
-          PASSED="${{ steps.test-reporter.outputs.passed || 0 }}"
-          FAILED="${{ steps.test-reporter.outputs.failed || 0 }}"
-          SKIPPED="${{ steps.test-reporter.outputs.skipped || 0 }}"
+          TOTAL="${{ steps.test-reporter-overall.outputs.total || 0 }}"
+          PASSED="${{ steps.test-reporter-overall.outputs.passed || 0 }}"
+          FAILED="${{ steps.test-reporter-overall.outputs.failed || 0 }}"
+          SKIPPED="${{ steps.test-reporter-overall.outputs.skipped || 0 }}"
 
           if [ "$TOTAL" != "0" ]; then
             DESCRIPTION="$DESCRIPTION: $PASSED passed, $SKIPPED skipped, $FAILED failed"
@@ -424,7 +544,7 @@ jobs:
         with:
           script: |
             const prNumber = ${{ steps.find-pr.outputs.pr_number }};
-            const testSummary = `${{ steps.test-reporter.outputs.summary || 'No test summary available' }} ${{ steps.test-reporter.outputs.detailed_summary || '' }}`;
+            const testSummary = `${{ steps.test-reporter-overall.outputs.summary || 'No test summary available' }} ${{ steps.test-reporter-overall.outputs.detailed_summary || '' }}`;
             const status = `${{ steps.overall-status.outputs.status }}`;
             const description = `${{ steps.overall-status.outputs.description }}`;
             

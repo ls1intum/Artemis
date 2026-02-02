@@ -1,83 +1,36 @@
-name: 'E2E Test Setup'
-description: 'Common setup steps for E2E test jobs'
+name: 'E2E Test Teardown'
+description: 'Common teardown steps for E2E test jobs'
 
 inputs:
-  workflow-run-id:
-    description: 'The triggering workflow run ID'
-    required: true
-  workflow-head-branch:
-    description: 'The branch being tested'
-    required: true
-  workflow-head-sha:
-    description: 'The commit SHA'
-    required: true
-  github-token:
-    description: 'Token for downloading artifacts'
-    required: true
   artifact-name-suffix:
-    description: 'Optional suffix for workflow context artifact (e.g., "phase1")'
+    description: 'Suffix for artifact names (e.g., "Phase 1", "Phase 2", "")'
     required: false
     default: ''
-  test-notice:
-    description: 'Optional notice message about test selection'
+  require-tests:
+    description: 'Whether to fail if no test files found (error vs warn)'
     required: false
-    default: ''
+    default: 'warn'
 
 runs:
   using: 'composite'
   steps:
-    - name: Save triggering workflow info
-      shell: bash
-      run: |
-        echo "TRIGGERING_WORKFLOW_RUN_ID=${{ inputs.workflow-run-id }}" > workflow-context.txt
-        echo "TRIGGERING_WORKFLOW_HEAD_BRANCH=${{ inputs.workflow-head-branch }}" >> workflow-context.txt
-        echo "TRIGGERING_WORKFLOW_HEAD_SHA=${{ inputs.workflow-head-sha }}" >> workflow-context.txt
-        cat workflow-context.txt
-
-    - name: Upload workflow context
+    - name: Upload JUnit Test Results
+      if: success() || failure()
       uses: actions/upload-artifact@v5
       with:
-        name: workflow-context${{ inputs.artifact-name-suffix && format('-{0}', inputs.artifact-name-suffix) || '' }}
-        path: workflow-context.txt
+        name: JUnit Test Results${{ inputs.artifact-name-suffix && format(' {0}', inputs.artifact-name-suffix) || '' }}
+        if-no-files-found: ${{ inputs.require-tests }}
+        path: |
+          src/test/playwright/test-reports/*.xml
+          src/test/playwright/test-reports/**/*.xml
 
-    - name: Add link to triggering workflow
-      shell: bash
-      run: |
-        echo "::notice title=Triggered by workflow run::This E2E test was triggered by workflow run #${{ inputs.workflow-run-id }} - View it at https://github.com/${{ github.repository }}/actions/runs/${{ inputs.workflow-run-id }}"
-        if [ -n "${{ inputs.test-notice }}" ]; then
-          echo "::notice title=Test Selection::${{ inputs.test-notice }}"
-        fi
-
-    - name: Git Checkout
-      uses: actions/checkout@v6
+    - name: Upload Client Test Coverage Report
+      if: success() || failure()
+      uses: actions/upload-artifact@v5
       with:
-        ref: ${{ inputs.workflow-head-branch }}
+        name: E2E Client Coverage Report${{ inputs.artifact-name-suffix && format(' {0}', inputs.artifact-name-suffix) || '' }}
+        path: src/test/playwright/test-reports/client-coverage
 
-    - name: Download Docker tag
-      uses: actions/download-artifact@v6
-      with:
-        name: docker-tag
-        github-token: ${{ inputs.github-token }}
-        run-id: ${{ inputs.workflow-run-id }}
-
-    - name: Set Docker Tag Environment Variable
-      shell: bash
-      run: |
-        if [ -f "docker-tag.txt" ]; then
-          ARTEMIS_DOCKER_TAG=$(cat docker-tag.txt)
-          echo "ARTEMIS_DOCKER_TAG=${ARTEMIS_DOCKER_TAG}" >> $GITHUB_ENV
-          echo "Using Docker tag: ${ARTEMIS_DOCKER_TAG}"
-        else
-          echo "::error::No docker-tag.txt found in the previous build workflow! Artifact is needed to run E2E tests."
-          exit 1
-        fi
-
-    - name: Make scripts executable
-      shell: bash
-      run: |
-        chmod +x .ci/E2E-tests/cleanup.sh
-        chmod +x .ci/E2E-tests/execute.sh
-
-    - name: Run cleanup script (before E2E)
+    - name: Run cleanup script (after E2E)
       shell: bash
       run: .ci/E2E-tests/cleanup.sh
