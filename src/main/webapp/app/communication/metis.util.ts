@@ -2,6 +2,7 @@ import { Validators } from '@angular/forms';
 import { Params } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { Post } from './shared/entities/post.model';
+import { User } from 'app/core/user/user.model';
 
 export enum PostingEditType {
     CREATE,
@@ -143,8 +144,8 @@ export const PostTitleValidationPattern = Validators.pattern(/^(.)*\S+(.)*$/);
  * */
 export const PostContentValidationPattern = Validators.pattern(/^(\n|\r|.)*\S+(\n|\r|.)*$/);
 
-export function getUnreadPostsByLastReadDate(posts: Post[], lastReadDate: dayjs.Dayjs): Post[] {
+export function getUnreadPostsByLastReadDate(user: User, posts: Post[], lastReadDate: dayjs.Dayjs): Post[] {
     const sortedPosts = [...posts].sort((a, b) => a.creationDate!.diff(b.creationDate!));
-    const indexFirstRelevantPost = sortedPosts.findIndex((post) => post.creationDate?.isAfter(lastReadDate) && post.author?.id !== this.user.id);
-    return indexFirstRelevantPost >= 0 ? sortedPosts.slice(indexFirstRelevantPost).filter((post) => post.author?.id !== this.user.id) : [];
+    const indexFirstRelevantPost = sortedPosts.findIndex((post) => post.creationDate?.isAfter(lastReadDate) && post.author?.id !== user.id);
+    return indexFirstRelevantPost >= 0 ? sortedPosts.slice(indexFirstRelevantPost).filter((post) => post.author?.id !== user.id) : [];
 }

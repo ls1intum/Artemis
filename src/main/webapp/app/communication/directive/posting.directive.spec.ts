@@ -182,6 +182,14 @@ describe('PostingDirective', () => {
         expect(component.showReactionSelector).toBeFalse();
     });
 
+    it('should call markMessageAsUnread on metisService', () => {
+        const markMessageAsUnreadSpy = jest.spyOn(mockMetisService, 'markMessageAsUnread');
+
+        component.markMessageAsUnread();
+
+        expect(markMessageAsUnreadSpy).toHaveBeenCalledWith(component.posting);
+    });
+
     it('should not proceed in onUserNameClicked if author is not set', () => {
         const isMessagingEnabledSpy = jest.spyOn(courseModel, 'isMessagingEnabled').mockReturnValue(true);
 

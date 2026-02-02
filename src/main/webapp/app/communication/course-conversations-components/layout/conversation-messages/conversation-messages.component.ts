@@ -294,7 +294,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.allPosts = posts;
             this.setPosts();
             this.isFetchingPosts = false;
-            // comment out maybe
             this.computeLastReadState();
         });
         this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
@@ -712,7 +711,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             return [];
         }
 
-        return getUnreadPostsByLastReadDate(this.allPosts, lastReadDate);
+        return getUnreadPostsByLastReadDate(this.currentUser, this.allPosts, lastReadDate);
     }
 
     /**
