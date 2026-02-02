@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -666,8 +667,12 @@ class LectureContentProcessingServiceTest {
             testState.setPhase(ProcessingPhase.FAILED);
             testState.setId(42L);
 
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            AtomicReference<LectureUnitProcessingState> savedState = new AtomicReference<>();
+            when(processingStateRepository.save(any(LectureUnitProcessingState.class))).thenAnswer(inv -> {
+                savedState.set(inv.getArgument(0));
+                return inv.getArgument(0);
+            });
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenAnswer(inv -> Optional.ofNullable(savedState.get()));
             when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://playlist.m3u8"));
             when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("job-123");
 
@@ -680,7 +685,7 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
-        void shouldFallbackToIngestionWhenTranscriptionFails() {
+        void shouldScheduleRetryWhenTranscriptionFails() {
             // Given: Failed state with video AND PDF, transcription throws exception
             testState.setPhase(ProcessingPhase.FAILED);
             testState.setId(42L);
@@ -689,19 +694,22 @@ class LectureContentProcessingServiceTest {
             pdfAttachment.setVersion(1);
             testUnit.setAttachment(pdfAttachment);
 
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            AtomicReference<LectureUnitProcessingState> savedState = new AtomicReference<>();
+            when(processingStateRepository.save(any(LectureUnitProcessingState.class))).thenAnswer(inv -> {
+                savedState.set(inv.getArgument(0));
+                return inv.getArgument(0);
+            });
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenAnswer(inv -> Optional.ofNullable(savedState.get()));
             when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://playlist.m3u8"));
             when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenThrow(new RuntimeException("Nebula error"));
-            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
 
             // When
             LectureUnitProcessingState result = service.retryProcessing(testUnit);
 
-            // Then: Should fallback to ingestion
+            // Then: Should be in TRANSCRIBING phase with retry scheduled (standard retry mechanism)
             assertThat(result).isNotNull();
-            assertThat(result.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
-            verify(irisLectureApi).addLectureUnitToPyrisDB(any());
+            assertThat(result.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
+            assertThat(result.getRetryCount()).isEqualTo(1);
         }
 
         @Test
@@ -711,8 +719,12 @@ class LectureContentProcessingServiceTest {
             testState.setId(42L);
             testUnit.setAttachment(null);
 
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            AtomicReference<LectureUnitProcessingState> savedState = new AtomicReference<>();
+            when(processingStateRepository.save(any(LectureUnitProcessingState.class))).thenAnswer(inv -> {
+                savedState.set(inv.getArgument(0));
+                return inv.getArgument(0);
+            });
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenAnswer(inv -> Optional.ofNullable(savedState.get()));
             when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.empty());
 
             // When
@@ -735,8 +747,12 @@ class LectureContentProcessingServiceTest {
             pdfAttachment.setVersion(1);
             testUnit.setAttachment(pdfAttachment);
 
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            AtomicReference<LectureUnitProcessingState> savedState = new AtomicReference<>();
+            when(processingStateRepository.save(any(LectureUnitProcessingState.class))).thenAnswer(inv -> {
+                savedState.set(inv.getArgument(0));
+                return inv.getArgument(0);
+            });
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenAnswer(inv -> Optional.ofNullable(savedState.get()));
             when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
 
             // When
@@ -759,8 +775,12 @@ class LectureContentProcessingServiceTest {
             pdfAttachment.setVersion(1);
             testUnit.setAttachment(pdfAttachment);
 
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            AtomicReference<LectureUnitProcessingState> savedState = new AtomicReference<>();
+            when(processingStateRepository.save(any(LectureUnitProcessingState.class))).thenAnswer(inv -> {
+                savedState.set(inv.getArgument(0));
+                return inv.getArgument(0);
+            });
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenAnswer(inv -> Optional.ofNullable(savedState.get()));
             when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn(null);
 
             // When
@@ -772,7 +792,7 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
-        void shouldReturnFailedWhenIngestionThrows() {
+        void shouldScheduleRetryWhenIngestionThrows() {
             // Given: Failed state with PDF only, ingestion throws
             testState.setPhase(ProcessingPhase.FAILED);
             testState.setId(42L);
@@ -782,17 +802,21 @@ class LectureContentProcessingServiceTest {
             pdfAttachment.setVersion(1);
             testUnit.setAttachment(pdfAttachment);
 
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            AtomicReference<LectureUnitProcessingState> savedState = new AtomicReference<>();
+            when(processingStateRepository.save(any(LectureUnitProcessingState.class))).thenAnswer(inv -> {
+                savedState.set(inv.getArgument(0));
+                return inv.getArgument(0);
+            });
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenAnswer(inv -> Optional.ofNullable(savedState.get()));
             when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenThrow(new RuntimeException("Pyris error"));
 
             // When
             LectureUnitProcessingState result = service.retryProcessing(testUnit);
 
-            // Then: Should return failed state
+            // Then: Should be in INGESTING phase with retry scheduled (standard retry mechanism)
             assertThat(result).isNotNull();
-            assertThat(result.getPhase()).isEqualTo(ProcessingPhase.FAILED);
-            assertThat(result.getErrorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.ingestionFailed");
+            assertThat(result.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+            assertThat(result.getRetryCount()).isEqualTo(1);
         }
     }
 
