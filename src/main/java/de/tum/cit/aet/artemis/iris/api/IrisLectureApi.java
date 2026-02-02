@@ -1,17 +1,16 @@
 package de.tum.cit.aet.artemis.iris.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.util.List;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 @Controller
 @Lazy
 public class IrisLectureApi extends AbstractIrisApi {
