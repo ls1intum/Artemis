@@ -62,7 +62,7 @@ public class CompetencyMappingToolsService {
 
     private final CourseRepository courseRepository;
 
-    private final AtlasAgentService atlasAgentService;
+    private final AtlasAgentSessionCacheService sessionCacheService;
 
     private final AtlasMLApi atlasMLApi;
 
@@ -80,13 +80,13 @@ public class CompetencyMappingToolsService {
 
     public CompetencyMappingToolsService(ObjectMapper objectMapper, CourseCompetencyRepository courseCompetencyRepository,
             CompetencyRelationRepository competencyRelationRepository, CompetencyRelationService competencyRelationService, CourseRepository courseRepository,
-            @Lazy AtlasAgentService atlasAgentService, @Lazy AtlasMLApi atlasMLApi) {
+            AtlasAgentSessionCacheService atlasAgentSessionCacheService, AtlasMLApi atlasMLApi) {
         this.objectMapper = objectMapper;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.competencyRelationService = competencyRelationService;
         this.courseRepository = courseRepository;
-        this.atlasAgentService = atlasAgentService;
+        this.sessionCacheService = atlasAgentSessionCacheService;
         this.atlasMLApi = atlasMLApi;
     }
 
@@ -167,7 +167,7 @@ public class CompetencyMappingToolsService {
             return errorResponse("No active session available");
         }
 
-        List<CompetencyRelationDTO> cachedData = atlasAgentService.getCachedRelationData(sessionId);
+        List<CompetencyRelationDTO> cachedData = sessionCacheService.getCachedRelationData(sessionId);
         if (cachedData == null || cachedData.isEmpty()) {
             return errorResponse("No previewed relation data found for this session");
         }
@@ -210,7 +210,7 @@ public class CompetencyMappingToolsService {
         // Cache the relation operation data for refinement operations (possible update request)
         String sessionId = currentSessionId.get();
         if (sessionId != null && !Boolean.TRUE.equals(viewOnly)) {
-            atlasAgentService.cacheRelationOperations(sessionId, new ArrayList<>(relations));
+            sessionCacheService.cacheRelationOperations(sessionId, new ArrayList<>(relations));
         }
 
         return relations.size() == 1 ? "Preview generated successfully for 1 relation mapping." : "Preview generated successfully for " + relations.size() + " relation mappings.";

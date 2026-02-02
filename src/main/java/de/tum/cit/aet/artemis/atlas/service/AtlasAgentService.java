@@ -18,7 +18,6 @@ import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -27,7 +26,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
-import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentChatResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentHistoryMessageDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.BatchRelationPreviewResponseDTO;
@@ -35,8 +33,6 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyRelationPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.RelationGraphPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.SingleRelationPreviewResponseDTO;
-import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService.CompetencyOperation;
-import de.tum.cit.aet.artemis.core.util.SessionBasedCache;
 
 /**
  * Service for Atlas Agent functionality with Azure OpenAI integration.
@@ -65,18 +61,6 @@ public class AtlasAgentService {
     private static final String PREVIEW_DATA_START_MARKER = "%%PREVIEW_DATA_START%%";
 
     private static final String PREVIEW_DATA_END_MARKER = "%%PREVIEW_DATA_END%%";
-
-    /**
-     * Cache name for tracking pending competency operations for each session.
-     * Must be configured in CacheConfiguration with appropriate TTL (2 hours recommended).
-     */
-    public static final String ATLAS_SESSION_PENDING_OPERATIONS_CACHE = "atlas-session-pending-operations";
-
-    /**
-     * Cache name for tracking pending relation operations for each session.
-     * Must be configured in CacheConfiguration with appropriate TTL (2 hours recommended).
-     */
-    public static final String ATLAS_SESSION_PENDING_RELATIONS_CACHE = "atlas-session-pending-relations";
 
     private final ChatClient chatClient;
 
@@ -110,11 +94,7 @@ public class AtlasAgentService {
 
     private static final ThreadLocal<Boolean> competencyModifiedInCurrentRequest = ThreadLocal.withInitial(() -> false);
 
-    private final SessionBasedCache<CompetencyOperation> pendingCompetencyOperationsCache;
-
-    private final SessionBasedCache<CompetencyRelationDTO> pendingRelationOperationsCache;
-
-    public AtlasAgentService(CacheManager cacheManager, @Autowired(required = false) ChatClient chatClient, AtlasPromptTemplateService templateService,
+    public AtlasAgentService(@Autowired(required = false) ChatClient chatClient, AtlasPromptTemplateService templateService,
             @Autowired(required = false) ToolCallbackProvider mainAgentToolCallbackProvider, @Autowired(required = false) ToolCallbackProvider competencyExpertToolCallbackProvider,
             @Autowired(required = false) ToolCallbackProvider competencyMapperToolCallbackProvider, @Autowired(required = false) ChatMemory chatMemory,
             @Value("${atlas.chat-model:gpt-4o}") String deploymentName, @Value("${atlas.chat-temperature:0.2}") double temperature) {
@@ -126,72 +106,6 @@ public class AtlasAgentService {
         this.chatMemory = chatMemory;
         this.deploymentName = deploymentName;
         this.temperature = temperature;
-        this.pendingCompetencyOperationsCache = new SessionBasedCache<>(cacheManager, ATLAS_SESSION_PENDING_OPERATIONS_CACHE);
-        this.pendingRelationOperationsCache = new SessionBasedCache<>(cacheManager, ATLAS_SESSION_PENDING_RELATIONS_CACHE);
-    }
-
-    /**
-     * Get the cached pending competency operations for a session.
-     * Used by Competency Expert to retrieve previous preview data for refinement.
-     *
-     * @param sessionId the session ID
-     * @return the cached pending competency operations, or null if none exist
-     */
-    public List<CompetencyOperation> getCachedPendingCompetencyOperations(String sessionId) {
-        return pendingCompetencyOperationsCache.get(sessionId);
-    }
-
-    /**
-     * Cache pending competency operations for a session.
-     * Called after preview generation to enable deterministic refinements.
-     *
-     * @param sessionId  the session ID
-     * @param operations the competency operations to cache
-     */
-    public void cachePendingCompetencyOperations(String sessionId, List<CompetencyOperation> operations) {
-        pendingCompetencyOperationsCache.put(sessionId, operations);
-    }
-
-    /**
-     * Clear cached pending competency operations for a session.
-     * Called after successful save or when starting a new competency flow.
-     *
-     * @param sessionId the session ID
-     */
-    public void clearCachedPendingCompetencyOperations(String sessionId) {
-        pendingCompetencyOperationsCache.evict(sessionId);
-    }
-
-    /**
-     * Get the cached relation operations for a session.
-     * Used by Competency Mapper to retrieve previous relation data.
-     *
-     * @param sessionId the session ID
-     * @return the cached relation operations, or null if none exist
-     */
-    public List<CompetencyRelationDTO> getCachedRelationData(String sessionId) {
-        return pendingRelationOperationsCache.get(sessionId);
-    }
-
-    /**
-     * Cache relation operations for a session.
-     * Called after preview generation to enable tracking.
-     *
-     * @param sessionId  the session ID
-     * @param operations the relation operations to cache
-     */
-    public void cacheRelationOperations(String sessionId, List<CompetencyRelationDTO> operations) {
-        pendingRelationOperationsCache.put(sessionId, operations);
-    }
-
-    /**
-     * Clear cached relation operations for a session.
-     * Called after successful save or when starting a new relation flow.
-     *
-     * @param sessionId the session ID
-     */
-    public void clearCachedRelationOperations(String sessionId) {
-        pendingRelationOperationsCache.evict(sessionId);
     }
 
     /**
@@ -231,23 +145,15 @@ public class AtlasAgentService {
                 return new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews, null, null);
             }
             else if (response.contains(CREATE_APPROVED_COMPETENCY)) {
-                List<CompetencyOperation> cachedData = getCachedPendingCompetencyOperations(sessionId);
-
                 String creationResponse = delegateToAgent(AgentType.COMPETENCY_EXPERT, CREATE_APPROVED_COMPETENCY, courseId, sessionId);
                 List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getAndClearPreviews();
                 String responseWithEmbeddedData = embedPreviewDataInResponse(creationResponse, previews);
-
-                if (cachedData != null && !cachedData.isEmpty()) {
-                    clearCachedPendingCompetencyOperations(sessionId);
-                }
 
                 updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, creationResponse);
 
                 return new AtlasAgentChatResponseDTO(creationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews, null, null);
             }
             else if (response.contains(CREATE_APPROVED_RELATION) || message.equals(CREATE_APPROVED_RELATION)) {
-                List<CompetencyRelationDTO> cachedRelationData = getCachedRelationData(sessionId);
-
                 // Set sessionId for tool calls
                 CompetencyMappingToolsService.setCurrentSessionId(sessionId);
 
@@ -259,10 +165,6 @@ public class AtlasAgentService {
                 RelationGraphPreviewDTO relationGraphPreview = CompetencyMappingToolsService.getRelationGraphPreview();
                 // Embed relation preview data in the response
                 String responseWithEmbeddedData = embedRelationPreviewDataInResponse(creationResponse, singleRelationPreview, batchRelationPreview, relationGraphPreview);
-
-                if (cachedRelationData != null && !cachedRelationData.isEmpty()) {
-                    clearCachedRelationOperations(sessionId);
-                }
 
                 updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, creationResponse);
 

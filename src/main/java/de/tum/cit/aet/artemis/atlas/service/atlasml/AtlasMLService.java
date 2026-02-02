@@ -137,8 +137,7 @@ public class AtlasMLService {
             // Parse the response as SuggestCompetencyResponseDTO
             try {
                 ObjectMapper objectMapper = new ObjectMapper();
-                SuggestCompetencyResponseDTO result = objectMapper.readValue(responseBody, SuggestCompetencyResponseDTO.class);
-                return result;
+                return objectMapper.readValue(responseBody, SuggestCompetencyResponseDTO.class);
             }
             catch (Exception parseException) {
                 throw new AtlasMLServiceException("Failed to parse AtlasML response", parseException);

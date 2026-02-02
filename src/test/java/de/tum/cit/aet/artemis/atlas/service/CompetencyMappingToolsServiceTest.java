@@ -51,7 +51,7 @@ class CompetencyMappingToolsServiceTest {
     private CourseTestRepository courseTestRepository;
 
     @Mock
-    private AtlasAgentService atlasAgentService;
+    private AtlasAgentSessionCacheService sessionCacheService;
 
     @Mock
     private AtlasMLApi atlasMLApi;
@@ -70,7 +70,7 @@ class CompetencyMappingToolsServiceTest {
     void setUp() {
         objectMapper = new ObjectMapper();
         service = new CompetencyMappingToolsService(objectMapper, courseCompetencyRepository, competencyRelationRepository, competencyRelationService, courseTestRepository,
-                atlasAgentService, atlasMLApi);
+                sessionCacheService, atlasMLApi);
 
         course = new Course();
         course.setId(123L);
@@ -131,7 +131,7 @@ class CompetencyMappingToolsServiceTest {
 
         service.previewRelationMappings(123L, List.of(new CompetencyRelationDTO(null, 1L, 2L, RelationType.ASSUMES)), true);
 
-        verify(atlasAgentService, never()).cacheRelationOperations(123L + "", List.of(new CompetencyRelationDTO(null, 1L, 2L, RelationType.ASSUMES)));
+        verify(sessionCacheService, never()).cacheRelationOperations(123L + "", List.of(new CompetencyRelationDTO(null, 1L, 2L, RelationType.ASSUMES)));
     }
 
     @Test
