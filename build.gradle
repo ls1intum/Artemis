@@ -398,6 +398,8 @@ dependencies {
 
     // Weaviate vector database client for semantic search
     implementation "io.weaviate:client6:${weaviate_client_version}"
+    // Gson is required by Weaviate client v6 for JSON serialization
+    implementation "com.google.code.gson:gson:2.13.2"
 
     implementation "org.opensaml:opensaml-saml-api:${opensaml_version}"
     implementation "org.opensaml:opensaml-saml-impl:${opensaml_version}"
