@@ -1,0 +1,48 @@
+<div class="onboarding-container">
+    <!-- Step 0: Welcome Modal with full backdrop -->
+    @if (step() === 0) {
+        <div class="full-backdrop"></div>
+        <div class="centered-modal-wrapper">
+            <div class="iris-onboarding-modal">
+                <button type="button" class="close-button" (click)="close()" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+
+                <div class="modal-content-wrapper">
+                    <div class="iris-avatar">
+                        <jhi-iris-logo [size]="IrisLogoSize.MEDIUM" />
+                    </div>
+
+                    <div class="text-content">
+                        <h2 class="title" jhiTranslate="artemisApp.iris.onboarding.title"></h2>
+                        <p class="description" jhiTranslate="artemisApp.iris.onboarding.description"></p>
+                    </div>
+
+                    <div class="actions">
+                        <jhi-button [btnType]="ButtonType.PRIMARY" [title]="'artemisApp.iris.onboarding.getStarted'" (onClick)="onStartTour()" />
+                        <button type="button" class="skip-link" (click)="onSkipTour()">
+                            <span jhiTranslate="artemisApp.iris.onboarding.skipTour"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Step 1: Sidebar Spotlight -->
+    @if (step() === 1) {
+        <!-- Backdrop with cutout for sidebar -->
+        <div class="backdrop-with-cutout">
+            <div class="backdrop-section backdrop-right" [style.left.px]="sidebarSpotlight.width"></div>
+        </div>
+
+        <!-- Tooltip positioned next to sidebar -->
+        <div class="onboarding-tooltip" [style.top.px]="152" [style.left.px]="sidebarSpotlight.width + 12">
+            <p class="tooltip-label" jhiTranslate="artemisApp.iris.onboarding.sidebar.label"></p>
+            <p class="tooltip-description" jhiTranslate="artemisApp.iris.onboarding.sidebar.description"></p>
+            <div class="tooltip-actions">
+                <jhi-button [btnType]="ButtonType.PRIMARY" [title]="'artemisApp.iris.onboarding.next'" (onClick)="next()" />
+            </div>
+        </div>
+    }
+</div>

@@ -1,6 +1,19 @@
 {
     "artemisApp": {
         "iris": {
+            "onboarding": {
+                "title": "Hello, I'm Iris!",
+                "description": "I'm your AI coding partner. I already know your assignment details and your current code, so you can just dive straight into asking questions.",
+                "getStarted": "Let's get started",
+                "skipTour": "Skip tour",
+                "next": "Next",
+                "back": "Back",
+                "finish": "Finish",
+                "sidebar": {
+                    "label": "Your Learning Hub",
+                    "description": "Everything you need for the course lives here. Let's find your current assignment."
+                }
+            },
             "settings": {
                 "success": "Successfully saved Iris settings",
                 "saved": "All saved",

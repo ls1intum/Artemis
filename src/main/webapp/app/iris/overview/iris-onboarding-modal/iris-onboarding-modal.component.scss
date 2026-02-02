@@ -1,0 +1,217 @@
+// Container for the entire onboarding flow
+.onboarding-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1050;
+}
+
+// Full backdrop for step 0
+.full-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(34, 34, 34, 0.6);
+}
+
+// Centered modal wrapper for step 0
+.centered-modal-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.iris-onboarding-modal {
+    position: relative;
+    background: var(--iris-secondary-background-color, var(--bs-modal-bg, var(--bs-card-bg, var(--bs-body-bg))));
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    max-width: 26.875rem;
+    width: 90%;
+}
+
+.close-button {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--bs-secondary-color);
+    cursor: pointer;
+    padding: 0;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+        opacity: 1;
+        color: var(--bs-body-color);
+    }
+}
+
+.modal-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    text-align: center;
+}
+
+.iris-avatar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 5rem;
+    height: 5rem;
+
+    :host ::ng-deep .iris-logo {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+}
+
+.text-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 24rem;
+}
+
+.title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--bs-body-color);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.description {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--bs-secondary-color);
+    margin: 0;
+}
+
+.actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    width: 100%;
+    margin-top: 0.5rem;
+
+    :host ::ng-deep jhi-button {
+        width: 100%;
+        border-radius: 8px;
+
+        button {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+}
+
+.skip-link {
+    background: none;
+    border: none;
+    color: var(--bs-secondary-color);
+    font-size: 0.875rem;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    transition: color 0.2s ease;
+
+    &:hover {
+        color: var(--bs-body-color);
+        text-decoration: underline;
+    }
+}
+
+// Spotlight overlay styles
+.spotlight-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1050;
+    pointer-events: none;
+}
+
+.backdrop-with-cutout {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.backdrop-section {
+    position: absolute;
+    background: rgba(34, 34, 34, 0.6);
+    pointer-events: auto;
+}
+
+.backdrop-right {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: calc(100% - 220px);
+}
+
+// Onboarding tooltip styles
+.onboarding-tooltip {
+    position: absolute;
+    background: var(--bs-modal-bg, var(--bs-card-bg, white));
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1);
+    width: 250px;
+    pointer-events: auto;
+    z-index: 1051;
+
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.tooltip-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--bs-secondary-color);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.tooltip-description {
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: var(--bs-body-color);
+    margin: 0;
+    line-height: 1.6;
+}
+
+.tooltip-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.5rem;
+
+    :host ::ng-deep jhi-button button {
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        padding: 0.5rem 0.75rem;
+    }
+}
