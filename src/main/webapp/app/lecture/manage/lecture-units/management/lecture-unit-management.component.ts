@@ -101,7 +101,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     };
 
     private resolvedLectureId: number | undefined;
-    private isDestroyed = false;
     private retryProcessingTimeouts = new Map<number, ReturnType<typeof setTimeout>>();
 
     ngOnInit(): void {
@@ -114,7 +113,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.isDestroyed = true;
         for (const timeoutId of this.retryProcessingTimeouts.values()) {
             clearTimeout(timeoutId);
         }
