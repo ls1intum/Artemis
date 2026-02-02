@@ -75,7 +75,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailGroupDTO;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegisteredUserDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegisterStudentDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegisteredStudentDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
@@ -492,22 +493,22 @@ public class TutorialGroupResource {
      *
      * @param courseId        the id of the course to which the tutorial group belongs to
      * @param tutorialGroupId the id of the tutorial group to which the users should be registered to
-     * @param studentDtos     the list of students who should be registered to the tutorial group
+     * @param studentDTOs     the list of students who should be registered to the tutorial group
      * @return the list of students who could not be registered for the tutorial group, because they could NOT be found in the Artemis database as students of the tutorial group
      *         course
      */
-    // TODO: there is absolutely no reason that the DTO sent as request body has any other fields than login and registrationNumber. -> Remove all other fields
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/register-multiple")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Set<StudentDTO>> registerMultipleStudentsToTutorialGroup(@PathVariable long courseId, @PathVariable long tutorialGroupId,
-            @RequestBody Set<StudentDTO> studentDtos) {
-        log.debug("REST request to register {} to tutorial group {}", studentDtos, tutorialGroupId);
+    public ResponseEntity<List<TutorialGroupRegisterStudentDTO>> registerMultipleStudentsToTutorialGroup(@PathVariable long courseId, @PathVariable long tutorialGroupId,
+            @RequestBody List<TutorialGroupRegisterStudentDTO> studentDTOs) {
+        log.error("REST request to register {} to tutorial group {}", studentDTOs, tutorialGroupId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
         var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), responsibleUser);
         checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId));
-        Set<StudentDTO> notFoundStudentDtos = tutorialGroupService.registerMultipleStudents(tutorialGroupFromDatabase, studentDtos,
+        List<TutorialGroupRegisterStudentDTO> notFoundStudentDtos = tutorialGroupService.registerMultipleStudents(tutorialGroupFromDatabase, studentDTOs,
                 TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION, responsibleUser);
+        log.error(notFoundStudentDtos.toString());
         return ResponseEntity.ok().body(notFoundStudentDtos);
     }
 
@@ -717,7 +718,7 @@ public class TutorialGroupResource {
 
     @GetMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/registered-students")
     @EnforceAtLeastTutorInCourse
-    public ResponseEntity<Set<TutorialGroupRegisteredUserDTO>> getRegisteredStudents(@PathVariable long courseId, @PathVariable long tutorialGroupId) {
+    public ResponseEntity<Set<TutorialGroupRegisteredStudentDTO>> getRegisteredStudents(@PathVariable long courseId, @PathVariable long tutorialGroupId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         var isUserTutorInTutorialGroup = userRepository.isTutorInTutorialGroup(user.getId(), tutorialGroupId, courseId);

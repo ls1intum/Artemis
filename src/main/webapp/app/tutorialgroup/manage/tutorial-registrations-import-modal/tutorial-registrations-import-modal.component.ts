@@ -99,9 +99,15 @@ export class TutorialRegistrationsImportModalComponent {
                     return {
                         login: parsedStudent.login,
                         registrationNumber: parsedStudent.registrationNumber,
-                        exists: !nonExistingStudents.some(
-                            (nonExistingStudent) => nonExistingStudent.login === parsedStudent.login || nonExistingStudent.registrationNumber === parsedStudent.registrationNumber,
-                        ),
+                        exists: !nonExistingStudents.some((nonExistingStudent) => {
+                            if (parsedStudent.login && nonExistingStudent.login) {
+                                return nonExistingStudent.login === parsedStudent.login;
+                            }
+                            if (parsedStudent.registrationNumber && nonExistingStudent.registrationNumber) {
+                                return nonExistingStudent.registrationNumber === parsedStudent.registrationNumber;
+                            }
+                            return false;
+                        }),
                     };
                 });
                 this.resultStudents.set(resultStudents);
