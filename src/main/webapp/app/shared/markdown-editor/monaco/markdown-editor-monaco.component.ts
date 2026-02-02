@@ -495,9 +495,15 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         // Set up selection change listener for inline comments/refinement
         this.selectionChangeDisposable = this.monacoEditor.onSelectionChange((selection) => {
             if (selection) {
-                // Get selected text and screen position for inline refinement
+                // Get selected text for inline refinement
                 const model = this.monacoEditor.getModel();
                 const selectedText = model ? model.getValueInRange(selection) : '';
+
+                // Only emit if there's actual text selected (not just cursor movement)
+                if (selectedText.trim().length === 0) {
+                    this.onSelectionChange.emit(undefined);
+                    return;
+                }
 
                 // Calculate screen position for floating button
                 let screenPosition = { top: 0, left: 0 };
