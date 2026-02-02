@@ -373,6 +373,99 @@ Visibility conditions marked as "(if released)", "(before due date)", "(own only
 - Students can view the example solution only after it has been published (`isExampleSolutionPublished()`)
 - Teaching Assistants and above can view example solutions at any time
 
+### Modeling Exercises
+
+| Feature                         | Instructor       | Editor           | Teaching Assistant | Student               |
+|---------------------------------|------------------|------------------|--------------------|-----------------------|
+| View Exercise (course)          | ✔                | ✔                | ✔                  | ✔ (if released)       |
+| View Exercise (exam)            | ✔                | ✔                |                    |                       |
+| Create Exercise                 | ✔                | ✔                |                    |                       |
+| Edit Exercise                   | ✔                | ✔                |                    |                       |
+| Delete Exercise                 | ✔                |                  |                    |                       |
+| Import Exercise                 | ✔ (both courses) | ✔ (both courses) |                    |                       |
+| Search Exercises                | ✔                | ✔                |                    |                       |
+| Re-evaluate Exercise            | ✔                | ✔                |                    |                       |
+| View Course Exercises           | ✔                | ✔                | ✔                  |                       |
+| Submit Model                    | ✔                | ✔                | ✔                  | ✔ (before due date)   |
+| View Own Submission             | ✔                | ✔                | ✔                  | ✔ (own only)          |
+| View Latest Submission (editor) | ✔                | ✔                | ✔                  | ✔ (own only)          |
+| Get Submission (for assessment) | ✔                | ✔                | ✔                  |                       |
+| Get Unassessed Submission       | ✔                | ✔                | ✔                  |                       |
+| List All Submissions            | ✔                | ✔                | ✔                  |                       |
+| Save Assessment                 | ✔                | ✔                | ✔                  |                       |
+| Save Example Assessment         | ✔                | ✔                | ✔                  |                       |
+| Cancel Assessment               | ✔                | ✔                | ✔                  |                       |
+| Update After Complaint          | ✔                | ✔                | ✔                  |                       |
+| View Assessment Result          | ✔                | ✔                | ✔                  | ✔ (own, after graded) |
+| Delete Assessment               | ✔                |                  |                    |                       |
+| Export Submissions (limited)    | ✔                | ✔                | ✔                  |                       |
+| Export All Submissions          | ✔                |                  |                    |                       |
+| Create Apollon Diagram          | ✔                | ✔                | ✔                  |                       |
+| Edit Apollon Diagram            | ✔                | ✔                | ✔                  |                       |
+| View Apollon Diagrams           | ✔                | ✔                | ✔                  |                       |
+| Delete Apollon Diagram          | ✔                | ✔                |                    |                       |
+| View Diagram Title              | ✔                | ✔                | ✔                  | ✔                     |
+| Convert Model to PDF            | ✔                | ✔                | ✔                  | ✔                     |
+
+<Callout variant={CalloutVariant.info}>
+    **Import Exercise** requires at least Editor role in **both** the source and target course.
+</Callout>
+
+<Callout variant={CalloutVariant.warning}>
+    **Exam exercises** require Editor role for viewing details, while **course exercises** only require Teaching Assistant role.
+</Callout>
+
+### Modeling Exercises - Summary
+
+| Role       | Capabilities                                                                                      |
+|------------|---------------------------------------------------------------------------------------------------|
+| Student    | Submit models, view own submission/results, view diagram titles, convert models to PDF            |
+| TA         | Same as Student + view all submissions, assess, lock submissions, limited export, manage diagrams |
+| Editor     | Same as TA + create/edit/import exercises, search exercises, re-evaluate, delete diagrams         |
+| Instructor | Same as Editor + delete exercises, delete assessments, export all submissions                     |
+| Admin      | Full access to all modeling exercises                                                             |
+
+### Modeling Exercises - Prerequisites
+
+- **Course Enrollment**: All exercise access requires enrollment in the course (except for Admins)
+- **Admin Override**: Admins can access all modeling exercises regardless of course membership
+- **Exam vs Course**: Exam exercises require Editor role for viewing details; course exercises only require TA role
+
+### Modeling Exercises - Visibility Rules
+
+Visibility conditions marked as "(if released)", "(before due date)", "(own only)", or "(own, after graded)" in the tables above are defined as follows:
+
+**Exercise Release:**
+- Students can only view and participate in exercises after the `releaseDate` has passed
+- Teaching Assistants and above can view exercises before release
+
+**Submission Due Date:**
+- Students can only submit models before the exercise `dueDate`
+- Submissions after due date are rejected (except for exam exercises which have separate handling)
+
+**Own Submission/Participation:**
+- Students can only view their own participations and submissions
+- Teaching Assistants and above can view all participations and submissions
+
+**Assessment Results:**
+- Students can view their assessment results only after the assessment is finalized AND the assessment due date has passed
+- Assessor information is hidden from students until assessment is finalized
+- Double-blind assessment is supported: TAs cannot see student/team information during assessment
+
+**Example Solution:**
+- Students can view the example solution model only after it has been published (`isExampleSolutionPublished()`)
+- Teaching Assistants and above can view example solutions at any time
+
+### Modeling Exercises - Apollon Diagram Templates
+
+Apollon diagram templates are reusable diagram structures that instructors can create for use in exercises.
+
+| Role       | Create | Edit | View | Delete |
+|------------|--------|------|------|--------|
+| TA         | ✔      | ✔    | ✔    |        |
+| Editor     | ✔      | ✔    | ✔    | ✔      |
+| Instructor | ✔      | ✔    | ✔    | ✔      |
+
 ## Lectures
 
 | Feature                          | Instructor       | Editor           | Teaching Assistant | Student         |
