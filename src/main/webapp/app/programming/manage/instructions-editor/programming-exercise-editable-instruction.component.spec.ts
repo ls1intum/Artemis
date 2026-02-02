@@ -6,6 +6,13 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import * as Y from 'yjs';
 import { DebugElement } from '@angular/core';
+
+// Mock y-monaco to avoid needing full Monaco API in tests
+jest.mock('y-monaco', () => ({
+    MonacoBinding: jest.fn().mockImplementation(() => ({
+        destroy: jest.fn(),
+    })),
+}));
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
@@ -36,6 +43,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProblemStatementSyncService } from 'app/programming/manage/services/problem-statement-sync.service';
+import { editor } from 'test/helpers/mocks/mock-monaco-editor';
 
 describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let comp: ProgrammingExerciseEditableInstructionComponent;
@@ -147,6 +155,18 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         const exercise = { id: 30, templateParticipation, problemStatement: 'test' } as ProgrammingExercise;
         setRequiredInputs(fixture, exercise);
         fixture.detectChanges();
+
+        // Set up mock for markdownEditorMonaco using the mock-monaco-editor helper
+        const mockEditor = editor.create();
+        comp.markdownEditorMonaco = {
+            monacoEditor: {
+                getModel: () => mockEditor.getModel(),
+                getEditor: () => mockEditor,
+            },
+        } as unknown as MarkdownEditorMonacoComponent;
+
+        // Trigger ngAfterViewInit manually since the ViewChild is now set
+        comp.ngAfterViewInit();
         tick();
 
         expect(problemStatementSyncServiceMock.init).toHaveBeenCalledWith(exercise.id, exercise.problemStatement);
