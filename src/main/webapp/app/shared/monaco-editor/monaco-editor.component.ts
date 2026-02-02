@@ -185,6 +185,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.renderer.addClass(this.diffEditorContainerElement, 'monaco-diff-editor-container');
         this.renderer.addClass(this.diffEditorContainerElement, MonacoEditorComponent.SHRINK_TO_FIT_CLASS);
         this.renderer.setStyle(this.diffEditorContainerElement, 'display', 'none');
+        const rect = this.monacoEditorContainerElement.getBoundingClientRect();
+        const width = `${rect.width}px`;
+        const height = `${rect.height}px`;
+        // Enforce dimensions on the container to prevent the Diff Editor from collapsing or detecting 0x0 size.
+        // Unlike the normal editor, the Diff Editor is sensitive to its container's explicit size during layout.
+        this.renderer.setStyle(this.diffEditorContainerElement, 'width', width);
+        this.renderer.setStyle(this.diffEditorContainerElement, 'height', height);
         this.renderer.appendChild(this.elementRef.nativeElement, this.diffEditorContainerElement);
     }
 
@@ -220,10 +227,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         const resizeObserver = new ResizeObserver(() => {
             if (this.mode() === 'diff' && this._diffEditor) {
-                // Recalculate and apply container dimensions to prevent stale sizing
-                const rect = this.monacoEditorContainerElement.getBoundingClientRect();
-                this.renderer.setStyle(this.diffEditorContainerElement, 'width', `${rect.width}px`);
-                this.renderer.setStyle(this.diffEditorContainerElement, 'height', `${rect.height}px`);
                 this._diffEditor.layout();
             } else {
                 this._editor.layout();
@@ -295,8 +298,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             });
         }
 
-        // Enforce dimensions on the container to prevent the Diff Editor from collapsing or detecting 0x0 size.
-        // Unlike the normal editor, the Diff Editor is sensitive to its container's explicit size during layout.
         this.renderer.setStyle(this.diffEditorContainerElement, 'width', width);
         this.renderer.setStyle(this.diffEditorContainerElement, 'height', height);
         this.setContainersVisibility('diff');
