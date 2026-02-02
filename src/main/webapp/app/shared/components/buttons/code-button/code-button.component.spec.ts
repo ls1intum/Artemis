@@ -27,7 +27,7 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PROFILE_THEIA } from '../../../../app.constants';
-import { expectedProfileInfo } from '../../../../core/layouts/profiles/shared/profile.constants';
+import { expectedProfileInfo } from '../../../../core/layouts/profiles/shared/profile.constants.spec';
 
 describe('CodeButtonComponent', () => {
     setupTestBed({ zoneless: true });

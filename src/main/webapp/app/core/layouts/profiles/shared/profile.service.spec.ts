@@ -8,7 +8,7 @@ import { Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
-import { expectedProfileInfo } from './profile.constants';
+import { expectedProfileInfo } from './profile.constants.spec';
 
 describe('ProfileService', () => {
     let service: ProfileService;
