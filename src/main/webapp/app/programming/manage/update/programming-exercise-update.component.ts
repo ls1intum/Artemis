@@ -11,7 +11,7 @@ import { ProgrammingExerciseSharingService } from '../services/programming-exerc
 import { TranslateService } from '@ngx-translate/core';
 import { switchMap, take, tap } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
@@ -59,6 +59,7 @@ import { FileService } from 'app/shared/service/file.service';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { ExerciseMetadataSyncService } from 'app/exercise/services/exercise-metadata-sync.service';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 
@@ -100,6 +101,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly aeolusService = inject(AeolusService);
     private readonly calendarService = inject(CalendarService);
     private readonly localStorageService = inject(LocalStorageService);
+    private readonly metadataSyncService = inject(ExerciseMetadataSyncService);
 
     private readonly packageNameRegexForJavaKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
     private readonly packageNameRegexForJavaBlackbox = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX);
@@ -524,7 +526,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                         }
                     }),
                 )
-                .subscribe();
+                .subscribe(() => this.setupMetadataSync());
         }
 
         // If an exercise is created, load our readme template so the problemStatement is not empty
@@ -561,6 +563,20 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         for (const subscription of this.inputFieldSubscriptions) {
             subscription?.unsubscribe();
         }
+        this.metadataSyncService.destroy();
+    }
+
+    private setupMetadataSync(): void {
+        if (!this.programmingExercise?.id || this.isImportFromExistingExercise || this.isImportFromFile || this.isImportFromSharing || !this.isEdit) {
+            return;
+        }
+        this.metadataSyncService.initialize({
+            exerciseId: this.programmingExercise.id,
+            exerciseType: this.programmingExercise.type ?? ExerciseType.PROGRAMMING,
+            getCurrentExercise: () => this.programmingExercise,
+            getBaselineExercise: () => this.backupExercise,
+            setBaselineExercise: (exercise) => (this.backupExercise = exercise),
+        });
     }
 
     calculateFormStatusSections() {

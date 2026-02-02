@@ -9,7 +9,7 @@ import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-gra
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseMode, ExerciseType, IncludedInOverallScore, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -43,6 +43,7 @@ import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { ExerciseMetadataSyncService } from 'app/exercise/services/exercise-metadata-sync.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -81,6 +82,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly calendarService = inject(CalendarService);
+    private readonly metadataSyncService = inject(ExerciseMetadataSyncService);
 
     readonly exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
     readonly teamConfigFormGroupComponent = viewChild(TeamConfigFormGroupComponent);
@@ -224,7 +226,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                     });
                 }),
             )
-            .subscribe();
+            .subscribe(() => this.setupMetadataSync());
 
         this.isSaving = false;
         this.notificationText = undefined;
@@ -233,6 +235,21 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     ngOnDestroy() {
         this.pointsSubscription?.unsubscribe();
         this.bonusPointsSubscription?.unsubscribe();
+        this.metadataSyncService.destroy();
+    }
+
+    private setupMetadataSync(): void {
+        const isImportRoute = this.activatedRoute.snapshot.url.some((segment) => segment.path === 'import');
+        if (!this.modelingExercise?.id || this.isImport || isImportRoute) {
+            return;
+        }
+        this.metadataSyncService.initialize({
+            exerciseId: this.modelingExercise.id,
+            exerciseType: this.modelingExercise.type ?? ExerciseType.MODELING,
+            getCurrentExercise: () => this.modelingExercise,
+            getBaselineExercise: () => this.backupExercise,
+            setBaselineExercise: (exercise) => (this.backupExercise = exercise),
+        });
     }
 
     async calculateFormSectionStatus() {

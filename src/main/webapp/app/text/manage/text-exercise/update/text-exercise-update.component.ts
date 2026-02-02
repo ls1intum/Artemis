@@ -10,7 +10,7 @@ import { TextExerciseService } from '../service/text-exercise.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseMode, ExerciseType, IncludedInOverallScore, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { FormsModule, NgForm, NgModel } from '@angular/forms';
@@ -45,6 +45,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { ExerciseMetadataSyncService } from 'app/exercise/services/exercise-metadata-sync.service';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -85,6 +86,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly profileService = inject(ProfileService);
     private readonly calendarService = inject(CalendarService);
+    private readonly metadataSyncService = inject(ExerciseMetadataSyncService);
 
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'Text';
@@ -217,7 +219,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                     }
                 }),
             )
-            .subscribe();
+            .subscribe(() => this.setupMetadataSync());
 
         this.isPlagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
 
@@ -229,6 +231,21 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         this.pointsSubscription?.unsubscribe();
         this.bonusPointsSubscription?.unsubscribe();
         this.teamSubscription?.unsubscribe();
+        this.metadataSyncService.destroy();
+    }
+
+    private setupMetadataSync(): void {
+        const isImportRoute = this.activatedRoute.snapshot.url.some((segment) => segment.path === 'import');
+        if (!this.textExercise?.id || this.isImport || isImportRoute) {
+            return;
+        }
+        this.metadataSyncService.initialize({
+            exerciseId: this.textExercise.id,
+            exerciseType: this.textExercise.type ?? ExerciseType.TEXT,
+            getCurrentExercise: () => this.textExercise,
+            getBaselineExercise: () => this.backupExercise,
+            setBaselineExercise: (exercise) => (this.backupExercise = exercise),
+        });
     }
 
     calculateFormSectionStatus() {

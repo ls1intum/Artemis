@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { BehaviorSubject } from 'rxjs';
 import FingerprintJS, { GetResult } from '@fingerprintjs/fingerprintjs';
 
@@ -11,13 +12,17 @@ import FingerprintJS, { GetResult } from '@fingerprintjs/fingerprintjs';
  * - Browser Fingerprint: A hash generated from browser characteristics (screen size, plugins, etc.)
  *   that remains relatively stable across sessions on the same browser.
  * - Instance Identifier: A UUID stored in local storage to identify this specific browser instance.
+ * - Session Identifier: A UUID stored in session storage to identify the current browser tab.
  */
 @Injectable({ providedIn: 'root' })
 export class BrowserFingerprintService {
     private localStorageService = inject(LocalStorageService);
+    private sessionStorageService = inject(SessionStorageService);
 
     /** Local storage key for persisting the browser instance identifier */
     private readonly INSTANCE_STORAGE_KEY = 'instanceIdentifier';
+    /** Session storage key for persisting the browser session identifier */
+    private readonly SESSION_STORAGE_KEY = 'sessionIdentifier';
 
     /**
      * Observable containing the browser fingerprint hash.
@@ -32,6 +37,13 @@ export class BrowserFingerprintService {
     public browserInstanceId = new BehaviorSubject<string | undefined>(undefined);
 
     /**
+     * Observable containing the unique session identifier for this browser tab.
+     * Stored in session storage, which is scoped per tab, so it resets when the
+     * tab is closed and differs across tabs.
+     */
+    public browserSessionId = new BehaviorSubject<string | undefined>(undefined);
+
+    /**
      * Initializes the fingerprint service based on server configuration.
      * If fingerprints are disabled, clears any stored instance data.
      *
@@ -43,6 +55,7 @@ export class BrowserFingerprintService {
         if (browserFingerprintsEnabled !== false) {
             this.generateBrowserFingerprint();
             this.initializeInstanceIdentifier();
+            this.initializeSessionIdentifier();
         } else {
             this.clearStoredInstanceData();
         }
@@ -76,6 +89,22 @@ export class BrowserFingerprintService {
         }
 
         this.browserInstanceId.next(storedInstanceId);
+    }
+
+    /**
+     * Initializes or retrieves the browser session identifier.
+     * If no identifier exists in session storage, generates a new UUID.
+     * This identifier persists for the lifetime of the tab.
+     */
+    private initializeSessionIdentifier(): void {
+        let storedSessionId = this.sessionStorageService.retrieve<string>(this.SESSION_STORAGE_KEY);
+
+        if (!storedSessionId) {
+            storedSessionId = window.crypto.randomUUID();
+            this.sessionStorageService.store<string>(this.SESSION_STORAGE_KEY, storedSessionId);
+        }
+
+        this.browserSessionId.next(storedSessionId);
     }
 
     /**
