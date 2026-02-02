@@ -791,12 +791,12 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     /**
      * Gets the current selection in the editor.
-     * @returns The current selection or null.
+     * @returns The current selection or undefined.
      */
-    getSelection(): { startLine: number; endLine: number } | null {
+    getSelection(): { startLine: number; endLine: number } | undefined {
         const sel = this.monacoEditor.getSelection();
         if (!sel) {
-            return null;
+            return undefined;
         }
         return {
             startLine: sel.startLineNumber,
