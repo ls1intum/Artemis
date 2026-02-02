@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -598,10 +599,224 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
 
             // When
-            service.retryProcessing(testUnit);
+            LectureUnitProcessingState result = service.retryProcessing(testUnit);
 
             // Then: Should not restart
+            assertThat(result).isNull();
             verify(transcriptionApi, never()).startNebulaTranscription(anyLong(), anyLong(), any());
+        }
+
+        @Test
+        void shouldReturnNullWhenNoStateExists() {
+            // Given: No existing state
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+
+            // When
+            LectureUnitProcessingState result = service.retryProcessing(testUnit);
+
+            // Then
+            assertThat(result).isNull();
+            verify(processingStateRepository, never()).delete(any());
+        }
+
+        @Test
+        void shouldReturnNullWhenNoProcessingPossible() {
+            // Given: Failed state but unit has no content
+            testState.setPhase(ProcessingPhase.FAILED);
+            testState.setId(42L);
+            testUnit.setVideoSource(null);
+            testUnit.setAttachment(null);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+
+            // When
+            LectureUnitProcessingState result = service.retryProcessing(testUnit);
+
+            // Then: Should return null without deleting state (preserves error context)
+            assertThat(result).isNull();
+            verify(processingStateRepository, never()).delete(any());
+        }
+
+        @Test
+        void shouldReturnNullForNullInput() {
+            // Given: null input
+            // When
+            LectureUnitProcessingState result = service.retryProcessing(null);
+
+            // Then
+            assertThat(result).isNull();
+            verify(processingStateRepository, never()).findByLectureUnit_Id(anyLong());
+        }
+
+        @Test
+        void shouldReturnNullForUnsavedUnit() {
+            // Given: unit without ID
+            testUnit.setId(null);
+
+            // When
+            LectureUnitProcessingState result = service.retryProcessing(testUnit);
+
+            // Then
+            assertThat(result).isNull();
+            verify(processingStateRepository, never()).findByLectureUnit_Id(anyLong());
+        }
+
+        @Test
+        void shouldReturnActualStateWhenTranscriptionStarts() {
+            // Given: Failed state with video
+            testState.setPhase(ProcessingPhase.FAILED);
+            testState.setId(42L);
+
+            AtomicReference<LectureUnitProcessingState> savedState = new AtomicReference<>();
+            when(processingStateRepository.save(any(LectureUnitProcessingState.class))).thenAnswer(inv -> {
+                savedState.set(inv.getArgument(0));
+                return inv.getArgument(0);
+            });
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenAnswer(inv -> Optional.ofNullable(savedState.get()));
+            when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://playlist.m3u8"));
+            when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("job-123");
+
+            // When
+            LectureUnitProcessingState result = service.retryProcessing(testUnit);
+
+            // Then: Should return actual state in TRANSCRIBING phase
+            assertThat(result).isNotNull();
+            assertThat(result.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
+        }
+
+        @Test
+        void shouldScheduleRetryWhenTranscriptionFails() {
+            // Given: Failed state with video AND PDF, transcription throws exception
+            testState.setPhase(ProcessingPhase.FAILED);
+            testState.setId(42L);
+            Attachment pdfAttachment = new Attachment();
+            pdfAttachment.setLink("/path/to/file.pdf");
+            pdfAttachment.setVersion(1);
+            testUnit.setAttachment(pdfAttachment);
+
+            AtomicReference<LectureUnitProcessingState> savedState = new AtomicReference<>();
+            when(processingStateRepository.save(any(LectureUnitProcessingState.class))).thenAnswer(inv -> {
+                savedState.set(inv.getArgument(0));
+                return inv.getArgument(0);
+            });
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenAnswer(inv -> Optional.ofNullable(savedState.get()));
+            when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://playlist.m3u8"));
+            when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenThrow(new RuntimeException("Nebula error"));
+
+            // When
+            LectureUnitProcessingState result = service.retryProcessing(testUnit);
+
+            // Then: Should be in TRANSCRIBING phase with retry scheduled (standard retry mechanism)
+            assertThat(result).isNotNull();
+            assertThat(result.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
+            assertThat(result.getRetryCount()).isEqualTo(1);
+        }
+
+        @Test
+        void shouldFailWhenNoPlaylistAndNoPdf() {
+            // Given: Failed state with video but no playlist found and no PDF
+            testState.setPhase(ProcessingPhase.FAILED);
+            testState.setId(42L);
+            testUnit.setAttachment(null);
+
+            AtomicReference<LectureUnitProcessingState> savedState = new AtomicReference<>();
+            when(processingStateRepository.save(any(LectureUnitProcessingState.class))).thenAnswer(inv -> {
+                savedState.set(inv.getArgument(0));
+                return inv.getArgument(0);
+            });
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenAnswer(inv -> Optional.ofNullable(savedState.get()));
+            when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.empty());
+
+            // When
+            LectureUnitProcessingState result = service.retryProcessing(testUnit);
+
+            // Then: Should return failed state
+            assertThat(result).isNotNull();
+            assertThat(result.getPhase()).isEqualTo(ProcessingPhase.FAILED);
+            assertThat(result.getErrorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.noPlaylist");
+        }
+
+        @Test
+        void shouldRetryPdfOnlyUnit() {
+            // Given: Failed state with PDF only (no video)
+            testState.setPhase(ProcessingPhase.FAILED);
+            testState.setId(42L);
+            testUnit.setVideoSource(null);
+            Attachment pdfAttachment = new Attachment();
+            pdfAttachment.setLink("/path/to/file.pdf");
+            pdfAttachment.setVersion(1);
+            testUnit.setAttachment(pdfAttachment);
+
+            AtomicReference<LectureUnitProcessingState> savedState = new AtomicReference<>();
+            when(processingStateRepository.save(any(LectureUnitProcessingState.class))).thenAnswer(inv -> {
+                savedState.set(inv.getArgument(0));
+                return inv.getArgument(0);
+            });
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenAnswer(inv -> Optional.ofNullable(savedState.get()));
+            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
+
+            // When
+            LectureUnitProcessingState result = service.retryProcessing(testUnit);
+
+            // Then: Should go directly to ingestion
+            assertThat(result).isNotNull();
+            assertThat(result.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+            verify(tumLiveApi, never()).getTumLivePlaylistLink(any());
+        }
+
+        @Test
+        void shouldReturnDoneWhenIngestionReturnsNull() {
+            // Given: Failed state with PDF only, ingestion returns null (not applicable)
+            testState.setPhase(ProcessingPhase.FAILED);
+            testState.setId(42L);
+            testUnit.setVideoSource(null);
+            Attachment pdfAttachment = new Attachment();
+            pdfAttachment.setLink("/path/to/file.pdf");
+            pdfAttachment.setVersion(1);
+            testUnit.setAttachment(pdfAttachment);
+
+            AtomicReference<LectureUnitProcessingState> savedState = new AtomicReference<>();
+            when(processingStateRepository.save(any(LectureUnitProcessingState.class))).thenAnswer(inv -> {
+                savedState.set(inv.getArgument(0));
+                return inv.getArgument(0);
+            });
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenAnswer(inv -> Optional.ofNullable(savedState.get()));
+            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn(null);
+
+            // When
+            LectureUnitProcessingState result = service.retryProcessing(testUnit);
+
+            // Then: Should mark as DONE (nothing to do)
+            assertThat(result).isNotNull();
+            assertThat(result.getPhase()).isEqualTo(ProcessingPhase.DONE);
+        }
+
+        @Test
+        void shouldScheduleRetryWhenIngestionThrows() {
+            // Given: Failed state with PDF only, ingestion throws
+            testState.setPhase(ProcessingPhase.FAILED);
+            testState.setId(42L);
+            testUnit.setVideoSource(null);
+            Attachment pdfAttachment = new Attachment();
+            pdfAttachment.setLink("/path/to/file.pdf");
+            pdfAttachment.setVersion(1);
+            testUnit.setAttachment(pdfAttachment);
+
+            AtomicReference<LectureUnitProcessingState> savedState = new AtomicReference<>();
+            when(processingStateRepository.save(any(LectureUnitProcessingState.class))).thenAnswer(inv -> {
+                savedState.set(inv.getArgument(0));
+                return inv.getArgument(0);
+            });
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenAnswer(inv -> Optional.ofNullable(savedState.get()));
+            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenThrow(new RuntimeException("Pyris error"));
+
+            // When
+            LectureUnitProcessingState result = service.retryProcessing(testUnit);
+
+            // Then: Should be in INGESTING phase with retry scheduled (standard retry mechanism)
+            assertThat(result).isNotNull();
+            assertThat(result.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+            assertThat(result.getRetryCount()).isEqualTo(1);
         }
     }
 
