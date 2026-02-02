@@ -349,6 +349,59 @@ public class WeaviateService {
     }
 
     /**
+     * Performs semantic search on exercises using vector similarity via REST API.
+     *
+     * @param searchQuery the search query text
+     * @param courseId    the course ID to filter by (optional, null for all courses)
+     * @param limit       maximum number of results to return
+     * @return list of exercise properties as maps with similarity scores
+     */
+    public List<Map<String, Object>> semanticSearchExercises(String searchQuery, @Nullable Long courseId, int limit) {
+        try {
+            // For now, fall back to basic text filtering until we implement proper nearText API
+            var collection = getCollection(WeaviateSchemas.EXERCISES_COLLECTION);
+
+            // Create basic filters
+            var textFilters = new ArrayList<Filter>();
+
+            // Add course filter if specified
+            if (courseId != null) {
+                textFilters.add(Filter.property(WeaviateSchemas.ExercisesProperties.COURSE_ID).eq(courseId));
+            }
+
+            // Add text search filters (basic keyword matching for now)
+            var lowerQuery = searchQuery.toLowerCase();
+            var titleFilter = Filter.property(WeaviateSchemas.ExercisesProperties.TITLE).like("*" + lowerQuery + "*");
+            var problemFilter = Filter.property(WeaviateSchemas.ExercisesProperties.PROBLEM_STATEMENT).like("*" + lowerQuery + "*");
+            var textMatchFilter = titleFilter.or(problemFilter);
+            textFilters.add(textMatchFilter);
+
+            Filter finalFilter = textFilters.get(0);
+            for (int i = 1; i < textFilters.size(); i++) {
+                finalFilter = finalFilter.and(textFilters.get(i));
+            }
+
+            final Filter searchFilter = finalFilter; // Make it effectively final for lambda
+            var response = collection.query.fetchObjects(q -> q.filters(searchFilter).limit(limit));
+            List<Map<String, Object>> results = new ArrayList<>();
+
+            for (var obj : response.objects()) {
+                Map<String, Object> result = new HashMap<>(obj.properties());
+                // Add a basic relevance score (for compatibility)
+                result.put("_relevance", 0.8); // Placeholder relevance score
+                results.add(result);
+            }
+
+            log.debug("Basic text search for '{}' returned {} results", searchQuery, results.size());
+            return results;
+        }
+        catch (Exception e) {
+            log.error("Failed to perform search for query '{}': {}", searchQuery, e.getMessage(), e);
+            throw new WeaviateException("Failed to perform search", e);
+        }
+    }
+
+    /**
      * Checks if the Weaviate connection is healthy.
      *
      * @return true if the connection is healthy

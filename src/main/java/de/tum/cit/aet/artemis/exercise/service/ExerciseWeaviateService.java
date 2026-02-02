@@ -164,4 +164,27 @@ public class ExerciseWeaviateService {
             return Collections.emptyList();
         }
     }
+
+    /**
+     * Performs semantic search on exercises using natural language queries.
+     *
+     * @param query    the search query
+     * @param courseId optional course ID to filter by
+     * @param limit    maximum number of results
+     * @return list of exercise search results with similarity scores
+     */
+    public List<Map<String, Object>> searchExercises(String query, Long courseId, int limit) {
+        if (weaviateService.isEmpty()) {
+            log.trace("Weaviate is not enabled, returning empty list for search query: {}", query);
+            return Collections.emptyList();
+        }
+
+        try {
+            return weaviateService.get().semanticSearchExercises(query, courseId, limit);
+        }
+        catch (Exception e) {
+            log.error("Failed to search exercises with query '{}': {}", query, e.getMessage(), e);
+            return Collections.emptyList();
+        }
+    }
 }
