@@ -10,15 +10,15 @@ let package = Package(
     ],
     dependencies: [
         // SwiftSyntax for structural code analysis (replaces unmaintained swift-ast)
-        // Version 602.x corresponds to Swift 6.2 (versioning: 600=6.0, 601=6.1, 602=6.2)
-        .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "602.0.0"),
+        // Version 600.x matches swift-tools-version:6.0 (versioning: 600=6.0, 601=6.1, 602=6.2)
+        .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "600.0.1"),
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
         // Targets can depend on other targets in this package, and on products in packages which this package depends on.
         .target(name: "${packageName}Lib"),
-        // We need the separate Lib directory in order for the tests to run correctly, because the main.swift would interfere.
-        .target(name: "${packageName}App", dependencies: ["${packageName}Lib"]),
+        // Executable target with main.swift - separate from Lib so tests can run correctly
+        .executableTarget(name: "${packageName}App", dependencies: ["${packageName}Lib"]),
         .testTarget(
             name: "${packageName}Tests",
             dependencies: [
