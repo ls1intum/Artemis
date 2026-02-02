@@ -1,0 +1,22 @@
+<div class="frame">
+    <table class="import-table">
+        <thead>
+            <tr>
+                <th>Login</th>
+                <th>Registration Number</th>
+            </tr>
+        </thead>
+    </table>
+    <div class="scroll-container">
+        <table class="import-table">
+            <tbody>
+                @for (row of rows(); track row.login ?? '' + row.registrationNumber ?? '') {
+                    <tr>
+                        <td [class.danger]="row.login && row.markFilledCells">{{ row.login }}</td>
+                        <td [class.danger]="row.registrationNumber && row.markFilledCells">{{ row.registrationNumber }}</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

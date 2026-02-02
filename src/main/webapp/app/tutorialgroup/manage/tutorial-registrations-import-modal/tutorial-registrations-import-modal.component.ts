@@ -10,7 +10,10 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { HttpResponse } from '@angular/common/http';
 import { Student } from 'app/openapi/model/student';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
-import { TutorialRegistrationsImportModalTableRow } from 'app/tutorialgroup/manage/tutorial-registrations-import-modal-table/tutorial-registrations-import-modal-table.component';
+import {
+    TutorialRegistrationsImportModalTableComponent,
+    TutorialRegistrationsImportModalTableRow,
+} from 'app/tutorialgroup/manage/tutorial-registrations-import-modal-table/tutorial-registrations-import-modal-table.component';
 
 export enum ImportFlowStep {
     EXPLANATION = 'EXPLANATION',
@@ -26,7 +29,7 @@ interface ResultStudent {
 
 @Component({
     selector: 'jhi-tutorial-registrations-import-modal',
-    imports: [DialogModule, TranslateDirective, ButtonDirective],
+    imports: [DialogModule, TranslateDirective, ButtonDirective, TutorialRegistrationsImportModalTableComponent],
     templateUrl: './tutorial-registrations-import-modal.component.html',
     styleUrl: './tutorial-registrations-import-modal.component.scss',
 })
@@ -37,19 +40,19 @@ export class TutorialRegistrationsImportModalComponent {
     private alertService = inject(AlertService);
     private tutorialGroupsService = inject(TutorialGroupsService);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
+    private parsedStudents = signal<StudentDTO[]>([]);
+    private resultStudents = signal<ResultStudent[]>([]);
 
     courseId = input.required<number>();
     tutorialGroupId = input.required<number>();
     loading = signal(false);
     isOpen = signal(false);
     flowStep = signal<ImportFlowStep>(ImportFlowStep.EXPLANATION);
-    parsedStudents = signal<StudentDTO[]>([]);
-    resultStudents = signal<ResultStudent[]>([]);
     header = computed<string>(() => this.computeHeader());
+    tableRows = computed<TutorialRegistrationsImportModalTableRow[]>(() => this.computeTableRows());
     someStudentsDoNotExist = computed<boolean>(() => this.resultStudents().some((student) => !student.exists));
     noStudentsExist = computed<boolean>(() => this.resultStudents().every((student) => !student.exists));
     onStudentsRegistered = output<void>();
-    tableRows = computed<TutorialRegistrationsImportModalTableRow[]>(() => this.computeTableRows());
 
     open() {
         this.parsedStudents.set([]);
@@ -62,7 +65,7 @@ export class TutorialRegistrationsImportModalComponent {
         this.isOpen.set(false);
     }
 
-    async onFileSelected(event: Event) {
+    async parseStudents(event: Event) {
         this.loading.set(true);
         const input = event.target as HTMLInputElement;
         const file = input.files?.[0];
@@ -140,13 +143,13 @@ export class TutorialRegistrationsImportModalComponent {
         switch (this.flowStep()) {
             case ImportFlowStep.EXPLANATION:
                 return [
-                    { login: 'user_1', registrationNumber: undefined, markEmptyCells: false },
-                    { login: undefined, registrationNumber: 'ge86vox', markEmptyCells: false },
+                    { login: 'user_1', registrationNumber: undefined, markFilledCells: false },
+                    { login: undefined, registrationNumber: 'ge86vox', markFilledCells: false },
                 ];
             case ImportFlowStep.CONFIRMATION:
-                return this.parsedStudents().map((student) => ({ login: student.login, registrationNumber: student.registrationNumber, markEmptyCells: false }));
+                return this.parsedStudents().map((student) => ({ login: student.login, registrationNumber: student.registrationNumber, markFilledCells: false }));
             case ImportFlowStep.RESULTS:
-                return this.resultStudents().map((student) => ({ login: student.login, registrationNumber: student.registrationNumber, markEmptyCells: true }));
+                return this.resultStudents().map((student) => ({ login: student.login, registrationNumber: student.registrationNumber, markFilledCells: !student.exists }));
         }
     }
 }

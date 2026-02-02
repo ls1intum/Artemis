@@ -1,0 +1,32 @@
+.frame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: min(50rem, 85vw);
+
+    .import-table {
+        table-layout: fixed;
+        width: 35rem;
+        border-collapse: collapse;
+        box-sizing: border-box;
+
+        th,
+        td {
+            border: 1px solid var(--border-color);
+            padding: 0.5rem;
+            text-align: left;
+
+            &.danger {
+                background-color: var(--danger);
+            }
+        }
+    }
+
+    .scroll-container {
+        max-height: 20rem;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-right: 1rem;
+        padding-left: 1rem;
+    }
+}
