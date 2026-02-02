@@ -25,6 +25,7 @@ import io.weaviate.client6.v1.api.WeaviateClient;
 import io.weaviate.client6.v1.api.collections.CollectionHandle;
 import io.weaviate.client6.v1.api.collections.Property;
 import io.weaviate.client6.v1.api.collections.ReferenceProperty;
+import io.weaviate.client6.v1.api.collections.VectorConfig;
 import io.weaviate.client6.v1.api.collections.query.Filter;
 
 /**
@@ -75,6 +76,9 @@ public class WeaviateService {
             log.info("Creating collection '{}'...", collectionName);
 
             client.collections.create(collectionName, col -> {
+                // Configure text2vec-transformers vectorizer for automatic embeddings
+                col.vectorConfig(VectorConfig.text2vecTransformers());
+
                 // Add properties
                 for (WeaviatePropertyDefinition prop : schema.properties()) {
                     col.properties(createProperty(prop));

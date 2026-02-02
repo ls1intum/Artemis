@@ -1,0 +1,66 @@
+---
+# Weaviate with local embedding model (embeddinggemma-300m)
+# Use this configuration for semantic search with automatic embedding generation
+#
+# First-time setup requires building the transformer image:
+#   docker compose -f weaviate-embeddings.yml build
+#
+# Then start the services:
+#   docker compose -f weaviate-embeddings.yml up -d
+
+services:
+  weaviate:
+    container_name: artemis-weaviate
+    command:
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8001"
+      - --scheme
+      - http
+    image: cr.weaviate.io/semitechnologies/weaviate:1.34.10
+    expose:
+      - 8001
+      - 50051
+    ports:
+      - "${WEAVIATE_REST_PORT:-8001}:8001"
+      - "${WEAVIATE_GRPC_PORT:-50051}:50051"
+    volumes:
+      - ${WEAVIATE_VOLUME_MOUNT:-./.docker-data/weaviate-data}:/var/lib/weaviate
+    restart: on-failure:3
+    env_file:
+      - ./weaviate/embeddings.env
+    depends_on:
+      t2v-transformers:
+        condition: service_healthy
+
+  t2v-transformers:
+    build:
+      context: ./weaviate
+      dockerfile: Dockerfile.embeddinggemma
+      args:
+        # Required for gated model access. Set HF_TOKEN env var before building.
+        HF_TOKEN: ${HF_TOKEN:-}
+    image: artemis/t2v-embeddinggemma:latest
+    expose:
+      - 8080
+    environment:
+      # embeddinggemma-300m requires float32 or bfloat16 (NOT float16)
+      USE_SENTENCE_TRANSFORMERS_VECTORIZER: "true"
+      # Set to 1 if you have a CUDA-capable GPU
+      ENABLE_CUDA: "${ENABLE_CUDA:-0}"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/.well-known/ready')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    restart: on-failure:3
+    # Uncomment for GPU support:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]

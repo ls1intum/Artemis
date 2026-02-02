@@ -1,0 +1,9 @@
+FROM semitechnologies/transformers-inference:custom
+
+# embeddinggemma-300m is a gated model requiring Hugging Face authentication
+# Pass HF_TOKEN as a build argument: docker build --build-arg HF_TOKEN=your_token ...
+ARG HF_TOKEN
+
+# Download the embeddinggemma-300m model from Hugging Face
+# This model requires float32/bfloat16 precision (NOT float16)
+RUN MODEL_NAME=google/embeddinggemma-300m HF_TOKEN=${HF_TOKEN} ./download.py
