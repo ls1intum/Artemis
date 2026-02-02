@@ -282,7 +282,7 @@ describe('CourseManagementContainerComponent', () => {
             component.ngOnDestroy();
         }
         vi.restoreAllMocks();
-        localStorageService.clear();
+        localStorageService?.clear();
         TestBed.inject(SessionStorageService).clear();
     });
 

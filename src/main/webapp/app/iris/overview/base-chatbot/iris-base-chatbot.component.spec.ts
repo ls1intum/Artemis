@@ -386,9 +386,16 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should adjust textarea rows and call adjustChatBodyHeight', () => {
+        // The textarea is only rendered when userAccepted is true
+        component.userAccepted.set(true);
+        fixture.detectChanges();
+
         const textarea = fixture.nativeElement.querySelector('textarea');
         const originalScrollHeightGetter = textarea.__lookupGetter__('scrollHeight');
         const originalGetComputedStyle = window.getComputedStyle;
+
+        // Set some text content to avoid early return
+        textarea.value = 'Some text content';
 
         const scrollHeightGetterSpy = vi.spyOn(textarea, 'scrollHeight', 'get').mockReturnValue(100);
         const getComputedStyleSpy = vi.spyOn(window, 'getComputedStyle').mockImplementation(
@@ -400,9 +407,8 @@ describe('IrisBaseChatbotComponent', () => {
 
         component.adjustTextareaRows();
 
-        // Line height is calculated as follows: 20px (line height) + 4px (padding) = 24px
-        // The height of the textarea should be 72px (3 rows * (lineHeight + padding))
-        expect(textarea.style.height).toBe('72px'); // Assuming the calculated height is 60px
+        // The method caps height at min(scrollHeight, maxHeight=200), so with scrollHeight=100 it should be 100px
+        expect(textarea.style.height).toBe('100px');
 
         // Restore original getters and methods
         scrollHeightGetterSpy.mockRestore();
@@ -432,6 +438,7 @@ describe('IrisBaseChatbotComponent', () => {
     it('should not disable submit button if isLoading is false and no error exists', () => {
         component.userAccepted.set(true);
         component.isLoading.set(false);
+        component.newMessageTextContent.set('test message');
         // error is from toSignal - button disabled state doesn't depend on error
         fixture.changeDetectorRef.detectChanges();
         const sendButton = fixture.debugElement.query(By.css('#irisSendButton')).componentInstance;
@@ -442,6 +449,7 @@ describe('IrisBaseChatbotComponent', () => {
     it('should not disable submit button if isLoading is false and error is not fatal', () => {
         component.userAccepted.set(true);
         component.isLoading.set(false);
+        component.newMessageTextContent.set('test message');
         // error is from toSignal - button disabled state doesn't depend on error
         fixture.changeDetectorRef.detectChanges();
         const sendButton = fixture.debugElement.query(By.css('#irisSendButton')).componentInstance;
@@ -623,7 +631,8 @@ describe('IrisBaseChatbotComponent', () => {
     it('should start a new session when the new chat item is clicked', () => {
         const newChatSession: IrisSessionDTO = {
             id: 2,
-            title: 'New chat',
+            // MockTranslateService.stream() returns the key itself, so use the translation key
+            title: 'artemisApp.iris.chatHistory.newChat',
             creationDate: new Date(),
             chatMode: ChatServiceMode.COURSE,
             entityId: 1,
