@@ -244,11 +244,11 @@ public class LectureUnitResource {
 
         // Bulk fetch processing states for all units in the lecture
         List<LectureUnitProcessingState> processingStates = processingStateRepository.findByLectureId(lectureId);
-        Map<Long, LectureUnitProcessingState> stateByUnitId = processingStates.stream().collect(toMap(s -> s.getLectureUnit().getId(), identity()));
+        Map<Long, LectureUnitProcessingState> stateByUnitId = processingStates.stream().collect(toMap(s -> s.getLectureUnit().getId(), identity(), (a, b) -> a));
 
         // Bulk fetch transcriptions for all units in the lecture
         List<LectureTranscription> transcriptions = transcriptionRepository.findByLectureId(lectureId);
-        Map<Long, LectureTranscription> transcriptionByUnitId = transcriptions.stream().collect(toMap(t -> t.getLectureUnit().getId(), identity()));
+        Map<Long, LectureTranscription> transcriptionByUnitId = transcriptions.stream().collect(toMap(t -> t.getLectureUnit().getId(), identity(), (a, b) -> a));
 
         // Build status list for attachment video units only
         List<LectureUnitCombinedStatusDTO> statuses = lecture.getLectureUnits().stream().filter(AttachmentVideoUnit.class::isInstance).map(unit -> {
@@ -289,17 +289,18 @@ public class LectureUnitResource {
 
         // Check that the unit is in a failed state
         var currentState = lectureContentProcessingService.get().getProcessingState(lectureUnitId);
-        if (currentState.isPresent() && currentState.get().getPhase() != ProcessingPhase.FAILED) {
+        if (currentState.isEmpty() || currentState.get().getPhase() != ProcessingPhase.FAILED) {
             throw new BadRequestAlertException("Cannot retry processing for a unit that is not in failed state", ENTITY_NAME, "notInFailedState");
         }
 
         // Retry processing - creates initial state synchronously
         var newState = lectureContentProcessingService.get().retryProcessing(attachmentVideoUnit);
 
-        // Return the actual state (or IDLE if nothing could be processed)
+        // Return the new state, or the existing failed state if preflight failed (services unavailable)
         var transcription = transcriptionRepository.findByLectureUnit_Id(lectureUnitId).orElse(null);
         var transcriptionStatus = transcription != null ? transcription.getTranscriptionStatus() : null;
-        return ResponseEntity.ok(LectureUnitCombinedStatusDTO.of(lectureUnitId, newState, transcriptionStatus));
+        var stateToReturn = newState != null ? newState : currentState.get();
+        return ResponseEntity.ok(LectureUnitCombinedStatusDTO.of(lectureUnitId, stateToReturn, transcriptionStatus));
     }
 
 }
