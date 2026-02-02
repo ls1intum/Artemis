@@ -1,0 +1,44 @@
+.modal-body {
+    .conflict-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .conflict-item {
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        background: var(--bs-body-bg);
+    }
+
+    .field-name {
+        font-weight: 600;
+        margin-left: 0.5rem;
+    }
+
+    .conflict-values {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-top: 0.5rem;
+    }
+
+    .value-block {
+        background: var(--bs-body-bg);
+        border-radius: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .value-label {
+        font-size: 0.85rem;
+        color: var(--bs-secondary-color);
+        margin-bottom: 0.25rem;
+    }
+
+    .value-text {
+        font-size: 0.95rem;
+        word-break: break-word;
+    }
+}

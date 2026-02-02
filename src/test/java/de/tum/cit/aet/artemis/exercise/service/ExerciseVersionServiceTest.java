@@ -2,6 +2,12 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.exercise.util.ExerciseVersionUtilService.zonedDateTimeBiPredicate;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -10,6 +16,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.mockito.ArgumentCaptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +26,9 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
+import de.tum.cit.aet.artemis.exercise.domain.synchronization.ExerciseEditorSyncTarget;
+import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncEventType;
+import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseNewVersionAlertDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseVersionUtilService;
@@ -222,7 +232,6 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         newProgrammingExercise.setSubmissionPolicy(penaltyPolicy);
         programmingExerciseRepository.saveAndFlush(newProgrammingExercise);
 
-        String projectKey = newProgrammingExercise.getProjectKey();
         try {
             newProgrammingExercise = programmingExerciseRepository.findForVersioningById(newProgrammingExercise.getId()).orElseThrow();
 
@@ -312,6 +321,66 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
             default:
                 throw new IllegalArgumentException("Unsupported exercise type");
         };
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testNoSynchronizationBroadcastWhenNoPreviousVersion() {
+        ProgrammingExercise exercise = createProgrammingExercise();
+        reset(websocketMessagingService);
+
+        exerciseVersionService.createExerciseVersion(exercise);
+
+        // No synchronization should be broadcast for the initial version
+        verify(websocketMessagingService, never()).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testMetadataSynchronizationBroadcastWhenNoCommitChanges() {
+        ProgrammingExercise exercise = createProgrammingExercise();
+        exerciseVersionService.createExerciseVersion(exercise);
+        reset(websocketMessagingService);
+
+        // Update without changing any repository commits
+        exercise.setTitle("New Title");
+        programmingExerciseRepository.saveAndFlush(exercise);
+        exercise = programmingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
+
+        exerciseVersionService.createExerciseVersion(exercise);
+
+        // Metadata synchronization should be broadcast when no commits have changed
+        var captor = ArgumentCaptor.forClass(ExerciseNewVersionAlertDTO.class);
+        verify(websocketMessagingService, times(1)).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
+        var payload = captor.getValue();
+        assertThat(payload.exerciseVersionId()).isNotNull();
+        assertThat(payload.eventType()).isEqualTo(ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT);
+        assertThat(payload.target()).isEqualTo(ExerciseEditorSyncTarget.EXERCISE_METADATA);
+        assertThat(payload.author()).isNotNull();
+        assertThat(payload.changedFields()).contains("title");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testMetadataSynchronizationBroadcastForNonProgrammingExercise() {
+        TextExercise exercise = createTextExercise();
+        exerciseVersionService.createExerciseVersion(exercise);
+        reset(websocketMessagingService);
+
+        exercise.setExampleSolution("Updated solution");
+        textExerciseRepository.saveAndFlush(exercise);
+
+        exerciseVersionService.createExerciseVersion(exercise);
+
+        // Metadata synchronization should be broadcast for non-programming exercises
+        var captor = ArgumentCaptor.forClass(ExerciseNewVersionAlertDTO.class);
+        verify(websocketMessagingService, times(1)).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
+        var payload = captor.getValue();
+        assertThat(payload.exerciseVersionId()).isNotNull();
+        assertThat(payload.eventType()).isEqualTo(ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT);
+        assertThat(payload.target()).isEqualTo(ExerciseEditorSyncTarget.EXERCISE_METADATA);
+        assertThat(payload.author()).isNotNull();
+        assertThat(payload.changedFields()).contains("textData.exampleSolution");
     }
 
 }

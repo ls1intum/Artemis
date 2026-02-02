@@ -3,9 +3,15 @@ import { Observable, Subject, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
+import { UserPublicInfoDTO } from 'app/core/user/user.model';
 
 export enum ExerciseEditorSyncTarget {
     PROBLEM_STATEMENT = 'PROBLEM_STATEMENT',
+    TEMPLATE_REPOSITORY = 'TEMPLATE_REPOSITORY',
+    SOLUTION_REPOSITORY = 'SOLUTION_REPOSITORY',
+    TESTS_REPOSITORY = 'TESTS_REPOSITORY',
+    AUXILIARY_REPOSITORY = 'AUXILIARY_REPOSITORY',
+    EXERCISE_METADATA = 'EXERCISE_METADATA',
 }
 
 export enum ExerciseEditorSyncEventType {
@@ -13,6 +19,8 @@ export enum ExerciseEditorSyncEventType {
     PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE = 'PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE',
     PROBLEM_STATEMENT_SYNC_UPDATE = 'PROBLEM_STATEMENT_SYNC_UPDATE',
     PROBLEM_STATEMENT_AWARENESS_UPDATE = 'PROBLEM_STATEMENT_AWARENESS_UPDATE',
+    NEW_COMMIT_ALERT = 'NEW_COMMIT_ALERT',
+    NEW_EXERCISE_VERSION_ALERT = 'NEW_EXERCISE_VERSION_ALERT',
 }
 
 export interface ExerciseEditorSyncEventBase {
@@ -44,11 +52,30 @@ export interface ProblemStatementAwarenessUpdateEvent extends ExerciseEditorSync
     awarenessUpdate: string;
 }
 
+export interface ExerciseNewCommitAlertEvent {
+    eventType: ExerciseEditorSyncEventType.NEW_COMMIT_ALERT;
+    target: ExerciseEditorSyncTarget;
+    auxiliaryRepositoryId?: number;
+    sessionId?: string;
+    timestamp?: number;
+}
+
+export interface ExerciseNewVersionAlertEvent {
+    eventType: ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT;
+    target: ExerciseEditorSyncTarget;
+    exerciseVersionId: number;
+    author: UserPublicInfoDTO;
+    changedFields?: string[];
+    sessionId?: string;
+}
+
 export type ExerciseEditorSyncEvent =
     | ProblemStatementSyncFullContentRequestEvent
     | ProblemStatementSyncFullContentResponseEvent
     | ProblemStatementSyncUpdateEvent
-    | ProblemStatementAwarenessUpdateEvent;
+    | ProblemStatementAwarenessUpdateEvent
+    | ExerciseNewVersionAlertEvent
+    | ExerciseNewCommitAlertEvent;
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseEditorSyncService {
@@ -76,13 +103,23 @@ export class ExerciseEditorSyncService {
     }
 
     subscribeToUpdates(exerciseId: number): Observable<ExerciseEditorSyncEvent> {
+        if (this.subject && this.exerciseId !== undefined && this.exerciseId !== exerciseId) {
+            this.unsubscribe();
+        }
         if (!this.subject) {
             const topic = this.getTopic(exerciseId);
             this.exerciseId = exerciseId;
             this.subject = new Subject<ExerciseEditorSyncEvent>();
             this.subscription = this.websocketService
                 .subscribe(topic)
-                .pipe(filter((message: ExerciseEditorSyncEvent) => message.sessionId !== this.sessionId))
+                .pipe(
+                    filter((message: ExerciseEditorSyncEvent) => {
+                        if (!message.sessionId || !this.sessionId) {
+                            return true;
+                        }
+                        return message.sessionId !== this.sessionId;
+                    }),
+                )
                 .subscribe((message: ExerciseEditorSyncEvent) => this.handleIncomingMessage(message));
         }
         return this.subject;

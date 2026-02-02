@@ -1,0 +1,45 @@
+<div class="modal-header">
+    <h4 class="modal-title">
+        <fa-icon [icon]="faExclamationTriangle" />
+        <span jhiTranslate="artemisApp.exercise.metadataSync.conflictTitle"></span>
+    </h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="close()"></button>
+</div>
+
+<div class="modal-body">
+    <p class="lead" jhiTranslate="artemisApp.exercise.metadataSync.conflictIntro"></p>
+    <p>
+        <span jhiTranslate="artemisApp.exercise.metadataSync.conflictAuthor"></span>
+        <strong>{{ authorName() }}</strong>
+        @if (versionId()) {
+            <span>(#{{ versionId() }})</span>
+        }
+    </p>
+
+    <div class="conflict-list">
+        @for (conflict of conflicts(); track conflict.field) {
+            <div class="conflict-item">
+                <label class="form-check">
+                    <input class="form-check-input" type="checkbox" [ngModel]="decisions()[conflict.field]" (ngModelChange)="updateDecision(conflict.field, $event)" />
+                    <span class="form-check-label" jhiTranslate="artemisApp.exercise.metadataSync.useIncoming"></span>
+                    <span class="field-name" [jhiTranslate]="conflict.labelKey"></span>
+                </label>
+                <div class="conflict-values">
+                    <div class="value-block">
+                        <div class="value-label" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
+                        <div class="value-text">{{ formatValue(conflict.currentValue) }}</div>
+                    </div>
+                    <div class="value-block">
+                        <div class="value-label" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
+                        <div class="value-text">{{ formatValue(conflict.incomingValue) }}</div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="modal-footer">
+    <button type="button" class="btn btn-outline-secondary" (click)="keepLocalChanges()" jhiTranslate="artemisApp.exercise.metadataSync.keepLocal"></button>
+    <button type="button" class="btn btn-primary" (click)="applySelections()" jhiTranslate="artemisApp.exercise.metadataSync.applySelections"></button>
+</div>

@@ -5,7 +5,7 @@ import { isRequestToArtemisServer } from './interceptor.util';
 import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
 
 /**
- * HTTP interceptor that adds browser fingerprint and instance ID headers to requests.
+ * HTTP interceptor that adds browser fingerprint, instance ID, and session ID headers to requests.
  * These headers are used by the server for security purposes like detecting
  * suspicious login patterns or session anomalies.
  */
@@ -17,11 +17,14 @@ export class BrowserFingerprintInterceptor implements HttpInterceptor {
     private cachedFingerprint?: string;
     /** Cached browser instance identifier */
     private cachedInstanceId?: string;
+    /** Cached browser session identifier */
+    private cachedSessionId?: string;
 
     constructor() {
         // Subscribe to fingerprint and instance ID updates
         this.browserFingerprintService.browserFingerprint.subscribe((fingerprint) => (this.cachedFingerprint = fingerprint));
         this.browserFingerprintService.browserInstanceId.subscribe((instanceId) => (this.cachedInstanceId = instanceId));
+        this.browserFingerprintService.browserSessionId.subscribe((sessionId) => (this.cachedSessionId = sessionId));
     }
 
     /**
@@ -33,10 +36,11 @@ export class BrowserFingerprintInterceptor implements HttpInterceptor {
      * @returns Observable of the HTTP event stream
      */
     intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-        if (isRequestToArtemisServer(request) && (this.cachedInstanceId || this.cachedFingerprint)) {
+        if (isRequestToArtemisServer(request) && (this.cachedInstanceId || this.cachedFingerprint || this.cachedSessionId)) {
             request = request.clone({
                 setHeaders: {
                     'X-Artemis-Client-Instance-ID': this.cachedInstanceId ?? '',
+                    'X-Artemis-Client-Session-ID': this.cachedSessionId ?? '',
                     'X-Artemis-Client-Fingerprint': this.cachedFingerprint ?? '',
                 },
             });

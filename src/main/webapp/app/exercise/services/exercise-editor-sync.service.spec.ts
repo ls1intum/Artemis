@@ -27,7 +27,7 @@ describe('ExerciseEditorSyncService', () => {
                 {
                     provide: BrowserFingerprintService,
                     useValue: {
-                        browserSessionId: new BehaviorSubject<string | undefined>('test-session-456'),
+                        browserSessionId: new BehaviorSubject<string | undefined>('test-session-123'),
                     },
                 },
             ],
@@ -44,25 +44,23 @@ describe('ExerciseEditorSyncService', () => {
         expect(websocketService.subscribe).toHaveBeenCalledWith('/topic/exercises/5/synchronization');
 
         const synchronizationMessage: ExerciseEditorSyncEvent = {
-            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
-            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            sessionId: 'other-client',
-            yjsUpdate: 'update',
+            eventType: ExerciseEditorSyncEventType.NEW_COMMIT_ALERT,
+            target: ExerciseEditorSyncTarget.TESTS_REPOSITORY,
+            sessionId: 'other-session',
         };
         receiveSubject.next(synchronizationMessage);
 
         expect(received).toContain(synchronizationMessage);
     });
 
-    it('filters out messages from same session', () => {
+    it('filters out messages from the same session', () => {
         const received: ExerciseEditorSyncEvent[] = [];
         service.subscribeToUpdates(5).subscribe((message: ExerciseEditorSyncEvent) => received.push(message));
 
         const ownMessage: ExerciseEditorSyncEvent = {
-            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
-            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            sessionId: 'test-session-456', // Same as our session
-            yjsUpdate: 'update',
+            eventType: ExerciseEditorSyncEventType.NEW_COMMIT_ALERT,
+            target: ExerciseEditorSyncTarget.TESTS_REPOSITORY,
+            sessionId: 'test-session-123',
         };
         receiveSubject.next(ownMessage);
 
@@ -85,7 +83,7 @@ describe('ExerciseEditorSyncService', () => {
             expect.objectContaining({
                 eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
                 target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-                sessionId: 'test-session-456',
+                sessionId: 'test-session-123',
                 timestamp: expect.any(Number),
             }),
         );
@@ -120,10 +118,9 @@ describe('ExerciseEditorSyncService', () => {
         service.subscribeToUpdates(5).subscribe((message: ExerciseEditorSyncEvent) => received.push(message));
 
         const message1: ExerciseEditorSyncEvent = {
-            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
-            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            sessionId: 'other-client',
-            yjsUpdate: 'update-1',
+            eventType: ExerciseEditorSyncEventType.NEW_COMMIT_ALERT,
+            target: ExerciseEditorSyncTarget.TESTS_REPOSITORY,
+            sessionId: 'other-session',
         };
         receiveSubject.next(message1);
         expect(received).toHaveLength(1);
@@ -131,14 +128,13 @@ describe('ExerciseEditorSyncService', () => {
         service.unsubscribe();
 
         const message2: ExerciseEditorSyncEvent = {
-            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
-            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            sessionId: 'other-client',
-            yjsUpdate: 'update-2',
+            eventType: ExerciseEditorSyncEventType.NEW_COMMIT_ALERT,
+            target: ExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
+            sessionId: 'other-session',
         };
         receiveSubject.next(message2);
 
-        expect(received).toHaveLength(1); // Still only has the first message
+        expect(received).toHaveLength(1);
     });
 
     it('reuses same observable for multiple subscribers', () => {
@@ -148,18 +144,15 @@ describe('ExerciseEditorSyncService', () => {
         service.subscribeToUpdates(5).subscribe((message: ExerciseEditorSyncEvent) => received1.push(message));
         service.subscribeToUpdates(5).subscribe((message: ExerciseEditorSyncEvent) => received2.push(message));
 
-        // Should only subscribe to websocket once
         expect(websocketService.subscribe).toHaveBeenCalledOnce();
 
         const message: ExerciseEditorSyncEvent = {
-            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
-            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            sessionId: 'other-client',
-            yjsUpdate: 'update',
+            eventType: ExerciseEditorSyncEventType.NEW_COMMIT_ALERT,
+            target: ExerciseEditorSyncTarget.TESTS_REPOSITORY,
+            sessionId: 'other-session',
         };
         receiveSubject.next(message);
 
-        // Both subscribers should receive the message
         expect(received1).toEqual([message]);
         expect(received2).toEqual([message]);
     });
