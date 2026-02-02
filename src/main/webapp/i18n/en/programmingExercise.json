@@ -18,6 +18,9 @@
             "problemStatementGenerationRequest": {
                 "userPrompt": "User Prompt"
             },
+            "problemStatementTargetedRefinementRequest": {
+                "instruction": "Refinement Instruction"
+            },
             "created": "Created new Programming Exercise with title {{ param }}",
             "updated": "Updated Programming Exercise with title {{ param }}",
             "deleted": "Deleted Programming Exercise with title {{ param }}",

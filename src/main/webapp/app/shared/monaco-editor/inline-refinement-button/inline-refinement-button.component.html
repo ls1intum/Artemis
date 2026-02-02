@@ -21,7 +21,9 @@
                 [(ngModel)]="instruction"
                 (keydown)="onKeydown($event)"
                 [disabled]="isLoading()"
+                maxlength="500"
             />
+            <span class="char-counter">{{ instruction.length }}/500</span>
             <button
                 type="button"
                 class="refinement-submit-btn"

@@ -114,3 +114,10 @@
         font-size: 11px;
     }
 }
+
+.char-counter {
+    font-size: 11px;
+    color: var(--bs-secondary, #888);
+    white-space: nowrap;
+    padding: 0 4px;
+}
