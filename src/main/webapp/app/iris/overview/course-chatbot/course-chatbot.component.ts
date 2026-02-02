@@ -25,7 +25,7 @@ export class CourseChatbotComponent {
         });
     }
 
-    toggleChatHistory(): void {
+    public toggleChatHistory(): void {
         const baseChatbot = this.irisBaseChatbot();
         if (!baseChatbot) {
             return;

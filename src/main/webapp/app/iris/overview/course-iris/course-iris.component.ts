@@ -14,7 +14,7 @@ import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-
 })
 export class CourseIrisComponent {
     private readonly route = inject(ActivatedRoute);
-    private readonly courseChatbot = viewChild(CourseChatbotComponent);
+    private readonly courseChatbot = viewChild('courseChatbot', { read: CourseChatbotComponent });
 
     private readonly courseIdParam = toSignal((this.route.parent?.paramMap ?? of(convertToParamMap({}))).pipe(map((params) => params.get('courseId'))), { initialValue: null });
 

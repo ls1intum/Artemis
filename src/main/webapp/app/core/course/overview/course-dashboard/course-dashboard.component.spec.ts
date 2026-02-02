@@ -19,6 +19,7 @@ import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { of } from 'rxjs';
 
 // Manual mock for CourseChatbotComponent to avoid ng-mocks issues with signal queries (viewChild)
 @Component({
@@ -59,7 +60,7 @@ describe('CourseDashboardComponent', () => {
                     provide: CourseStorageService,
                     useValue: {
                         getCourse: () => ({ id: 123, studentCourseAnalyticsDashboardEnabled: true, irisEnabledInCourse: true, learningPathsEnabled: true }),
-                        subscribeToCourseUpdates: () => ({ subscribe: jest.fn(() => ({ unsubscribe: jest.fn() })) }),
+                        subscribeToCourseUpdates: () => of({ id: 123, studentCourseAnalyticsDashboardEnabled: true, irisEnabledInCourse: true, learningPathsEnabled: true }),
                     },
                 },
             ],
@@ -129,23 +130,27 @@ describe('CourseDashboardComponent', () => {
 
     it('should not load course metrics when studentCourseAnalyticsDashboardEnabled is false', () => {
         const metricsSpy = jest.spyOn(component, 'loadMetrics');
-        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({
+        const courseData = {
             id: 456,
             studentCourseAnalyticsDashboardEnabled: false,
             irisEnabledInCourse: true,
             learningPathsEnabled: true,
-        });
+        };
+        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseData);
+        jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of(courseData));
         component.ngOnInit();
         expect(metricsSpy).not.toHaveBeenCalled();
     });
     it('should load course metrics when studentCourseAnalyticsDashboardEnabled is true', () => {
         const metricsSpy = jest.spyOn(component, 'loadMetrics');
-        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({
+        const courseData = {
             id: 456,
             studentCourseAnalyticsDashboardEnabled: true,
             irisEnabledInCourse: true,
             learningPathsEnabled: true,
-        });
+        };
+        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseData);
+        jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of(courseData));
         component.ngOnInit();
         expect(metricsSpy).toHaveBeenCalledOnce();
     });
