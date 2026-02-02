@@ -92,10 +92,6 @@ describe('ContextSelectionComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
-    });
-
     it('should have default selection as course', () => {
         expect(component.selectedType()).toBe('course');
         expect(component.selection()).toEqual({ type: 'course' });

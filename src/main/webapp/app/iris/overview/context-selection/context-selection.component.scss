@@ -3,6 +3,7 @@
         opacity: 0;
         transform: translateY(5px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -98,6 +99,11 @@
     gap: 12px;
     flex-shrink: 0;
 
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
     &:hover:not(:disabled) {
         background-color: var(--iris-tool-background);
         border-color: var(--primary);
@@ -105,11 +111,6 @@
 
     &:active:not(:disabled) {
         transform: scale(0.98);
-    }
-
-    &:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
     }
 
     &.selected {
