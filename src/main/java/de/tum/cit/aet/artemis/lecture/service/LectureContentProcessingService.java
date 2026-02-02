@@ -10,6 +10,7 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -109,20 +110,34 @@ public class LectureContentProcessingService {
      */
     @Async
     public void triggerProcessing(AttachmentVideoUnit unit) {
+        // Set auth context due to @Async
+        SecurityUtils.setAuthorizationObject();
+        doTriggerProcessing(unit, Optional.empty());
+    }
+
+    /**
+     * Core processing logic - called by both async triggerProcessing and sync retryProcessing.
+     * This method is synchronous; the @Async annotation on triggerProcessing handles async execution.
+     *
+     * @param unit          the attachment video unit to process
+     * @param stateToDelete if present, delete this state after preflight checks pass (used by retryProcessing)
+     * @return true if preflight checks passed and processing was attempted, false if preflight failed (nothing changed)
+     */
+    private boolean doTriggerProcessing(AttachmentVideoUnit unit, Optional<LectureUnitProcessingState> stateToDelete) {
         if (!featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)) {
             log.debug("LectureContentProcessing feature is disabled, skipping processing");
-            return;
+            return false;
         }
 
         if (unit == null || unit.getId() == null) {
             log.warn("Cannot process null or unsaved lecture unit");
-            return;
+            return false;
         }
 
         // Skip tutorial lectures
         if (unit.getLecture() != null && unit.getLecture().isTutorialLecture()) {
             log.debug("Skipping processing for tutorial lecture unit: {}", unit.getId());
-            return;
+            return false;
         }
 
         // Check content availability
@@ -131,7 +146,7 @@ public class LectureContentProcessingService {
 
         if (!hasVideo && !hasPdf) {
             log.debug("Unit {} has no video or PDF to process", unit.getId());
-            return;
+            return false;
         }
 
         // Check service availability
@@ -140,14 +155,17 @@ public class LectureContentProcessingService {
 
         if (!canTranscribe && !canIngest) {
             log.debug("No processing services available for unit {}", unit.getId());
-            return;
+            return false;
         }
 
-        // Set auth context due to @Async
-        SecurityUtils.setAuthorizationObject();
+        // Preflight passed - now handle existing state
+        if (stateToDelete.isPresent()) {
+            processingStateRepository.delete(stateToDelete.get());
+        }
 
-        // Get existing state or create new (don't persist yet - IDLE should never be in DB)
-        Optional<LectureUnitProcessingState> existingState = processingStateRepository.findByLectureUnit_Id(unit.getId());
+        // Query for state (will be empty if we just deleted, or may exist for normal trigger)
+        Optional<LectureUnitProcessingState> existingState = stateToDelete.isPresent() ? Optional.empty() : processingStateRepository.findByLectureUnit_Id(unit.getId());
+
         LectureUnitProcessingState state = existingState.orElseGet(() -> new LectureUnitProcessingState(unit));
 
         // Detect and handle content changes (updates hash/version in state object)
@@ -163,21 +181,22 @@ public class LectureContentProcessingService {
         // (content changes already transition to IDLE above, so these checks are for unchanged content)
         if (state.isProcessing()) {
             log.debug("Unit {} already processing, skipping", unit.getId());
-            return;
+            return true;
         }
 
         if (state.getPhase() == ProcessingPhase.DONE) {
             log.debug("Unit {} already done, skipping", unit.getId());
-            return;
+            return true;
         }
 
         if (state.getPhase() == ProcessingPhase.FAILED) {
             log.debug("Unit {} in failed state, skipping (use retryProcessing or change content)", unit.getId());
-            return;
+            return true;
         }
 
         // Start the state machine (will save state when actually starting processing)
         advanceProcessing(unit, state, hasVideo, hasPdf);
+        return true;
     }
 
     /**
@@ -216,22 +235,46 @@ public class LectureContentProcessingService {
 
     /**
      * Manually retry processing for a unit that failed.
+     * This is synchronous - the external API calls (Nebula/Pyris) are just job submissions
+     * which are fast. The actual processing happens on those external systems.
      *
-     * @param lectureUnit the unit to retry
+     * @param lectureUnit the unit to retry (must be in FAILED state)
+     * @return the processing state after retry attempt, or null if retry not possible
      */
-    @Async
-    public void retryProcessing(AttachmentVideoUnit lectureUnit) {
-        // Set auth context due to @Async
-        SecurityUtils.setAuthorizationObject();
-        processingStateRepository.findByLectureUnit_Id(lectureUnit.getId()).ifPresent(state -> {
-            if (state.getPhase() == ProcessingPhase.FAILED) {
-                log.info("Retrying processing for unit {}", lectureUnit.getId());
-                // Delete the failed state - triggerProcessing will create fresh
-                // (hash/version will be set correctly for the new state)
-                processingStateRepository.delete(state);
-                triggerProcessing(lectureUnit);
-            }
-        });
+    @Nullable
+    public LectureUnitProcessingState retryProcessing(AttachmentVideoUnit lectureUnit) {
+        if (lectureUnit == null || lectureUnit.getId() == null) {
+            log.warn("Cannot retry processing for null or unsaved lecture unit");
+            return null;
+        }
+
+        var existingState = processingStateRepository.findByLectureUnit_Id(lectureUnit.getId());
+        if (existingState.isEmpty() || existingState.get().getPhase() != ProcessingPhase.FAILED) {
+            return null;
+        }
+
+        log.info("Retrying processing for unit {}", lectureUnit.getId());
+
+        // Run processing, passing the FAILED state to delete after preflight passes
+        // If preflight fails, the FAILED state is preserved (nothing deleted)
+        // If preflight passes, the FAILED state is deleted and fresh state created
+        boolean preflightPassed = doTriggerProcessing(lectureUnit, existingState);
+        if (!preflightPassed) {
+            // Services unavailable - FAILED state was NOT deleted, return null
+            return null;
+        }
+
+        // Preflight passed, old state was deleted - check what was created
+        var newState = processingStateRepository.findByLectureUnit_Id(lectureUnit.getId());
+        if (newState.isPresent()) {
+            return newState.get();
+        }
+
+        // Processing couldn't start (e.g., no playlist available for video)
+        // Create a FAILED state to provide feedback to the user
+        var failedState = new LectureUnitProcessingState(lectureUnit);
+        failedState.markFailed("artemisApp.attachmentVideoUnit.processing.error.noPlaylist");
+        return processingStateRepository.save(failedState);
     }
 
     /**
