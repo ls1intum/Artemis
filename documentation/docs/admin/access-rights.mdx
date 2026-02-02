@@ -209,17 +209,94 @@ Visibility conditions marked as "(if released)" in the tables above are defined 
 
 ### Quiz Exercises
 
-| Feature               | Instructor | Editor | Teaching Assistant |
-|-----------------------|------------|--------|--------------------|
-| Preview               | ✔          | ✔      | ✔                  |
-| Sample Solution       | ✔          | ✔      | ✔                  |
-| Statistic             | ✔          | ✔      | ✔                  |
-| Set Visible           | ✔          | ✔      |                    |
-| Start Now             | ✔          | ✔      |                    |
-| Release For Practice  | ✔          | ✔      |                    |
-| Export Quiz Exercises | ✔          | ✔      |                    |
-| Export                | ✔          |        |                    |
-| Re-evaluate           | ✔          |        |                    |
+| Feature                         | Instructor       | Editor           | Teaching Assistant | Student              |
+|---------------------------------|------------------|------------------|--------------------|----------------------|
+| View Quiz (course)              | ✔                | ✔                | ✔                  | ✔ (if released)      |
+| View Quiz (exam)                | ✔                | ✔                |                    |                      |
+| Create Quiz (course)            | ✔                | ✔                |                    |                      |
+| Create Quiz (exam)              | ✔                | ✔                |                    |                      |
+| Update Quiz                     | ✔                | ✔                |                    |                      |
+| Delete Quiz                     | ✔                |                  |                    |                      |
+| Search Quizzes                  | ✔                | ✔                |                    |                      |
+| Set Visible                     | ✔                | ✔                |                    |                      |
+| Start Now                       | ✔                | ✔                |                    |                      |
+| End Now                         | ✔                |                  |                    |                      |
+| Preview                         | ✔                | ✔                | ✔                  |                      |
+| Sample Solution                 | ✔                | ✔                | ✔                  | ✔ (after quiz ends)  |
+| View Statistics                 | ✔                | ✔                | ✔                  |                      |
+| Recalculate Statistics          | ✔                | ✔                | ✔                  |                      |
+| Evaluate Quiz                   | ✔                |                  |                    |                      |
+| Re-evaluate Quiz                | ✔                |                  |                    |                      |
+| Submit (Live Mode)              | ✔                | ✔                | ✔                  | ✔                    |
+| Submit (Practice Mode)          | ✔                | ✔                | ✔                  | ✔ (after quiz ends)  |
+| Submit (Exam Mode)              | ✔                | ✔                | ✔                  | ✔                    |
+| Start Participation             | ✔                | ✔                | ✔                  | ✔ (if released)      |
+| Join Batch                      | ✔                | ✔                | ✔                  | ✔ (if started)       |
+| Create Batch                    | ✔                | ✔                | ✔                  |                      |
+| Start Batch (own)               | ✔                | ✔                | ✔                  |                      |
+| Start Batch (others')           | ✔                |                  |                    |                      |
+| Training Questions              | ✔                | ✔                | ✔                  | ✔                    |
+| Submit Training Answer          | ✔                | ✔                | ✔                  | ✔                    |
+| View Training Leaderboard       | ✔                | ✔                | ✔                  | ✔                    |
+| Update Leaderboard Settings     | ✔                | ✔                | ✔                  | ✔                    |
+
+<Callout variant={CalloutVariant.info}>
+    **Exam quiz exercises** require Editor role for viewing details, while **course quiz exercises** only require Teaching Assistant role.
+</Callout>
+
+<Callout variant={CalloutVariant.warning}>
+    **End Now** requires Instructor role (higher than Start Now which only requires Editor).
+</Callout>
+
+### Quiz Exercises - Batch Mode
+
+Quiz exercises support three modes: **SYNCHRONIZED**, **BATCHED**, and **INDIVIDUAL**.
+
+| Operation    | Mode         | Teaching Assistant                     | Student             |
+|--------------|--------------|----------------------------------------|---------------------|
+| Join Batch   | BATCHED/IND. | ✔                                      | ✔ (if quiz started) |
+| Create Batch | BATCHED/IND. | ✔                                      |                     |
+| Start Batch  | BATCHED/IND. | ✔ (own batches) / INSTRUCTOR (others') |                     |
+
+<Callout variant={CalloutVariant.info}>
+    Batch operations are not allowed for exam quiz exercises - they are only available for course quizzes.
+</Callout>
+
+### Quiz Exercises - Summary
+
+| Role       | Capabilities                                                                     |
+|------------|----------------------------------------------------------------------------------|
+| Student    | Participate, submit answers, view results after quiz ends, access training mode  |
+| TA         | Same as Student + preview, view statistics, create/start own batches             |
+| Editor     | Same as TA + create/update quizzes, start/set visible, search quizzes            |
+| Instructor | Same as Editor + delete quizzes, evaluate/re-evaluate, end quiz, start any batch |
+| Admin      | Full access to all quiz exercises                                                |
+
+### Quiz Exercises - Prerequisites
+
+- **Course Enrollment**: All quiz access requires enrollment in the course (except for Admins)
+- **Admin Override**: Admins can access all quizzes regardless of course membership
+- **Exam vs Course**: Exam quiz exercises require Editor role for viewing details; course quizzes only require TA role
+
+### Quiz Exercises - Visibility Rules
+
+Visibility conditions marked as "(if released)" or "(if started)" in the tables above are defined as follows:
+
+**Quiz Release:**
+- Students can only view quizzes after the `releaseDate` has passed
+- Teaching Assistants and above can view quizzes before release
+
+**Quiz Started:**
+- Students can join batches only after the quiz has started (not ended)
+- Batch joining is not available for exam quiz exercises
+
+**Practice Mode:**
+- Students can submit in practice mode only after the quiz has ended
+- For exam exercises, practice mode is only available for test exams
+
+**Sample Solution:**
+- Students can view the sample solution only after the quiz has ended
+- Teaching Assistants and above can view sample solutions at any time
 
 ## Lectures
 
