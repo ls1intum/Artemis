@@ -113,7 +113,7 @@ export class ExerciseMetadataSyncService {
             return;
         }
 
-        const handlers = this.getHandlers(context.exerciseType);
+        const handlers = this.getHandlers(context);
         const changedFields = alert.changedFields ?? [];
         const applicableHandlers = handlers.filter((handler) => changedFields.includes(handler.key));
 
@@ -230,7 +230,7 @@ export class ExerciseMetadataSyncService {
         resolution: ExerciseMetadataConflictModalResult,
     ): void {
         const currentExercise = context.getCurrentExercise();
-        const handlers = this.getHandlers(context.exerciseType);
+        const handlers = this.getHandlers(context);
         const handlerMap = new Map(handlers.map((handler) => [handler.key, handler]));
 
         for (const decision of resolution.decisions) {
@@ -258,7 +258,7 @@ export class ExerciseMetadataSyncService {
         return isEqual(value, otherValue);
     }
 
-    private getHandlers(exerciseType: ExerciseType): ExerciseMetadataFieldHandler<Exercise>[] {
-        return createExerciseMetadataHandlers(exerciseType);
+    private getHandlers(context: ExerciseMetadataSyncContext<Exercise>): ExerciseMetadataFieldHandler<Exercise>[] {
+        return createExerciseMetadataHandlers(context.exerciseType, () => context.getCurrentExercise());
     }
 }

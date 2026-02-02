@@ -237,6 +237,8 @@
                 "fields": {
                     "title": "Titel",
                     "shortName": "Kurzname",
+                    "channelName": "Kanalname",
+                    "competencyLinks": "Kompetenzverknüpfungen",
                     "maxPoints": "Punkte",
                     "bonusPoints": "Bonuspunkte",
                     "assessmentType": "Bewertungstyp",

@@ -12,6 +12,8 @@ describe('ExerciseMetadataHandlers', () => {
 
         expect(keys).toContain('title');
         expect(keys).toContain('shortName');
+        expect(keys).toContain('competencyLinks');
+        expect(keys).toContain('channelName');
         expect(keys).toContain('maxPoints');
         expect(keys).toContain('problemStatement');
     });

@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -66,9 +67,11 @@ public class ExerciseVersionService {
 
     private final ExerciseEditorSyncService exerciseEditorSyncService;
 
+    private final ChannelRepository channelRepository;
+
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
             QuizExerciseRepository quizExerciseRepository, TextExerciseRepository textExerciseRepository, Optional<ModelingRepositoryApi> modelingRepositoryApi,
-            Optional<FileUploadApi> fileUploadApi, UserRepository userRepository, ExerciseEditorSyncService exerciseEditorSyncService) {
+            Optional<FileUploadApi> fileUploadApi, UserRepository userRepository, ExerciseEditorSyncService exerciseEditorSyncService, ChannelRepository channelRepository) {
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -78,6 +81,7 @@ public class ExerciseVersionService {
         this.fileUploadApi = fileUploadApi;
         this.userRepository = userRepository;
         this.exerciseEditorSyncService = exerciseEditorSyncService;
+        this.channelRepository = channelRepository;
     }
 
     public boolean isRepositoryTypeVersionable(RepositoryType repositoryType) {
@@ -161,13 +165,20 @@ public class ExerciseVersionService {
             return null;
         }
         ExerciseType exerciseType = exercise.getExerciseType();
-        return switch (exerciseType) {
+        Exercise fetched = switch (exerciseType) {
             case PROGRAMMING -> programmingExerciseRepository.findForVersioningById(exercise.getId()).orElse(null);
             case QUIZ -> quizExerciseRepository.findForVersioningById(exercise.getId()).orElse(null);
             case TEXT -> textExerciseRepository.findForVersioningById(exercise.getId()).orElse(null);
             case MODELING -> modelingRepositoryApi.flatMap(api -> api.findForVersioningById(exercise.getId())).orElse(null);
             case FILE_UPLOAD -> fileUploadApi.flatMap(api -> api.findForVersioningById(exercise.getId())).orElse(null);
         };
+        if (fetched != null) {
+            var channel = channelRepository.findChannelByExerciseId(fetched.getId());
+            if (channel != null) {
+                fetched.setChannelName(channel.getName());
+            }
+        }
+        return fetched;
     }
 
     /**
@@ -237,6 +248,8 @@ public class ExerciseVersionService {
         Set<String> changedFields = new HashSet<>();
         addIfChanged(changedFields, "title", newSnapshot.title(), previousSnapshot.title());
         addIfChanged(changedFields, "shortName", newSnapshot.shortName(), previousSnapshot.shortName());
+        addIfChanged(changedFields, "channelName", newSnapshot.channelName(), previousSnapshot.channelName());
+        addIfChanged(changedFields, "competencyLinks", newSnapshot.competencyLinks(), previousSnapshot.competencyLinks());
         addIfChanged(changedFields, "maxPoints", newSnapshot.maxPoints(), previousSnapshot.maxPoints());
         addIfChanged(changedFields, "bonusPoints", newSnapshot.bonusPoints(), previousSnapshot.bonusPoints());
         addIfChanged(changedFields, "assessmentType", newSnapshot.assessmentType(), previousSnapshot.assessmentType());
