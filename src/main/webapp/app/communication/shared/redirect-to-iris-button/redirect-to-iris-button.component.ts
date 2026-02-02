@@ -12,7 +12,7 @@ import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iri
 import { MetisService } from 'app/communication/service/metis.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-redirect-to-iris-button',
@@ -43,7 +43,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
     TEXT = IrisLogoSize.TEXT;
 
     ngOnInit(): void {
-        const isIrisActive = this.profileService.isProfileActive(PROFILE_IRIS);
+        const isIrisActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
         this.irisEnabled.set(isIrisActive);
         if (!isIrisActive) {
             return;

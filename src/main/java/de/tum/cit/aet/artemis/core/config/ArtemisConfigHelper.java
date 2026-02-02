@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.config;
 import static de.tum.cit.aet.artemis.core.config.Constants.ATLAS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.NEBULA_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_ENABLED_PROPERTY_NAME;
@@ -70,6 +71,16 @@ public class ArtemisConfigHelper {
      */
     public boolean isHyperionEnabled(Environment environment) {
         return getPropertyOrExitArtemis(HYPERION_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the Iris module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the Iris module is enabled, false otherwise
+     */
+    public boolean isIrisEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(IRIS_ENABLED_PROPERTY_NAME, environment);
     }
 
     /**
@@ -188,6 +199,9 @@ public class ArtemisConfigHelper {
         }
         if (isHyperionEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_HYPERION);
+        }
+        if (isIrisEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_IRIS);
         }
         if (isExamEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_EXAM);
