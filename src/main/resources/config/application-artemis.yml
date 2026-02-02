@@ -77,6 +77,10 @@ artemis:
   git:
     name: Artemis
     email: artemis@xcit.tum.de
+  rate-limiting:
+    enabled: false
+    account-management-requests-per-minute: 5
+    authentication-requests-per-minute: 30
   athena:
     url: http://localhost:5100
     secret: abcdef12345
@@ -85,12 +89,15 @@ artemis:
     conversion-service-url: http://localhost:8080
   hyperion:
     enabled: false  # Set this to true to enable the hyperion service on startup, requires Spring AI to be configured below.
-
+  atlas:
+    chat-model: gpt-4o
+    temperature: 0.2
   scheduling: # these values are cron expressions. To generate one, you can use e.g. https://www.freeformatter.com/cron-expression-generator-quartz.html
     programming-exercises-cleanup-time: 0 0 3 * * * # every day at 3am
     data-export-creation-time: 0 0 4 * * * # every day at 4am
     programming-exercises-retrigger-submission-without-result-time: 0 0 2 * * * # every day at 2am
     continuous-plagiarism-control-trigger-time: 0 0 5 * * * # every day at 5am
+    vulnerability-scan-time: 0 0 8 * * MON # every Monday at 8am
 
   data-export:
     days-between-data-exports: 14
@@ -105,6 +112,11 @@ artemis:
   nebula: # The nebula module is used for llm features such as faq-rewriting and lecture transcription
     enabled: false
     url: <your-nebula-url>
+    secret-token: <your-secret>
+
+  iris: # The iris module is used for AI-powered features via Pyris
+    enabled: false
+    url: <your-pyris-url>
     secret-token: <your-secret>
 
 # Configure Spring AI, if you want to use Hyperion or Atlas

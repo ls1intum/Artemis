@@ -1,5 +1,4 @@
-import { TestBed } from '@angular/core/testing';
-import { SimpleChange } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CodeEditorContainerComponent, CollapsableCodeEditorElement } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import {
     CommitState,
@@ -9,7 +8,6 @@ import {
     FileBadgeType,
     FileType,
     RenameFileChange,
-    RepositoryType,
 } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService, TranslateStore } from '@ngx-translate/core';
@@ -20,6 +18,7 @@ import { CodeEditorFileService } from 'app/programming/shared/code-editor/servic
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { editor } from 'monaco-editor';
 
 class MockFileService {
     updateFileReferences = jest.fn((refs) => refs);
@@ -28,6 +27,7 @@ class MockFileService {
 
 describe('CodeEditorContainerComponent', () => {
     let component: CodeEditorContainerComponent;
+    let fixture: ComponentFixture<CodeEditorContainerComponent>;
     let alertService: AlertService;
     let fileService: MockFileService;
 
@@ -46,7 +46,7 @@ describe('CodeEditorContainerComponent', () => {
             })
             .compileComponents();
 
-        const fixture = TestBed.createComponent(CodeEditorContainerComponent);
+        fixture = TestBed.createComponent(CodeEditorContainerComponent);
         component = fixture.componentInstance;
         alertService = TestBed.inject(AlertService);
         fileService = TestBed.inject(CodeEditorFileService) as unknown as MockFileService;
@@ -56,6 +56,7 @@ describe('CodeEditorContainerComponent', () => {
             getText: jest.fn().mockReturnValue('content'),
             getNumberOfLines: jest.fn().mockReturnValue(3),
             highlightLines: jest.fn(),
+            editor: jest.fn().mockReturnValue({ revealLine: jest.fn() }),
         } as any;
         component.grid = { toggleCollapse: jest.fn() } as any;
     });
@@ -63,7 +64,6 @@ describe('CodeEditorContainerComponent', () => {
     afterEach(() => jest.clearAllMocks());
 
     it('should initialize defaults', () => {
-        expect(component.selectedRepository).toBe(RepositoryType.TEMPLATE);
         expect(component.editorState).toBe(EditorState.CLEAN);
         expect(component.commitState).toBe(CommitState.UNDEFINED);
         expect(component.unsavedFiles).toEqual({});
@@ -71,13 +71,12 @@ describe('CodeEditorContainerComponent', () => {
     });
 
     it('should update file badges when feedback suggestions change', () => {
-        component.feedbackSuggestions = [
+        fixture.componentRef.setInput('feedbackSuggestions', [
             { reference: 'file:src/main/App.java_line:3' } as Feedback,
             { reference: 'file:src/main/App.java_line:10' } as Feedback,
             { reference: 'file:src/Other.java_line:5' } as Feedback,
-        ];
-
-        component.ngOnChanges({ feedbackSuggestions: new SimpleChange([], component.feedbackSuggestions, true) });
+        ]);
+        fixture.detectChanges();
 
         expect(Object.keys(component.fileBadges)).toEqual(expect.arrayContaining(['src/main/App.java', 'src/Other.java']));
         expect(component.fileBadges['src/main/App.java'][0].type).toBe(FileBadgeType.FEEDBACK_SUGGESTION);
@@ -205,13 +204,14 @@ describe('CodeEditorContainerComponent', () => {
 
     it('should expose feedbacks for submission when inline feedback is enabled', () => {
         const feedback = { id: 1 } as Feedback;
-        component.participation = {
+        fixture.componentRef.setInput('participation', {
             submissions: [{ results: [{ feedbacks: [feedback] } as Result] } as Submission],
-        } as Participation;
+        } as Participation);
 
         expect(component.feedbackForSubmission()).toEqual([feedback]);
 
-        component.showInlineFeedback = false;
+        fixture.componentRef.setInput('showInlineFeedback', false);
+        fixture.detectChanges();
         expect(component.feedbackForSubmission()).toEqual([]);
     });
 
@@ -227,5 +227,23 @@ describe('CodeEditorContainerComponent', () => {
         event.preventDefault.mockClear();
         expect(component.unloadNotification(event)).toBeTrue();
         expect(event.preventDefault).not.toHaveBeenCalled();
+    });
+
+    it('jumpToLine should call monaco revealLine with Immediate scroll type', () => {
+        const ed = component.monacoEditor.editor();
+        const revealSpy = jest.spyOn(ed, 'revealLine');
+
+        component.jumpToLine(12);
+
+        expect(revealSpy).toHaveBeenCalledWith(12, editor.ScrollType.Immediate);
+    });
+
+    it('fileLoad should emit onFileLoad', () => {
+        const spy = jest.fn();
+        component.onFileLoad.subscribe(spy);
+
+        component.fileLoad('src/main/App.java');
+
+        expect(spy).toHaveBeenCalledWith('src/main/App.java');
     });
 });

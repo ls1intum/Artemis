@@ -9,7 +9,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import {
     ImportAllCourseCompetenciesModalComponent,
@@ -87,7 +87,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             untracked(async () => await this.loadCourseCompetencies(courseId));
         });
         effect(() => {
-            const irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+            const irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
             untracked(async () => {
                 if (irisEnabled) {
                     await this.loadIrisEnabled();
@@ -217,7 +217,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             size: 'lg',
             backdrop: true,
         });
-        modalRef.componentInstance.courseId = this.courseId();
+        modalRef.componentInstance.courseId.set(this.courseId());
 
         modalRef.componentInstance.competencyChanged.subscribe(() => {
             this.loadCourseCompetencies(this.courseId());

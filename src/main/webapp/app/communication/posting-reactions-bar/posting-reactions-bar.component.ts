@@ -18,7 +18,7 @@ import { DisplayPriority } from '../metis.util';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { GroupChatDTO, isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
@@ -31,6 +31,7 @@ import { map } from 'rxjs';
 import { ForwardMessageDialogComponent } from 'app/communication/course-conversations-components/forward-message-dialog/forward-message-dialog.component';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { firstValueFrom } from 'rxjs';
+import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
 
 const PIN_EMOJI_ID = 'pushpin';
 const ARCHIVE_EMOJI_ID = 'open_file_folder';
@@ -113,7 +114,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     pinTooltip: string;
     displayPriority: DisplayPriority;
     canPin = false;
-    channels: ChannelDTO[] = [];
+    channels: (ChannelDTO | GroupChatDTO)[] = [];
     users: UserPublicInfoDTO[] = [];
     posting = input<T>();
     isThreadSidebar = input<boolean>();
@@ -147,6 +148,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     private conversationService = inject(ConversationService);
     private modalService = inject(NgbModal);
     private metisConversationService = inject(MetisConversationService);
+    private courseSidebarService = inject(CourseSidebarService);
 
     /**
      * on initialization: updates the current posting and its reactions,
@@ -517,6 +519,9 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
                     conversations.forEach((conversation) => {
                         if (conversation.type === ConversationType.CHANNEL && !(conversation as ChannelDTO).isAnnouncementChannel) {
                             this.channels.push(conversation as ChannelDTO);
+                        } else if (conversation.type === ConversationType.GROUP_CHAT) {
+                            (conversation as GroupChatDTO).name = this.conversationService.getConversationName(conversation);
+                            this.channels.push(conversation as GroupChatDTO);
                         }
                     });
 
@@ -582,7 +587,11 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
      * Sends the post to selected conversation with optional new content via MetisService.
      */
     forwardPost(post: Posting, conversation: Conversation, content: string, isAnswer: boolean): void {
-        this.metisService.createForwardedMessages([post], conversation, isAnswer, content).subscribe({});
+        this.metisService.createForwardedMessages([post], conversation, isAnswer, content).subscribe({
+            complete: () => {
+                this.courseSidebarService.reloadSidebar();
+            },
+        });
     }
 
     /**

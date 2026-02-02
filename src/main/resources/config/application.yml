@@ -73,7 +73,7 @@ artemis:
                 java:
                     # possible overrides: maven, gradle
                     default: "ls1tum/artemis-maven-template:java17-25"
-                    maven_blackbox: "ghcr.io/uni-passau-artemis/artemis-dejagnu:22"
+                    maven_blackbox: "ghcr.io/uni-passau-artemis/artemis-dejagnu:25"
                 kotlin:
                     # possible overrides: maven, gradle
                     default: "ls1tum/artemis-maven-template:java17-25"
@@ -140,7 +140,11 @@ artemis:
         url: # Set this in production environment (e.g., https://nebula.example.com)
         secret-token: # Set this in production environment
 
+    # Iris / Pyris configuration for AI-powered features
     iris:
+        enabled: false # Set this to true in prod if you want to use Iris
+        url: # Set this in production environment (e.g., https://pyris.example.com)
+        secret-token: # Set this in production environment
         ratelimit:
             # Use -1 for both values to indicate unlimited (no rate limiting)
             # Otherwise: default-limit >= 0 (0 = no requests allowed), default-timeframe-hours >= 1
@@ -382,7 +386,9 @@ jhipster:
         password: AN-ADMIN-PASSWORD-THAT-MUST-BE-CHANGED (FROM REGISTRY CONFIG)
     http:
         cache: # Used by the CachingHttpHeadersFilter
-            timeToLiveInDays: 1461
+            # 7 days balances caching benefits with allowing bug fixes to propagate within a reasonable timeframe.
+            # Longer durations (e.g., years) make it difficult to push fixes to users who have cached broken responses.
+            timeToLiveInDays: 7
     cache: # Cache configuration
         hazelcast: # Hazelcast distributed cache
             time-to-live-seconds: 3600

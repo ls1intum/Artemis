@@ -42,7 +42,7 @@ import { ProgrammingExerciseInstructionAnalysisComponent } from './analysis/prog
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
-import { MODULE_FEATURE_HYPERION, PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS } from 'app/app.constants';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
@@ -50,6 +50,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { editor } from 'monaco-editor';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -87,7 +88,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     courseId: number;
     exerciseId: number;
-    irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+    irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
     artemisIntelligenceActions = computed(() => {
         const actions = [];
@@ -325,6 +326,16 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         const lineWarnings = this.mapAnalysisToWarnings(analysis);
         this.markdownEditorMonaco?.monacoEditor?.setAnnotations(lineWarnings as Annotation[]);
     };
+
+    /**
+     * Scrolls the Monaco editor to the specified line immediately.
+     *
+     * @param {number} lineNumber
+     *        The line to reveal in the editor.
+     */
+    jumpToLine(lineNumber: number) {
+        this.markdownEditorMonaco?.monacoEditor.revealLine(lineNumber, editor.ScrollType.Immediate);
+    }
 
     private mapAnalysisToWarnings = (analysis: ProblemStatementAnalysis) => {
         return Array.from(analysis.values()).flatMap(({ lineNumber, invalidTestCases, repeatedTestCases }) =>

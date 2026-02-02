@@ -9,7 +9,7 @@ import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled, unsetCourseIcon } from 'app/core/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
-import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATLAS, PROFILE_ATHENA, PROFILE_LTI } from 'app/app.constants';
+import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI, PROFILE_ATHENA } from 'app/app.constants';
 import { ImageComponent } from 'app/shared/image/image.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import dayjs from 'dayjs/esm';
@@ -44,6 +44,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { FileService } from 'app/shared/service/file.service';
+import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
 
 const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
 
@@ -75,21 +76,31 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
     ],
 })
 export class CourseUpdateComponent implements OnInit {
-    private eventManager = inject(EventManager);
-    private courseManagementService = inject(CourseManagementService);
-    private courseAdminService = inject(CourseAdminService);
-    private activatedRoute = inject(ActivatedRoute);
-    private fileService = inject(FileService);
-    private alertService = inject(AlertService);
-    private profileService = inject(ProfileService);
-    private organizationService = inject(OrganizationManagementService);
-    private dialogService = inject(DialogService);
-    private translateService = inject(TranslateService);
-    private navigationUtilService = inject(ArtemisNavigationUtilService);
-    private router = inject(Router);
-    private accountService = inject(AccountService);
+    private readonly eventManager = inject(EventManager);
+    private readonly courseManagementService = inject(CourseManagementService);
+    private readonly courseAdminService = inject(CourseAdminService);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly fileService = inject(FileService);
+    private readonly alertService = inject(AlertService);
+    private readonly profileService = inject(ProfileService);
+    private readonly organizationService = inject(OrganizationManagementService);
+    private readonly dialogService = inject(DialogService);
+    private readonly translateService = inject(TranslateService);
+    private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
+    private readonly router = inject(Router);
+    private readonly accountService = inject(AccountService);
 
-    ProgrammingLanguage = ProgrammingLanguage;
+    protected readonly ProgrammingLanguage = ProgrammingLanguage;
+    protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
+    protected readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
+
+    protected readonly faSave = faSave;
+    protected readonly faBan = faBan;
+    protected readonly faTimes = faTimes;
+    protected readonly faTrash = faTrash;
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly faPen = faPen;
 
     readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
     readonly colorSelector = viewChild.required(ColorSelectorComponent);
@@ -99,8 +110,6 @@ export class CourseUpdateComponent implements OnInit {
     tzClick$ = new Subject<string>();
     timeZones: string[] = [];
     originalTimeZone?: string;
-
-    readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
 
     courseForm: FormGroup;
     course: Course;
@@ -112,14 +121,6 @@ export class CourseUpdateComponent implements OnInit {
     customizeGroupNames = false;
     courseOrganizations: Organization[];
     isAdmin = false;
-    // Icons
-    faSave = faSave;
-    faBan = faBan;
-    faTimes = faTimes;
-    faTrash = faTrash;
-    faQuestionCircle = faQuestionCircle;
-    faExclamationTriangle = faExclamationTriangle;
-    faPen = faPen;
 
     faqEnabled = true;
     communicationEnabled = true;
@@ -189,7 +190,7 @@ export class CourseUpdateComponent implements OnInit {
             }
         }
         this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
-        this.ltiEnabled = this.profileService.isProfileActive(PROFILE_LTI);
+        this.ltiEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI);
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
 
         this.communicationEnabled = isCommunicationEnabled(this.course);

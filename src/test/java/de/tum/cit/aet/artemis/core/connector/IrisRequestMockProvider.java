@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.core.connector;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
@@ -16,8 +15,8 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -32,6 +31,7 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.dto.IngestionStateResponseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisHealthStatusDTO;
@@ -48,7 +48,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.transcriptionIngestion.Pyri
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.transcriptionIngestion.PyrisWebhookTranscriptionIngestionExecutionDTO;
 
 @Component
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 @Lazy
 public class IrisRequestMockProvider {
 

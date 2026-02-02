@@ -331,6 +331,70 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             """)
     Optional<Exercise> findByIdWithEagerParticipations(@Param("exerciseId") Long exerciseId);
 
+    /**
+     * Finds an exercise with participations, submissions, results, and feedbacks for a specific student.
+     * Used for data export of non-programming exercises.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @return the exercise with the student's participations
+     */
+    @Query("""
+            SELECT DISTINCT e
+            FROM Exercise e
+                LEFT JOIN FETCH e.exerciseGroup eg
+                LEFT JOIN FETCH eg.exam ex
+                LEFT JOIN FETCH ex.course
+                LEFT JOIN FETCH e.studentParticipations p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks
+            WHERE e.id = :exerciseId
+                AND p.student.id = :studentId
+            """)
+    Optional<Exercise> findByIdWithStudentParticipationSubmissionsResultsAndFeedbacks(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+
+    /**
+     * Finds an exercise with participations, submissions, results, feedbacks, and test cases for a specific student.
+     * Used for data export of programming exercises where test case information is needed.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @return the exercise with the student's participations including test cases
+     */
+    @Query("""
+            SELECT DISTINCT e
+            FROM Exercise e
+                LEFT JOIN FETCH e.exerciseGroup eg
+                LEFT JOIN FETCH eg.exam ex
+                LEFT JOIN FETCH ex.course
+                LEFT JOIN FETCH e.studentParticipations p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
+            WHERE e.id = :exerciseId
+                AND p.student.id = :studentId
+            """)
+    Optional<Exercise> findByIdWithStudentParticipationSubmissionsResultsFeedbacksAndTestCases(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+
+    /**
+     * Fetches an exercise by id with its exercise group, exam, and course relationships eagerly loaded.
+     * This is used as a fallback when a student has no participation in the exercise.
+     *
+     * @param exerciseId the id of the exercise to fetch
+     * @return the exercise with exercise group, exam, and course relationships loaded
+     */
+    @Query("""
+            SELECT e
+            FROM Exercise e
+                LEFT JOIN FETCH e.exerciseGroup eg
+                LEFT JOIN FETCH eg.exam ex
+                LEFT JOIN FETCH ex.course
+            WHERE e.id = :exerciseId
+            """)
+    Optional<Exercise> findByIdWithExerciseGroupExamAndCourse(@Param("exerciseId") long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig" })
     Optional<Exercise> findWithEagerCategoriesAndTeamAssignmentConfigById(Long exerciseId);
 
@@ -450,16 +514,19 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     /**
      * Fetches the number of student participations in the given exercise
      *
-     * @param exerciseId the id of the exercise to get the amount for
-     * @return The number of participations as <code>Long</code>
+     * @param exerciseId       the id of the exercise to get the amount for
+     * @param studentGroupName the student group name of the exercise's course
+     * @return The number of student participations as <code>Long</code>
      */
     @Query("""
             SELECT COUNT(DISTINCT p.student.id)
             FROM Exercise e
                 JOIN e.studentParticipations p
+                JOIN p.student.groups g
             WHERE e.id = :exerciseId
+                 AND g = :studentGroupName
             """)
-    Long getStudentParticipationCountById(@Param("exerciseId") Long exerciseId);
+    Long getStudentParticipationCountById(@Param("exerciseId") Long exerciseId, @Param("studentGroupName") String studentGroupName);
 
     /**
      * Fetches the number of team participations in the given exercise

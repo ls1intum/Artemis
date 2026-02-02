@@ -25,7 +25,8 @@
                 "authority": {
                     "title": "Rolle ({{ num }})",
                     "tooltip": "Filter die Nutzer:innen anhand ihrer Berechtigungen",
-                    "admin": "Administrator",
+                    "super_admin": "Super-Administrator:in",
+                    "admin": "Administrator:in",
                     "instructor": "Lehrende",
                     "editor": "Editor:in",
                     "ta": "Tutor:in",
@@ -92,7 +93,8 @@
             "deactivated": "Deaktiviert",
             "globalRoles": "Globale Rollen",
             "roles": {
-                "admin": "Administrator",
+                "superAdmin": "Super-Administrator:in",
+                "admin": "Administrator:in",
                 "instructor": "Lehrende:r",
                 "editor": "Editor:in",
                 "tutor": "Tutor:in",
