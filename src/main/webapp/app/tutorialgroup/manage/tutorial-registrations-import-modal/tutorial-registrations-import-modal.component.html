@@ -8,7 +8,6 @@
                     <thead>
                         <tr>
                             <th>Login</th>
-                            <th>Email</th>
                             <th>Registration Number</th>
                         </tr>
                     </thead>
@@ -16,24 +15,14 @@
                         <tr>
                             <td>user_1</td>
                             <td></td>
-                            <td></td>
                         </tr>
                         <tr>
-                            <td></td>
-                            <td>{{ 'user_2@artemis.org' }}</td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td></td>
                             <td></td>
                             <td>ge48vol</td>
                         </tr>
                     </tbody>
                 </table>
                 <div class="controls-footer">
-                    @if (loading()) {
-                        Loading
-                    }
                     <input type="file" class="file-upload-input" accept=".csv" (change)="onFileSelected($event)" #fileUploadInput />
                     <button
                         pButton
@@ -45,6 +34,96 @@
                 </div>
             </div>
         }
-        @case (ImportFlowStep.IMPORT) {}
+        @case (ImportFlowStep.CONFIRMATION) {
+            <div class="confirmation-frame">
+                <span jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.confirmationText"></span>
+                <div class="table-frame">
+                    <table class="parsed-table">
+                        <thead>
+                            <tr>
+                                <th>Login</th>
+                                <th>Registration Number</th>
+                            </tr>
+                        </thead>
+                    </table>
+                    <div class="table-body-scroll">
+                        <table class="parsed-table">
+                            <tbody>
+                                @for (student of parsedStudents(); track student.login + student.registrationNumber) {
+                                    <tr>
+                                        <td>{{ student.login }}</td>
+                                        <td>{{ student.registrationNumber }}</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="controls-footer">
+                    <button
+                        pButton
+                        class="p-button-secondary p-button-sm"
+                        data-testid="back-to-explanation-button"
+                        jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.backToExplanationButtonLabel"
+                        (click)="goToExplanationStep()"
+                    ></button>
+                    <div class="spacer"></div>
+                    <button
+                        pButton
+                        class="p-button-primary p-button-sm"
+                        data-testid="import-button"
+                        jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.importButtonLabel"
+                        (click)="importParsedStudents()"
+                    ></button>
+                </div>
+            </div>
+        }
+        @case (ImportFlowStep.RESULTS) {
+            @if (someStudentsDoNotExist()) {
+                <div class="results-frame">
+                    @if (noStudentsExist()) {
+                        <span jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.resultsDescription.noStudentsRegistered"></span>
+                    } @else {
+                        <span jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.resultsDescription.someStudentsRegistered"></span>
+                    }
+                    <div class="table-frame">
+                        <table class="results-table">
+                            <thead>
+                                <tr>
+                                    <th>Login</th>
+                                    <th>Registration Number</th>
+                                </tr>
+                            </thead>
+                        </table>
+                        <div class="table-body-scroll">
+                            <table class="results-table">
+                                <tbody>
+                                    @for (student of resultStudents(); track student.login ?? '' + student.registrationNumber ?? '') {
+                                        <tr>
+                                            <td [class.danger]="student.login !== '' && !student.exists">{{ student.login }}</td>
+                                            <td [class.danger]="student.registrationNumber !== '' && !student.exists">{{ student.registrationNumber }}</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="controls-footer">
+                        <button pButton class="p-button-secondary p-button-sm" data-testid="restart-button" (click)="goToExplanationStep()">Restart</button>
+                        <button pButton class="p-button-primary p-button-sm" data-testid="restart-button" (click)="close()">Finish</button>
+                    </div>
+                </div>
+            } @else {
+                <div class="success-frame">
+                    <div class="success-content">
+                        <span class="pi pi-check-circle" style="font-size: 5rem"></span>
+                        <span>All students were registered.</span>
+                    </div>
+                    <div class="controls-footer">
+                        <button pButton class="p-button-primary p-button-sm" data-testid="finish-button" (click)="close()">Finish</button>
+                    </div>
+                </div>
+            }
+        }
     }
 </p-dialog>

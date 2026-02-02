@@ -54,6 +54,7 @@ export class TutorialRegistrationsComponent {
     removeButtonTooltip = computed<string>(() => this.computeRemoveButtonTooltip());
     searchFieldPlaceholder = computed<string>(() => this.computeSearchFieldPlaceholder());
     searchString = signal('');
+    onStudentsRegistered = output<void>();
 
     confirmDeregistration(event: Event, studentLogin: string) {
         this.confirmationService.confirm({

@@ -2,8 +2,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
-    max-width: 50rem;
+    gap: 1.5rem;
+    width: min(50rem, 85vw);
 
     .example-table {
         table-layout: fixed;
@@ -26,5 +26,119 @@
         .file-upload-input {
             display: none;
         }
+    }
+}
+
+.confirmation-frame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    width: min(50rem, 85vw);
+
+    .table-frame {
+        padding-left: 1rem;
+
+        .parsed-table {
+            table-layout: fixed;
+            width: 35rem;
+            border-collapse: collapse;
+            box-sizing: border-box;
+
+            th,
+            td {
+                border: 1px solid var(--border-color);
+                padding: 0.5rem;
+                text-align: left;
+            }
+        }
+
+        .table-body-scroll {
+            max-height: 20rem;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 1rem;
+        }
+    }
+
+    .controls-footer {
+        width: 100%;
+        display: flex;
+
+        .spacer {
+            flex: 1;
+        }
+    }
+}
+
+.results-frame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    width: min(50rem, 85vw);
+
+    span {
+        width: 100%;
+    }
+
+    .table-frame {
+        padding-left: 1rem;
+
+        .results-table {
+            table-layout: fixed;
+            width: 35rem;
+            border-collapse: collapse;
+            box-sizing: border-box;
+
+            th,
+            td {
+                border: 1px solid var(--border-color);
+                padding: 0.5rem;
+                text-align: left;
+
+                &.danger {
+                    background-color: var(--danger);
+                }
+            }
+        }
+
+        .table-body-scroll {
+            max-height: 20rem;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 1rem;
+        }
+    }
+
+    .controls-footer {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+
+        .spacer {
+            flex: 1;
+        }
+    }
+}
+
+.success-frame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 25rem;
+    gap: 1.5rem;
+
+    .success-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .controls-footer {
+        width: 100%;
+        display: flex;
+        justify-content: end;
     }
 }

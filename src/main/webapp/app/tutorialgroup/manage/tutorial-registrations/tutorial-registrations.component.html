@@ -65,4 +65,4 @@
     </table>
 </div>
 <p-confirmDialog />
-<jhi-tutorial-registrations-import-modal #importModal />
+<jhi-tutorial-registrations-import-modal [courseId]="courseId()" [tutorialGroupId]="tutorialGroupId()" (onStudentsRegistered)="onStudentsRegistered.emit()" #importModal />

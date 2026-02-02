@@ -278,12 +278,21 @@
                     "actions": "Aktionen"
                 },
                 "importModal": {
-                    "explanationText": "Über diesen Dialog kann man existierende Nutzer über eine .csv Datei registrieren. Jeder Eintrag der Datei muss zu mindest einen Wert für 'Login', 'Email' oder 'Registration Number' enthalten. Werte für 'First Name' und 'Last Name' sind optional. Hier ein Beispiel für einen validen Dateiinhalt:",
+                    "explanationText": "Über diesen Dialog kann man existierende Nutzer über eine .csv Datei registrieren. Jeder Eintrag der Datei muss zu mindest einen Wert für 'Login' oder 'Registration Number' enthalten. Hier ein Beispiel für einen validen Dateiinhalt:",
                     "explanationHeader": "Studenten Importieren",
                     "confirmImportHeader": "Importbestätigung",
+                    "importResultsHeader": "Import Resultat",
                     "chooseFileButtonLabel": "Datei Wählen",
                     "invalidFileEntriesAlert": "Die ausgewählte Datei enthält Einträge, die nicht mindestens eines der benötigten Felder enthälten.",
-                    "noFileEntriesAlert": "Die ausgewählte Datei enthält keine Einträge."
+                    "noFileEntriesAlert": "Die ausgewählte Datei enthält keine Einträge.",
+                    "confirmationText": "Bitte schau dir den Inhalt der eingelesenen .csv Datei and und bestätige, dass er korrekt ist. Danach wird Artemis verifizieren, dass die Benutzer existieren und sie für die Gruppe registrieren. Artemis hat Folgendes eingelesen:",
+                    "backToExplanationButtonLabel": "Zurück",
+                    "importButtonLabel": "Importieren",
+                    "importErrorAlert": "Beim Importieren ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "resultsDescription": {
+                        "someStudentsRegistered": "Nur ein Teil der Studenten konnten registriert werden. Die rot markierten logins/registration numbers konnten keinen Benutzern zugeordnet werden:",
+                        "noStudentsRegistered": "Keine Studenten konnten registriert werden. Die gegebenen logins/registration numbers konnten keinen Benutzern zugeordnet werden:"
+                    }
                 }
             },
             "createTutorialGroup": {

@@ -22,20 +22,7 @@ export class TutorialRegistrationsContainerComponent {
     registeredStudents = signal<TutorialGroupRegisteredStudentDTO[] | undefined>(undefined);
 
     constructor() {
-        effect(() => {
-            const courseId = this.courseId();
-            const tutorialGroupId = this.tutorialGroupId();
-            if (!courseId || !tutorialGroupId) {
-                return;
-            }
-
-            this.tutorialGroupsService
-                .getRegisteredStudentDTOs(courseId, tutorialGroupId)
-                .pipe(takeUntilDestroyed(this.destroyRef))
-                .subscribe((registeredStudents) => {
-                    this.registeredStudents.set(registeredStudents);
-                });
-        });
+        effect(() => this.fetchRegisteredStudents());
     }
 
     deregisterStudent(event: DeregisterStudentEvent) {
@@ -51,6 +38,21 @@ export class TutorialRegistrationsContainerComponent {
                         return registeredStudents.filter((student) => student.login !== studentLogin);
                     }
                 });
+            });
+    }
+
+    fetchRegisteredStudents() {
+        const courseId = this.courseId();
+        const tutorialGroupId = this.tutorialGroupId();
+        if (!courseId || !tutorialGroupId) {
+            return;
+        }
+
+        this.tutorialGroupsService
+            .getRegisteredStudentDTOs(courseId, tutorialGroupId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((registeredStudents) => {
+                this.registeredStudents.set(registeredStudents);
             });
     }
 }

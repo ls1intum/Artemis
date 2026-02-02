@@ -278,12 +278,21 @@
                     "actions": "Actions"
                 },
                 "importModal": {
-                    "explanationText": "This dialog can be used to register existing users through a .csv file. Each entry in the file must contain a value for either matriculation number, login or email. Values for last and first name are optional. Here an example of valid .csv file content:",
+                    "explanationText": "This dialog can be used to register existing users through a .csv file. Each entry in the file must contain a value for either login or registration number. Here an example of valid .csv file content:",
                     "explanationHeader": "Import Students",
                     "confirmImportHeader": "Confirm Import",
+                    "importResultsHeader": "Import Results",
                     "chooseFileButtonLabel": "Choose File",
                     "invalidFileEntriesAlert": "The chosen file contains entries that do not have at least one of the required fields.",
-                    "noFileEntriesAlert": "The chosen file contains no entries."
+                    "noFileEntriesAlert": "The chosen file contains no entries.",
+                    "confirmationText": "Please have a look at the contents of the parsed .csv file and confirm their correctness. After your confirmation, Artemis will verify that the users exists and register them for the group. Artemis parsed the following:",
+                    "backToExplanationButtonLabel": "Back",
+                    "importButtonLabel": "Import",
+                    "importErrorAlert": "Something went wrong while importing the students. Please try again.",
+                    "resultsDescription": {
+                        "someStudentsRegistered": "Only a subset of students could be registered. The logins/registration numbers highlighted in red could not be matched to any existing users:",
+                        "noStudentsRegistered": "No students could be registered. The given logins/registration numbers could not be matched to existing users:"
+                    }
                 }
             },
             "createTutorialGroup": {

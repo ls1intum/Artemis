@@ -8,6 +8,7 @@
             [tutorialGroupId]="tutorialGroupIdToPass"
             [registeredStudents]="registeredStudentsToPass"
             (onDeregisterStudent)="deregisterStudent($event)"
+            (onStudentsRegistered)="fetchRegisteredStudents()"
         />
     } @else {
         <!-- TODO: create some error screen -->

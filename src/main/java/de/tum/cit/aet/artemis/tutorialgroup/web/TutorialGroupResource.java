@@ -496,6 +496,7 @@ public class TutorialGroupResource {
      * @return the list of students who could not be registered for the tutorial group, because they could NOT be found in the Artemis database as students of the tutorial group
      *         course
      */
+    // TODO: there is absolutely no reason that the DTO sent as request body has any other fields than login and registrationNumber. -> Remove all other fields
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/register-multiple")
     @EnforceAtLeastInstructor
     public ResponseEntity<Set<StudentDTO>> registerMultipleStudentsToTutorialGroup(@PathVariable long courseId, @PathVariable long tutorialGroupId,
