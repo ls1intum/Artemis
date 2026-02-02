@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.athena.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import static de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils.hashSha256;
 
 import java.io.IOException;
@@ -16,8 +15,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.athena.config.AthenaEnabled;
 import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
@@ -60,7 +60,7 @@ import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
 /**
  * REST controller for Athena feedback suggestions.
  */
-@Profile(PROFILE_ATHENA)
+@Conditional(AthenaEnabled.class)
 @Lazy
 @RestController
 @RequestMapping("api/athena/")

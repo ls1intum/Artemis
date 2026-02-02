@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, inject, input } from '@angular/core';
-import { PROFILE_ATHENA } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import dayjs from 'dayjs/esm';
@@ -79,7 +79,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
         if (!this.exercise.id && !this.isImport) {
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
         }
-        this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+        this.isAthenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
     }
 
     private updateIsImportBasedOnUrl() {

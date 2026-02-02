@@ -4,7 +4,7 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPenSquare } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_ATHENA } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -66,7 +66,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     private acceptSubscription?: Subscription;
 
     ngOnInit() {
-        this.athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+        this.athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
         this.isExamExercise = isExamExercise(this.exercise());
         if (this.isExamExercise || !this.exercise().id) {
             return;

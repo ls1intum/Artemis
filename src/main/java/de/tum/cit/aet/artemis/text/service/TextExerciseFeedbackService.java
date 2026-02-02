@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.text.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
-
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -24,7 +22,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
-import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
+import de.tum.cit.aet.artemis.athena.config.AthenaApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
@@ -121,7 +119,7 @@ public class TextExerciseFeedbackService {
 
             log.debug("Submission id: {}", textSubmission.getId());
 
-            AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA));
+            AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new AthenaApiNotPresentException(AthenaFeedbackApi.class));
             var athenaResponse = api.getTextFeedbackSuggestions(textExercise, textSubmission, false);
 
             Set<TextBlock> textBlocks = new HashSet<>();

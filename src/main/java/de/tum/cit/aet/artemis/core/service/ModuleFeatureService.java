@@ -133,4 +133,13 @@ public class ModuleFeatureService {
     public boolean isApollonEnabled() {
         return artemisConfigHelper.isApollonEnabled(environment);
     }
+
+    /**
+     * Check if the Athena module is enabled.
+     *
+     * @return true if the Athena module is enabled, false otherwise
+     */
+    public boolean isAthenaEnabled() {
+        return artemisConfigHelper.isAthenaEnabled(environment);
+    }
 }
