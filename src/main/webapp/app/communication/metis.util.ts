@@ -1,5 +1,7 @@
 import { Validators } from '@angular/forms';
 import { Params } from '@angular/router';
+import dayjs from 'dayjs/esm';
+import { Post } from './shared/entities/post.model';
 
 export enum PostingEditType {
     CREATE,
@@ -140,3 +142,9 @@ export const PostTitleValidationPattern = Validators.pattern(/^(.)*\S+(.)*$/);
  * whitespace accepted only together with a character including newline character
  * */
 export const PostContentValidationPattern = Validators.pattern(/^(\n|\r|.)*\S+(\n|\r|.)*$/);
+
+export function getUnreadPostsByLastReadDate(posts: Post[], lastReadDate: dayjs.Dayjs): Post[] {
+    const sortedPosts = [...posts].sort((a, b) => a.creationDate!.diff(b.creationDate!));
+    const indexFirstRelevantPost = sortedPosts.findIndex((post) => post.creationDate?.isAfter(lastReadDate) && post.author?.id !== this.user.id);
+    return indexFirstRelevantPost >= 0 ? sortedPosts.slice(indexFirstRelevantPost).filter((post) => post.author?.id !== this.user.id) : [];
+}

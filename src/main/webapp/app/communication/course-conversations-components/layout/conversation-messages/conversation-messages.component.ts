@@ -26,7 +26,7 @@ import { Conversation, ConversationDTO } from 'app/communication/shared/entities
 import { Observable, Subject, forkJoin, map, takeUntil } from 'rxjs';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/communication/metis.util';
+import { PageType, PostContextFilter, PostSortCriterion, SortDirection, getUnreadPostsByLastReadDate } from 'app/communication/metis.util';
 import { MetisService } from 'app/communication/service/metis.service';
 import { Channel, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { GroupChat, isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
@@ -204,7 +204,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             }
             this._activeConversation = conversation;
             this.onActiveConversationChange();
-            // this.computeLastReadState();
         });
     }
 
@@ -713,9 +712,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             return [];
         }
 
-        const sortedPosts = [...this.allPosts].sort((a, b) => a.creationDate!.diff(b.creationDate!));
-        const indexFirstRelevantPost = sortedPosts.findIndex((post) => post.creationDate?.isAfter(lastReadDate) && post.author?.id !== this.currentUser.id);
-        return indexFirstRelevantPost >= 0 ? sortedPosts.slice(indexFirstRelevantPost) : [];
+        return getUnreadPostsByLastReadDate(this.allPosts, lastReadDate);
     }
 
     /**

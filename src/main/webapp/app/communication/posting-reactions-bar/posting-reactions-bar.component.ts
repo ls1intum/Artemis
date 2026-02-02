@@ -497,7 +497,9 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
         }
     }
 
-    markMessageAsUnread() {}
+    markMessageAsUnread() {
+        this.metisService.markMessageAsUnread(this.posting()!);
+    }
 
     /**
      * Opens the forward message modal dialog.
