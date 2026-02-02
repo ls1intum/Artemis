@@ -845,6 +845,32 @@ Course Info Bar
     width: 50%;
 }
 
+.iris-onboarding-modal-window {
+    // Make the modal container cover the full screen
+    .modal-dialog {
+        max-width: 100%;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    .modal-content {
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        width: 100%;
+        height: 100%;
+    }
+}
+
+.iris-onboarding-dialog {
+    max-width: 100% !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: 0 !important;
+}
+
 .connection-status {
     font-size: 14px;
     color: $connection-status;

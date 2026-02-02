@@ -50,6 +50,7 @@ import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service'
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
+import { IrisOnboardingService } from 'app/iris/overview/iris-onboarding-modal/iris-onboarding.service';
 
 // Session history time bucket boundaries (in days ago)
 const YESTERDAY_OFFSET = 1;
@@ -111,7 +112,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected route = inject(ActivatedRoute);
     protected llmModalService = inject(LLMSelectionModalService);
     private readonly destroyRef = inject(DestroyRef);
-    private readonly clipboard = inject(Clipboard);
+    private readonly onboardingService = inject(IrisOnboardingService);
 
     // Icons
     protected readonly faPaperPlane = faPaperPlane;
@@ -362,6 +363,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         // Enable animations after initial messages have loaded
         // Delay ensures initial message batch doesn't trigger animations
         setTimeout(() => (this.shouldAnimate = true), 500);
+
+        // Show onboarding modal for first-time users
+        this.onboardingService.showOnboardingIfNeeded();
     }
 
     checkIfUserAcceptedLLMUsage(): void {
