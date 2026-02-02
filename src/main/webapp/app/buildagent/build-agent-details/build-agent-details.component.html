@@ -72,7 +72,10 @@
             <jhi-build-job-statistics [buildJobStatisticsInput]="buildJobStatistics()" class="mb-4" />
 
             <div>
-                <h4 id="build-queue-running-heading" jhiTranslate="artemisApp.buildAgents.runningBuildJobs"></h4>
+                <h4 id="build-queue-running-heading">
+                    <span jhiTranslate="artemisApp.buildAgents.runningBuildJobs"></span>
+                    <span class="badge bg-primary ms-2">{{ runningBuildJobs()?.length ?? 0 }}</span>
+                </h4>
                 <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3"></div>
                 <jhi-running-jobs-table
                     [buildJobs]="runningBuildJobs()"
@@ -96,7 +99,10 @@
         <div>
             <div class="d-flex justify-content-between mb-2">
                 <div class="d-flex align-items-center">
-                    <h4 id="build-agents-recent-builds-heading" class="my-0" jhiTranslate="artemisApp.buildQueue.finishedBuildJobs"></h4>
+                    <h4 id="build-agents-recent-builds-heading" class="my-0">
+                        <span jhiTranslate="artemisApp.buildQueue.finishedBuildJobs"></span>
+                        <span class="badge bg-info ms-2">{{ finishedBuildJobs()?.length ?? 0 }}</span>
+                    </h4>
                     <div class="form-group form-inline my-0 mx-1">
                         <input class="form-control ms-3" type="text" name="searchTerm" id="field_searchTerm" [(ngModel)]="searchTerm" (focusout)="triggerLoadFinishedJobs()" />
                         <jhi-help-icon class="ps-1" text="artemisApp.buildQueue.filter.search.tooltip" />

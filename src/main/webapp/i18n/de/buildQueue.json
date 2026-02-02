@@ -8,6 +8,7 @@
             "finishedBuildJobs": "Abgeschlossene Build Jobs",
             "noRunningBuilds": "Keine laufenden Builds",
             "noQueuedBuilds": "Keine Builds in der Warteschlange",
+            "noFinishedBuilds": "Keine abgeschlossenen Builds",
             "buildCapacity": "Build Kapazität",
             "buildCapacityInfo": "{{ running }} von {{ capacity }} Builds laufen auf {{ agents }} Agents",
             "jumpTo": "Springe zu",

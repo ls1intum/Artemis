@@ -228,8 +228,13 @@ describe('FinishedJobsTableComponent', () => {
         const jobClickSpy = vi.fn();
         component.jobClick.subscribe(jobClickSpy);
 
-        // Test the onJobClick method which is called by the keyboard handler
-        component.onJobClick('1');
+        // Find the first row and dispatch an Enter keydown event
+        const row = fixture.nativeElement.querySelector('tr.clickable-row');
+        const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+        Object.defineProperty(enterEvent, 'target', { value: row });
+        Object.defineProperty(enterEvent, 'currentTarget', { value: row });
+        row.dispatchEvent(enterEvent);
+
         expect(jobClickSpy).toHaveBeenCalledWith('1');
     });
 
@@ -240,9 +245,14 @@ describe('FinishedJobsTableComponent', () => {
         const jobClickSpy = vi.fn();
         component.jobClick.subscribe(jobClickSpy);
 
-        // Test the onJobClick method which is called by the keyboard handler
-        component.onJobClick('2');
-        expect(jobClickSpy).toHaveBeenCalledWith('2');
+        // Find the first row and dispatch a Space keydown event
+        const row = fixture.nativeElement.querySelector('tr.clickable-row');
+        const spaceEvent = new KeyboardEvent('keydown', { key: ' ', bubbles: true });
+        Object.defineProperty(spaceEvent, 'target', { value: row });
+        Object.defineProperty(spaceEvent, 'currentTarget', { value: row });
+        row.dispatchEvent(spaceEvent);
+
+        expect(jobClickSpy).toHaveBeenCalledWith('1');
     });
 
     it('should have status ERROR job in the mock data', () => {

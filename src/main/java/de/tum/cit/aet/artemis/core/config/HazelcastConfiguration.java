@@ -705,7 +705,9 @@ public class HazelcastConfiguration {
 
         if (hazelcastLocalInstances) {
             log.info("Running with localInstances setting, Hazelcast cluster will only work with localhost instances");
-            effectivePort = serverProperties.getPort() + hazelcastPort;
+            Integer serverPort = serverProperties.getPort();
+            int basePort = serverPort != null ? serverPort : 8080;
+            effectivePort = basePort + hazelcastPort;
             config.getNetworkConfig().setPort(effectivePort);
         }
         else {

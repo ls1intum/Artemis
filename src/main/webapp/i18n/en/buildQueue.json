@@ -8,6 +8,7 @@
             "finishedBuildJobs": "Finished Build Jobs",
             "noRunningBuilds": "No builds running",
             "noQueuedBuilds": "No builds queued",
+            "noFinishedBuilds": "No finished builds",
             "buildCapacity": "Build Capacity",
             "buildCapacityInfo": "{{ running }} of {{ capacity }} builds running on {{ agents }} agents",
             "jumpTo": "Jump to",
