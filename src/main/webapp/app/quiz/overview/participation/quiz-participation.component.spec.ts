@@ -482,6 +482,67 @@ describe('QuizParticipationComponent - live mode', () => {
 
         expect(component.quizExercise).toEqual(quizExercise);
     });
+
+    it('should return false if there is no answer in any question type', () => {
+        component.selectedAnswerOptions = new Map();
+        component.dragAndDropMappings = new Map();
+        component.shortAnswerSubmittedTexts = new Map();
+
+        expect(component.hasAnyAnswer()).toBe(false);
+    });
+
+    it('should return true if there is at least one multiple choice answer', () => {
+        component.selectedAnswerOptions = new Map<number, AnswerOption[]>([[question2.id!, question2.answerOptions!]]);
+        component.dragAndDropMappings = new Map();
+        component.shortAnswerSubmittedTexts = new Map();
+
+        expect(component.hasAnyAnswer()).toBe(true);
+    });
+
+    it('shouldTreatAsSubmittedForUi should be true when submission is submitted', () => {
+        component.submission.submitted = true;
+        component.remainingTimeSeconds = -100;
+
+        expect(component.shouldTreatAsSubmittedForUi).toBe(true);
+    });
+
+    it('shouldTreatAsSubmittedForUi should be true after timeout if there is any answer', () => {
+        component.submission.submitted = false;
+        component.remainingTimeSeconds = -1;
+
+        vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(true);
+
+        expect(component.shouldTreatAsSubmittedForUi).toBe(true);
+    });
+
+    it('shouldTreatAsSubmittedForUi should be false after timeout if there is no answer', () => {
+        component.submission.submitted = false;
+        component.remainingTimeSeconds = -1;
+
+        vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(false);
+
+        expect(component.shouldTreatAsSubmittedForUi).toBe(false);
+    });
+
+    it('shouldTreatAsSubmittedForUi should be true after timeout if submissionDate exists even without answers', () => {
+        component.submission.submitted = false;
+        component.remainingTimeSeconds = -1;
+
+        vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(false);
+        component.submission.submissionDate = dayjs();
+
+        expect(component.shouldTreatAsSubmittedForUi).toBe(true);
+    });
+
+    it('shouldTreatAsSubmittedForUi should be true after timeout if submission id exists even without answers', () => {
+        component.submission.submitted = false;
+        component.remainingTimeSeconds = -1;
+
+        vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(false);
+        component.submission.id = 42;
+
+        expect(component.shouldTreatAsSubmittedForUi).toBe(true);
+    });
 });
 
 describe('QuizParticipationComponent - preview mode', () => {
