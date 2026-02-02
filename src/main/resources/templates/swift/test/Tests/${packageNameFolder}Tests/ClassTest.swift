@@ -1,40 +1,29 @@
-import XCTest
+import Testing
 
-final class ClassTest: XCTestCase {
+@Suite("Class Tests")
+struct ClassTests {
 
-    /// This is the setUp() instance method. It is called before each test method begins.
-    override func setUp() {
-        super.setUp()
-        continueAfterFailure = false
+    @Test("Context class exists")
+    func classContext() throws {
+        try #require(
+            sourceFileExists(for: "Context"),
+            "Context.swift is not implemented!"
+        )
     }
 
-    func testClassContext() {
-        print("-> Testcase: testClassContext")
-        let className = "Context"
-        if classFromString(className) == nil {
-            XCTFailClassNotFoundFor(className)
-        }
+    @Test("Policy class exists")
+    func classPolicy() throws {
+        try #require(
+            sourceFileExists(for: "Policy"),
+            "Policy.swift is not implemented!"
+        )
     }
 
-    func testClassPolicy() {
-        print("-> Testcase: testClassPolicy")
-        let className = "Policy"
-        if classFromString(className) == nil {
-            XCTFailClassNotFoundFor(className)
-        }
-    }
-
-    func testClassSortStrategy() {
-        print("-> Testcase: testClassSortStrategy")
-        let className = "SortStrategy"
-        // SortStrategy is a protocol, so we check for source file existence
-        // rather than runtime class resolution via NSClassFromString
-        if !sourceFileExists(for: className) {
-            XCTFailClassNotFoundFor(className)
-        }
-    }
-
-    func XCTFailClassNotFoundFor(_ className: String) {
-        XCTFail("\(className).swift is not implemented!")
+    @Test("SortStrategy protocol exists")
+    func classSortStrategy() throws {
+        try #require(
+            sourceFileExists(for: "SortStrategy"),
+            "SortStrategy.swift is not implemented!"
+        )
     }
 }

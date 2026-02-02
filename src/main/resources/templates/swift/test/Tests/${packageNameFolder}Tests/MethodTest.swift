@@ -1,45 +1,41 @@
-import XCTest
+import Testing
 
-final class MethodTest: XCTestCase {
+@Suite("Method Tests")
+struct MethodTests {
 
-    /// This is the setUp() instance method. It is called before each test method begins.
-    override func setUp() {
-        super.setUp()
-        continueAfterFailure = false
+    @Test("SortStrategy has required methods")
+    func methodsSortStrategy() throws {
+        try checkMethodsFor("SortStrategy")
     }
 
-    func testMethodsSortStrategy() {
-        print("-> Testcase: testMethodsSortStrategy")
-        checkMethodsFor("SortStrategy")
+    @Test("Context class has required methods")
+    func methodsContext() throws {
+        try checkMethodsFor("Context")
     }
 
-    func testMethodsContext() {
-        print("-> Testcase: testMethodsContext")
-        checkMethodsFor("Context")
+    @Test("Policy class has required methods")
+    func methodsPolicy() throws {
+        try checkMethodsFor("Policy")
     }
 
-    func testMethodsPolicy() {
-        print("-> Testcase: testMethodsPolicy")
-        checkMethodsFor("Policy")
-    }
+    /// Verify that all required methods are implemented in the given class
+    private func checkMethodsFor(_ className: String) throws {
+        let structure = try #require(
+            getSourceFileStructure(for: className),
+            "\(className).swift is not implemented!"
+        )
 
-    /// Test methods implementation
-    func checkMethodsFor(_ className: String) {
-        guard let structure = getSourceFileStructure(for: className) else {
-            XCTFail("\(className).swift is not implemented!")
-            return
-        }
-
-        guard let classFile = classFileOracle.first(where: { $0.name == className }) else {
-            XCTFail("No tests for class \(className) available in the structural oracle (TestFileOracle.swift). Either provide methods information or delete testMethods\(className)()!")
-            return
-        }
+        let classFile = try #require(
+            classFileOracle.first(where: { $0.name == className }),
+            "No tests for class \(className) available in the structural oracle (TestFileOracle.swift)."
+        )
 
         // Check implementation of methods
         for method in classFile.methods {
-            if !structure.functions.contains(method) {
-                XCTFail("Func '\(method)' of \(classFile.name).swift is not implemented!")
-            }
+            #expect(
+                structure.functions.contains(method),
+                "Func '\(method)' of \(classFile.name).swift is not implemented!"
+            )
         }
     }
 }

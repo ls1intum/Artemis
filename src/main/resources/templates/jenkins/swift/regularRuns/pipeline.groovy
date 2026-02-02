@@ -52,6 +52,10 @@ private void test() {
             # Note: --parallel is required due to Swift 6 bug where --xunit-output
             # does not work correctly without it
             swift test --parallel --xunit-output tests.xml || true
+            # Swift Testing writes results to tests-swift-testing.xml, copy to expected location
+            if [ -f tests-swift-testing.xml ]; then
+                cp tests-swift-testing.xml tests.xml
+            fi
         fi
         chmod -R 777 .
         '''

@@ -1,45 +1,41 @@
-import XCTest
+import Testing
 
-final class AttributeTest: XCTestCase {
+@Suite("Attribute Tests")
+struct AttributeTests {
 
-    /// This is the setUp() instance method. It is called before each test method begins.
-    override func setUp() {
-        super.setUp()
-        continueAfterFailure = false
+    @Test("Context class has required attributes")
+    func attributesContext() throws {
+        try checkAttributesFor("Context")
     }
 
-    func testAttributesContext() {
-        print("-> Testcase: testAttributesContext")
-        checkAttributesFor("Context")
+    @Test("Policy class has required attributes")
+    func attributesPolicy() throws {
+        try checkAttributesFor("Policy")
     }
 
-    func testAttributesPolicy() {
-        print("-> Testcase: testAttributesPolicy")
-        checkAttributesFor("Policy")
-    }
+    /// Verify that all required attributes are implemented in the given class
+    private func checkAttributesFor(_ className: String) throws {
+        let structure = try #require(
+            getSourceFileStructure(for: className),
+            "\(className).swift is not implemented!"
+        )
 
-    /// Test implementation of attributes
-    func checkAttributesFor(_ className: String) {
-        guard let structure = getSourceFileStructure(for: className) else {
-            XCTFail("\(className).swift is not implemented!")
-            return
-        }
+        let classFile = try #require(
+            classFileOracle.first(where: { $0.name == className }),
+            "No tests for class \(className) available in the structural oracle (TestFileOracle.swift)."
+        )
 
-        guard let classFile = classFileOracle.first(where: { $0.name == className }) else {
-            XCTFail("No tests for class \(className) available in the structural oracle (TestFileOracle.swift). Either provide attributes information or delete testAttributes\(className)()!")
-            return
-        }
-
-        guard let attributes = classFile.attributes else {
-            XCTFail("No attribute tests for class \(className) available in the structural oracle (TestFileOracle.swift). Either provide attributes information or delete testAttributes\(className)()!")
-            return
-        }
+        let attributes = try #require(
+            classFile.attributes,
+            "No attribute tests for class \(className) available in the structural oracle (TestFileOracle.swift)."
+        )
 
         // Check implementation of attributes
         for attribute in attributes {
-            if !structure.properties.contains(attribute) {
-                XCTFail("Attribute '\(attribute)' of \(classFile.name).swift is not implemented!")
-            }
+            #expect(
+                structure.properties.contains(attribute),
+                "Attribute '\(attribute)' of \(classFile.name).swift is not implemented!"
+            )
         }
     }
 }

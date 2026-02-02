@@ -1,14 +1,6 @@
-import XCTest
 import SwiftSyntax
 import SwiftParser
 import Foundation
-
-// MARK: - Runtime Class Resolution
-
-/// Attempts to load a class by name from the student's library module
-public func classFromString(_ className: String) -> AnyClass? {
-    return NSClassFromString("${packageName}Lib.\(className)")
-}
 
 // MARK: - Source File Reading
 
