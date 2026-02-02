@@ -458,14 +458,14 @@ describe('MarkdownEditorMonacoComponent', () => {
         });
     });
 
-    it('should return null from getSelection when no selection', () => {
+    it('should return undefined from getSelection when no selection', () => {
         fixture.detectChanges();
 
-        jest.spyOn(comp.monacoEditor, 'getSelection').mockReturnValue(null);
+        jest.spyOn(comp.monacoEditor, 'getSelection').mockReturnValue(undefined);
 
         const result = comp.getSelection();
 
-        expect(result).toBeNull();
+        expect(result).toBeUndefined();
     });
 
     it('should have consistencyIssues input', () => {

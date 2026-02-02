@@ -3,7 +3,6 @@ import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-obser
 import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/diff-editor/monaco-diff-editor.component';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
-import * as monaco from 'monaco-editor';
 
 describe('MonacoDiffEditorComponent', () => {
     let fixture: ComponentFixture<MonacoDiffEditorComponent>;
