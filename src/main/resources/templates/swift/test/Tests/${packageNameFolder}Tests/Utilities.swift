@@ -43,7 +43,7 @@ public func getParsedSyntax(for className: String) -> SourceFileSyntax? {
 // MARK: - Structural Analysis
 
 /// Collects structural information from a Swift source file
-public struct SourceFileStructure {
+public struct SourceFileStructure: Sendable {
     public let classes: [String]
     public let structs: [String]
     public let protocols: [String]
@@ -58,7 +58,8 @@ public struct SourceFileStructure {
 }
 
 /// Visitor that collects structural information from Swift syntax
-private class StructureCollector: SyntaxVisitor {
+/// Note: Marked @unchecked Sendable because it's only used synchronously within a single function
+private final class StructureCollector: SyntaxVisitor, @unchecked Sendable {
     var classes: [String] = []
     var structs: [String] = []
     var protocols: [String] = []

@@ -1,6 +1,6 @@
 import XCTest
 
-class MethodTest: XCTestCase {
+final class MethodTest: XCTestCase {
 
     /// This is the setUp() instance method. It is called before each test method begins.
     override func setUp() {
@@ -31,7 +31,7 @@ class MethodTest: XCTestCase {
         }
 
         guard let classFile = classFileOracle.first(where: { $0.name == className }) else {
-            XCTFail("No tests for class \(className) available in the structural oracle (TestFileOracle.swift). Either provide attributes information or delete testMethods\(className)()!")
+            XCTFail("No tests for class \(className) available in the structural oracle (TestFileOracle.swift). Either provide methods information or delete testMethods\(className)()!")
             return
         }
 

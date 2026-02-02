@@ -1,6 +1,6 @@
 import XCTest
 
-class AttributeTest: XCTestCase {
+final class AttributeTest: XCTestCase {
 
     /// This is the setUp() instance method. It is called before each test method begins.
     override func setUp() {
@@ -9,12 +9,12 @@ class AttributeTest: XCTestCase {
     }
 
     func testAttributesContext() {
-        print("-> Testcase: testMethodsContext")
+        print("-> Testcase: testAttributesContext")
         checkAttributesFor("Context")
     }
 
     func testAttributesPolicy() {
-        print("-> Testcase: testMethodsPolicy")
+        print("-> Testcase: testAttributesPolicy")
         checkAttributesFor("Policy")
     }
 

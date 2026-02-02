@@ -1,7 +1,7 @@
-struct ClassFile {
-    var name: String
-    var methods: [String]
-    var attributes: [String]?
+struct ClassFile: Sendable {
+    let name: String
+    let methods: [String]
+    let attributes: [String]?
 }
 
 /// Defines test structure

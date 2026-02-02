@@ -1,6 +1,6 @@
 import XCTest
 
-class ClassTest: XCTestCase {
+final class ClassTest: XCTestCase {
 
     /// This is the setUp() instance method. It is called before each test method begins.
     override func setUp() {
@@ -27,6 +27,8 @@ class ClassTest: XCTestCase {
     func testClassSortStrategy() {
         print("-> Testcase: testClassSortStrategy")
         let className = "SortStrategy"
+        // SortStrategy is a protocol, so we check for source file existence
+        // rather than runtime class resolution via NSClassFromString
         if !sourceFileExists(for: className) {
             XCTFailClassNotFoundFor(className)
         }
