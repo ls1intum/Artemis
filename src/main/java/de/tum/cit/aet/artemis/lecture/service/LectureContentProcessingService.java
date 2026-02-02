@@ -112,30 +112,32 @@ public class LectureContentProcessingService {
     public void triggerProcessing(AttachmentVideoUnit unit) {
         // Set auth context due to @Async
         SecurityUtils.setAuthorizationObject();
-        doTriggerProcessing(unit);
+        doTriggerProcessing(unit, Optional.empty());
     }
 
     /**
      * Core processing logic - called by both async triggerProcessing and sync retryProcessing.
      * This method is synchronous; the @Async annotation on triggerProcessing handles async execution.
      *
-     * @param unit the attachment video unit to process
+     * @param unit          the attachment video unit to process
+     * @param stateToDelete if present, delete this state after preflight checks pass (used by retryProcessing)
+     * @return true if preflight checks passed and processing was attempted, false if preflight failed (nothing changed)
      */
-    private void doTriggerProcessing(AttachmentVideoUnit unit) {
+    private boolean doTriggerProcessing(AttachmentVideoUnit unit, Optional<LectureUnitProcessingState> stateToDelete) {
         if (!featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)) {
             log.debug("LectureContentProcessing feature is disabled, skipping processing");
-            return;
+            return false;
         }
 
         if (unit == null || unit.getId() == null) {
             log.warn("Cannot process null or unsaved lecture unit");
-            return;
+            return false;
         }
 
         // Skip tutorial lectures
         if (unit.getLecture() != null && unit.getLecture().isTutorialLecture()) {
             log.debug("Skipping processing for tutorial lecture unit: {}", unit.getId());
-            return;
+            return false;
         }
 
         // Check content availability
@@ -144,7 +146,7 @@ public class LectureContentProcessingService {
 
         if (!hasVideo && !hasPdf) {
             log.debug("Unit {} has no video or PDF to process", unit.getId());
-            return;
+            return false;
         }
 
         // Check service availability
@@ -153,11 +155,17 @@ public class LectureContentProcessingService {
 
         if (!canTranscribe && !canIngest) {
             log.debug("No processing services available for unit {}", unit.getId());
-            return;
+            return false;
         }
 
-        // Get existing state or create new (don't persist yet - IDLE should never be in DB)
-        Optional<LectureUnitProcessingState> existingState = processingStateRepository.findByLectureUnit_Id(unit.getId());
+        // Preflight passed - now handle existing state
+        if (stateToDelete.isPresent()) {
+            processingStateRepository.delete(stateToDelete.get());
+        }
+
+        // Query for state (will be empty if we just deleted, or may exist for normal trigger)
+        Optional<LectureUnitProcessingState> existingState = stateToDelete.isPresent() ? Optional.empty() : processingStateRepository.findByLectureUnit_Id(unit.getId());
+
         LectureUnitProcessingState state = existingState.orElseGet(() -> new LectureUnitProcessingState(unit));
 
         // Detect and handle content changes (updates hash/version in state object)
@@ -173,21 +181,22 @@ public class LectureContentProcessingService {
         // (content changes already transition to IDLE above, so these checks are for unchanged content)
         if (state.isProcessing()) {
             log.debug("Unit {} already processing, skipping", unit.getId());
-            return;
+            return true;
         }
 
         if (state.getPhase() == ProcessingPhase.DONE) {
             log.debug("Unit {} already done, skipping", unit.getId());
-            return;
+            return true;
         }
 
         if (state.getPhase() == ProcessingPhase.FAILED) {
             log.debug("Unit {} in failed state, skipping (use retryProcessing or change content)", unit.getId());
-            return;
+            return true;
         }
 
         // Start the state machine (will save state when actually starting processing)
         advanceProcessing(unit, state, hasVideo, hasPdf);
+        return true;
     }
 
     /**
@@ -244,27 +253,18 @@ public class LectureContentProcessingService {
             return null;
         }
 
-        // Check if any processing is possible before deleting the failed state
-        // This preserves error context when no processing services are available
-        boolean hasVideo = lectureUnit.getVideoSource() != null && !lectureUnit.getVideoSource().isBlank();
-        boolean hasPdf = lectureUnit.getAttachment() != null && lectureUnit.getAttachment().getLink() != null && lectureUnit.getAttachment().getLink().endsWith(".pdf");
-        boolean canTranscribe = hasVideo && transcriptionApi.isPresent() && tumLiveApi.isPresent();
-        boolean canIngest = hasPdf && irisLectureApi.isPresent();
+        log.info("Retrying processing for unit {}", lectureUnit.getId());
 
-        if (!canTranscribe && !canIngest) {
-            log.debug("No processing possible for unit {} during retry", lectureUnit.getId());
+        // Run processing, passing the FAILED state to delete after preflight passes
+        // If preflight fails, the FAILED state is preserved (nothing deleted)
+        // If preflight passes, the FAILED state is deleted and fresh state created
+        boolean preflightPassed = doTriggerProcessing(lectureUnit, existingState);
+        if (!preflightPassed) {
+            // Services unavailable - FAILED state was NOT deleted, return null
             return null;
         }
 
-        log.info("Retrying processing for unit {}", lectureUnit.getId());
-
-        // Delete the failed state - doTriggerProcessing will create fresh state
-        processingStateRepository.delete(existingState.get());
-
-        // Run processing synchronously (reuses all the logic from triggerProcessing)
-        doTriggerProcessing(lectureUnit);
-
-        // Return the newly created state
+        // Preflight passed, old state was deleted - check what was created
         var newState = processingStateRepository.findByLectureUnit_Id(lectureUnit.getId());
         if (newState.isPresent()) {
             return newState.get();
