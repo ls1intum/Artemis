@@ -854,6 +854,99 @@ describe('IrisBaseChatbotComponent', () => {
         });
     });
 
+    describe('copyMessage', () => {
+        it('should not copy if message has no content', () => {
+            const message = { id: 1, content: undefined } as any;
+
+            component.copyMessage(message);
+
+            expect(component.copiedMessageKey()).toBeUndefined();
+        });
+
+        it('should not copy if message content is empty array', () => {
+            const message = { id: 1, content: [] } as any;
+
+            component.copyMessage(message);
+
+            expect(component.copiedMessageKey()).toBeUndefined();
+        });
+
+        it('should not throw when clipboard API is not available', () => {
+            const message = {
+                id: 1,
+                content: [{ type: 'TEXT', textContent: 'Hello world' }],
+            } as any;
+
+            // Should not throw regardless of clipboard availability
+            expect(() => component.copyMessage(message)).not.toThrow();
+        });
+
+        it('should correctly identify copied message by id', () => {
+            const message = { id: 42 } as any;
+
+            component.copiedMessageKey.set(42);
+
+            expect(component.isCopied(message)).toBe(true);
+            expect(component.isCopied({ id: 99 } as any)).toBe(false);
+        });
+
+        it('should use messageIndex as key when message has no id', () => {
+            const message = { id: undefined } as any;
+
+            component.copiedMessageKey.set(5);
+
+            expect(component.isCopied(message, 5)).toBe(true);
+            expect(component.isCopied(message, 3)).toBe(false);
+        });
+    });
+
+    describe('processMessages edge cases', () => {
+        it('should return empty array when all messages are from LLM only', () => {
+            const llmOnlyMessages = [
+                { id: 1, sender: 'LLM', content: [{ type: 'TEXT', textContent: 'Hello' }] },
+                { id: 2, sender: 'LLM', content: [{ type: 'TEXT', textContent: 'How can I help?' }] },
+            ];
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(llmOnlyMessages as any));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            expect(component.messages()).toEqual([]);
+        });
+    });
+
+    describe('adjustTextareaRows', () => {
+        it('should reset height and return early when textarea is empty', () => {
+            component.userAccepted.set(true);
+            fixture.detectChanges();
+
+            const textarea = fixture.nativeElement.querySelector('textarea');
+            textarea.value = '';
+            const adjustScrollButtonPositionSpy = vi.spyOn(component, 'adjustScrollButtonPosition');
+
+            component.adjustTextareaRows();
+
+            expect(textarea.style.height).toBe('');
+            expect(adjustScrollButtonPositionSpy).toHaveBeenCalledWith(1);
+        });
+
+        it('should reset height and return early when textarea has only whitespace', () => {
+            component.userAccepted.set(true);
+            fixture.detectChanges();
+
+            const textarea = fixture.nativeElement.querySelector('textarea');
+            textarea.value = '   ';
+            const adjustScrollButtonPositionSpy = vi.spyOn(component, 'adjustScrollButtonPosition');
+
+            component.adjustTextareaRows();
+
+            expect(textarea.style.height).toBe('');
+            expect(adjustScrollButtonPositionSpy).toHaveBeenCalledWith(1);
+        });
+    });
+
     describe('Related entity button', () => {
         it('should display correct related entity button when lecture session selected', async () => {
             // Mock the service observables before component creation
