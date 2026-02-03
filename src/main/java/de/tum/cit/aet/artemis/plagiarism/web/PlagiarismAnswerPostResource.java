@@ -56,20 +56,19 @@ public class PlagiarismAnswerPostResource {
             throws URISyntaxException {
         log.debug("POST createAnswerPost invoked for course {} with post {}", courseId, answerPostDto.content());
         long start = System.nanoTime();
-        AnswerPost createdAnswerPost = plagiarismAnswerPostService.createAnswerPost(courseId, answerPostDto.toEntity());
+        PlagiarismAnswerPostCreationResponseDTO createdAnswerPost = plagiarismAnswerPostService.createAnswerPost(courseId, answerPostDto);
         log.info("createAnswerPost took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.created(new URI("/api/plagiarism/courses/" + courseId + "/answer-posts/" + createdAnswerPost.getId()))
-                .body(PlagiarismAnswerPostCreationResponseDTO.of(createdAnswerPost));
+        return ResponseEntity.created(new URI("/api/plagiarism/courses/" + courseId + "/answer-posts/" + createdAnswerPost.id())).body(createdAnswerPost);
     }
 
     /**
-     * PUT /courses/{courseId}/answer-posts/{answerPostId} : Update an existing answer post with given id
+     * PUT /courses/{courseId}/answer-posts/{answerPostId}: Update an existing answer post with given id
      *
-     * @param courseId     id of the course the answer post belongs to
+     * @param courseId     id of course the answer post belongs to
      * @param answerPostId id of the answer post to update
      * @param answerPost   answer post to update
      * @return ResponseEntity with status 200 (OK) containing the updated answer post in the response body,
-     *         or with status 400 (Bad Request) if the checks on user, course or associated post validity fail
+     *         or with status 400 (Bad Request) if the checks on user, course, or associated post-validity fail
      */
     @PutMapping("courses/{courseId}/answer-posts/{answerPostId}")
     @EnforceAtLeastStudent
@@ -82,9 +81,9 @@ public class PlagiarismAnswerPostResource {
     }
 
     /**
-     * DELETE /courses/{courseId}/posts/{id} : Delete an answer post by its id
+     * DELETE /courses/{courseId}/posts/{id}: Delete an answer post by its id
      *
-     * @param courseId     id of the course the post belongs to
+     * @param courseId     id of course the post belongs to
      * @param answerPostId id of the answer post to delete
      * @return ResponseEntity with status 200 (OK),
      *         or 400 (Bad Request) if the checks on user or course validity fail

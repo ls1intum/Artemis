@@ -30,7 +30,6 @@ public record PlagiarismAnswerPostCreationDTO(Long id, String content, @NotNull 
         AnswerPost answerPost = new AnswerPost();
         answerPost.setId(id);
         answerPost.setContent(content);
-
         // only set the reference; actual post is loaded from DB in the service
         Post post = new Post();
         post.setId(postId);

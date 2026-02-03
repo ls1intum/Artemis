@@ -27,6 +27,8 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismAnswerPostCreationDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismAnswerPostCreationResponseDTO;
 
 @Conditional(PlagiarismEnabled.class)
 @Lazy
@@ -53,23 +55,24 @@ public class PlagiarismAnswerPostService extends PostingService {
      * sets resolves post to false by default,
      * persists the answer post, and sends a notification to affected user groups
      *
-     * @param courseId   id of course the answer post belongs to
-     * @param answerPost answer post to create
+     * @param courseId                        id of course the answer post belongs to
+     * @param plagiarismAnswerPostCreationDTO answer post to create
      * @return created an answer post that was persisted
      */
-    public AnswerPost createAnswerPost(Long courseId, AnswerPost answerPost) {
+    public PlagiarismAnswerPostCreationResponseDTO createAnswerPost(Long courseId, PlagiarismAnswerPostCreationDTO plagiarismAnswerPostCreationDTO) {
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
 
         // check
-        if (answerPost.getId() != null) {
+        if (plagiarismAnswerPostCreationDTO.id() != null) {
             throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idExists");
         }
 
         final Course course = courseRepository.findByIdElseThrow(courseId);
 
-        Post post = postRepository.findPostByIdElseThrow(answerPost.getPost().getId());
-        parseUserMentions(course, answerPost.getContent());
+        Post post = postRepository.findPostByIdElseThrow(plagiarismAnswerPostCreationDTO.postId());
+        parseUserMentions(course, plagiarismAnswerPostCreationDTO.content());
 
+        AnswerPost answerPost = plagiarismAnswerPostCreationDTO.toEntity();
         // use post from database rather than user input
         answerPost.setPost(post);
         // set author to current user
@@ -82,7 +85,7 @@ public class PlagiarismAnswerPostService extends PostingService {
 
         preparePostAndBroadcast(savedAnswerPost, course);
 
-        return savedAnswerPost;
+        return PlagiarismAnswerPostCreationResponseDTO.of(savedAnswerPost);
     }
 
     /**

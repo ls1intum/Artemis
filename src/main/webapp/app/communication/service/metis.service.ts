@@ -293,8 +293,6 @@ export class MetisService implements OnDestroy {
                     const cachedPost = this.cachedPosts[indexOfCachedPost];
                     const existingAnswers = cachedPost.answers ?? [];
 
-                    createdAnswerPost.creationDate = dayjs(createdAnswerPost.creationDate ?? dayjs());
-                    createdAnswerPost.author = this.user;
                     createdAnswerPost.post = { ...cachedPost, answers: [], reactions: [] };
 
                     const alreadyThere = existingAnswers.some((a) => a.id === createdAnswerPost.id);
