@@ -364,7 +364,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
     }
 
-    readonly totalLocationsCount = computed(() => this.sortedIssues().reduce((acc, issue) => acc + issue.relatedLocations.length, 0));
+    readonly totalLocationsCount = computed(() => this.sortedIssues().reduce((acc, issue) => acc + (issue.relatedLocations?.length ?? 0), 0));
     readonly showConsistencyIssuesToolbar = signal(false);
 
     get currentGlobalIndex(): number {
@@ -374,19 +374,28 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             if (issue === this.selectedIssue) {
                 return count + this.locationIndex + 1; // 1-based
             }
-            count += issue.relatedLocations.length;
+            count += issue.relatedLocations?.length ?? 0;
         }
         return 0;
     }
 
     toggleConsistencyIssuesToolbar() {
         this.showConsistencyIssuesToolbar.update((v) => !v);
-        // If opening and no issue selected, select first
-        if (this.showConsistencyIssuesToolbar() && !this.selectedIssue && this.sortedIssues().length > 0) {
-            this.selectedIssue = this.sortedIssues()[0];
-            this.locationIndex = 0;
-            // Jump to it immediately
-            this.jumpToLocation(this.selectedIssue, 0);
+        const issues = this.sortedIssues();
+
+        // If newly opened
+        if (this.showConsistencyIssuesToolbar()) {
+            // Check if selection is invalid (stale issue, issue not in list anymore, or index out of bounds)
+            const isIssueValid = this.selectedIssue && issues.includes(this.selectedIssue);
+            const isIndexValid =
+                this.selectedIssue && this.selectedIssue.relatedLocations && this.locationIndex < this.selectedIssue.relatedLocations.length && this.locationIndex >= 0;
+
+            if ((!isIssueValid || !isIndexValid) && issues.length > 0) {
+                this.selectedIssue = issues[0];
+                this.locationIndex = 0;
+                // Jump to it immediately
+                this.jumpToLocation(this.selectedIssue, 0);
+            }
         }
     }
 
@@ -401,7 +410,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         // Flatten all locations
         const allLocations: { issue: ConsistencyIssue; locIndex: number }[] = [];
         issues.forEach((issue) => {
-            issue.relatedLocations.forEach((_, idx) => {
+            (issue.relatedLocations || []).forEach((_, idx) => {
                 allLocations.push({ issue, locIndex: idx });
             });
         });
@@ -433,6 +442,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Helper to perform the actual editor jump.
      */
     private jumpToLocation(issue: ConsistencyIssue, index: number) {
+        if (!issue.relatedLocations || !issue.relatedLocations[index]) {
+            return;
+        }
         const location = issue.relatedLocations[index];
 
         // We can always jump to the problem statement

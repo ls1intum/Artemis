@@ -9,6 +9,9 @@
                 "checkFailedAlert": "Es gab einen Fehler bei der Konsistenzprüfung",
                 "issueHeading": "Konsistenzfehler gefunden",
                 "navigationFailed": "Es konnte nicht zur Inkonsistenz gesprungen werden",
+                "prevIssue": "Vorheriges Problem",
+                "nextIssue": "Nächstes Problem",
+                "closeIssues": "Probleme schließen",
                 "category": {
                     "METHOD_RETURN_TYPE_MISMATCH": "Rückgabetyp der Methode stimmt nicht überein",
                     "METHOD_PARAMETER_MISMATCH": "Methodenparameter stimmen nicht überein",

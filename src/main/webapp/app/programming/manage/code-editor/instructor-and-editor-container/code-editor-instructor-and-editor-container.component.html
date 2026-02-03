@@ -206,7 +206,12 @@
                 <!-- Consistency Issue Navigator Toolbar -->
                 @if (showConsistencyIssuesToolbar() && consistencyIssues().length) {
                     <div class="btn-group ms-2">
-                        <button class="btn btn-outline-secondary" (click)="navigateGlobal(-1)">
+                        <button
+                            class="btn btn-outline-secondary"
+                            (click)="navigateGlobal(-1)"
+                            [ngbTooltip]="'artemisApp.hyperion.consistencyCheck.prevIssue' | artemisTranslate"
+                            [ariaLabel]="'artemisApp.hyperion.consistencyCheck.prevIssue' | artemisTranslate"
+                        >
                             <fa-icon [icon]="faArrowLeft" />
                         </button>
                         <button class="btn btn-outline-secondary" disabled style="opacity: 1; color: var(--bs-body-color)">
@@ -218,10 +223,20 @@
                                 <span jhiTranslate="artemisApp.hyperion.consistencyCheck.issues"></span>
                             }
                         </button>
-                        <button class="btn btn-outline-secondary" (click)="navigateGlobal(1)">
+                        <button
+                            class="btn btn-outline-secondary"
+                            (click)="navigateGlobal(1)"
+                            [ngbTooltip]="'artemisApp.hyperion.consistencyCheck.nextIssue' | artemisTranslate"
+                            [ariaLabel]="'artemisApp.hyperion.consistencyCheck.nextIssue' | artemisTranslate"
+                        >
                             <fa-icon [icon]="faArrowRight" />
                         </button>
-                        <button class="btn btn-outline-secondary" (click)="toggleConsistencyIssuesToolbar()">
+                        <button
+                            class="btn btn-outline-secondary"
+                            (click)="toggleConsistencyIssuesToolbar()"
+                            [ngbTooltip]="'artemisApp.hyperion.consistencyCheck.closeIssues' | artemisTranslate"
+                            [ariaLabel]="'artemisApp.hyperion.consistencyCheck.closeIssues' | artemisTranslate"
+                        >
                             <fa-icon [icon]="faTimes" />
                         </button>
                     </div>
