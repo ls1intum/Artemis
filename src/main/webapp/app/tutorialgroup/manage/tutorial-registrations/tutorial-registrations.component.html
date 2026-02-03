@@ -11,7 +11,13 @@
             data-testid="import-button"
             (click)="importModal.open()"
         ></button>
-        <button pButton class="p-button-secondary p-button-sm" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.exportButtonLabel" data-testid="export-button"></button>
+        <button
+            pButton
+            class="p-button-secondary p-button-sm"
+            jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.exportButtonLabel"
+            data-testid="export-button"
+            (click)="exportRegisteredStudents()"
+        ></button>
         <button
             pButton
             class="p-button-primary p-button-sm"

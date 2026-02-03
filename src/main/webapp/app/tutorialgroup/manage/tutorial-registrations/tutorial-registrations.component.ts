@@ -13,6 +13,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { FormsModule } from '@angular/forms';
 import { TutorialRegistrationsImportModalComponent } from 'app/tutorialgroup/manage/tutorial-registrations-import-modal/tutorial-registrations-import-modal.component';
+import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
+import { ExportUserInformationRow, exportUserInformationAsCsv } from 'app/shared/user-import/helpers/write-users-to-csv';
 
 export interface DeregisterStudentEvent {
     courseId: number;
@@ -74,6 +76,22 @@ export class TutorialRegistrationsComponent {
                 });
             },
         });
+    }
+
+    exportRegisteredStudents() {
+        const registeredStudents = this.registeredStudents();
+        if (registeredStudents.length > 0) {
+            const rows: ExportUserInformationRow[] = registeredStudents.map((student) => {
+                return {
+                    [NAME_KEY]: student.name?.trim() ?? '',
+                    [USERNAME_KEY]: student.login?.trim() ?? '',
+                    [EMAIL_KEY]: student.email?.trim() ?? '',
+                    [REGISTRATION_NUMBER_KEY]: student.registrationNumber?.trim() ?? '',
+                };
+            });
+            const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
+            exportUserInformationAsCsv(rows, keys, 'registrations');
+        }
     }
 
     private computeSearchFieldPlaceholder(): string {
