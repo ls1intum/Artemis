@@ -93,12 +93,12 @@ export class StudentsExportDialogComponent {
             this.sanitizeCsvValue(examUser.email),
             this.sanitizeCsvValue(examUser.room),
             this.sanitizeCsvValue(examUser.seat),
-            this.sanitizeCsvValue(examUser.room ? `${this.exam().title}; ${examUser.fullLocation ?? ''}: ${examUser.seat ?? ''}` : undefined),
+            this.sanitizeCsvValue(examUser.room ? `${this.exam().title}: ${examUser.fullLocation ?? ''}: ${examUser.seat ?? ''}` : undefined),
         ]);
 
         const csv: string = Papa.unparse([header, ...rows], {
             quotes: true,
-            delimiter: ',',
+            delimiter: ';',
         });
 
         return new Blob([csv], { type: 'text/csv;charset=utf-8;' });

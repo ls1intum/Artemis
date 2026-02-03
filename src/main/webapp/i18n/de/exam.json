@@ -61,7 +61,7 @@
                         "email": "E-Mail",
                         "room": "Raum",
                         "seat": "Sitz",
-                        "fullLocation": "<Exam-Titel>; <vollständiger Raumname>: <Sitz>"
+                        "fullLocation": "<Exam-Titel>: <vollständiger Raumname>: <Sitz>"
                     },
                     "exportFailed": "Export fehlgeschlagen"
                 }
