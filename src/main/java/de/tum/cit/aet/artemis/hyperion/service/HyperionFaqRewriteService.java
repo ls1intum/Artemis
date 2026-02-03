@@ -37,6 +37,12 @@ public class HyperionFaqRewriteService {
 
     private static final String PROMPT_CONSISTENCY_USER = "/prompts/hyperion/faq_consistency_user.st";
 
+    /**
+     * Limits context to the 10 most recent FAQs to ensure the
+     * model stays focused on current standards while controlling cost.
+     */
+    private static final int RECENT_FAQ_LIMIT = 10;
+
     private static final Logger log = LoggerFactory.getLogger(HyperionFaqRewriteService.class);
 
     private final FaqRepository faqRepository;
@@ -122,7 +128,8 @@ public class HyperionFaqRewriteService {
             return new RewriteFaqResponseDTO(rewrittenText, List.of(), List.of(), "");
         }
 
-        List<ConsistencyIssue.Faq> faqData = faqs.stream().limit(10).map(faq -> new ConsistencyIssue.Faq(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer())).toList();
+        List<ConsistencyIssue.Faq> faqData = faqs.stream().limit(RECENT_FAQ_LIMIT)
+                .map(faq -> new ConsistencyIssue.Faq(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer())).toList();
         String faqsJson;
         try {
             faqsJson = objectMapper.writeValueAsString(faqData);
@@ -158,7 +165,7 @@ public class HyperionFaqRewriteService {
         return new RewriteFaqResponseDTO(rewrittenText.trim(), parseInconsistencies(consistencyIssue.faqs()), consistencyIssue.suggestions(), consistencyIssue.improvedVersion());
     }
 
-    // Internal representation of found consistency issues.
+    // See the prompt at src/main/resources/prompts/hyperion/faq_consistency_system.st for the definition of consistency
     private record ConsistencyIssue(ConsistencyStatus type, String message, List<Faq> faqs, List<String> suggestions, @JsonProperty("improved_version") String improvedVersion) {
 
         public record Faq(@JsonProperty("faq_id") long id, @JsonProperty("faq_question_title") String title, @JsonProperty("faq_question_answer") String answer) {
