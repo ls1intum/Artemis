@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service;
 
 import java.util.List;
 import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -9,8 +10,10 @@ import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
@@ -53,10 +56,10 @@ public class HyperionFaqRewriteService {
      * @param chatClient          the AI chat client
      * @param templateService     prompt template service
      * @param observationRegistry observation registry for metrics
-     * @param objectMapper object mapper
+     * @param objectMapper        object mapper
      */
     public HyperionFaqRewriteService(FaqRepository faqRepository, ChatClient chatClient, HyperionPromptTemplateService templateService, ObservationRegistry observationRegistry,
-                                     ObjectMapper objectMapper) {
+            ObjectMapper objectMapper) {
         this.faqRepository = faqRepository;
         this.chatClient = chatClient;
         this.templateService = templateService;
@@ -95,11 +98,13 @@ public class HyperionFaqRewriteService {
                 .content();
             // @formatter:on
             observation.event(Observation.Event.of("ai_rewrite_completed"));
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Failed to process FAQ rewrite for course {} - returning original text", courseId, e);
             observation.error(e);
             return new RewriteFaqResponseDTO(normalizedFaqText, List.of(), List.of(), "");
-        } finally {
+        }
+        finally {
             observation.stop();
         }
 
@@ -121,7 +126,8 @@ public class HyperionFaqRewriteService {
         String faqsJson;
         try {
             faqsJson = objectMapper.writeValueAsString(faqData);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Failed to serialize FAQ data", e);
             return new RewriteFaqResponseDTO(rewrittenText.trim(), List.of(), List.of(), "");
         }
@@ -140,7 +146,8 @@ public class HyperionFaqRewriteService {
                 .call()
                 .entity(outputConverter);
             // @formatter:on
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Failed to process FAQ consistency for course {} - only returning rewritten text ", courseId, e);
             return new RewriteFaqResponseDTO(rewrittenText.trim(), List.of(), List.of(), "");
         }
@@ -152,11 +159,9 @@ public class HyperionFaqRewriteService {
     }
 
     // Internal representation of found consistency issues.
-    private record ConsistencyIssue(ConsistencyStatus type, String message, List<Faq> faqs, List<String> suggestions,
-                                    @JsonProperty("improved_version") String improvedVersion) {
+    private record ConsistencyIssue(ConsistencyStatus type, String message, List<Faq> faqs, List<String> suggestions, @JsonProperty("improved_version") String improvedVersion) {
 
-        public record Faq(@JsonProperty("faq_id") long id, @JsonProperty("faq_question_title") String title,
-                          @JsonProperty("faq_question_answer") String answer) {
+        public record Faq(@JsonProperty("faq_id") long id, @JsonProperty("faq_question_title") String title, @JsonProperty("faq_question_answer") String answer) {
         }
 
         public enum ConsistencyStatus {
