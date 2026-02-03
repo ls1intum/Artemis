@@ -98,16 +98,18 @@ public class ModelingAssessmentResource extends AssessmentResource {
             throw new EntityNotFoundException("Result with submission", submissionId);
         }
 
-        // For Athena results, allow access if user is owner of participation or at least teaching assistant
-        // while still enforcing exam/publish-window checks via isUserAllowedToGetResult
+        // For Athena results, use special authorization logic (more permissive, no date restrictions)
         if (result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA) {
-            if (!(authCheckService.isUserAllowedToGetResult(exercise, participation, result) && authCheckService.isAtLeastStudentForExercise(exercise)
-                    && (authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastTeachingAssistantForExercise(exercise)))) {
+            if (!authCheckService.isAtLeastStudentForExercise(exercise)
+                    || (!authCheckService.isOwnerOfParticipation(participation) && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise))) {
                 throw new AccessForbiddenException();
             }
         }
-        else if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result)) {
-            throw new AccessForbiddenException();
+        else {
+            // For regular results, apply standard access control (includes due date checks)
+            if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result)) {
+                throw new AccessForbiddenException();
+            }
         }
 
         // remove sensitive information for students
