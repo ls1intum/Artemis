@@ -103,6 +103,6 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
 
     createPlagiarismAnswerPost = (answerPost: AnswerPost): Observable<AnswerPost> => {
         const dto = PlagiarismAnswerPostCreationDTO.of(answerPost);
-        return this.metisService.createPlagiarismAnswerPost(dto);
+        return this.metisService.createAnswerPost(dto);
     };
 }

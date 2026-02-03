@@ -14,8 +14,8 @@ import de.tum.cit.aet.artemis.communication.dto.AuthorDTO;
  * DTO for returning a created plagiarism AnswerPost.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismAnswerPostCreationResponseDTO(Long id, String content, Long postId, AuthorDTO authorDTO, UserRole userRole, Boolean resolvesPost,
-        Boolean hasForwardedMessages, ZonedDateTime creationDate) {
+public record PlagiarismAnswerPostCreationResponseDTO(Long id, String content, Long postId, AuthorDTO author, UserRole userRole, Boolean resolvesPost, Boolean hasForwardedMessages,
+        ZonedDateTime creationDate) {
 
     /**
      * Creates a {@link PlagiarismAnswerPostCreationResponseDTO} from an {@link AnswerPost} entity.
