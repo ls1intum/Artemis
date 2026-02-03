@@ -95,10 +95,10 @@ public class ModelingAssessmentResource extends AssessmentResource {
             throw new EntityNotFoundException("Result with submission", submissionId);
         }
 
-        // For Athena results, allow access if user is owner of participation or at least instructor
+        // For Athena results, allow access if user is owner of participation or at least teaching assistant
         if (result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA) {
             if (!authCheckService.isAtLeastStudentForExercise(exercise)
-                    || (!authCheckService.isOwnerOfParticipation(participation) && !authCheckService.isAtLeastInstructorForExercise(exercise))) {
+                    || (!authCheckService.isOwnerOfParticipation(participation) && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise))) {
                 throw new AccessForbiddenException();
             }
         }
