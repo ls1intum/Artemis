@@ -35,7 +35,7 @@ runs:
         cat workflow-context.txt
 
     - name: Upload workflow context
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v4
       with:
         name: workflow-context${{ inputs.artifact-name-suffix && format('-{0}', inputs.artifact-name-suffix) || '' }}
         path: workflow-context.txt
