@@ -25,7 +25,7 @@ runs:
 
     - name: Upload JUnit Test Results
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: JUnit Test Results${{ inputs.artifact-name-suffix && format(' {0}', inputs.artifact-name-suffix) || '' }}
         if-no-files-found: ${{ inputs.require-tests }}
@@ -33,7 +33,7 @@ runs:
 
     - name: Upload Client Test Coverage Report
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: E2E Client Coverage Report${{ inputs.artifact-name-suffix && format(' {0}', inputs.artifact-name-suffix) || '' }}
         path: src/test/playwright/test-reports/client-coverage

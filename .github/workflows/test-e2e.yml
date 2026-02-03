@@ -122,7 +122,7 @@ jobs:
 
       - name: Download Phase 1 test results
         if: success() || failure()
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         continue-on-error: true
         with:
           name: JUnit Test Results Phase 1
@@ -237,7 +237,7 @@ jobs:
 
       - name: Download Phase 2 test results
         if: success() || failure()
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         continue-on-error: true
         with:
           name: JUnit Test Results Phase 2
@@ -348,7 +348,7 @@ jobs:
 
       - name: Download all tests results
         if: success() || failure()
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         continue-on-error: true
         with:
           name: JUnit Test Results
@@ -420,7 +420,7 @@ jobs:
 
       - name: Download all tests results
         if: success() || failure()
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         continue-on-error: true
         with:
           name: JUnit Test Results
