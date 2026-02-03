@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.exception.failureAnalyzer;
 
+import java.util.stream.Collectors;
+
 import org.springframework.boot.diagnostics.AbstractFailureAnalyzer;
 import org.springframework.boot.diagnostics.FailureAnalysis;
 
@@ -20,27 +22,30 @@ public class WeaviateConfigurationFailureAnalyzer extends AbstractFailureAnalyze
     }
 
     private String buildDescription(WeaviateConfigurationException cause) {
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("Invalid Weaviate configuration detected:%n%n");
-        stringBuilder.append("Weaviate is enabled (artemis.weaviate.enabled=true) but the following properties are missing or invalid:%n");
-        for (String property : cause.getMissingOrInvalidProperties()) {
-            stringBuilder.append("    - ").append(property).append("%n");
-        }
-        return String.format(stringBuilder.toString());
+        String propertyList = formatPropertyList(cause);
+        return """
+                Invalid Weaviate configuration detected:
+
+                Weaviate is enabled (artemis.weaviate.enabled=true) but the following properties are missing or invalid:
+                %s""".formatted(propertyList);
     }
 
     private String buildAction(WeaviateConfigurationException cause) {
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("Update your application configuration (e.g., environment variables, application-dev.yml or application-local.yml):%n%n");
-        stringBuilder.append("Option 1: Provide valid Weaviate configuration for the following properties:%n");
-        for (String property : cause.getMissingOrInvalidProperties()) {
-            stringBuilder.append("    - ").append(property).append("%n");
-        }
-        stringBuilder.append("%n");
-        stringBuilder.append("Option 2: Disable Weaviate if not needed:%n");
-        stringBuilder.append("    artemis:%n");
-        stringBuilder.append("      weaviate:%n");
-        stringBuilder.append("        enabled: false%n");
-        return String.format(stringBuilder.toString());
+        String propertyList = formatPropertyList(cause);
+        return """
+                Update your application configuration (e.g., environment variables, application-dev.yml or application-local.yml):
+
+                Option 1: Provide valid Weaviate configuration for the following properties:
+                %s
+
+                Option 2: Disable Weaviate if not needed:
+                    artemis:
+                      weaviate:
+                        enabled: false
+                """.formatted(propertyList);
+    }
+
+    private String formatPropertyList(WeaviateConfigurationException cause) {
+        return cause.getMissingOrInvalidProperties().stream().map(property -> "    - " + property).collect(Collectors.joining("\n"));
     }
 }
