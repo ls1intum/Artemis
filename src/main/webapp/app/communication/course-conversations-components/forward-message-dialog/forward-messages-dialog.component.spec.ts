@@ -16,6 +16,7 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 
 describe('ForwardMessageDialogComponent', () => {
     let component: ForwardMessageDialogComponent;
@@ -46,15 +47,17 @@ describe('ForwardMessageDialogComponent', () => {
         fixture = TestBed.createComponent(ForwardMessageDialogComponent);
         component = fixture.componentInstance;
         component.channels.set([
-            { id: 1, name: 'General' } as ChannelDTO,
+            { id: 1, name: 'General', type: 'channel' } as ChannelDTO,
             {
                 id: 2,
                 name: 'Announcements',
+                type: 'channel',
             } as ChannelDTO,
+            { id: 3, name: 'Group 1', type: 'groupChat' } as GroupChatDTO,
         ]);
         component.users.set([
             {
-                id: 3,
+                id: 4,
                 name: 'User1',
                 imageUrl: 'user1.png',
             } as UserPublicInfoDTO,
@@ -80,7 +83,8 @@ describe('ForwardMessageDialogComponent', () => {
         expect(component.combinedOptions).toEqual([
             { id: 1, name: 'General', type: 'channel', img: '' },
             { id: 2, name: 'Announcements', type: 'channel', img: '' },
-            { id: 3, name: 'User1', type: 'user', img: 'user1.png' },
+            { id: 3, name: 'Group 1', type: 'groupChat', img: '' },
+            { id: 4, name: 'User1', type: 'user', img: 'user1.png' },
         ]);
     });
 

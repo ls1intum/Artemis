@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { IconDefinition, faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
@@ -15,12 +15,12 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 export class CodeEditorFileBrowserBadgeComponent {
     private translateService = inject(TranslateService);
 
-    @Input() badge: FileBadge;
-    @Input() onColoredBackground = false;
+    badge = input.required<FileBadge>();
+    onColoredBackground = input<boolean>(false);
     // Only slightly darken the background and use white text
 
     get tooltip(): string | undefined {
-        switch (this.badge.type) {
+        switch (this.badge().type) {
             case FileBadgeType.FEEDBACK_SUGGESTION:
                 return this.translateService.instant('artemisApp.editor.fileBrowser.fileBadgeTooltips.feedbackSuggestions');
             default:
@@ -29,7 +29,7 @@ export class CodeEditorFileBrowserBadgeComponent {
     }
 
     get icon(): IconDefinition | undefined {
-        switch (this.badge.type) {
+        switch (this.badge().type) {
             case FileBadgeType.FEEDBACK_SUGGESTION:
                 return faLightbulb;
             default:

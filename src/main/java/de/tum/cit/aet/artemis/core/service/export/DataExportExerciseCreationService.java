@@ -171,7 +171,6 @@ public class DataExportExerciseCreationService {
                 Collections.synchronizedList(new ArrayList<>()), repositoryExportOptions);
 
         createPlagiarismCaseInfoExport(programmingExercise, exerciseDir, user.getId());
-
     }
 
     /**
@@ -414,13 +413,12 @@ public class DataExportExerciseCreationService {
             return;
         }
 
-        PlagiarismCaseApi api = plagiarismCaseApi.get();
-        var plagiarismCaseOptional = api.findByStudentIdAndExerciseIdWithPostAndAnswerPost(userId, exercise.getId());
-        List<String> headers = new ArrayList<>();
-        var dataStreamBuilder = Stream.builder();
+        var plagiarismCaseOptional = plagiarismCaseApi.get().findByStudentIdAndExerciseIdWithPostAndAnswerPost(userId, exercise.getId());
         if (plagiarismCaseOptional.isEmpty()) {
             return;
         }
+        List<String> headers = new ArrayList<>();
+        var dataStreamBuilder = Stream.builder();
         var plagiarismCase = plagiarismCaseOptional.get();
         if (plagiarismCase.getVerdict() != null) {
             headers.add("Verdict");

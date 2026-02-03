@@ -42,12 +42,15 @@ class AtlasAgentServiceTest {
     @Mock
     private ChatMemory chatMemory;
 
+    @Mock
+    private AtlasAgentSessionCacheService sessionCacheService;
+
     private AtlasAgentService atlasAgentService;
 
     @BeforeEach
     void setUp() {
         ChatClient chatClient = ChatClient.create(chatModel);
-        atlasAgentService = new AtlasAgentService(chatClient, templateService, null, null, chatMemory, null, 0.2);
+        atlasAgentService = new AtlasAgentService(sessionCacheService, chatClient, templateService, null, null, chatMemory, "gpt-4o", 0.2);
     }
 
     @Test
@@ -94,7 +97,7 @@ class AtlasAgentServiceTest {
 
     @Test
     void testIsAvailable_WithNullChatClient() {
-        AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, null, chatMemory, null, 0.2);
+        AtlasAgentService serviceWithNullClient = new AtlasAgentService(sessionCacheService, null, templateService, null, null, chatMemory, "gpt-4o", 0.2);
         boolean available = serviceWithNullClient.isAvailable();
 
         assertThat(available).isFalse();
@@ -103,7 +106,7 @@ class AtlasAgentServiceTest {
     @Test
     void testIsAvailable_WithNullChatMemory() {
         ChatClient chatClient = ChatClient.create(chatModel);
-        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(chatClient, templateService, null, null, null, null, 0.2);
+        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(sessionCacheService, chatClient, templateService, null, null, null, "gpt-4o", 0.2);
 
         boolean available = serviceWithNullMemory.isAvailable();
 
@@ -168,7 +171,7 @@ class AtlasAgentServiceTest {
     @Test
     void testGetConversationHistoryAsDTO_NullChatMemory() {
         String sessionId = "course_456_user_789";
-        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(ChatClient.create(chatModel), templateService, null, null, null, null, 0.2);
+        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(sessionCacheService, ChatClient.create(chatModel), templateService, null, null, null, "gpt-4o", 0.2);
 
         List<AtlasAgentHistoryMessageDTO> result = serviceWithNullMemory.getConversationHistoryAsDTO(sessionId);
 
@@ -272,7 +275,7 @@ class AtlasAgentServiceTest {
 
         @Test
         void shouldHandleCompetencyExpertToolsServiceNull() {
-            AtlasAgentService serviceWithoutTools = new AtlasAgentService(ChatClient.create(chatModel), templateService, null, null, null, null, 0.2);
+            AtlasAgentService serviceWithoutTools = new AtlasAgentService(sessionCacheService, ChatClient.create(chatModel), templateService, null, null, null, "gpt-4o", 0.2);
 
             String testMessage = "Test message";
             Long courseId = 123L;
