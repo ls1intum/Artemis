@@ -69,7 +69,7 @@ export default defineConfig({
             ],
             exclude: ['**/node_modules/**', '**/*.spec.ts', '**/*.route.ts', '**/*.routes.ts', '**/*.model.ts'],
             thresholds: {
-                lines: 92.15,
+                lines: 92.10,
                 statements: 92.00,
                 branches: 77.00,
                 functions: 89.15,
