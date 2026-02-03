@@ -1,0 +1,195 @@
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+
+# Access Rights
+
+Artemis distinguishes between seven different roles: **SUPER_ADMIN**, **ADMIN**, **INSTRUCTOR**, **EDITOR**, **TA** (Teaching Assistant), **USER** and **ANONYMOUS**.
+The roles are sorted in descending order. An INSTRUCTOR has at least all the permissions that an EDITOR has.
+A SUPER_ADMIN has no restrictions, while an ANONYMOUS has hardly any rights.
+
+## Roles Overview
+
+- **SUPER_ADMIN:** has all permissions that an ADMIN has and additional privileges for critical security operations (see [Super Admin vs Admin](#super-admin-vs-admin) for details)
+- **ADMIN:** can access all features that Artemis provides (includes features regarding the server administration, e.g. server health checks, user management and creating new courses)
+- **INSTRUCTOR:** can access all features related to the content of a course (includes creating and deleting exercises/exams/lectures and monitoring scores and submissions)
+- **EDITOR:** can create and edit the content of a course but cannot delete content and monitoring other course participants is limited
+- **TEACHING ASSISTANT:** can assess student submissions and view course content before the release date
+- **USER:** participates as a Student in courses, can view course content after the release date
+- **ANONYMOUS:** role before login
+
+<Callout variant={CalloutVariant.warning}>
+    When changing the access rights of a user, the respective user must logoff and then logon again for the changes to take effect.
+</Callout>
+
+In the following, the respective permissions illustrated. If a subordinated role has all permissions or a role does not have any access rights, it is not explicitly displayed.
+
+## Super Admin vs Admin
+
+While Super Admins have all the permissions of regular Admins, they have additional privileges in security-critical areas:
+
+### Admin User Management
+
+Only Super Admins can manage administrator accounts (both Admin and Super Admin users). This includes:
+- **Creating** new admin or super admin users
+- **Updating** existing admin or super admin users
+- **Activating/Deactivating** admin or super admin users
+- **Deleting** admin or super admin users
+
+Regular Admins can only manage users with roles below Admin (Instructor, Editor, Teaching Assistant, Student).
+
+### Passkey Approval
+
+Super Admins have the exclusive privilege to approve passkey registrations for administrators.
+This minimizes the attack surface for critical security operations by limiting passkey approval to a very small number of trusted users.
+
+For detailed information about passkey authentication, configuration, and the approval process, see the [Passkey Authentication](/admin/production-setup/security#passkey-authentication) section in the Security Configuration documentation.
+
+<Callout variant={CalloutVariant.info}>
+    Super Admin privileges ensure that only the most trusted users can manage administrator accounts and approve passkeys for administrators.
+    This minimizes the attack surface for critical security operations.
+</Callout>
+
+## Navigation
+
+| Feature                  | Super Admin | Admin | Instructor | Editor | Teaching Assistant | Student |
+|--------------------------|-------------|-------|------------|--------|--------------------|---------|
+| Course Overview          | ✔           | ✔     | ✔          | ✔      | ✔                  | ✔       |
+| Course Management        | ✔           | ✔     | ✔          | ✔      | ✔                  |         |
+| Edit Course              | ✔           | ✔     | ✔          |        |                    |         |
+| Create new course        | ✔           | ✔     |            |        |                    |         |
+| Delete Course            | ✔           | ✔     |            |        |                    |         |
+| Server Administration    | ✔           | ✔     |            |        |                    |         |
+| Manage Non-Admin Users   | ✔           | ✔     |            |        |                    |         |
+| Manage Admin Users       | ✔           |       |            |        |                    |         |
+| Approve Passkeys         | ✔           |       |            |        |                    |         |
+
+## Course
+
+| Feature                     | Instructor | Editor | Teaching Assistant |
+|-----------------------------|------------|--------|--------------------|
+| Exercises                   | ✔          | ✔      | ✔                  |
+| Exams                       | ✔          | ✔      | ✔                  |
+| Assessment Dashboard        | ✔          | ✔      | ✔                  |
+| Statistics                  | ✔          | ✔      | ✔                  |
+| Lectures                    | ✔          | ✔      |                    |
+| Learning Goals              | ✔          |        |                    |
+| Instructor Course Dashboard | ✔          |        |                    |
+
+## Exercises
+
+### General Functionality
+
+| Feature                             | Instructor | Editor | Teaching Assistant | Student |
+|-------------------------------------|------------|--------|--------------------|---------|
+| Exercise View                       | ✔          | ✔      | ✔                  | ✔       |
+| Start + Submit Exercise             | ✔          | ✔      | ✔                  | ✔       |
+| Exercise Detail View                | ✔          | ✔      | ✔                  |         |
+| Scores                              | ✔          | ✔      | ✔                  |         |
+| Participation                       | ✔          | ✔      | ✔                  |         |
+| Submissions                         | ✔          | ✔      |                    |         |
+| Create new Exercise                 | ✔          | ✔      |                    |         |
+| Import Exercise                     | ✔          | ✔      |                    |         |
+| Edit                                | ✔          | ✔      |                    |         |
+| Create / Update Example Submissions | ✔          | ✔      |                    |         |
+| View / Assess Example Submissions   | ✔          | ✔      | ✔                  |         |
+| Check Plagiarism                    | ✔          | ✔      |                    |         |
+| Export Submissions                  | ✔          |        |                    |         |
+| Add External Submission             | ✔          |        |                    |         |
+| Delete                              | ✔          |        |                    |         |
+
+### Programming Exercises
+
+| Feature                        | Instructor | Editor | Teaching Assistant |
+|--------------------------------|------------|--------|--------------------|
+| Clone Repository               | ✔          | ✔      | ✔                  |
+| Download Repo                  | ✔          | ✔      | ✔                  |
+| Edit in editor                 | ✔          | ✔      |                    |
+| Mange Hints                    | ✔          | ✔      |                    |
+| Update Structure Test Oracle   | ✔          | ✔      |                    |
+| Show Template Submissions      | ✔          | ✔      |                    |
+| Show Solution Submissions      | ✔          | ✔      |                    |
+| Trigger Template Participation | ✔          | ✔      |                    |
+| Trigger Solution Participation | ✔          | ✔      |                    |
+| Grading                        | ✔          | ✔      |                    |
+| Manage Submission Policies     | ✔          |        |                    |
+| Re-evaluate all                | ✔          |        |                    |
+| Trigger all                    | ✔          |        |                    |
+| Unlock all repositories        | ✔          |        |                    |
+| Lock all repositories          | ✔          |        |                    |
+| Add External Submission        | ✔          |        |                    |
+| Download Repos                 | ✔          |        |                    |
+| Cleanup                        | ✔          |        |                    |
+| Build Plan Access              | R + W      | R + W  | R                  |
+
+### Programming Exercises - Repository Access
+
+**Action Types:**
+- **READ** (fetch, pull)
+- **WRITE** (push)
+- **RESET** (reset to origin head)
+
+#### Access to all repositories of a course
+
+| Admin / Instructor / Editor | Teaching Assistant | Student    |
+|-----------------------------|--------------------|------------|
+| *READ*, *WRITE*, *RESET*    | *READ*             | restricted |
+
+#### Access for Teaching Assistants and Students on their own repositories (graded participation)
+
+| Context                                        | Teaching Assistant       | Student                  |
+|------------------------------------------------|--------------------------|--------------------------|
+| Before start                                   | *READ*, *WRITE*, *RESET* | restricted               |
+| After start but before due date and not locked | *READ*, *WRITE*, *RESET* | *READ*, *WRITE*, *RESET* |
+| After due date                                 | *READ*                   | *READ*                   |
+| Locked                                         | *READ*                   | *READ*                   |
+
+<Callout variant={CalloutVariant.info}>
+    **Practice** repositories also allow *WRITE* and *RESET* access after the due date.
+</Callout>
+
+### Quiz Exercises
+
+| Feature               | Instructor | Editor | Teaching Assistant |
+|-----------------------|------------|--------|--------------------|
+| Preview               | ✔          | ✔      | ✔                  |
+| Sample Solution       | ✔          | ✔      | ✔                  |
+| Statistic             | ✔          | ✔      | ✔                  |
+| Set Visible           | ✔          | ✔      |                    |
+| Start Now             | ✔          | ✔      |                    |
+| Release For Practice  | ✔          | ✔      |                    |
+| Export Quiz Exercises | ✔          | ✔      |                    |
+| Export                | ✔          |        |                    |
+| Re-evaluate           | ✔          |        |                    |
+
+## Lectures
+
+| Feature                  | Instructor | Editor | Teaching Assistant |
+|--------------------------|------------|--------|--------------------|
+| Add attachment (in unit) | ✔          | ✔      |                    |
+| Edit attachment          | ✔          | ✔      |                    |
+| Delete attachment        | ✔          |        |                    |
+| Add Lecture Unit         | ✔          | ✔      |                    |
+| Edit Lecture Unit        | ✔          | ✔      |                    |
+| Delete Lecture Unit      | ✔          |        |                    |
+| Create Lecture           | ✔          | ✔      |                    |
+| Edit Lecture             | ✔          | ✔      |                    |
+| Delete Lecture           | ✔          |        |                    |
+
+## Exam
+
+| Feature               | Instructor | Editor | Teaching Assistant |
+|-----------------------|------------|--------|--------------------|
+| Assessment Dashboard  | ✔          | ✔      | ✔                  |
+| Exercise Groups       | ✔          | ✔      |                    |
+| Edit Exercise Group   | ✔          | ✔      |                    |
+| Import Exercise Group | ✔          | ✔      |                    |
+| Delete Exercise Group | ✔          |        |                    |
+| Edit Exam             | ✔          |        |                    |
+| Import Exam           | ✔          |        |                    |
+| Archive Exam          | ✔          |        |                    |
+| Delete Exam           | ✔          |        |                    |
+| Exam Checklist        | ✔          |        |                    |
+| Scores                | ✔          |        |                    |
+| Test Run              | ✔          |        |                    |
+| Student Exams         | ✔          |        |                    |
+| Students              | ✔          |        |                    |

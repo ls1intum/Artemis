@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { NgbCollapse, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, PROFILE_LOCALCI, PROFILE_LTI, VERSION } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LTI, PROFILE_LOCALCI, VERSION } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LoginService } from 'app/core/login/login.service';
@@ -67,18 +67,6 @@ import { ServerAdministrationComponent } from 'app/core/navbar/server-administra
     ],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
-    protected readonly faBars = faBars;
-    protected readonly faThLarge = faThLarge;
-    protected readonly faThList = faThList;
-    protected readonly faUser = faUser;
-    protected readonly faCog = faCog;
-    protected readonly faWrench = faWrench;
-    protected readonly faLock = faLock;
-    protected readonly faFlag = faFlag;
-    protected readonly faBook = faBook;
-    protected readonly faSignOutAlt = faSignOutAlt;
-    protected readonly faChevronRight = faChevronRight;
-
     private readonly accountService = inject(AccountService);
     private readonly loginService = inject(LoginService);
     private readonly translateService = inject(TranslateService);
@@ -93,6 +81,20 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private readonly entityTitleService = inject(EntityTitleService);
     private readonly titleService = inject(Title);
     private readonly featureToggleService = inject(FeatureToggleService);
+
+    protected readonly faBars = faBars;
+    protected readonly faThLarge = faThLarge;
+    protected readonly faThList = faThList;
+    protected readonly faUser = faUser;
+    protected readonly faCog = faCog;
+    protected readonly faWrench = faWrench;
+    protected readonly faLock = faLock;
+    protected readonly faFlag = faFlag;
+    protected readonly faBook = faBook;
+    protected readonly faSignOutAlt = faSignOutAlt;
+    protected readonly faChevronRight = faChevronRight;
+
+    protected readonly IS_AT_LEAST_TUTOR = IS_AT_LEAST_TUTOR;
 
     inProduction: boolean;
     testServer: boolean;
@@ -188,7 +190,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.atlasEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS);
         this.examEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_EXAM);
         this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
-        this.ltiEnabled = profileInfo?.activeProfiles.includes(PROFILE_LTI);
+        this.ltiEnabled = profileInfo?.activeModuleFeatures.includes(MODULE_FEATURE_LTI);
 
         this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
             this.standardizedCompetenciesEnabled = isActive;

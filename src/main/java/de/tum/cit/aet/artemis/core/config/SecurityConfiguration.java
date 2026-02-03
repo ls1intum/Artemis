@@ -198,7 +198,7 @@ public class SecurityConfiguration {
      */
     @Bean
     public RoleHierarchy roleHierarchy() {
-        return RoleHierarchyImpl.fromHierarchy("ROLE_ADMIN > ROLE_INSTRUCTOR > ROLE_EDITOR > ROLE_TA > ROLE_USER > ROLE_ANONYMOUS");
+        return RoleHierarchyImpl.fromHierarchy("ROLE_SUPER_ADMIN > ROLE_ADMIN > ROLE_INSTRUCTOR > ROLE_EDITOR > ROLE_TA > ROLE_USER > ROLE_ANONYMOUS");
     }
 
     /**
@@ -317,10 +317,10 @@ public class SecurityConfiguration {
             passkeyWebAuthnConfigurer.orElseThrow(() -> new IllegalStateException("Passkey enabled but SecurityConfigurer could not be injected")).configure(http);
         }
 
-        // Conditionally adds configuration for LTI if it is active.
-        if (profileService.isLtiActive()) {
+        // Conditionally adds configuration for LTI if it is enabled.
+        if (moduleFeatureService.isLtiEnabled()) {
             // Activates the LTI endpoints and filters.
-            log.info("LTI profile is active; enabling LTI endpoints and security configuration.");
+            log.info("LTI module feature is enabled; enabling LTI endpoints and security configuration.");
             http.with(customLti13Configurer.orElseThrow(), configurer -> configurer.configure(http));
         }
 

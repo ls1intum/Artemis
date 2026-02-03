@@ -159,6 +159,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @ViewChild('fullElement', { static: true }) fullElement: ElementRef<HTMLDivElement>;
     @ViewChild('wrapper', { static: true }) wrapper: ElementRef<HTMLDivElement>;
     @ViewChild('fileUploadFooter', { static: false }) fileUploadFooter?: ElementRef<HTMLDivElement>;
+    @ViewChild('fileUploadInput', { static: false }) fileUploadInput?: ElementRef<HTMLInputElement>;
     @ViewChild('resizePlaceholder', { static: false }) resizePlaceholder?: ElementRef<HTMLDivElement>;
     @ViewChild('actionPalette', { static: false }) actionPalette?: ElementRef<HTMLElement>;
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
@@ -261,6 +262,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     isButtonLoading = input<boolean>(false);
     isFormGroupValid = input<boolean>(false);
     isInCommunication = input<boolean>(false);
+    showMarkdownInfoText = input<boolean>(true);
     editType = input<PostingEditType>();
     course = input<Course>();
 
@@ -449,6 +451,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                     action.element = this.isHeightManagedExternally() ? this.fullElement.nativeElement : this.wrapper.nativeElement;
                 } else if (this.enableFileUpload && action instanceof AttachmentAction) {
                     action.setUploadCallback(this.embedFiles.bind(this));
+                    action.setOpenFileDialogCallback(this.openFilePicker.bind(this));
                 }
                 this.monacoEditor.registerAction(action);
             });
@@ -512,10 +515,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * The height of the editor is the height of the wrapper (or the full element, if the height is external) minus the height of the file upload footer and the action palette.
      */
     getEditorHeight(): number {
-        const elementHeight = this.getElementClientHeight(this.isHeightManagedExternally() ? this.fullElement : this.wrapper);
+        // We always use the wrapper height, as it is correctly sized by the flexbox layout in all cases (external or internal height).
+        const elementHeight = this.getElementClientHeight(this.wrapper);
         const fileUploadFooterHeight = this.getElementClientHeight(this.fileUploadFooter);
         const actionPaletteHeight = this.getElementClientHeight(this.actionPalette);
-        return elementHeight - fileUploadFooterHeight - actionPaletteHeight - BORDER_HEIGHT_OFFSET;
+        return Math.max(0, elementHeight - fileUploadFooterHeight - actionPaletteHeight - BORDER_HEIGHT_OFFSET);
     }
 
     /**
@@ -589,6 +593,13 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (event.target.files.length >= 1) {
             this.embedFiles(Array.from(event.target.files), event.target);
         }
+    }
+
+    /**
+     * Opens the file picker dialog to allow the user to select files for upload.
+     */
+    openFilePicker(): void {
+        this.fileUploadInput?.nativeElement.click();
     }
 
     /**

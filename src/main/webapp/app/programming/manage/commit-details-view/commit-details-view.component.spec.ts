@@ -300,8 +300,8 @@ describe('CommitDetailsViewComponent', () => {
         // Trigger ngOnDestroy
         component.ngOnDestroy();
 
-        // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
+        // Expect participationRepoFilesSubscription to be unsubscribed
+        // Note: paramSub is not tested here because ngOnInit() was not called
         expect(component.participationRepoFilesSubscription?.closed).toBeTrue();
     });
 

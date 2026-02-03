@@ -9,7 +9,7 @@ on:
     - 'CONTRIBUTING.md'
     - 'LICENSE'
     - 'SECURITY.md'
-    - 'docs/**'
+    - 'documentation/**'
     - '.github/**'
     - '!.github/workflows/build.yml'
     - '!.github/workflows/test-e2e.yml'
@@ -109,11 +109,11 @@ jobs:
           java-version: '${{ env.java }}'
           cache: 'gradle'
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v5
       - name: Production Build
         run: ./gradlew -Pprod -Pwar clean bootWar
       - name: Upload Artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: Artemis.war
           path: build/libs/Artemis-*.war
@@ -154,7 +154,7 @@ jobs:
           echo "Using Docker tag: ${{ needs.docker.outputs.image_tag }}"
 
       - name: Upload Docker Tag as Artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: docker-tag
           path: docker-tag.txt

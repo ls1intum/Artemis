@@ -1,0 +1,387 @@
+name: Validate PR Description
+
+on:
+    pull_request_target:
+        types: [opened, edited, ready_for_review, synchronize, reopened]
+
+jobs:
+    validate-pr-description:
+        # Only run on non-draft PRs targeting develop from non-forked repos
+        # Security: prevents stacked PR attacks and blocks forked PRs from accessing secrets
+        if: |
+            github.event.pull_request.draft == false &&
+            github.event.pull_request.base.ref == 'develop' &&
+            github.event.pull_request.head.repo != null &&
+            github.event.pull_request.head.repo.fork == false
+        runs-on: ubuntu-latest
+        timeout-minutes: 2
+        permissions:
+            pull-requests: write
+            issues: write
+            contents: read
+
+        steps:
+            - name: Validate PR description
+              uses: actions/github-script@v8
+              env:
+                  AZURE_ENDPOINT: ${{ secrets.PR_DESCRIPTION_VALIDATOR_OPENAI_ENDPOINT }}
+                  AZURE_API_KEY: ${{ secrets.PR_DESCRIPTION_VALIDATOR_OPENAI_API_KEY }}
+                  AZURE_DEPLOYMENT: ${{ secrets.PR_DESCRIPTION_VALIDATOR_OPENAI_DEPLOYMENT }}
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  script: |
+                      const prNumber = context.payload.pull_request.number;
+                      const owner = context.repo.owner;
+                      const repo = context.repo.repo;
+                      const author = context.payload.pull_request.user.login;
+
+                      console.log(`Validating PR #${prNumber} description`);
+
+                      // Use body from event payload (available in pull_request_target events)
+                      const body = context.payload.pull_request.body || '';
+
+                      // Fetch changed files (needed for visual changes detection)
+                      let files = [];
+                      try {
+                          const response = await github.rest.pulls.listFiles({
+                              owner,
+                              repo,
+                              pull_number: prNumber,
+                              per_page: 100
+                          });
+                          files = response.data;
+                      } catch (error) {
+                          console.log('Could not fetch changed files:', error.message);
+                          // Continue without file analysis - AI checks for visual changes will be skipped
+                      }
+
+                      const changedFiles = files.map(f => f.filename);
+                      const hasClientChanges = changedFiles.some(f => f.startsWith('src/main/webapp/'));
+                      console.log(`Change types - Client: ${hasClientChanges}`);
+
+                      // Strip HTML comments and CodeRabbit summary from body for AI analysis
+                      const bodyForAI = body
+                          .replace(/<!--[\s\S]*?-->/g, '')
+                          .replace(/##\s*Summary by CodeRabbit[\s\S]*$/i, '')
+                          .trim();
+
+                      const issues = [];
+                      const aiSuggestions = [];
+
+                      // Check if all checkboxes are unchecked (at least some should be checked)
+                      // Supports both - [ ] and * [ ] checkbox styles, with flexible spacing
+                      const checkedBoxes = (body.match(/[-*] \[x\]/gi) || []).length;
+                      const uncheckedBoxes = (body.match(/[-*] \[\s*\]/g) || []).length;
+                      if (uncheckedBoxes > 0 && checkedBoxes === 0) {
+                          issues.push('No checkboxes are checked in the PR description');
+                          aiSuggestions.push('Check the boxes that apply to your changes in the Checklist section');
+                      }
+
+                      // AI validation setup (secrets passed via env vars to avoid injection)
+                      const azureEndpoint = process.env.AZURE_ENDPOINT || '';
+                      const azureApiKey = process.env.AZURE_API_KEY || '';
+                      const deploymentName = process.env.AZURE_DEPLOYMENT || '';
+                      const hasAiCredentials = azureEndpoint !== '' && azureApiKey !== '' && deploymentName !== '';
+
+                      // Helper function to call Azure OpenAI
+                      async function callAI(prompt, userContent) {
+                          const response = await fetch(
+                              `${azureEndpoint}/openai/deployments/${deploymentName}/chat/completions?api-version=2024-02-15-preview`,
+                              {
+                                  method: 'POST',
+                                  headers: {
+                                      'Content-Type': 'application/json',
+                                      'api-key': azureApiKey
+                                  },
+                                  body: JSON.stringify({
+                                      messages: [
+                                          { role: 'user', content: prompt + '\n\nContent to check:\n' + userContent }
+                                      ],
+                                      reasoning_effort: 'high'
+                                  })
+                              }
+                          );
+
+                          if (!response.ok) {
+                              if (response.status === 429 || response.status === 503) {
+                                  console.log(`AI service temporarily unavailable (${response.status})`);
+                              } else {
+                                  console.log(`AI request failed with status ${response.status}`);
+                              }
+                              return null;
+                          }
+
+                          try {
+                              const data = await response.json();
+                              return data.choices?.[0]?.message?.content?.trim() || null;
+                          } catch (parseError) {
+                              console.log('Failed to parse AI response as JSON');
+                              return null;
+                          }
+                      }
+
+                      // Sanitize AI output to prevent injection attacks via suggestions
+                      function sanitizeAiOutput(text) {
+                          if (!text) return '';
+                          return text
+                              // Remove @mentions (potential pings)
+                              .replace(/@[a-zA-Z0-9_-]+/g, '')
+                              // Remove URLs and links
+                              .replace(/https?:\/\/[^\s)>\]]+/gi, '')
+                              // Remove markdown links but keep text
+                              .replace(/\[([^\]]*)\]\([^)]+\)/g, '$1')
+                              // Remove potential API keys/secrets (long alphanumeric strings 32+ chars)
+                              .replace(/\b[a-zA-Z0-9_-]{32,}\b/g, '[redacted]')
+                              // Remove common secret patterns
+                              .replace(/\b(sk|pk|api|key|token|secret|password|auth)[_-]?[a-zA-Z0-9]{16,}\b/gi, '[redacted]')
+                              // Remove backtick code blocks that might contain secrets
+                              .replace(/`[^`]{40,}`/g, '[redacted]')
+                              // Collapse multiple spaces
+                              .replace(/\s+/g, ' ')
+                              .trim();
+                      }
+
+                      // Parse AI response robustly - handles quotes, whitespace, variations
+                      function parseAiResponse(text) {
+                          if (!text) return { pass: null, suggestion: '' };
+                          // Normalize: trim, remove surrounding quotes, uppercase for comparison
+                          const normalized = text.trim().replace(/^["'`]+|["'`]+$/g, '').trim();
+                          const upper = normalized.toUpperCase();
+
+                          if (upper === 'PASS' || upper.startsWith('PASS.') || upper.startsWith('PASS!')) {
+                              return { pass: true, suggestion: '' };
+                          }
+                          if (upper.startsWith('FAIL')) {
+                              // Extract suggestion after "FAIL:" or "FAIL " or just "FAIL"
+                              let suggestion = '';
+                              const colonIndex = normalized.indexOf(':');
+                              if (colonIndex !== -1) {
+                                  suggestion = normalized.substring(colonIndex + 1).trim();
+                              } else if (normalized.length > 4) {
+                                  suggestion = normalized.substring(4).trim();
+                              }
+                              // Remove leading punctuation from suggestion
+                              suggestion = suggestion.replace(/^[:\-.\s]+/, '').trim();
+                              return { pass: false, suggestion: sanitizeAiOutput(suggestion) };
+                          }
+                          // Unexpected format
+                          console.log(`Unexpected AI response format: ${text}`);
+                          return { pass: null, suggestion: '' };
+                      }
+
+                      // ============================================================
+                      // AI CHECK 1: Motivation Quality
+                      // ============================================================
+                      if (hasAiCredentials) {
+                          try {
+                              const prompt = 'You are reviewing a GitHub PR description. Find the section about motivation/context (why this change is needed). ' +
+                                  'It might be labeled "Motivation", "Motivation and Context", "Why", "Context", or similar. ' +
+                                  'FAIL if: the section is missing, empty, contains only placeholder text (TODO, TBD, fill in), gibberish, or unrelated content. ' +
+                                  'PASS if: there is any real explanation of why this change is needed (brief is OK, imperfect grammar is OK). ' +
+                                  'Output format: If acceptable, reply with just PASS. If not acceptable, reply with FAIL: followed by one short suggestion. ' +
+                                  'Examples: PASS | FAIL: Add why this change is needed. | FAIL: Describe the problem being solved.';
+
+                              console.log('Running motivation quality check...');
+                              const result = await callAI(prompt, bodyForAI);
+
+                              if (result === null) {
+                                  core.warning('Motivation quality check skipped: AI service unavailable');
+                              } else {
+                                  const parsed = parseAiResponse(result);
+                                  if (parsed.pass === false) {
+                                      issues.push('**Motivation/Context** section is missing or needs improvement');
+                                      if (parsed.suggestion) aiSuggestions.push(parsed.suggestion);
+                                  } else if (parsed.pass === null) {
+                                      core.warning('Motivation quality check skipped: unexpected AI response format');
+                                  }
+                              }
+                          } catch (error) {
+                              console.log('Motivation check error:', error.message);
+                              core.warning('Motivation quality check skipped: AI service error');
+                          }
+                      }
+
+                      // ============================================================
+                      // AI CHECK 2: Description Quality
+                      // ============================================================
+                      if (hasAiCredentials) {
+                          try {
+                              const prompt = 'You are reviewing a GitHub PR description. Find the section describing what was changed. ' +
+                                  'It might be labeled "Description", "Changes", "What", "Summary", or similar. ' +
+                                  'FAIL if: the section is missing, empty, contains only placeholder text (TODO, TBD, fill in), gibberish, or no actual changes described. ' +
+                                  'PASS if: there is any real description of what was changed (brief is OK, imperfect grammar is OK). ' +
+                                  'Output format: If acceptable, reply with just PASS. If not acceptable, reply with FAIL: followed by one short suggestion. ' +
+                                  'Examples: PASS | FAIL: Describe what was changed. | FAIL: Add details about the implementation.';
+
+                              console.log('Running description quality check...');
+                              const result = await callAI(prompt, bodyForAI);
+
+                              if (result === null) {
+                                  core.warning('Description quality check skipped: AI service unavailable');
+                              } else {
+                                  const parsed = parseAiResponse(result);
+                                  if (parsed.pass === false) {
+                                      issues.push('**Description** section is missing or needs improvement');
+                                      if (parsed.suggestion) aiSuggestions.push(parsed.suggestion);
+                                  } else if (parsed.pass === null) {
+                                      core.warning('Description quality check skipped: unexpected AI response format');
+                                  }
+                              }
+                          } catch (error) {
+                              console.log('Description check error:', error.message);
+                              core.warning('Description quality check skipped: AI service error');
+                          }
+                      }
+
+                      // ============================================================
+                      // AI CHECK 3: Testing Steps Quality
+                      // ============================================================
+                      if (hasAiCredentials) {
+                          try {
+                              const prompt = 'You are reviewing a GitHub PR description. Find the section about how to test this change. ' +
+                                  'It might be labeled "Testing", "Steps for Testing", "Test Plan", "How to Test", "Verification", or similar. ' +
+                                  'FAIL if: the section is missing, empty, contains only placeholder text, or has only vague instructions like "test it" or "check everything". ' +
+                                  'PASS if: there are specific actions a tester can follow (does not need to be perfect, brief steps are OK). ' +
+                                  'Output format: If acceptable, reply with just PASS. If not acceptable, reply with FAIL: followed by one short suggestion. ' +
+                                  'Examples: PASS | FAIL: Add specific steps to reproduce. | FAIL: Include concrete test actions.';
+
+                              console.log('Running testing steps quality check...');
+                              const result = await callAI(prompt, bodyForAI);
+
+                              if (result === null) {
+                                  core.warning('Testing steps quality check skipped: AI service unavailable');
+                              } else {
+                                  const parsed = parseAiResponse(result);
+                                  if (parsed.pass === false) {
+                                      issues.push('**Testing instructions** are missing or need more specific steps');
+                                      if (parsed.suggestion) aiSuggestions.push(parsed.suggestion);
+                                  } else if (parsed.pass === null) {
+                                      core.warning('Testing steps quality check skipped: unexpected AI response format');
+                                  }
+                              }
+                          } catch (error) {
+                              console.log('Testing steps check error:', error.message);
+                              core.warning('Testing steps quality check skipped: AI service error');
+                          }
+                      }
+
+                      // ============================================================
+                      // AI CHECK 4: Visual Changes & Screenshots (only for client changes)
+                      // ============================================================
+                      if (hasClientChanges && hasAiCredentials) {
+                          try {
+                              const clientFiles = files.filter(f =>
+                                  f.filename.startsWith('src/main/webapp/') && !f.filename.includes('.spec.')
+                              );
+                              const patchSummary = clientFiles.map(f =>
+                                  `${f.filename}:\n${(f.patch || '').substring(0, 1000)}`
+                              ).join('\n\n');
+
+                              const prompt = 'You are reviewing a GitHub PR. First, analyze the code changes to determine if they affect the UI visually. ' +
+                                  'Visual changes include: HTML template changes, CSS/SCSS style changes, component layout changes, adding/removing UI elements. ' +
+                                  'Non-visual changes include: TypeScript logic only, variable renames, refactoring, services, imports, test files. ' +
+                                  'If the changes ARE visual, check if the PR description contains screenshots (look for image links, "Screenshots" section, or similar). ' +
+                                  'PASS if: changes are non-visual OR changes are visual and screenshots are present. ' +
+                                  'FAIL if: changes are visual but no screenshots are included. ' +
+                                  'Output format: If acceptable, reply with just PASS. If not acceptable, reply with FAIL: followed by one short suggestion. ' +
+                                  'Examples: PASS | FAIL: Add screenshots of the UI changes. | FAIL: Include before/after images.';
+
+                              const combinedContent = `PR DESCRIPTION:\n${bodyForAI}\n\nCODE CHANGES:\n${patchSummary}`;
+
+                              console.log('Running visual changes check...');
+                              const result = await callAI(prompt, combinedContent);
+
+                              if (result === null) {
+                                  core.warning('Visual changes check skipped: AI service unavailable');
+                              } else {
+                                  const parsed = parseAiResponse(result);
+                                  if (parsed.pass === false) {
+                                      issues.push('**Screenshots** are missing but this PR contains visual/UI changes');
+                                      if (parsed.suggestion) aiSuggestions.push(parsed.suggestion);
+                                  } else if (parsed.pass === null) {
+                                      core.warning('Visual changes check skipped: unexpected AI response format');
+                                  }
+                              }
+                          } catch (error) {
+                              console.log('Visual changes check error:', error.message);
+                              core.warning('Visual changes check skipped: AI service error');
+                          }
+                      } else if (hasClientChanges && !hasAiCredentials) {
+                          core.warning('Visual changes check skipped: AI credentials not configured');
+                      }
+
+                      // Define the comment marker for identification
+                      const commentMarker = '<!-- pr-description-validator -->';
+
+                      // Helper function to delete previous validation comments
+                      async function deletePreviousComments() {
+                          try {
+                              const { data: comments } = await github.rest.issues.listComments({
+                                  owner,
+                                  repo,
+                                  issue_number: prNumber,
+                                  per_page: 100
+                              });
+
+                              const botComments = comments.filter(c =>
+                                  c.user.type === 'Bot' &&
+                                  c.body.includes(commentMarker)
+                              );
+
+                              for (const comment of botComments) {
+                                  await github.rest.issues.deleteComment({
+                                      owner,
+                                      repo,
+                                      comment_id: comment.id
+                                  });
+                                  console.log(`Deleted previous validation comment ${comment.id}`);
+                              }
+                          } catch (error) {
+                              console.log('Could not clean up old comments:', error.message);
+                          }
+                      }
+
+                      // Always delete previous comments first (avoid spam)
+                      await deletePreviousComments();
+
+                      if (issues.length > 0) {
+                          console.log(`Found ${issues.length} issues with PR description`);
+
+                          // Build comment body
+                          let commentBody = `${commentMarker}\n`;
+                          commentBody += `@${author} Your PR description needs attention before it can be reviewed:\n\n`;
+                          commentBody += `### Issues Found\n`;
+                          issues.forEach((issue, index) => {
+                              commentBody += `${index + 1}. ${issue}\n`;
+                          });
+
+                          // Deduplicate suggestions before adding
+                          const uniqueSuggestions = [...new Set(aiSuggestions)].filter(Boolean);
+                          if (uniqueSuggestions.length > 0) {
+                              commentBody += `\n### How to Fix\n`;
+                              uniqueSuggestions.forEach(suggestion => {
+                                  commentBody += `- ${suggestion}\n`;
+                              });
+                          }
+
+                          commentBody += `\n---\n`;
+                          commentBody += `*This check validates that your PR description follows the [PR template](https://github.com/${owner}/${repo}/blob/develop/.github/PULL_REQUEST_TEMPLATE.md). `;
+                          commentBody += `A complete description helps reviewers understand your changes and speeds up the review process.*\n\n`;
+                          commentBody += `> **Note:** This description validation is an experimental feature. If you observe false positives, please send a DM with a link to the wrong comment to Patrick Bassner on Slack. Thank you!`;
+
+                          // Post new comment
+                          try {
+                              await github.rest.issues.createComment({
+                                  owner,
+                                  repo,
+                                  issue_number: prNumber,
+                                  body: commentBody
+                              });
+                          } catch (commentError) {
+                              console.log('Could not post comment:', commentError.message);
+                          }
+
+                          core.setFailed('PR description validation failed');
+                      } else {
+                          console.log('PR description validation passed');
+                      }

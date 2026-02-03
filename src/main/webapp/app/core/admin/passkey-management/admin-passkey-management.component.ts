@@ -1,0 +1,65 @@
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { AdminPasskeyManagementService } from './admin-passkey-management.service';
+import { AdminPasskeyDTO } from './admin-passkey.dto';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AlertService } from 'app/shared/service/alert.service';
+import { isErrorAlert, onError } from 'app/shared/util/global.utils';
+
+@Component({
+    selector: 'jhi-admin-passkey-management',
+    templateUrl: './admin-passkey-management.component.html',
+    imports: [NgxDatatableModule, ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective],
+})
+export class AdminPasskeyManagementComponent implements OnInit {
+    private readonly adminPasskeyService = inject(AdminPasskeyManagementService);
+    private readonly alertService = inject(AlertService);
+
+    passkeys = signal<AdminPasskeyDTO[]>([]);
+    isLoading = signal<boolean>(false);
+
+    ngOnInit(): void {
+        this.loadPasskeys().then();
+    }
+
+    /**
+     * @param showLoading can be set as false to avoid flickering on silent loading in background
+     */
+    async loadPasskeys(showLoading: boolean = true): Promise<void> {
+        if (showLoading) {
+            this.isLoading.set(true);
+        }
+
+        try {
+            const loadedPasskeys = await this.adminPasskeyService.getAllPasskeys();
+            this.passkeys.set(loadedPasskeys);
+        } catch (error) {
+            onError(this.alertService, error);
+        }
+
+        this.isLoading.set(false);
+    }
+
+    async onApprovalToggle(passkey: AdminPasskeyDTO): Promise<void> {
+        const newApprovalStatus = !passkey.isSuperAdminApproved;
+
+        try {
+            await this.adminPasskeyService.updatePasskeyApproval(passkey.credentialId, newApprovalStatus);
+            passkey.isSuperAdminApproved = newApprovalStatus;
+            this.passkeys.update((passkeys) => [...passkeys]);
+        } catch (error) {
+            if (!isErrorAlert(error)) {
+                if (error.status === 404) {
+                    this.alertService.error('artemisApp.adminPasskeyManagement.errors.passkeyNotFound');
+                    return;
+                }
+
+                onError(this.alertService, error);
+            }
+
+            await this.loadPasskeys(false);
+        }
+    }
+}
