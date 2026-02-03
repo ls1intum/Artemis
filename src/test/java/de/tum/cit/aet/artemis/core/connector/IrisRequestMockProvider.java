@@ -92,8 +92,10 @@ public class IrisRequestMockProvider {
     }
 
     public void enableMockingOfRequests() {
-        mockServer = MockRestServiceServer.createServer(restTemplate);
-        shortTimeoutMockServer = MockRestServiceServer.createServer(shortTimeoutRestTemplate);
+        // Use unordered mode so tests don't fail due to request ordering
+        // (e.g., when cleanup sends DELETE before processing sends INGEST)
+        mockServer = MockRestServiceServer.bindTo(restTemplate).ignoreExpectOrder(true).build();
+        shortTimeoutMockServer = MockRestServiceServer.bindTo(shortTimeoutRestTemplate).ignoreExpectOrder(true).build();
         closeable = MockitoAnnotations.openMocks(this);
     }
 
