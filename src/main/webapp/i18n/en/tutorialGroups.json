@@ -289,9 +289,12 @@
                     "backToExplanationButtonLabel": "Back",
                     "importButtonLabel": "Import",
                     "importErrorAlert": "Something went wrong while importing the students. Please try again.",
+                    "finishButtonLabel": "Finish",
+                    "restartButtonLabel": "Restart",
                     "resultsDescription": {
                         "someStudentsRegistered": "Only a subset of students could be registered. The logins/registration numbers highlighted in red could not be matched to any existing users:",
-                        "noStudentsRegistered": "No students could be registered. The given logins/registration numbers could not be matched to existing users:"
+                        "noStudentsRegistered": "No students could be registered. The given logins/registration numbers could not be matched to existing users:",
+                        "allStudentsRegistered": "All students were registered."
                     }
                 }
             },

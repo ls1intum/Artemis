@@ -4,7 +4,7 @@
         @if (step === ImportFlowStep.RESULTS && allStudentsExist()) {
             <div class="success-content">
                 <span class="pi pi-check-circle" style="font-size: 5rem"></span>
-                <span>All students were registered.</span>
+                <span jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.resultsDescription.allStudentsRegistered"></span>
             </div>
         } @else {
             @switch (step) {
@@ -56,10 +56,22 @@
                 }
                 @case (ImportFlowStep.RESULTS) {
                     @if (!allStudentsExist()) {
-                        <button pButton class="p-button-secondary p-button-sm" data-testid="restart-button" (click)="goToExplanationStep()">Restart</button>
+                        <button
+                            pButton
+                            class="p-button-secondary p-button-sm"
+                            data-testid="restart-button"
+                            jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.restartButtonLabel"
+                            (click)="goToExplanationStep()"
+                        ></button>
                     }
                     <div class="spacer"></div>
-                    <button pButton class="p-button-primary p-button-sm" data-testid="restart-button" (click)="close()">Finish</button>
+                    <button
+                        pButton
+                        class="p-button-primary p-button-sm"
+                        data-testid="finish-button"
+                        jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.finishButtonLabel"
+                        (click)="close()"
+                    ></button>
                 }
             }
         </div>

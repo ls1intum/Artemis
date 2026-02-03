@@ -289,9 +289,12 @@
                     "backToExplanationButtonLabel": "Zurück",
                     "importButtonLabel": "Importieren",
                     "importErrorAlert": "Beim Importieren ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "finishButtonLabel": "Beenden",
+                    "restartButtonLabel": "Neustart",
                     "resultsDescription": {
                         "someStudentsRegistered": "Nur ein Teil der Studenten konnten registriert werden. Die rot markierten logins/registration numbers konnten keinen Benutzern zugeordnet werden:",
-                        "noStudentsRegistered": "Keine Studenten konnten registriert werden. Die gegebenen logins/registration numbers konnten keinen Benutzern zugeordnet werden:"
+                        "noStudentsRegistered": "Keine Studenten konnten registriert werden. Die gegebenen logins/registration numbers konnten keinen Benutzern zugeordnet werden:",
+                        "allStudentsRegistered": "Alle Studenten wurden registriert.."
                     }
                 }
             },
