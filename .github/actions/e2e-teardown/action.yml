@@ -1,0 +1,34 @@
+name: 'E2E Test Teardown'
+description: 'Common teardown steps for E2E test jobs'
+
+inputs:
+  artifact-name-suffix:
+    description: 'Suffix for artifact names (e.g., "Phase 1", "Phase 2", "")'
+    required: false
+    default: ''
+  require-tests:
+    description: 'Whether to fail if no test files found (error vs warn)'
+    required: false
+    default: 'warn'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Upload JUnit Test Results
+      if: success() || failure()
+      uses: actions/upload-artifact@v5
+      with:
+        name: JUnit Test Results${{ inputs.artifact-name-suffix && format(' {0}', inputs.artifact-name-suffix) || '' }}
+        if-no-files-found: ${{ inputs.require-tests }}
+        path: src/test/playwright/test-reports/*.xml
+
+    - name: Upload Client Test Coverage Report
+      if: success() || failure()
+      uses: actions/upload-artifact@v5
+      with:
+        name: E2E Client Coverage Report${{ inputs.artifact-name-suffix && format(' {0}', inputs.artifact-name-suffix) || '' }}
+        path: src/test/playwright/test-reports/client-coverage
+
+    - name: Run cleanup script (after E2E)
+      shell: bash
+      run: .ci/E2E-tests/cleanup.sh

@@ -1,6 +1,7 @@
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
+import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
 
 import courseManagement from './assets/general/course-management.png';
 import courseDashboard from './assets/general/course-management-course-dashboard-exercises.png';
@@ -41,6 +42,7 @@ import assessmentSuggestionsLoadingIndicator from './assets/modeling/assessment-
 import assessmentSuggestionsNotice from './assets/modeling/assessment-suggestions-notice.png';
 import referencedAssessmentSuggestion from './assets/modeling/referenced-assessment-suggestion.png';
 import unreferencedAssessmentSuggestion from './assets/modeling/unreferenced-assessment-suggestion.png';
+import modelingLlmActivity from './assets/modeling/modeling-llm-activity.svg';
 import automaticFeedbackRequestEditor from './assets/modeling/automatic-feedback-request-editor.png';
 import automaticFeedbackRequestAlert from './assets/modeling/automatic-feedback-request-alert.png';
 import automaticFeedbackRequestScore from './assets/modeling/automatic-feedback-request-score.png';
@@ -231,6 +233,63 @@ These unreferenced suggestions can be accepted or discarded via buttons on the i
 
 <Image src={unreferencedAssessmentSuggestion} alt="Unreferenced Assessment Suggestion" size={ImageSize.medium} caption="Unreferenced Assessment Suggestion" />
 
+### How Suggestion Generation Works
+
+This section provides insights into how automated feedback suggestions are generated for modeling exercises using Athena.
+The module uses a Large Language Model (LLM) internally to generate feedback through the following process:
+
+1. **Feedback Request Reception:** Upon receiving a feedback request, the corresponding modeling submission is serialized into an appropriate exchange format depending on the diagram type.
+For BPMN diagrams, BPMN 2.0 XML is used as it is a commonly used exchange format for process models and proved to be well-understood by LLMs.
+IDs of diagram elements are shortened during serialization to minimize the token count of the input provided to the language model.
+
+2. **Prompt Input Collection:** The module gathers all required input to query the connected language model. This includes:
+   - Number of points and bonus points achievable
+   - Grading instructions
+   - Problem statement
+   - Explanation of the submission format
+   - Optional example solution
+   - Serialized submission
+
+3. **Prompt Template Filling:** The collected input is used to fill in the prompt template. If the prompt exceeds the language model's token limit, omittable features are removed in the following order: example solution, grading instructions, and problem statement.
+The system can still provide improvement suggestions without detailed grading instructions.
+
+4. **Token Limit Check:** Feedback generation is aborted if the prompt is still too long after removing omittable features.
+Otherwise, the prompt is executed on the connected language model.
+
+5. **Response Parsing:** The model's response is parsed into a dictionary representation.
+Feedback items are mapped back to their original element IDs, ensuring that the feedback suggestions can be attached to referenced elements in the original diagram.
+
+<Image src={modelingLlmActivity} alt="Modeling LLM Activity Diagram" size={ImageSize.large} caption="LLM-based Feedback Generation Process" />
+
+### Optimizing Exercises for Automated Assessment
+
+A few best practices should be considered to get the best possible assessment suggestions for a modeling exercise.
+As the current version of the module for generating suggestions for modeling exercises is based on a large language model, when composing grading instructions for an exercise, it is advisable to follow similar strategies as for [prompt engineering an LLM](https://platform.openai.com/docs/guides/prompt-engineering).
+
+One of the strategies for optimizing the prompt results of an LLM is instructing the model as clearly as possible about the expected output of the task at hand.
+The following example shows grading instructions for an exemplary BPMN process modeling exercise optimized for automatic assessment.
+The instructions explicitly list all aspects Athena should assess and how credits should be assigned accordingly, ensuring consistent suggestions across all submissions.
+
+<details>
+<summary>Example: Optimized Grading Instructions for BPMN Exercises</summary>
+
+```text
+Evaluate the following 10 criteria:
+
+1. Give 1 point if all elements described in the problem statement are present in the submission, 0 otherwise.
+2. Give 1 point if the outgoing flows from an exclusive gateway are also labeled if there is more than one outgoing flow from the exclusive gateway, 0 otherwise.
+3. Give 1 point if a start-event is present in the student's submission, 0 otherwise.
+4. Give 1 point if an end-event is present in the student's submission, 0 otherwise.
+5. Give 0 points if the activities in the diagram are not in the correct order according to the problem statement, 1 otherwise.
+6. Give 1 point if all pools and swimlanes are labeled, 0 otherwise.
+7. Give 1 point if the submission does not contain elements that are not described in the problem statement, 0 otherwise.
+8. Give 1 point if all diagram elements are connected, 0 otherwise.
+9. Give 1 point if all tasks are named in the "Verb Object"-format where a name consists of a verb followed by the object, 0 otherwise.
+10. Give 1 point if no sequence flows connect elements in two different pools, 0 otherwise.
+```
+
+</details>
+
 ## Automatic Student Feedback
 
 <Callout variant={CalloutVariant.info}>
@@ -278,15 +337,4 @@ When a modeling exercise is configured to allow **Allow automatic AI preliminary
 
 A demonstration of the automated generation of student feedback for a class diagram:
 
-<iframe
-    src="https://tum.live/w/artemisintro/55922?video_only=1&t=0"
-    title="Video tutorial of the automated assessment of modeling exercises on TUM-Live"
-    width="600"
-    height="350"
-    allowFullScreen
-    loading="lazy"
-    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-    referrerPolicy="no-referrer-when-downgrade"
-    style={{border: 0}}>
-    Video tutorial of the automated assessment of modeling exercises on TUM-Live.
-</iframe>
+<TumLiveVideo src="https://tum.live/w/artemisintro/55922" title="Video tutorial of the automated assessment of modeling exercises" />
