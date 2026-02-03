@@ -210,7 +210,7 @@
                             class="btn btn-outline-secondary"
                             (click)="navigateGlobal(-1)"
                             [ngbTooltip]="'artemisApp.hyperion.consistencyCheck.prevIssue' | artemisTranslate"
-                            [ariaLabel]="'artemisApp.hyperion.consistencyCheck.prevIssue' | artemisTranslate"
+                            [attr.aria-label]="'artemisApp.hyperion.consistencyCheck.prevIssue' | artemisTranslate"
                         >
                             <fa-icon [icon]="faArrowLeft" />
                         </button>
@@ -227,7 +227,7 @@
                             class="btn btn-outline-secondary"
                             (click)="navigateGlobal(1)"
                             [ngbTooltip]="'artemisApp.hyperion.consistencyCheck.nextIssue' | artemisTranslate"
-                            [ariaLabel]="'artemisApp.hyperion.consistencyCheck.nextIssue' | artemisTranslate"
+                            [attr.aria-label]="'artemisApp.hyperion.consistencyCheck.nextIssue' | artemisTranslate"
                         >
                             <fa-icon [icon]="faArrowRight" />
                         </button>
@@ -235,7 +235,7 @@
                             class="btn btn-outline-secondary"
                             (click)="toggleConsistencyIssuesToolbar()"
                             [ngbTooltip]="'artemisApp.hyperion.consistencyCheck.closeIssues' | artemisTranslate"
-                            [ariaLabel]="'artemisApp.hyperion.consistencyCheck.closeIssues' | artemisTranslate"
+                            [attr.aria-label]="'artemisApp.hyperion.consistencyCheck.closeIssues' | artemisTranslate"
                         >
                             <fa-icon [icon]="faTimes" />
                         </button>
