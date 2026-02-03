@@ -20,11 +20,15 @@ def __parse_course_name_to_short_name() -> str:
     :return: The parsed short name for the course.
     :rtype: str
     """
+    logging.info(f"Parsing course name '{COURSE_NAME}' to generate short name")
+
     short_name = COURSE_NAME.strip()
     short_name = re.sub(SPECIAL_CHARACTER_REGEX, '', short_name.replace(' ', ''))
 
     if len(short_name) > 0 and not short_name[0].isalpha():
         short_name = 'a' + short_name
+
+    logging.info(f"Generated short name '{short_name}' from course name '{COURSE_NAME}'")
 
     return short_name
 
@@ -36,7 +40,7 @@ def create_pecv_bench_course_request(session: requests.Session) -> requests.Resp
 
     Creates a course with COURSE_NAME from config.ini.
 
-    :param Session session: The active requests Session object.
+    :param requests.Session session: The active requests Session object.
     :return: The JSON response containing the created course details, such as ID etc.
     :rtype: requests.Response
     :raises Exception: If course creation fails or if the course cannot be deleted before recreation.
@@ -177,6 +181,7 @@ def get_pecv_bench_course_id_request(session: requests.Session) -> int:
     :rtype: int
     :raises Exception: If the course with the generated short name is not found.
     """
+    logging.info("Retrieving PECV-Bench course ID")
     course_short_name = __parse_course_name_to_short_name()
     courseResponse: requests.Response = session.get(f"{SERVER_URL}/core/courses")
     courses = courseResponse.json()
@@ -189,8 +194,11 @@ def get_pecv_bench_course_id_request(session: requests.Session) -> int:
 if __name__ == "__main__":
     logging.info("Creating PECV-Bench Hyperion Benchmark Course")
 
+    logging.info("Step 1: Creating session")
     session = requests.Session()
 
+    logging.info("Step 2: Logging in as admin")
     login_as_admin(session=session)
 
+    logging.info("Step 3: Creating PECV-Bench course")
     create_pecv_bench_course_request(session=session)
