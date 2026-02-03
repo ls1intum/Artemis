@@ -23,15 +23,6 @@ setupUsers.sh
 
 This will create 20 test users.
 
-## 3.v1 Setup Playwright and run Playwright tests in terminal
-
-You can run Playwright tests in two different ways: running all tests or running in UI mode.
-
-### Running All Tests
-The `startPlaywright.sh` script runs the full suite of Playwright tests in a headless mode, outputting the results to the command line.
-- Executes all test cases defined in the Playwright test suite.
-- Runs in a headless environment for faster execution.
-- Outputs test results, including logs, in the terminal.
 ## 3. Setup Playwright and run Playwright tests in terminal
 
 You can run Playwright tests in two different ways: running all tests or running in UI mode.
@@ -46,8 +37,8 @@ The `startPlaywright.sh` script runs the full suite of Playwright tests in a hea
 The `startPlaywrightUI.sh` script starts Playwright in a graphical mode for debugging and interactive test execution.
 - Launches a browser window to display available test cases.
 - Allows manual selection and execution of individual or multiple tests.
-- Provides real-time debugging features, such as visual test steps and screenshots. 
+- Provides real-time debugging features, such as visual test steps and screenshots.
 - Useful for debugging and inspecting browser behavior during test execution.
 
-## 3. Setup Playwright and run Playwright tests in VS Code
+## 4. Setup Playwright and run Playwright tests in VS Code
 The `prepareVSCodeForE2ETests.sh` script allows VSCode to discover the E2E Tests and execute them directly from inside the IDE. Once the script has run, wait for 10 seconds, go to the "Erlenmayerkolben" (flask) symbol at the left-side toolbar in VS-Code and the E2E Tests should appear and be ready to execute.
