@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.communication.dto.AuthorDTO;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PlagiarismAnswerPostCreationResponseDTO(Long id, String content, Long postId, AuthorDTO authorDTO, UserRole userRole, Boolean resolvesPost,
-        Boolean hasForwardedMessages, ZonedDateTime creationDate, AuthorDTO author) {
+        Boolean hasForwardedMessages, ZonedDateTime creationDate) {
 
     /**
      * Creates a {@link PlagiarismAnswerPostCreationResponseDTO} from an {@link AnswerPost} entity.
@@ -26,6 +26,6 @@ public record PlagiarismAnswerPostCreationResponseDTO(Long id, String content, L
     public static PlagiarismAnswerPostCreationResponseDTO of(@NonNull AnswerPost answerPost) {
         return new PlagiarismAnswerPostCreationResponseDTO(answerPost.getId(), answerPost.getContent(), answerPost.getPost() != null ? answerPost.getPost().getId() : null,
                 AuthorDTO.fromUser(answerPost.getAuthor()), answerPost.getAuthorRole(), answerPost.doesResolvePost(), answerPost.getHasForwardedMessages(),
-                answerPost.getCreationDate(), AuthorDTO.fromUser(answerPost.getAuthor()));
+                answerPost.getCreationDate());
     }
 }
