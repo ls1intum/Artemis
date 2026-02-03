@@ -305,10 +305,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         const currentCourse = this.course();
 
         // Use the service to get sidebar items
-        const defaultItems = this.sidebarItemService.getStudentDefaultItems(
-            currentCourse?.studentCourseAnalyticsDashboardEnabled || currentCourse?.irisEnabledInCourse,
-            currentCourse?.trainingEnabled,
-        );
+        const defaultItems = this.sidebarItemService.getStudentDefaultItems(currentCourse?.studentCourseAnalyticsDashboardEnabled, currentCourse?.trainingEnabled);
         if (currentCourse?.irisEnabledInCourse) {
             const irisItem = this.sidebarItemService.getIrisItem();
             const dashboardIndex = defaultItems.findIndex((item) => item.routerLink === 'dashboard');
