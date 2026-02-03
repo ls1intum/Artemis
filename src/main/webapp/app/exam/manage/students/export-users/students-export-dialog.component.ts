@@ -62,8 +62,17 @@ export class StudentsExportDialogComponent {
         });
     }
 
+    /**
+     * Sanitizes a csv entry to avoid accidental or malicious spreadsheet execution
+     *
+     * OWASP recommends prepending a tab to avoid spreadsheet, and especially Excel, formula execution:
+     * https://owasp.org/www-community/attacks/CSV_Injection
+     *
+     * @param value a field of a csv row
+     * @private
+     */
     private sanitizeCsvValue(value?: string): string | undefined {
-        return value && /^[=+\-@]/.test(value) ? `'${value}` : value;
+        return value && /^[=+\-@]/.test(value) ? `\t${value}` : value;
     }
 
     private createCsv(data: ExportExamUserDTO[]): Blob {
