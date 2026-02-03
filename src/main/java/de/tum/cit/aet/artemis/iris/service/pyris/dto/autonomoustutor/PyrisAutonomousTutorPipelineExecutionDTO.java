@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.autonomoustutor;
+package de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor;
 
 import java.util.List;
 
