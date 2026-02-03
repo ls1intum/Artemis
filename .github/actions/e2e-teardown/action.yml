@@ -14,6 +14,15 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Clean up intermediate test result files
+      shell: bash
+      run: |
+        echo "Removing intermediate XML files to prevent double-counting..."
+        rm -f src/test/playwright/test-reports/results-parallel.xml || true
+        rm -f src/test/playwright/test-reports/results-sequential.xml || true
+        echo "Listing remaining XML files:"
+        ls -la src/test/playwright/test-reports/*.xml 2>/dev/null || echo "No XML files found"
+
     - name: Upload JUnit Test Results
       if: success() || failure()
       uses: actions/upload-artifact@v5

@@ -36,9 +36,10 @@ jobs:
       relevant_count: ${{ steps.determine.outputs.RELEVANT_COUNT }}
       remaining_count: ${{ steps.determine.outputs.REMAINING_COUNT }}
     steps:
-      - name: Git Checkout
+      - name: Checkout repository for local actions
         uses: actions/checkout@v6
         with:
+          repository: ${{ github.repository }}
           ref: ${{ github.event.workflow_run.head_branch }}
           fetch-depth: 0
 
@@ -90,10 +91,12 @@ jobs:
             "${{ env.STATUSES_REQUEST_URL }}" \
             -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"Phase 1: Running relevant tests (${{ needs.determine-tests.outputs.relevant_count }} test paths)...","target_url":"${{ env.TARGET_URL }}"}'
 
-      - name: Git Checkout
+      - name: Checkout repository for local actions
         uses: actions/checkout@v6
         with:
+          repository: ${{ github.repository }}
           ref: ${{ github.event.workflow_run.head_branch }}
+          fetch-depth: 1
 
       - name: E2E Setup
         uses: ./.github/actions/e2e-setup
@@ -138,6 +141,49 @@ jobs:
           include_time_in_summary: true
           report_paths: 'phase1-test-results/results.xml'
 
+      - name: Find PR number
+        if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
+        id: find-pr-phase1
+        continue-on-error: true
+        run: |
+          BRANCH_NAME=${{ github.event.workflow_run.head_branch }}
+          echo "Checking if PR exists for head ref: $BRANCH_NAME."
+
+          PR_RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:$BRANCH_NAME")
+
+          PR_NUMBER=$(echo "$PR_RESPONSE" | grep -o '"number": [0-9]*,' | head -1 | sed 's/"number": //g' | sed 's/,//g' | tr -d ' \t\n\r')
+
+          if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
+            echo "Found PR: $PR_NUMBER from branch: $BRANCH_NAME."
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          else
+            echo "No PR found from branch: $BRANCH_NAME."
+          fi
+
+      - name: Post Phase 1 results comment
+        if: (success() || failure()) && steps.find-pr-phase1.outputs.pr_number != ''
+        uses: actions/github-script@v8
+        continue-on-error: true
+        with:
+          script: |
+            const prNumber = ${{ steps.find-pr-phase1.outputs.pr_number }};
+            const relevantTests = `${{ needs.determine-tests.outputs.relevant_tests }}`;
+            const jobStatus = '${{ job.status }}';
+
+            let statusEmoji = jobStatus === 'success' ? '✅' : '❌';
+            let statusText = jobStatus === 'success' ? 'passed' : 'failed';
+
+            const body = `### Phase 1: Relevant E2E Tests ${statusEmoji}\n\n**Status:** Phase 1 ${statusText}\n\n**Tests Run:** ${relevantTests}\n\n**Details:** Check the [Phase 1 Test Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for detailed results.\n\n---\n*This is an automated comment for Phase 1 of the two-phase E2E test execution.*`;
+
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: body
+            });
+
   # Phase 2: Run remaining tests only if Phase 1 succeeds
   run-e2e-remaining:
     name: "Phase 2: Remaining E2E Tests"
@@ -169,10 +215,12 @@ jobs:
             "${{ env.STATUSES_REQUEST_URL }}" \
             -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"Phase 2: Running remaining tests (${{ needs.determine-tests.outputs.remaining_count }} test paths)...","target_url":"${{ env.TARGET_URL }}"}'
 
-      - name: Git Checkout
+      - name: Checkout repository for local actions
         uses: actions/checkout@v6
         with:
+          repository: ${{ github.repository }}
           ref: ${{ github.event.workflow_run.head_branch }}
+          fetch-depth: 1
 
       - name: E2E Setup
         uses: ./.github/actions/e2e-setup
@@ -217,6 +265,49 @@ jobs:
           include_time_in_summary: true
           report_paths: 'phase2-test-results/results.xml'
 
+      - name: Find PR number
+        if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
+        id: find-pr-phase2
+        continue-on-error: true
+        run: |
+          BRANCH_NAME=${{ github.event.workflow_run.head_branch }}
+          echo "Checking if PR exists for head ref: $BRANCH_NAME."
+
+          PR_RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:$BRANCH_NAME")
+
+          PR_NUMBER=$(echo "$PR_RESPONSE" | grep -o '"number": [0-9]*,' | head -1 | sed 's/"number": //g' | sed 's/,//g' | tr -d ' \t\n\r')
+
+          if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
+            echo "Found PR: $PR_NUMBER from branch: $BRANCH_NAME."
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          else
+            echo "No PR found from branch: $BRANCH_NAME."
+          fi
+
+      - name: Post Phase 2 results comment
+        if: (success() || failure()) && steps.find-pr-phase2.outputs.pr_number != ''
+        uses: actions/github-script@v8
+        continue-on-error: true
+        with:
+          script: |
+            const prNumber = ${{ steps.find-pr-phase2.outputs.pr_number }};
+            const remainingTests = `${{ needs.determine-tests.outputs.remaining_tests }}`;
+            const jobStatus = '${{ job.status }}';
+
+            let statusEmoji = jobStatus === 'success' ? '✅' : '❌';
+            let statusText = jobStatus === 'success' ? 'passed' : 'failed';
+
+            const body = `### Phase 2: Remaining E2E Tests ${statusEmoji}\n\n**Status:** Phase 2 ${statusText}\n\n**Tests Run:** ${remainingTests}\n\n**Details:** Check the [Phase 2 Test Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for detailed results.\n\n---\n*This is an automated comment for Phase 2 of the two-phase E2E test execution.*`;
+
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: body
+            });
+
   # Run all tests for PR when run_all_tests is triggered, or when no specific tests detected
   run-e2e-all-pr:
     name: Run All E2E Tests (PR)
@@ -246,10 +337,12 @@ jobs:
             "${{ env.STATUSES_REQUEST_URL }}" \
             -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"E2E tests are running (all tests - infrastructure changes detected)...","target_url":"${{ env.TARGET_URL }}"}'
 
-      - name: Git Checkout
+      - name: Checkout repository for local actions
         uses: actions/checkout@v6
         with:
+          repository: ${{ github.repository }}
           ref: ${{ github.event.workflow_run.head_branch }}
+          fetch-depth: 1
 
       - name: E2E Setup
         uses: ./.github/actions/e2e-setup
@@ -317,10 +410,12 @@ jobs:
             "${{ env.STATUSES_REQUEST_URL }}" \
             -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"E2E tests are running (all tests - multi-node)...","target_url":"${{ env.TARGET_URL }}"}'
 
-      - name: Git Checkout
+      - name: Checkout repository for local actions
         uses: actions/checkout@v6
         with:
+          repository: ${{ github.repository }}
           ref: ${{ github.event.workflow_run.head_branch }}
+          fetch-depth: 1
 
       - name: E2E Setup
         uses: ./.github/actions/e2e-setup
