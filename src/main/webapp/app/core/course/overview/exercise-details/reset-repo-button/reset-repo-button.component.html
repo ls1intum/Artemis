@@ -9,7 +9,7 @@
             [buttonIcon]="faBackward"
             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
             [buttonLabel]="'artemisApp.exerciseActions.resetRepository.label' | artemisTranslate"
-            [buttonLoading]="!!exercise().loading"
+            [buttonLoading]="isLoading()"
             [smallButton]="smallButtons()"
             [hideLabelMobile]="false"
             [ngbPopover]="popContent"

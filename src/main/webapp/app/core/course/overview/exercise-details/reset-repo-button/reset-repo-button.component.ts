@@ -41,10 +41,12 @@ export class ResetRepoButtonComponent {
     private readonly _gradedParticipation = signal<StudentParticipation | undefined>(undefined);
     private readonly _practiceParticipation = signal<StudentParticipation | undefined>(undefined);
     private readonly _beforeIndividualDueDate = signal(true);
+    private readonly _isLoading = signal(false);
 
     readonly gradedParticipation = computed(() => this._gradedParticipation());
     readonly practiceParticipation = computed(() => this._practiceParticipation());
     readonly beforeIndividualDueDate = computed(() => this._beforeIndividualDueDate());
+    readonly isLoading = computed(() => this._isLoading());
 
     readonly faBackward = faBackward;
 
@@ -63,14 +65,14 @@ export class ResetRepoButtonComponent {
     }
 
     resetRepository(gradedParticipationId?: number) {
-        this.exercise().loading = true;
+        this._isLoading.set(true);
         // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         const participationId = this._practiceParticipation()?.id ?? this._gradedParticipation()?.id!;
         this.programmingExerciseParticipationService
             .resetRepository(participationId, gradedParticipationId)
             .pipe(
                 finalize(() => {
-                    this.exercise().loading = false;
+                    this._isLoading.set(false);
                     this.popover().close();
                 }),
             )

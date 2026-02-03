@@ -4,11 +4,9 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { AccountService } from 'app/core/auth/account.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { Exercise, ExerciseType, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { Exercise, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { RouterLink } from '@angular/router';
@@ -42,9 +40,7 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
     ],
 })
 export class CourseExerciseRowComponent implements OnInit {
-    private accountService = inject(AccountService);
     private participationService = inject(ParticipationService);
-    private exerciseService = inject(ExerciseService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private destroyRef = inject(DestroyRef);
 
@@ -66,12 +62,14 @@ export class CourseExerciseRowComponent implements OnInit {
     private readonly _isAfterAssessmentDueDate = signal(false);
     private readonly _dueDate = signal<dayjs.Dayjs | undefined>(undefined);
     private readonly _gradedStudentParticipation = signal<StudentParticipation | undefined>(undefined);
+    private readonly _studentParticipations = signal<StudentParticipation[]>([]);
 
     // Public computed accessors
     readonly exerciseCategories = computed(() => this._exerciseCategories());
     readonly isAfterAssessmentDueDate = computed(() => this._isAfterAssessmentDueDate());
     readonly dueDate = computed(() => this._dueDate());
     readonly gradedStudentParticipation = computed(() => this._gradedStudentParticipation());
+    readonly studentParticipations = computed(() => this._studentParticipations());
 
     readonly routerLink = computed(() => {
         const course = this.course();
@@ -92,6 +90,7 @@ export class CourseExerciseRowComponent implements OnInit {
     ngOnInit() {
         const exercise = this.exercise();
         if (exercise?.studentParticipations?.length) {
+            this._studentParticipations.set(exercise.studentParticipations);
             this._gradedStudentParticipation.set(this.participationService.getSpecificStudentParticipation(exercise.studentParticipations, false));
         }
 
@@ -101,12 +100,12 @@ export class CourseExerciseRowComponent implements OnInit {
             .subscribe((changedParticipation: StudentParticipation) => {
                 const exerciseValue = this.exercise();
                 if (changedParticipation && exerciseValue?.id && changedParticipation.exercise?.id === exerciseValue.id) {
-                    exerciseValue.studentParticipations = exerciseValue.studentParticipations?.length
-                        ? exerciseValue.studentParticipations.map((el) => {
-                              return el.id === changedParticipation.id ? changedParticipation : el;
-                          })
+                    const currentParticipations = this._studentParticipations();
+                    const updatedParticipations = currentParticipations.length
+                        ? currentParticipations.map((el) => (el.id === changedParticipation.id ? changedParticipation : el))
                         : [changedParticipation];
-                    const participation = this.participationService.getSpecificStudentParticipation(exerciseValue.studentParticipations, false);
+                    this._studentParticipations.set(updatedParticipations);
+                    const participation = this.participationService.getSpecificStudentParticipation(updatedParticipations, false);
                     this._gradedStudentParticipation.set(participation);
                     this._dueDate.set(getExerciseDueDate(exerciseValue, participation));
                 }
@@ -119,21 +118,12 @@ export class CourseExerciseRowComponent implements OnInit {
         }
         const cachedParticipations = this.participationWebsocketService.getParticipationsForExercise(exercise.id!);
         if (cachedParticipations?.length) {
-            exercise.studentParticipations = cachedParticipations;
-            this._gradedStudentParticipation.set(this.participationService.getSpecificStudentParticipation(exercise.studentParticipations, false));
+            this._studentParticipations.set(cachedParticipations);
+            this._gradedStudentParticipation.set(this.participationService.getSpecificStudentParticipation(cachedParticipations, false));
         }
         this._dueDate.set(getExerciseDueDate(exercise, this._gradedStudentParticipation()));
-        exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course || exercise.exerciseGroup!.exam!.course);
-        exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(course || exercise.exerciseGroup!.exam!.course);
-        exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course || exercise.exerciseGroup!.exam!.course);
         this._isAfterAssessmentDueDate.set(!exercise.assessmentDueDate || dayjs().isAfter(exercise.assessmentDueDate));
-        if (exercise.type === ExerciseType.QUIZ) {
-            const quizExercise = exercise as QuizExercise;
-            quizExercise.isActiveQuiz = this.exerciseService.isActiveQuiz(quizExercise);
-            quizExercise.isPracticeModeAvailable = quizExercise.quizEnded;
-        }
         this._exerciseCategories.set(exercise.categories || []);
-        exercise.course = course;
     }
 
     getUrgentClass(date?: dayjs.Dayjs) {

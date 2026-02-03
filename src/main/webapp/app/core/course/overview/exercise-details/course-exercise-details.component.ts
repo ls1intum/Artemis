@@ -444,14 +444,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             const merged = this.participationService.mergeStudentParticipations(this.exercise.studentParticipations);
             if (merged?.length) {
                 this._studentParticipations.set(merged);
-                this.exercise.studentParticipations = merged;
                 this.sortResults();
                 // Add exercise to studentParticipation, as the result component is dependent on its existence.
                 merged.forEach((participation) => (participation.exercise = this.exercise));
             }
-        } else if (this._studentParticipations()?.length && this.exercise) {
-            // otherwise we make sure that the student participation in exercise is correct
-            this.exercise.studentParticipations = this._studentParticipations();
         }
     }
 
@@ -492,13 +488,13 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                         }
                     }
                     const currentParticipations = this._studentParticipations();
+                    let updatedParticipations: StudentParticipation[];
                     if (currentParticipations?.some((participation) => participation.id === changedParticipation.id)) {
-                        this.exercise.studentParticipations = currentParticipations.map((participation) =>
-                            participation.id === changedParticipation.id ? changedParticipation : participation,
-                        );
+                        updatedParticipations = currentParticipations.map((participation) => (participation.id === changedParticipation.id ? changedParticipation : participation));
                     } else {
-                        this.exercise.studentParticipations = [...currentParticipations, changedParticipation];
+                        updatedParticipations = [...currentParticipations, changedParticipation];
                     }
+                    this._studentParticipations.set(updatedParticipations);
                     this.mergeResultsAndSubmissionsForParticipations();
                 }
             });
@@ -514,9 +510,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe((teamAssignment) => {
-                if (this.exercise) {
-                    this.exercise.studentAssignedTeamId = teamAssignment.teamId;
-                    this.exercise.studentParticipations = teamAssignment.studentParticipations;
+                if (this.exercise && teamAssignment.studentParticipations) {
+                    this._studentParticipations.set(teamAssignment.studentParticipations);
+                    this.mergeResultsAndSubmissionsForParticipations();
                 }
             });
     }
