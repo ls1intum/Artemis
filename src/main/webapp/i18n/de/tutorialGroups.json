@@ -295,6 +295,9 @@
                         "noStudentsRegistered": "Keine Studenten konnten registriert werden. Die gegebenen logins/registration numbers konnten keinen Benutzern zugeordnet werden:",
                         "allStudentsRegistered": "Alle Studenten wurden registriert.."
                     }
+                },
+                "registerModal": {
+                    "header": "Studenten Registrieren"
                 }
             },
             "createTutorialGroup": {

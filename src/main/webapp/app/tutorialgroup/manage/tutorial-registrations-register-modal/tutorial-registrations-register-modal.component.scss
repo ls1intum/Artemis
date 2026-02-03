@@ -1,0 +1,25 @@
+.frame {
+    display: flex;
+    flex-direction: column;
+    width: 45rem;
+
+    .autocomplete-with-icon {
+        position: relative;
+        width: 100%;
+
+        p-autocomplete {
+            width: 100%;
+            display: block;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: var(--text-color-secondary);
+            z-index: 1;
+        }
+    }
+}

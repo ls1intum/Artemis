@@ -23,6 +23,7 @@
             class="p-button-primary p-button-sm"
             jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.addStudentsButtonLabel"
             data-testid="new-students-button"
+            (click)="registerModal.open()"
         ></button>
     </div>
     <table>
@@ -67,3 +68,4 @@
 </div>
 <p-confirmDialog />
 <jhi-tutorial-registrations-import-modal [courseId]="courseId()" [tutorialGroupId]="tutorialGroupId()" (onStudentsRegistered)="onStudentsRegistered.emit()" #importModal />
+<jhi-tutorial-registrations-register-modal #registerModal />

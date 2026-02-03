@@ -295,6 +295,9 @@
                         "noStudentsRegistered": "No students could be registered. The given logins/registration numbers could not be matched to existing users:",
                         "allStudentsRegistered": "All students were registered."
                     }
+                },
+                "registerModal": {
+                    "header": "Register Students"
                 }
             },
             "createTutorialGroup": {
