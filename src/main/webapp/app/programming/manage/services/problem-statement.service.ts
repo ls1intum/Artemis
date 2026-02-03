@@ -60,8 +60,9 @@ export class ProblemStatementService {
             return of({ success: false });
         }
         loadingSignal.set(true);
+        const exerciseId = exercise?.id; // undefined during creation, has value when editing
         return this.hyperionApiService
-            .generateProblemStatement(courseId, buildGenerationRequest(prompt))
+            .generateProblemStatement(courseId, buildGenerationRequest(prompt), exerciseId)
             .pipe(
                 this.handleApiResponse(
                     loadingSignal,
@@ -83,8 +84,9 @@ export class ProblemStatementService {
             return of({ success: false });
         }
         loadingSignal.set(true);
+        const exerciseId = exercise?.id; // undefined during creation, has value when editing
         return this.hyperionApiService
-            .refineProblemStatementGlobally(courseId, buildGlobalRefinementRequest(currentContent, prompt))
+            .refineProblemStatementGlobally(courseId, buildGlobalRefinementRequest(currentContent, prompt), exerciseId)
             .pipe(
                 this.handleApiResponse(
                     loadingSignal,
@@ -109,8 +111,9 @@ export class ProblemStatementService {
             return of({ success: false });
         }
         loadingSignal.set(true);
+        const exerciseId = exercise?.id; // undefined during creation, has value when editing
         return this.hyperionApiService
-            .refineProblemStatementTargeted(courseId, buildTargetedRefinementRequest(currentContent, event))
+            .refineProblemStatementTargeted(courseId, buildTargetedRefinementRequest(currentContent, event), exerciseId)
             .pipe(
                 this.handleApiResponse(
                     loadingSignal,

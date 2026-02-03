@@ -14,6 +14,8 @@ import { HttpClient,
          HttpResponse, HttpEvent, HttpContext 
         }       from '@angular/common/http';
 import { Observable }                                        from 'rxjs';
+import { OpenApiHttpParams, QueryParamStyle } from '../query.params';
+
 // @ts-ignore
 import { ConsistencyCheckResponse } from '../model/consistencyCheckResponse';
 // @ts-ignore
@@ -106,20 +108,32 @@ export class HyperionProblemStatementApiService extends BaseService {
      * @endpoint post /api/hyperion/courses/{courseId}/problem-statements/generate
      * @param courseId 
      * @param problemStatementGenerationRequest 
+     * @param exerciseId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public generateProblemStatement(courseId: number, problemStatementGenerationRequest: ProblemStatementGenerationRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProblemStatementGenerationResponse>;
-    public generateProblemStatement(courseId: number, problemStatementGenerationRequest: ProblemStatementGenerationRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProblemStatementGenerationResponse>>;
-    public generateProblemStatement(courseId: number, problemStatementGenerationRequest: ProblemStatementGenerationRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProblemStatementGenerationResponse>>;
-    public generateProblemStatement(courseId: number, problemStatementGenerationRequest: ProblemStatementGenerationRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public generateProblemStatement(courseId: number, problemStatementGenerationRequest: ProblemStatementGenerationRequest, exerciseId?: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProblemStatementGenerationResponse>;
+    public generateProblemStatement(courseId: number, problemStatementGenerationRequest: ProblemStatementGenerationRequest, exerciseId?: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProblemStatementGenerationResponse>>;
+    public generateProblemStatement(courseId: number, problemStatementGenerationRequest: ProblemStatementGenerationRequest, exerciseId?: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProblemStatementGenerationResponse>>;
+    public generateProblemStatement(courseId: number, problemStatementGenerationRequest: ProblemStatementGenerationRequest, exerciseId?: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
             throw new Error('Required parameter courseId was null or undefined when calling generateProblemStatement.');
         }
         if (problemStatementGenerationRequest === null || problemStatementGenerationRequest === undefined) {
             throw new Error('Required parameter problemStatementGenerationRequest was null or undefined when calling generateProblemStatement.');
         }
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'exerciseId',
+            <any>exerciseId,
+            QueryParamStyle.Form,
+            true,
+        );
+
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -161,6 +175,7 @@ export class HyperionProblemStatementApiService extends BaseService {
             {
                 context: localVarHttpContext,
                 body: problemStatementGenerationRequest,
+                params: localVarQueryParameters.toHttpParams(),
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -175,20 +190,32 @@ export class HyperionProblemStatementApiService extends BaseService {
      * @endpoint post /api/hyperion/courses/{courseId}/problem-statements/refine/global
      * @param courseId 
      * @param problemStatementGlobalRefinementRequest 
+     * @param exerciseId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public refineProblemStatementGlobally(courseId: number, problemStatementGlobalRefinementRequest: ProblemStatementGlobalRefinementRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProblemStatementRefinementResponse>;
-    public refineProblemStatementGlobally(courseId: number, problemStatementGlobalRefinementRequest: ProblemStatementGlobalRefinementRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProblemStatementRefinementResponse>>;
-    public refineProblemStatementGlobally(courseId: number, problemStatementGlobalRefinementRequest: ProblemStatementGlobalRefinementRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProblemStatementRefinementResponse>>;
-    public refineProblemStatementGlobally(courseId: number, problemStatementGlobalRefinementRequest: ProblemStatementGlobalRefinementRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public refineProblemStatementGlobally(courseId: number, problemStatementGlobalRefinementRequest: ProblemStatementGlobalRefinementRequest, exerciseId?: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProblemStatementRefinementResponse>;
+    public refineProblemStatementGlobally(courseId: number, problemStatementGlobalRefinementRequest: ProblemStatementGlobalRefinementRequest, exerciseId?: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProblemStatementRefinementResponse>>;
+    public refineProblemStatementGlobally(courseId: number, problemStatementGlobalRefinementRequest: ProblemStatementGlobalRefinementRequest, exerciseId?: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProblemStatementRefinementResponse>>;
+    public refineProblemStatementGlobally(courseId: number, problemStatementGlobalRefinementRequest: ProblemStatementGlobalRefinementRequest, exerciseId?: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
             throw new Error('Required parameter courseId was null or undefined when calling refineProblemStatementGlobally.');
         }
         if (problemStatementGlobalRefinementRequest === null || problemStatementGlobalRefinementRequest === undefined) {
             throw new Error('Required parameter problemStatementGlobalRefinementRequest was null or undefined when calling refineProblemStatementGlobally.');
         }
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'exerciseId',
+            <any>exerciseId,
+            QueryParamStyle.Form,
+            true,
+        );
+
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -230,6 +257,7 @@ export class HyperionProblemStatementApiService extends BaseService {
             {
                 context: localVarHttpContext,
                 body: problemStatementGlobalRefinementRequest,
+                params: localVarQueryParameters.toHttpParams(),
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
@@ -244,20 +272,32 @@ export class HyperionProblemStatementApiService extends BaseService {
      * @endpoint post /api/hyperion/courses/{courseId}/problem-statements/refine/targeted
      * @param courseId 
      * @param problemStatementTargetedRefinementRequest 
+     * @param exerciseId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public refineProblemStatementTargeted(courseId: number, problemStatementTargetedRefinementRequest: ProblemStatementTargetedRefinementRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProblemStatementRefinementResponse>;
-    public refineProblemStatementTargeted(courseId: number, problemStatementTargetedRefinementRequest: ProblemStatementTargetedRefinementRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProblemStatementRefinementResponse>>;
-    public refineProblemStatementTargeted(courseId: number, problemStatementTargetedRefinementRequest: ProblemStatementTargetedRefinementRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProblemStatementRefinementResponse>>;
-    public refineProblemStatementTargeted(courseId: number, problemStatementTargetedRefinementRequest: ProblemStatementTargetedRefinementRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public refineProblemStatementTargeted(courseId: number, problemStatementTargetedRefinementRequest: ProblemStatementTargetedRefinementRequest, exerciseId?: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProblemStatementRefinementResponse>;
+    public refineProblemStatementTargeted(courseId: number, problemStatementTargetedRefinementRequest: ProblemStatementTargetedRefinementRequest, exerciseId?: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProblemStatementRefinementResponse>>;
+    public refineProblemStatementTargeted(courseId: number, problemStatementTargetedRefinementRequest: ProblemStatementTargetedRefinementRequest, exerciseId?: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProblemStatementRefinementResponse>>;
+    public refineProblemStatementTargeted(courseId: number, problemStatementTargetedRefinementRequest: ProblemStatementTargetedRefinementRequest, exerciseId?: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
             throw new Error('Required parameter courseId was null or undefined when calling refineProblemStatementTargeted.');
         }
         if (problemStatementTargetedRefinementRequest === null || problemStatementTargetedRefinementRequest === undefined) {
             throw new Error('Required parameter problemStatementTargetedRefinementRequest was null or undefined when calling refineProblemStatementTargeted.');
         }
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'exerciseId',
+            <any>exerciseId,
+            QueryParamStyle.Form,
+            true,
+        );
+
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -299,6 +339,7 @@ export class HyperionProblemStatementApiService extends BaseService {
             {
                 context: localVarHttpContext,
                 body: problemStatementTargetedRefinementRequest,
+                params: localVarQueryParameters.toHttpParams(),
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
