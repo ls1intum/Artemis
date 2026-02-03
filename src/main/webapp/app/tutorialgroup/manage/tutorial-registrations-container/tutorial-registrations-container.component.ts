@@ -5,12 +5,12 @@ import { ActivatedRoute } from '@angular/router';
 import { DeregisterStudentEvent, TutorialRegistrationsComponent } from 'app/tutorialgroup/manage/tutorial-registrations/tutorial-registrations.component';
 import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
+import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
 
 @Component({
     selector: 'jhi-tutorial-registrations-container',
-    imports: [TutorialRegistrationsComponent],
+    imports: [TutorialRegistrationsComponent, LoadingIndicatorOverlayComponent],
     templateUrl: './tutorial-registrations-container.component.html',
-    styleUrl: './tutorial-registrations-container.component.scss',
 })
 export class TutorialRegistrationsContainerComponent {
     private destroyRef = inject(DestroyRef);
@@ -19,13 +19,15 @@ export class TutorialRegistrationsContainerComponent {
 
     courseId = getNumericPathVariableSignal(this.activatedRoute, 'courseId');
     tutorialGroupId = getNumericPathVariableSignal(this.activatedRoute, 'tutorialGroupId');
-    registeredStudents = signal<TutorialGroupRegisteredStudentDTO[] | undefined>(undefined);
+    isLoading = signal(false);
+    registeredStudents = signal<TutorialGroupRegisteredStudentDTO[]>([]);
 
     constructor() {
         effect(() => this.fetchRegisteredStudents());
     }
 
     deregisterStudent(event: DeregisterStudentEvent) {
+        this.isLoading.set(true);
         const courseId = event.courseId;
         const tutorialGroupId = event.tutorialGroupId;
         const studentLogin = event.studentLogin;
@@ -34,10 +36,10 @@ export class TutorialRegistrationsContainerComponent {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe(() => {
                 this.registeredStudents.update((registeredStudents) => {
-                    if (registeredStudents) {
-                        return registeredStudents.filter((student) => student.login !== studentLogin);
-                    }
+                    return registeredStudents.filter((student) => student.login !== studentLogin);
                 });
+                this.isLoading.set(false);
+                // TODO: catch errors
             });
     }
 
@@ -48,11 +50,14 @@ export class TutorialRegistrationsContainerComponent {
             return;
         }
 
+        this.isLoading.set(true);
         this.tutorialGroupsService
             .getRegisteredStudentDTOs(courseId, tutorialGroupId)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((registeredStudents) => {
                 this.registeredStudents.set(registeredStudents);
+                this.isLoading.set(false);
+                // TODO: catch errors
             });
     }
 }

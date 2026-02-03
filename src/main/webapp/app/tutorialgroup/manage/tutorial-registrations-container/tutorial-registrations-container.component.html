@@ -1,8 +1,8 @@
-<div class="frame">
+<div>
     @let courseIdToPass = courseId();
     @let tutorialGroupIdToPass = tutorialGroupId();
     @let registeredStudentsToPass = registeredStudents();
-    @if (courseIdToPass && tutorialGroupIdToPass && registeredStudentsToPass !== undefined) {
+    @if (courseIdToPass && tutorialGroupIdToPass) {
         <jhi-tutorial-registrations
             [courseId]="courseIdToPass"
             [tutorialGroupId]="tutorialGroupIdToPass"
@@ -10,7 +10,8 @@
             (onDeregisterStudent)="deregisterStudent($event)"
             (onStudentsRegistered)="fetchRegisteredStudents()"
         />
-    } @else {
-        <!-- TODO: create some error screen -->
+    }
+    @if (isLoading()) {
+        <jhi-loading-indicator-overlay />
     }
 </div>

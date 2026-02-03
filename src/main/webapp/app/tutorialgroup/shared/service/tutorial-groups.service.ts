@@ -4,6 +4,7 @@ import {
     RawTutorialGroupDetailGroupDTO,
     TutorialGroup,
     TutorialGroupDetailGroupDTO,
+    TutorialGroupRegisterStudentDTO,
     TutorialGroupRegisteredStudentDTO,
 } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Observable } from 'rxjs';
@@ -103,7 +104,7 @@ export class TutorialGroupsService {
         return this.tutorialGroupApiService.registerStudent(courseId, tutorialGroupId, login, 'response');
     }
 
-    registerMultipleStudents(courseId: number, tutorialGroupId: number, studentDtos: Student[]): Observable<HttpResponse<Array<Student>>> {
+    registerMultipleStudents(courseId: number, tutorialGroupId: number, studentDtos: Student[]): Observable<HttpResponse<Array<TutorialGroupRegisterStudentDTO>>> {
         return this.httpClient.post<Array<Student>>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/register-multiple`, studentDtos, {
             observe: 'response',
         });

@@ -16,11 +16,12 @@ import {
 } from 'app/tutorialgroup/overview/course-tutorial-group-detail/course-tutorial-group-detail.component';
 import { TutorialGroupSessionApiService } from 'app/openapi/api/tutorialGroupSessionApi.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
 
 @Component({
     selector: 'jhi-management-tutorial-group-detail-container',
     templateUrl: './management-tutorial-group-detail-container.component.html',
-    imports: [CourseTutorialGroupDetailComponent],
+    imports: [CourseTutorialGroupDetailComponent, LoadingIndicatorOverlayComponent],
 })
 export class ManagementTutorialGroupDetailContainerComponent {
     private router = inject(Router);

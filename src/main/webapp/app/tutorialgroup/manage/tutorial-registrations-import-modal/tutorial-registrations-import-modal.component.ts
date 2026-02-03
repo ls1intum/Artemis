@@ -4,16 +4,16 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { ButtonDirective } from 'primeng/button';
-import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { readStudentDTOsFromCSVFile } from 'app/shared/user-import/helpers/read-users-from-csv';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpResponse } from '@angular/common/http';
-import { Student } from 'app/openapi/model/student';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import {
     TutorialRegistrationsImportModalTableComponent,
     TutorialRegistrationsImportModalTableRow,
 } from 'app/tutorialgroup/manage/tutorial-registrations-import-modal-table/tutorial-registrations-import-modal-table.component';
+import { TutorialGroupRegisterStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
 
 export enum ImportFlowStep {
     EXPLANATION = 'EXPLANATION',
@@ -21,15 +21,14 @@ export enum ImportFlowStep {
     RESULTS = 'RESULTS',
 }
 
-interface ResultStudent {
-    login?: string;
-    registrationNumber?: string;
+interface ImportResult {
+    student: TutorialGroupRegisterStudentDTO;
     exists: boolean;
 }
 
 @Component({
     selector: 'jhi-tutorial-registrations-import-modal',
-    imports: [DialogModule, TranslateDirective, ButtonDirective, TutorialRegistrationsImportModalTableComponent],
+    imports: [DialogModule, TranslateDirective, ButtonDirective, TutorialRegistrationsImportModalTableComponent, LoadingIndicatorOverlayComponent],
     templateUrl: './tutorial-registrations-import-modal.component.html',
     styleUrl: './tutorial-registrations-import-modal.component.scss',
 })
@@ -40,23 +39,23 @@ export class TutorialRegistrationsImportModalComponent {
     private alertService = inject(AlertService);
     private tutorialGroupsService = inject(TutorialGroupsService);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
-    private parsedStudents = signal<StudentDTO[]>([]);
-    private resultStudents = signal<ResultStudent[]>([]);
+    private parsedStudents = signal<TutorialGroupRegisterStudentDTO[]>([]);
+    private importResults = signal<ImportResult[]>([]);
 
     courseId = input.required<number>();
     tutorialGroupId = input.required<number>();
-    loading = signal(false);
+    isLoading = signal(false);
     isOpen = signal(false);
     flowStep = signal<ImportFlowStep>(ImportFlowStep.EXPLANATION);
     header = computed<string>(() => this.computeHeader());
     tableRows = computed<TutorialRegistrationsImportModalTableRow[]>(() => this.computeTableRows());
-    someStudentsDoNotExist = computed<boolean>(() => this.resultStudents().some((student) => !student.exists));
-    noStudentsExist = computed<boolean>(() => this.resultStudents().every((student) => !student.exists));
+    allStudentsExist = computed<boolean>(() => this.importResults().every((student) => student.exists));
+    noStudentsExist = computed<boolean>(() => this.importResults().every((student) => !student.exists));
     onStudentsRegistered = output<void>();
 
     open() {
         this.parsedStudents.set([]);
-        this.resultStudents.set([]);
+        this.importResults.set([]);
         this.flowStep.set(ImportFlowStep.EXPLANATION);
         this.isOpen.set(true);
     }
@@ -66,7 +65,7 @@ export class TutorialRegistrationsImportModalComponent {
     }
 
     async parseStudents(event: Event) {
-        this.loading.set(true);
+        this.isLoading.set(true);
         const input = event.target as HTMLInputElement;
         const file = input.files?.[0];
 
@@ -80,25 +79,27 @@ export class TutorialRegistrationsImportModalComponent {
             return;
         }
 
-        const parsedStudents = result.students;
+        const parsedStudents: TutorialGroupRegisterStudentDTO[] = result.students.map((student) => {
+            return { login: student.login, registrationNumber: student.registrationNumber };
+        });
         if (parsedStudents.length === 0) {
             this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupRegistrations.importModal.noFileEntriesAlert');
             return;
         }
 
-        this.loading.set(false);
+        this.isLoading.set(false);
         this.parsedStudents.set(parsedStudents);
         this.flowStep.set(ImportFlowStep.CONFIRMATION);
     }
 
     importParsedStudents() {
+        this.isLoading.set(true);
         this.tutorialGroupsService.registerMultipleStudents(this.courseId(), this.tutorialGroupId(), this.parsedStudents()).subscribe({
-            next: (response: HttpResponse<Array<Student>>) => {
+            next: (response: HttpResponse<Array<TutorialGroupRegisterStudentDTO>>) => {
                 const nonExistingStudents = response.body || [];
-                const resultStudents: ResultStudent[] = this.parsedStudents().map((parsedStudent) => {
+                const studentResults: ImportResult[] = this.parsedStudents().map((parsedStudent) => {
                     return {
-                        login: parsedStudent.login,
-                        registrationNumber: parsedStudent.registrationNumber,
+                        student: parsedStudent,
                         exists: !nonExistingStudents.some((nonExistingStudent) => {
                             if (parsedStudent.login && nonExistingStudent.login) {
                                 return nonExistingStudent.login === parsedStudent.login;
@@ -110,15 +111,17 @@ export class TutorialRegistrationsImportModalComponent {
                         }),
                     };
                 });
-                this.resultStudents.set(resultStudents);
+                this.importResults.set(studentResults);
                 this.flowStep.set(ImportFlowStep.RESULTS);
-                const someStudentsRegistered = resultStudents.some((student) => student.exists);
+                const someStudentsRegistered = studentResults.some((student) => student.exists);
                 if (someStudentsRegistered) {
                     this.onStudentsRegistered.emit();
                 }
+                this.isLoading.set(false);
             },
             error: () => {
                 this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupRegistrations.importModal.importErrorAlert');
+                this.isLoading.set(false);
             },
         });
     }
@@ -153,9 +156,21 @@ export class TutorialRegistrationsImportModalComponent {
                     { login: undefined, registrationNumber: 'ge86vox', markFilledCells: false },
                 ];
             case ImportFlowStep.CONFIRMATION:
-                return this.parsedStudents().map((student) => ({ login: student.login, registrationNumber: student.registrationNumber, markFilledCells: false }));
+                return this.parsedStudents().map((student) => {
+                    return {
+                        login: student.login,
+                        registrationNumber: student.registrationNumber,
+                        markFilledCells: false,
+                    };
+                });
             case ImportFlowStep.RESULTS:
-                return this.resultStudents().map((student) => ({ login: student.login, registrationNumber: student.registrationNumber, markFilledCells: !student.exists }));
+                return this.importResults().map((result) => {
+                    return {
+                        login: result.student.login,
+                        registrationNumber: result.student.registrationNumber,
+                        markFilledCells: !result.exists,
+                    };
+                });
         }
     }
 }
