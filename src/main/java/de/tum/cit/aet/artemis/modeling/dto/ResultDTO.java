@@ -25,7 +25,7 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
         List<FeedbackDTO> feedbacks, AssessmentType assessmentType, Boolean hasComplaint, Boolean exampleResult) implements Serializable {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record FeedbackDTO(Long id, String text, String detailText, boolean hasLongFeedbackText, String reference, Double credits, Boolean positive, FeedbackType type,
+    public record FeedbackDTO(Long id, String text, String detailText, Boolean hasLongFeedbackText, String reference, Double credits, Boolean positive, FeedbackType type,
             Visibility visibility) implements Serializable {
 
         public static FeedbackDTO of(Feedback feedback) {
