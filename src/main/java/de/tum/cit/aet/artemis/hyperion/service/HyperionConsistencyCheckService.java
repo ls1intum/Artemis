@@ -17,6 +17,8 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -132,6 +134,34 @@ public class HyperionConsistencyCheckService {
         var semanticIssues = results != null ? results.getT2() : List.<ConsistencyIssue>of();
 
         List<ConsistencyIssue> combinedIssues = Stream.concat(structuralIssues.stream(), semanticIssues.stream()).toList();
+
+        List<ConsistencyIssue> finalIssues;
+
+        if (combinedIssues.isEmpty()) {
+            finalIssues = new ArrayList<>();
+        }
+        else {
+            try {
+                // Serialize raw issues to JSON for the prompt
+                // Note: You might need a simple ObjectMapper here if 'templates' service doesn't handle objects automatically in .render()
+                // Assuming HyperionPromptTemplateService can handle strings, we convert the list to a string manually or use Jackson.
+                ObjectMapper mapper = new ObjectMapper();
+                String issuesJson = mapper.writeValueAsString(combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList());
+
+                var verificationInput = new java.util.HashMap<>(input);
+                verificationInput.put("detected_issues_json", issuesJson);
+
+                // Run the 3rd check
+                finalIssues = runVerificationCheck(verificationInput, parentObs, usageCollector);
+
+                log.info("Verification reduced issues from {} to {}", combinedIssues.size(), finalIssues.size());
+            }
+            catch (Exception e) {
+                log.error("Error during verification step", e);
+                finalIssues = combinedIssues;
+            }
+        }
+
         List<LLMRequest> validRequests = usageCollector.stream().filter(Objects::nonNull).toList();
         if (!validRequests.isEmpty()) {
             Long courseId = exerciseWithParticipations.getCourseViaExerciseGroupOrCourseMember() != null
@@ -142,7 +172,7 @@ public class HyperionConsistencyCheckService {
                     builder -> builder.withCourse(courseId).withExercise(exerciseWithParticipations.getId()).withUser(userId));
         }
 
-        List<ConsistencyIssueDTO> issueDTOs = combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList();
+        List<ConsistencyIssueDTO> issueDTOs = finalIssues.stream().map(this::mapConsistencyIssueToDto).toList();
 
         // Timing
         Instant endTime = Instant.now();
@@ -235,6 +265,38 @@ public class HyperionConsistencyCheckService {
         catch (RuntimeException e) {
             child.error(e);
             log.warn("Failed to obtain or parse AI response for {} - returning empty list", resourcePath, e);
+            return new ArrayList<>();
+        }
+        finally {
+            child.stop();
+        }
+    }
+
+    /**
+     * Run the verification prompt to filter false positives.
+     *
+     * @param input          prompt variables (rendered_context, detected_issues_json)
+     * @param parentObs      parent observation for tracing
+     * @param usageCollector list to collect LLM request data
+     * @return filtered list of issues
+     */
+    private List<ConsistencyIssue> runVerificationCheck(Map<String, String> input, Observation parentObs, List<LLMRequest> usageCollector) {
+        var child = Observation.createNotStarted("hyperion.consistency.verification", observationRegistry).contextualName("verification check")
+                .lowCardinalityKeyValue(io.micrometer.common.KeyValue.of(AI_SPAN_KEY, AI_SPAN_VALUE))
+                .highCardinalityKeyValue(io.micrometer.common.KeyValue.of(LF_SPAN_NAME_KEY, "verification check")).parentObservation(parentObs).start();
+
+        var resourcePath = "/prompts/hyperion/consistency_verification.st";
+        String renderedPrompt = templates.render(resourcePath, input);
+        try (Observation.Scope scope = child.openScope()) {
+            var verificationResponse = chatClient.prompt().system("You are a quality assurance verifier. Filter the provided issues and return only valid ones.")
+                    .user(renderedPrompt).call().responseEntity(StructuredOutputSchema.StructuralConsistencyIssues.class);
+
+            usageCollector.add(buildRequestFromResponse(verificationResponse.getResponse(), CONSISTENCY_PIPELINE_ID));
+            return toGenericConsistencyIssue(verificationResponse.entity());
+        }
+        catch (RuntimeException e) {
+            child.error(e);
+            log.warn("Failed to verification AI response - returning original list as fallback", e);
             return new ArrayList<>();
         }
         finally {
