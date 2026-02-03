@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, viewChild } from '@angular/core';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
@@ -27,10 +27,10 @@ export class CourseIrisComponent {
         return Number.isNaN(parsed) ? undefined : parsed;
     });
 
-    isCollapsed = signal(false);
+    isCollapsed = false;
 
     toggleSidebar(): void {
         this.courseChatbot()?.toggleChatHistory();
-        this.isCollapsed.set(!this.isCollapsed());
+        this.isCollapsed = !this.isCollapsed;
     }
 }
