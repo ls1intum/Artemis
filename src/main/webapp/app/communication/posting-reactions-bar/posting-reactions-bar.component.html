@@ -178,6 +178,9 @@
             >
                 <fa-icon [icon]="faShare" cdkOverlayOrigin />
             </button>
+        }
+        <!-- Mark as unread button -->
+        @if (canMarkAsUnread && !isEmojiCount()) {
             <button
                 class="reaction-button clickable px-2 fs-small"
                 [disabled]="isReadOnlyMode()"

@@ -115,6 +115,7 @@
                                     (mayEditOutput)="onMayEdit($event)"
                                     (mayDeleteOutput)="onMayDelete($event)"
                                     (canPinOutput)="onCanPin($event)"
+                                    (canMarkAsUnreadOutput)="onCanMarkAsUnread($event)"
                                     [originalPostDetails]="originalPostDetails"
                                     (isDeleteEvent)="onDeleteEvent(true)"
                                     (onBookmarkClicked)="toggleSavePost()"
@@ -215,10 +216,12 @@
             <fa-icon [icon]="faShare" class="item-icon" />
             <span jhiTranslate="artemisApp.metis.post.forwardMessage"></span>
         </button>
-        <button class="dropdown-item d-flex" (click)="markMessageAsUnread()">
-            <fa-icon [icon]="faCircle" class="item-icon" />
-            <span jhiTranslate="artemisApp.metis.post.markAsUnread"></span>
-        </button>
+        @if (canMarkAsUnread) {
+            <button class="dropdown-item d-flex" (click)="markMessageAsUnread()">
+                <fa-icon [icon]="faCircle" class="item-icon" />
+                <span jhiTranslate="artemisApp.metis.post.markAsUnread"></span>
+            </button>
+        }
     </div>
 }
 

@@ -108,6 +108,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     mayEdit = false;
     mayDelete = false;
     canPin = false;
+    canMarkAsUnread = false;
     originalPostDetails: Post | AnswerPost | undefined;
     readonly onNavigateToPost = output<Posting>();
 
@@ -165,6 +166,11 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     /** Updates internal flag for pin permission */
     onCanPin(value: boolean) {
         this.canPin = value;
+    }
+
+    /** Updates internal flag for mark as unread permission */
+    onCanMarkAsUnread(value: boolean) {
+        this.canMarkAsUnread = value;
     }
 
     /**

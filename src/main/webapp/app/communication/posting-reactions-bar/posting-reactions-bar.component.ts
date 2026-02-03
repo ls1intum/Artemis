@@ -114,6 +114,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     isAtLeastInstructorInCourse: boolean;
     mayEdit: boolean;
     mayDelete: boolean;
+    canMarkAsUnread: boolean;
     pinTooltip: string;
     displayPriority: DisplayPriority;
     canPin = false;
@@ -130,6 +131,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     mayDeleteOutput = output<boolean>();
     mayEditOutput = output<boolean>();
     canPinOutput = output<boolean>();
+    canMarkAsUnreadOutput = output<boolean>();
     showAnswers = input<boolean>();
     showSearchResultInAnswersHint = input<boolean>(false);
     sortedAnswerPosts = input<AnswerPost[]>();
@@ -173,6 +175,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
         }
         this.setMayDelete();
         this.setMayEdit();
+        this.setCanMarkAsUnread();
     }
 
     /**
@@ -467,6 +470,11 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     setMayEdit(): void {
         this.mayEdit = this.isAuthorOfPosting;
         this.mayEditOutput.emit(this.mayEdit);
+    }
+
+    setCanMarkAsUnread(): void {
+        this.canMarkAsUnread = !this.isAuthorOfPosting && this.getPostingType() === 'post';
+        this.canMarkAsUnreadOutput.emit(this.canMarkAsUnread);
     }
 
     /**
