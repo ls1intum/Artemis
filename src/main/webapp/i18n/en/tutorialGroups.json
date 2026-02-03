@@ -277,7 +277,7 @@
                     "deregister": "Deregister"
                 },
                 "importModal": {
-                    "explanationText": "This dialog can be used to register existing users through a .csv file. Each entry in the file must contain a value for either login or registration number. Here an example of valid .csv file content:",
+                    "explanationText": "This dialog can be used to register existing users through a .csv file. Each entry in the file must contain a value for either login or registration number. If the file contains more then the required columns, they will be discarded automatically. Here an example for a valid .csv file:",
                     "explanationHeader": "Import Students",
                     "confirmImportHeader": "Confirm Import",
                     "importResultsHeader": "Import Results",

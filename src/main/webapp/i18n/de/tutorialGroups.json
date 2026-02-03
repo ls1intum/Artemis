@@ -277,7 +277,7 @@
                     "deregister": "Deregistrieren"
                 },
                 "importModal": {
-                    "explanationText": "Über diesen Dialog kann man existierende Nutzer über eine .csv Datei registrieren. Jeder Eintrag der Datei muss zu mindest einen Wert für 'Login' oder 'Registration Number' enthalten. Hier ein Beispiel für einen validen Dateiinhalt:",
+                    "explanationText": "Über diesen Dialog kann man existierende Nutzer über eine .csv Datei registrieren. Jeder Eintrag der Datei muss zu mindest einen Wert für 'Login' oder 'Registration Number' enthalten. Falls die Datei weitere Spalten enthält, werden diese ignoriert. Hier ein Beispiel für eine valide Datei:",
                     "explanationHeader": "Studenten Importieren",
                     "confirmImportHeader": "Importbestätigung",
                     "importResultsHeader": "Import Resultat",
