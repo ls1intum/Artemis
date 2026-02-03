@@ -182,7 +182,7 @@
                                 <!-- Split Button for Consistency Check if issues exist -->
                                 @if (consistencyIssues().length) {
                                     <div class="d-flex w-100">
-                                        <button ngbDropdownItem class="flex-grow-1" (click)="checkConsistencies(exercise)" [disabled]="isCheckingConsistency()">
+                                        <button ngbDropdownItem class="flex-grow-1" (click)="checkConsistencies(exercise); aiDropdown.close()" [disabled]="isCheckingConsistency()">
                                             <fa-icon [icon]="faCheckDouble" class="me-2" />
                                             <span jhiTranslate="artemisApp.hyperion.consistencyCheck.button"></span>
                                         </button>
@@ -193,7 +193,7 @@
                                         </button>
                                     </div>
                                 } @else {
-                                    <button ngbDropdownItem (click)="checkConsistencies(exercise)" [disabled]="isCheckingConsistency()">
+                                    <button ngbDropdownItem (click)="checkConsistencies(exercise); aiDropdown.close()" [disabled]="isCheckingConsistency()">
                                         <fa-icon [icon]="faCheckDouble" class="me-2" />
                                         <span jhiTranslate="artemisApp.hyperion.consistencyCheck.button"></span>
                                     </button>
