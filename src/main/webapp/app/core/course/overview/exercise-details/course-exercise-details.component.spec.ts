@@ -314,7 +314,7 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.courseId).toBe(1);
         expect(comp.studentParticipations?.[0].exercise?.id).toBe(exercise.id);
         expect(comp.exercise!.id).toBe(exercise.id);
-        expect(comp.exercise!.studentParticipations![0].submissions![0].results![0]).toStrictEqual(changedResult);
+        expect(comp.studentParticipations[0].submissions![0].results![0]).toStrictEqual(changedResult);
         expect(comp.plagiarismCaseInfo).toEqual(plagiarismCaseInfo);
         expect(comp.hasMoreResults).toBe(false);
         expect(comp.exerciseRatedBadge(result)).toBe('bg-info');
