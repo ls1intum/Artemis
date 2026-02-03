@@ -417,7 +417,7 @@ public class LocalCIResultProcessingService {
         }
 
         var buildConfig = exercise.getBuildConfig();
-        var containerConfig = buildConfig.getContainerConfigs().get(containerId);
+        var containerConfig = buildConfig.getContainerConfigs().values().stream().filter(c -> containerId.equals(c.getId())).findFirst().orElse(null);
 
         if (containerConfig != null && containerConfig.getName() != null) {
             return containerConfig.getName();

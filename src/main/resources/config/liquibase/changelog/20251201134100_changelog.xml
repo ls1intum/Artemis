@@ -32,7 +32,7 @@
                                  referencedTableName="programming_exercise_build_config"
                                  referencedColumnNames="id" onDelete="CASCADE"/>
 
-        <!-- TODO: Transfer old data over!!!! Does this work? -->
+        <!-- Migrate existing per-exercise build config into the first container of each exercise -->
         <sql>
             INSERT INTO docker_container_config (config_name, build_plan_configuration, build_script, docker_flags, build_config_id)
             SELECT 'Container 1', bc.build_plan_configuration, bc.build_script, bc.docker_flags, bc.id
@@ -71,14 +71,17 @@
                 <column name="docker_flags" type="longtext"/>
             </addColumn>
 
-            <!-- TODO: Incomplete -->
+            <!-- Copy back the first container's config per exercise. If multiple containers were added,
+                 only the one with the lowest id is used; the rest are lost on rollback. -->
             <sql>
-                INSERT INTO programming_exercise_build_config (id, build_plan_configuration, build_script, docker_flags)
-                SELECT dcc.build_config_id, dcc.build_plan_configuration, dcc.build_script, dcc.docker_flags
-                FROM docker_container_config dcc
+                UPDATE programming_exercise_build_config
+                SET build_plan_configuration = (SELECT dcc.build_plan_configuration FROM docker_container_config dcc WHERE dcc.build_config_id = programming_exercise_build_config.id ORDER BY dcc.id LIMIT 1),
+                    build_script = (SELECT dcc.build_script FROM docker_container_config dcc WHERE dcc.build_config_id = programming_exercise_build_config.id ORDER BY dcc.id LIMIT 1),
+                    docker_flags = (SELECT dcc.docker_flags FROM docker_container_config dcc WHERE dcc.build_config_id = programming_exercise_build_config.id ORDER BY dcc.id LIMIT 1);
             </sql>
 
-            <dropForeignKeyConstraint baseTableName="fk_docker_container_build_config_id"/>
+            <dropForeignKeyConstraint baseTableName="docker_container_config"
+                                     constraintName="fk_docker_container_build_config_id"/>
 
             <dropTable tableName="docker_container_config"/>
 
