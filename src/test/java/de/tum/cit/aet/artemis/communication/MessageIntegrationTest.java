@@ -738,7 +738,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         String conversationId = createdPost1.getConversation().getId().toString();
         String messageId = createdPost1.getId().toString();
 
-        request.patch("/api/communication/courses/" + courseId + "/conversations" + conversationId + "/messages" + messageId + "/mark-as-unread", null, HttpStatus.OK);
+        request.patch("/api/communication/courses/" + courseId + "/conversations/" + conversationId + "/messages/" + messageId + "/mark-as-unread", null, HttpStatus.OK);
 
         await().untilAsserted(() -> {
             SecurityUtils.setAuthorizationObject();
