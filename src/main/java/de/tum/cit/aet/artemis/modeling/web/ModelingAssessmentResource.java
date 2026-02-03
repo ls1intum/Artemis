@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.dto.ModelingAssessmentDTO;
+import de.tum.cit.aet.artemis.modeling.dto.ResultDTO;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
 
@@ -75,16 +76,15 @@ public class ModelingAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * Get the result of the modeling submission with the given id. See {@link AssessmentResource#getAssessmentBySubmissionId}.
+     * Get the result of the modeling submission with the given id as DTO.
      * For Athena results, a simplified authorization check is performed since Athena results don't have an assessor.
      *
      * @param submissionId the id of the submission that should be sent to the client
-     * @return the assessment of the given submission
+     * @return the assessment of the given submission as DTO
      */
-    @Override
     @GetMapping("modeling-submissions/{submissionId}/result")
     @EnforceAtLeastStudent
-    public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId) {
+    public ResponseEntity<ResultDTO> getModelingAssessmentBySubmissionId(@PathVariable Long submissionId) {
         log.debug("REST request to get modeling assessment for submission with id {}", submissionId);
         Submission submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNoteAndTeamStudents(submissionId);
         if (submission == null) {
@@ -118,7 +118,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
             result.filterSensitiveInformation();
         }
 
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(ResultDTO.of(result));
     }
 
     /**
