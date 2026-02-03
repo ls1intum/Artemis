@@ -393,8 +393,9 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
 
         // do not send the result to the client if the assessment is not finished
-        Result latestResult = modelingSubmission.getLatestResult();
-        if (latestResult != null && (latestResult.getCompletionDate() == null || latestResult.getAssessor() == null)) {
+        Result latestResult = getLatestResultByCompletionDate(modelingSubmission);
+        if (latestResult != null && latestResult.getAssessmentType() != AssessmentType.AUTOMATIC_ATHENA
+                && (latestResult.getCompletionDate() == null || latestResult.getAssessor() == null)) {
             modelingSubmission.setResults(List.of());
         }
 
@@ -405,8 +406,9 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             modelingSubmission.setResults(athenaResults);
         }
 
-        if (modelingSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-            modelingSubmission.getLatestResult().filterSensitiveInformation();
+        Result resultToFilter = getLatestResultByCompletionDate(modelingSubmission);
+        if (resultToFilter != null && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            resultToFilter.filterSensitiveInformation();
         }
 
         // make sure sensitive information are not sent to the client
@@ -467,5 +469,19 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }).toList();
 
         return ResponseEntity.ok().body(submissionsWithResults);
+    }
+
+    /**
+     * Gets the result with the latest completion date from a submission.
+     *
+     * @param submission the submission to get the latest result from
+     * @return the result with the latest completion date, or null if no results exist
+     */
+    private Result getLatestResultByCompletionDate(ModelingSubmission submission) {
+        if (submission.getResults() == null || submission.getResults().isEmpty()) {
+            return null;
+        }
+        return submission.getResults().stream().filter(result -> result != null && result.getCompletionDate() != null).max(Comparator.comparing(Result::getCompletionDate))
+                .orElse(submission.getLatestResult());
     }
 }

@@ -40,7 +40,7 @@
                     <jhi-button
                         class="submission-button"
                         id="submit-modeling-submission"
-                        [disabled]="(!isActive && !isLate) || !submission || !!result || (isLate && !!submission.submitted)"
+                        [disabled]="(!isActive && !isLate) || !submission || (!!result && !hasAthenaResultForLatestSubmission) || (isLate && !!submission.submitted)"
                         [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
                         (onClick)="submit()"
                         [isLoading]="isSaving"
@@ -87,7 +87,13 @@
                             <jhi-fullscreen>
                                 <div class="column" style="display: flex; flex-direction: column; flex-grow: 1">
                                     <div class="row" style="flex-grow: 1; display: flex">
-                                        @if (submission && (isActive || isLate) && !result && (!isLate || !submission.submitted) && !isFeedbackView) {
+                                        @if (
+                                            submission &&
+                                            (isActive || isLate) &&
+                                            (!result || hasAthenaResultForLatestSubmission) &&
+                                            (!isLate || !submission.submitted) &&
+                                            !isFeedbackView
+                                        ) {
                                             <div class="col-12 editor-large">
                                                 <jhi-modeling-editor
                                                     [readOnly]="!isOwnerOfParticipation"
@@ -112,7 +118,7 @@
                                                 }
                                             </div>
                                         }
-                                        @if (((!isActive || result) && (!isLate || submission.submitted)) || isFeedbackView) {
+                                        @if (((!isActive || (result && !hasAthenaResultForLatestSubmission)) && (!isLate || submission.submitted)) || isFeedbackView) {
                                             <div class="col-8 editor-assessment">
                                                 <jhi-modeling-assessment
                                                     [umlModel]="umlModel"
