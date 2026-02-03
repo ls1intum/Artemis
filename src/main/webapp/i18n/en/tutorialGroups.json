@@ -264,7 +264,6 @@
                 "exportButtonLabel": "Export",
                 "addStudentsButtonLabel": "Add Students",
                 "removeStudentButton": {
-                    "tooltipLabel": "Remove",
                     "confirmationDialogue": {
                         "header": "Confirm Removal",
                         "message": "Do you really want to remove this student from registrations?"
@@ -275,7 +274,7 @@
                     "login": "Login",
                     "email": "Email",
                     "registrationNumber": "Registration Number",
-                    "actions": "Actions"
+                    "deregister": "Deregister"
                 },
                 "importModal": {
                     "explanationText": "This dialog can be used to register existing users through a .csv file. Each entry in the file must contain a value for either login or registration number. Here an example of valid .csv file content:",

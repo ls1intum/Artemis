@@ -26,7 +26,7 @@
                 <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.login"></th>
                 <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.email"></th>
                 <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.registrationNumber"></th>
-                <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.actions"></th>
+                <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.deregister"></th>
             </tr>
         </thead>
         <tbody>
@@ -49,12 +49,7 @@
                     </td>
                     <td>
                         <div class="student-actions">
-                            <!-- TODO: decide whether to include pull and/or push student functionality, then implement or remove
-                            <button>
-                                <span class="pi pi-arrow-right-arrow-left" style="font-size: 1.25rem" aria-hidden="true"></span>
-                            </button>
-                            -->
-                            <button class="danger" [pTooltip]="removeButtonTooltip()" tooltipPosition="left" (click)="confirmDeregistration($event, student.login)">
+                            <button class="danger" (click)="confirmDeregistration($event, student.login)">
                                 <span class="pi pi-times" style="font-size: 1.25rem" aria-hidden="true"></span>
                             </button>
                         </div>

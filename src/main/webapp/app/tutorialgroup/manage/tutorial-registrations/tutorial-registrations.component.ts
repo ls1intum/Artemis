@@ -2,7 +2,6 @@ import { Component, computed, inject, input, output, signal } from '@angular/cor
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
-import { TooltipModule } from 'primeng/tooltip';
 import { ButtonModule } from 'primeng/button';
 import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
@@ -27,7 +26,6 @@ export interface DeregisterStudentEvent {
         IconFieldModule,
         InputIconModule,
         InputTextModule,
-        TooltipModule,
         ConfirmDialogModule,
         ButtonModule,
         ProfilePictureComponent,
@@ -51,7 +49,6 @@ export class TutorialRegistrationsComponent {
     registeredStudents = input.required<TutorialGroupRegisteredStudentDTO[]>();
     filteredRegisteredStudents = computed<TutorialGroupRegisteredStudentDTO[]>(() => this.computeFilteredRegisteredStudents());
     onDeregisterStudent = output<DeregisterStudentEvent>();
-    removeButtonTooltip = computed<string>(() => this.computeRemoveButtonTooltip());
     searchFieldPlaceholder = computed<string>(() => this.computeSearchFieldPlaceholder());
     searchString = signal('');
     onStudentsRegistered = output<void>();
@@ -77,11 +74,6 @@ export class TutorialRegistrationsComponent {
                 });
             },
         });
-    }
-
-    private computeRemoveButtonTooltip(): string {
-        this.currentLocale();
-        return this.translateService.instant('artemisApp.pages.tutorialGroupRegistrations.removeStudentButton.tooltipLabel');
     }
 
     private computeSearchFieldPlaceholder(): string {
