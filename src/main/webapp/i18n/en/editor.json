@@ -79,7 +79,7 @@
                 "deleteFile": "Delete file",
                 "compressTree": "Combine empty folders",
                 "fileBadgeTooltips": {
-                    "feedbackSuggestions": "Number of feedback suggestions in this file/folder"
+                    "feedbackSuggestions": "Number of feedback in this file/folder"
                 }
             },
             "errors": {
