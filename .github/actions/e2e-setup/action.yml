@@ -47,7 +47,7 @@ runs:
         ref: ${{ inputs.workflow-head-branch }}
 
     - name: Download Docker tag
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v6
       with:
         name: docker-tag
         github-token: ${{ inputs.github-token }}
