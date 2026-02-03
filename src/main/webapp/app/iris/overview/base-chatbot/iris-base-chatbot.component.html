@@ -22,7 +22,7 @@
                             <div class="chat-history-label">
                                 <p jhiTranslate="artemisApp.iris.chatHistory.today"></p>
                             </div>
-                            @for (session of todaySessions(); track session.id; let i = $index) {
+                            @for (session of todaySessions(); track session.id) {
                                 <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
                             }
                         }
@@ -31,7 +31,7 @@
                             <div class="chat-history-label">
                                 <p jhiTranslate="artemisApp.iris.chatHistory.yesterday"></p>
                             </div>
-                            @for (session of yesterdaySessions(); track session.id; let i = $index) {
+                            @for (session of yesterdaySessions(); track session.id) {
                                 <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
                             }
                         }
@@ -40,7 +40,7 @@
                             <div class="chat-history-label">
                                 <p jhiTranslate="artemisApp.iris.chatHistory.last7Days"></p>
                             </div>
-                            @for (session of last7DaysSessions(); track session.id; let i = $index) {
+                            @for (session of last7DaysSessions(); track session.id) {
                                 <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
                             }
                         }
@@ -49,7 +49,7 @@
                             <div class="chat-history-label">
                                 <p jhiTranslate="artemisApp.iris.chatHistory.last30Days"></p>
                             </div>
-                            @for (session of last30DaysSessions(); track session.id; let i = $index) {
+                            @for (session of last30DaysSessions(); track session.id) {
                                 <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
                             }
                         }
@@ -58,7 +58,7 @@
                             <div class="chat-history-label">
                                 <p jhiTranslate="artemisApp.iris.chatHistory.older"></p>
                             </div>
-                            @for (session of olderSessions(); track session.id; let i = $index) {
+                            @for (session of olderSessions(); track session.id) {
                                 <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
                             }
                         }

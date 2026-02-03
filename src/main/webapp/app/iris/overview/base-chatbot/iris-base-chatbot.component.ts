@@ -1,8 +1,6 @@
 import {
     faArrowDown,
     faCheck,
-    faChevronRight,
-    faCircle,
     faCircleInfo,
     faCircleNotch,
     faCompress,
@@ -11,10 +9,8 @@ import {
     faLink,
     faPaperPlane,
     faPenToSquare,
-    faRedo,
     faThumbsDown,
     faThumbsUp,
-    faTrash,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -41,7 +37,6 @@ import { AsPipe } from 'app/shared/pipes/as.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
 import { NgClass } from '@angular/common';
-import { facSidebar } from 'app/shared/icons/icons';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { Clipboard } from '@angular/cdk/clipboard';
@@ -85,8 +80,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private readonly clipboard = inject(Clipboard);
 
     // Icons
-    protected readonly faTrash = faTrash;
-    protected readonly faCircle = faCircle;
     protected readonly faPaperPlane = faPaperPlane;
     protected readonly faExpand = faExpand;
     protected readonly faXmark = faXmark;
@@ -95,10 +88,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly faCompress = faCompress;
     protected readonly faThumbsUp = faThumbsUp;
     protected readonly faThumbsDown = faThumbsDown;
-    protected readonly faRedo = faRedo;
     protected readonly faPenToSquare = faPenToSquare;
-    protected readonly faChevronRight = faChevronRight;
-    protected readonly facSidebar = facSidebar;
     protected readonly faLink = faLink;
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faCopy = faCopy;
@@ -629,15 +619,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
         return sessions.filter((session) => {
             const sessionCreationDate = new Date(session.creationDate);
-
             const isAfterOrOnStartDate = ignoreOlderBoundary || (rangeStartDate && sessionCreationDate.getTime() >= rangeStartDate.getTime());
             const isBeforeOrOnEndDate = sessionCreationDate.getTime() <= rangeEndDate.getTime();
-
-            if (ignoreOlderBoundary) {
-                return isBeforeOrOnEndDate;
-            } else {
-                return isAfterOrOnStartDate && isBeforeOrOnEndDate;
-            }
+            return isBeforeOrOnEndDate && (ignoreOlderBoundary || isAfterOrOnStartDate);
         });
     }
 
