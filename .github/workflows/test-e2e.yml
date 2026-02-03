@@ -316,10 +316,12 @@ jobs:
       - name: Merge test results
         run: |
           mkdir -p merged-results
-          cp test-results-phase1/*.xml merged-results/ 2>/dev/null || true
-          cp test-results-phase2/*.xml merged-results/ 2>/dev/null || true
-          cp test-results-all/*.xml merged-results/ 2>/dev/null || true
-          
+          # Copy only the unified results.xml files to avoid double-counting
+          # (results-parallel.xml and results-sequential.xml contain overlapping data)
+          cp test-results-phase1/results.xml merged-results/results-phase1.xml 2>/dev/null || true
+          cp test-results-phase2/results.xml merged-results/results-phase2.xml 2>/dev/null || true
+          cp test-results-all/results.xml merged-results/results-all.xml 2>/dev/null || true
+
           # List what we have
           echo "Merged results directory contents:"
           ls -la merged-results/ || echo "No files found"
