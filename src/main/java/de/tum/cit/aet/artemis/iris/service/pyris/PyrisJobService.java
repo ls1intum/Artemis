@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
@@ -125,6 +126,21 @@ public class PyrisJobService {
     public String addTutorSuggestionJob(Long postId, Long courseId, Long sessionId) {
         var token = generateJobIdToken();
         var job = new TutorSuggestionJob(token, postId, courseId, sessionId, null, null, null);
+        getPyrisJobMap().put(token, job);
+        return token;
+    }
+
+    /**
+     * Adds an autonomous tutor job to the job map.
+     * This job is used for the autonomous tutor pipeline that responds to student posts.
+     *
+     * @param postId   Id of the post being responded to
+     * @param courseId Id of the course the post belongs to
+     * @return the token of the job
+     */
+    public String addAutonomousTutorJob(Long postId, Long courseId) {
+        var token = generateJobIdToken();
+        var job = new AutonomousTutorJob(token, postId, courseId);
         getPyrisJobMap().put(token, job);
         return token;
     }

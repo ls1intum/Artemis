@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisEventDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.course.PyrisCourseChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.exercise.PyrisExerciseChatPipelineExecutionDTO;
@@ -359,6 +360,43 @@ public class PyrisPipelineService {
                 );
             },
             stages -> irisChatWebsocketService.sendStatusUpdate(session, stages)
+        );
+        // @formatter:on
+    }
+
+    /**
+     * Execute the autonomous tutor pipeline to respond to a student's post.
+     * Unlike session-based pipelines, this is a one-shot operation that generates a response
+     * and either posts it directly or discards it based on confidence.
+     *
+     * @param variant                the variant of the pipeline
+     * @param post                   the student's post to respond to
+     * @param course                 the course the post belongs to
+     * @param student                the student who created the post
+     * @param programmingExerciseDTO optional programming exercise if the channel is linked to one
+     * @param textExerciseDTO        optional text exercise if the channel is linked to one
+     * @param lectureDTO             optional lecture if the channel is linked to one
+     * @param statusUpdateConsumer   consumer to handle status updates (e.g., for logging or future websocket support)
+     */
+    public void executeAutonomousTutorPipeline(String variant, PyrisPostDTO post, Course course, PyrisUserDTO student, PyrisProgrammingExerciseDTO programmingExerciseDTO,
+            PyrisTextExerciseDTO textExerciseDTO, PyrisLectureDTO lectureDTO, Consumer<List<PyrisStageDTO>> statusUpdateConsumer) {
+        // @formatter:off
+        executePipeline(
+            "autonomous-tutor",
+            variant,
+            Optional.empty(),
+            pyrisJobService.addAutonomousTutorJob(post.id(), course.getId()),
+            executionDto -> new PyrisAutonomousTutorPipelineExecutionDTO(
+                new PyrisCourseDTO(course),
+                post,
+                student,
+                executionDto.settings(),
+                executionDto.initialStages(),
+                programmingExerciseDTO,
+                textExerciseDTO,
+                lectureDTO
+            ),
+            statusUpdateConsumer
         );
         // @formatter:on
     }
