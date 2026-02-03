@@ -728,6 +728,17 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
     }
 
+    shouldShowGenerateWithAi(): boolean {
+        return (
+            this.hyperionEnabled &&
+            !this.programmingExercise.id &&
+            !this.isImportFromExistingExercise &&
+            !this.isImportFromFile &&
+            !this.isImportFromSharing &&
+            this.programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA
+        );
+    }
+
     /**
      * Saves the programming exercise with AI preparation.
      */

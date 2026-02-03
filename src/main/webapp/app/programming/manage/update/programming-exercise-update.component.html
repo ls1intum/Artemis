@@ -70,7 +70,7 @@
                 [isImport]="isImportFromExistingExercise || isImportFromFile || isImportFromSharing"
                 [isSaving]="isSaving"
                 [isGeneratingWithAi]="isGeneratingWithAi"
-                [showGenerateWithAi]="hyperionEnabled && !programmingExercise.id && !isImportFromExistingExercise && !isImportFromFile && !isImportFromSharing"
+                [showGenerateWithAi]="shouldShowGenerateWithAi()"
                 [(notificationText)]="notificationText"
                 [isSimpleMode]="isSimpleMode()"
                 [switchEditMode]="switchEditMode"

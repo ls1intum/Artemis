@@ -398,6 +398,25 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         });
     });
 
+    describe('generate with AI visibility', () => {
+        it('should only show for java when hyperion is enabled', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.programmingLanguage = ProgrammingLanguage.JAVA;
+
+            comp.programmingExercise = entity;
+            comp.hyperionEnabled = true;
+            comp.isImportFromExistingExercise = false;
+            comp.isImportFromFile = false;
+            comp.isImportFromSharing = false;
+
+            expect(comp.shouldShowGenerateWithAi()).toBeTrue();
+
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.KOTLIN;
+
+            expect(comp.shouldShowGenerateWithAi()).toBeFalse();
+        });
+    });
+
     describe('exam mode', () => {
         const examId = 1;
         const exerciseGroupId = 1;
