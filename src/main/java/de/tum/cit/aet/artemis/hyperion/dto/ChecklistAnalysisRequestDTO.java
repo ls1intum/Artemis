@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.dto;
 
-import java.util.List;
-
 import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -9,11 +7,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 /**
  * DTO for the request to analyze the checklist.
  *
- *
- * @param problemStatement      The problem statement to analyze
- * @param existingDifficulty    The existing difficulty of the exercise
- * @param existingLearningGoals The existing learning goals of the exercise
+ * @param problemStatementMarkdown The problem statement to analyze (Markdown
+ *                                     format)
+ * @param declaredDifficulty       The declared difficulty of the exercise
+ *                                     (optional)
+ * @param language                 The programming language (optional, e.g.,
+ *                                     JAVA, PYTHON)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ChecklistAnalysisRequestDTO(@NotNull String problemStatement, String existingDifficulty, List<String> existingLearningGoals) {
+public record ChecklistAnalysisRequestDTO(@NotNull String problemStatementMarkdown, String declaredDifficulty, String language) {
 }

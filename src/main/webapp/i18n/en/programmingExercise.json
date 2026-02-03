@@ -785,14 +785,18 @@
                 "title": "Instructor Checklist",
                 "analyze": "Analyze Problem Statement",
                 "analyzing": "Analyzing...",
-                "defaultMessage": "Click \"Analyze Problem Statement\" to check for quality issues and learning goals.",
-                "learningGoals": {
-                    "title": "Inferred Learning Goals",
-                    "empty": "No learning goals inferred."
+                "defaultMessage": "Click \"Analyze Problem Statement\" to check for competencies, difficulty, and quality issues.",
+                "competencies": {
+                    "title": "Top 5 Competencies",
+                    "empty": "No competencies inferred."
+                },
+                "bloomRadar": {
+                    "title": "Bloom's Taxonomy Distribution"
                 },
                 "difficulty": {
                     "title": "Difficulty Assessment",
                     "suggested": "Suggested:",
+                    "delta": "Delta:",
                     "match": "Match:"
                 },
                 "quality": {

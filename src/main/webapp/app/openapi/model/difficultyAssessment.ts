@@ -9,9 +9,11 @@
  */
 
 
-export interface DifficultyAssessment {
+export interface DifficultyAssessment { 
     suggested?: string;
+    confidence?: number;
     reasoning?: string;
     matchesDeclared?: boolean;
+    delta?: string;
 }
 

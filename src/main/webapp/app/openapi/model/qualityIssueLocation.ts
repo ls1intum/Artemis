@@ -9,9 +9,8 @@
  */
 
 
-export interface ChecklistAnalysisRequest { 
-    problemStatementMarkdown: string;
-    declaredDifficulty?: string;
-    language?: string;
+export interface QualityIssueLocation { 
+    startLine?: number;
+    endLine?: number;
 }
 

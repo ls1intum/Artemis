@@ -8,13 +8,15 @@
  * Do not edit the class manually.
  */
 import { DifficultyAssessment } from './difficultyAssessment';
-import { LearningGoalItem } from './learningGoalItem';
-import { ConsistencyIssue } from './consistencyIssue';
+import { BloomRadar } from './bloomRadar';
+import { InferredCompetency } from './inferredCompetency';
+import { QualityIssue } from './qualityIssue';
 
 
 export interface ChecklistAnalysisResponse { 
-    inferredLearningGoals?: Array<LearningGoalItem>;
-    suggestedDifficulty?: DifficultyAssessment;
-    qualityIssues?: Array<ConsistencyIssue>;
+    inferredCompetencies?: Array<InferredCompetency>;
+    bloomRadar?: BloomRadar;
+    difficultyAssessment?: DifficultyAssessment;
+    qualityIssues?: Array<QualityIssue>;
 }
 

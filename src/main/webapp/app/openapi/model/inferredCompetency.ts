@@ -9,10 +9,16 @@
  */
 
 
-export interface LearningGoalItem { 
-    skill?: string;
+export interface InferredCompetency { 
+    knowledgeAreaShortTitle?: string;
+    competencyTitle?: string;
+    competencyVersion?: string;
+    catalogSourceId?: number;
     taxonomyLevel?: string;
     confidence?: number;
-    explanation?: string;
+    rank?: number;
+    evidence?: Array<string>;
+    whyThisMatches?: string;
+    isLikelyPrimary?: boolean;
 }
 

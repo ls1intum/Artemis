@@ -12,29 +12,102 @@
     <div class="card-body">
         @if (analysisResult(); as result) {
             <div class="analysis-results">
-                <!-- Learning Goals -->
+                <!-- Competencies Section with Radar Overview -->
                 <div class="card mb-2">
-                    <div class="card-header p-2 d-flex align-items-center cursor-pointer" (click)="sections.learningGoals = !sections.learningGoals" style="cursor: pointer">
-                        <fa-icon [icon]="sections.learningGoals ? faChevronDown : faChevronRight" class="me-2 text-muted" />
-                        <h6 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.learningGoals.title">Inferred Learning Goals</h6>
+                    <div class="card-header p-2 d-flex align-items-center" (click)="sections.competencies = !sections.competencies" style="cursor: pointer">
+                        <fa-icon [icon]="sections.competencies ? faChevronDown : faChevronRight" class="me-2 text-muted" />
+                        <h6 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.title">Top 5 Competencies</h6>
+                        @if (result.inferredCompetencies?.length) {
+                            <span class="badge bg-primary ms-2">{{ result.inferredCompetencies?.length }}</span>
+                        }
                     </div>
-                    @if (sections.learningGoals) {
-                        <div class="card-body p-0">
-                            @if (!result.inferredLearningGoals || result.inferredLearningGoals.length === 0) {
-                                <div class="p-3 text-muted" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.learningGoals.empty">No learning goals inferred.</div>
+                    @if (sections.competencies) {
+                        <div class="card-body">
+                            @if (!result.inferredCompetencies || result.inferredCompetencies.length === 0) {
+                                <div class="text-muted" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.empty">No competencies inferred.</div>
                             }
-                            @if (result.inferredLearningGoals && result.inferredLearningGoals.length > 0) {
+                            @if (result.inferredCompetencies && result.inferredCompetencies.length > 0) {
+                                <!-- Competency Radar Chart Overview -->
+                                <div class="competency-radar-chart d-flex justify-content-center mb-3" style="padding: 20px 80px">
+                                    <svg viewBox="-150 -150 300 300" width="300" height="300" style="overflow: visible">
+                                        <!-- Background grid lines -->
+                                        <g class="radar-grid">
+                                            @for (level of [0.25, 0.5, 0.75, 1.0]; track level) {
+                                                <polygon [attr.points]="getCompetencyGridPoints(level)" fill="none" stroke="#6c757d" stroke-width="1" opacity="0.4" />
+                                            }
+                                        </g>
+
+                                        <!-- Axis lines -->
+                                        <g class="radar-axes">
+                                            @for (point of competencyRadarPoints; track point.label) {
+                                                <line x1="0" y1="0" [attr.x2]="point.axisX" [attr.y2]="point.axisY" stroke="#0d6efd" stroke-width="1.5" opacity="0.7" />
+                                            }
+                                        </g>
+
+                                        <!-- Data polygon -->
+                                        <polygon [attr.points]="competencyPolygonPoints" fill="#0d6efd" fill-opacity="0.35" stroke="#0d6efd" stroke-width="2.5" />
+
+                                        <!-- Data points -->
+                                        <g class="radar-points">
+                                            @for (point of competencyRadarPoints; track point.label) {
+                                                <circle [attr.cx]="point.dataX" [attr.cy]="point.dataY" r="5" fill="#0d6efd" stroke="white" stroke-width="2" />
+                                            }
+                                        </g>
+
+                                        <!-- Labels -->
+                                        <g class="radar-labels">
+                                            @for (point of competencyRadarPoints; track point.label) {
+                                                <text
+                                                    [attr.x]="point.labelX"
+                                                    [attr.y]="point.labelY"
+                                                    [attr.text-anchor]="point.textAnchor"
+                                                    class="radar-label"
+                                                    fill="var(--bs-body-color, #212529)"
+                                                    font-size="12"
+                                                >
+                                                    <tspan font-weight="bold">{{ point.value * 100 | number: '1.0-0' }}%</tspan>
+                                                    <tspan [attr.x]="point.labelX" dy="15">{{ point.label }}</tspan>
+                                                </text>
+                                            }
+                                        </g>
+                                    </svg>
+                                </div>
+
+                                <!-- Detailed Competency List -->
                                 <ul class="list-group list-group-flush">
-                                    @for (goal of result.inferredLearningGoals; track goal) {
-                                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <strong>{{ goal.skill }}</strong>
-                                                <div class="badge bg-secondary ms-2">{{ goal.taxonomyLevel }}</div>
-                                                <p class="mb-0 text-muted small">{{ goal.explanation }}</p>
+                                    @for (comp of result.inferredCompetencies; track comp.rank) {
+                                        <li class="list-group-item competency-card">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div class="flex-grow-1">
+                                                    <div class="d-flex align-items-center mb-1">
+                                                        <span class="badge bg-secondary me-2">{{ comp.knowledgeAreaShortTitle }}</span>
+                                                        <strong>{{ comp.competencyTitle }}</strong>
+                                                        @if (comp.isLikelyPrimary) {
+                                                            <span class="badge bg-primary ms-2">Primary</span>
+                                                        }
+                                                    </div>
+                                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                                        <span class="badge bg-info">{{ comp.taxonomyLevel }}</span>
+                                                        <div class="confidence-bar" [style.width.%]="(comp.confidence || 0) * 100" [ngClass]="getConfidenceClass(comp.confidence)">
+                                                            {{ (comp.confidence || 0) * 100 | number: '1.0-0' }}%
+                                                        </div>
+                                                    </div>
+                                                    <p class="mb-0 text-muted small">{{ comp.whyThisMatches }}</p>
+                                                </div>
+                                                <button class="btn btn-sm btn-link" (click)="toggleCompetencyExpand(comp.rank || 0); $event.stopPropagation()">
+                                                    <fa-icon [icon]="isCompetencyExpanded(comp.rank || 0) ? faChevronDown : faChevronRight" />
+                                                </button>
                                             </div>
-                                            <span class="badge" [ngClass]="(goal.confidence || 0) > 0.7 ? 'bg-success' : 'bg-warning'">
-                                                {{ (goal.confidence || 0) * 100 | number: '1.0-0' }}%
-                                            </span>
+                                            @if (isCompetencyExpanded(comp.rank || 0) && comp.evidence?.length) {
+                                                <div class="evidence-section mt-2 ps-3 border-start">
+                                                    <strong class="small">Evidence:</strong>
+                                                    <ul class="small mb-0">
+                                                        @for (item of comp.evidence; track item) {
+                                                            <li>{{ item }}</li>
+                                                        }
+                                                    </ul>
+                                                </div>
+                                            }
                                         </li>
                                     }
                                 </ul>
@@ -43,74 +116,83 @@
                     }
                 </div>
 
-                <!-- Difficulty -->
+                <!-- Difficulty Section -->
                 <div class="card mb-2">
-                    <div class="card-header p-2 d-flex align-items-center cursor-pointer" (click)="sections.difficulty = !sections.difficulty" style="cursor: pointer">
+                    <div class="card-header p-2 d-flex align-items-center" (click)="sections.difficulty = !sections.difficulty" style="cursor: pointer">
                         <fa-icon [icon]="sections.difficulty ? faChevronDown : faChevronRight" class="me-2 text-muted" />
                         <h6 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.title">Difficulty Assessment</h6>
                     </div>
-                    @if (sections.difficulty && result.suggestedDifficulty) {
+                    @if (sections.difficulty && result.difficultyAssessment) {
                         <div class="card-body p-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="fw-bold me-2" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.suggested">Suggested:</span>
-                                <span
-                                    class="badge"
-                                    [ngClass]="{
-                                        'bg-success': result.suggestedDifficulty.suggested === 'EASY',
-                                        'bg-warning': result.suggestedDifficulty.suggested === 'MEDIUM',
-                                        'bg-danger': result.suggestedDifficulty.suggested === 'HARD',
-                                    }"
-                                    >{{ result.suggestedDifficulty.suggested }}</span
-                                >
-
-                                <span class="ms-3 fw-bold me-2" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.match">Match:</span>
-                                <fa-icon
-                                    [icon]="result.suggestedDifficulty.matchesDeclared ? faCheckCircle : faExclamationTriangle"
-                                    [class.text-success]="result.suggestedDifficulty.matchesDeclared"
-                                    [class.text-warning]="!result.suggestedDifficulty.matchesDeclared"
-                                />
+                            <div class="d-flex align-items-center mb-2 gap-3">
+                                <div>
+                                    <span class="fw-bold me-2" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.suggested">Suggested:</span>
+                                    <span
+                                        class="badge"
+                                        [ngClass]="{
+                                            'bg-success': result.difficultyAssessment.suggested === 'EASY',
+                                            'bg-warning': result.difficultyAssessment.suggested === 'MEDIUM',
+                                            'bg-danger': result.difficultyAssessment.suggested === 'HARD',
+                                        }"
+                                    >
+                                        {{ result.difficultyAssessment.suggested }}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span class="fw-bold me-2" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.delta">Delta:</span>
+                                    <fa-icon [icon]="getDeltaIcon(result.difficultyAssessment.delta)" [ngClass]="getDeltaClass(result.difficultyAssessment.delta)" />
+                                    <span class="ms-1" [ngClass]="getDeltaClass(result.difficultyAssessment.delta)">
+                                        {{ result.difficultyAssessment.delta }}
+                                    </span>
+                                </div>
                             </div>
-                            <p class="text-muted mb-0">{{ result.suggestedDifficulty.reasoning }}</p>
+                            <p class="text-muted mb-0">{{ result.difficultyAssessment.reasoning }}</p>
                         </div>
                     }
                 </div>
 
-                <!-- Quality Issues -->
+                <!-- Quality Issues Section -->
                 <div class="card mb-2">
-                    <div class="card-header p-2 d-flex align-items-center cursor-pointer" (click)="sections.quality = !sections.quality" style="cursor: pointer">
+                    <div class="card-header p-2 d-flex align-items-center" (click)="sections.quality = !sections.quality" style="cursor: pointer">
                         <fa-icon [icon]="sections.quality ? faChevronDown : faChevronRight" class="me-2 text-muted" />
                         <h6 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.title">Quality Issues</h6>
+                        @if (result.qualityIssues?.length) {
+                            <span class="badge bg-warning ms-2">{{ result.qualityIssues?.length }}</span>
+                        }
                     </div>
                     @if (sections.quality) {
                         <div class="card-body p-0">
                             @if (!result.qualityIssues || result.qualityIssues.length === 0) {
                                 <div class="p-3 text-success">
                                     <fa-icon [icon]="faCheckCircle" />
-                                    <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.empty">No quality issues found.</span>
+                                    <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.empty"> No quality issues found.</span>
                                 </div>
                             }
                             @if (result.qualityIssues && result.qualityIssues.length > 0) {
                                 <ul class="list-group list-group-flush">
                                     @for (issue of result.qualityIssues; track issue) {
                                         <li class="list-group-item">
-                                            <div class="d-flex w-100 justify-content-between">
-                                                <h6
-                                                    class="mb-1"
-                                                    [ngClass]="{
-                                                        'text-danger': issue.severity === 'HIGH',
-                                                        'text-warning': issue.severity === 'MEDIUM',
-                                                        'text-info': issue.severity === 'LOW',
-                                                    }"
-                                                >
-                                                    {{ issue.category }}
-                                                </h6>
-                                                <small class="text-muted">{{ issue.severity }}</small>
+                                            <div class="d-flex w-100 justify-content-between align-items-start">
+                                                <div>
+                                                    <span class="badge bg-secondary me-2">{{ issue.category }}</span>
+                                                    <span [ngClass]="getSeverityClass(issue.severity)">{{ issue.severity }}</span>
+                                                </div>
+                                                @if (issue.location?.startLine) {
+                                                    <small class="text-muted">Line {{ issue.location?.startLine }}</small>
+                                                }
                                             </div>
-                                            <p class="mb-1">{{ issue.description }}</p>
+                                            <p class="mb-1 mt-1">{{ issue.description }}</p>
                                             @if (issue.suggestedFix) {
-                                                <small class="text-muted">
-                                                    <strong jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.fix">Fix:</strong> {{ issue.suggestedFix }}
-                                                </small>
+                                                <div class="small">
+                                                    <strong jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.fix">Fix:</strong>
+                                                    {{ issue.suggestedFix }}
+                                                </div>
+                                            }
+                                            @if (issue.impactOnLearners) {
+                                                <div class="small text-muted fst-italic">
+                                                    <fa-icon [icon]="faInfoCircle" class="me-1" />
+                                                    {{ issue.impactOnLearners }}
+                                                </div>
                                             }
                                         </li>
                                     }
@@ -123,7 +205,7 @@
         }
         @if (!analysisResult()) {
             <div class="text-muted text-center p-3" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.defaultMessage">
-                Click "Analyze Problem Statement" to check for quality issues and learning goals.
+                Click "Analyze Problem Statement" to check for competencies, difficulty, and quality issues.
             </div>
         }
     </div>

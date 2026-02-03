@@ -1,16 +1,37 @@
 Analyze the following programming exercise problem statement for quality issues related to CLARITY, COHERENCE, and COMPLETENESS.
 
-Identify specific issues such as:
-- Ambiguous requirements or inputs/outputs (CLARITY).
-- Contradictory statements or terminology (COHERENCE).
-- Missing definitions, edge cases, or environment assumptions (COMPLETENESS).
+## Issue Categories
+- **CLARITY**: Ambiguous requirements, unclear inputs/outputs, vague language
+- **COHERENCE**: Contradictory statements, inconsistent terminology
+- **COMPLETENESS**: Missing definitions, undefined edge cases, missing environment assumptions
 
-For each issue:
-1. Categorize it (CLARITY, COHERENCE, COMPLETENESS).
-2. Assign severity (INFO, WARNING, ERROR).
-3. Describe the issue.
-4. Suggest a fix.
-5. Identify the location in the text (if applicable).
+## For Each Issue Provide
+1. **category**: CLARITY, COHERENCE, or COMPLETENESS
+2. **severity**: INFO (minor), WARNING (notable), or ERROR (critical)
+3. **description**: What is wrong (1-2 sentences)
+4. **location**: Line range where the issue occurs (if identifiable)
+5. **suggestedFix**: Concrete suggestion to fix the issue
+6. **impactOnLearners**: How this increases extraneous cognitive load (1 sentence)
 
-Problem Statement:
+## Guidelines
+- Be specific and actionable
+- Focus on issues that affect student understanding
+- Don't nitpick style - focus on substantive problems
+- If no issues found, return an empty array
+
+## Problem Statement
 {{problem_statement}}
+
+Return your response as a JSON array:
+```json
+[
+  {
+    "category": "CLARITY|COHERENCE|COMPLETENESS",
+    "severity": "INFO|WARNING|ERROR",
+    "description": "string",
+    "location": { "startLine": number, "endLine": number } | null,
+    "suggestedFix": "string",
+    "impactOnLearners": "string"
+  }
+]
+```

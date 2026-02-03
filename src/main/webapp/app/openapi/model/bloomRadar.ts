@@ -9,9 +9,12 @@
  */
 
 
-export interface ChecklistAnalysisRequest { 
-    problemStatementMarkdown: string;
-    declaredDifficulty?: string;
-    language?: string;
+export interface BloomRadar { 
+    REMEMBER?: number;
+    UNDERSTAND?: number;
+    APPLY?: number;
+    ANALYZE?: number;
+    EVALUATE?: number;
+    CREATE?: number;
 }
 
