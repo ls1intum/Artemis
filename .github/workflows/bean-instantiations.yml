@@ -17,7 +17,7 @@ jobs:
       MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH: 10
       MAX_DEFERRED_CHAIN_LENGTH: 16
       MIN_INSTANTIATED_BEANS: 20
-      MAX_INSTANTIATED_BEANS: 115
+      MAX_INSTANTIATED_BEANS: 108
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:
@@ -105,14 +105,13 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          PROFILES=dev,localci,aeolus,theia,localvc,artemis,scheduling,buildagent,core,ldap
+          PROFILES=dev,localci,aeolus,theia,iris,localvc,artemis,scheduling,buildagent,core,ldap
           JAR=$(ls build/libs/Artemis*.jar | head -n1)
           nohup java -jar "$JAR" \
             --spring.profiles.active="$PROFILES" \
             --artemis.lti.enabled=true \
             --artemis.user-management.passkey.enabled=true \
             --artemis.user-management.use-external=false \
-            --artemis.iris.enabled=true \
             --artemis.iris.url=http://iris.fake \
             --artemis.iris.secret-token=token \
             --spring.datasource.url="jdbc:h2:mem:mydb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE" \
