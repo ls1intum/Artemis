@@ -20,7 +20,7 @@ public record ConsistencyCheckResponseDTO(
 
         @NotNull @Schema(description = "List of consistency issues found") List<ConsistencyIssueDTO> issues,
 
-        @NotNull @Schema(description = "List of consistency issues verified") List<ConsistencyIssueDTO> issues_verified,
+        @NotNull @Schema(description = "List of consistency issues verified") List<ConsistencyIssueDTO> issuesVerified,
 
         @Schema(description = "Execution timing details") TimingDTO timing,
 
