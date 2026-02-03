@@ -62,8 +62,8 @@ describe('Exercise detail common actions Component', () => {
     });
 
     it('should be ok', () => {
-        comp.exercise = { type: ExerciseType.TEXT, id: 1 } as TextExercise;
-        comp.course = course;
+        fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT, id: 1 } as TextExercise);
+        fixture.componentRef.setInput('course', course);
         fixture.detectChanges();
         expect(comp).not.toBeNull();
     });
@@ -72,22 +72,22 @@ describe('Exercise detail common actions Component', () => {
         const textExercise: TextExercise = new TextExercise(course, undefined);
         textExercise.id = 123;
 
-        comp.exercise = textExercise;
-        comp.course = course;
+        fixture.componentRef.setInput('exercise', textExercise);
+        fixture.componentRef.setInput('course', course);
         comp.ngOnInit();
         expect(comp.baseResource).toBe('/course-management/123/text-exercises/123/');
 
         const fileUploadExercise: FileUploadExercise = new FileUploadExercise(course, undefined);
         fileUploadExercise.id = 123;
 
-        comp.exercise = fileUploadExercise;
+        fixture.componentRef.setInput('exercise', fileUploadExercise);
         comp.ngOnInit();
         expect(comp.baseResource).toBe('/course-management/123/file-upload-exercises/123/');
 
         const modelingExercise: ModelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
         modelingExercise.id = 123;
 
-        comp.exercise = modelingExercise;
+        fixture.componentRef.setInput('exercise', modelingExercise);
         comp.ngOnInit();
         expect(comp.baseResource).toBe('/course-management/123/modeling-exercises/123/');
     });
@@ -98,25 +98,83 @@ describe('Exercise detail common actions Component', () => {
         const textExercise: TextExercise = new TextExercise(course, exerciseGroup);
         textExercise.id = 4;
 
-        comp.isExamExercise = true;
-        comp.exercise = textExercise;
-        comp.course = course;
+        fixture.componentRef.setInput('isExamExercise', true);
+        fixture.componentRef.setInput('exercise', textExercise);
+        fixture.componentRef.setInput('course', course);
         comp.ngOnInit();
         expect(comp.baseResource).toBe('/course-management/123/exams/2/exercise-groups/3/text-exercises/4/');
 
         const fileUploadExercise: FileUploadExercise = new FileUploadExercise(course, exerciseGroup);
         fileUploadExercise.id = 5;
 
-        comp.exercise = fileUploadExercise;
+        fixture.componentRef.setInput('exercise', fileUploadExercise);
         comp.ngOnInit();
         expect(comp.baseResource).toBe('/course-management/123/exams/2/exercise-groups/3/file-upload-exercises/5/');
 
         const modelingExercise: ModelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, exerciseGroup);
         modelingExercise.id = 6;
 
-        comp.exercise = modelingExercise;
+        fixture.componentRef.setInput('exercise', modelingExercise);
         comp.ngOnInit();
         expect(comp.baseResource).toBe('/course-management/123/exams/2/exercise-groups/3/modeling-exercises/6/');
+    });
+
+    describe('canAccessParticipationsAndScores', () => {
+        it('should return true for course exercise when user is at least tutor', () => {
+            const textExercise: TextExercise = new TextExercise(course, undefined);
+            textExercise.id = 1;
+            textExercise.isAtLeastTutor = true;
+            textExercise.isAtLeastInstructor = false;
+
+            fixture.componentRef.setInput('exercise', textExercise);
+            fixture.componentRef.setInput('course', course);
+            fixture.componentRef.setInput('isExamExercise', false);
+
+            expect(comp.canAccessParticipationsAndScores()).toBeTrue();
+        });
+
+        it('should return false for course exercise when user is not at least tutor', () => {
+            const textExercise: TextExercise = new TextExercise(course, undefined);
+            textExercise.id = 1;
+            textExercise.isAtLeastTutor = false;
+            textExercise.isAtLeastInstructor = false;
+
+            fixture.componentRef.setInput('exercise', textExercise);
+            fixture.componentRef.setInput('course', course);
+            fixture.componentRef.setInput('isExamExercise', false);
+
+            expect(comp.canAccessParticipationsAndScores()).toBeFalse();
+        });
+
+        it('should return false for exam exercise when user is only tutor', () => {
+            const exam: Exam = { id: 2, course };
+            const exerciseGroup: ExerciseGroup = { id: 3, exam };
+            const textExercise: TextExercise = new TextExercise(course, exerciseGroup);
+            textExercise.id = 1;
+            textExercise.isAtLeastTutor = true;
+            textExercise.isAtLeastInstructor = false;
+
+            fixture.componentRef.setInput('exercise', textExercise);
+            fixture.componentRef.setInput('course', course);
+            fixture.componentRef.setInput('isExamExercise', true);
+
+            expect(comp.canAccessParticipationsAndScores()).toBeFalse();
+        });
+
+        it('should return true for exam exercise when user is at least instructor', () => {
+            const exam: Exam = { id: 2, course };
+            const exerciseGroup: ExerciseGroup = { id: 3, exam };
+            const textExercise: TextExercise = new TextExercise(course, exerciseGroup);
+            textExercise.id = 1;
+            textExercise.isAtLeastTutor = true;
+            textExercise.isAtLeastInstructor = true;
+
+            fixture.componentRef.setInput('exercise', textExercise);
+            fixture.componentRef.setInput('course', course);
+            fixture.componentRef.setInput('isExamExercise', true);
+
+            expect(comp.canAccessParticipationsAndScores()).toBeTrue();
+        });
     });
 
     it('should call event manager on delete exercises', () => {
@@ -128,17 +186,17 @@ describe('Exercise detail common actions Component', () => {
         const deleteFileUploadExerciseStub = vi.spyOn(fileUploadExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
         const deleteModelingExerciseService = vi.spyOn(modelingExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
 
-        comp.course = course;
+        fixture.componentRef.setInput('course', course);
 
-        comp.exercise = new TextExercise({ id: 123 }, undefined);
+        fixture.componentRef.setInput('exercise', new TextExercise({ id: 123 }, undefined));
         comp.deleteExercise();
         expect(deleteTextExerciseService).toHaveBeenCalledOnce();
 
-        comp.exercise = new FileUploadExercise({ id: 123 }, undefined);
+        fixture.componentRef.setInput('exercise', new FileUploadExercise({ id: 123 }, undefined));
         comp.deleteExercise();
         expect(deleteFileUploadExerciseStub).toHaveBeenCalledOnce();
 
-        comp.exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, { id: 123 }, undefined);
+        fixture.componentRef.setInput('exercise', new ModelingExercise(UMLDiagramType.ClassDiagram, { id: 123 }, undefined));
         comp.deleteExercise();
         expect(deleteModelingExerciseService).toHaveBeenCalledOnce();
     });
