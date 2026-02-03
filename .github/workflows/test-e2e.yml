@@ -118,6 +118,27 @@ jobs:
           artifact-name-suffix: Phase 1
           require-tests: warn
 
+      - name: Download Phase 1 test results
+        if: success() || failure()
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: JUnit Test Results Phase 1
+          path: phase1-test-results
+
+      - name: Phase 1 Test Report
+        uses: mikepenz/action-junit-report@v5.6.2
+        if: success() || failure()
+        with:
+          commit: ${{ github.event.workflow_run.head_sha }}
+          check_name: "Phase 1: E2E Test Report"
+          fail_on_failure: false
+          require_tests: false
+          annotate_only: false
+          detailed_summary: true
+          include_time_in_summary: true
+          report_paths: 'phase1-test-results/results.xml'
+
   # Phase 2: Run remaining tests only if Phase 1 succeeds
   run-e2e-remaining:
     name: "Phase 2: Remaining E2E Tests"
@@ -177,6 +198,27 @@ jobs:
           artifact-name-suffix: Phase 2
           require-tests: warn
 
+      - name: Download Phase 2 test results
+        if: success() || failure()
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: JUnit Test Results Phase 2
+          path: phase2-test-results
+
+      - name: Phase 2 Test Report
+        uses: mikepenz/action-junit-report@v5.6.2
+        if: success() || failure()
+        with:
+          commit: ${{ github.event.workflow_run.head_sha }}
+          check_name: "Phase 2: E2E Test Report"
+          fail_on_failure: false
+          require_tests: false
+          annotate_only: false
+          detailed_summary: true
+          include_time_in_summary: true
+          report_paths: 'phase2-test-results/results.xml'
+
   # Run all tests for PR when run_all_tests is triggered, or when no specific tests detected
   run-e2e-all-pr:
     name: Run All E2E Tests (PR)
@@ -232,6 +274,27 @@ jobs:
         with:
           require-tests: error
 
+      - name: Download all tests results
+        if: success() || failure()
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: JUnit Test Results
+          path: all-test-results
+
+      - name: All Tests Report (PR)
+        uses: mikepenz/action-junit-report@v5.6.2
+        if: success() || failure()
+        with:
+          commit: ${{ github.event.workflow_run.head_sha }}
+          check_name: "All E2E Tests Report (PR)"
+          fail_on_failure: false
+          require_tests: false
+          annotate_only: false
+          detailed_summary: true
+          include_time_in_summary: true
+          report_paths: 'all-test-results/results.xml'
+
   # Run all tests for non-PR events (push to develop, main, release branches)
   run-e2e-all-non-pr:
     name: Run All E2E Tests (Non-PR)
@@ -282,68 +345,34 @@ jobs:
         with:
           require-tests: error
 
-  # Aggregate results and report
+      - name: Download all tests results
+        if: success() || failure()
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: JUnit Test Results
+          path: all-test-results
+
+      - name: All Tests Report (Non-PR)
+        uses: mikepenz/action-junit-report@v5.6.2
+        if: success() || failure()
+        with:
+          commit: ${{ github.event.workflow_run.head_sha }}
+          check_name: "All E2E Tests Report (Multi-Node)"
+          fail_on_failure: false
+          require_tests: false
+          annotate_only: false
+          detailed_summary: true
+          include_time_in_summary: true
+          report_paths: 'all-test-results/results.xml'
+
+  # Aggregate results and report overall status
   report-results:
-    name: Report E2E Results
+    name: Report E2E Overall Status
     needs: [determine-tests, run-e2e-relevant, run-e2e-remaining, run-e2e-all-pr, run-e2e-all-non-pr]
     if: always() && github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
-      - name: Download Phase 1 test results
-        if: needs.run-e2e-relevant.result == 'success' || needs.run-e2e-relevant.result == 'failure'
-        uses: actions/download-artifact@v6
-        continue-on-error: true
-        with:
-          name: JUnit Test Results Phase 1
-          path: test-results-phase1
-
-      - name: Download Phase 2 test results
-        if: needs.run-e2e-remaining.result == 'success' || needs.run-e2e-remaining.result == 'failure'
-        uses: actions/download-artifact@v6
-        continue-on-error: true
-        with:
-          name: JUnit Test Results Phase 2
-          path: test-results-phase2
-
-      - name: Download all tests results
-        if: needs.run-e2e-all-pr.result == 'success' || needs.run-e2e-all-pr.result == 'failure' || needs.run-e2e-all-non-pr.result == 'success' || needs.run-e2e-all-non-pr.result == 'failure'
-        uses: actions/download-artifact@v6
-        continue-on-error: true
-        with:
-          name: JUnit Test Results
-          path: test-results-all
-
-      - name: Merge test results
-        run: |
-          mkdir -p merged-results
-          # Copy only the unified results.xml files to avoid double-counting
-          # (results-parallel.xml and results-sequential.xml contain overlapping data)
-          cp test-results-phase1/results.xml merged-results/results-phase1.xml 2>/dev/null || true
-          cp test-results-phase2/results.xml merged-results/results-phase2.xml 2>/dev/null || true
-          cp test-results-all/results.xml merged-results/results-all.xml 2>/dev/null || true
-
-          # List what we have
-          echo "Merged results directory contents:"
-          ls -la merged-results/ || echo "No files found"
-
-      - name: Test Report
-        uses: mikepenz/action-junit-report@v5.6.2
-        id: test-reporter
-        if: always()
-        env:
-          NODE_OPTIONS: "--max_old_space_size=4096"
-        with:
-          commit: ${{ github.event.workflow_run.head_sha }}
-          check_name: "End-to-End (E2E) Test Report"
-          fail_on_failure: true
-          require_tests: false
-          require_passed_tests: false
-          annotate_only: true
-          detailed_summary: true
-          include_time_in_summary: true
-          group_suite: true
-          updateComment: false
-          report_paths: 'merged-results/*.xml'
 
       - name: Determine overall status
         id: overall-status
@@ -398,16 +427,6 @@ jobs:
           STATUS="${{ steps.overall-status.outputs.status }}"
           DESCRIPTION="${{ steps.overall-status.outputs.description }}"
 
-          # Get test results if available
-          TOTAL="${{ steps.test-reporter.outputs.total || 0 }}"
-          PASSED="${{ steps.test-reporter.outputs.passed || 0 }}"
-          FAILED="${{ steps.test-reporter.outputs.failed || 0 }}"
-          SKIPPED="${{ steps.test-reporter.outputs.skipped || 0 }}"
-
-          if [ "$TOTAL" != "0" ]; then
-            DESCRIPTION="$DESCRIPTION: $PASSED passed, $SKIPPED skipped, $FAILED failed"
-          fi
-
           DESCRIPTION_ESCAPED=$(echo "$DESCRIPTION" | sed 's/"/\\"/g')
           JSON_PAYLOAD='{"state":"'$STATUS'","context":"${{ env.STATUS_CONTEXT }}","description":"'$DESCRIPTION_ESCAPED'","target_url":"${{ env.TARGET_URL }}"}'
           echo "JSON payload: $JSON_PAYLOAD"
@@ -446,14 +465,13 @@ jobs:
         with:
           script: |
             const prNumber = ${{ steps.find-pr.outputs.pr_number }};
-            const testSummary = `${{ steps.test-reporter.outputs.summary || 'No test summary available' }} ${{ steps.test-reporter.outputs.detailed_summary || '' }}`;
             const status = `${{ steps.overall-status.outputs.status }}`;
             const description = `${{ steps.overall-status.outputs.description }}`;
-            
+
             const runAllTests = `${{ needs.determine-tests.outputs.run_all_tests || 'unknown' }}`;
             const relevantTests = `${{ needs.determine-tests.outputs.relevant_tests || '' }}`;
             const remainingTests = `${{ needs.determine-tests.outputs.remaining_tests || '' }}`;
-            
+
             let phaseInfo = '';
             if (runAllTests === 'true') {
               phaseInfo = '**Test Strategy:** Running all tests (configuration or infrastructure changes detected)\n\n';
@@ -465,9 +483,11 @@ jobs:
               phaseInfo = '**Test Strategy:** Running all tests\n\n';
             }
 
+            const detailsNote = '**Detailed Results:** Check the individual phase reports in the [workflow run](${{ env.TARGET_URL }}) for test counts, timing, and results.\n\n';
+
             github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: prNumber,
-                body: `### End-to-End (E2E) Test Results Summary\n\n${phaseInfo}**Status:** ${description}\n\n${testSummary}`
+                body: `### End-to-End (E2E) Test Results Summary\n\n${phaseInfo}**Status:** ${description}\n\n${detailsNote}`
               });
