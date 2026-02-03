@@ -112,19 +112,19 @@ export const createBaseHandlers = (resolveExercise?: ExerciseResolver): Exercise
     return [
         baseHandler(
             'title',
-            'artemisApp.exercise.metadataSync.fields.title',
+            'artemisApp.exercise.title',
             (exercise) => exercise.title,
             (exercise, value) => (exercise.title = value as string | undefined),
         ),
         baseHandler(
             'shortName',
-            'artemisApp.exercise.metadataSync.fields.shortName',
+            'artemisApp.exercise.shortName',
             (exercise) => exercise.shortName,
             (exercise, value) => (exercise.shortName = value as string | undefined),
         ),
         {
             key: 'competencyLinks',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.competencyLinks',
+            labelKey: 'artemisApp.competency.competencies',
             getCurrentValue: (exercise) => exercise.competencyLinks,
             getBaselineValue: (exercise) => exercise.competencyLinks,
             getIncomingValue: (snapshot) => (resolveExercise ? toCompetencyLinks(resolveExercise(), snapshot.competencyLinks) : snapshot.competencyLinks),
@@ -132,139 +132,139 @@ export const createBaseHandlers = (resolveExercise?: ExerciseResolver): Exercise
         },
         baseHandler(
             'channelName',
-            'artemisApp.exercise.metadataSync.fields.channelName',
+            'artemisApp.lecture.channelName',
             (exercise) => exercise.channelName,
             (exercise, value) => (exercise.channelName = value as string | undefined),
         ),
         baseHandler(
             'maxPoints',
-            'artemisApp.exercise.metadataSync.fields.maxPoints',
+            'artemisApp.gradingSystem.maxPoints',
             (exercise) => exercise.maxPoints,
             (exercise, value) => (exercise.maxPoints = value as number | undefined),
         ),
         baseHandler(
             'bonusPoints',
-            'artemisApp.exercise.metadataSync.fields.bonusPoints',
+            'artemisApp.exercise.bonusPoints',
             (exercise) => exercise.bonusPoints,
             (exercise, value) => (exercise.bonusPoints = value as number | undefined),
         ),
         baseHandler(
             'assessmentType',
-            'artemisApp.exercise.metadataSync.fields.assessmentType',
+            'artemisApp.assessment.assessmentType',
             (exercise) => exercise.assessmentType,
             (exercise, value) => (exercise.assessmentType = value as AssessmentType | undefined),
         ),
         dateHandler(
             'releaseDate',
-            'artemisApp.exercise.metadataSync.fields.releaseDate',
+            'artemisApp.exercise.releaseDate',
             (exercise) => exercise.releaseDate,
             (exercise, value) => (exercise.releaseDate = value as dayjs.Dayjs | undefined),
         ),
         dateHandler(
             'startDate',
-            'artemisApp.exercise.metadataSync.fields.startDate',
+            'artemisApp.exercise.startDate',
             (exercise) => exercise.startDate,
             (exercise, value) => (exercise.startDate = value as dayjs.Dayjs | undefined),
         ),
         dateHandler(
             'dueDate',
-            'artemisApp.exercise.metadataSync.fields.dueDate',
+            'artemisApp.exercise.dueDate',
             (exercise) => exercise.dueDate,
             (exercise, value) => (exercise.dueDate = value as dayjs.Dayjs | undefined),
         ),
         dateHandler(
             'assessmentDueDate',
-            'artemisApp.exercise.metadataSync.fields.assessmentDueDate',
+            'artemisApp.exercise.assessmentDueDate',
             (exercise) => exercise.assessmentDueDate,
             (exercise, value) => (exercise.assessmentDueDate = value as dayjs.Dayjs | undefined),
         ),
         dateHandler(
             'exampleSolutionPublicationDate',
-            'artemisApp.exercise.metadataSync.fields.exampleSolutionPublicationDate',
+            'artemisApp.exercise.exampleSolutionPublicationDate',
             (exercise) => exercise.exampleSolutionPublicationDate,
             (exercise, value) => (exercise.exampleSolutionPublicationDate = value as dayjs.Dayjs | undefined),
         ),
         baseHandler(
             'difficulty',
-            'artemisApp.exercise.metadataSync.fields.difficulty',
+            'artemisApp.exercise.difficulty',
             (exercise) => exercise.difficulty,
             (exercise, value) => (exercise.difficulty = value as DifficultyLevel | undefined),
         ),
         baseHandler(
             'mode',
-            'artemisApp.exercise.metadataSync.fields.mode',
+            'artemisApp.exercise.mode',
             (exercise) => exercise.mode,
             (exercise, value) => (exercise.mode = value as ExerciseMode | undefined),
         ),
         baseHandler(
             'allowComplaintsForAutomaticAssessments',
-            'artemisApp.exercise.metadataSync.fields.allowComplaintsForAutomaticAssessments',
+            'artemisApp.course.complaintsEnabled.title',
             (exercise) => exercise.allowComplaintsForAutomaticAssessments,
             (exercise, value) => (exercise.allowComplaintsForAutomaticAssessments = value as boolean | undefined),
         ),
         baseHandler(
             'allowFeedbackRequests',
-            'artemisApp.exercise.metadataSync.fields.allowFeedbackRequests',
+            'artemisApp.course.requestMoreFeedbackEnabled.title',
             (exercise) => exercise.allowFeedbackRequests,
             (exercise, value) => (exercise.allowFeedbackRequests = value as boolean | undefined),
         ),
         baseHandler(
             'includedInOverallScore',
-            'artemisApp.exercise.metadataSync.fields.includedInOverallScore',
+            'artemisApp.exercise.includedInOverallScore',
             (exercise) => exercise.includedInOverallScore,
             (exercise, value) => (exercise.includedInOverallScore = value as IncludedInOverallScore | undefined),
         ),
         baseHandler(
             'problemStatement',
-            'artemisApp.exercise.metadataSync.fields.problemStatement',
+            'artemisApp.exercise.problemStatement',
             (exercise) => exercise.problemStatement,
             (exercise, value) => (exercise.problemStatement = value as string | undefined),
         ),
         baseHandler(
             'gradingInstructions',
-            'artemisApp.exercise.metadataSync.fields.gradingInstructions',
+            'artemisApp.assessmentInstructions.assessmentInstructions',
             (exercise) => exercise.gradingInstructions,
             (exercise, value) => (exercise.gradingInstructions = value as string | undefined),
         ),
         baseHandler(
             'categories',
-            'artemisApp.exercise.metadataSync.fields.categories',
+            'artemisApp.exercise.categories',
             (exercise) => exercise.categories,
             (exercise, value) => (exercise.categories = toExerciseCategories(value as string[] | undefined)),
         ),
         baseHandler(
             'teamAssignmentConfig',
-            'artemisApp.exercise.metadataSync.fields.teamAssignmentConfig',
+            'artemisApp.exercise.teamAssignmentConfig.teamSize',
             (exercise) => exercise.teamAssignmentConfig,
             (exercise, value) => (exercise.teamAssignmentConfig = toTeamAssignmentConfig(value as TeamAssignmentConfigSnapshot | undefined)),
         ),
         baseHandler(
             'presentationScoreEnabled',
-            'artemisApp.exercise.metadataSync.fields.presentationScoreEnabled',
+            'artemisApp.exercise.presentationScoreEnabled.title',
             (exercise) => exercise.presentationScoreEnabled,
             (exercise, value) => (exercise.presentationScoreEnabled = value as boolean | undefined),
         ),
         baseHandler(
             'secondCorrectionEnabled',
-            'artemisApp.exercise.metadataSync.fields.secondCorrectionEnabled',
+            'artemisApp.exam.secondCorrectionColumn',
             (exercise) => exercise.secondCorrectionEnabled,
             (exercise, value) => (exercise.secondCorrectionEnabled = (value as boolean | undefined) ?? false),
         ),
         baseHandler(
             'feedbackSuggestionModule',
-            'artemisApp.exercise.metadataSync.fields.feedbackSuggestionModule',
+            'artemisApp.exercise.feedbackSuggestionsEnabled',
             (exercise) => exercise.feedbackSuggestionModule,
             (exercise, value) => (exercise.feedbackSuggestionModule = value as string | undefined),
         ),
         baseHandler(
             'gradingCriteria',
-            'artemisApp.exercise.metadataSync.fields.gradingCriteria',
+            'artemisApp.assessmentInstructions.structuredGradingInstructions',
             (exercise) => exercise.gradingCriteria,
             (exercise, value) => (exercise.gradingCriteria = value as GradingCriterion[] | undefined),
         ),
         baseHandler(
             'plagiarismDetectionConfig',
-            'artemisApp.exercise.metadataSync.fields.plagiarismDetectionConfig',
+            'artemisApp.plagiarism.plagiarismDetection',
             (exercise) => exercise.plagiarismDetectionConfig,
             (exercise, value) => (exercise.plagiarismDetectionConfig = value as PlagiarismDetectionConfig | undefined),
         ),
@@ -278,7 +278,7 @@ const createTextHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] => {
     return [
         {
             key: 'textData.exampleSolution',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.textExampleSolution',
+            labelKey: 'artemisApp.exercise.exampleSolution',
             getCurrentValue: (exercise) => (exercise as TextExercise).exampleSolution,
             getBaselineValue: (exercise) => (exercise as TextExercise).exampleSolution,
             getIncomingValue: (snapshot) => snapshot.textData?.exampleSolution,
@@ -294,7 +294,7 @@ const createModelingHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] => {
     return [
         {
             key: 'modelingData.diagramType',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.modelingDiagramType',
+            labelKey: 'artemisApp.modelingExercise.diagramType',
             getCurrentValue: (exercise) => (exercise as ModelingExercise).diagramType,
             getBaselineValue: (exercise) => (exercise as ModelingExercise).diagramType,
             getIncomingValue: (snapshot) => snapshot.modelingData?.diagramType,
@@ -302,7 +302,7 @@ const createModelingHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] => {
         },
         {
             key: 'modelingData.exampleSolutionModel',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.modelingExampleSolutionModel',
+            labelKey: 'artemisApp.modelingExercise.exampleSolution',
             getCurrentValue: (exercise) => (exercise as ModelingExercise).exampleSolutionModel,
             getBaselineValue: (exercise) => (exercise as ModelingExercise).exampleSolutionModel,
             getIncomingValue: (snapshot) => snapshot.modelingData?.exampleSolutionModel,
@@ -310,7 +310,7 @@ const createModelingHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] => {
         },
         {
             key: 'modelingData.exampleSolutionExplanation',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.modelingExampleSolutionExplanation',
+            labelKey: 'artemisApp.modelingExercise.exampleSolutionExplanation',
             getCurrentValue: (exercise) => (exercise as ModelingExercise).exampleSolutionExplanation,
             getBaselineValue: (exercise) => (exercise as ModelingExercise).exampleSolutionExplanation,
             getIncomingValue: (snapshot) => snapshot.modelingData?.exampleSolutionExplanation,
@@ -326,7 +326,7 @@ const createFileUploadHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] =>
     return [
         {
             key: 'fileUploadData.exampleSolution',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.fileUploadExampleSolution',
+            labelKey: 'artemisApp.exercise.exampleSolution',
             getCurrentValue: (exercise) => (exercise as FileUploadExercise).exampleSolution,
             getBaselineValue: (exercise) => (exercise as FileUploadExercise).exampleSolution,
             getIncomingValue: (snapshot) => snapshot.fileUploadData?.exampleSolution,
@@ -334,7 +334,7 @@ const createFileUploadHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] =>
         },
         {
             key: 'fileUploadData.filePattern',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.fileUploadFilePattern',
+            labelKey: 'artemisApp.fileUploadExercise.filePattern',
             getCurrentValue: (exercise) => (exercise as FileUploadExercise).filePattern,
             getBaselineValue: (exercise) => (exercise as FileUploadExercise).filePattern,
             getIncomingValue: (snapshot) => snapshot.fileUploadData?.filePattern,
@@ -350,7 +350,7 @@ const createQuizHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] => {
     return [
         {
             key: 'quizData.randomizeQuestionOrder',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.quizRandomizeQuestionOrder',
+            labelKey: 'artemisApp.quizExercise.randomizeQuestionOrder',
             getCurrentValue: (exercise) => (exercise as QuizExercise).randomizeQuestionOrder,
             getBaselineValue: (exercise) => (exercise as QuizExercise).randomizeQuestionOrder,
             getIncomingValue: (snapshot) => snapshot.quizData?.randomizeQuestionOrder,
@@ -358,7 +358,7 @@ const createQuizHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] => {
         },
         {
             key: 'quizData.allowedNumberOfAttempts',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.quizAllowedNumberOfAttempts',
+            labelKey: 'artemisApp.quizExercise.allowedNumberOfAttempts',
             getCurrentValue: (exercise) => (exercise as QuizExercise).allowedNumberOfAttempts,
             getBaselineValue: (exercise) => (exercise as QuizExercise).allowedNumberOfAttempts,
             getIncomingValue: (snapshot) => snapshot.quizData?.allowedNumberOfAttempts,
@@ -366,7 +366,7 @@ const createQuizHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] => {
         },
         {
             key: 'quizData.quizMode',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.quizMode',
+            labelKey: 'artemisApp.quizExercise.quizMode.title',
             getCurrentValue: (exercise) => (exercise as QuizExercise).quizMode,
             getBaselineValue: (exercise) => (exercise as QuizExercise).quizMode,
             getIncomingValue: (snapshot) => snapshot.quizData?.quizMode,
@@ -374,7 +374,7 @@ const createQuizHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] => {
         },
         {
             key: 'quizData.duration',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.quizDuration',
+            labelKey: 'artemisApp.quizExercise.duration',
             getCurrentValue: (exercise) => (exercise as QuizExercise).duration,
             getBaselineValue: (exercise) => (exercise as QuizExercise).duration,
             getIncomingValue: (snapshot) => snapshot.quizData?.duration,
@@ -382,7 +382,7 @@ const createQuizHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] => {
         },
         {
             key: 'quizData.quizQuestions',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.quizQuestions',
+            labelKey: 'artemisApp.quizExercise.questions',
             getCurrentValue: (exercise) => (exercise as QuizExercise).quizQuestions,
             getBaselineValue: (exercise) => (exercise as QuizExercise).quizQuestions,
             getIncomingValue: (snapshot) => toQuizQuestions(snapshot.quizData?.quizQuestions),
@@ -398,7 +398,7 @@ const createProgrammingHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] =
     return [
         {
             key: 'programmingData.allowOnlineEditor',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.programmingAllowOnlineEditor',
+            labelKey: 'artemisApp.programmingExercise.allowOnlineEditor.title',
             getCurrentValue: (exercise) => (exercise as ProgrammingExercise).allowOnlineEditor,
             getBaselineValue: (exercise) => (exercise as ProgrammingExercise).allowOnlineEditor,
             getIncomingValue: (snapshot) => snapshot.programmingData?.allowOnlineEditor,
@@ -406,7 +406,7 @@ const createProgrammingHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] =
         },
         {
             key: 'programmingData.allowOfflineIde',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.programmingAllowOfflineIde',
+            labelKey: 'artemisApp.programmingExercise.allowOfflineIde.title',
             getCurrentValue: (exercise) => (exercise as ProgrammingExercise).allowOfflineIde,
             getBaselineValue: (exercise) => (exercise as ProgrammingExercise).allowOfflineIde,
             getIncomingValue: (snapshot) => snapshot.programmingData?.allowOfflineIde,
@@ -414,7 +414,7 @@ const createProgrammingHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] =
         },
         {
             key: 'programmingData.allowOnlineIde',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.programmingAllowOnlineIde',
+            labelKey: 'artemisApp.programmingExercise.allowOnlineIde.title',
             getCurrentValue: (exercise) => (exercise as ProgrammingExercise).allowOnlineIde,
             getBaselineValue: (exercise) => (exercise as ProgrammingExercise).allowOnlineIde,
             getIncomingValue: (snapshot) => snapshot.programmingData?.allowOnlineIde,
@@ -422,7 +422,7 @@ const createProgrammingHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] =
         },
         {
             key: 'programmingData.maxStaticCodeAnalysisPenalty',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.programmingMaxStaticCodeAnalysisPenalty',
+            labelKey: 'artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.title',
             getCurrentValue: (exercise) => (exercise as ProgrammingExercise).maxStaticCodeAnalysisPenalty,
             getBaselineValue: (exercise) => (exercise as ProgrammingExercise).maxStaticCodeAnalysisPenalty,
             getIncomingValue: (snapshot) => snapshot.programmingData?.maxStaticCodeAnalysisPenalty,
@@ -430,7 +430,7 @@ const createProgrammingHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] =
         },
         {
             key: 'programmingData.showTestNamesToStudents',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.programmingShowTestNamesToStudents',
+            labelKey: 'artemisApp.programmingExercise.showTestNamesToStudents',
             getCurrentValue: (exercise) => (exercise as ProgrammingExercise).showTestNamesToStudents,
             getBaselineValue: (exercise) => (exercise as ProgrammingExercise).showTestNamesToStudents,
             getIncomingValue: (snapshot) => snapshot.programmingData?.showTestNamesToStudents,
@@ -438,7 +438,7 @@ const createProgrammingHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] =
         },
         {
             key: 'programmingData.buildAndTestStudentSubmissionsAfterDueDate',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.programmingBuildAndTestAfterDueDate',
+            labelKey: 'artemisApp.programmingExercise.timeline.afterDueDate',
             getCurrentValue: (exercise) => (exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate,
             getBaselineValue: (exercise) => (exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate,
             getIncomingValue: (snapshot) => convertDateFromServer(snapshot.programmingData?.buildAndTestStudentSubmissionsAfterDueDate as any),
@@ -446,7 +446,7 @@ const createProgrammingHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] =
         },
         {
             key: 'programmingData.releaseTestsWithExampleSolution',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.programmingReleaseTestsWithExampleSolution',
+            labelKey: 'artemisApp.programmingExercise.releaseTestsWithExampleSolution',
             getCurrentValue: (exercise) => (exercise as ProgrammingExercise).releaseTestsWithExampleSolution,
             getBaselineValue: (exercise) => (exercise as ProgrammingExercise).releaseTestsWithExampleSolution,
             getIncomingValue: (snapshot) => snapshot.programmingData?.releaseTestsWithExampleSolution,
@@ -454,7 +454,7 @@ const createProgrammingHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] =
         },
         {
             key: 'programmingData.buildConfig',
-            labelKey: 'artemisApp.exercise.metadataSync.fields.programmingBuildConfig',
+            labelKey: 'artemisApp.programmingExercise.buildConfiguration',
             getCurrentValue: (exercise) => (exercise as ProgrammingExercise).buildConfig,
             getBaselineValue: (exercise) => (exercise as ProgrammingExercise).buildConfig,
             getIncomingValue: (snapshot) => toBuildConfig(snapshot.programmingData?.buildConfig),
