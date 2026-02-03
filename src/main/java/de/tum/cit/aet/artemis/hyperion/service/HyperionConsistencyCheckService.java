@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -134,32 +135,24 @@ public class HyperionConsistencyCheckService {
         var semanticIssues = results != null ? results.getT2() : List.<ConsistencyIssue>of();
 
         List<ConsistencyIssue> combinedIssues = Stream.concat(structuralIssues.stream(), semanticIssues.stream()).toList();
+        List<ConsistencyIssueDTO> issueDTOs = combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList();
 
-        List<ConsistencyIssue> finalIssues;
+        List<ConsistencyIssue> combinedIssuesVerified = new ArrayList<>(combinedIssues);
 
-        if (combinedIssues.isEmpty()) {
-            finalIssues = new ArrayList<>();
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String issuesJson = mapper.writeValueAsString(combinedIssuesVerified.stream().map(this::mapConsistencyIssueToDto).toList());
+
+            var verificationInput = new HashMap<>(input);
+            verificationInput.put("detected_issues_json", issuesJson);
+
+            combinedIssuesVerified = runVerificationCheck(verificationInput, parentObs, usageCollector);
+
+            log.info("Verification reduced issues from {} to {}", combinedIssues.size(), combinedIssuesVerified.size());
         }
-        else {
-            try {
-                // Serialize raw issues to JSON for the prompt
-                // Note: You might need a simple ObjectMapper here if 'templates' service doesn't handle objects automatically in .render()
-                // Assuming HyperionPromptTemplateService can handle strings, we convert the list to a string manually or use Jackson.
-                ObjectMapper mapper = new ObjectMapper();
-                String issuesJson = mapper.writeValueAsString(combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList());
-
-                var verificationInput = new java.util.HashMap<>(input);
-                verificationInput.put("detected_issues_json", issuesJson);
-
-                // Run the 3rd check
-                finalIssues = runVerificationCheck(verificationInput, parentObs, usageCollector);
-
-                log.info("Verification reduced issues from {} to {}", combinedIssues.size(), finalIssues.size());
-            }
-            catch (Exception e) {
-                log.error("Error during verification step", e);
-                finalIssues = combinedIssues;
-            }
+        catch (Exception e) {
+            log.error("Error during verification step", e);
+            combinedIssuesVerified = combinedIssues;
         }
 
         List<LLMRequest> validRequests = usageCollector.stream().filter(Objects::nonNull).toList();
@@ -172,7 +165,7 @@ public class HyperionConsistencyCheckService {
                     builder -> builder.withCourse(courseId).withExercise(exerciseWithParticipations.getId()).withUser(userId));
         }
 
-        List<ConsistencyIssueDTO> issueDTOs = finalIssues.stream().map(this::mapConsistencyIssueToDto).toList();
+        List<ConsistencyIssueDTO> issueVerifiedDTOs = combinedIssuesVerified.stream().map(this::mapConsistencyIssueToDto).toList();
 
         // Timing
         Instant endTime = Instant.now();
@@ -197,7 +190,7 @@ public class HyperionConsistencyCheckService {
                 log.info("Consistency issue for exercise {}: [{}] {} - Suggested fix: {}", exercise.getId(), issue.severity(), issue.description(), issue.suggestedFix());
             }
         }
-        return new ConsistencyCheckResponseDTO(startTime, issueDTOs, timingDTO, tokenDTO, costsDto);
+        return new ConsistencyCheckResponseDTO(startTime, issueDTOs, issueVerifiedDTOs, timingDTO, tokenDTO, costsDto);
     }
 
     /**
