@@ -87,6 +87,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId) {
         log.debug("REST request to get modeling assessment for submission with id {}", submissionId);
         Submission submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNoteAndTeamStudents(submissionId);
+        if (submission == null) {
+            throw new EntityNotFoundException("Submission", submissionId);
+        }
         StudentParticipation participation = (StudentParticipation) submission.getParticipation();
         Exercise exercise = participation.getExercise();
 
@@ -96,9 +99,10 @@ public class ModelingAssessmentResource extends AssessmentResource {
         }
 
         // For Athena results, allow access if user is owner of participation or at least teaching assistant
+        // while still enforcing exam/publish-window checks via isUserAllowedToGetResult
         if (result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA) {
-            if (!authCheckService.isAtLeastStudentForExercise(exercise)
-                    || (!authCheckService.isOwnerOfParticipation(participation) && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise))) {
+            if (!(authCheckService.isUserAllowedToGetResult(exercise, participation, result) && authCheckService.isAtLeastStudentForExercise(exercise)
+                    && (authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastTeachingAssistantForExercise(exercise)))) {
                 throw new AccessForbiddenException();
             }
         }
