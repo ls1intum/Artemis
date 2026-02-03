@@ -39,6 +39,7 @@ import { CourseNotificationService } from 'app/communication/course-notification
 import { CourseNotificationPresetPickerComponent } from 'app/communication/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CourseIrisComponent } from 'app/iris/overview/course-iris/course-iris.component';
+import { CourseDashboardComponent } from 'app/core/course/overview/course-dashboard/course-dashboard.component';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -90,7 +91,14 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     canUnenroll = signal<boolean>(false);
     showRefreshButton = signal<boolean>(false);
     activatedComponentReference = signal<
-        CourseExercisesComponent | CourseLecturesComponent | CourseExamsComponent | CourseTutorialGroupsComponent | CourseConversationsComponent | CourseIrisComponent | undefined
+        | CourseExercisesComponent
+        | CourseLecturesComponent
+        | CourseExamsComponent
+        | CourseTutorialGroupsComponent
+        | CourseConversationsComponent
+        | CourseIrisComponent
+        | CourseDashboardComponent
+        | undefined
     >(undefined);
 
     // Icons
@@ -269,7 +277,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             componentRef instanceof CourseTutorialGroupsComponent ||
             componentRef instanceof CourseExamsComponent ||
             componentRef instanceof CourseConversationsComponent ||
-            componentRef instanceof CourseIrisComponent
+            componentRef instanceof CourseIrisComponent ||
+            componentRef instanceof CourseDashboardComponent
         ) {
             this.activatedComponentReference.set(componentRef);
         }

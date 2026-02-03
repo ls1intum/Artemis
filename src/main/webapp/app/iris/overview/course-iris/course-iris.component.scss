@@ -1,4 +1,8 @@
+@import 'src/main/webapp/content/scss/artemis-mixins.scss';
+
 :host {
+    @include dynamic-content-height(--header-height);
+
     max-height: 100%;
     width: 100%;
     display: flex;
@@ -10,7 +14,7 @@
         border-radius: 4px;
         flex: 1;
         min-height: 0;
-        height: calc(100dvh - var(--sidebar-header-footer-combined-height) - var(--header-height));
+        height: 100%;
         display: flex;
         flex-direction: column;
         min-width: 0;

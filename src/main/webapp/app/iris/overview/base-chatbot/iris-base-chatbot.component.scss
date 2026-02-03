@@ -1,4 +1,7 @@
 :host {
+    --iris-chat-content-max-width: 800px;
+    --iris-chat-content-margin-inline: auto;
+
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -6,19 +9,10 @@
     border-radius: var(--bs-border-radius-lg);
 }
 
-// .header-start {
-//     // text-align: start;
-//     flex: 1;
-//     // font-size: 20px;
-//     display: flex;
-//     gap: 4px;
-//     min-width: 0;
-
-//     // .word-iris,
-//     // a {
-//     //     align-self: center;
-//     // }
-// }
+:host.layout-widget {
+    --iris-chat-content-max-width: 100%;
+    --iris-chat-content-margin-inline: 0;
+}
 
 .button-container {
     display: flex;
@@ -148,8 +142,6 @@
 }
 
 .toolbox {
-    // background: var(--iris-tool-background);
-    // border: 1px solid var(--border-color);
     display: flex;
     gap: 4px;
 
@@ -237,7 +229,6 @@
 .bubble-left {
     --_d: 0%;
     // border-left: var(--t) solid #0000;
-    //background-color: var(--iris-client-chat-background);
     // margin-right: var(--t);
     margin-bottom: 8px;
     place-self: center;
@@ -305,8 +296,6 @@ pre {
         justify-content: flex-end;
         font-weight: bold;
         padding: 4px;
-        width: min(800px, 100%); // keep the scrollbar full width but limit the content width
-        margin-inline: auto;
         height: 40px;
         flex: 0;
         z-index: 10;
@@ -340,8 +329,9 @@ pre {
         .chat-input,
         .client-chat-error,
         .empty-chat-message {
-            width: min(800px, 100%); // keep the scrollbar full width but limit the content width
-            margin-inline: auto;
+            width: 100%; // keep the scrollbar full width but limit the content width
+            max-width: var(--iris-chat-content-max-width);
+            margin-inline: var(--iris-chat-content-margin-inline);
         }
 
         &.empty-state {
@@ -504,39 +494,6 @@ pre {
         background-color: var(--bs-border-color);
         margin: 0.5rem 0.75rem;
     }
-
-    // .double-arrow-icon {
-    //     transition: transform 0.3s ease;
-    //     transform: rotate(180deg);
-    //     cursor: pointer;
-    // }
-
-    // .history-closed {
-    //     transform: rotate(0deg);
-    // }
-
-    // .icon-negative {
-    //     margin-right: -5px;
-    // }
-
-    // h6 {
-    //     font-size: 20px;
-    //     font-weight: bold;
-    //     padding: 1rem 0 0 1rem;
-    //     margin: 0;
-    // }
-
-    // .chat-history-close-btn {
-    //     padding: 1rem;
-    //     display: grid;
-    //     place-items: center;
-    // }
-
-    // .chat-history-open-btn {
-    //     display: grid;
-    //     place-items: center;
-    //     padding: 1rem;
-    // }
 }
 
 .chat-history.chat-history-open {
@@ -589,11 +546,10 @@ pre {
     display: flex;
     justify-content: flex-end;
     width: fit-content;
-    // padding-bottom: 1.25rem; // space for the buttons
-    // left: 20px;
-    // bottom: -0.5lh;
-    // height: 1lh;
-    // background: var(--iris-rate-background);
+    //padding-bottom: 1.25rem; // space for the buttons
+    //left: 20px;
+    //bottom: -0.5lh;
+    //height: 1lh;
 
     button.btn {
         padding: 4px 6px;
@@ -661,72 +617,3 @@ cdk-global-scrollblock {
     width: 100%;
     overflow-y: auto;
 }
-
-// .btn-sidebar-collapse {
-//     margin: 0 1rem 0 0.5rem;
-//     position: relative;
-//     overflow: hidden;
-//     display: inline-flex;
-//     align-items: center;
-//     justify-content: start;
-//     background-color: transparent;
-
-//     &:hover {
-//         color: var(--primary);
-//     }
-
-//     &:focus {
-//         border-color: transparent;
-//     }
-
-//     transition: border-color 0.2s 0.3s + 0.2s * 2 ease-in-out;
-// }
-
-// .btn-sidebar-collapse::after,
-// .btn-sidebar-collapse::before {
-//     content: '';
-//     left: 0;
-//     top: 0;
-//     width: 100%;
-//     height: 100%;
-//     z-index: -2;
-//     position: absolute;
-//     transition: background-color 0.2s ease-in-out;
-// }
-
-// .btn-sidebar-collapse::after {
-//     background-color: var(--iris-chat-header-button-background);
-// }
-
-// .btn-sidebar-collapse:hover::after {
-//     background-color: var(--sidebar-card-selected-bg);
-// }
-
-// .btn-sidebar-collapse:hover::before {
-//     background-color: var(--iris-chat-header-button-background);
-// }
-
-// .btn-sidebar-collapse:active::after {
-//     background-color: var(--iris-chat-header-button-background);
-// }
-
-// .btn-sidebar-collapse:active::before {
-//     background-color: var(--sidebar-card-selected-bg);
-// }
-
-// .btn-sidebar-collapse-chevron-start {
-//     margin-right: -0.7rem;
-// }
-
-// .btn-sidebar-collapse-chevron {
-//     transform: rotateZ(-180deg);
-//     display: inline-block;
-//     overflow: hidden;
-//     margin-left: 0.3rem;
-//     transition: transform 0.2s 0.3s ease-in-out;
-// }
-
-// .is-collapsed .btn-sidebar-collapse-chevron {
-//     transform: rotateZ(0deg);
-//     transition: transform 0.2s 0.3s ease-in-out;
-// }

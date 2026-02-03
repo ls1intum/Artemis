@@ -9,7 +9,6 @@
             <div class="bubble-text" [innerHTML]="newIrisMessage() | htmlForMarkdown"></div>
             @if (isOverflowing()) {
                 <div class="read-more">
-                    <!-- <span jhiTranslate="artemisApp.iris.chatBubble.seeFull"></span> -->
                     <fa-icon [icon]="faArrowRight" class="read-more-icon" />
                 </div>
             }

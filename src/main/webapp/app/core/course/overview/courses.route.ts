@@ -229,6 +229,7 @@ export const courseRoutes: Routes = [
                 data: {
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.dashboard',
+                    hasSidebar: true,
                 },
                 canActivate: [UserRouteAccessService, CourseOverviewGuard],
             },

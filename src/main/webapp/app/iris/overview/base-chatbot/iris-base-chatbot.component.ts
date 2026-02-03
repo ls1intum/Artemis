@@ -50,6 +50,10 @@ import { Clipboard } from '@angular/cdk/clipboard';
     selector: 'jhi-iris-base-chatbot',
     templateUrl: './iris-base-chatbot.component.html',
     styleUrls: ['./iris-base-chatbot.component.scss'],
+    host: {
+        '[class.layout-client]': "layout() === 'client'",
+        '[class.layout-widget]': "layout() === 'widget'",
+    },
     imports: [
         IrisLogoComponent,
         RouterLink,
@@ -193,6 +197,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly fullSize = input<boolean>();
     readonly showCloseButton = input<boolean>(false);
     readonly isChatGptWrapper = input<boolean>(false);
+    readonly layout = input<'client' | 'widget'>('client');
     readonly fullSizeToggle = output<void>();
     readonly closeClicked = output<void>();
 

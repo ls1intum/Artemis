@@ -29,13 +29,10 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     // User preferences (constants)
     readonly initialWidth = 450;
     readonly initialHeight = 600;
-    readonly maxWidth = 800; // max width for resizing chatbot
-    readonly maxHeight = 900;
     readonly fullWidthFactor = 0.93;
     readonly fullHeightFactor = 0.85;
     readonly fullSize = signal(false);
     public ButtonType = ButtonType;
-    private readonly resizeMax = { width: this.maxWidth, height: this.maxHeight };
 
     constructor() {
         this.router.events
@@ -90,7 +87,6 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
                     // minimum size
                     interact.modifiers.restrictSize({
                         min: { width: this.initialWidth, height: this.initialHeight },
-                        max: this.resizeMax,
                     }),
                 ],
 
@@ -130,8 +126,6 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
             return;
         }
 
-        this.updateResizeBounds(cntRect);
-
         let initX: number;
         let initY: number;
 
@@ -156,16 +150,6 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
             nE.style.width = `${this.initialWidth}px`;
             nE.style.height = `${this.initialHeight}px`;
         }
-    }
-
-    private updateResizeBounds(cntRect: DOMRect) {
-        if (this.fullSize() || this.isMobile()) {
-            this.resizeMax.width = cntRect.width;
-            this.resizeMax.height = cntRect.height;
-            return;
-        }
-        this.resizeMax.width = this.maxWidth;
-        this.resizeMax.height = this.maxHeight;
     }
 
     ngOnDestroy() {
