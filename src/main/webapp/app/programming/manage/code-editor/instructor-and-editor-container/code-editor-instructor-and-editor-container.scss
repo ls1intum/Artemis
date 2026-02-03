@@ -15,3 +15,15 @@
 .consistency-issue-item__actions {
     gap: 0.25rem;
 }
+
+.toolbar-divider {
+    width: 1px;
+    height: 24px;
+    background-color: var(--border-color);
+    margin: 0 0.5rem;
+    align-self: center;
+}
+
+.ai-dropdown-menu {
+    min-width: 280px;
+}

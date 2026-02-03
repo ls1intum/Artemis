@@ -10,6 +10,7 @@ import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/ex
 import {
     faArrowLeft,
     faArrowRight,
+    faCheckDouble,
     faCircleExclamation,
     faCircleInfo,
     faCircleNotch,
@@ -37,7 +38,6 @@ import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websock
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { Subscription, catchError, of, take } from 'rxjs';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
@@ -364,50 +364,97 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
     }
 
+    readonly totalLocationsCount = computed(() => this.sortedIssues().reduce((acc, issue) => acc + issue.relatedLocations.length, 0));
+    readonly showConsistencyIssuesToolbar = signal(false);
+
+    get currentGlobalIndex(): number {
+        const issues = this.sortedIssues();
+        let count = 0;
+        for (const issue of issues) {
+            if (issue === this.selectedIssue) {
+                return count + this.locationIndex + 1; // 1-based
+            }
+            count += issue.relatedLocations.length;
+        }
+        return 0;
+    }
+
+    toggleConsistencyIssuesToolbar() {
+        this.showConsistencyIssuesToolbar.update((v) => !v);
+        // If opening and no issue selected, select first
+        if (this.showConsistencyIssuesToolbar() && !this.selectedIssue && this.sortedIssues().length > 0) {
+            this.selectedIssue = this.sortedIssues()[0];
+            this.locationIndex = 0;
+            // Jump to it immediately
+            this.jumpToLocation(this.selectedIssue, 0);
+        }
+    }
+
     /**
-     * Navigates between issue locations in the dropdown and updates the editor accordingly.
-     *
-     * If navigating within the same issue, the location index is advanced (with wrap-around).
-     * If switching to a new issue, the first or last location is selected based on `deltaIndex`.
-     *
-     * The method prepares the jump target (file + line), switches repositories if needed,
-     * and triggers file loading. If the file is already open, the jump executes immediately;
-     * otherwise it runs after the editor’s file-load event.
-     *
-     * @param {ConsistencyIssue} issue   The issue being navigated.
-     * @param {1 | -1} deltaIndex        Direction of navigation (forward or backward).
-     * @param {Event} event              The originating UI event.
+     * Navigates through consistency issues globally.
+     * @param {number} step - Direction to navigate (1 for next, -1 for previous).
      */
-    onIssueNavigate(issue: ConsistencyIssue, deltaIndex: 1 | -1, event: Event) {
-        if (issue === this.selectedIssue) {
-            // Stay in bounds of the array
-            this.locationIndex = (this.locationIndex + this.selectedIssue.relatedLocations.length + deltaIndex) % this.selectedIssue.relatedLocations.length;
-        } else {
-            this.selectedIssue = issue;
-            this.locationIndex = deltaIndex === 1 ? 0 : issue.relatedLocations.length - 1;
+    navigateGlobal(step: number): void {
+        const issues = this.sortedIssues();
+        if (!issues.length) return;
+
+        // Flatten all locations
+        const allLocations: { issue: ConsistencyIssue; locIndex: number }[] = [];
+        issues.forEach((issue) => {
+            issue.relatedLocations.forEach((_, idx) => {
+                allLocations.push({ issue, locIndex: idx });
+            });
+        });
+
+        if (allLocations.length === 0) return;
+
+        // Find current index
+        let currentIndex = -1;
+        if (this.selectedIssue) {
+            currentIndex = allLocations.findIndex((item) => item.issue === this.selectedIssue && item.locIndex === this.locationIndex);
         }
 
+        // Calculate new index
+        let newIndex = currentIndex + step;
+        if (newIndex >= allLocations.length) {
+            newIndex = 0; // Wrap to start
+        } else if (newIndex < 0) {
+            newIndex = allLocations.length - 1; // Wrap to end
+        }
+
+        const target = allLocations[newIndex];
+        this.selectedIssue = target.issue;
+        this.locationIndex = target.locIndex;
+
+        this.jumpToLocation(target.issue, target.locIndex);
+    }
+
+    /**
+     * Helper to perform the actual editor jump.
+     */
+    private jumpToLocation(issue: ConsistencyIssue, index: number) {
+        const location = issue.relatedLocations[index];
+
         // We can always jump to the problem statement
-        if (issue.relatedLocations[this.locationIndex].type === 'PROBLEM_STATEMENT') {
+        if (location.type === 'PROBLEM_STATEMENT') {
             this.codeEditorContainer.selectedFile = this.codeEditorContainer.problemStatementIdentifier;
-            this.editableInstructions.jumpToLine(issue.relatedLocations[this.locationIndex].endLine);
+            this.editableInstructions.jumpToLine(location.endLine);
             return;
         }
 
         // Set parameters for when fileLoad is called
-        this.lineJumpOnFileLoad = issue.relatedLocations[this.locationIndex].endLine;
-        this.fileToJumpOn = getRepoPath(issue.relatedLocations[this.locationIndex]);
+        this.lineJumpOnFileLoad = location.endLine;
+        this.fileToJumpOn = getRepoPath(location);
 
         // Jump to the right repo
-        // This signals onEditorLoaded if successful
         try {
-            if (issue.relatedLocations[this.locationIndex].type === 'TEMPLATE_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TEMPLATE') {
+            if (location.type === 'TEMPLATE_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TEMPLATE') {
                 this.selectTemplateParticipation();
                 return;
-            } else if (issue.relatedLocations[this.locationIndex].type === 'SOLUTION_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'SOLUTION') {
+            } else if (location.type === 'SOLUTION_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'SOLUTION') {
                 this.selectSolutionParticipation();
                 return;
-            } else if (issue.relatedLocations[this.locationIndex].type === 'TESTS_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TESTS') {
+            } else if (location.type === 'TESTS_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TESTS') {
                 this.selectTestRepository();
                 return;
             }
@@ -418,8 +465,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
 
-        // We were already in the right repo, no jump, so the editor did not reload
-        // So call the function manually
+        // Trigger manual load if already in correct repo
         this.onEditorLoaded();
     }
 

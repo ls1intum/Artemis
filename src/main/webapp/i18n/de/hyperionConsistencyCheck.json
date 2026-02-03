@@ -3,6 +3,7 @@
         "hyperion": {
             "consistencyCheck": {
                 "button": "Konsistenzprüfung",
+                "issues": "Probleme",
                 "noInconsistencies": "Keine Inkonsistenzen gefunden",
                 "inconsistenciesFoundAlert": "Es wurden Inkonsistenzen in der Programmieraufgabe gefunden",
                 "checkFailedAlert": "Es gab einen Fehler bei der Konsistenzprüfung",
