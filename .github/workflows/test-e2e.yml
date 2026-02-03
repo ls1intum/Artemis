@@ -68,7 +68,6 @@ jobs:
       needs.determine-tests.outputs.relevant_tests != ''
     runs-on: [self-hosted, e2e-test]
     environment: playwright-e2e-tests
-    timeout-minutes: 60
     env:
       ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
       ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
@@ -151,7 +150,6 @@ jobs:
       (needs.run-e2e-relevant.result == 'success' || needs.run-e2e-relevant.result == 'skipped')
     runs-on: [self-hosted, e2e-test]
     environment: playwright-e2e-tests
-    timeout-minutes: 60
     env:
       ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
       ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
@@ -229,7 +227,6 @@ jobs:
        (needs.determine-tests.outputs.relevant_tests == '' && needs.determine-tests.outputs.remaining_tests == ''))
     runs-on: [self-hosted, e2e-test]
     environment: playwright-e2e-tests
-    timeout-minutes: 90
     env:
       ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
       ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
@@ -301,7 +298,6 @@ jobs:
     if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'pull_request'
     runs-on: [self-hosted, e2e-test]
     environment: playwright-e2e-tests
-    timeout-minutes: 90
     env:
       ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
       ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
