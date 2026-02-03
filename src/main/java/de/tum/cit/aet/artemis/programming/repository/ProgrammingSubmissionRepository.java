@@ -33,6 +33,16 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionIdAndSubmissi
 @Repository
 public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<ProgrammingSubmission, Long> {
 
+    /**
+     * Finds the first programming submission by participation ID and commit hash, ordered by ID descending.
+     * This is used in multi-container builds to find or identify the submission that all containers are processing.
+     *
+     * @param participationId the ID of the participation
+     * @param commitHash      the commit hash
+     * @return an optional containing the submission, or empty if not found
+     */
+    Optional<ProgrammingSubmission> findFirstByParticipationIdAndCommitHashOrderByIdDesc(long participationId, String commitHash);
+
     @Query("""
             SELECT s
             FROM ProgrammingSubmission s

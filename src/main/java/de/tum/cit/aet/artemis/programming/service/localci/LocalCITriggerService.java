@@ -17,6 +17,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -27,6 +30,8 @@ import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
@@ -37,6 +42,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatist
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
@@ -46,6 +52,8 @@ import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryReposito
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
@@ -105,6 +113,12 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final BuildJobRepository buildJobRepository;
 
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+
+    private final ResultRepository resultRepository;
+
     private static final int DEFAULT_BUILD_DURATION = 17;
 
     // Arbitrary value to ensure that the build duration is always a bit higher than the actual build duration
@@ -116,7 +130,9 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             LocalCIBuildConfigurationService localCIBuildConfigurationService, ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, BuildScriptProviderService buildScriptProviderService,
-            ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService, BuildJobRepository buildJobRepository) {
+            ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService, BuildJobRepository buildJobRepository,
+            ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
+            ResultRepository resultRepository) {
         this.distributedDataAccessService = distributedDataAccessService;
         this.aeolusTemplateService = aeolusTemplateService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
@@ -131,6 +147,9 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         this.programmingExerciseBuildConfigService = programmingExerciseBuildConfigService;
         this.programmingExerciseBuildStatisticsRepository = programmingExerciseBuildStatisticsRepository;
         this.buildJobRepository = buildJobRepository;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -239,6 +258,12 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         // TODO: Sorting here is obviously very ugly.
         var sortedContainerConfigs = programmingExerciseBuildConfig.getContainerConfigs().values().stream().sorted(Comparator.comparing(DomainObject::getId)).toList();
 
+        int expectedContainerCount = Math.max(buildConfigs.size(), 1);
+
+        // Find or create the submission that all containers will process
+        // This ensures all BuildJobQueueItems for the same commit share the same submissionId
+        Long submissionId = findOrCreateSubmission(participation, assignmentCommitHash, submissionDate, triggeredByPushTo, expectedContainerCount);
+
         var buildJobs = distributedDataAccessService.getDistributedBuildJobQueue();
 
         for (int i = 0; i < buildConfigs.size(); i++) { // TODO: You cannot do this as the windfile might be default? Fix later.
@@ -247,7 +272,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
             String buildJobId = String.format("%d-%d-%d", participation.getId(), containerConfig.getId(), time);
             BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem(buildJobId, participation.getBuildPlanId(), buildAgent, participation.getId(), containerConfig.getId(),
-                    courseId, programmingExercise.getId(), retryCount, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null);
+                    courseId, programmingExercise.getId(), retryCount, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null, submissionId);
 
             // Save the build job before adding it to the queue to ensure it exists in the database.
             // This prevents potential race conditions where a build agent pulls the job from the queue very quickly before it is persisted,
@@ -263,8 +288,113 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     // -------Helper methods for triggerBuild()-------
 
+    /**
+     * Finds or creates a ProgrammingSubmission for the given participation and commit hash.
+     * This ensures all containers processing the same commit share the same submission.
+     * If a submission already exists (e.g., created by the push processing flow), it will be reused.
+     *
+     * @param participation          the participation
+     * @param commitHash             the commit hash
+     * @param submissionDate         the submission date
+     * @param triggeredByPushTo      the repository type that triggered the push
+     * @param expectedContainerCount expected number of containers for this submission
+     * @return the submission ID
+     */
+    private Long findOrCreateSubmission(ProgrammingExerciseParticipation participation, String commitHash, ZonedDateTime submissionDate, RepositoryType triggeredByPushTo,
+            int expectedContainerCount) {
+        // Try to find an existing submission for this commit
+        Optional<ProgrammingSubmission> existingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDesc(participation.getId(),
+                commitHash);
+
+        if (existingSubmission.isPresent()) {
+            ProgrammingSubmission submission = existingSubmission.get();
+            log.debug("Found existing submission {} for commit {}", submission.getId(), commitHash);
+            if (submission.getExpectedContainerCount() == null || submission.getExpectedContainerCount() <= 0) {
+                submission.setExpectedContainerCount(expectedContainerCount);
+                programmingSubmissionRepository.save(submission);
+            }
+            return submission.getId();
+        }
+
+        // Create a new submission
+        // Note: This might fail if another process (e.g., LocalVCServletService) creates the submission concurrently
+        // In that case, we catch the error and fetch the existing submission
+        try {
+            ProgrammingSubmission newSubmission = new ProgrammingSubmission();
+            newSubmission.setParticipation((Participation) participation);
+            newSubmission.setCommitHash(commitHash);
+            newSubmission.setSubmissionDate(submissionDate);
+            newSubmission.setSubmitted(true);
+
+            // Set submission type based on repository type
+            if (triggeredByPushTo == RepositoryType.TESTS) {
+                newSubmission.setType(SubmissionType.TEST);
+            }
+            else {
+                newSubmission.setType(SubmissionType.MANUAL);
+            }
+
+            newSubmission.setExpectedContainerCount(expectedContainerCount);
+            ProgrammingSubmission savedSubmission = programmingSubmissionRepository.save(newSubmission);
+            createPlaceholderResultIfNeeded(savedSubmission, participation, expectedContainerCount);
+            log.info("Created new submission {} for commit {} in participation {}", savedSubmission.getId(), commitHash, participation.getId());
+
+            return savedSubmission.getId();
+        }
+        catch (Exception e) {
+            // If save failed (likely due to duplicate submission), fetch the existing one
+            log.debug("Failed to create submission (probably already exists), fetching existing submission: {}", e.getMessage());
+            existingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDesc(participation.getId(), commitHash);
+
+            if (existingSubmission.isPresent()) {
+                ProgrammingSubmission submission = existingSubmission.get();
+                log.info("Found existing submission {} for commit {} after failed creation attempt", submission.getId(), commitHash);
+                if (submission.getExpectedContainerCount() == null || submission.getExpectedContainerCount() <= 0) {
+                    submission.setExpectedContainerCount(expectedContainerCount);
+                    programmingSubmissionRepository.save(submission);
+                }
+                return submission.getId();
+            }
+
+            // If we still can't find it, something is wrong
+            log.error("Could not create or find submission for commit {} in participation {}", commitHash, participation.getId(), e);
+            throw new RuntimeException("Could not create or find submission for commit " + commitHash, e);
+        }
+    }
+
     private List<String> getTestResultPaths(Windfile windfile) {
         return windfile.results().stream().map(result -> LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + result.path()).toList();
+    }
+
+    private void createPlaceholderResultIfNeeded(ProgrammingSubmission submission, ProgrammingExerciseParticipation participation, int expectedContainerCount) {
+        if (expectedContainerCount <= 1) {
+            return;
+        }
+        if (submission.getLatestResult() != null) {
+            return;
+        }
+
+        ProgrammingExercise exercise = participation.getProgrammingExercise();
+        if (exercise == null) {
+            return;
+        }
+
+        Result result = new Result();
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
+        result.setScore(0D, exercise.getCourseViaExerciseGroupOrCourseMember());
+        result.setCompletionDate(null);
+        result.setSuccessful(null);
+        result.setSubmission(submission);
+        result.setExerciseId(exercise.getId());
+        result.setRatedIfNotAfterDueDate();
+
+        int testCaseCount = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true).size();
+        result.setTestCaseCount(testCaseCount);
+        result.setPassedTestCaseCount(0);
+        result.setCodeIssueCount(0);
+
+        submission.addResult(result);
+        resultRepository.save(result);
     }
 
     /**
@@ -364,7 +494,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
             // Todo: If build agent does not have access to filesystem, we need to send the build script to the build agent and execute it there.
             programmingExercise.setBuildConfig(buildConfig);
-            String buildScript = localCIBuildConfigurationService.createBuildScript(programmingExercise);
+            String buildScript = localCIBuildConfigurationService.createBuildScript(programmingExercise, i);
 
             buildConfigs.add(new BuildConfig(buildScript, dockerImages.get(i), commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
                     staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(), buildConfig.getAssignmentCheckoutPath(),

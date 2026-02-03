@@ -129,6 +129,10 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             """)
     Optional<BuildJob> findByBuildJobIdAndResult(String id);
 
+    long countByResultId(long resultId);
+
+    boolean existsByResultIdAndBuildStatusNot(long resultId, BuildStatus buildStatus);
+
     @Query("""
             SELECT r
             FROM Result r

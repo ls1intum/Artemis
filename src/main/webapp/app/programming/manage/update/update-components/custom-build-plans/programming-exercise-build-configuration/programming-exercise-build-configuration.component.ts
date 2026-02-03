@@ -1,57 +1,19 @@
-import {
-    Component,
-    effect,
-    inject,
-    input,
-    OnChanges,
-    OnInit,
-    SimpleChanges,
-    ViewChild,
-    viewChild
-} from '@angular/core';
+import { AfterViewInit, Component, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren, effect, inject, input, viewChild } from '@angular/core';
 import { FormsModule, NgModel } from '@angular/forms';
-import {
-    ProgrammingExercise,
-    ProgrammingLanguage,
-    ProjectType
-} from 'app/programming/shared/entities/programming-exercise.model';
-import {
-    faAngleDown,
-    faAngleRight,
-    faPencil,
-    faPlus,
-    faQuestionCircle,
-    faTrash
-} from '@fortawesome/free-solid-svg-icons';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
+import { faAngleDown, faAngleRight, faPencil, faPlus, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import {
-    HelpIconComponent
-} from 'app/shared/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import {
-    TableEditableFieldComponent
-} from 'app/shared/table/editable-field/table-editable-field.component';
+import { TableEditableFieldComponent } from 'app/shared/table/editable-field/table-editable-field.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import {
-    ProfileService
-} from 'app/core/layouts/profiles/shared/profile.service';
-import {
-    MonacoEditorComponent
-} from 'app/shared/monaco-editor/monaco-editor.component';
-import {
-    DockerContainerConfig
-} from 'app/programming/shared/entities/docker-container.config';
-import {
-    ASSIGNMENT_REPO_NAME,
-    TEST_REPO_NAME
-} from 'app/shared/constants/input.constants';
-import {
-    getDefaultContainerConfig
-} from 'app/programming/shared/entities/programming-exercise-build.config';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { DockerContainerConfig } from 'app/programming/shared/entities/docker-container.config';
+import { ASSIGNMENT_REPO_NAME, TEST_REPO_NAME } from 'app/shared/constants/input.constants';
+import { getDefaultContainerConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { AeolusService } from 'app/programming/shared/services/aeolus.service';
-import {
-    ProgrammingExerciseCreationConfig
-} from 'app/programming/manage/update/programming-exercise-creation-config';
+import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 
 const NOT_SUPPORTED_NETWORK_DISABLED_LANGUAGES = [ProgrammingLanguage.EMPTY];
 
@@ -79,7 +41,7 @@ interface DockerFlagsFlat {
     styleUrls: ['../../../../../shared/programming-exercise-form.scss'],
     imports: [TranslateDirective, HelpIconComponent, FormsModule, NgxDatatableModule, TableEditableFieldComponent, FaIconComponent, MonacoEditorComponent],
 })
-export class ProgrammingExerciseBuildConfigurationComponent implements OnInit, OnChanges {
+export class ProgrammingExerciseBuildConfigurationComponent implements OnInit, OnChanges, AfterViewInit {
     private aeolusService = inject(AeolusService);
     private profileService = inject(ProfileService);
 
@@ -211,6 +173,42 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit, O
         }
     }
 
+    ngAfterViewInit() {
+        // Initialize editors when they become available
+        this.initializeEditors();
+
+        // Subscribe to changes in the editors list (e.g., when containers are added/removed)
+        this.containerEditors.changes.subscribe(() => {
+            this.initializeEditors();
+        });
+    }
+
+    /**
+     * Maps each editor to its container based on the order of expanded containers,
+     * then initializes the editor with the container's build script.
+     * Editors are created in DOM order which matches the @for loop order for expanded containers.
+     */
+    private initializeEditors(): void {
+        const editors = this.containerEditors.toArray();
+
+        // Get containers that are expanded (have editors visible) in the same order as the @for loop
+        const expandedContainers = this.containerConfigsList.filter((container) => this.dockerFlags[container.id]?.open);
+
+        editors.forEach((editor, index) => {
+            const container = expandedContainers[index];
+            if (container) {
+                this.editorsByContainerId.set(container.id, editor);
+
+                // Only initialize once per editor to avoid overwriting user changes
+                if (!this.initializedEditors.has(container.id)) {
+                    this.initializedEditors.add(container.id);
+                    editor.changeModel(`build-plan-${container.id}.sh`, '');
+                    editor.setText(container.buildScript || this.code);
+                }
+            }
+        });
+    }
+
     initDockerFlags(containerConfig: DockerContainerConfig): DockerFlagsFlat {
         if (containerConfig.dockerFlags) {
             const dockerFlags = JSON.parse(containerConfig?.dockerFlags ?? '') as DockerFlags;
@@ -323,7 +321,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit, O
     }
 
     setIsLanguageSupported() {
-        this.isLanguageSupported = !NOT_SUPPORTED_NETWORK_DISABLED_LANGUAGES.includes(this.programmingExercise()?.programmingLanguage || ProgrammingLanguage.EMPTY);
+        this.isLanguageSupported = !NOT_SUPPORTED_NETWORK_DISABLED_LANGUAGES.includes(this.programmingExercise()!.programmingLanguage || ProgrammingLanguage.EMPTY)!;
     }
 
     // TODO: Everything from here comes from the file "programming-exercise-custom-build-plan.component.html" originally.
@@ -334,18 +332,10 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit, O
     isImportFromFile = false;
 
     code: string = '#!/bin/bash\n\n# Add your custom build plan action here';
-    private _editor?: MonacoEditorComponent;
 
-    @ViewChild('editor', { static: false }) set editor(value: MonacoEditorComponent) {
-        this._editor = value;
-        if (this._editor) {
-            this.setupEditor();
-            if (this.programmingExercise()?.id || this.isImportFromFile) {
-                this.code = getDefaultContainerConfig(this.programmingExercise()?.buildConfig).buildScript || '';
-            }
-            this._editor.setText(this.code);
-        }
-    }
+    @ViewChildren('containerEditor') containerEditors!: QueryList<MonacoEditorComponent>;
+    private editorsByContainerId: Map<number, MonacoEditorComponent> = new Map();
+    private initializedEditors: Set<number> = new Set();
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes.programmingExerciseCreationConfig || changes.programmingExercise) {
@@ -362,7 +352,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit, O
             (this.programmingExercise()?.programmingLanguage !== this.programmingLanguage ||
                 this.programmingExercise()?.projectType !== this.projectType ||
                 this.programmingExercise()?.staticCodeAnalysisEnabled !== this.staticCodeAnalysisEnabled ||
-                this.programmingExercise()?.buildConfig!.sequentialTestRuns !== this.sequentialTestRuns)
+                this.programmingExercise()?.buildConfig?.sequentialTestRuns !== this.sequentialTestRuns)
         );
     }
 
@@ -372,8 +362,8 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit, O
      */
     resetCustomBuildPlan() {
         // TODO: this.programmingExercise.buildConfig!.windfile = undefined;
-        getDefaultContainerConfig(this.programmingExercise()?.buildConfig!).buildPlanConfiguration = undefined;
-        getDefaultContainerConfig(this.programmingExercise()?.buildConfig!).buildScript = undefined;
+        getDefaultContainerConfig(this.programmingExercise()?.buildConfig).buildPlanConfiguration = undefined;
+        getDefaultContainerConfig(this.programmingExercise()?.buildConfig).buildScript = undefined;
     }
 
     /**
@@ -391,14 +381,13 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit, O
         this.staticCodeAnalysisEnabled = this.programmingExercise()?.staticCodeAnalysisEnabled;
         this.sequentialTestRuns = this.programmingExercise()?.buildConfig?.sequentialTestRuns;
         this.isImportFromFile = isImportFromFile;
-        // TODO: Revert to this: if (!isImportFromFile || !this.programmingExercise.buildConfig?.windfile) {
-        if (true) {
+        if (!isImportFromFile || !this.programmingExercise()?.buildConfig) {
             this.aeolusService.getAeolusTemplateFile(this.programmingLanguage!, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns).subscribe({
                 next: (file) => {
-                    getDefaultContainerConfig(this.programmingExercise()?.buildConfig!).windfile = this.aeolusService.parseWindFile(file);
+                    getDefaultContainerConfig(this.programmingExercise()?.buildConfig).windfile = this.aeolusService.parseWindFile(file);
                 },
                 error: () => {
-                    getDefaultContainerConfig(this.programmingExercise()?.buildConfig!).windfile = undefined;
+                    getDefaultContainerConfig(this.programmingExercise()?.buildConfig).windfile = undefined;
                 },
             });
         }
@@ -412,10 +401,9 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit, O
                 next: (file: string) => {
                     file = this.replacePlaceholders(file);
                     this.codeChanged(file);
-                    this.editor?.setText(file);
                 },
                 error: () => {
-                    getDefaultContainerConfig(this.programmingExercise()?.buildConfig!).buildScript = undefined;
+                    getDefaultContainerConfig(this.programmingExercise()?.buildConfig).buildScript = undefined;
                 },
             });
         }
@@ -427,28 +415,34 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit, O
         }
     }
 
-    get editor(): MonacoEditorComponent | undefined {
-        return this._editor;
-    }
-
     faQuestionCircle = faQuestionCircle;
 
-    // TODO: This has to be moved aswell, later!
+    /**
+     * Called when a template script is loaded. Updates all containers with the new script
+     * and refreshes all editors.
+     */
     codeChanged(codeOrEvent: string | { text: string; fileName: string }): void {
         const code = typeof codeOrEvent === 'string' ? codeOrEvent : codeOrEvent.text;
         this.code = code;
-        this.editor?.setText(code);
-        getDefaultContainerConfig(this.programmingExercise()?.buildConfig!).buildScript = code;
+
+        // Update all containers with the new template script
+        for (const container of this.containerConfigsList) {
+            container.buildScript = code;
+            const editor = this.editorsByContainerId.get(container.id);
+            if (editor) {
+                editor.setText(code);
+            }
+        }
     }
 
     /**
-     * Sets up the Monaco editor for the build plan script
+     * Called when a specific container's build script is changed in the editor.
      */
-    setupEditor(): void {
-        if (!this._editor) {
-            return;
+    onBuildScriptChanged(containerId: number, event: { text: string; fileName: string }): void {
+        const container = this.containerConfigsById[containerId];
+        if (container) {
+            container.buildScript = event.text;
         }
-        this._editor.changeModel('build-plan.sh', '');
     }
 
     onContainerConfigsChange(containerConfigs: { [key: string]: DockerContainerConfig }) {

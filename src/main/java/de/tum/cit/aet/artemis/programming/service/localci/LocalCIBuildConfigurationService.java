@@ -39,13 +39,28 @@ public class LocalCIBuildConfigurationService {
      * @return the build script
      */
     public String createBuildScript(ProgrammingExercise programmingExercise) {
+        return createBuildScript(programmingExercise, 0);
+    }
+
+    /**
+     * Creates a build script for a given programming exercise and container index.
+     * The build script is used to build the programming exercise in a Docker container.
+     *
+     * @param programmingExercise the programming exercise for which the build script should be created
+     * @param containerIndex      the index of the container (0-based) to get the build script for
+     * @return the build script
+     */
+    public String createBuildScript(ProgrammingExercise programmingExercise, int containerIndex) {
 
         StringBuilder buildScriptBuilder = new StringBuilder();
         buildScriptBuilder.append("#!/bin/bash\n");
         buildScriptBuilder.append("cd ").append(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).append("/testing-dir\n");
 
         ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
-        String customScript = buildConfig.getDefaultContainerConfig().getBuildScript();
+        var containerConfigs = buildConfig.getContainerConfigsSorted();
+        var containerConfig = containerIndex < containerConfigs.size() ? containerConfigs.get(containerIndex) : buildConfig.getDefaultContainerConfig();
+
+        String customScript = containerConfig.getBuildScript();
         // Todo: get default script if custom script is null before trying to get actions from windfile
         if (customScript != null) {
             buildScriptBuilder.append(customScript);
@@ -53,7 +68,7 @@ public class LocalCIBuildConfigurationService {
         else {
             List<ScriptAction> actions;
 
-            Windfile windfile = buildConfig.getDefaultWindfile();
+            Windfile windfile = containerConfig.getWindfile();
 
             if (windfile == null) {
                 windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);

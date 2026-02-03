@@ -163,6 +163,15 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         return containerConfigs;
     }
 
+    /**
+     * Returns container configs as a list sorted by ID.
+     * This ensures consistent ordering when iterating over containers.
+     */
+    @JsonIgnore
+    public List<DockerContainerConfig> getContainerConfigsSorted() {
+        return containerConfigs.values().stream().sorted(Comparator.comparing(DomainObject::getId)).toList();
+    }
+
     public boolean getCheckoutSolutionRepository() {
         return checkoutSolutionRepository;
     }

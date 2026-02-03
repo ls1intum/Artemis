@@ -104,30 +104,30 @@ public class BuildLogEntryService {
                 .orElseGet(Collections::emptyList);
 
         // Check if this is a multi-container build (multiple containers have logs)
-        boolean hasMultipleContainers = logs.stream().map(BuildLogEntry::getContainerId).filter(java.util.Objects::nonNull).distinct().count() > 1;
+        boolean hasMultipleContainers = logs.stream().map(BuildLogEntry::getContainerName).filter(java.util.Objects::nonNull).distinct().count() > 1;
 
         if (!hasMultipleContainers) {
             return logs;
         }
 
-        // Sort logs by container_id (nulls first for backwards compatibility) and then by time
-        logs.sort(java.util.Comparator.comparing(BuildLogEntry::getContainerId, java.util.Comparator.nullsFirst(java.util.Comparator.naturalOrder()))
+        // Sort logs by container_name (nulls first for backwards compatibility) and then by time
+        logs.sort(java.util.Comparator.comparing(BuildLogEntry::getContainerName, java.util.Comparator.nullsFirst(java.util.Comparator.naturalOrder()))
                 .thenComparing(BuildLogEntry::getTime));
 
         // Add separator headers between containers
         List<BuildLogEntry> logsWithSeparators = new ArrayList<>();
-        Long currentContainerId = null;
+        String currentContainerName = null;
 
         for (BuildLogEntry log : logs) {
-            Long logContainerId = log.getContainerId();
+            String logContainerName = log.getContainerName();
 
             // Add separator when container changes
-            if (currentContainerId == null || !currentContainerId.equals(logContainerId)) {
-                String separator = logContainerId != null ? "=== Container " + logContainerId + ": ===" : "=== Container (unknown): ===";
+            if (currentContainerName == null || !currentContainerName.equals(logContainerName)) {
+                String separator = logContainerName != null ? "=== " + logContainerName + " ===" : "=== Container (unknown) ===";
                 BuildLogEntry separatorEntry = new BuildLogEntry(log.getTime(), separator, programmingSubmission);
-                separatorEntry.setContainerId(logContainerId);
+                separatorEntry.setContainerName(logContainerName);
                 logsWithSeparators.add(separatorEntry);
-                currentContainerId = logContainerId;
+                currentContainerName = logContainerName;
             }
 
             logsWithSeparators.add(log);

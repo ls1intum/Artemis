@@ -443,7 +443,7 @@ public class SharedQueueProcessingService {
 
             BuildJobQueueItem finishedJob = new BuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgent(), buildJob.participationId(), buildJob.containerId(),
                     buildJob.courseId(), buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildStatus.SUCCESSFUL, buildJob.repositoryInfo(), jobTimingInfo,
-                    buildJob.buildConfig(), null);
+                    buildJob.buildConfig(), null, buildJob.submissionId());
 
             List<BuildLogDTO> buildLogs = buildLogsMap.getAndTruncateBuildLogs(buildJob.id());
             buildLogsMap.removeBuildLogs(buildJob.id());

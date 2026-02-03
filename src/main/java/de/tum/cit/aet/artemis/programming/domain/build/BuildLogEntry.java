@@ -34,8 +34,8 @@ public class BuildLogEntry extends DomainObject {
     @Column(name = "log")
     private String log;
 
-    @Column(name = "container_id")
-    private Long containerId;
+    @Column(name = "container_name")
+    private String containerName;
 
     @ManyToOne
     @JsonIgnore
@@ -80,12 +80,12 @@ public class BuildLogEntry extends DomainObject {
         this.programmingSubmission = programmingSubmission;
     }
 
-    public Long getContainerId() {
-        return containerId;
+    public String getContainerName() {
+        return containerName;
     }
 
-    public void setContainerId(Long containerId) {
-        this.containerId = containerId;
+    public void setContainerName(String containerName) {
+        this.containerName = containerName;
     }
 
     /**

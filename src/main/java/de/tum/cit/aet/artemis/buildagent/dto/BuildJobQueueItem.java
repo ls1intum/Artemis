@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BuildJobQueueItem(@NonNull String id, @NonNull String name, @NonNull BuildAgentDTO buildAgent, long participationId, long containerId, long courseId, long exerciseId,
         int retryCount, int priority, @Nullable BuildStatus status, @NonNull RepositoryInfo repositoryInfo, @NonNull JobTimingInfo jobTimingInfo, @NonNull BuildConfig buildConfig,
-        @Nullable ResultDTO submissionResult) implements Serializable, Comparable<BuildJobQueueItem> {
+        @Nullable ResultDTO submissionResult, @Nullable Long submissionId) implements Serializable, Comparable<BuildJobQueueItem> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -36,7 +36,7 @@ public record BuildJobQueueItem(@NonNull String id, @NonNull String name, @NonNu
                 queueItem.retryCount(), queueItem.priority(), status, queueItem.repositoryInfo(),
                 new JobTimingInfo(queueItem.jobTimingInfo.submissionDate(), queueItem.jobTimingInfo.buildStartDate(), buildCompletionDate,
                         queueItem.jobTimingInfo.estimatedCompletionDate(), queueItem.jobTimingInfo.estimatedDuration()),
-                queueItem.buildConfig(), null);
+                queueItem.buildConfig(), null, queueItem.submissionId());
     }
 
     /**
@@ -49,19 +49,20 @@ public record BuildJobQueueItem(@NonNull String id, @NonNull String name, @NonNu
         this(queueItem.id(), queueItem.name(), buildAgent, queueItem.participationId(), queueItem.containerId(), queueItem.courseId(), queueItem.exerciseId(),
                 queueItem.retryCount(), queueItem.priority(), null, queueItem.repositoryInfo(),
                 new JobTimingInfo(queueItem.jobTimingInfo.submissionDate(), ZonedDateTime.now(), null, estimatedCompletionDate, queueItem.jobTimingInfo.estimatedDuration()),
-                queueItem.buildConfig(), null);
+                queueItem.buildConfig(), null, queueItem.submissionId());
     }
 
     public BuildJobQueueItem(BuildJobQueueItem queueItem, ResultDTO submissionResult) {
         this(queueItem.id(), queueItem.name(), queueItem.buildAgent(), queueItem.participationId(), queueItem.containerId(), queueItem.courseId(), queueItem.exerciseId(),
-                queueItem.retryCount(), queueItem.priority(), queueItem.status(), queueItem.repositoryInfo(), queueItem.jobTimingInfo(), queueItem.buildConfig(), submissionResult);
+                queueItem.retryCount(), queueItem.priority(), queueItem.status(), queueItem.repositoryInfo(), queueItem.jobTimingInfo(), queueItem.buildConfig(), submissionResult,
+                queueItem.submissionId());
     }
 
     public BuildJobQueueItem(BuildJobQueueItem queueItem, BuildAgentDTO buildAgent, int newRetryCount) {
         this(queueItem.id(), queueItem.name(), buildAgent, queueItem.participationId(), queueItem.containerId(), queueItem.courseId(), queueItem.exerciseId(), newRetryCount,
                 queueItem.priority(), null, queueItem.repositoryInfo(),
                 new JobTimingInfo(queueItem.jobTimingInfo.submissionDate(), ZonedDateTime.now(), null, null, queueItem.jobTimingInfo().estimatedDuration()),
-                queueItem.buildConfig(), null);
+                queueItem.buildConfig(), null, queueItem.submissionId());
     }
 
     @Override

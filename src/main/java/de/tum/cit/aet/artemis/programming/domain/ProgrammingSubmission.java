@@ -43,6 +43,9 @@ public class ProgrammingSubmission extends Submission {
     @Column(name = "build_failed")
     private boolean buildFailed;
 
+    @Column(name = "expected_container_count")
+    private Integer expectedContainerCount;
+
     // Only present if buildFailed == true
     @OneToMany(mappedBy = "programmingSubmission", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn
@@ -95,6 +98,14 @@ public class ProgrammingSubmission extends Submission {
         this.buildFailed = buildFailed;
     }
 
+    public Integer getExpectedContainerCount() {
+        return expectedContainerCount;
+    }
+
+    public void setExpectedContainerCount(Integer expectedContainerCount) {
+        this.expectedContainerCount = expectedContainerCount;
+    }
+
     public List<BuildLogEntry> getBuildLogEntries() {
         return buildLogEntries;
     }
@@ -114,7 +125,8 @@ public class ProgrammingSubmission extends Submission {
 
     @Override
     public String toString() {
-        return "ProgrammingSubmission{" + "commitHash='" + commitHash + "', buildFailed=" + buildFailed + ", type=" + getType() + '}';
+        return "ProgrammingSubmission{" + "commitHash='" + commitHash + "', buildFailed=" + buildFailed + ", expectedContainerCount=" + expectedContainerCount + ", type="
+                + getType() + '}';
     }
 
     @Override

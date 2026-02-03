@@ -92,7 +92,7 @@ public class LocalCIQueueWebsocketService {
             var buildConfig = removeUnnecessaryInformationFromBuildConfig(job.buildConfig());
             var repositoryInfo = removeUnnecessaryInformationFromRepositoryInfo(job.repositoryInfo());
             filteredQueuedJobs.add(new BuildJobQueueItem(job.id(), job.name(), job.buildAgent(), job.participationId(), job.containerId(), job.courseId(), job.exerciseId(),
-                    job.retryCount(), job.priority(), job.status(), repositoryInfo, job.jobTimingInfo(), buildConfig, null));
+                    job.retryCount(), job.priority(), job.status(), repositoryInfo, job.jobTimingInfo(), buildConfig, null, job.submissionId()));
 
         }
         return filteredQueuedJobs;

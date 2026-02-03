@@ -59,6 +59,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 
@@ -90,6 +91,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final ParticipationAuthorizationCheckService participationAuthCheckService;
 
+    private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ParticipationService participationService,
@@ -97,7 +100,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, Optional<ExamDateApi> examDateApi,
             ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ComplaintRepository complaintRepository,
-            ParticipationAuthorizationCheckService participationAuthCheckService) {
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ParticipationAuthorizationCheckService participationAuthCheckService) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateApi,
                 exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaApi);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -106,6 +109,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.gitService = gitService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.participationAuthCheckService = participationAuthCheckService;
     }
 
@@ -166,11 +170,15 @@ public class ProgrammingSubmissionService extends SubmissionService {
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository
                 .findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participation.getId(), commit.commitHash());
         if (programmingSubmission != null) {
-            throw new IllegalStateException("Submission for participation id " + participation.getId() + " and commitHash " + commit.commitHash() + " already exists!");
+            log.info("Reusing existing submission {} for participation {} and commitHash {}", programmingSubmission.getId(), participation.getId(), commit.commitHash());
+            updateExpectedContainerCountIfMissing(programmingSubmission, participation);
+            createPlaceholderResultIfNeeded(programmingSubmission, participation);
+            return programmingSubmission;
         }
 
         programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setCommitHash(commit.commitHash());
+        setExpectedContainerCount(programmingSubmission, participation);
         log.info("Create new programmingSubmission with commitHash: {} for participation: {}", commit.commitHash(), participation.getId());
 
         programmingSubmission.setSubmitted(true);
@@ -186,6 +194,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
         participation.addSubmission(programmingSubmission);
         programmingSubmission = programmingSubmissionRepository.save(programmingSubmission);
+
+        createPlaceholderResultIfNeeded(programmingSubmission, participation);
 
         // NOTE: this might an important information if a lock submission policy of the corresponding programming exercise is active
         programmingSubmission.getParticipation().setSubmissionCount(existingSubmissionCount + 1);
@@ -242,6 +252,60 @@ public class ProgrammingSubmissionService extends SubmissionService {
             return Optional.empty();
         }
         return optionalSubmission;
+    }
+
+    private void setExpectedContainerCount(ProgrammingSubmission submission, ProgrammingExerciseParticipation participation) {
+        int expectedContainerCount = determineExpectedContainerCount(participation);
+        submission.setExpectedContainerCount(expectedContainerCount);
+    }
+
+    private void updateExpectedContainerCountIfMissing(ProgrammingSubmission submission, ProgrammingExerciseParticipation participation) {
+        if (submission.getExpectedContainerCount() != null && submission.getExpectedContainerCount() > 0) {
+            return;
+        }
+        setExpectedContainerCount(submission, participation);
+        programmingSubmissionRepository.save(submission);
+    }
+
+    private int determineExpectedContainerCount(ProgrammingExerciseParticipation participation) {
+        ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseWithBuildConfigFromParticipation(participation);
+        if (exercise == null || exercise.getBuildConfig() == null) {
+            return 1;
+        }
+        int containerCount = exercise.getBuildConfig().getContainerConfigs().size();
+        return containerCount > 0 ? containerCount : 1;
+    }
+
+    private void createPlaceholderResultIfNeeded(ProgrammingSubmission submission, ProgrammingExerciseParticipation participation) {
+        Integer expectedContainerCount = submission.getExpectedContainerCount();
+        if (expectedContainerCount == null || expectedContainerCount <= 1) {
+            return;
+        }
+        if (submission.getLatestResult() != null) {
+            return;
+        }
+
+        ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseWithBuildConfigFromParticipation(participation);
+        if (exercise == null) {
+            return;
+        }
+
+        Result result = new Result();
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
+        result.setScore(0D, exercise.getCourseViaExerciseGroupOrCourseMember());
+        result.setCompletionDate(null);
+        result.setSuccessful(null);
+        result.setSubmission(submission);
+        result.setExerciseId(exercise.getId());
+        result.setRatedIfNotAfterDueDate();
+
+        int testCaseCount = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true).size();
+        result.setTestCaseCount(testCaseCount);
+        result.setPassedTestCaseCount(0);
+        result.setCodeIssueCount(0);
+
+        submission.addResult(result);
+        resultRepository.save(result);
     }
 
     /**
