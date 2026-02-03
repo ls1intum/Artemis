@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -8,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,6 +23,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -32,6 +36,9 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private ExerciseVersionRepository exerciseVersionRepository;
 
     private static final String TEST_PREFIX = "hyperionproblemstatementresource";
 
@@ -350,5 +357,225 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", courseId).contentType(MediaType.APPLICATION_JSON).content(bodyOneCol))
                 .andExpect(status().isBadRequest()).andExpect(jsonPath("$.title").value("Bad Request"))
                 .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("startColumn and endColumn must be either both null or both non-null")));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldCreateExerciseVersionWhenGeneratingWithExerciseId() throws Exception {
+        long courseId = persistedCourseId;
+        long exerciseId = persistedExerciseId;
+        mockChatSuccess("Generated problem statement with versioning.");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        // Get initial version timestamp
+        Optional<ExerciseVersion> versionBefore = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exerciseId);
+        var timestampBefore = versionBefore.map(ExerciseVersion::getCreatedDate).orElse(null);
+
+        // Generate problem statement with exerciseId
+        String body = "{\"userPrompt\":\"Create a sorting algorithm exercise\"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/generate?exerciseId={exerciseId}", courseId, exerciseId)
+                .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isOk()).andExpect(jsonPath("$.draftProblemStatement").isString());
+
+        // Verify new version was created
+        Optional<ExerciseVersion> versionAfter = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exerciseId);
+        assertThat(versionAfter).isPresent();
+
+        // Verify it's a new version (different timestamp or first version)
+        if (timestampBefore != null) {
+            assertThat(versionAfter.get().getCreatedDate()).isAfter(timestampBefore);
+        }
+
+        // Verify the new version has correct metadata
+        assertThat(versionAfter.get().getExerciseId()).isEqualTo(exerciseId);
+        assertThat(versionAfter.get().getAuthorId()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldNotCreateExerciseVersionWhenGeneratingWithoutExerciseId() throws Exception {
+        long courseId = persistedCourseId;
+        long exerciseId = persistedExerciseId;
+        mockChatSuccess("Generated problem statement without versioning.");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        // Get initial version timestamp
+        Optional<ExerciseVersion> versionBefore = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exerciseId);
+        var timestampBefore = versionBefore.map(ExerciseVersion::getCreatedDate).orElse(null);
+
+        // Generate problem statement WITHOUT exerciseId (simulating creation)
+        String body = "{\"userPrompt\":\"Create a sorting algorithm exercise\"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.draftProblemStatement").isString());
+
+        // Verify NO new version was created (timestamp should be same or no version
+        // exists)
+        Optional<ExerciseVersion> versionAfter = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exerciseId);
+        if (timestampBefore != null) {
+            assertThat(versionAfter).isPresent();
+            assertThat(versionAfter.get().getCreatedDate()).isEqualTo(timestampBefore);
+        }
+        else {
+            assertThat(versionAfter).isEmpty();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldCreateExerciseVersionWhenRefiningGloballyWithExerciseId() throws Exception {
+        long courseId = persistedCourseId;
+        long exerciseId = persistedExerciseId;
+        mockChatSuccess("Refined problem statement with versioning.");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        // Get initial version timestamp
+        Optional<ExerciseVersion> versionBefore = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exerciseId);
+        var timestampBefore = versionBefore.map(ExerciseVersion::getCreatedDate).orElse(null);
+
+        // Refine problem statement globally with exerciseId
+        String body = "{\"problemStatementText\":\"Original problem statement\",\"userPrompt\":\"Make it more detailed\"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/global?exerciseId={exerciseId}", courseId, exerciseId)
+                .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isOk()).andExpect(jsonPath("$.refinedProblemStatement").isString());
+
+        // Verify new version was created
+        Optional<ExerciseVersion> versionAfter = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exerciseId);
+        assertThat(versionAfter).isPresent();
+        if (timestampBefore != null) {
+            assertThat(versionAfter.get().getCreatedDate()).isAfter(timestampBefore);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldNotCreateExerciseVersionWhenRefiningGloballyWithoutExerciseId() throws Exception {
+        long courseId = persistedCourseId;
+        long exerciseId = persistedExerciseId;
+        mockChatSuccess("Refined problem statement without versioning.");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        // Get initial version timestamp
+        Optional<ExerciseVersion> versionBefore = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exerciseId);
+        var timestampBefore = versionBefore.map(ExerciseVersion::getCreatedDate).orElse(null);
+
+        // Refine problem statement globally WITHOUT exerciseId
+        String body = "{\"problemStatementText\":\"Original problem statement\",\"userPrompt\":\"Make it more detailed\"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/global", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.refinedProblemStatement").isString());
+
+        // Verify NO new version was created
+        Optional<ExerciseVersion> versionAfter = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exerciseId);
+        if (timestampBefore != null) {
+            assertThat(versionAfter).isPresent();
+            assertThat(versionAfter.get().getCreatedDate()).isEqualTo(timestampBefore);
+        }
+        else {
+            assertThat(versionAfter).isEmpty();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldCreateExerciseVersionWhenRefiningTargetedWithExerciseId() throws Exception {
+        long courseId = persistedCourseId;
+        long exerciseId = persistedExerciseId;
+        mockChatSuccess("Refined problem statement with targeted instructions.");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        // Get initial version timestamp
+        Optional<ExerciseVersion> versionBefore = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exerciseId);
+        var timestampBefore = versionBefore.map(ExerciseVersion::getCreatedDate).orElse(null);
+
+        // Refine problem statement with targeted instructions and exerciseId
+        String body = "{\"problemStatementText\":\"Original problem statement\",\"instruction\":\"Add more examples\",\"startLine\":1,\"endLine\":2}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted?exerciseId={exerciseId}", courseId, exerciseId)
+                .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isOk()).andExpect(jsonPath("$.refinedProblemStatement").isString());
+
+        // Verify new version was created
+        Optional<ExerciseVersion> versionAfter = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exerciseId);
+        assertThat(versionAfter).isPresent();
+        if (timestampBefore != null) {
+            assertThat(versionAfter.get().getCreatedDate()).isAfter(timestampBefore);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldNotCreateExerciseVersionWhenRefiningTargetedWithoutExerciseId() throws Exception {
+        long courseId = persistedCourseId;
+        long exerciseId = persistedExerciseId;
+        mockChatSuccess("Refined problem statement without versioning.");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        // Get initial version timestamp
+        Optional<ExerciseVersion> versionBefore = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exerciseId);
+        var timestampBefore = versionBefore.map(ExerciseVersion::getCreatedDate).orElse(null);
+
+        // Refine problem statement with targeted instructions WITHOUT exerciseId
+        String body = "{\"problemStatementText\":\"Original problem statement\",\"instruction\":\"Add more examples\",\"startLine\":1,\"endLine\":2}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.refinedProblemStatement").isString());
+
+        // Verify NO new version was created
+        Optional<ExerciseVersion> versionAfter = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exerciseId);
+        if (timestampBefore != null) {
+            assertThat(versionAfter).isPresent();
+            assertThat(versionAfter.get().getCreatedDate()).isEqualTo(timestampBefore);
+        }
+        else {
+            assertThat(versionAfter).isEmpty();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldReturnBadRequestWhenExerciseDoesNotBelongToCourse() throws Exception {
+        long courseId = persistedCourseId;
+        mockChatSuccess("Generated problem statement.");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        // Create a second course and exercise
+        Course otherCourse = new Course();
+        otherCourse.setTitle("Other Course");
+        otherCourse.setStudentGroupName(TEST_PREFIX + "student");
+        otherCourse.setTeachingAssistantGroupName(TEST_PREFIX + "tutor");
+        otherCourse.setEditorGroupName(TEST_PREFIX + "editor");
+        otherCourse.setInstructorGroupName(TEST_PREFIX + "instructor");
+        otherCourse = courseRepository.save(otherCourse);
+
+        ProgrammingExercise otherExercise = new ProgrammingExercise();
+        otherExercise.setTitle("Other Exercise");
+        otherExercise.setCourse(otherCourse);
+        otherExercise = programmingExerciseRepository.save(otherExercise);
+        long otherExerciseId = otherExercise.getId();
+
+        // Try to generate with exerciseId from different course
+        String body = "{\"userPrompt\":\"Create exercise\"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/generate?exerciseId={exerciseId}", courseId, otherExerciseId)
+                .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("exerciseNotInCourse"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    void shouldCreateExerciseVersionForEditorWithExerciseId() throws Exception {
+        long courseId = persistedCourseId;
+        long exerciseId = persistedExerciseId;
+        mockChatSuccess("Generated problem statement for editor.");
+        userUtilService.changeUser(TEST_PREFIX + "editor1");
+
+        // Get initial version timestamp
+        Optional<ExerciseVersion> versionBefore = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exerciseId);
+        var timestampBefore = versionBefore.map(ExerciseVersion::getCreatedDate).orElse(null);
+
+        // Generate problem statement with exerciseId as editor
+        String body = "{\"userPrompt\":\"Create exercise\"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/generate?exerciseId={exerciseId}", courseId, exerciseId)
+                .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isOk());
+
+        // Verify new version was created
+        Optional<ExerciseVersion> versionAfter = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exerciseId);
+        assertThat(versionAfter).isPresent();
+        if (timestampBefore != null) {
+            assertThat(versionAfter.get().getCreatedDate()).isAfter(timestampBefore);
+        }
+        assertThat(versionAfter.get().getExerciseId()).isEqualTo(exerciseId);
     }
 }
