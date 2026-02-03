@@ -53,6 +53,14 @@ $draggable-width: 15px;
     height: 100%;
     overflow-x: auto;
     overflow-y: auto;
+
+    // Use margin auto on the SVG for horizontal centering instead of flexbox justify-content-center.
+    // Flexbox centering with overflow clips the left side, making it impossible to scroll to see
+    // the full diagram when it's wider than the container.
+    > svg {
+        display: block;
+        margin: 0 auto;
+    }
 }
 
 .scroll-container {
