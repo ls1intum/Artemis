@@ -45,6 +45,9 @@ export class StartPracticeModeButtonComponent {
         effect(() => {
             const exercise = this.exercise();
             untracked(() => {
+                if (!exercise) {
+                    return;
+                }
                 this._gradedStudentParticipation.set(this.participationService.getSpecificStudentParticipation(exercise.studentParticipations ?? [], false));
             });
         });

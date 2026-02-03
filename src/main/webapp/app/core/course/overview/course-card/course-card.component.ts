@@ -39,6 +39,9 @@ export class CourseCardComponent {
         effect(() => {
             const course = this.course();
             untracked(() => {
+                if (!course) {
+                    return;
+                }
                 this.processCourseData(course);
                 this.subscribeToNotificationCount(course);
             });

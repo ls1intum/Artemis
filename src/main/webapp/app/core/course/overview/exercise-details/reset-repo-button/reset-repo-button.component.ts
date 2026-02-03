@@ -55,6 +55,9 @@ export class ResetRepoButtonComponent {
             const participations = this.participations();
             const exercise = this.exercise();
             untracked(() => {
+                if (!exercise || !participations) {
+                    return;
+                }
                 const gradedParticipation = this.participationService.getSpecificStudentParticipation(participations, false);
                 this._gradedParticipation.set(gradedParticipation);
                 this._practiceParticipation.set(this.participationService.getSpecificStudentParticipation(participations, true));

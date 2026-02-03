@@ -45,6 +45,9 @@ export class OpenCodeEditorButtonComponent {
             const exercise = this.exercise();
             const participations = this.participations();
             untracked(() => {
+                if (!courseAndExerciseNavigationUrlSegment || !exercise || !participations) {
+                    return;
+                }
                 this._courseAndExerciseNavigationUrl.set(courseAndExerciseNavigationUrlSegment.reduce((acc, segment) => `${acc}/${segment}`));
                 const shouldPreferPractice = this.participationService.shouldPreferPractice(exercise);
                 this._activeParticipation.set(this.participationService.getSpecificStudentParticipation(participations, shouldPreferPractice) ?? participations[0]);

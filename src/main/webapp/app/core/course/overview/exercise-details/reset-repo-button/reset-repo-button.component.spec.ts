@@ -123,7 +123,7 @@ describe('JhiResetRepoButtonComponent', () => {
 
         resetRepositoryStub.mockReturnValue(resetSubject);
         comp.resetRepository(gradedParticipationId);
-        expect(comp.exercise().loading).toBe(true);
+        expect(comp.isLoading()).toBe(true);
         resetSubject.next();
 
         expect(resetRepositoryStub).toHaveBeenCalledWith(expectedResetId, gradedParticipationId);

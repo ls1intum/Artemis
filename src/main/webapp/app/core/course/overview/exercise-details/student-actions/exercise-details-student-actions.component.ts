@@ -71,6 +71,9 @@ export class ExerciseDetailsStudentActionsComponent {
         effect(() => {
             const exercise = this.exercise();
             untracked(() => {
+                if (!exercise) {
+                    return;
+                }
                 // Initialize local participations from the exercise input
                 this._studentParticipations.set(exercise.studentParticipations ?? []);
                 this.updateParticipations();
