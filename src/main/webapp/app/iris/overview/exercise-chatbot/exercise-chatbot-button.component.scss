@@ -12,9 +12,7 @@
 }
 
 .message-bubble {
-    --r: 13px;
-    /* the radius */
-
+    --r: 13px; /* the radius */
     position: absolute;
     z-index: 50;
     bottom: 100px;
