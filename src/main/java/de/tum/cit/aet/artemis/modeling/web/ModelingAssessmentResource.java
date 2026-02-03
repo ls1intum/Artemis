@@ -93,7 +93,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         StudentParticipation participation = (StudentParticipation) submission.getParticipation();
         Exercise exercise = participation.getExercise();
 
-        Result result = submission.getLatestResult();
+        Result result = submission.getLatestCompletedResult();
         if (result == null) {
             throw new EntityNotFoundException("Result with submission", submissionId);
         }
