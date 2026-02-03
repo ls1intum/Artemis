@@ -462,7 +462,8 @@ describe('MetisConversationService', () => {
         });
 
         it('should not update active conversation if conversationId does not match', () => {
-            const nonExistentConversation = { ...groupChat, id: 999 };
+            (metisConversationService as any).activeConversation = groupChat;
+            const nonExistentConversation = { ...oneToOneChat, id: 999 };
 
             (metisConversationService as any).updateConversationAsRead(nonExistentConversation.id, dayjs(), 5);
 

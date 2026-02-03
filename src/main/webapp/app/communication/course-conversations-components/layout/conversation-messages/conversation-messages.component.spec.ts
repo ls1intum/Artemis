@@ -601,13 +601,13 @@ examples.forEach((activeConversation) => {
 
             component.allPosts = [
                 { id: 1, creationDate: dayjs().subtract(5, 'minutes'), author: otherUser } as Post, // unread
-                { id: 2, creationDate: dayjs().subtract(3, 'minutes'), author: currentUser } as Post, // unread
+                { id: 2, creationDate: dayjs().subtract(3, 'minutes'), author: currentUser } as Post, // read
                 { id: 3, creationDate: dayjs().subtract(20, 'minutes'), author: otherUser } as Post, // read
                 { id: 4, creationDate: dayjs().subtract(2, 'minutes'), author: otherUser } as Post, // unread
             ];
             const unreadPosts = (component as any).getUnreadPosts();
-            expect(unreadPosts).toHaveLength(3);
-            expect(unreadPosts.map((p: Post) => p.id)).toEqual([1, 2, 4]);
+            expect(unreadPosts).toHaveLength(2);
+            expect(unreadPosts.map((p: Post) => p.id)).toEqual([1, 4]);
         });
         it('should compute unreadPosts, unreadPostsCount, and lastReadPostId correctly', () => {
             const lastReadDate = dayjs().subtract(10, 'minutes');
@@ -624,14 +624,14 @@ examples.forEach((activeConversation) => {
             component.allPosts = [
                 { id: 1, creationDate: dayjs().subtract(15, 'minutes'), author: otherUser } as Post, // read
                 { id: 2, creationDate: dayjs().subtract(5, 'minutes'), author: otherUser } as Post, // unread
-                { id: 3, creationDate: dayjs().subtract(3, 'minutes'), author: currentUser } as Post, // unread
+                { id: 3, creationDate: dayjs().subtract(3, 'minutes'), author: currentUser } as Post, // read
                 { id: 4, creationDate: dayjs(), author: otherUser } as Post, // unread
             ];
 
             (component as any).computeLastReadState();
 
-            expect(component.unreadPosts).toHaveLength(3);
-            expect(component.unreadPostsCount).toBe(3);
+            expect(component.unreadPosts).toHaveLength(2);
+            expect(component.unreadPostsCount).toBe(2);
         });
 
         it('should return true if at least one unread post is visible', () => {
