@@ -20,7 +20,7 @@ import { PostingDirective } from 'app/communication/directive/posting.directive'
 import { MetisService } from 'app/communication/service/metis.service';
 import { NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
-import { faBookmark, faBullhorn, faCircle, faComments, faPencilAlt, faShare, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark, faBullhorn, faComments, faEnvelopeOpenText, faPencilAlt, faShare, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';
@@ -121,7 +121,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     readonly faThumbtack = faThumbtack;
     readonly faBookmark = faBookmark;
     readonly faShare = faShare;
-    readonly faCircle = faCircle;
+    readonly faEnvelopeOpenText = faEnvelopeOpenText;
 
     isConsecutive = input<boolean>(false);
     forwardedPosts = input<(Post | undefined)[]>([]);

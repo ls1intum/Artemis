@@ -185,9 +185,9 @@
                 class="reaction-button clickable px-2 fs-small"
                 [disabled]="isReadOnlyMode()"
                 (click)="markMessageAsUnread()"
-                ngbTooltip="'artemisApp.metis.post.markAsUnread' | artemisTranslate"
+                [ngbTooltip]="'artemisApp.metis.post.markAsUnread' | artemisTranslate"
             >
-                <fa-icon [icon]="faCircle" cdkOverlayOrigin />
+                <fa-icon [icon]="faEnvelopeOpenText" cdkOverlayOrigin />
             </button>
         }
     </div>
