@@ -68,7 +68,7 @@
         white-space: normal;
         text-align: center;
         z-index: 2;
-        transform: translate(-50%, -100%) translateX(var(--iris-citation-shift));
+        transform: translate(-50%, calc(-100% - 20px)) translateX(var(--iris-citation-shift));
         opacity: 0;
         visibility: hidden;
         pointer-events: none;
@@ -106,13 +106,6 @@
     .iris-citation-group--has-summary:hover,
     .iris-citation-group--has-summary:focus-within {
         z-index: 20;
-    }
-
-    .iris-citation--has-summary:hover .iris-citation__text,
-    .iris-citation--has-summary:focus-within .iris-citation__text,
-    .iris-citation-group--has-summary:hover .iris-citation__text,
-    .iris-citation-group--has-summary:focus-within .iris-citation__text {
-        visibility: hidden;
     }
 
     .iris-citation--has-summary:hover .iris-citation__summary,

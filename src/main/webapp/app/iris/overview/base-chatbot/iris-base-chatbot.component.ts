@@ -394,7 +394,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const classes = ['iris-citation', typeClass, hasSummary ? 'iris-citation--has-summary' : undefined].filter(Boolean).join(' ');
 
         const summaryHtml = hasSummary
-            ? `<span class="iris-citation__summary"><span class="iris-citation__summary-content"><span class="iris-citation__summary-item is-active">${summaryText}</span></span><span class="iris-citation__summary-icon iris-citation__icon" aria-hidden="true"></span></span>`
+            ? `<span class="iris-citation__summary"><span class="iris-citation__summary-content"><span class="iris-citation__summary-item is-active">${summaryText}</span></span></span>`
             : '';
 
         return `<span class="${classes}"><span class="iris-citation__icon"></span><span class="iris-citation__text">${label}</span>${summaryHtml}</span>`;
@@ -424,11 +424,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const classes = ['iris-citation-group', typeClass, hasSummary ? 'iris-citation-group--has-summary' : undefined].filter(Boolean).join(' ');
         const count = parsed.length - 1;
         const navHtml = summaryItems.length > 1 ? this.renderCitationNavHtml(summaryItems.length) : '';
-        const summaryHtml = hasSummary
-            ? `<span class="iris-citation__summary"><span class="iris-citation__summary-content">${summaryItems.join(
-                  '',
-              )}</span>${navHtml}<span class="iris-citation__summary-icon iris-citation__icon" aria-hidden="true"></span></span>`
-            : '';
+        const summaryHtml = hasSummary ? `<span class="iris-citation__summary"><span class="iris-citation__summary-content">${summaryItems.join('')}</span>${navHtml}</span>` : '';
 
         return `<span class="${classes}"><span class="iris-citation ${typeClass}"><span class="iris-citation__icon"></span><span class="iris-citation__text">${label}</span></span><span class="iris-citation__count">+${count}</span>${summaryHtml}</span>`;
     }
@@ -503,38 +499,33 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
      * @returns The formatted summary HTML.
      */
     private formatSummary(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
-        const fallbackKeyword = parsed.type === 'F' ? 'FAQ' : 'Source';
-        const keywordValue = escapeHtml(parsed.keyword?.trim() || fallbackKeyword);
         const summaryValue = parsed.summary.trim() ? escapeHtml(parsed.summary.trim()) : '';
-        const lines: string[] = [keywordValue];
 
-        if (summaryValue) {
-            lines.push(summaryValue);
+        let firstLine: string;
+        if (parsed.type === 'L' && meta?.lectureTitle?.trim()) {
+            firstLine = escapeHtml(meta.lectureTitle.trim());
+        } else if (parsed.type === 'F') {
+            firstLine = 'FAQ';
+        } else {
+            firstLine = 'Source';
         }
 
-        const filtered = lines.filter(Boolean);
-        if (filtered.length === 0) {
+        if (!firstLine && !summaryValue) {
             return '';
         }
 
-        const [keywordLine, ...restLines] = filtered;
-        const rest = restLines.length > 0 ? `<br />${restLines.join('<br />')}` : '';
-        const metaLines: string[] = [];
+        let unitHtml = '';
         if (parsed.type === 'L') {
-            const lectureTitle = meta?.lectureTitle?.trim();
-            if (lectureTitle) {
-                const lectureLabel = this.translateService.instant('artemisApp.iris.citations.lectureLabel');
-                metaLines.push(`<span class="iris-citation__summary-meta">${lectureLabel}: "${escapeHtml(lectureTitle)}"</span>`);
-            }
             const unitTitle = meta?.lectureUnitTitle?.trim();
             if (unitTitle) {
                 const lectureUnitLabel = this.translateService.instant('artemisApp.iris.citations.lectureUnitLabel');
-                metaLines.push(`<span class="iris-citation__summary-meta">${lectureUnitLabel}: "${escapeHtml(unitTitle)}"</span>`);
+                unitHtml = `<br /><span class="iris-citation__summary-meta">${lectureUnitLabel}: "${escapeHtml(unitTitle)}"</span>`;
             }
         }
-        const metaHtml = metaLines.length > 0 ? `<br />${metaLines.join('<br />')}` : '';
 
-        return `<span class="iris-citation__summary-keyword">${keywordLine}</span>${rest}${metaHtml}`;
+        const summaryHtml = summaryValue ? `<br />${summaryValue}` : '';
+
+        return `<span class="iris-citation__summary-keyword">${firstLine}</span>${unitHtml}${summaryHtml}`;
     }
 
     /**

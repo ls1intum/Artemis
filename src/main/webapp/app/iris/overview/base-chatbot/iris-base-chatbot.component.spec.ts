@@ -911,7 +911,7 @@ describe('IrisBaseChatbotComponent', () => {
         const html = (component as any).renderCitationHtml(parsed, meta);
 
         expect(html).toContain('iris-citation--slide');
-        expect(html).toContain('artemisApp.iris.citations.lectureLabel');
+        expect(html).toContain('Intro');
         expect(html).toContain('artemisApp.iris.citations.lectureUnitLabel');
     });
 
