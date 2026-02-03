@@ -91,6 +91,11 @@ jobs:
             "${{ env.STATUSES_REQUEST_URL }}" \
             -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"Phase 1: Running relevant tests (${{ needs.determine-tests.outputs.relevant_count }} test paths)...","target_url":"${{ env.TARGET_URL }}"}'
 
+      - name: Git Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+
       - name: E2E Setup
         uses: ./.github/actions/e2e-setup
         with:
@@ -145,6 +150,11 @@ jobs:
             "${{ env.STATUSES_REQUEST_URL }}" \
             -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"Phase 2: Running remaining tests (${{ needs.determine-tests.outputs.remaining_count }} test paths)...","target_url":"${{ env.TARGET_URL }}"}'
 
+      - name: Git Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+
       - name: E2E Setup
         uses: ./.github/actions/e2e-setup
         with:
@@ -197,6 +207,11 @@ jobs:
             "${{ env.STATUSES_REQUEST_URL }}" \
             -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"E2E tests are running (all tests - infrastructure changes detected)...","target_url":"${{ env.TARGET_URL }}"}'
 
+      - name: Git Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+
       - name: E2E Setup
         uses: ./.github/actions/e2e-setup
         with:
@@ -242,6 +257,11 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             "${{ env.STATUSES_REQUEST_URL }}" \
             -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"E2E tests are running (all tests - multi-node)...","target_url":"${{ env.TARGET_URL }}"}'
+
+      - name: Git Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
 
       - name: E2E Setup
         uses: ./.github/actions/e2e-setup

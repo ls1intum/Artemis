@@ -81,3 +81,11 @@ runs:
     - name: Run cleanup script (before E2E)
       shell: bash
       run: .ci/E2E-tests/cleanup.sh
+
+    - name: Clean old test results
+      shell: bash
+      run: |
+        echo "Cleaning up old test results from previous runs..."
+        rm -rf src/test/playwright/test-reports/*.xml || true
+        ls -la src/test/playwright/test-reports/ 2>/dev/null || echo "test-reports directory does not exist yet"
+        echo "Test results cleanup complete"
