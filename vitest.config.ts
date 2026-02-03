@@ -47,7 +47,7 @@ export default defineConfig({
             },
         },
         coverage: {
-            provider: 'v8',
+            provider: 'istanbul',
             reporter: ['text', 'lcov', 'html', 'json-summary'],
             reportsDirectory: 'build/test-results/vitest/coverage',
             include: [

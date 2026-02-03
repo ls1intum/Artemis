@@ -1,6 +1,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { NgClass } from '@angular/common';
-import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, input, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -9,6 +10,7 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 @Component({
     selector: 'jhi-problem-statement',
@@ -20,6 +22,7 @@ export class ProblemStatementComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private exerciseService = inject(ExerciseService);
     private participationService = inject(ParticipationService);
+    private destroyRef = inject(DestroyRef);
 
     public readonly exerciseInput = input<Exercise>();
     readonly participationInput = input<StudentParticipation>();
@@ -30,10 +33,16 @@ export class ProblemStatementComponent implements OnInit {
     readonly exercise = computed(() => this.exerciseInput() ?? this.fetchedExercise());
     readonly participation = computed(() => this.participationInput() ?? this.fetchedParticipation());
 
+    /** Returns the exercise as ProgrammingExercise if it's a programming exercise, undefined otherwise */
+    readonly programmingExercise = computed(() => {
+        const ex = this.exercise();
+        return ex?.type === ExerciseType.PROGRAMMING ? (ex as ProgrammingExercise) : undefined;
+    });
+
     isStandalone: boolean = false;
 
     ngOnInit() {
-        this.route.params.subscribe((params) => {
+        this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             const exerciseId = parseInt(params['exerciseId'], 10);
             let participationId: number | undefined = undefined;
             if (params['participationId']) {
@@ -54,13 +63,9 @@ export class ProblemStatementComponent implements OnInit {
         // Check whether problem statement is displayed standalone (mobile apps)
         const url = this.route.url;
         if (url) {
-            url.subscribe((segments) => {
+            url.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((segments) => {
                 this.isStandalone = segments.some((segment) => segment.path == 'problem-statement');
             });
         }
-    }
-
-    get isProgrammingExercise(): boolean {
-        return this.exercise()?.type === ExerciseType.PROGRAMMING;
     }
 }

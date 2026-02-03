@@ -104,20 +104,21 @@ describe('ProblemStatementComponent', () => {
         expect(component.participation()).toEqual(participation);
     });
 
-    describe('isProgrammingExercise', () => {
-        it('should return true if exercise type is PROGRAMMING', () => {
-            fixture.componentRef.setInput('exerciseInput', { id: 1, type: ExerciseType.PROGRAMMING } as Exercise);
-            expect(component.isProgrammingExercise).toBe(true);
+    describe('programmingExercise', () => {
+        it('should return the exercise as ProgrammingExercise if exercise type is PROGRAMMING', () => {
+            const programmingExercise = { id: 1, type: ExerciseType.PROGRAMMING };
+            fixture.componentRef.setInput('exerciseInput', programmingExercise as Exercise);
+            expect(component.programmingExercise()).toEqual(programmingExercise);
         });
 
-        it('should return false if exercise type is not PROGRAMMING', () => {
+        it('should return undefined if exercise type is not PROGRAMMING', () => {
             fixture.componentRef.setInput('exerciseInput', { id: 1, type: ExerciseType.QUIZ } as Exercise);
-            expect(component.isProgrammingExercise).toBe(false);
+            expect(component.programmingExercise()).toBeUndefined();
         });
 
-        it('should return false if exercise is not defined', () => {
+        it('should return undefined if exercise is not defined', () => {
             fixture.componentRef.setInput('exerciseInput', undefined);
-            expect(component.isProgrammingExercise).toBe(false);
+            expect(component.programmingExercise()).toBeUndefined();
         });
     });
 

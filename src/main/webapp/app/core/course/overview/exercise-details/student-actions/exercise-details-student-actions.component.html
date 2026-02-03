@@ -89,7 +89,7 @@
                             [buttonIcon]="faPlayCircle"
                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                             [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
-                            [buttonLoading]="!!exercise().loading"
+                            [buttonLoading]="isLoading()"
                             [smallButton]="smallButtons()"
                             [hideLabelMobile]="false"
                             [overwriteDisabled]="isBeforeStartDateAndStudent"
@@ -111,9 +111,9 @@
                 @if (shouldDisplayIDEButtons()) {
                     @if (!examMode() && programmingExercise()?.allowOnlineEditor) {
                         <jhi-open-code-editor-button
-                            [loading]="!!exercise().loading"
+                            [loading]="isLoading()"
                             [smallButtons]="smallButtons()"
-                            [participations]="exercise().studentParticipations!"
+                            [participations]="studentParticipations()"
                             [courseAndExerciseNavigationUrlSegment]="['/courses', courseId(), 'exercises', 'programming-exercises', exercise().id, 'code-editor']"
                             [exercise]="exercise()"
                             [hideLabelMobile]="true"
@@ -121,11 +121,11 @@
                     }
                     @if (programmingExercise()?.allowOfflineIde) {
                         <jhi-code-button
-                            [loading]="!!exercise().loading"
+                            [loading]="isLoading()"
                             [smallButtons]="smallButtons()"
-                            [participations]="exercise().studentParticipations!"
+                            [participations]="studentParticipations()"
                             [exercise]="exercise()"
-                            [routerLinkForRepositoryView]="['/courses', courseId(), 'exercises', exercise().id!, 'repository', exercise().studentParticipations![0].id!]"
+                            [routerLinkForRepositoryView]="['/courses', courseId(), 'exercises', exercise().id!, 'repository', studentParticipations()[0]!.id!]"
                             [hideLabelMobile]="true"
                             [repositoryUri]="''"
                         />
@@ -146,7 +146,7 @@
                         [buttonIcon]="faPlayCircle"
                         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                         [buttonLabel]="'artemisApp.exerciseActions.resumeExercise' | artemisTranslate"
-                        [buttonLoading]="!!exercise().loading"
+                        [buttonLoading]="isLoading()"
                         [smallButton]="smallButtons()"
                         [hideLabelMobile]="false"
                         (click)="resumeProgrammingExercise(false)"
@@ -163,7 +163,7 @@
                         [buttonIcon]="faPlayCircle"
                         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                         [buttonLabel]="'artemisApp.exerciseActions.resumeExercisePractice' | artemisTranslate"
-                        [buttonLoading]="!!exercise().loading"
+                        [buttonLoading]="isLoading()"
                         [smallButton]="smallButtons()"
                         [hideLabelMobile]="false"
                         (click)="resumeProgrammingExercise(true)"
@@ -194,7 +194,7 @@
                             jhi-exercise-action-button
                             [buttonIcon]="faPlayCircle"
                             [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
-                            [buttonLoading]="!!exercise().loading"
+                            [buttonLoading]="isLoading()"
                             [smallButton]="smallButtons()"
                             [hideLabelMobile]="false"
                             [overwriteDisabled]="isBeforeStartDateAndStudent"
@@ -217,7 +217,7 @@
                                       : 'viewSubmissions') | artemisTranslate
                         "
                         [outlined]="(!beforeDueDate() || hasRatedGradedResult()) && gradedParticipation()?.initializationState === InitializationState.FINISHED"
-                        [buttonLoading]="!!exercise().loading"
+                        [buttonLoading]="isLoading()"
                         [smallButton]="smallButtons()"
                         [hideLabelMobile]="false"
                         [routerLink]="['/courses', courseId(), 'exercises', exercise().type + '-exercises', exercise().id, 'participate', gradedParticipation()!.id]"
@@ -246,7 +246,7 @@
         [id]="button.id"
         [buttonIcon]="button.icon"
         [buttonLabel]="button.label | artemisTranslate"
-        [buttonLoading]="!!exercise().loading"
+        [buttonLoading]="isLoading()"
         [smallButton]="smallButtons()"
         [hideLabelMobile]="button.hideLabelMobile"
         [outlined]="button.outlined"

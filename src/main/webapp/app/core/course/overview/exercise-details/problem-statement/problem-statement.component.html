@@ -1,6 +1,6 @@
-@if (isProgrammingExercise && exercise()) {
+@if (programmingExercise()) {
     <div class="row mb-4">
-        <jhi-programming-exercise-instructions [exercise]="$any(exercise())" [participation]="participation()!" [personalParticipation]="true" />
+        <jhi-programming-exercise-instructions [exercise]="programmingExercise()!" [participation]="participation()!" [personalParticipation]="true" />
     </div>
 } @else {
     @if (exercise()?.problemStatement) {

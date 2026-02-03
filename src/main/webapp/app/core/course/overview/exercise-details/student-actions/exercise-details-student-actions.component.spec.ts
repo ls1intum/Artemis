@@ -245,8 +245,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         let codeButton = fixture.debugElement.query(By.css('jhi-code-button'));
         expect(codeButton).toBeNull();
 
-        comp.exercise().studentParticipations = [initPart];
-        comp.updateParticipations();
+        // Update participations via the component's public method
+        comp.receiveNewParticipation(initPart);
 
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
@@ -312,7 +312,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
         comp.resumeProgrammingExercise(false);
 
-        expect(comp.exercise().studentParticipations).toEqual([activeParticipation, practiceParticipation]);
+        expect(comp.studentParticipations()).toEqual([activeParticipation, practiceParticipation]);
     });
 
     it('should show correct buttons in exam mode', async () => {

@@ -71,6 +71,8 @@ export class ExerciseDetailsStudentActionsComponent {
         effect(() => {
             const exercise = this.exercise();
             untracked(() => {
+                // Initialize local participations from the exercise input
+                this._studentParticipations.set(exercise.studentParticipations ?? []);
                 this.updateParticipations();
                 this._isTeamAvailable.set(!!(exercise.teamMode && exercise.studentAssignedTeamIdComputed && exercise.studentAssignedTeamId));
                 this.initializeExerciseSpecificState(exercise);
@@ -100,6 +102,8 @@ export class ExerciseDetailsStudentActionsComponent {
     private readonly _hasRatedGradedResult = signal(false);
     private readonly _editorLabel = signal<string | undefined>(undefined);
     private readonly _numberOfGradedParticipationResults = signal(0);
+    private readonly _isLoading = signal(false);
+    private readonly _studentParticipations = signal<StudentParticipation[]>([]);
 
     readonly uninitializedQuiz = computed(() => this._uninitializedQuiz());
     readonly quizNotStarted = computed(() => this._quizNotStarted());
@@ -110,6 +114,8 @@ export class ExerciseDetailsStudentActionsComponent {
     readonly hasRatedGradedResult = computed(() => this._hasRatedGradedResult());
     readonly editorLabel = computed(() => this._editorLabel());
     readonly numberOfGradedParticipationResults = computed(() => this._numberOfGradedParticipationResults());
+    readonly isLoading = computed(() => this._isLoading());
+    readonly studentParticipations = computed(() => this._studentParticipations());
 
     readonly athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
 
@@ -135,21 +141,23 @@ export class ExerciseDetailsStudentActionsComponent {
     }
 
     receiveNewParticipation(newParticipation: StudentParticipation) {
-        const studentParticipations = this.exercise().studentParticipations ?? [];
-        if (studentParticipations.map((participation) => participation.id).includes(newParticipation.id)) {
-            this.exercise().studentParticipations = studentParticipations.map((participation) => (participation.id === newParticipation.id ? newParticipation : participation));
+        const currentParticipations = this._studentParticipations();
+        let updatedParticipations: StudentParticipation[];
+        if (currentParticipations.map((participation) => participation.id).includes(newParticipation.id)) {
+            updatedParticipations = currentParticipations.map((participation) => (participation.id === newParticipation.id ? newParticipation : participation));
         } else {
-            this.exercise().studentParticipations = [...studentParticipations, newParticipation];
+            updatedParticipations = [...currentParticipations, newParticipation];
         }
+        this._studentParticipations.set(updatedParticipations);
         this.updateParticipations();
     }
 
     updateParticipations() {
-        const studentParticipations = this.exercise().studentParticipations ?? [];
-        const gradedParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, false);
+        const currentParticipations = this._studentParticipations();
+        const gradedParticipation = this.participationService.getSpecificStudentParticipation(currentParticipations, false);
         this._gradedParticipation.set(gradedParticipation);
         this._numberOfGradedParticipationResults.set(getAllResultsOfAllSubmissions(gradedParticipation?.submissions).length);
-        this._practiceParticipation.set(this.participationService.getSpecificStudentParticipation(studentParticipations, true));
+        this._practiceParticipation.set(this.participationService.getSpecificStudentParticipation(currentParticipations, true));
 
         this._hasRatedGradedResult.set(
             !!getAllResultsOfAllSubmissions(gradedParticipation?.submissions)?.some((result) => result.rated === true && result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA),
@@ -181,11 +189,11 @@ export class ExerciseDetailsStudentActionsComponent {
     }
 
     startExercise() {
-        this.exercise().loading = true;
+        this._isLoading.set(true);
         const programmingExercise = this._programmingExercise();
         this.courseExerciseService
             .startExercise(this.exercise().id!)
-            .pipe(finalize(() => (this.exercise().loading = false)))
+            .pipe(finalize(() => this._isLoading.set(false)))
             .subscribe({
                 next: (participation) => {
                     if (participation) {
@@ -216,17 +224,20 @@ export class ExerciseDetailsStudentActionsComponent {
      * resume the programming exercise
      */
     resumeProgrammingExercise(testRun: boolean) {
-        this.exercise().loading = true;
+        this._isLoading.set(true);
         const participation = testRun ? this._practiceParticipation() : this._gradedParticipation();
         this.courseExerciseService
             .resumeProgrammingExercise(this.exercise().id!, participation!.id!)
-            .pipe(finalize(() => (this.exercise().loading = false)))
+            .pipe(finalize(() => this._isLoading.set(false)))
             .subscribe({
                 next: (resumedParticipation: StudentParticipation) => {
                     if (resumedParticipation) {
                         // Otherwise the client would think that all results are loaded, but there would not be any (=> no graded result).
-                        const replacedIndex = this.exercise().studentParticipations!.indexOf(participation!);
-                        this.exercise().studentParticipations![replacedIndex] = resumedParticipation;
+                        const currentParticipations = this._studentParticipations();
+                        const replacedIndex = currentParticipations.indexOf(participation!);
+                        const updatedParticipations = [...currentParticipations];
+                        updatedParticipations[replacedIndex] = resumedParticipation;
+                        this._studentParticipations.set(updatedParticipations);
                         this.updateParticipations();
                         this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
                     }
@@ -274,7 +285,7 @@ export class ExerciseDetailsStudentActionsComponent {
      * We don't want to show buttons that would interact with the repository if the repository is not set
      */
     private isRepositoryUriSet(): boolean {
-        const participations = this.exercise().studentParticipations ?? [];
+        const participations = this._studentParticipations();
         const activeParticipation: ProgrammingExerciseStudentParticipation = this.participationService.getSpecificStudentParticipation(participations, false) ?? participations[0];
         return !!activeParticipation?.repositoryUri;
     }
@@ -285,7 +296,7 @@ export class ExerciseDetailsStudentActionsComponent {
      * @return {assignedTeamId}
      */
     get assignedTeamId(): number | undefined {
-        const participations = this.exercise().studentParticipations;
+        const participations = this._studentParticipations();
         return participations?.length ? participations[0].team?.id : this.exercise().studentAssignedTeamId;
     }
 

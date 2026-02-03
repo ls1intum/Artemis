@@ -111,7 +111,6 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
                     content: 'Deleted a textExercise',
                 });
                 this.dialogErrorSource.next('');
-                // TODO: The 'emit' function requires a mandatory void argument
                 this.onDeleteExercise.emit();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -126,7 +125,6 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
                     content: 'Deleted a modelingExercise',
                 });
                 this.dialogErrorSource.next('');
-                // TODO: The 'emit' function requires a mandatory void argument
                 this.onDeleteExercise.emit();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -141,7 +139,6 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
                     content: 'Deleted a fileUploadExercise',
                 });
                 this.dialogErrorSource.next('');
-                // TODO: The 'emit' function requires a mandatory void argument
                 this.onDeleteExercise.emit();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -156,7 +153,6 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
                     content: 'Deleted a quiz',
                 });
                 this.dialogErrorSource.next('');
-                // TODO: The 'emit' function requires a mandatory void argument
                 this.onDeleteExercise.emit();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -171,7 +167,6 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
                     content: 'Deleted a programming exercise',
                 });
                 this.dialogErrorSource.next('');
-                // TODO: The 'emit' function requires a mandatory void argument
                 this.onDeleteExercise.emit();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
