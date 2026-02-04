@@ -37,6 +37,7 @@
         "externalSubmissionForQuizExercise": "External submissions are not supported for Quiz exercises.",
         "noSubmissions": "No existing user was specified, or no submission exists.",
         "feedbackCreditsNull": "Error! If feedback is present, all elements must contain points.",
+        "faqRewriteFailed": "Failed to process FAQ rewrite.",
         "invalidGradeStepFormat": "One or more grade steps are not following the correct format. Click on the \"?\" for more information.",
         "examExerciseNotIncludedInScore": "An exam exercise must be included in the score!",
         "invalidGradeStepAdjacency": "The grade steps don't map to a valid grading key. Click on the \"?\" for more information.",

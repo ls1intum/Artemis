@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.RewriteFaqResponseDTO;
 import io.micrometer.observation.Observation;
@@ -94,7 +95,7 @@ public class HyperionFaqRewriteService {
         String userPrompt = templateService.render(PROMPT_REWRITE_USER, input);
 
         String rewrittenText;
-        try (var scope = observation.openScope()) {
+        try (var _ = observation.openScope()) {
             // @formatter:off
             rewrittenText = chatClient
                 .prompt()
@@ -105,10 +106,10 @@ public class HyperionFaqRewriteService {
             // @formatter:on
             observation.event(Observation.Event.of("ai_rewrite_completed"));
         }
-        catch (Exception e) {
-            log.error("Failed to process FAQ rewrite for course {} - returning original text", courseId, e);
+        catch (RuntimeException e) {
+            log.error("Failed to process FAQ rewrite for course {}", courseId, e);
             observation.error(e);
-            return new RewriteFaqResponseDTO(normalizedFaqText, List.of(), List.of(), "");
+            throw new InternalServerErrorAlertException("Failed to process FAQ rewrite: " + e.getMessage(), "FAQ", "faqRewriteFailed");
         }
         finally {
             observation.stop();
@@ -139,7 +140,7 @@ public class HyperionFaqRewriteService {
             return new RewriteFaqResponseDTO(rewrittenText.trim(), List.of(), List.of(), "");
         }
 
-        // Handle the JSON parsing automatically
+        // The outputConverter handles the JSON parsing automatically
         var outputConverter = new BeanOutputConverter<>(ConsistencyIssue.class);
         String systemPrompt = templateService.render(PROMPT_CONSISTENCY_SYSTEM, Map.of());
         String userPrompt = templateService.renderObject(PROMPT_CONSISTENCY_USER, Map.of("faqs", faqsJson, "final_result", rewrittenText, "format", outputConverter.getFormat()));

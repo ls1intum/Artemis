@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -23,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.hyperion.dto.RewriteFaqResponseDTO;
 import io.micrometer.observation.ObservationRegistry;
 
@@ -110,7 +112,7 @@ class HyperionFaqRewriteServiceTest {
     }
 
     @Test
-    void rewriteFaq_onError_returnsFallback() {
+    void rewriteFaq_onRewriteError_throwsAlertException() {
         long courseId = 1L;
         String originalText = "This is a bullet point text.";
 
@@ -118,8 +120,25 @@ class HyperionFaqRewriteServiceTest {
 
         when(faqRepository.findAllByCourseIdOrderByCreatedDateDesc(courseId)).thenReturn(List.of(existingFaq));
 
+        assertThatThrownBy(() -> hyperionFaqRewriteService.rewriteFaq(courseId, originalText)).isInstanceOf(InternalServerErrorAlertException.class)
+                .hasMessageContaining("Failed to process FAQ rewrite:");
+
+        // Only rewrite call was made
+        verify(chatModel, times(1)).call(any(Prompt.class));
+    }
+
+    @Test
+    void rewriteFaq_onConsistencyCheckError_returnsRewrittenText() {
+        long courseId = 1L;
+        String originalText = "This is a bullet point text.";
+        String rewrittenText = "This is a rewritten complete sentence.";
+
+        when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(rewrittenText)).thenThrow(new RuntimeException("AI Service Unavailable"));
+
+        when(faqRepository.findAllByCourseIdOrderByCreatedDateDesc(courseId)).thenReturn(List.of(existingFaq));
+
         var result = hyperionFaqRewriteService.rewriteFaq(courseId, originalText);
-        assertThat(result.rewrittenText()).isEqualTo(originalText);
+        assertThat(result.rewrittenText()).isEqualTo(rewrittenText);
         assertThat(result.inconsistencies()).isEmpty();
         assertThat(result.suggestions()).isEmpty();
         assertThat(result.improvement()).isEmpty();
