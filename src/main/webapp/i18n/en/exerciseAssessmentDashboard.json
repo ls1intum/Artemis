@@ -89,8 +89,7 @@
             "numberOfManualAssessedSubmissions": "Manual Assessed Submissions",
             "nextAssessment": "Assess next submission",
             "programmingExercise": {
-                "exampleSolution": "Example solution repository",
-                "goToRepo": "Go to repository"
+                "exampleSolution": "Example solution repository"
             },
             "language": "Language",
             "languages": {

@@ -70,22 +70,57 @@
                         >
                             <span jhiTranslate="artemisApp.editor.repoSelect.solutionRepo"></span>
                         </button>
-                        <button
-                            [disabled]="
-                                loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO ||
-                                loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO ||
-                                !exercise ||
-                                !exercise.studentParticipations ||
-                                !exercise.studentParticipations!.length ||
-                                (exercise.studentParticipations!.length > 0 && !repositoryUri(exercise.studentParticipations![0]))
-                            "
-                            (click)="selectAssignmentParticipation()"
-                            ngbDropdownItem
-                            [style.background-color]="selectedRepository === RepositoryType.ASSIGNMENT ? 'var(--link-color)' : 'transparent'"
-                            jhiTranslate="artemisApp.editor.repoSelect.assignmentRepo"
-                        >
-                            Assignment Participation
-                        </button>
+                        <div class="d-flex w-100">
+                            <button
+                                type="button"
+                                class="flex-grow-1 text-start"
+                                ngbDropdownItem
+                                [disabled]="
+                                    !exercise.studentParticipations ||
+                                    !exercise.studentParticipations.length ||
+                                    (exercise.studentParticipations!.length > 0 && !repositoryUri(exercise.studentParticipations![0]))
+                                "
+                                (click)="selectAssignmentParticipation()"
+                                [style.background-color]="selectedRepository === RepositoryType.ASSIGNMENT ? 'var(--link-color)' : 'transparent'"
+                            >
+                                <span jhiTranslate="artemisApp.editor.repoSelect.assignmentRepo"></span>
+                            </button>
+                            @if (exercise.isAtLeastInstructor) {
+                                <div class="vr my-1"></div>
+                                @if (!exercise.studentParticipations || !exercise.studentParticipations.length) {
+                                    <button
+                                        type="button"
+                                        class="flex-shrink-1 w-auto px-2"
+                                        ngbDropdownItem
+                                        (click)="createAssignmentParticipation()"
+                                        [disabled]="isCreateAssignmentRepoDisabled || loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO"
+                                        [ngbTooltip]="'artemisApp.editor.repoSelect.createAssignmentRepo' | artemisTranslate"
+                                    >
+                                        @if (loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
+                                            <fa-icon [icon]="faCircleNotch" animation="spin" />
+                                        } @else {
+                                            <fa-icon [icon]="faPlus" />
+                                        }
+                                    </button>
+                                }
+                                @if (exercise.studentParticipations && exercise.studentParticipations.length) {
+                                    <button
+                                        type="button"
+                                        class="flex-shrink-1 w-auto px-2 text-danger"
+                                        ngbDropdownItem
+                                        (click)="deleteAssignmentParticipation()"
+                                        [disabled]="loadingState !== LOADING_STATE.CLEAR"
+                                        [ngbTooltip]="'artemisApp.editor.repoSelect.deleteAssignmentRepo' | artemisTranslate"
+                                    >
+                                        @if (loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO) {
+                                            <fa-icon [icon]="faCircleNotch" animation="spin" />
+                                        } @else {
+                                            <fa-icon [icon]="faTimes" />
+                                        }
+                                    </button>
+                                }
+                            }
+                        </div>
                         <button
                             [disabled]="!exercise"
                             (click)="selectTestRepository()"
@@ -142,36 +177,6 @@
                             }
                         </button>
                         <div ngbDropdownMenu class="ai-dropdown-menu">
-                            <!-- Repository Actions Section -->
-                            @if (!exercise.studentParticipations || !exercise.studentParticipations.length) {
-                                <div
-                                    [ngbTooltip]="'artemisApp.editor.repoSelect.createAssignmentRepoDisabledTooltip' | artemisTranslate"
-                                    [disableTooltip]="!isCreateAssignmentRepoDisabled"
-                                >
-                                    <button
-                                        ngbDropdownItem
-                                        (click)="createAssignmentParticipation(); aiDropdown.close()"
-                                        [disabled]="isCreateAssignmentRepoDisabled || loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO"
-                                    >
-                                        <fa-icon [icon]="faPlus" class="me-2" />
-                                        <span jhiTranslate="artemisApp.editor.repoSelect.createAssignmentRepo"></span>
-                                    </button>
-                                </div>
-                            }
-                            @if (exercise.studentParticipations && exercise.studentParticipations.length && exercise.isAtLeastInstructor) {
-                                <button
-                                    ngbDropdownItem
-                                    class="text-danger"
-                                    (click)="deleteAssignmentParticipation(); aiDropdown.close()"
-                                    [disabled]="loadingState !== LOADING_STATE.CLEAR"
-                                >
-                                    <fa-icon [icon]="faTimes" class="me-2" />
-                                    <span jhiTranslate="artemisApp.editor.repoSelect.deleteAssignmentRepo"></span>
-                                </button>
-                            }
-
-                            <div class="dropdown-divider"></div>
-
                             <!-- AI Generation Actions -->
                             <button ngbDropdownItem (click)="generateCode(); aiDropdown.close()" [disabled]="isGeneratingCode()">
                                 <fa-icon [icon]="facArtemisIntelligence" class="me-2" />

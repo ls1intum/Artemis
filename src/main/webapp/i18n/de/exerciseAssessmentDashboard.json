@@ -89,8 +89,7 @@
             "numberOfManualAssessedSubmissions": "Manuell bewertete Abgaben",
             "nextAssessment": "Nächste Abgabe bewerten",
             "programmingExercise": {
-                "exampleSolution": "Beispiellösungs-Repository",
-                "goToRepo": "Repository anzeigen"
+                "exampleSolution": "Beispiellösungs-Repository"
             },
             "language": "Sprache",
             "languages": {

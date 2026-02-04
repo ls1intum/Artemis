@@ -4,7 +4,7 @@
 @if (isInCourseManagement) {
     <a class="btn btn-secondary navbar-btn me-3 open-repository-button" [routerLink]="repositoryLink" target="_blank" rel="noopener noreferrer">
         <fa-icon [icon]="faExternalLink" />
-        <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo"></span>
+        <span jhiTranslate="artemisApp.editor.repo"></span>
     </a>
 }
 @if (commitState === CommitState.CONFLICT) {
