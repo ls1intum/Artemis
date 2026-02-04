@@ -40,4 +40,4 @@ runs:
 
     - name: Run cleanup script (after E2E)
       shell: bash
-      run: .ci/E2E-tests/cleanup.sh
+      run: .ci/E2E-tests/cleanup.sh || true
