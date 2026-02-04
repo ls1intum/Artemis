@@ -52,12 +52,12 @@ public class DeferredEagerBeanInitializer {
         String dataStoreConfig = env.getProperty("artemis.continuous-integration.data-store", HAZELCAST);
         if (dataStoreConfig.equalsIgnoreCase(HAZELCAST)) {
             try {
-                // Force eager initialization of HazelcastConnection first, so that connections are established as early as possible.
-                context.getBean(HazelcastConnection.class);
-                log.debug("Priority initialization of HazelcastConnection completed");
+                // Force eager initialization of HazelcastClusterManager first, so that connections are established as early as possible.
+                context.getBean(HazelcastClusterManager.class);
+                log.debug("Priority initialization of HazelcastClusterManager completed");
             }
             catch (Throwable ex) {
-                shutdownOnDeferredInitFailure("HazelcastConnection", ex);
+                shutdownOnDeferredInitFailure("HazelcastClusterManager", ex);
             }
         }
 

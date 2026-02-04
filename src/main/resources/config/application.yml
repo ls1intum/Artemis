@@ -394,7 +394,17 @@ jhipster:
             time-to-live-seconds: 3600
             backup-count: 1
 
-# Eureka configuration
+# =======================================================================================
+# EUREKA CONFIGURATION (Service Discovery via JHipster Registry)
+# =======================================================================================
+# Eureka is used for service discovery, allowing Artemis nodes (core servers and build agents)
+# to find each other dynamically. The JHipster Registry acts as the Eureka server.
+#
+# Key use cases:
+# - Build agents discover core nodes to establish Hazelcast client connections
+# - Core nodes discover other core nodes for Hazelcast cluster formation
+# - Load balancers can use Eureka to find healthy instances
+# =======================================================================================
 eureka:
     client:
         region: default
@@ -413,8 +423,34 @@ eureka:
         prefer-ip-address: true
         appname: Artemis
         instanceId: Artemis:1
-        lease-renewal-interval-in-seconds: 20
-        lease-expiration-duration-in-seconds: 60
+        # -----------------------------------------------------------------------------------
+        # EUREKA LEASE/HEARTBEAT CONFIGURATION
+        # -----------------------------------------------------------------------------------
+        # These settings control how quickly the Eureka server (JHipster Registry) detects
+        # that an Artemis instance (core node or build agent) has gone offline.
+        #
+        # How it works:
+        # - Each instance sends a heartbeat to Eureka every 'lease-renewal-interval-in-seconds'
+        # - If Eureka doesn't receive a heartbeat within 'lease-expiration-duration-in-seconds',
+        #   the instance is marked as DOWN and eventually evicted from the registry
+        #
+        # Values chosen (10s interval, 30s expiration):
+        # - Balanced between fast detection and tolerance for brief network issues
+        # - Allows for 3 missed heartbeats before declaring an instance as DOWN
+        # - More conservative than Hazelcast (5s/15s) because Eureka handles service discovery
+        #   across potentially less reliable networks, and false-positive deregistrations
+        #   can cause unnecessary service disruption
+        # - Still fast enough to remove crashed instances within ~30-45 seconds
+        #
+        # Note: The actual eviction time also depends on the Eureka server's eviction interval
+        # (configured on the JHipster Registry side, typically runs every 60 seconds by default)
+        #
+        # Comparison with Hazelcast timeouts:
+        # - Hazelcast client heartbeat: 5s interval, 15s timeout (for real-time build agent status)
+        # - Eureka lease: 10s interval, 30s timeout (for service discovery, more tolerant)
+        # -----------------------------------------------------------------------------------
+        lease-renewal-interval-in-seconds: 10
+        lease-expiration-duration-in-seconds: 30
         status-page-url-path: ${management.endpoints.web.base-path}/info
         health-check-url-path: ${management.endpoints.web.base-path}/health
         metadata-map:

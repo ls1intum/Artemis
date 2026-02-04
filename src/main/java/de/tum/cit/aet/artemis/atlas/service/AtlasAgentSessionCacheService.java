@@ -26,7 +26,7 @@ public class AtlasAgentSessionCacheService {
 
     /**
      * Cache name for tracking pending competency operations for each session.
-     * Must be configured in CacheConfiguration with appropriate TTL (2 hours recommended).
+     * Must be configured in HazelcastConfiguration with appropriate TTL (2 hours recommended).
      */
     public static final String ATLAS_SESSION_PENDING_OPERATIONS_CACHE = "atlas-session-pending-operations";
 
