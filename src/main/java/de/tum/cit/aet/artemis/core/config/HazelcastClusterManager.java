@@ -167,11 +167,18 @@ public class HazelcastClusterManager {
             log.debug("Current {} Registry cluster members: {}", clusterMemberInstances.size(), registryMemberAddresses);
             log.debug("Current {} Hazelcast members: {}", hazelcastMemberAddresses.size(), hazelcastMemberAddresses);
 
+            // Resolve Hazelcast member addresses to IPs for comparison (handles hostname vs IP mismatches in Docker)
+            Set<String> hazelcastResolvedAddresses = resolveAddressesToIps(hazelcastMemberAddresses);
+
             // Check for members in registry but not in Hazelcast (need to add)
             for (ServiceInstance instance : clusterMemberInstances) {
                 var instanceHazelcastAddress = eurekaInstanceHelper.formatInstanceAddress(instance);
+                // Check both direct match and IP-resolved match to handle hostname/IP mismatches
                 if (!hazelcastMemberAddresses.contains(instanceHazelcastAddress)) {
-                    addHazelcastClusterMember(instance, hazelcastInstance.getConfig());
+                    String resolvedInstanceAddress = resolveAddressToIp(instanceHazelcastAddress);
+                    if (!hazelcastResolvedAddresses.contains(resolvedInstanceAddress)) {
+                        addHazelcastClusterMember(instance, hazelcastInstance.getConfig());
+                    }
                 }
             }
 
