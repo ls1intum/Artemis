@@ -562,7 +562,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
                 startColumn: 0,
                 endColumn: 10,
             }),
-            1,
+            42,
         );
         expect(comp.showDiff()).toBeTrue();
         expect(successSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.success');
@@ -638,7 +638,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
         expect(hyperionApiService.refineProblemStatementGlobally).toHaveBeenCalledWith(
             1,
             expect.objectContaining({ problemStatementText: 'Original problem statement', userPrompt: 'Improve clarity' }),
-            1,
+            42,
         );
         expect(comp.showDiff()).toBeTrue();
         expect(successSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.success');
