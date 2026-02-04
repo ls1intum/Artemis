@@ -338,7 +338,7 @@
                                 <fa-icon [icon]="faBan" class="me-1" />
                                 <span jhiTranslate="artemisApp.programmingExercise.problemStatement.revertAll"></span>
                             </button>
-                            <button class="btn btn-success btn-sm" type="button" (click)="acceptRefinement()" [disabled]="isAiApplying() || isGeneratingCode()">
+                            <button class="btn btn-success btn-sm" type="button" (click)="closeDiff()" [disabled]="isAiApplying() || isGeneratingCode()">
                                 <fa-icon [icon]="faSave" class="me-1" />
                                 <span jhiTranslate="artemisApp.programmingExercise.problemStatement.doneReviewing"></span>
                             </button>

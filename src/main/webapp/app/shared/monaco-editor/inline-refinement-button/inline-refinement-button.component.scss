@@ -1,6 +1,6 @@
 .inline-refinement-container {
     position: fixed;
-    z-index: 1000;
+    z-index: 2000; // Increased to ensure it's above modals and consistent overlay elements
     display: flex;
     align-items: center;
 }
@@ -27,6 +27,12 @@
         transform: translateY(-1px);
     }
 
+    &:focus-visible {
+        outline: 2px solid var(--bs-body-bg, #303030);
+        outline-offset: 2px;
+        box-shadow: 0 0 0 4px rgba(62, 138, 204, 0.6);
+    }
+
     fa-icon {
         font-size: 12px;
     }
@@ -48,7 +54,8 @@
 }
 
 .refinement-input {
-    width: 420px;
+    width: 100%;
+    max-width: 420px;
     border: none;
     background: transparent;
     color: var(--bs-body-color, #e0e0e0);
@@ -87,6 +94,12 @@
         filter: brightness(1.15);
     }
 
+    &:focus-visible {
+        outline: 2px solid var(--bs-body-bg, #303030);
+        outline-offset: 1px;
+        box-shadow: 0 0 0 3px rgba(62, 138, 204, 0.6);
+    }
+
     fa-icon {
         font-size: 12px;
     }
@@ -108,6 +121,13 @@
     &:hover {
         color: var(--bs-body-color, #e0e0e0);
         background: rgba(255, 255, 255, 0.1);
+    }
+
+    &:focus-visible {
+        color: var(--bs-body-color, #e0e0e0);
+        outline: 2px solid var(--bs-secondary, #888);
+        outline-offset: 1px;
+        border-radius: 50%;
     }
 
     fa-icon {
