@@ -1,25 +1,18 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { BuildAgentInformation } from 'app/buildagent/shared/entities/build-agent-information.model';
 import { Subject, Subscription, debounceTime, switchMap, tap } from 'rxjs';
-import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faFilter, faPause, faPauseCircle, faPlay, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { faCircleCheck, faFilter, faPause, faPauseCircle, faPlay, faSync } from '@fortawesome/free-solid-svg-icons';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { BuildOverviewService } from 'app/buildagent/build-queue/build-overview.service';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CommonModule } from '@angular/common';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { ResultComponent } from 'app/exercise/result/result.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { BuildJobStatisticsComponent } from 'app/buildagent/build-job-statistics/build-job-statistics.component';
 import { BuildJob, BuildJobStatistics, FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -28,9 +21,14 @@ import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/ht
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { FormsModule } from '@angular/forms';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
+import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
 import dayjs from 'dayjs/esm';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/shared/components/slice-navigator/slice-navigator.component';
+import { RunningJobsTableComponent } from 'app/buildagent/build-queue/tables/running-jobs-table/running-jobs-table.component';
+import { FinishedJobsTableComponent } from 'app/buildagent/build-queue/tables/finished-jobs-table/finished-jobs-table.component';
+import { extractHost, looksLikeAddress } from 'app/buildagent/shared/build-agent-address.utils';
 
 /**
  * Component that displays detailed information about a specific build agent.
@@ -45,37 +43,35 @@ import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/
     styleUrl: './build-agent-details.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        NgxDatatableModule,
-        DataTableComponent,
-        ArtemisDurationFromSecondsPipe,
-        ArtemisDatePipe,
         FontAwesomeModule,
         RouterModule,
         CommonModule,
-        ResultComponent,
         TranslateDirective,
+        ArtemisDatePipe,
         BuildJobStatisticsComponent,
         HelpIconComponent,
-        SortByDirective,
-        SortDirective,
-        DataTableComponent,
-        NgxDatatableModule,
         FormsModule,
         SliceNavigatorComponent,
+        AdminTitleBarTitleDirective,
+        AdminTitleBarActionsDirective,
+        RunningJobsTableComponent,
+        FinishedJobsTableComponent,
     ],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     private readonly websocketService = inject(WebsocketService);
     private readonly buildAgentsService = inject(BuildAgentsService);
     private readonly route = inject(ActivatedRoute);
+    private readonly router = inject(Router);
     private readonly buildQueueService = inject(BuildOverviewService);
     private readonly alertService = inject(AlertService);
     private readonly modalService = inject(NgbModal);
 
-    protected readonly TriggeredByPushTo = TriggeredByPushTo;
-
     /** Current build agent information including status and configuration */
     buildAgent = signal<BuildAgentInformation | undefined>(undefined);
+
+    /** Whether the build agent was not found (offline/removed) */
+    agentNotFound = signal(false);
 
     /** Aggregated statistics for build jobs processed by this agent */
     buildJobStatistics = signal<BuildJobStatistics>(new BuildJobStatistics());
@@ -127,14 +123,11 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
     // Font Awesome icons for the UI
     readonly faCircleCheck = faCircleCheck;
-    readonly faExclamationCircle = faExclamationCircle;
-    readonly faExclamationTriangle = faExclamationTriangle;
-    readonly faTimes = faTimes;
     readonly faPauseCircle = faPauseCircle;
     readonly faPause = faPause;
     readonly faPlay = faPlay;
-    readonly faSort = faSort;
     readonly faSync = faSync;
+    readonly faFilter = faFilter;
 
     /** Configuration for the pagination component */
     readonly paginationConfig: PaginationConfig = {
@@ -157,7 +150,6 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
     /** Filter configuration for finished build jobs */
     finishedBuildJobFilter: FinishedBuildJobFilter;
-    faFilter = faFilter;
 
     /** Number of items to display per page */
     itemsPerPage = ITEMS_PER_PAGE;
@@ -244,24 +236,123 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
      * Loads initial agent data from the REST API.
      * This provides immediate data display while WebSocket connections are being established.
      * Loads both running jobs and agent details in parallel for faster initial render.
+     *
+     * If the query param looks like an address (contains brackets and port), first tries to
+     * resolve it to an agent name using the list of online agents. This handles the case where
+     * the address in the URL has a different port than the current agent address (due to
+     * ephemeral Hazelcast client ports that change on reconnection).
      */
     loadAgentData() {
-        // Load running jobs for this agent
+        // Check if agentName looks like an address (e.g., [192.168.1.1]:5701 or [2001:db8::1]:5701)
+        // If so, try to resolve it to the actual agent name first before loading data
+        if (looksLikeAddress(this.agentName)) {
+            this.resolveAddressToNameThenLoadDetails();
+        } else {
+            this.loadRunningJobs();
+            this.loadAgentDetails();
+        }
+    }
+
+    /**
+     * Loads running jobs for this agent.
+     * Should be called after agentName is resolved to ensure correct filtering.
+     */
+    private loadRunningJobs() {
+        this.runningJobsSubscription?.unsubscribe();
         this.runningJobsSubscription = this.buildQueueService.getRunningBuildJobs(this.agentName).subscribe((runningBuildJobs) => {
             this.runningBuildJobs.set(this.updateBuildJobDuration(runningBuildJobs));
         });
+    }
 
-        // Load agent details including status and statistics
-        this.agentDetailsSubscription = this.buildAgentsService.getBuildAgentDetails(this.agentName).subscribe((buildAgent) => {
-            this.updateBuildAgent(buildAgent);
-            // Initialize filter with this agent's address to show only its finished jobs
-            this.finishedBuildJobFilter = new FinishedBuildJobFilter(this.buildAgent()?.buildAgent?.memberAddress);
-            this.loadFinishedBuildJobs();
+    /**
+     * Tries to resolve an address to an agent name using the list of online agents,
+     * then loads the agent details.
+     * This handles the case where the URL contains an old address with a different port.
+     */
+    private resolveAddressToNameThenLoadDetails() {
+        this.buildAgentsService.getBuildAgentSummary().subscribe({
+            next: (agents) => {
+                const urlHost = extractHost(this.agentName);
+                // Try to find an online agent whose address host matches
+                const matchingAgent = agents.find((agent) => {
+                    const agentAddress = agent.buildAgent?.memberAddress;
+                    if (agentAddress) {
+                        const agentHost = extractHost(agentAddress);
+                        return agentHost === urlHost;
+                    }
+                    return false;
+                });
+
+                if (matchingAgent?.buildAgent?.name) {
+                    // Found a matching online agent - use its name instead of the address
+                    this.agentName = matchingAgent.buildAgent.name;
+                    this.resubscribeWebsocket();
+                }
+                // Now load running jobs and agent details with the resolved name
+                this.loadRunningJobs();
+                this.loadAgentDetails();
+            },
+            error: () => {
+                // If we can't get the agent list, just try with the original address
+                this.loadRunningJobs();
+                this.loadAgentDetails();
+            },
         });
+    }
+
+    /**
+     * Loads agent details from the API.
+     */
+    private loadAgentDetails() {
+        this.agentDetailsSubscription?.unsubscribe();
+        this.agentDetailsSubscription = this.buildAgentsService.getBuildAgentDetails(this.agentName).subscribe({
+            next: (buildAgent) => {
+                this.updateBuildAgent(buildAgent);
+                // If we queried by address but got a different name, update for correct WebSocket subscription
+                const actualName = buildAgent.buildAgent?.name;
+                if (actualName && this.agentName !== actualName) {
+                    this.agentName = actualName;
+                    // Re-subscribe to the correct WebSocket channel
+                    this.resubscribeWebsocket();
+                }
+                // Initialize filter with this agent's address to show only its finished jobs
+                this.finishedBuildJobFilter = new FinishedBuildJobFilter(buildAgent.buildAgent?.memberAddress);
+                this.loadFinishedBuildJobs();
+            },
+            error: (error: HttpErrorResponse) => {
+                if (error.status === 404) {
+                    // Agent not found - this is expected for offline/removed agents
+                    this.agentNotFound.set(true);
+                } else {
+                    // Other errors (server error, network issue, etc.) - show alert but don't mark as not found
+                    onError(this.alertService, error);
+                }
+                // Use the query param directly for filtering - it's likely the address when navigating from finished jobs
+                // When agent is offline, buildAgent() is empty, so use this.agentName instead
+                this.finishedBuildJobFilter = new FinishedBuildJobFilter(this.agentName);
+                this.loadFinishedBuildJobs();
+            },
+        });
+    }
+
+    /**
+     * Re-subscribes to WebSocket channels with the updated agent name.
+     * Called when we navigate by address but need to subscribe to name-based channels.
+     */
+    private resubscribeWebsocket() {
+        // Unsubscribe from old channels
+        this.agentDetailsWebsocketSubscription?.unsubscribe();
+        this.runningJobsWebsocketSubscription?.unsubscribe();
+
+        // Update channel and re-subscribe
+        this.agentDetailsWebsocketChannel = this.agentUpdatesChannel + '/' + this.agentName;
+        this.initWebsocketSubscription();
     }
 
     private updateBuildAgent(buildAgent: BuildAgentInformation) {
         this.buildAgent.set(buildAgent);
+        // Reset not-found state when we successfully receive agent data
+        this.agentNotFound.set(false);
         this.buildJobStatistics.set({
             successfulBuilds: buildAgent.buildAgentDetails?.successfulBuilds || 0,
             failedBuilds: buildAgent.buildAgentDetails?.failedBuilds || 0,
@@ -475,5 +566,13 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
             // This is necessary to update the view when the build job duration is updated
             return { ...buildJob };
         });
+    }
+
+    /**
+     * Navigate to the build job detail page.
+     * @param jobId The ID of the build job
+     */
+    navigateToJobDetail(jobId: string): void {
+        this.router.navigate(['/admin', 'build-overview', jobId, 'job-details']);
     }
 }
