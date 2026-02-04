@@ -121,6 +121,28 @@ def install_pecv_bench_dependencies(pecv_bench_dir: str) -> None:
         logging.error(f"Pip install stderr: {e.stderr}")
         sys.exit(1)
 
+def check_pecv_bench_setup(pecv_bench_dir: str) -> bool:
+    """
+    Checks if pecv-bench directory exists and if dependencies are likely installed.
+    """
+    if not os.path.exists(pecv_bench_dir):
+        logging.error(f"PECV-bench directory not found at {pecv_bench_dir}.")
+        logging.error("Please run 'clone_pecv_bench' first.")
+        return False
+
+    # Simple check if we can import the module (implies installation)
+    if pecv_bench_dir not in sys.path:
+        sys.path.insert(0, pecv_bench_dir)
+
+    try:
+        import cli
+        return True
+    except ImportError:
+        logging.error("Could not import 'cli' from pecv-bench. Dependencies might not be installed.")
+        logging.error("Please run 'install_pecv_bench_dependencies' first.")
+        return False
+
+
 def create_exercise_variants(version: str, course: str, exercise: str, pecv_bench_dir: str) -> None:
     """
     Imports VariantManager and ExerciseIdentifier from pecv-bench and creates all variants with materialize_variant func.
@@ -181,8 +203,11 @@ def create_exercise_variants_all() -> None:
     This function iterates through the COURSE_EXERCISES dictionary and calls create_exercise_variants
     for each course and exercise combination.
     """
-    variants_to_create = COURSE_EXERCISES.get(DATASET_VERSION, {})
     pecv_bench_dir = get_pecv_bench_dir()
+    if not check_pecv_bench_setup(pecv_bench_dir):
+        return
+
+    variants_to_create = COURSE_EXERCISES.get(DATASET_VERSION, {})
     for course, exercises in variants_to_create.items():
         for exercise in exercises:
             logging.info(f"Creating variants for {DATASET_VERSION}/{course}/{exercise}...")
@@ -347,7 +372,12 @@ def convert_variant_to_zip_all(session: requests.Session) -> None:
     zip_to_create = COURSE_EXERCISES.get(DATASET_VERSION, {})
     pecv_bench_dir = get_pecv_bench_dir()
 
-    course_id = get_course_id_request(session=session)
+    try:
+        course_id = get_course_id_request(session=session)
+    except Exception as e:
+        logging.error(f"Cannot convert variants to zip: {e}")
+        logging.error("Ensure you have run 'create_course_request' successfully first.")
+        return
 
     for course, exercises in zip_to_create.items():
         for exercise in exercises:
@@ -360,7 +390,157 @@ def convert_variant_to_zip_all(session: requests.Session) -> None:
                     logging.info(f"Converting variant {variant_id} to zip...")
                     convert_variant_to_zip(pecv_bench_dir, DATASET_VERSION, course, exercise, variant_id, course_id)
 
-def convert_base_exercise_to_zip_test(exercise_path: str, course_id: int) -> None:
+def import_exercise_variant_request(session: requests.Session,
+                                                server_url: str,
+                                                course_id: int,
+                                                pecv_bench_dir: str,
+                                                version: str,
+                                                course: str,
+                                                exercise: str,
+                                                variant_id: str) -> bool:
+    """
+    Imports a programming exercise variant to the Artemis server.
+
+    POST /api/programming-courses/{courseId}/programming-exercises/import-from-file
+
+    :param Session session: The active requests Session object.
+    :param str server_url: The base URL of the Artemis server.
+    :param int course_id: The ID of the course where the exercise will be imported.
+    :param str pecv_bench_dir: The path to the pecv-bench directory.
+    :param str version: The dataset version.
+    :param str course: The course identifier.
+    :param str exercise: The exercise identifier.
+    :param str variant_id: The variant identifier.
+    :return: Boolean whether import was successful.
+    :rtype: bool
+    """
+    url: str = f"{server_url}/programming/courses/{course_id}/programming-exercises/import-from-file"
+    variant_dir = os.path.join(pecv_bench_dir, "data", version, course, exercise, "variants", variant_id)
+    config_file = os.path.join(variant_dir, "exercise-details.json")
+    exercise_zip = os.path.join(variant_dir, f"{variant_id}-FullExercise.zip")
+
+    try:
+        with open(config_file, 'r') as cnfg_file:
+            exercise_details: Dict[str, Any] = json.load(cnfg_file)
+        exercise_details_str = json.dumps(exercise_details)
+        logging.info(f"Loaded programming exercise details from {config_file}")
+    except OSError as e:
+        logging.error(f"Failed to read programming exercise JSON file at {config_file}: {e}")
+        return None
+
+    logging.info(f"Preparing to import exercise: {exercise_details.get('title', 'Untitled')}")
+    try:
+        with open(exercise_zip, 'rb') as ex_zip:
+            exercise_zip_file = ex_zip.read()
+            logging.info(f"Loaded programming exercise ZIP file from {exercise_zip}")
+    except OSError as e:
+        logging.error(f"Failed to read programming exercise ZIP file at {exercise_zip}: {e}")
+        return None
+
+    files_payload = {
+        'programmingExercise': (
+            'Exercise-Details.json',
+            exercise_details_str,
+            'application/json'
+        ),
+        'file': (
+            os.path.basename(exercise_zip),
+            exercise_zip_file,
+            'application/zip'
+        )
+    }
+
+    body, content_type = urllib3.filepost.encode_multipart_formdata(files_payload)
+    logging.info(f"Multipart form-data body and content type prepared.")
+
+    headers  = {
+        "Content-Type": content_type
+        }
+
+    logging.info(f"Sending request to: {url}")
+
+    response: requests.Response = session.post(url, data=body, headers=headers)
+
+    if response.status_code == 200:
+        logging.info(f"Imported programming exercise {exercise_details.get('title', 'Untitled')} successfully")
+        return True
+    else:
+        logging.error(f"Failed to import programming exercise; Status code: {response.status_code}\nResponse content: {response.text}")
+        return False
+
+def import_exercise_variants(session: requests.Session) -> None:
+    """
+    Imports all programming exercise (their variants) defined in config.ini/COURSE_EXERCISES into the Artemis server to COURSE_NAME.
+
+    COURSE_NAME is specified in config.ini.
+
+    Uses multithreading to speed up the import process.
+
+    :param Session session: The active requests Session object.
+    :return: None
+    :rtype: None
+    """
+    exercises_to_import = COURSE_EXERCISES.get(DATASET_VERSION, {})
+    pecv_bench_dir = get_pecv_bench_dir()
+
+    try:
+        course_id = get_course_id_request(session=session)
+    except Exception as e:
+        logging.error(f"Cannot import exercises: {e}")
+        logging.error("Ensure you have run 'create_course_request' successfully first.")
+        return
+
+    #TODO improve logging for which exercises failed to import
+    total_variants_imported = 0
+    total_variants_failed = 0
+
+    logging.info(f"Preparing to import variants for {sum(len(ex) for ex in COURSE_EXERCISES.values())} exercises across {len(COURSE_EXERCISES)} courses using {MAX_THREADS} threads")
+    with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
+        futures = []
+        # submit all tasks
+        for course, exercises in exercises_to_import.items():
+            for exercise in exercises:
+                variants_dir = os.path.join(pecv_bench_dir, "data", DATASET_VERSION, course, exercise, "variants")
+                if not os.path.exists(variants_dir):
+                    logging.warning(f"Variants folder not found: {variants_dir}")
+                    continue
+
+                variants_list_id = os.listdir(variants_dir)
+                for variant_id in variants_list_id:
+                    variant_id_dir = os.path.join(variants_dir, variant_id)
+                    if not os.path.isdir(variant_id_dir):
+                        logging.warning(f"Variant ID directory not found: {variant_id_dir}")
+                        continue
+
+                    futures.append(executor.submit(
+                        import_exercise_variant_request,
+                        session,
+                        SERVER_URL,
+                        course_id,
+                        pecv_bench_dir,
+                        DATASET_VERSION,
+                        course,
+                        exercise,
+                        variant_id
+                    ))
+
+        for future in as_completed(futures):
+            try:
+                result = future.result()
+                if result:
+                    total_variants_imported += 1
+                    logging.info(f"Imported variant successfully.")
+                else:
+                    total_variants_failed += 1
+                    logging.error(f"Failed to import variant.")
+            except Exception as e:
+                logging.exception(f"Thread failed with error: {e}")
+                return
+    logging.info(f"Imported {total_variants_imported} programming exercises into course ID {course_id}.")
+    logging.error(f"Failed to import {total_variants_failed} programming exercises into course ID {course_id}.")
+
+# ======= TEST FUNCTIONS =======
+def test_convert_base_exercise_to_zip(exercise_path: str, course_id: int) -> None:
     """
     Converts a base programming exercise (no variants) into a ZIP file using a random unique ID.
 
@@ -437,148 +617,12 @@ def convert_base_exercise_to_zip_test(exercise_path: str, course_id: int) -> Non
         if temp_zip.endswith('.zip') and os.path.exists(temp_zip):
             os.remove(temp_zip)
 
-def import_exercise_variant_request(session: requests.Session,
-                                                server_url: str,
-                                                course_id: int,
-                                                pecv_bench_dir: str,
-                                                version: str,
-                                                course: str,
-                                                exercise: str,
-                                                variant_id: str) -> bool:
-    """
-    Imports a programming exercise variant to the Artemis server.
-
-    :param Session session: The active requests Session object.
-    :param str server_url: The base URL of the Artemis server.
-    :param int course_id: The ID of the course where the exercise will be imported.
-    :param str pecv_bench_dir: The path to the pecv-bench directory.
-    :param str version: The dataset version.
-    :param str course: The course identifier.
-    :param str exercise: The exercise identifier.
-    :param str variant_id: The variant identifier.
-    :return: Boolean whether import was successful.
-    :rtype: bool
-    """
-    url: str = f"{server_url}/programming/courses/{course_id}/programming-exercises/import-from-file"
-    variant_dir = os.path.join(pecv_bench_dir, "data", version, course, exercise, "variants", variant_id)
-    config_file = os.path.join(variant_dir, "exercise-details.json")
-    exercise_zip = os.path.join(variant_dir, f"{variant_id}-FullExercise.zip")
-
-    try:
-        with open(config_file, 'r') as cnfg_file:
-            exercise_details: Dict[str, Any] = json.load(cnfg_file)
-        exercise_details_str = json.dumps(exercise_details)
-        logging.info(f"Loaded programming exercise details from {config_file}")
-    except OSError as e:
-        logging.error(f"Failed to read programming exercise JSON file at {config_file}: {e}")
-        return None
-
-    logging.info(f"Preparing to import exercise: {exercise_details.get('title', 'Untitled')}")
-    try:
-        with open(exercise_zip, 'rb') as ex_zip:
-            exercise_zip_file = ex_zip.read()
-            logging.info(f"Loaded programming exercise ZIP file from {exercise_zip}")
-    except OSError as e:
-        logging.error(f"Failed to read programming exercise ZIP file at {exercise_zip}: {e}")
-        return None
-
-    files_payload = {
-        'programmingExercise': (
-            'Exercise-Details.json',
-            exercise_details_str,
-            'application/json'
-        ),
-        'file': (
-            os.path.basename(exercise_zip),
-            exercise_zip_file,
-            'application/zip'
-        )
-    }
-
-    body, content_type = urllib3.filepost.encode_multipart_formdata(files_payload)
-    logging.info(f"Multipart form-data body and content type prepared.")
-
-    headers  = {
-        "Content-Type": content_type
-        }
-
-    logging.info(f"Sending request to: {url}")
-
-    response: requests.Response = session.post(url, data=body, headers=headers)
-
-    if response.status_code == 200:
-        logging.info(f"Imported programming exercise {exercise_details.get('title', 'Untitled')} successfully")
-        return True
-    else:
-        logging.error(f"Failed to import programming exercise; Status code: {response.status_code}\nResponse content: {response.text}")
-        return False
-
-def import_exercise_base_request() -> None:
-    #TODO
+#TODO
+def test_import_exercise_base_request() -> None:
     pass
+# ==============================
 
-def import_exercise_variants(session: requests.Session) -> None:
-    """
-    Imports all programming exercise (their variants) defined in config.ini/COURSE_EXERCISES into the Artemis server.
 
-    Uses multithreading to speed up the import process.
-
-    :param Session session: The active requests Session object.
-    :return: None
-    :rtype: None
-    """
-    exercises_to_import = COURSE_EXERCISES.get(DATASET_VERSION, {})
-    pecv_bench_dir = get_pecv_bench_dir()
-
-    course_id = get_course_id_request(session=session)
-
-    #TODO improve logging for which exercises failed to import
-    total_variants_imported = 0
-    total_variants_failed = 0
-    logging.info(f"Preparing to import variants for {sum(len(ex) for ex in COURSE_EXERCISES.values())} exercises across {len(COURSE_EXERCISES)} courses using {MAX_THREADS} threads")
-    with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
-        futures = []
-        # submit all tasks
-        for course, exercises in exercises_to_import.items():
-            for exercise in exercises:
-                variants_dir = os.path.join(pecv_bench_dir, "data", DATASET_VERSION, course, exercise, "variants")
-                if not os.path.exists(variants_dir):
-                    logging.warning(f"Variants folder not found: {variants_dir}")
-                    continue
-
-                variants_list_id = os.listdir(variants_dir)
-                for variant_id in variants_list_id:
-                    variant_id_dir = os.path.join(variants_dir, variant_id)
-                    if not os.path.isdir(variant_id_dir):
-                        logging.warning(f"Variant ID directory not found: {variant_id_dir}")
-                        continue
-
-                    futures.append(executor.submit(
-                        import_exercise_variant_request,
-                        session,
-                        SERVER_URL,
-                        course_id,
-                        pecv_bench_dir,
-                        DATASET_VERSION,
-                        course,
-                        exercise,
-                        variant_id
-                    ))
-
-        for future in as_completed(futures):
-            try:
-                result = future.result()
-                if result:
-                    total_variants_imported += 1
-                    logging.info(f"Imported variant successfully.")
-                else:
-                    total_variants_failed += 1
-                    logging.error(f"Failed to import variant.")
-            except Exception as e:
-                logging.exception(f"Thread failed with error: {e}")
-                return
-    logging.info(f"Imported {total_variants_imported} programming exercises into course ID {course_id}.")
-    logging.error(f"Failed to import {total_variants_failed} programming exercises into course ID {course_id}.")
 
 if __name__ == "__main__":
     logging.info("Step 1: Creating session")
@@ -587,23 +631,24 @@ if __name__ == "__main__":
     logging.info("Step 2: Logging in as admin")
     login_as_admin(session=session)
 
-    # logging.info("Step 3: geting pecv-bench directory")
-    #pecv_bench_dir = get_pecv_bench_dir()
+    logging.info("Step 3: geting pecv-bench directory")
+    pecv_bench_dir = get_pecv_bench_dir()
 
-    # logging.info("Step 4: cloning pecv-bench repository")
-    # clone_pecv_bench(pecv_bench_dir)
+    logging.info("Step 4: cloning pecv-bench repository")
+    clone_pecv_bench(pecv_bench_dir)
 
-    # logging.info("Step 5: installing pecv-bench dependencies")
-    #install_pecv_bench_dependencies(pecv_bench_dir)
+    logging.info("Step 5: installing pecv-bench dependencies")
+    install_pecv_bench_dependencies(pecv_bench_dir)
 
-    # logging.info("Step 6: creating exercise variants")
-    #create_exercise_variants_all()
+    logging.info("Step 6: creating exercise variants")
+    create_exercise_variants_all()
 
-    #logging.info("Step 7: converting variants to zip files"
-    #convert_variant_to_zip_all(session=session)
+    logging.info("Step 7: converting variants to zip files")
+    convert_variant_to_zip_all(session=session)
 
-    #logging.info("Step TEST: converting base exercise to zip file")
-    #convert_base_exercise_to_zip_test(exercise_path="/Users/mkh/Desktop/test_function", course_id=22)
+    #logging.info("Step TEST: converting base exercise to zip file and importing it to Artemis")
+    #test_convert_base_exercise_to_zip(exercise_path="/Users/mkh/Desktop/test_function", course_id=22)
+    #test_import_exercise_base_request()
 
     logging.info("Step 8: importing exercise variants")
     import_exercise_variants(session=session)

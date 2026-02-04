@@ -28,6 +28,7 @@ PECV_BENCH_URL: str = config.get('PECVCourseSettings', 'pecv_bench_url', fallbac
 DATASET_VERSION: str = config.get('PECVExerciseSettings', 'dataset_version', fallback="V1")
 COURSE_EXERCISES: Dict[str, Dict[str, List[str]]] = json.loads(config.get('PECVExerciseSettings', 'course_exercises'))
 
+CONSISTENCY_CHECK_EXERCISES: Dict[str, Dict[str, List[str]]] = json.loads(config.get('PECVConsistencyCheckSettings', 'consistency_check_exercises', fallback='{}'))
 REFERENCE: str = config.get('PECVConsistencyCheckSettings', 'reference', fallback="No Data Available")
 
 def login_as_admin(session: requests.Session) -> None:

@@ -172,7 +172,6 @@ def delete_course_request(session: requests.Session,max_retries: int = 3) -> boo
     logging.error(f"Failed to delete course with shortName {course_short_name} after {max_retries} attempts.")
     return False
 
-#TODO
 def get_course_id_request(session: requests.Session) -> int:
     """
     Get the course ID for the given course name using the provided session.
@@ -196,10 +195,13 @@ def get_course_id_request(session: requests.Session) -> int:
             return course["id"]
     raise Exception(f"Course with shortName {course_short_name} not found")
 
-#TODO
-def get_exercise_ids_from_pecv_bench_request(session: requests.Session, course_id: int) -> Dict[str, int]:
+def get_exercise_ids_request(session: requests.Session, course_id: int) -> Dict[str, int]:
     """
     Retrieves programming exercises for a specific course and extracts IDs and Titles.
+
+    GET /programming/courses/{courseId}/programming-exercises
+
+    Need to call get_course_id_request first to get course_id, which searches for COURSE_NAME ID.
 
     :param Session session: The active requests Session object.
     :param int course_id: The ID of the course to retrieve exercises from.
@@ -217,11 +219,12 @@ def get_exercise_ids_from_pecv_bench_request(session: requests.Session, course_i
         exercises_map = {}
 
         for exercise in exercises_data:
-            title = exercise.get("title")
+            ex_title = exercise.get("title")
             ex_id = exercise.get("id")
 
-            if title is not None and ex_id is not None:
-                exercises_map[title] = ex_id
+            if ex_title is not None and ex_id is not None:
+                exercises_map[ex_title] = ex_id
+
         return __transform_exercise_json_keys(exercises_map)
 
     except requests.exceptions.RequestException as e:
@@ -231,10 +234,12 @@ def get_exercise_ids_from_pecv_bench_request(session: requests.Session, course_i
         print(f"Error parsing JSON: {e}")
         return {}
 
+#TODO
 def __transform_exercise_json_keys(input_dict: Dict[str, int]) -> Dict[str, int]:
     """
     Transforms the keys of the input dictionary into a new format.
 
+    <'007 - H00 - Hello World ASM': 1736 -> H00-Hello_World_ASM:007': 1736> to easily map it with COURSE_EXERCISES from config.ini
     :param Dict[str, int] input_dict: The dictionary with original keys.
     :return: A dictionary with transformed keys.
     :rtype: Dict[str, int]
@@ -279,5 +284,12 @@ if __name__ == "__main__":
     logging.info("Step 2: Logging in as admin")
     login_as_admin(session=session)
 
-    logging.info("Step 3: Creating Hyperion Benchmark Course")
-    create_course_request(session=session)
+    #logging.info("Step 3: Creating Hyperion Benchmark Course")
+    #create_course_request(session=session)
+
+    logging.info("Step 4: Retrieving Hyperion Benchmark Course ID")
+    course_id = get_course_id_request(session=session)
+
+    logging.info("Step 5: Retrieving programming exercise IDs for the course")
+    exercise_ids = get_exercise_ids_request(session=session, course_id=course_id)
+    print(exercise_ids)
