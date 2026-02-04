@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -20,14 +21,23 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.domain.LLMRequest;
+import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationResponseDTO;
 
 class HyperionProblemStatementGenerationServiceTest {
 
     @Mock
     private ChatModel chatModel;
+
+    @Mock
+    private LLMTokenUsageService llmTokenUsageService;
+
+    @Mock
+    private UserRepository userRepository;
 
     private HyperionProblemStatementGenerationService hyperionProblemStatementGenerationService;
 
@@ -38,7 +48,8 @@ class HyperionProblemStatementGenerationServiceTest {
         mocks = MockitoAnnotations.openMocks(this);
         ChatClient chatClient = ChatClient.create(chatModel);
         var templateService = new HyperionPromptTemplateService();
-        this.hyperionProblemStatementGenerationService = new HyperionProblemStatementGenerationService(chatClient, templateService);
+        when(llmTokenUsageService.buildLLMRequest(any(), any(Integer.class), any(Integer.class), any())).thenReturn(new LLMRequest("model", 10, 0.0f, 10, 0.0f, "pipeline"));
+        this.hyperionProblemStatementGenerationService = new HyperionProblemStatementGenerationService(chatClient, templateService, llmTokenUsageService, userRepository);
     }
 
     @AfterEach
@@ -49,14 +60,29 @@ class HyperionProblemStatementGenerationServiceTest {
     @Test
     void generateProblemStatement_returnsGeneratedDraft() {
         String generatedDraft = "Generated draft problem statement";
-        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(generatedDraft)))));
+        ChatResponse chatResponse = org.mockito.Mockito.mock(ChatResponse.class);
+        var generation = new Generation(new AssistantMessage(generatedDraft));
+        when(chatResponse.getResult()).thenReturn(generation);
+
+        var metadata = org.mockito.Mockito.mock(org.springframework.ai.chat.metadata.ChatResponseMetadata.class);
+        var usage = org.mockito.Mockito.mock(org.springframework.ai.chat.metadata.Usage.class);
+        when(usage.getPromptTokens()).thenReturn(10);
+        when(usage.getCompletionTokens()).thenReturn(20);
+        when(metadata.getUsage()).thenReturn(usage);
+        when(chatResponse.getMetadata()).thenReturn(metadata);
+
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> chatResponse);
 
         var course = new Course();
+        course.setId(123L);
         course.setTitle("Test Course");
         course.setDescription("Test Description");
         ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt");
         assertThat(resp).isNotNull();
         assertThat(resp.draftProblemStatement()).isEqualTo(generatedDraft);
+        assertThat(resp.error()).isNull();
+
+        verify(llmTokenUsageService).saveLLMTokenUsage(any(), any(LLMServiceType.class), any());
     }
 
     @Test
@@ -74,7 +100,8 @@ class HyperionProblemStatementGenerationServiceTest {
 
     @Test
     void generateProblemStatement_throwsExceptionOnExcessivelyLongResponse() {
-        // Generate a string longer than MAX_PROBLEM_STATEMENT_LENGTH (50,000 characters)
+        // Generate a string longer than MAX_PROBLEM_STATEMENT_LENGTH (50,000
+        // characters)
         String excessivelyLongDraft = "a".repeat(50_001);
         when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(excessivelyLongDraft)))));
 
