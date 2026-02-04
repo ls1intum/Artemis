@@ -30,16 +30,30 @@ export class FormStatusBarComponent implements AfterViewInit {
     }
 
     scrollToHeadline(id: string) {
-        const element = document.getElementById(id);
-        if (element) {
-            const navbarHeight = (document.querySelector('jhi-navbar') as HTMLElement)?.getBoundingClientRect().height;
-            const statusBarHeight = this.statusBar?.nativeElement.getBoundingClientRect().height;
+        const target = document.getElementById(id);
+        if (!target) return;
 
-            /** Needs to be applied to the scrollMarginTop to ensure that the scroll to element is not hidden behind header elements */
-            const scrollOffsetInPx = navbarHeight + statusBarHeight;
-
-            element.style.scrollMarginTop = `${scrollOffsetInPx}px`;
-            element.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'start' });
+        const container = document.getElementById('course-body-container');
+        if (!container) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+            return;
         }
+
+        const navbarEl = document.querySelector('jhi-navbar') as HTMLElement | null;
+        const navbarHeight = navbarEl?.getBoundingClientRect().height ?? 0;
+        const statusBarHeight = this.statusBar?.nativeElement?.getBoundingClientRect().height ?? 0;
+
+        const offset = navbarHeight + statusBarHeight;
+
+        const containerRect = container.getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
+
+        const currentScrollTop = container.scrollTop;
+        const targetTopWithinContainer = targetRect.top - containerRect.top + currentScrollTop;
+
+        container.scrollTo({
+            top: Math.max(0, targetTopWithinContainer - offset),
+            behavior: 'smooth',
+        });
     }
 }
