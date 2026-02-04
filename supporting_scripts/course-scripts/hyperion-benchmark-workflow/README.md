@@ -27,6 +27,10 @@ It is recommended to use a virtual environment to manage dependencies in isolati
     ```shell
     python3.13 -m venv venv
     ```
+   - On **Windows**:
+   ```shell
+      py -3.13 -m venv venv
+   ```
 
 3. Activate the virtual environment:
    - On **macOS/Linux**:
@@ -38,6 +42,24 @@ It is recommended to use a virtual environment to manage dependencies in isolati
      venv\Scripts\activate
      ```
 
+
+
+
+
+cd supporting_scripts/course-scripts/hyperion-benchmark-workflow
+py -3.13 -m venv venv
+venv\Scripts\activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+
+make patch.exe available (Git for Windows)
+setx PATH "$env:PATH;C:\Program Files\Git\usr\bin"
+
+restart PowerShell after this line, then continue
+python run_pecv_bench_in_artemis.py
+
+But after that, works as expected.
+Code also LGTM.
 Once the virtual environment is activated, you will see the `(venv)` prefix in your terminal prompt. All dependencies will now be installed locally to this environment.
 
 ## 2. Install the Required Packages
@@ -45,9 +67,28 @@ Once the virtual environment is activated, you will see the `(venv)` prefix in y
 pip install -r requirements.txt
 ```
 
+- On **Windows**:
+   ```shell
+      python -m pip install --upgrade pip
+      python -m pip install -r requirements.txt
+   ```
+
+   make patch.exe available (Git for Windows)
+
+   ```shell
+      setx PATH "$env:PATH;C:\Program Files\Git\usr\bin"
+   ```
+
+   restart PowerShell after this line, then continue
+
+   ```shell
+      python run_pecv_bench.py
+   ```
+
+
 ## 3. Configure the Environment
 1. Start your local Artemis instance.
-2. Configure the values in [hyperion-benchmark-workflow/config.ini](./config.ini) according to your local setup.
+2. Configure the values in [hyperion-benchmark-workflow/config.ini](./config.ini) according to your local setup. (But for testing can be leaved as it is)
 
 
 **Note:**
@@ -58,7 +99,7 @@ pip install -r requirements.txt
 The script will automatically perform all the necessary steps (running from hyperion-benchmark-workflow):
 
 ```shell
-python3 run_pecv_bench_in_artemis.py
+python3 run_pecv_bench.py
 ```
 
 1. Authenticate as admin.

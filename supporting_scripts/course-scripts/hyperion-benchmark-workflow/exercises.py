@@ -544,7 +544,7 @@ def test_convert_base_exercise_to_zip(exercise_path: str, course_id: int) -> Non
     """
     Converts a base programming exercise (no variants) into a ZIP file using a random unique ID.
 
-    :param str exercise_path: The path to the base exercise directory on your computer.
+    :param str exercise_path: The path to the base exercise directory on your computer. Should contain solution/, template/, tests/ folders, problem-statement.md and exercise-details.json file.
     :param int course_id: The ID of the course to which the exercise belongs. Can be obtained via API request (e.g Postman).
     Or simply calling get_course_id_request function after logging in, which will retrieve the course id based on the course name defined in config.ini.
 
