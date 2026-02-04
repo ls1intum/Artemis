@@ -390,6 +390,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         }
 
         monacoEditor.setText(text);
+        this.updateProblemStatement(text);
     }
 
     /**
@@ -478,9 +479,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     applyRefinedContent(refined: string): void {
         this.markdownEditorMonaco?.applyRefinedContent(refined);
-        this.exercise.problemStatement = refined;
-        this.instructionChange.emit(refined);
-        this.generateHtmlSubject.next();
+        this.updateProblemStatement(refined);
     }
 
     /**
@@ -489,5 +488,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     revertAll(): void {
         this.markdownEditorMonaco?.revertAll();
+        const currentContent = this.markdownEditorMonaco?.monacoEditor?.getText();
+        if (currentContent !== undefined) {
+            this.updateProblemStatement(currentContent);
+        }
     }
 }

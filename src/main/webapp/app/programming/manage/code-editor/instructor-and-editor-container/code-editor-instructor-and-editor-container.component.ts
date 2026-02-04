@@ -365,14 +365,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     /**
-     * Accepts the refined problem statement and applies the changes.
-     * Gets the actual content from the editor (which may have been modified by the user in diff mode).
-     */
-    acceptRefinement(): void {
-        this.closeDiff();
-    }
-
-    /**
      * Returns the appropriate FontAwesome icon for the given severity.
      *
      * @param {ConsistencyIssue.SeverityEnum} severity
@@ -400,7 +392,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     revertAllRefinement(): void {
         this.editableInstructions.revertAll();
-        this.syncEditorToProblemStatement();
         this.showDiff.set(false);
     }
 
@@ -408,21 +399,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Closes the diff view after syncing the current editor content to the model.
      */
     closeDiff(): void {
-        this.syncEditorToProblemStatement();
         this.showDiff.set(false);
-    }
-
-    /**
-     * Syncs the current editor content to the problem statement model.
-     * Extracted as helper to be used by both closeDiff and revertAllRefinement.
-     */
-    private syncEditorToProblemStatement(): void {
-        const currentContent = this.editableInstructions?.getCurrentContent();
-        if (this.exercise && currentContent != null) {
-            this.exercise.problemStatement = currentContent;
-            this.onInstructionChanged(currentContent);
-            this.currentProblemStatement.set(currentContent);
-        }
     }
 
     /**

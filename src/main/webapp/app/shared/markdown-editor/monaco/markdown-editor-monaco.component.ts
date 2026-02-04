@@ -510,13 +510,17 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 const endPosition = { lineNumber: selection.endLineNumber, column: selection.endColumn };
                 const coords = this.monacoEditor.getScrolledVisiblePosition(endPosition);
                 const editorDom = this.monacoEditor.getDomNode();
-                if (coords && editorDom) {
-                    const editorRect = editorDom.getBoundingClientRect();
-                    screenPosition = {
-                        top: editorRect.top + coords.top + coords.height + 5,
-                        left: editorRect.left + coords.left,
-                    };
+
+                if (!coords || !editorDom) {
+                    this.onSelectionChange.emit(undefined);
+                    return;
                 }
+
+                const editorRect = editorDom.getBoundingClientRect();
+                screenPosition = {
+                    top: editorRect.top + coords.top + coords.height + 5,
+                    left: editorRect.left + coords.left,
+                };
 
                 this.onSelectionChange.emit({
                     startLine: selection.startLineNumber,
