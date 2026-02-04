@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -93,7 +92,7 @@ public class ExamRoomDistributionResource {
      * @return 200 (OK) if the distribution was successful
      */
     @PostMapping("courses/{courseId}/exams/{examId}/distribute-registered-students")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> distributeRegisteredStudents(@PathVariable long courseId, @PathVariable long examId,
             @RequestParam(defaultValue = "true") boolean useOnlyDefaultLayouts, @RequestParam(defaultValue = "0.0") double reserveFactor,
             @Valid @RequestBody ExamRoomDistributionRequestBodyDTO examRoomDistributionRequestBody) {
@@ -118,7 +117,7 @@ public class ExamRoomDistributionResource {
             throw new BadRequestAlertException("You have invalid room IDs", ENTITY_NAME, "invalidRoomIDs");
         }
 
-        if (examRoomAliases.values().stream().anyMatch(alias -> alias.length() > ALIAS_NAME_MAX_LENGTH)) {
+        if (examRoomAliases.values().stream().anyMatch(alias -> alias != null && alias.length() > ALIAS_NAME_MAX_LENGTH)) {
             throw new BadRequestAlertException("Alias name too long", ENTITY_NAME, "aliasNameTooLong");
         }
 
@@ -276,7 +275,7 @@ public class ExamRoomDistributionResource {
      * @return A {roomNumber => alias} mapping
      */
     @GetMapping("courses/{courseId}/exams/{examId}/room-aliases")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<Map<String, String>> getRoomAliases(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request to get room aliases for exam: {}", examId);
 
