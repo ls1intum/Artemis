@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture;
 
+import static java.util.stream.Collectors.toMap;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
@@ -23,13 +24,17 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitForLearningPathNodeDetailsDTO;
+import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
@@ -52,6 +57,9 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
     @Autowired
     private LectureUnitProcessingStateRepository lectureUnitProcessingStateRepository;
+
+    @Autowired
+    private LectureTranscriptionRepository lectureTranscriptionRepository;
 
     @Autowired
     private LectureUtilService lectureUtilService;
@@ -297,23 +305,6 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void getProcessingStatus_asEditor_shouldSucceed() throws Exception {
-        // Get processing status for an attachment video unit
-        var attachmentVideoUnit = lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).findFirst().orElseThrow();
-        // The endpoint exists but may return 403 if processing service is not available
-        // This tests the endpoint is accessible to editors
-        request.get("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + attachmentVideoUnit.getId() + "/processing-status", HttpStatus.OK, Object.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getProcessingStatus_asStudent_shouldBeForbidden() throws Exception {
-        var attachmentVideoUnit = lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).findFirst().orElseThrow();
-        request.get("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + attachmentVideoUnit.getId() + "/processing-status", HttpStatus.FORBIDDEN, Object.class);
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void retryProcessing_wrongUnitType_shouldReturnBadRequest() throws Exception {
         // Try to retry processing for a text unit (not attachment video unit)
@@ -369,5 +360,199 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
         // Verify the processing state was not changed
         var unchangedState = lectureUnitProcessingStateRepository.findByLectureUnit_Id(attachmentVideoUnit.getId()).orElseThrow();
         assertThat(unchangedState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
+    }
+
+    // --- Tests for the bulk status endpoint: GET /lectures/{lectureId}/lecture-units/statuses ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void getUnitStatuses_asEditor_shouldReturnStatusesForVideoUnits() throws Exception {
+        // Get the attachment video unit from the lecture
+        var attachmentVideoUnit = (AttachmentVideoUnit) lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).findFirst().orElseThrow();
+
+        // Create a processing state for the video unit
+        LectureUnitProcessingState processingState = new LectureUnitProcessingState(attachmentVideoUnit);
+        processingState.setPhase(ProcessingPhase.TRANSCRIBING);
+        processingState.setRetryCount(1);
+        processingState.setStartedAt(ZonedDateTime.now().minusMinutes(5));
+        lectureUnitProcessingStateRepository.save(processingState);
+
+        // Create a transcription for the video unit
+        LectureTranscription transcription = new LectureTranscription();
+        transcription.setLectureUnit(attachmentVideoUnit);
+        transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
+        transcription.setLanguage("en");
+        lectureTranscriptionRepository.save(transcription);
+
+        // Call the bulk endpoint
+        List<LectureUnitCombinedStatusDTO> statuses = request.getList("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/statuses", HttpStatus.OK,
+                LectureUnitCombinedStatusDTO.class);
+
+        // Verify the response contains only the video unit
+        assertThat(statuses).hasSize(1);
+        var status = statuses.getFirst();
+        assertThat(status.lectureUnitId()).isEqualTo(attachmentVideoUnit.getId());
+        assertThat(status.processingPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
+        assertThat(status.retryCount()).isEqualTo(1);
+        assertThat(status.startedAt()).isNotNull();
+        assertThat(status.transcriptionStatus()).isEqualTo(TranscriptionStatus.COMPLETED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getUnitStatuses_asStudent_shouldBeForbidden() throws Exception {
+        request.getList("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/statuses", HttpStatus.FORBIDDEN, LectureUnitCombinedStatusDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void getUnitStatuses_asTutor_shouldBeForbidden() throws Exception {
+        request.getList("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/statuses", HttpStatus.FORBIDDEN, LectureUnitCombinedStatusDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    void getUnitStatuses_asInstructorNotInCourse_shouldBeForbidden() throws Exception {
+        request.getList("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/statuses", HttpStatus.FORBIDDEN, LectureUnitCombinedStatusDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getUnitStatuses_withNoProcessingStateOrTranscription_shouldReturnIdleStatus() throws Exception {
+        // Get the attachment video unit from the lecture - no processing state or transcription exists
+        var attachmentVideoUnit = (AttachmentVideoUnit) lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).findFirst().orElseThrow();
+
+        // Clean up any existing processing states and transcriptions for this unit
+        lectureUnitProcessingStateRepository.findByLectureUnit_Id(attachmentVideoUnit.getId()).ifPresent(lectureUnitProcessingStateRepository::delete);
+        lectureTranscriptionRepository.findByLectureUnit_Id(attachmentVideoUnit.getId()).ifPresent(lectureTranscriptionRepository::delete);
+
+        // Call the bulk endpoint
+        List<LectureUnitCombinedStatusDTO> statuses = request.getList("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/statuses", HttpStatus.OK,
+                LectureUnitCombinedStatusDTO.class);
+
+        // Verify the response contains the video unit with IDLE status
+        assertThat(statuses).hasSize(1);
+        var status = statuses.getFirst();
+        assertThat(status.lectureUnitId()).isEqualTo(attachmentVideoUnit.getId());
+        assertThat(status.processingPhase()).isEqualTo(ProcessingPhase.IDLE);
+        assertThat(status.retryCount()).isZero();
+        assertThat(status.startedAt()).isNull();
+        assertThat(status.processingErrorKey()).isNull();
+        assertThat(status.transcriptionStatus()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getUnitStatuses_withFailedProcessingState_shouldReturnErrorKey() throws Exception {
+        // Get the attachment video unit from the lecture
+        var attachmentVideoUnit = (AttachmentVideoUnit) lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).findFirst().orElseThrow();
+
+        // Create a failed processing state with error key
+        LectureUnitProcessingState processingState = new LectureUnitProcessingState(attachmentVideoUnit);
+        processingState.setPhase(ProcessingPhase.FAILED);
+        processingState.setRetryCount(3);
+        processingState.setErrorKey("artemisApp.processing.error.transcriptionFailed");
+        lectureUnitProcessingStateRepository.save(processingState);
+
+        // Call the bulk endpoint
+        List<LectureUnitCombinedStatusDTO> statuses = request.getList("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/statuses", HttpStatus.OK,
+                LectureUnitCombinedStatusDTO.class);
+
+        // Verify the response contains the error information
+        assertThat(statuses).hasSize(1);
+        var status = statuses.getFirst();
+        assertThat(status.lectureUnitId()).isEqualTo(attachmentVideoUnit.getId());
+        assertThat(status.processingPhase()).isEqualTo(ProcessingPhase.FAILED);
+        assertThat(status.retryCount()).isEqualTo(3);
+        assertThat(status.processingErrorKey()).isEqualTo("artemisApp.processing.error.transcriptionFailed");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getUnitStatuses_withOnlyTranscription_shouldReturnIdleProcessingWithTranscriptionStatus() throws Exception {
+        // Get the attachment video unit from the lecture
+        var attachmentVideoUnit = (AttachmentVideoUnit) lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).findFirst().orElseThrow();
+
+        // Clean up any existing processing states
+        lectureUnitProcessingStateRepository.findByLectureUnit_Id(attachmentVideoUnit.getId()).ifPresent(lectureUnitProcessingStateRepository::delete);
+
+        // Create only a transcription (no processing state)
+        LectureTranscription transcription = new LectureTranscription();
+        transcription.setLectureUnit(attachmentVideoUnit);
+        transcription.setTranscriptionStatus(TranscriptionStatus.PENDING);
+        transcription.setLanguage("de");
+        lectureTranscriptionRepository.save(transcription);
+
+        // Call the bulk endpoint
+        List<LectureUnitCombinedStatusDTO> statuses = request.getList("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/statuses", HttpStatus.OK,
+                LectureUnitCombinedStatusDTO.class);
+
+        // Verify the response shows IDLE processing but with transcription status
+        assertThat(statuses).hasSize(1);
+        var status = statuses.getFirst();
+        assertThat(status.lectureUnitId()).isEqualTo(attachmentVideoUnit.getId());
+        assertThat(status.processingPhase()).isEqualTo(ProcessingPhase.IDLE);
+        assertThat(status.transcriptionStatus()).isEqualTo(TranscriptionStatus.PENDING);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getUnitStatuses_shouldFilterOutNonVideoUnits() throws Exception {
+        // The lecture has text unit, online unit, and attachment video unit
+        // Only the attachment video unit should be returned
+
+        List<LectureUnitCombinedStatusDTO> statuses = request.getList("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/statuses", HttpStatus.OK,
+                LectureUnitCombinedStatusDTO.class);
+
+        // Verify only video units are returned (not text or online units)
+        assertThat(statuses).hasSize(1);
+
+        // Verify the returned ID is the attachment video unit's ID
+        var attachmentVideoUnit = lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).findFirst().orElseThrow();
+        assertThat(statuses.getFirst().lectureUnitId()).isEqualTo(attachmentVideoUnit.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getUnitStatuses_forNonExistentLecture_shouldBeForbidden() throws Exception {
+        // Note: Returns 403 (not 404) to avoid leaking information about resource existence
+        // This is the expected behavior from @EnforceAtLeastEditorInLecture annotation
+        request.getList("/api/lecture/lectures/" + 999999L + "/lecture-units/statuses", HttpStatus.FORBIDDEN, LectureUnitCombinedStatusDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getUnitStatuses_withMultipleVideoUnits_shouldReturnAllStatuses() throws Exception {
+        // Add a second attachment video unit to the lecture
+        AttachmentVideoUnit attachmentVideoUnit2 = lectureUtilService.createAttachmentVideoUnit(lecture1, false);
+        this.lecture1 = lectureUtilService.addLectureUnitsToLecture(this.lecture1, List.of(attachmentVideoUnit2));
+
+        // Get all video units
+        var videoUnits = lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).map(lu -> (AttachmentVideoUnit) lu).toList();
+        assertThat(videoUnits).hasSize(2);
+
+        // Create different states for each
+        LectureUnitProcessingState state1 = new LectureUnitProcessingState(videoUnits.get(0));
+        state1.setPhase(ProcessingPhase.INGESTING);
+        lectureUnitProcessingStateRepository.save(state1);
+
+        LectureUnitProcessingState state2 = new LectureUnitProcessingState(videoUnits.get(1));
+        state2.setPhase(ProcessingPhase.DONE);
+        lectureUnitProcessingStateRepository.save(state2);
+
+        // Call the bulk endpoint
+        List<LectureUnitCombinedStatusDTO> statuses = request.getList("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/statuses", HttpStatus.OK,
+                LectureUnitCombinedStatusDTO.class);
+
+        // Verify both video units are returned
+        assertThat(statuses).hasSize(2);
+
+        var statusIds = statuses.stream().map(LectureUnitCombinedStatusDTO::lectureUnitId).collect(Collectors.toSet());
+        assertThat(statusIds).containsExactlyInAnyOrder(videoUnits.get(0).getId(), videoUnits.get(1).getId());
+
+        // Verify each has the correct phase
+        var statusMap = statuses.stream().collect(toMap(LectureUnitCombinedStatusDTO::lectureUnitId, s -> s));
+        assertThat(statusMap.get(videoUnits.get(0).getId()).processingPhase()).isEqualTo(ProcessingPhase.INGESTING);
+        assertThat(statusMap.get(videoUnits.get(1).getId()).processingPhase()).isEqualTo(ProcessingPhase.DONE);
     }
 }

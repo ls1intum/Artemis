@@ -49,6 +49,22 @@
                     "notEnoughSeatsForStudents": "Du kannst nur {{ usableCapacity }} der {{ totalStudents }} Studierenden unterbringen ({{ percentage }}%).",
                     "distribute": "Verteilen",
                     "noRoomSelected": "Es ist kein Raum ausgewählt"
+                },
+                "export": {
+                    "buttonTitle": "Nutzer Exportieren",
+                    "dialogTitle": "Nutzer Exportieren",
+                    "introText": "Dieser Dialog kann benutzt werden um die Informationen aller für diese Klausur registrierten Studenten zu exportieren.",
+                    "finalize": "Exportieren",
+                    "header": {
+                        "matriculationNumber": "Matrikelnummer",
+                        "login": "Login",
+                        "name": "Name",
+                        "email": "E-Mail",
+                        "room": "Raum",
+                        "seat": "Sitz",
+                        "fullLocation": "<Exam-Titel>: <vollständiger Raumname>: <Sitz>"
+                    },
+                    "exportFailed": "Export fehlgeschlagen"
                 }
             },
             "overview": {
