@@ -3,7 +3,7 @@ import json
 import os
 import sys
 import requests
-from typing import Dict, List
+from typing import Any, Dict, List
 from logging_config import logging
 
 # Load configuration
