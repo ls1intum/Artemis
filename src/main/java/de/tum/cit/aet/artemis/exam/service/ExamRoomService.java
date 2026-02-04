@@ -97,8 +97,7 @@ public class ExamRoomService {
                     continue;
                 }
 
-                // extract the filename - remove the folder path (if existent) and remove the trailing '.json'
-                // Math.max(0, entryName.lastIndexOf('/') + 1); === entryName.lastIndexOf('/') + 1;
+                // extract the filename (= room number) : remove the folder path (if existent) and remove the trailing '.json'
                 int roomNumberStartIndex = entryName.lastIndexOf('/') + 1;
                 int roomNumberEndIndex = entryName.lastIndexOf(".json");
                 String roomNumber = FileUtil.sanitizeFilename(entryName.substring(roomNumberStartIndex, roomNumberEndIndex));

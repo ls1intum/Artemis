@@ -24,7 +24,7 @@ export interface ExamRoomLayoutStrategyDTO {
     capacity: number;
 }
 
-export interface NumberOfAvailable {
+export interface ExamRoomOverviewNumberOfAvailable {
     examRooms: number;
     examSeats: number;
 }

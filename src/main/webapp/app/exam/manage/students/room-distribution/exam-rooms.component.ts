@@ -4,8 +4,8 @@ import {
     ExamRoomDTOExtended,
     ExamRoomDeletionSummaryDTO,
     ExamRoomOverviewDTO,
+    ExamRoomOverviewNumberOfAvailable,
     ExamRoomUploadInformationDTO,
-    NumberOfAvailable,
 } from 'app/exam/manage/students/room-distribution/exam-rooms.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
@@ -61,7 +61,7 @@ export class ExamRoomsComponent implements OnInit {
                 ?.newestUniqueExamRooms?.map((examRoomDTO) => examRoomDTO.numberOfSeats)
                 .reduce((acc, val) => acc + val, 0) ?? 0,
     );
-    readonly numberOfAvailable: Signal<NumberOfAvailable | undefined> = computed(() => {
+    readonly numberOfAvailable: Signal<ExamRoomOverviewNumberOfAvailable | undefined> = computed(() => {
         if (!this.hasOverview()) {
             return undefined;
         }
@@ -69,7 +69,7 @@ export class ExamRoomsComponent implements OnInit {
         return {
             examRooms: this.numberOfUniqueExamRooms(),
             examSeats: this.numberOfUniqueExamSeats(),
-        } as NumberOfAvailable;
+        } as ExamRoomOverviewNumberOfAvailable;
     });
     readonly hasExamRoomData: Signal<boolean> = computed(() => !!this.numberOfUniqueExamRooms());
     readonly examRoomData: Signal<ExamRoomDTOExtended[] | undefined> = computed(() => this.calculateExamRoomData());
