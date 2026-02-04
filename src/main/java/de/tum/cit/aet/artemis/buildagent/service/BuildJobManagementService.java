@@ -14,8 +14,11 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
@@ -26,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
@@ -34,7 +38,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.DistributedTopic;
 
 /**
  * Coordinates submission, tracking, timeout handling, and cancellation of build jobs
@@ -77,6 +80,12 @@ public class BuildJobManagementService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobManagementService.class);
 
+    /**
+     * Interval between retries when waiting for cluster connection during startup.
+     * Uses the same interval as the availability check in SharedQueueProcessingService for consistency.
+     */
+    private static final java.time.Duration CLUSTER_CONNECTION_RETRY_INTERVAL = java.time.Duration.ofSeconds(5);
+
     private final BuildJobExecutionService buildJobExecutionService;
 
     private final BuildAgentConfiguration buildAgentConfiguration;
@@ -86,6 +95,26 @@ public class BuildJobManagementService {
     private final DistributedDataAccessService distributedDataAccessService;
 
     private final BuildLogsMap buildLogsMap;
+
+    private final TaskScheduler taskScheduler;
+
+    /**
+     * Scheduled future for retrying cluster connection and initialization.
+     * This is used when the build agent starts before any core node is available.
+     * Uses AtomicReference for thread-safe check-then-act operations.
+     */
+    private final AtomicReference<ScheduledFuture<?>> connectionRetryFuture = new AtomicReference<>();
+
+    /**
+     * Flag to track whether initialization has completed successfully.
+     * Uses AtomicBoolean to ensure thread-safe access from the retry task.
+     */
+    private final AtomicBoolean initialized = new AtomicBoolean(false);
+
+    /**
+     * UUID of the cancel build job message listener. Stored to allow removal on reconnection.
+     */
+    private java.util.UUID cancelListenerId;
 
     /**
      * Guards job lifecycle state transitions that must be atomic across multiple data structures:
@@ -150,34 +179,126 @@ public class BuildJobManagementService {
     private final Set<String> cancelledBuildJobs = new ConcurrentSkipListSet<>();
 
     public BuildJobManagementService(DistributedDataAccessService distributedDataAccessService, BuildJobExecutionService buildJobExecutionService,
-            BuildAgentConfiguration buildAgentConfiguration, BuildJobContainerService buildJobContainerService, BuildLogsMap buildLogsMap) {
+            BuildAgentConfiguration buildAgentConfiguration, BuildJobContainerService buildJobContainerService, BuildLogsMap buildLogsMap, TaskScheduler taskScheduler) {
         this.buildJobExecutionService = buildJobExecutionService;
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildJobContainerService = buildJobContainerService;
         this.distributedDataAccessService = distributedDataAccessService;
         this.buildLogsMap = buildLogsMap;
+        this.taskScheduler = taskScheduler;
     }
 
     /**
-     * Add a listener to the canceledBuildJobsTopic that cancels the build job for the given buildJobId.
-     * It gets broadcast to all nodes in the cluster. Only the node that is running the build job will cancel it.
+     * Initialize the service by setting up the cancel listener for build jobs.
+     * <p>
+     * When running as a Hazelcast client with asyncStart=true, the client may not yet be
+     * connected to the cluster when this method is called. In that case, we schedule
+     * periodic retries until the connection is established and initialization completes.
+     * <p>
+     * Additionally, a connection state listener is registered to handle reconnection after
+     * a connection loss. When the client reconnects to the cluster, the listener re-initializes
+     * the distributed topic listener which may have been lost during the disconnection.
+     * <p>
      * EventListener cannot be used here, as the bean is lazy
      * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
     @PostConstruct
     public void init() {
-        DistributedTopic<String> canceledBuildJobsTopic = distributedDataAccessService.getCanceledBuildJobsTopic();
-        canceledBuildJobsTopic.addMessageListener(buildJobId -> {
-            jobLifecycleLock.lock();
-            try {
-                if (runningFutures.containsKey(buildJobId)) {
-                    cancelBuildJob(buildJobId);
-                }
+        // Register a connection state listener to handle both initial connection and reconnection.
+        // On reconnection (isInitialConnection=false), the topic listener needs to be re-registered
+        // because it may have been lost when the connection was interrupted.
+        distributedDataAccessService.addConnectionStateListener(isInitialConnection -> {
+            if (!isInitialConnection) {
+                // This is a reconnection - reset the initialized flag so listeners are re-registered
+                log.info("Hazelcast client reconnected to cluster. Re-initializing BuildJobManagementService listeners.");
+                initialized.set(false);
             }
-            finally {
-                jobLifecycleLock.unlock();
+            boolean initSucceeded = tryInitialize();
+            // If initialization failed, schedule retries (handles both connection issues and transient failures)
+            if (!initSucceeded) {
+                scheduleConnectionRetryIfNeeded();
             }
         });
+
+        // If already connected, tryInitialize was called by the listener above.
+        // If not connected yet, schedule periodic retries as a fallback.
+        if (!initialized.get() && !distributedDataAccessService.isConnectedToCluster()) {
+            log.info("Hazelcast client not yet connected to cluster. Scheduling periodic initialization retries every {} seconds.", CLUSTER_CONNECTION_RETRY_INTERVAL.toSeconds());
+            scheduleConnectionRetryIfNeeded();
+        }
+    }
+
+    /**
+     * Atomically schedules a connection retry task if one is not already running.
+     * Uses AtomicReference.updateAndGet to prevent race conditions where multiple
+     * threads could schedule duplicate retry tasks.
+     */
+    private void scheduleConnectionRetryIfNeeded() {
+        connectionRetryFuture.updateAndGet(current -> {
+            if (current == null || current.isDone()) {
+                return taskScheduler.scheduleAtFixedRate(() -> {
+                    if (tryInitialize()) {
+                        // Initialization succeeded - cancel the retry task
+                        ScheduledFuture<?> future = connectionRetryFuture.get();
+                        if (future != null) {
+                            future.cancel(false);
+                        }
+                    }
+                }, CLUSTER_CONNECTION_RETRY_INTERVAL);
+            }
+            return current;
+        });
+    }
+
+    /**
+     * Attempts to initialize the cancel listener for build jobs.
+     * <p>
+     * This method checks if the Hazelcast client is connected to the cluster before
+     * attempting to access distributed data structures. If not connected, it returns
+     * false so the caller can retry later.
+     *
+     * @return true if initialization succeeded, false if not connected to cluster
+     */
+    private synchronized boolean tryInitialize() {
+        if (initialized.get()) {
+            return true;
+        }
+
+        if (!distributedDataAccessService.isConnectedToCluster()) {
+            log.debug("Cannot initialize BuildJobManagementService: not connected to Hazelcast cluster yet");
+            return false;
+        }
+
+        try {
+            var canceledBuildJobsTopic = distributedDataAccessService.getCanceledBuildJobsTopic();
+
+            // Remove old listener if it exists (prevents duplicate listeners on reconnection)
+            if (cancelListenerId != null) {
+                canceledBuildJobsTopic.removeMessageListener(cancelListenerId);
+                cancelListenerId = null;
+            }
+
+            cancelListenerId = canceledBuildJobsTopic.addMessageListener(buildJobId -> {
+                jobLifecycleLock.lock();
+                try {
+                    if (runningFutures.containsKey(buildJobId)) {
+                        cancelBuildJob(buildJobId);
+                    }
+                }
+                finally {
+                    jobLifecycleLock.unlock();
+                }
+            });
+
+            initialized.set(true);
+            log.info("BuildJobManagementService initialized successfully - cancel listener registered");
+            return true;
+        }
+        catch (Exception e) {
+            // This can happen if the connection is lost between the check and the access
+            log.warn("Failed to initialize BuildJobManagementService: {}. Will retry.", e.getMessage());
+            return false;
+        }
     }
 
     /**
@@ -257,6 +378,10 @@ public class BuildJobManagementService {
                 else {
                     finishBuildJobExceptionally(buildJobItem.id(), containerName, ex);
                     if (ex instanceof TimeoutException) {
+                        // Cancel the underlying future to interrupt the build job that's still running.
+                        // Without this, the build job continues running in the background and may create
+                        // a "zombie" container after the timeout has already been reported.
+                        future.cancel(true);
                         logTimedOutBuildJob(buildJobItem, buildJobTimeoutSeconds);
                     }
                     throw new CompletionException(ex);

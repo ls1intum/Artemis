@@ -76,6 +76,7 @@ export class IrisExerciseChatbotButtonComponent {
     private lastShownBubbleMessage: string | undefined;
 
     readonly chatBubble = viewChild<ElementRef>('chatBubble');
+    private readonly shouldReopenChat = toSignal(this.chatService.shouldReopenChat$, { initialValue: false });
 
     constructor() {
         // Register cleanup for dialog
@@ -137,6 +138,16 @@ export class IrisExerciseChatbotButtonComponent {
                     this.newIrisMessage.set(undefined);
                     this.isOverflowing.set(false);
                 }, this.CHAT_BUBBLE_TIMEOUT);
+            }
+        });
+
+        effect(() => {
+            const shouldReopen = this.shouldReopenChat();
+            if (shouldReopen && !untracked(() => this.chatOpen())) {
+                untracked(() => {
+                    this.openChat();
+                    this.chatService.setShouldReopenChat(false);
+                });
             }
         });
     }

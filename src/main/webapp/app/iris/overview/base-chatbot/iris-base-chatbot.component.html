@@ -91,6 +91,27 @@
                                 </div>
                                 <fa-icon [icon]="faLink" />
                             </button>
+    <div class="chat-body" [class.not-accepted]="!userAccepted()" #chatBody>
+        @if (messages()?.length) {
+            <div class="messages" #messagesElement (scroll)="checkChatScroll()">
+                @if (
+                    suggestions()?.length &&
+                    (userAccepted() === LLMSelectionDecision.CLOUD_AI || userAccepted() === LLMSelectionDecision.LOCAL_AI) &&
+                    active() &&
+                    (!rateLimitInfo()?.rateLimit || rateLimitInfo()?.currentMessageCount !== rateLimitInfo()?.rateLimit) &&
+                    !hasActiveStage()
+                ) {
+                    <div animate.enter="suggestion-entering" animate.leave="suggestion-leaving">
+                        <div class="suggestions-container">
+                            @for (suggestion of suggestions(); track suggestion) {
+                                <button class="suggestion-button" (click)="onSuggestionClick(suggestion)" [disabled]="isLoading()">
+                                    @if (clickedSuggestion() === suggestion) {
+                                        <fa-icon [icon]="faCircleNotch" animation="spin" />
+                                    } @else {
+                                        <span [innerHTML]="suggestion"></span>
+                                    }
+                                </button>
+                            }
                         </div>
                     }
                     @if (rateLimitInfo()?.rateLimit; as rateLimit) {

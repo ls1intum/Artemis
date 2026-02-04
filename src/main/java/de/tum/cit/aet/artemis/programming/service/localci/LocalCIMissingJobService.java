@@ -99,9 +99,7 @@ public class LocalCIMissingJobService {
     }
 
     /**
-     * Periodically retries missing build jobs.
-     * R
-     * retrieves a slice of missing build jobs from the last hour and attempts to retry them.
+     * Periodically retries missing build jobs: Retrieves a slice of missing build jobs from the last hour and attempts to retry them.
      * If a build job has reached the maximum number of retries, it will not be retried again.
      */
     @Scheduled(fixedRateString = "${artemis.continuous-integration.retry-missing-jobs-interval-seconds:300}", initialDelayString = "${artemis.continuous-integration.retry-missing-jobs-delay-seconds:120}", timeUnit = TimeUnit.SECONDS)
