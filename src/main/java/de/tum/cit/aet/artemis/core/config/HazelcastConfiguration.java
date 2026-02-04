@@ -520,7 +520,46 @@ public class HazelcastConfiguration {
         configureLocalCIQueueIfNeeded(config, jHipsterProperties);
         configureLiteMemberIfBuildAgent(config);
 
-        return Hazelcast.newHazelcastInstance(config);
+        HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
+
+        // Register the ACTUAL Hazelcast address in Eureka after the instance starts.
+        // This ensures the registered address matches what Hazelcast is actually using,
+        // which is critical for Docker deployments where hostname/IP resolution may differ.
+        registerActualHazelcastAddress(hazelcastInstance);
+
+        return hazelcastInstance;
+    }
+
+    /**
+     * Registers the actual Hazelcast member address in the service registry.
+     * <p>
+     * This method gets the address from the running Hazelcast instance rather than
+     * predicting it from configuration. This is important because:
+     * <ul>
+     * <li>Hazelcast may resolve hostnames to IPs or vice versa</li>
+     * <li>Docker networking can cause address resolution differences</li>
+     * <li>The actual bind address may differ from the configured interface</li>
+     * </ul>
+     *
+     * @param hazelcastInstance the running Hazelcast instance
+     */
+    private void registerActualHazelcastAddress(HazelcastInstance hazelcastInstance) {
+        if (registration.isEmpty()) {
+            return;
+        }
+
+        try {
+            var localMember = hazelcastInstance.getCluster().getLocalMember();
+            var address = localMember.getAddress();
+            String actualHost = address.getHost();
+            int actualPort = address.getPort();
+
+            log.info("Hazelcast member started with actual address: {}:{}", actualHost, actualPort);
+            eurekaInstanceHelper.registerHazelcastAddress(actualHost, actualPort);
+        }
+        catch (Exception e) {
+            log.warn("Failed to register actual Hazelcast address: {}. Using configured address as fallback.", e.getMessage());
+        }
     }
 
     /**
@@ -680,7 +719,7 @@ public class HazelcastConfiguration {
     }
 
     /**
-     * Configures port and registers metadata for service discovery.
+     * Configures port settings for Hazelcast.
      *
      * <p>
      * <strong>Local Instances Mode ({@code spring.hazelcast.localInstances=true}):</strong>
@@ -694,34 +733,28 @@ public class HazelcastConfiguration {
      * All production nodes use the same port because they run on different machines.
      *
      * <p>
-     * <strong>Metadata Registration:</strong> The Hazelcast host and port are registered as
-     * Eureka metadata via {@link EurekaInstanceHelper#registerHazelcastAddress}, which also triggers
-     * an immediate re-registration to propagate the metadata. This ensures build agents can
-     * discover core nodes without waiting for the next heartbeat.
+     * <strong>Note:</strong> The Hazelcast address is registered in Eureka AFTER the instance
+     * starts (see {@link #registerActualHazelcastAddress}), using the actual address that
+     * Hazelcast is using. This ensures the registered address matches what Hazelcast reports,
+     * which is critical for Docker deployments where hostname/IP resolution may differ.
      *
      * @param config the Hazelcast configuration to modify
      */
     private void configurePortAndMetadata(Config config) {
-        String hazelcastMetadataHost = registration.get().getHost();
-        int effectivePort;
-
         if (hazelcastLocalInstances) {
             log.info("Running with localInstances setting, Hazelcast cluster will only work with localhost instances");
             Integer serverPort = serverProperties.getPort();
             int basePort = serverPort != null ? serverPort : 8080;
-            effectivePort = basePort + hazelcastPort;
+            int effectivePort = basePort + hazelcastPort;
             config.getNetworkConfig().setPort(effectivePort);
         }
         else {
             config.setClusterName("prod");
             config.setInstanceName(instanceName);
-            effectivePort = hazelcastPort;
-            config.getNetworkConfig().setPort(effectivePort);
+            config.getNetworkConfig().setPort(hazelcastPort);
         }
-
-        // Register Hazelcast address and trigger immediate Eureka re-registration
-        // This ensures build agents can discover this core node immediately
-        eurekaInstanceHelper.registerHazelcastAddress(hazelcastMetadataHost, effectivePort);
+        // Note: Hazelcast address is registered in Eureka after the instance starts
+        // via registerActualHazelcastAddress() to ensure we use the actual bind address
     }
 
     /**
