@@ -4,6 +4,7 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -51,9 +52,17 @@ public class HazelcastClusterManager {
 
     private static final Logger log = LoggerFactory.getLogger(HazelcastClusterManager.class);
 
+    /**
+     * Grace period in seconds after startup during which stale member warnings are suppressed.
+     * This allows time for Eureka metadata to propagate across the cluster.
+     */
+    private static final int STALE_MEMBER_WARNING_GRACE_PERIOD_SECONDS = 60;
+
     private final EurekaInstanceHelper eurekaInstanceHelper;
 
     private final Environment env;
+
+    private final Instant startupTime = Instant.now();
 
     @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
     private String instanceName;
@@ -199,12 +208,22 @@ public class HazelcastClusterManager {
      * <p>
      * This method uses IP address resolution to compare Hazelcast members with registry members,
      * handling cases where hostnames and IP addresses may be used interchangeably (common in Docker).
+     * <p>
+     * Warnings are suppressed during the first {@value #STALE_MEMBER_WARNING_GRACE_PERIOD_SECONDS} seconds
+     * after startup to allow time for Eureka metadata to propagate across the cluster.
      *
      * @param instances                all service instances from the registry
      * @param hazelcastMemberAddresses set of Hazelcast member addresses (host:port format)
      * @param registryMemberAddresses  set of registry member addresses (host:port format)
      */
     private void checkForStaleMembersAndLogWarnings(List<ServiceInstance> instances, Set<String> hazelcastMemberAddresses, Set<String> registryMemberAddresses) {
+        // Suppress warnings during the grace period to allow Eureka metadata to propagate
+        long secondsSinceStartup = java.time.Duration.between(startupTime, Instant.now()).toSeconds();
+        if (secondsSinceStartup < STALE_MEMBER_WARNING_GRACE_PERIOD_SECONDS) {
+            log.debug("Skipping stale member check during startup grace period ({}/{}s)", secondsSinceStartup, STALE_MEMBER_WARNING_GRACE_PERIOD_SECONDS);
+            return;
+        }
+
         var currentInstance = instances.stream().filter(eurekaInstanceHelper::isCurrentInstance).findFirst();
         String ownAddress = currentInstance.map(eurekaInstanceHelper::formatInstanceAddress).orElse(null);
         if (ownAddress == null) {
@@ -233,8 +252,8 @@ public class HazelcastClusterManager {
 
                 // Check if it matches any registry member via IP resolution
                 if (!registryResolvedAddresses.contains(resolvedHazelcastMember)) {
-                    log.warn("Hazelcast member {} is not registered in service registry - may be a stale/zombie member. "
-                            + "If this persists, the member may have crashed without proper deregistration.", hazelcastMember);
+                    log.warn("Hazelcast member {} not found in service registry. This may indicate the member crashed without proper deregistration, "
+                            + "or the service registry metadata has not yet propagated. If this warning persists, investigate the member's health.", hazelcastMember);
                 }
             }
         }
