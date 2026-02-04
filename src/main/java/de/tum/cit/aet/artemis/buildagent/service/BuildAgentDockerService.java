@@ -121,6 +121,9 @@ public class BuildAgentDockerService {
     @Value("${artemis.continuous-integration.image-architecture:amd64}")
     private String imageArchitecture;
 
+    @Value("${artemis.continuous-integration.build-agent.short-name}")
+    private String buildAgentShortName;
+
     private static final String AMD64_ARCHITECTURE = "amd64";
 
     private static final String ARM64_ARCHITECTURE = "arm64";
@@ -524,7 +527,7 @@ public class BuildAgentDockerService {
     private boolean dockerClientNotAvailable(String additionalLogInfo) {
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         if (dockerClient == null) {
-            BuildAgentStatus status = distributedDataAccessService.getLocalBuildAgentStatus();
+            BuildAgentStatus status = distributedDataAccessService.getBuildAgentStatus(buildAgentShortName);
             if ((status == BuildAgentStatus.PAUSED || status == BuildAgentStatus.SELF_PAUSED)) {
                 log.info("Docker client is not available because the build agent is paused. {} This is expected behavior.", additionalLogInfo);
                 return true;

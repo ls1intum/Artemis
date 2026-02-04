@@ -33,7 +33,7 @@ public class TelemetrySendingService {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TelemetryData(String version, String serverUrl, String operator, List<String> profiles, boolean isProductionInstance, boolean isTestServer, String dataSource,
-            String contact, String adminName) {
+            String contact, String adminName, boolean isLocalLLMDeploymentEnabled) {
     }
 
     private final Environment env;
@@ -71,6 +71,9 @@ public class TelemetrySendingService {
 
     @Value("${info.testServer:false}")
     private boolean isTestServer;
+
+    @Value("${info.localLLMDeploymentEnabled:false}")
+    private boolean isLocalLLMDeploymentEnabled;
 
     /**
      * Sends telemetry data to a specified destination via an HTTP POST request asynchronously.
@@ -126,7 +129,8 @@ public class TelemetrySendingService {
             contact = operatorContact;
             adminName = operatorAdminName;
         }
-        telemetryData = new TelemetryData(version, serverUrl, operator, activeProfiles, profileService.isProductionActive(), isTestServer, dataSource, contact, adminName);
+        telemetryData = new TelemetryData(version, serverUrl, operator, activeProfiles, profileService.isProductionActive(), isTestServer, dataSource, contact, adminName,
+                isLocalLLMDeploymentEnabled);
         return telemetryData;
     }
 }
