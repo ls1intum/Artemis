@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { Dialog } from 'primeng/dialog';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
@@ -40,6 +40,18 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
     selectedStudents = signal<TutorialGroupRegisteredStudentDTO[]>([]);
     suggestionHighlightIndex = signal<number | undefined>(undefined);
 
+    constructor() {
+        effect(() => {
+            if (this.suggestedStudents().length > 0) {
+                this.openPanel();
+            }
+        });
+
+        effect(() => {
+            // TODO: init paging tracker proeprties / fetch first page
+        });
+    }
+
     ngOnDestroy(): void {
         this.overlayRef?.dispose();
         this.overlayRef = undefined;
@@ -50,12 +62,19 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
     }
 
     onKeyDown(event: KeyboardEvent): void {
+        if (event.key === 'Enter') {
+            const suggestionIndex = this.suggestionHighlightIndex();
+            if (suggestionIndex !== undefined) {
+                event.preventDefault();
+                this.selectSuggestion(suggestionIndex);
+            }
+            return;
+        }
+
         const suggestedStudents = this.suggestedStudents();
         if (!suggestedStudents) return;
-
         const numberOfSuggestedStudents = suggestedStudents.length;
         if (numberOfSuggestedStudents === 0) return;
-
         if (event.key === 'ArrowDown') {
             event.preventDefault();
             this.suggestionHighlightIndex.update((selectionTargetIndex) => {
@@ -95,7 +114,26 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
         }
     }
 
-    openPanel(): void {
+    selectSuggestion(suggestionIndex: number): void {
+        const students = this.suggestedStudents();
+        const student = students[suggestionIndex];
+        if (!student) return;
+
+        this.selectedStudents.update((selectedStudents) =>
+            selectedStudents.some((otherStudent) => otherStudent.id === student.id) ? selectedStudents : [...selectedStudents, student],
+        );
+
+        this.searchString.set('');
+        this.suggestionHighlightIndex.set(undefined);
+        this.suggestedStudents.set([]);
+
+        this.overlayRef?.dispose();
+        this.overlayRef = undefined;
+
+        this.searchInput()?.nativeElement.focus();
+    }
+
+    private openPanel(): void {
         if (this.overlayRef) return;
 
         const searchInput = this.searchInput()?.nativeElement;

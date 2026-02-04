@@ -9,34 +9,37 @@
                 type="text"
                 [placeholder]="searchBarPlaceholder()"
                 [(ngModel)]="searchString"
-                (focus)="openPanel()"
                 (keydown)="onKeyDown($event)"
             />
             @if (isLoading()) {
                 <p-inputicon class="pi pi-spin pi-spinner" />
             }
         </p-iconfield>
-
-        <ng-template #panelTemplate>
-            <div class="search-panel">
-                <cdk-virtual-scroll-viewport class="search-viewport" [itemSize]="36" minBufferPx="200" maxBufferPx="400">
-                    <button
-                        class="student-row"
-                        *cdkVirtualFor="let student of suggestedStudents(); let i = index; trackBy: trackStudentById"
-                        (mouseenter)="suggestionHighlightIndex.set(i)"
-                        [class.active]="suggestionHighlightIndex() === i"
-                    >
-                        <span class="student-name">
-                            {{ student.login + (student.name ? ' | ' + student.name : '') }}
-                        </span>
-                    </button>
-                    @if (isLoading()) {
-                        <div class="loading-row">
-                            <span class="pi pi-spin pi-spinner"></span>
-                        </div>
-                    }
-                </cdk-virtual-scroll-viewport>
-            </div>
-        </ng-template>
+        @for (student of selectedStudents(); track student.id) {
+            <span>{{ student.login + (student.name ? ' | ' + student.name : '') }}</span>
+        }
     </div>
 </p-dialog>
+
+<ng-template #panelTemplate>
+    <div class="search-panel">
+        <cdk-virtual-scroll-viewport class="search-viewport" [itemSize]="36" minBufferPx="200" maxBufferPx="400">
+            <button
+                class="student-row"
+                *cdkVirtualFor="let student of suggestedStudents(); let i = index; trackBy: trackStudentById"
+                (mouseenter)="suggestionHighlightIndex.set(i)"
+                [class.active]="suggestionHighlightIndex() === i"
+                (click)="selectSuggestion(i)"
+            >
+                <span class="student-name">
+                    {{ student.login + (student.name ? ' | ' + student.name : '') }}
+                </span>
+            </button>
+            @if (isLoading()) {
+                <div class="loading-row">
+                    <span class="pi pi-spin pi-spinner"></span>
+                </div>
+            }
+        </cdk-virtual-scroll-viewport>
+    </div>
+</ng-template>
