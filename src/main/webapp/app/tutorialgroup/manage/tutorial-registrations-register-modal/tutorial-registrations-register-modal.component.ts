@@ -104,4 +104,9 @@ const mockStudents: TutorialGroupRegisteredStudentDTO[] = [
     { id: 3, name: 'Jabruce Wayne', login: 'bwayne' },
     { id: 4, name: 'Jalark Kent', login: 'ckent' },
     { id: 5, name: 'Japeter Parker', login: 'pparker' },
+    { id: 6, name: 'Jaaron Miller', login: 'amiller' },
+    { id: 7, name: 'Jajessica Brown', login: 'jbrown' },
+    { id: 8, name: 'Jaalex Johnson', login: 'ajohnson' },
+    { id: 9, name: 'Jalinda Davis', login: 'ldavis' },
+    { id: 10, name: 'Jamichael Wilson', login: 'mwilson' },
 ];

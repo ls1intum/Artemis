@@ -2,7 +2,6 @@
     <div class="frame">
         <p-iconfield class="search-field">
             <p-inputicon class="pi pi-search" />
-
             <input
                 #searchInput
                 pInputText
@@ -12,6 +11,9 @@
                 [(ngModel)]="searchString"
                 (focus)="openPanel()"
             />
+            @if (isLoading()) {
+                <p-inputicon class="pi pi-spin pi-spinner" />
+            }
         </p-iconfield>
 
         <ng-template #panelTemplate>
