@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -227,9 +228,8 @@ public class ProgrammingExerciseParticipationService {
      *
      * @param targetUri the repository where all files should be replaced
      * @param sourceUri the repository that should be used as source for all files
-     * @param login     the login of the user that reset the repository
      */
-    public void resetRepository(LocalVCRepositoryUri targetUri, LocalVCRepositoryUri sourceUri, @Nullable String login) throws GitAPIException, IOException {
+    public void resetRepository(LocalVCRepositoryUri targetUri, LocalVCRepositoryUri sourceUri) throws GitAPIException, IOException {
         Repository targetRepo = gitService.getOrCheckoutRepository(targetUri, true, true);
         Repository sourceRepo = gitService.getOrCheckoutRepository(sourceUri, true, true);
 
@@ -248,13 +248,31 @@ public class ProgrammingExerciseParticipationService {
                 FileUtils.copyFile(file, targetRepo.getLocalPath().resolve(file.toPath().getFileName()).toFile());
             }
         }
+        String login = SecurityUtils.getCurrentUserLogin().orElse(null);
         User coAuthor = userRepository.findOneByLogin(login).orElse(null);
+
         String commitMessage = "Reset Exercise";
-        if (coAuthor != null && coAuthor.getName() != null && coAuthor.getEmail() != null) {
-            commitMessage += "\n\nCo-authored-by: " + coAuthor.getName() + " <" + coAuthor.getEmail() + ">";
+        if (coAuthor != null) {
+            StringBuilder displayIdentifier = new StringBuilder("\n\nResponsible person:");
+
+            if (coAuthor.getName() != null) {
+                displayIdentifier.append(" ").append(coAuthor.getName());
+            }
+            else if (coAuthor.getEmail() == null) {
+                displayIdentifier.append(" ").append(login);
+            }
+
+            if (coAuthor.getEmail() != null) {
+                displayIdentifier.append(" <").append(coAuthor.getEmail()).append(">");
+            }
+
+            commitMessage += displayIdentifier.toString();
         }
+
         gitService.stageAllChanges(targetRepo);
         gitService.commitAndPush(targetRepo, commitMessage, true, null);
+
+        log.info("Reset repo by {}", login != null ? login : "unknown");
     }
 
     /**

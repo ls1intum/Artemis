@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
@@ -381,10 +380,7 @@ public class ProgrammingExerciseParticipationResource {
             sourceUri = exercise.getVcsTemplateRepositoryUri();
         }
 
-        String login = SecurityUtils.getCurrentUserLogin().orElse(null);
-
-        programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUri(), sourceUri, login);
-        log.warn("Reset repo by {}", login != null ? login : "unknown");
+        programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUri(), sourceUri);
 
         continuousIntegrationTriggerService
                 .orElseThrow(() -> new UnsupportedOperationException(
