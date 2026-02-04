@@ -1,15 +1,8 @@
 <p-dialog [header]="header()" [modal]="true" [visible]="isOpen()" (visibleChange)="isOpen.set($event)">
     <div class="frame">
-        <div class="autocomplete-with-icon">
-            <i class="pi pi-search search-icon"></i>
-            <p-autoComplete
-                [(ngModel)]="searchString"
-                [suggestions]="suggestedStudents()"
-                (completeMethod)="search($event)"
-                [placeholder]="searchBarPlaceholder()"
-                [inputStyle]="{ width: '100%', 'padding-left': '2.5rem' }"
-                size="small"
-            />
-        </div>
+        <p-iconfield class="search-field">
+            <p-inputicon class="pi pi-search" />
+            <input pInputText class="search-input p-inputtext-sm" type="text" [placeholder]="searchBarPlaceholder()" [(ngModel)]="searchString" />
+        </p-iconfield>
     </div>
 </p-dialog>
