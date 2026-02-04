@@ -20,24 +20,36 @@
     background: var(--body-background-color);
     border: 1px solid var(--border-color);
     border-radius: 0.3rem;
+    padding: 0.25rem;
 }
 
 .search-viewport {
     height: 100%;
     width: 100%;
-}
 
-.student-row {
-    height: 2.5rem;
-    display: flex;
-    align-items: center;
-    padding: 0 0.75rem;
-}
+    .loading-row {
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--secondary);
+    }
 
-.loading-row {
-    height: 2.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--secondary);
+    .student-row {
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        padding: 0 0.5rem;
+        margin-bottom: 0.25rem;
+        width: 100%;
+        border: none;
+        background: none;
+        text-align: left;
+        cursor: pointer;
+        border-radius: 0.25rem;
+
+        &.active {
+            background-color: var(--secondary);
+        }
+    }
 }

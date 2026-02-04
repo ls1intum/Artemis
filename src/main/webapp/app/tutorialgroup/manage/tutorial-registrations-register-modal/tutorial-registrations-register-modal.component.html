@@ -10,6 +10,7 @@
                 [placeholder]="searchBarPlaceholder()"
                 [(ngModel)]="searchString"
                 (focus)="openPanel()"
+                (keydown)="onKeyDown($event)"
             />
             @if (isLoading()) {
                 <p-inputicon class="pi pi-spin pi-spinner" />
@@ -18,10 +19,17 @@
 
         <ng-template #panelTemplate>
             <div class="search-panel">
-                <cdk-virtual-scroll-viewport class="search-viewport" [itemSize]="40" minBufferPx="200" maxBufferPx="400">
-                    <div class="student-row" *cdkVirtualFor="let student of students(); trackBy: trackStudentById">
-                        <span class="student-name">{{ student.login + (student.name ? ' - ' + student.name : '') }}</span>
-                    </div>
+                <cdk-virtual-scroll-viewport class="search-viewport" [itemSize]="36" minBufferPx="200" maxBufferPx="400">
+                    <button
+                        class="student-row"
+                        *cdkVirtualFor="let student of suggestedStudents(); let i = index; trackBy: trackStudentById"
+                        (mouseenter)="suggestionHighlightIndex.set(i)"
+                        [class.active]="suggestionHighlightIndex() === i"
+                    >
+                        <span class="student-name">
+                            {{ student.login + (student.name ? ' | ' + student.name : '') }}
+                        </span>
+                    </button>
                     @if (isLoading()) {
                         <div class="loading-row">
                             <span class="pi pi-spin pi-spinner"></span>
