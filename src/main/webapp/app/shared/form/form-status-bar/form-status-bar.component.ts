@@ -35,6 +35,7 @@ export class FormStatusBarComponent implements AfterViewInit {
 
         const container = document.getElementById('course-body-container');
         if (!container) {
+            // Fallback for future layout changes
             target.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
             return;
         }
@@ -43,8 +44,10 @@ export class FormStatusBarComponent implements AfterViewInit {
         const navbarHeight = navbarEl?.getBoundingClientRect().height ?? 0;
         const statusBarHeight = this.statusBar?.nativeElement?.getBoundingClientRect().height ?? 0;
 
+        // Total offset so that the target headline is not hidden behind the navbar/status bar.
         const offset = navbarHeight + statusBarHeight;
 
+        // Compute the target position within the container:
         const containerRect = container.getBoundingClientRect();
         const targetRect = target.getBoundingClientRect();
 
