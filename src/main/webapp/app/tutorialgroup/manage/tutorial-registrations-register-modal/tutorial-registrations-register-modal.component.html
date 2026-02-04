@@ -11,7 +11,7 @@
                 [(ngModel)]="searchString"
                 (keydown)="onKeyDown($event)"
             />
-            @if (isLoading()) {
+            @if (firstPageLoading()) {
                 <p-inputicon class="pi pi-spin pi-spinner" />
             }
         </p-iconfield>
@@ -35,7 +35,7 @@
                     {{ student.login + (student.name ? ' | ' + student.name : '') }}
                 </span>
             </button>
-            @if (isLoading()) {
+            @if (nextPageLoading()) {
                 <div class="loading-row">
                     <span class="pi pi-spin pi-spinner"></span>
                 </div>

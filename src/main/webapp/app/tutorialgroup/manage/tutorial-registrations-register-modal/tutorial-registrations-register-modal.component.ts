@@ -32,23 +32,30 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
     private viewport = viewChild<CdkVirtualScrollViewport>(CdkVirtualScrollViewport);
 
     isOpen = signal(false);
-    isLoading = signal(true);
-    searchString = signal<string>('');
     header = computed<string>(() => this.computeHeader());
     searchBarPlaceholder = computed<string>(() => this.computeSearchBarPlaceholder());
-    suggestedStudents = signal<TutorialGroupRegisteredStudentDTO[]>(mockStudents);
+    searchString = signal<string>('');
+    suggestedStudents = signal<TutorialGroupRegisteredStudentDTO[]>([]);
     selectedStudents = signal<TutorialGroupRegisteredStudentDTO[]>([]);
     suggestionHighlightIndex = signal<number | undefined>(undefined);
+
+    currentPage = signal(0);
+    hasMorePages = signal(true);
+    firstPageLoading = signal(false);
+    nextPageLoading = signal(false);
 
     constructor() {
         effect(() => {
             if (this.suggestedStudents().length > 0) {
-                this.openPanel();
+                this.openPanelIfNotAlreadyOpen();
             }
         });
 
         effect(() => {
-            // TODO: init paging tracker proeprties / fetch first page
+            const query = this.searchString().trim();
+            if (!query) return;
+
+            this.loadFirstPage();
         });
     }
 
@@ -62,6 +69,9 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
     }
 
     onKeyDown(event: KeyboardEvent): void {
+        const viewport = this.viewport();
+        if (!viewport) return;
+
         if (event.key === 'Enter') {
             const suggestionIndex = this.suggestionHighlightIndex();
             if (suggestionIndex !== undefined) {
@@ -87,30 +97,24 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
                 return selectionTargetIndex !== undefined ? Math.max(selectionTargetIndex - 1, 0) : numberOfSuggestedStudents - 1;
             });
         }
+
         const updatedSuggestionHighlightIndex = this.suggestionHighlightIndex();
         if (updatedSuggestionHighlightIndex !== undefined) {
-            this.ensureIndexVisible(updatedSuggestionHighlightIndex);
-        }
-    }
+            const scrollTop = viewport.measureScrollOffset();
+            const viewportHeight = viewport.getViewportSize();
 
-    private ensureIndexVisible(index: number): void {
-        const viewport = this.viewport();
-        if (!viewport) return;
+            const ITEM_SIZE = 36;
+            const itemTop = updatedSuggestionHighlightIndex * ITEM_SIZE;
+            const itemBottom = itemTop + ITEM_SIZE;
 
-        const scrollTop = viewport.measureScrollOffset();
-        const viewportHeight = viewport.getViewportSize();
+            const viewportTop = scrollTop;
+            const viewportBottom = scrollTop + viewportHeight;
 
-        const ITEM_SIZE = 36;
-        const itemTop = index * ITEM_SIZE;
-        const itemBottom = itemTop + ITEM_SIZE;
-
-        const viewportTop = scrollTop;
-        const viewportBottom = scrollTop + viewportHeight;
-
-        if (itemTop < viewportTop) {
-            viewport.scrollToIndex(index, 'smooth');
-        } else if (itemBottom > viewportBottom) {
-            viewport.scrollToIndex(index, 'smooth');
+            if (itemTop < viewportTop) {
+                viewport.scrollToIndex(updatedSuggestionHighlightIndex, 'smooth');
+            } else if (itemBottom > viewportBottom) {
+                viewport.scrollToIndex(updatedSuggestionHighlightIndex, 'smooth');
+            }
         }
     }
 
@@ -133,7 +137,11 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
         this.searchInput()?.nativeElement.focus();
     }
 
-    private openPanel(): void {
+    trackStudentById(index: number, student: TutorialGroupRegisteredStudentDTO): number {
+        return student.id;
+    }
+
+    private openPanelIfNotAlreadyOpen(): void {
         if (this.overlayRef) return;
 
         const searchInput = this.searchInput()?.nativeElement;
@@ -170,10 +178,52 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
         });
 
         this.overlayRef.attach(new TemplatePortal(panelTemplate, this.viewContainerRef));
+
+        const viewport = this.viewport();
+        if (!viewport) return;
+
+        // TODO: fix memory leak
+        viewport.elementScrolled().subscribe(() => {
+            const distanceToBottom = viewport.measureScrollOffset('bottom');
+
+            if (distanceToBottom < 40) {
+                this.loadNextPage();
+            }
+        });
     }
 
-    trackStudentById(index: number, student: TutorialGroupRegisteredStudentDTO): number {
-        return student.id;
+    private async loadFirstPage(): Promise<void> {
+        this.currentPage.set(0);
+        this.hasMorePages.set(true);
+        this.suggestedStudents.set([]);
+
+        this.firstPageLoading.set(true);
+
+        const page = await fetchPage(0);
+
+        this.suggestedStudents.set(page);
+        this.currentPage.set(1);
+
+        this.hasMorePages.set(page.length === PAGE_SIZE);
+
+        this.firstPageLoading.set(false);
+    }
+
+    private async loadNextPage(): Promise<void> {
+        if (this.nextPageLoading()) return;
+        if (!this.hasMorePages()) return;
+
+        this.nextPageLoading.set(true);
+
+        const pageIndex = this.currentPage();
+        const page = await fetchPage(pageIndex);
+
+        this.suggestedStudents.update((current) => [...current, ...page]);
+        this.currentPage.set(pageIndex + 1);
+
+        this.hasMorePages.set(page.length === PAGE_SIZE);
+
+        this.nextPageLoading.set(false);
     }
 
     private computeHeader(): string {
@@ -186,25 +236,34 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
     }
 }
 
-const mockStudents: TutorialGroupRegisteredStudentDTO[] = [
-    { id: 1, name: 'Jaohn Doe', login: 'jdoe' },
-    { id: 2, name: 'Jaice Smith', login: 'asmith' },
-    { id: 3, name: 'Jabruce Wayne', login: 'bwayne' },
-    { id: 4, name: 'Jalark Kent', login: 'ckent' },
-    { id: 5, name: 'Japeter Parker', login: 'pparker' },
-    { id: 6, name: 'Jaaron Miller', login: 'amiller' },
-    { id: 7, name: 'Jajessica Brown', login: 'jbrown' },
-    { id: 8, name: 'Jaalex Johnson', login: 'ajohnson' },
-    { id: 9, name: 'Jalinda Davis', login: 'ldavis' },
-    { id: 10, name: 'Jamichael Wilson', login: 'mwilson' },
-    { id: 11, name: 'Jaaniel Taylor', login: 'dtaylor' },
-    { id: 12, name: 'Jasophia Anderson', login: 'sanderson' },
-    { id: 13, name: 'Jabrian Thomas', login: 'bthomas' },
-    { id: 14, name: 'Jarebecca Moore', login: 'rmoore' },
-    { id: 15, name: 'Jajames Jackson', login: 'jjackson' },
-    { id: 16, name: 'Japatricia White', login: 'pwhite' },
-    { id: 17, name: 'Jarobert Harris', login: 'rharris' },
-    { id: 18, name: 'Jamanda Martin', login: 'amartin' },
-    { id: 19, name: 'Jacharles Thompson', login: 'cthompson' },
-    { id: 20, name: 'Janicole Garcia', login: 'ngarcia' },
-];
+const PAGE_SIZE = 25;
+
+const MOCK_PAGES: TutorialGroupRegisteredStudentDTO[][] = generateMockPages();
+
+function generateMockPages(): TutorialGroupRegisteredStudentDTO[][] {
+    const pages: TutorialGroupRegisteredStudentDTO[][] = [];
+    let id = 1;
+
+    for (let p = 0; p < 4; p++) {
+        const page: TutorialGroupRegisteredStudentDTO[] = [];
+        for (let i = 0; i < 25; i++) {
+            const currentId = id++;
+            page.push({
+                id: currentId,
+                login: `jauser${currentId}`,
+                name: `JaUser ${currentId}`,
+            });
+        }
+        pages.push(page);
+    }
+
+    return pages;
+}
+
+function fetchPage(page: number): Promise<TutorialGroupRegisteredStudentDTO[]> {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve(MOCK_PAGES[page] ?? []);
+        }, 2000);
+    });
+}
