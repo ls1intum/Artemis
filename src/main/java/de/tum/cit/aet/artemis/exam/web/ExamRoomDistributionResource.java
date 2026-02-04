@@ -268,7 +268,7 @@ public class ExamRoomDistributionResource {
     }
 
     /**
-     * GET courses/{courseId}/exams/{examId}/aliases : Gets a mapping from the original room number to an optionally specified alias.
+     * GET courses/{courseId}/exams/{examId}/room-aliases : Gets a mapping from the original room number to an optionally specified alias.
      * Only returns aliases for rooms connected to the given exam.
      *
      * @param courseId the id of the course
