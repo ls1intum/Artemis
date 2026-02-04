@@ -182,13 +182,19 @@ public class BuildAgentConfiguration {
 
     /**
      * Creates a Docker client that is used to communicate with the Docker daemon.
+     * Configures connection and response timeouts to prevent hanging on unresponsive Docker daemons.
+     * <p>
+     * The response timeout (45s) applies to each chunk of data received, not the total operation time.
+     * For streaming operations like image pulls, Docker sends progress updates regularly, so this
+     * timeout only fires if the daemon becomes completely unresponsive.
      *
      * @return The DockerClient.
      */
     public DockerClient createDockerClient() {
         log.debug("Create bean dockerClient");
         DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().withDockerHost(dockerConnectionUri).build();
-        DockerHttpClient httpClient = new ZerodepDockerHttpClient.Builder().dockerHost(config.getDockerHost()).sslConfig(config.getSSLConfig()).build();
+        DockerHttpClient httpClient = new ZerodepDockerHttpClient.Builder().dockerHost(config.getDockerHost()).sslConfig(config.getSSLConfig())
+                .connectionTimeout(java.time.Duration.ofSeconds(10)).responseTimeout(java.time.Duration.ofSeconds(45)).build();
         DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
 
         log.debug("Docker client created with connection URI: {}", dockerConnectionUri);
