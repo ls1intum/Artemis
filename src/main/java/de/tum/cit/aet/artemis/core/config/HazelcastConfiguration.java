@@ -702,7 +702,11 @@ public class HazelcastConfiguration {
      * @param config the Hazelcast configuration to modify
      */
     private void configurePortAndMetadata(Config config) {
-        String hazelcastMetadataHost = registration.get().getHost();
+        // Use the configured Hazelcast interface if set, otherwise fall back to localhost.
+        // This ensures the registered address matches what Hazelcast actually binds to,
+        // which is critical for address comparison in HazelcastClusterManager.
+        // normalizeHost() strips brackets from IPv6 addresses for consistent comparison.
+        String hazelcastMetadataHost = (hazelcastInterface != null && !hazelcastInterface.isEmpty()) ? eurekaInstanceHelper.normalizeHost(hazelcastInterface) : "127.0.0.1";
         int effectivePort;
 
         if (hazelcastLocalInstances) {
