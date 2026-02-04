@@ -558,7 +558,11 @@ public class HazelcastConfiguration {
             eurekaInstanceHelper.registerHazelcastAddress(actualHost, actualPort);
         }
         catch (Exception e) {
-            log.warn("Failed to register actual Hazelcast address: {}. Using configured address as fallback.", e.getMessage());
+            log.warn("Failed to register actual Hazelcast address: {}. Registering configured address as fallback.", e.getMessage());
+            // Fallback: register the configured interface or Eureka host as a best effort
+            String fallbackHost = (hazelcastInterface != null && !hazelcastInterface.isEmpty()) ? hazelcastInterface : registration.get().getHost();
+            int fallbackPort = hazelcastLocalInstances ? (serverProperties.getPort() != null ? serverProperties.getPort() : 8080) + hazelcastPort : hazelcastPort;
+            eurekaInstanceHelper.registerHazelcastAddress(fallbackHost, fallbackPort);
         }
     }
 
