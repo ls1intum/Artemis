@@ -250,7 +250,7 @@ public class ProgrammingExerciseParticipationService {
         }
         User coAuthor = userRepository.findOneByLogin(login).orElse(null);
         String commitMessage = "Reset Exercise";
-        if (coAuthor != null && coAuthor.getEmail() != null) {
+        if (coAuthor != null && coAuthor.getName() != null && coAuthor.getEmail() != null) {
             commitMessage += "\n\nCo-authored-by: " + coAuthor.getName() + " <" + coAuthor.getEmail() + ">";
         }
         gitService.stageAllChanges(targetRepo);
