@@ -580,4 +580,22 @@ public class ExamRoomService {
         return examRoomRepository.existsByRoomNumberAndIsConnectedToExam(roomNumber, examId);
     }
 
+    /**
+     * Formats the metadata of an exam room into a human-readable format
+     *
+     * @param room The exam room
+     */
+    protected String humanReadableFormat(ExamRoom room) {
+        String namePart = room.getName();
+        if (room.getAlternativeName() != null) {
+            namePart += " (" + room.getAlternativeName() + ")";
+        }
+
+        String numberPart = room.getRoomNumber();
+        if (room.getAlternativeRoomNumber() != null) {
+            numberPart += " (" + room.getAlternativeRoomNumber() + ")";
+        }
+
+        return namePart + " - " + numberPart + " - [" + room.getBuilding() + "]";
+    }
 }

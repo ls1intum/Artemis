@@ -237,11 +237,11 @@ export class AdminSidebarComponent {
                         testId: 'admin-build-agents',
                     },
                     {
-                        routerLink: '/admin/build-queue',
+                        routerLink: '/admin/build-overview',
                         icon: faList,
                         title: 'Build Overview',
                         translation: 'global.menu.admin.sidebar.buildQueue',
-                        testId: 'admin-build-queue',
+                        testId: 'admin-build-overview',
                     },
                 ],
             });

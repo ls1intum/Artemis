@@ -49,6 +49,22 @@
                     "distribute": "Distribute",
                     "noRoomSelected": "No room is selected",
                     "cantFindRoom": "Can't find your room? Upload it here: "
+                },
+                "export": {
+                    "buttonTitle": "Export Users",
+                    "dialogTitle": "Export Users",
+                    "introText": "This dialog can be used to export the information of all students registered for this exam.",
+                    "finalize": "Export",
+                    "header": {
+                        "matriculationNumber": "Matriculation Number",
+                        "login": "Login",
+                        "name": "Name",
+                        "email": "E-Mail",
+                        "room": "Room",
+                        "seat": "Seat",
+                        "fullLocation": "<exam title>: <full room name>: <seat>"
+                    },
+                    "exportFailed": "Export failed"
                 }
             },
             "overview": {
