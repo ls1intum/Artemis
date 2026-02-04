@@ -2,7 +2,9 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
 
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -13,7 +15,9 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
+import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.core.env.Environment;
 
 /**
@@ -208,6 +212,124 @@ class EurekaInstanceHelperAddressTest {
             // Compressed IPv6 format should be preserved
             String compressedIpv6 = "2001:db8::1";
             assertThat(eurekaInstanceHelper.formatAddressForHazelcast(compressedIpv6, "5701")).isEqualTo("[" + compressedIpv6 + "]:5701");
+        }
+    }
+
+    @Nested
+    class IsCurrentInstanceTests {
+
+        private Registration registration;
+
+        private ServiceInstance serviceInstance;
+
+        private EurekaInstanceHelper helperWithRegistration;
+
+        @BeforeEach
+        void setUp() {
+            registration = Mockito.mock(Registration.class);
+            serviceInstance = Mockito.mock(ServiceInstance.class);
+            DiscoveryClient discoveryClient = Mockito.mock(DiscoveryClient.class);
+            Environment env = Mockito.mock(Environment.class);
+            helperWithRegistration = new EurekaInstanceHelper(discoveryClient, Optional.of(registration), Optional.empty(), env);
+        }
+
+        @Test
+        void shouldReturnFalseWhenNoRegistration() {
+            // eurekaInstanceHelper has no registration (from outer setUp)
+            ServiceInstance instance = Mockito.mock(ServiceInstance.class);
+            assertThat(eurekaInstanceHelper.isCurrentInstance(instance)).isFalse();
+        }
+
+        @Test
+        void shouldReturnFalseWhenPortsDoNotMatch() {
+            when(registration.getPort()).thenReturn(8080);
+            when(serviceInstance.getPort()).thenReturn(8081);
+
+            assertThat(helperWithRegistration.isCurrentInstance(serviceInstance)).isFalse();
+        }
+
+        @Test
+        void shouldReturnTrueWhenHostsMatch() {
+            when(registration.getHost()).thenReturn("192.168.1.5");
+            when(registration.getPort()).thenReturn(8080);
+            when(serviceInstance.getHost()).thenReturn("192.168.1.5");
+            when(serviceInstance.getPort()).thenReturn(8080);
+
+            assertThat(helperWithRegistration.isCurrentInstance(serviceInstance)).isTrue();
+        }
+
+        @Test
+        void shouldReturnTrueWhenLocalhostMatchesLoopbackIp() {
+            // This tests the IP resolution fallback for Docker-style hostname/IP mismatches
+            when(registration.getHost()).thenReturn("localhost");
+            when(registration.getPort()).thenReturn(8080);
+            when(serviceInstance.getHost()).thenReturn("127.0.0.1");
+            when(serviceInstance.getPort()).thenReturn(8080);
+
+            assertThat(helperWithRegistration.isCurrentInstance(serviceInstance)).isTrue();
+        }
+
+        @Test
+        void shouldHandleIPv6LocalhostVariants() {
+            // Test IPv6 loopback matches
+            when(registration.getHost()).thenReturn("::1");
+            when(registration.getPort()).thenReturn(8080);
+            when(serviceInstance.getHost()).thenReturn("::1");
+            when(serviceInstance.getPort()).thenReturn(8080);
+
+            assertThat(helperWithRegistration.isCurrentInstance(serviceInstance)).isTrue();
+        }
+
+        @Test
+        void shouldReturnFalseForDifferentIpAddresses() {
+            when(registration.getHost()).thenReturn("192.168.1.5");
+            when(registration.getPort()).thenReturn(8080);
+            when(serviceInstance.getHost()).thenReturn("192.168.1.6");
+            when(serviceInstance.getPort()).thenReturn(8080);
+
+            assertThat(helperWithRegistration.isCurrentInstance(serviceInstance)).isFalse();
+        }
+
+        @Test
+        void shouldHandleNormalizedBracketedIPv6() {
+            // Eureka may store IPv6 with brackets
+            when(registration.getHost()).thenReturn("[::1]");
+            when(registration.getPort()).thenReturn(8080);
+            when(serviceInstance.getHost()).thenReturn("[::1]");
+            when(serviceInstance.getPort()).thenReturn(8080);
+
+            assertThat(helperWithRegistration.isCurrentInstance(serviceInstance)).isTrue();
+        }
+    }
+
+    @Nested
+    class GetHazelcastHostTests {
+
+        @Test
+        void shouldPreferHazelcastHostFromMetadata() {
+            ServiceInstance instance = Mockito.mock(ServiceInstance.class);
+            when(instance.getMetadata()).thenReturn(Map.of("hazelcast.host", "192.168.1.100"));
+            when(instance.getHost()).thenReturn("10.0.0.1");
+
+            assertThat(eurekaInstanceHelper.getHazelcastHost(instance)).isEqualTo("192.168.1.100");
+        }
+
+        @Test
+        void shouldFallbackToInstanceHostWhenMetadataEmpty() {
+            ServiceInstance instance = Mockito.mock(ServiceInstance.class);
+            when(instance.getMetadata()).thenReturn(Map.of());
+            when(instance.getHost()).thenReturn("10.0.0.1");
+
+            assertThat(eurekaInstanceHelper.getHazelcastHost(instance)).isEqualTo("10.0.0.1");
+        }
+
+        @Test
+        void shouldNormalizeBracketedIPv6FromMetadata() {
+            ServiceInstance instance = Mockito.mock(ServiceInstance.class);
+            when(instance.getMetadata()).thenReturn(Map.of("hazelcast.host", "[::1]"));
+            when(instance.getHost()).thenReturn("10.0.0.1");
+
+            assertThat(eurekaInstanceHelper.getHazelcastHost(instance)).isEqualTo("::1");
         }
     }
 }
