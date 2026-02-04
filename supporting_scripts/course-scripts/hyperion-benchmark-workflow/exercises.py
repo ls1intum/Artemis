@@ -3,9 +3,7 @@ import shutil
 import subprocess
 import sys
 import os
-import configparser
 import json
-import time
 from typing import Any, Dict, List
 import zipfile
 import requests
@@ -141,7 +139,6 @@ def check_pecv_bench_setup(pecv_bench_dir: str) -> bool:
         logging.error("Could not import 'cli' from pecv-bench. Dependencies might not be installed.")
         logging.error("Please run 'install_pecv_bench_dependencies' first.")
         return False
-
 
 def create_exercise_variants(version: str, course: str, exercise: str, pecv_bench_dir: str) -> None:
     """
@@ -625,8 +622,6 @@ def test_import_exercise_base_request() -> None:
 def test_consistency_check() -> None:
     pass
 # ==============================
-
-
 
 if __name__ == "__main__":
     logging.info("Step 1: Creating session")

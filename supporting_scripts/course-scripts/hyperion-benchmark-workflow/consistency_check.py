@@ -4,7 +4,7 @@ import os
 import subprocess
 import requests
 from logging_config import logging
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any
 from requests import Session
 
 from utils import SERVER_URL, MAX_THREADS, CONSISTENCY_CHECK_EXERCISES, get_pecv_bench_dir, login_as_admin

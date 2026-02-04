@@ -88,7 +88,6 @@ def summarize_report(report_md_path: str, summary_md_path: str) -> None:
         for line in lines:
             new_lines.append(line)
             if not inserted and header_marker in line:
-                # add a newline, the summary text, and another newline
                 new_lines.append("\n" + "".join(new_summary_text) + "\n")
                 inserted = True
 
@@ -103,7 +102,7 @@ def summarize_report(report_md_path: str, summary_md_path: str) -> None:
 
 if __name__ == "__main__":
     pecv_bench_dir = get_pecv_bench_dir()
-
+    #for testing purposes
     approach_id = "artemis-feature-hyperion-run_pecv_bench_in_artemis"
 
     generate_response_file(pecv_bench_dir, DATASET_VERSION, approach_id)

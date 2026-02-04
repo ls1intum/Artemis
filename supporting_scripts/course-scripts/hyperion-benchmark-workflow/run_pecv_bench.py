@@ -1,14 +1,8 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import json
-import os
-import subprocess
 import requests
 from logging_config import logging
-from typing import Dict, Any, List, Tuple
-from requests import Session
 
-from utils import DATASET_VERSION, SERVER_URL, MAX_THREADS, CONSISTENCY_CHECK_EXERCISES, get_pecv_bench_dir, login_as_admin
-from course import create_course_request, get_course_id_request, get_exercise_ids_request
+from utils import DATASET_VERSION, get_pecv_bench_dir, login_as_admin
+from course import create_course_request, get_exercise_ids_request
 from exercises import clone_pecv_bench, install_pecv_bench_dependencies, create_exercise_variants_all, convert_variant_to_zip_all, import_exercise_variants
 from report import generate_response_file
 from consistency_check import consistency_check

@@ -1,11 +1,9 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import configparser
 import json
-import subprocess
 import os
 import sys
 import requests
-from typing import Dict, List, Tuple
+from typing import Dict, List
 from logging_config import logging
 
 # Load configuration

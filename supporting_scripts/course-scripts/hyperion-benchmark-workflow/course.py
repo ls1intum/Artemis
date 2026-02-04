@@ -234,7 +234,6 @@ def get_exercise_ids_request(session: requests.Session, course_id: int) -> Dict[
         logging.error(f"Error parsing JSON: {e}")
         return {}
 
-#TODO
 def __transform_exercise_json_keys(input_dict: Dict[str, int]) -> Dict[str, int]:
     """
     Transforms the keys of the input dictionary into a new format.
@@ -273,7 +272,6 @@ def __transform_exercise_json_keys(input_dict: Dict[str, int]) -> Dict[str, int]
             transformed_dict[original_key] = value
 
     return transformed_dict
-
 
 if __name__ == "__main__":
     logging.info("Creating Hyperion Benchmark Course")
