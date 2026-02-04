@@ -70,7 +70,7 @@ pip install -r requirements.txt
 
 ## 3. Configure the Environment
 1. Start your local Artemis instance.
-2. Configure the values in [hyperion-benchmark-workflow/config.ini](./config.ini) according to your local setup. (But for testing can be leaved as it is)
+2. Configure the values in [hyperion-benchmark-workflow/config.ini](./config.ini) according to your local setup. (But for testing can be left as it is)
 
 
 **Note:**

@@ -79,14 +79,3 @@ def authenticate_user(username: str, password: str, session: requests.Session) -
             f"Authentication failed for user {username}. Status code: {response.status_code}\n Response content: {response.text}")
 
     return response
-
-def get_pecv_bench_dir() -> str:
-    """
-    Gets the directory path for pecv-bench.
-
-    :return: The absolute path to the pecv-bench directory
-    :rtype: str
-    """
-    hyperion_benchmark_workflow_dir = os.path.dirname(os.path.abspath(__file__))
-    pecv_bench_dir = os.path.join(hyperion_benchmark_workflow_dir, PECV_BENCH_DIR)
-    return pecv_bench_dir

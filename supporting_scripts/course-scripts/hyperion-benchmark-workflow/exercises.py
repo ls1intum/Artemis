@@ -57,8 +57,7 @@ def clone_pecv_bench(pecv_bench_dir: str) -> None:
             logging.info("Successfully pulled latest changes.")
 
         except subprocess.CalledProcessError as e:
-            logging.error(f"ERROR: Failed to pull updates for {pecv_bench_dir}.")
-            logging.error(f"Stderr: {e.stderr}")
+            logging.error(f"ERROR: Failed to pull updates for {pecv_bench_dir}. Error: {e}")
             sys.exit(1)
     else:
         logging.info(f"Cloning repository from {PECV_BENCH_URL} into {pecv_bench_dir}.")
@@ -74,8 +73,8 @@ def clone_pecv_bench(pecv_bench_dir: str) -> None:
             # =======================================
 
         except subprocess.CalledProcessError as e:
-            logging.error(f"ERROR: Failed to clone repository from {PECV_BENCH_URL}.")
-            logging.error(f"Stderr: {e.stderr}")
+            logging.error(f"ERROR: Failed to clone repository from {PECV_BENCH_URL}. Error: {e}")
+
             sys.exit(1)
 
 def checkout_pecv_bench_dataset_extension_branch(cwd: str) -> None:
@@ -423,7 +422,7 @@ def import_exercise_variant_request(session: requests.Session,
         logging.info(f"Loaded programming exercise details from {config_file}")
     except OSError as e:
         logging.error(f"Failed to read programming exercise JSON file at {config_file}: {e}")
-        return None
+        return False
 
     logging.info(f"Preparing to import exercise: {exercise_details.get('title', 'Untitled')}")
     try:
@@ -432,7 +431,7 @@ def import_exercise_variant_request(session: requests.Session,
             logging.info(f"Loaded programming exercise ZIP file from {exercise_zip}")
     except OSError as e:
         logging.error(f"Failed to read programming exercise ZIP file at {exercise_zip}: {e}")
-        return None
+        return False
 
     files_payload = {
         'programmingExercise': (

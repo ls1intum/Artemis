@@ -1,9 +1,9 @@
 import requests
 from logging_config import logging
 
-from utils import DATASET_VERSION, get_pecv_bench_dir, login_as_admin
+from utils import DATASET_VERSION, login_as_admin
 from course import create_course_request, get_exercise_ids_request
-from exercises import clone_pecv_bench, install_pecv_bench_dependencies, create_exercise_variants_all, convert_variant_to_zip_all, import_exercise_variants
+from exercises import clone_pecv_bench, install_pecv_bench_dependencies, create_exercise_variants_all, convert_variant_to_zip_all, import_exercise_variants, get_pecv_bench_dir
 from report import generate_response_file
 from consistency_check import consistency_check
 
@@ -20,7 +20,7 @@ if __name__ == "__main__":
     response = create_course_request(session=session)
 
     logging.info("Step 4: Retrieving Hyperion Benchmark Course ID")
-    course_id = response.get("id")
+    course_id = response.json().get("id")
 
     pecv_bench_dir = get_pecv_bench_dir()
 

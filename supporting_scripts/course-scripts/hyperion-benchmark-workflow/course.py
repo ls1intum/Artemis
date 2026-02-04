@@ -118,7 +118,7 @@ def create_course_request(session: requests.Session) -> requests.Response:
     # final check for successful creation
     if response.status_code == 201:
         logging.info(f"Successfully created course '{COURSE_NAME}' (ShortName: {course_short_name})")
-        return response.json()
+        return response
     else:
         raise Exception(
                 f"Could not create course {COURSE_NAME}; Status code: {response.status_code}\n"
@@ -155,13 +155,13 @@ def delete_course_request(session: requests.Session,max_retries: int = 3) -> boo
         logging.info(f"Deletion attempt {attempt}/{max_retries}")
         try:
             # If server takes longer than 60s, it raises a Timeout exception, triggering the retry logic.
-            logging.info(f"Sending DELETE request, it can take around 30 seconds to delete a course")
-            deleteCourseResponse: requests.Response = session.delete(delete_url, timeout = 60)
-            if deleteCourseResponse.status_code == 200:
+            logging.info("Sending DELETE request, it can take around 30 seconds to delete a course")
+            delete_course_response: requests.Response = session.delete(delete_url, timeout = 60)
+            if delete_course_response.status_code == 200:
                 logging.info(f"DELETED: on attempt {attempt} course with shortName {course_short_name} was deleted successfully ")
                 return True
             else:
-                logging.error(f"Deletion attempt {attempt}/{max_retries} for {course_short_name} failed with status code {deleteCourseResponse.status_code}")
+                logging.error(f"Deletion attempt {attempt}/{max_retries} for {course_short_name} failed with status code {delete_course_response.status_code}")
         except Exception as e:
             logging.exception(f"Exception during deletion attempt {attempt}/{max_retries} for {course_short_name}: {e}")
 

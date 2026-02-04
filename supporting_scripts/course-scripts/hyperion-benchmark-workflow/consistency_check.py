@@ -7,8 +7,9 @@ from logging_config import logging
 from typing import Dict, Any
 from requests import Session
 
-from utils import SERVER_URL, MAX_THREADS, CONSISTENCY_CHECK_EXERCISES, get_pecv_bench_dir, login_as_admin
+from utils import SERVER_URL, MAX_THREADS, CONSISTENCY_CHECK_EXERCISES, login_as_admin
 from course import get_course_id_request, get_exercise_ids_request
+from exercises import get_pecv_bench_dir
 
 def consistency_check(session: requests.Session, exercise_ids: Dict[str, int]) -> str:
     """
@@ -27,7 +28,7 @@ def consistency_check(session: requests.Session, exercise_ids: Dict[str, int]) -
     pecv_bench_dir = get_pecv_bench_dir()
     if not os.listdir(pecv_bench_dir):
         logging.error(f"PECV-bench directory at {pecv_bench_dir} is empty. Please ensure PECV-bench is properly set up.")
-        return
+        return "Consistency check aborted due to empty PECV-bench directory."
     approach_id = ""
     try:
         approach_id = subprocess.check_output(
@@ -132,19 +133,18 @@ def consistency_check_io(session: Session, server_url: str, exercise_local_id: s
         logging.exception(f"Failed to write file for {exercise_local_id}: {e}")
         return f"[{exercise_local_id}] error"
 
-def consistency_check_request(session: requests.Session, server_url: str, exercise_server_id: int, exercise_local_id: str = None) -> Dict[str, Any]:
+def consistency_check_request(session: requests.Session, server_url: str, exercise_server_id: int, exercise_local_id: str| None = None) -> Dict[str, Any] | None:
     """
     Server request, to check the consistency of the programming exercise with Hyperion System.
 
     POST /api/hyperion/programming-exercises/{exercise_server_id}/consistency-check
 
     :param Session session: The active requests Session object.
-    :param int exercise_server_id: The ID of the programming exercise on the server.
     :param str server_url: The base URL of the Artemis server.
     :param int exercise_server_id: The ID of the programming exercise on the server.
     :param str exercise_local_id: (OPTIONAL) The local variant identifier (e.g., 'H01E01-Lectures:001').
     :return: A dictionary containing consistency issues, or ``None`` if the request failed.
-    :rtype: Dict[str, Any] or None
+    :rtype: Dict[str, Any] | None
     """
     #:param str exercise_variant_local_id: The local variant identifier (e.g., 'H01E01-Lectures:001').
     debug_id = exercise_local_id if exercise_local_id is not None else exercise_server_id

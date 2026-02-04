@@ -1,12 +1,9 @@
-import configparser
-import json
 import subprocess
 import os
 import sys
-import requests
-from typing import Dict, List, Tuple
 from logging_config import logging
-from utils import REFERENCE, DATASET_VERSION, get_pecv_bench_dir
+from utils import REFERENCE, DATASET_VERSION
+from exercises import get_pecv_bench_dir
 
 def generate_response_file(pecv_bench_dir: str, version: str, approach_id: str) -> None:
     """
