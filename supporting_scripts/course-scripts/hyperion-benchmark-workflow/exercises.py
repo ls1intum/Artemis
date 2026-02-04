@@ -620,6 +620,10 @@ def test_convert_base_exercise_to_zip(exercise_path: str, course_id: int) -> Non
 #TODO
 def test_import_exercise_base_request() -> None:
     pass
+
+#TODO
+def test_consistency_check() -> None:
+    pass
 # ==============================
 
 
@@ -649,6 +653,7 @@ if __name__ == "__main__":
     #logging.info("Step TEST: converting base exercise to zip file and importing it to Artemis")
     #test_convert_base_exercise_to_zip(exercise_path="/Users/mkh/Desktop/test_function", course_id=22)
     #test_import_exercise_base_request()
+    #test_consistency_check()
 
     logging.info("Step 8: importing exercise variants")
     import_exercise_variants(session=session)

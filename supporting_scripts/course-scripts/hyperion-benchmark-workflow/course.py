@@ -228,10 +228,10 @@ def get_exercise_ids_request(session: requests.Session, course_id: int) -> Dict[
         return __transform_exercise_json_keys(exercises_map)
 
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching data: {e}")
+        logging.error(f"Error fetching data: {e}")
         return {}
     except ValueError as e:
-        print(f"Error parsing JSON: {e}")
+        logging.error(f"Error parsing JSON: {e}")
         return {}
 
 #TODO

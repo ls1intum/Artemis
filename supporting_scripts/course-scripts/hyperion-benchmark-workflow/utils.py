@@ -10,26 +10,34 @@ from logging_config import logging
 
 # Load configuration
 config = configparser.ConfigParser()
+if not os.path.exists('config.ini'):
+    logging.critical("Configuration file 'config.ini' not found. Please ensure it exists in the working directory.")
+    sys.exit(1)
+
 config.read(['config.ini'])
 
-ADMIN_USER: str = config.get('Settings', 'admin_user')
-ADMIN_PASSWORD: str = config.get('Settings', 'admin_password')
-MAX_THREADS: int = config.getint('Settings', 'max_threads')
-SERVER_URL: str = config.get('Settings', 'server_url')
-CLIENT_URL: str = config.get('Settings', 'client_url')
+try:
+    ADMIN_USER: str = config.get('Settings', 'admin_user')
+    ADMIN_PASSWORD: str = config.get('Settings', 'admin_password')
+    MAX_THREADS: int = config.getint('Settings', 'max_threads')
+    SERVER_URL: str = config.get('Settings', 'server_url')
+    CLIENT_URL: str = config.get('Settings', 'client_url')
 
-SPECIAL_CHARACTER_REGEX: str = config.get('PECVCourseSettings', 'special_character_regex')
-CREATE_COURSE: bool = config.getboolean('PECVCourseSettings', 'create_course')
-COURSE_NAME: str = config.get('PECVCourseSettings', 'course_name')
-IS_LOCAL_COURSE: bool = config.getboolean('PECVCourseSettings', 'is_local_course')
-PECV_BENCH_DIR: str = config.get('PECVCourseSettings', 'pecv_bench_dir', fallback="pecv-bench")
-PECV_BENCH_URL: str = config.get('PECVCourseSettings', 'pecv_bench_url', fallback="https://github.com/ls1intum/PECV-bench.git")
+    SPECIAL_CHARACTER_REGEX: str = config.get('PECVCourseSettings', 'special_character_regex')
+    CREATE_COURSE: bool = config.getboolean('PECVCourseSettings', 'create_course')
+    COURSE_NAME: str = config.get('PECVCourseSettings', 'course_name')
+    IS_LOCAL_COURSE: bool = config.getboolean('PECVCourseSettings', 'is_local_course')
+    PECV_BENCH_DIR: str = config.get('PECVCourseSettings', 'pecv_bench_dir', fallback="pecv-bench")
+    PECV_BENCH_URL: str = config.get('PECVCourseSettings', 'pecv_bench_url', fallback="https://github.com/ls1intum/PECV-bench.git")
 
-DATASET_VERSION: str = config.get('PECVExerciseSettings', 'dataset_version', fallback="V1")
-COURSE_EXERCISES: Dict[str, Dict[str, List[str]]] = json.loads(config.get('PECVExerciseSettings', 'course_exercises'))
+    DATASET_VERSION: str = config.get('PECVExerciseSettings', 'dataset_version', fallback="V1")
+    COURSE_EXERCISES: Dict[str, Dict[str, List[str]]] = json.loads(config.get('PECVExerciseSettings', 'course_exercises'))
 
-CONSISTENCY_CHECK_EXERCISES: Dict[str, Dict[str, List[str]]] = json.loads(config.get('PECVConsistencyCheckSettings', 'consistency_check_exercises', fallback='{}'))
-REFERENCE: str = config.get('PECVConsistencyCheckSettings', 'reference', fallback="No Data Available")
+    CONSISTENCY_CHECK_EXERCISES: Dict[str, Dict[str, List[str]]] = json.loads(config.get('PECVConsistencyCheckSettings', 'consistency_check_exercises', fallback='{}'))
+    REFERENCE: str = config.get('PECVConsistencyCheckSettings', 'reference', fallback="No Data Available")
+except (configparser.Error, json.JSONDecodeError, ValueError) as e:
+    logging.critical(f"Error loading configuration: {e}")
+    sys.exit(1)
 
 def login_as_admin(session: requests.Session) -> None:
     """

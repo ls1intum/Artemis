@@ -10,12 +10,16 @@ from requests import Session
 from utils import SERVER_URL, MAX_THREADS, CONSISTENCY_CHECK_EXERCISES, get_pecv_bench_dir, login_as_admin
 from course import get_course_id_request, get_exercise_ids_request
 
-def consistency_check(session: requests.Session, exercise_ids: Dict[str, int]) -> None:
+def consistency_check(session: requests.Session, exercise_ids: Dict[str, int]) -> str:
     """
     Run consistency checks for all programming exercises defined in consistency_check_exercises/config.ini
 
+    ENSURE to run get_exercise_ids_request() BEFORE to retrieve the mapping of exercise names to their server IDs, which is required for the consistency check.
+
     :param requests.Session session: The authenticated session to use for API requests
     :param Dict[str, int] exercise_ids: Available programming exercises on COURSE_NAME with their server IDs
+    :return: The approach ID used for the consistency check run
+    :rtype: str
     """
 
     logging.info("Starting consistency checks for programming exercises...")
@@ -24,13 +28,17 @@ def consistency_check(session: requests.Session, exercise_ids: Dict[str, int]) -
     if not os.listdir(pecv_bench_dir):
         logging.error(f"PECV-bench directory at {pecv_bench_dir} is empty. Please ensure PECV-bench is properly set up.")
         return
-
-    approach_id = subprocess.check_output(
-        ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-        text=True
-    ).strip()
-    # feature/hyperion/run-pecv-bench-in-artemis -> feature-hyperion-run_pecv_bench_in_artemis
-    approach_id = "artemis-" + approach_id.replace("-", "_").replace("/", "-")
+    approach_id = ""
+    try:
+        approach_id = subprocess.check_output(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            text=True
+        ).strip()
+        # feature/hyperion/run-pecv-bench-in-artemis -> feature-hyperion-run_pecv_bench_in_artemis
+        approach_id = "artemis-" + approach_id.replace("-", "_").replace("/", "-")
+    except subprocess.CalledProcessError:
+        logging.warning("Failed to determine git branch. Using default approach ID.")
+        approach_id = "artemis-default"
 
     model_name = "azure-openai-gpt-5-mini"  # NOTE future implementation
                                             # NOTE implement PyYAML parser to extract from src/main/resources//config/application-local.yml
@@ -85,6 +93,7 @@ def consistency_check(session: requests.Session, exercise_ids: Dict[str, int]) -
                 logging.exception(f"Thread failed with error: {e}")
 
     logging.info("All consistency checks completed.")
+    return approach_id
 
 def consistency_check_io(session: Session, server_url: str, exercise_local_id: str, exercise_server_id: int, exercise_results_dir: str, dataset_version: str, course_name: str, run_id: str) -> str:
     """
@@ -149,7 +158,9 @@ def consistency_check_request(session: requests.Session, server_url: str, exerci
     else:
         logging.error(f"Failed to check consistency for programming exercise ID {debug_id}; Status code: {response.status_code}\nResponse content: {response.text}")
         return None
+
 if __name__ == "__main__":
+
     logging.info("Step 1: Creating session")
     session = requests.Session()
 
