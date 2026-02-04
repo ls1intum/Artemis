@@ -104,7 +104,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.generateProblemStatement();
 
         // Verify the API was called correctly
-        expect(mockHyperionApiService.generateProblemStatement).toHaveBeenCalledWith(courseId, request);
+        expect(mockHyperionApiService.generateProblemStatement).toHaveBeenCalledWith(courseId, request, undefined);
 
         // Verify the alert was shown
         expect(mockAlertService.success).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.generationSuccess');
@@ -366,6 +366,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
                 startColumn: 1,
                 endColumn: 10,
             }),
+            undefined,
         );
 
         expect(comp.showDiff()).toBeTrue();
@@ -516,7 +517,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.userPrompt.set('Create exercise');
         comp.generateProblemStatement();
 
-        expect(mockHyperionApiService.generateProblemStatement).toHaveBeenCalledWith(99, expect.any(Object));
+        expect(mockHyperionApiService.generateProblemStatement).toHaveBeenCalledWith(99, expect.any(Object), undefined);
     }));
 
     it('should cancel active subscription on cancelGeneration', () => {
