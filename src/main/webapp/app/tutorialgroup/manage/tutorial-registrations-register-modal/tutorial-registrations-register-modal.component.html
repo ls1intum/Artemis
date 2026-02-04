@@ -15,7 +15,18 @@
         </p-iconfield>
 
         <ng-template #panelTemplate>
-            <div class="search-panel"></div>
+            <div class="search-panel">
+                <cdk-virtual-scroll-viewport class="search-viewport" [itemSize]="40" minBufferPx="200" maxBufferPx="400">
+                    <div class="student-row" *cdkVirtualFor="let student of students(); trackBy: trackStudentById">
+                        <span class="student-name">{{ student.login + (student.name ? ' - ' + student.name : '') }}</span>
+                    </div>
+                    @if (isLoading()) {
+                        <div class="loading-row">
+                            <span class="pi pi-spin pi-spinner"></span>
+                        </div>
+                    }
+                </cdk-virtual-scroll-viewport>
+            </div>
         </ng-template>
     </div>
 </p-dialog>
