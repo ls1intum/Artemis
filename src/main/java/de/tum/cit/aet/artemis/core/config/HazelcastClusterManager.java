@@ -130,8 +130,10 @@ public class HazelcastClusterManager {
             return;
         }
 
-        var hazelcastMemberAddresses = hazelcastInstance.getCluster().getMembers().stream()
-                .map(member -> eurekaInstanceHelper.formatAddressForHazelcast(member.getAddress().getHost(), String.valueOf(member.getAddress().getPort())))
+        // Resolve Hazelcast member hostnames to IPs for consistent comparison with Eureka addresses.
+        // Hazelcast may report hostnames (e.g., "artemis-app-node-1") while Eureka uses IPs.
+        var hazelcastMemberAddresses = hazelcastInstance.getCluster().getMembers().stream().map(member -> eurekaInstanceHelper
+                .formatAddressForHazelcast(eurekaInstanceHelper.resolveToIp(member.getAddress().getHost()), String.valueOf(member.getAddress().getPort())))
                 .collect(Collectors.toSet());
 
         var instances = eurekaInstanceHelper.getServiceInstances();

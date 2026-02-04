@@ -702,11 +702,12 @@ public class HazelcastConfiguration {
      * @param config the Hazelcast configuration to modify
      */
     private void configurePortAndMetadata(Config config) {
-        // Use the configured Hazelcast interface if set, otherwise fall back to localhost.
-        // This ensures the registered address matches what Hazelcast actually binds to,
-        // which is critical for address comparison in HazelcastClusterManager.
-        // normalizeHost() strips brackets from IPv6 addresses for consistent comparison.
-        String hazelcastMetadataHost = (hazelcastInterface != null && !hazelcastInterface.isEmpty()) ? eurekaInstanceHelper.normalizeHost(hazelcastInterface) : "127.0.0.1";
+        // Resolve the configured Hazelcast interface to an IP address for consistent comparison.
+        // Hazelcast may be configured with a hostname (e.g., "artemis-app-node-1"), but Eureka
+        // returns IP addresses when EUREKA_INSTANCE_PREFERIPADDRESS=true. By resolving to IP here,
+        // we ensure the registered metadata matches what Eureka returns, avoiding comparison
+        // mismatches in HazelcastClusterManager during the metadata propagation window.
+        String hazelcastMetadataHost = (hazelcastInterface != null && !hazelcastInterface.isEmpty()) ? eurekaInstanceHelper.resolveToIp(hazelcastInterface) : "127.0.0.1";
         int effectivePort;
 
         if (hazelcastLocalInstances) {

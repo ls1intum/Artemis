@@ -4,6 +4,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGENT;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -322,5 +324,35 @@ public class EurekaInstanceHelper {
      */
     public int getHazelcastPort() {
         return hazelcastPort;
+    }
+
+    /**
+     * Resolves a hostname to its IP address for consistent address comparison.
+     * This is necessary because Hazelcast may report hostnames while Eureka uses IP addresses
+     * (when EUREKA_INSTANCE_PREFERIPADDRESS=true), causing comparison mismatches.
+     *
+     * <p>
+     * <strong>Examples:</strong>
+     * <ul>
+     * <li>{@code "artemis-app-node-1"} → {@code "192.168.1.5"} (hostname resolved)</li>
+     * <li>{@code "192.168.1.5"} → {@code "192.168.1.5"} (IP unchanged)</li>
+     * <li>{@code "[fcfe:0:0:0:0:0:a:1]"} → {@code "fcfe:0:0:0:0:0:a:1"} (normalized and resolved)</li>
+     * </ul>
+     *
+     * @param hostname the hostname or IP address to resolve (may include IPv6 brackets)
+     * @return the resolved IP address, or the original hostname if resolution fails
+     */
+    public String resolveToIp(String hostname) {
+        if (hostname == null || hostname.isEmpty()) {
+            return hostname;
+        }
+        String normalizedHost = normalizeHost(hostname);
+        try {
+            return InetAddress.getByName(normalizedHost).getHostAddress();
+        }
+        catch (UnknownHostException e) {
+            log.debug("Failed to resolve hostname '{}' to IP, using as-is", normalizedHost);
+            return normalizedHost;
+        }
     }
 }
