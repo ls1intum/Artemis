@@ -38,6 +38,8 @@ import { ButtonModule } from 'primeng/button';
 })
 export class StudentsRoomDistributionDialogComponent implements OnInit {
     readonly RESERVE_FACTOR_DEFAULT_PERCENTAGE: number = 10;
+    // size defined in 20260130175050_changelog.xml
+    protected readonly ALIAS_NAME_MAX_LENGTH: number = 255;
 
     // Icons
     protected readonly faBan = faBan;

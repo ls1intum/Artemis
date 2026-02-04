@@ -47,7 +47,7 @@
                             <th jhiTranslate="artemisApp.exam.examUsers.rooms.building"></th>
                             <th jhiTranslate="artemisApp.exam.examUsers.rooms.number"></th>
                             <th jhiTranslate="artemisApp.exam.examUsers.rooms.alias"></th>
-                            <th><!-- Remove column --></th>
+                            <th><!-- Column for the 'Remove' button --></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -67,7 +67,7 @@
                                     }
                                 </td>
                                 <td>
-                                    <input type="text" [maxLength]="254" [defaultValue]="examRoom.alias ?? ''" (change)="setRoomAlias($event, examRoom.id)" />
+                                    <input type="text" [maxLength]="ALIAS_NAME_MAX_LENGTH" [defaultValue]="examRoom.alias ?? ''" (change)="setRoomAlias($event, examRoom.id)" />
                                 </td>
                                 <td>
                                     <button type="button" jhiTranslate="entity.action.remove" class="btn btn-sm btn-danger" (click)="removeSelectedRoom(examRoom)"></button>

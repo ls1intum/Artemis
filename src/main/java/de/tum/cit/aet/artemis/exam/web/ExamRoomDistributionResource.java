@@ -50,6 +50,9 @@ import jodd.util.StringUtil;
 @RequestMapping("api/exam/")
 public class ExamRoomDistributionResource {
 
+    /// size defined in 20260130175050_changelog.xml
+    private static final int ALIAS_NAME_MAX_LENGTH = 255;
+
     private static final Logger log = LoggerFactory.getLogger(ExamRoomDistributionResource.class);
 
     private static final String ENTITY_NAME = "exam";
@@ -115,7 +118,7 @@ public class ExamRoomDistributionResource {
             throw new BadRequestAlertException("You have invalid room IDs", ENTITY_NAME, "invalidRoomIDs");
         }
 
-        if (examRoomAliases.values().stream().anyMatch(alias -> alias.length() >= 255)) {
+        if (examRoomAliases.values().stream().anyMatch(alias -> alias.length() > ALIAS_NAME_MAX_LENGTH)) {
             throw new BadRequestAlertException("Alias name too long", ENTITY_NAME, "aliasNameTooLong");
         }
 
