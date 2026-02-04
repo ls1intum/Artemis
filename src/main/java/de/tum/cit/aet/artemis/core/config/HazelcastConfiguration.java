@@ -1187,7 +1187,8 @@ public class HazelcastConfiguration {
      * <li><strong>files:</strong> Cached file content with TTL for staleness prevention</li>
      * <li><strong>domain entities:</strong> Hibernate second-level cache entries</li>
      * <li><strong>rate-limit-buckets:</strong> API rate limiting state</li>
-     * <li><strong>atlas-session-pending-operations:</strong> Long-lived session state</li>
+     * <li><strong>atlas-session-pending-operations:</strong> Long-lived session state for competency operations</li>
+     * <li><strong>atlas-session-pending-relations:</strong> Long-lived session state for relation operations</li>
      * </ul>
      *
      * <p>
@@ -1204,6 +1205,7 @@ public class HazelcastConfiguration {
         config.getMapConfigs().put("de.tum.cit.aet.artemis.*.domain.*", createDomainMapConfig(jHipsterProperties));
         config.getMapConfigs().put("rate-limit-buckets", createRateLimitBucketsMapConfig(jHipsterProperties));
         config.getMapConfigs().put("atlas-session-pending-operations", createAtlasSessionMapConfig(jHipsterProperties));
+        config.getMapConfigs().put("atlas-session-pending-relations", createAtlasSessionMapConfig(jHipsterProperties));
     }
 
     /**
