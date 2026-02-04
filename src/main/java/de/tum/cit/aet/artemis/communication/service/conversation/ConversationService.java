@@ -234,6 +234,13 @@ public class ConversationService {
         conversationParticipantRepository.updateLastReadAsync(userId, conversationId, ZonedDateTime.now());
     }
 
+    /**
+     * Marks a conversation as unread for the user starting from the given message.
+     *
+     * @param conversationId the conversation ID
+     * @param userId         the user ID
+     * @param messageId      the message from which unread status begins
+     */
     public void markAsUnread(Long conversationId, Long userId, Long messageId) {
         Post post = postRepository.findByIdElseThrow(messageId);
         ZonedDateTime messageDate = post.getCreationDate();

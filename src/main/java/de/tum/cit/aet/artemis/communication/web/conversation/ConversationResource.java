@@ -186,6 +186,15 @@ public class ConversationResource extends ConversationManagementResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * PATCH courses/:courseId/conversations/:conversationId/messages/:messageId/mark-as-unread : Marks the conversation as unread for the requesting user starting from the given
+     * message in the given conversation
+     *
+     * @param courseId       the id of the course
+     * @param conversationId the id of the conversation
+     * @param messageId      the id of the message
+     * @return ResponseEntity with status 200 (Ok)
+     */
     @PatchMapping("{courseId}/conversations/{conversationId}/messages/{messageId}/mark-as-unread")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> markMessageAsUnread(@PathVariable Long courseId, @PathVariable Long conversationId, @PathVariable Long messageId) {
