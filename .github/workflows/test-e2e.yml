@@ -68,6 +68,7 @@ jobs:
       needs.determine-tests.outputs.run_all_tests != 'true' &&
       needs.determine-tests.outputs.relevant_tests != ''
     runs-on: [self-hosted, e2e-test]
+    timeout-minutes: 120
     environment: playwright-e2e-tests
     env:
       ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
@@ -120,69 +121,22 @@ jobs:
           artifact-name-suffix: Phase 1
           require-tests: warn
 
-      - name: Download Phase 1 test results
+      - name: E2E Test Report
         if: success() || failure()
-        uses: actions/download-artifact@v6
-        continue-on-error: true
+        uses: ./.github/actions/e2e-test-report
         with:
-          name: JUnit Test Results Phase 1
-          path: phase1-test-results
-
-      - name: Phase 1 Test Report
-        uses: mikepenz/action-junit-report@v5.6.2
-        if: success() || failure()
-        with:
-          commit: ${{ github.event.workflow_run.head_sha }}
-          check_name: "Phase 1: E2E Test Report"
-          fail_on_failure: false
-          require_tests: false
-          annotate_only: false
-          detailed_summary: true
-          include_time_in_summary: true
-          report_paths: 'phase1-test-results/results.xml'
-
-      - name: Find PR number
-        if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
-        id: find-pr-phase1
-        continue-on-error: true
-        run: |
-          BRANCH_NAME=${{ github.event.workflow_run.head_branch }}
-          echo "Checking if PR exists for head ref: $BRANCH_NAME."
-
-          PR_RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:$BRANCH_NAME")
-
-          PR_NUMBER=$(echo "$PR_RESPONSE" | grep -o '"number": [0-9]*,' | head -1 | sed 's/"number": //g' | sed 's/,//g' | tr -d ' \t\n\r')
-
-          if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
-            echo "Found PR: $PR_NUMBER from branch: $BRANCH_NAME."
-            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-          else
-            echo "No PR found from branch: $BRANCH_NAME."
-          fi
-
-      - name: Post Phase 1 results comment
-        if: (success() || failure()) && steps.find-pr-phase1.outputs.pr_number != ''
-        uses: actions/github-script@v8
-        continue-on-error: true
-        with:
-          script: |
-            const prNumber = ${{ steps.find-pr-phase1.outputs.pr_number }};
-            const relevantTests = `${{ needs.determine-tests.outputs.relevant_tests }}`;
-            const jobStatus = '${{ job.status }}';
-
-            let statusEmoji = jobStatus === 'success' ? '✅' : '❌';
-            let statusText = jobStatus === 'success' ? 'passed' : 'failed';
-
-            const body = `### Phase 1: Relevant E2E Tests ${statusEmoji}\n\n**Status:** Phase 1 ${statusText}\n\n**Tests Run:** ${relevantTests}\n\n**Details:** Check the [Phase 1 Test Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for detailed results.\n\n---\n*This is an automated comment for Phase 1 of the two-phase E2E test execution.*`;
-
-            github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-              body: body
-            });
+          phase-name: "Phase 1"
+          artifact-name: "JUnit Test Results Phase 1"
+          download-path: "phase1-test-results"
+          check-name: "Phase 1: E2E Test Report"
+          commit-sha: ${{ github.event.workflow_run.head_sha }}
+          tests-run: ${{ needs.determine-tests.outputs.relevant_tests }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          repository-owner: ${{ github.repository_owner }}
+          run-id: ${{ github.run_id }}
+          head-branch: ${{ github.event.workflow_run.head_branch }}
+          is-pr: ${{ github.event.workflow_run.event == 'pull_request' }}
 
   # Phase 2: Run remaining tests only if Phase 1 succeeds
   run-e2e-remaining:
@@ -195,6 +149,7 @@ jobs:
       needs.determine-tests.outputs.remaining_tests != '' &&
       (needs.run-e2e-relevant.result == 'success' || needs.run-e2e-relevant.result == 'skipped')
     runs-on: [self-hosted, e2e-test]
+    timeout-minutes: 120
     environment: playwright-e2e-tests
     env:
       ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
@@ -244,69 +199,22 @@ jobs:
           artifact-name-suffix: Phase 2
           require-tests: warn
 
-      - name: Download Phase 2 test results
+      - name: E2E Test Report
         if: success() || failure()
-        uses: actions/download-artifact@v6
-        continue-on-error: true
+        uses: ./.github/actions/e2e-test-report
         with:
-          name: JUnit Test Results Phase 2
-          path: phase2-test-results
-
-      - name: Phase 2 Test Report
-        uses: mikepenz/action-junit-report@v5.6.2
-        if: success() || failure()
-        with:
-          commit: ${{ github.event.workflow_run.head_sha }}
-          check_name: "Phase 2: E2E Test Report"
-          fail_on_failure: false
-          require_tests: false
-          annotate_only: false
-          detailed_summary: true
-          include_time_in_summary: true
-          report_paths: 'phase2-test-results/results.xml'
-
-      - name: Find PR number
-        if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
-        id: find-pr-phase2
-        continue-on-error: true
-        run: |
-          BRANCH_NAME=${{ github.event.workflow_run.head_branch }}
-          echo "Checking if PR exists for head ref: $BRANCH_NAME."
-
-          PR_RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:$BRANCH_NAME")
-
-          PR_NUMBER=$(echo "$PR_RESPONSE" | grep -o '"number": [0-9]*,' | head -1 | sed 's/"number": //g' | sed 's/,//g' | tr -d ' \t\n\r')
-
-          if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
-            echo "Found PR: $PR_NUMBER from branch: $BRANCH_NAME."
-            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-          else
-            echo "No PR found from branch: $BRANCH_NAME."
-          fi
-
-      - name: Post Phase 2 results comment
-        if: (success() || failure()) && steps.find-pr-phase2.outputs.pr_number != ''
-        uses: actions/github-script@v8
-        continue-on-error: true
-        with:
-          script: |
-            const prNumber = ${{ steps.find-pr-phase2.outputs.pr_number }};
-            const remainingTests = `${{ needs.determine-tests.outputs.remaining_tests }}`;
-            const jobStatus = '${{ job.status }}';
-
-            let statusEmoji = jobStatus === 'success' ? '✅' : '❌';
-            let statusText = jobStatus === 'success' ? 'passed' : 'failed';
-
-            const body = `### Phase 2: Remaining E2E Tests ${statusEmoji}\n\n**Status:** Phase 2 ${statusText}\n\n**Tests Run:** ${remainingTests}\n\n**Details:** Check the [Phase 2 Test Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for detailed results.\n\n---\n*This is an automated comment for Phase 2 of the two-phase E2E test execution.*`;
-
-            github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-              body: body
-            });
+          phase-name: "Phase 2"
+          artifact-name: "JUnit Test Results Phase 2"
+          download-path: "phase2-test-results"
+          check-name: "Phase 2: E2E Test Report"
+          commit-sha: ${{ github.event.workflow_run.head_sha }}
+          tests-run: ${{ needs.determine-tests.outputs.remaining_tests }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          repository-owner: ${{ github.repository_owner }}
+          run-id: ${{ github.run_id }}
+          head-branch: ${{ github.event.workflow_run.head_branch }}
+          is-pr: ${{ github.event.workflow_run.event == 'pull_request' }}
 
   # Run all tests for PR when run_all_tests is triggered, or when no specific tests detected
   run-e2e-all-pr:
@@ -317,6 +225,7 @@ jobs:
       (needs.determine-tests.outputs.run_all_tests == 'true' ||
        (needs.determine-tests.outputs.relevant_tests == '' && needs.determine-tests.outputs.remaining_tests == ''))
     runs-on: [self-hosted, e2e-test]
+    timeout-minutes: 120
     environment: playwright-e2e-tests
     env:
       ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
@@ -390,6 +299,7 @@ jobs:
     name: Run All E2E Tests (Non-PR)
     if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'pull_request'
     runs-on: [self-hosted, e2e-test]
+    timeout-minutes: 120
     environment: playwright-e2e-tests
     env:
       ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}

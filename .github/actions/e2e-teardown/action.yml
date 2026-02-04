@@ -17,7 +17,12 @@ runs:
     - name: Clean up intermediate test result files
       shell: bash
       run: |
-        echo "Removing intermediate XML files to prevent double-counting..."
+        # Playwright generates 3 XML files: results-parallel.xml, results-sequential.xml, and results.xml (merged).
+        # If all 3 are uploaded, the JUnit reporter counts tests from each file, causing double-counting
+        # (e.g., ~418 tests reported instead of ~223 actual tests).
+        # We remove the intermediate files to keep only the merged results.xml.
+        echo "Removing intermediate XML files (results-parallel.xml, results-sequential.xml) to prevent"
+        echo "double-counting in test reports. Only the merged results.xml should be uploaded."
         rm -f src/test/playwright/test-reports/results-parallel.xml || true
         rm -f src/test/playwright/test-reports/results-sequential.xml || true
         echo "Listing remaining XML files:"
