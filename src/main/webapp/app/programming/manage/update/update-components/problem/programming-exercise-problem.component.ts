@@ -222,7 +222,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         const currentContent = this.editableInstructions()?.getCurrentContent() ?? exercise?.problemStatement;
         const prompt = this.userPrompt();
 
-        if (!prompt?.trim() || !currentContent?.trim()) {
+        if (!exercise || !prompt?.trim() || !currentContent?.trim()) {
             return;
         }
 
