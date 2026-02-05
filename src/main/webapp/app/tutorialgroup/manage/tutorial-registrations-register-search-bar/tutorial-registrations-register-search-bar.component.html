@@ -1,0 +1,50 @@
+<p-iconfield class="search-field">
+    <p-inputicon class="pi pi-search" />
+    <input
+        #searchInput
+        pInputText
+        class="search-input p-inputtext-sm"
+        type="text"
+        [placeholder]="searchBarPlaceholder()"
+        [(ngModel)]="searchString"
+        (keydown)="onKeyDown($event)"
+        (focusout)="onInputFocusOut()"
+        (focusin)="onInputFocusIn()"
+    />
+    @if (firstSuggestedStudentsPageLoading()) {
+        <p-inputicon class="pi pi-spin pi-spinner" />
+    }
+</p-iconfield>
+
+<ng-template #panelTemplate>
+    <div class="search-panel">
+        @let somethingWasSearchedFor = this.searchString().trim().length !== 0;
+        @let initialSearchComplete = !this.firstSuggestedStudentsPageLoading();
+        @let noSuggestionsFound = this.suggestedStudents().length === 0;
+        @if (somethingWasSearchedFor && initialSearchComplete && noSuggestionsFound) {
+            <div class="no-results">
+                <i class="pi pi-exclamation-circle"></i>
+                <span>No Students Found</span>
+            </div>
+        } @else {
+            <cdk-virtual-scroll-viewport class="search-viewport" [itemSize]="36" minBufferPx="200" maxBufferPx="400">
+                <button
+                    class="student-row"
+                    *cdkVirtualFor="let student of suggestedStudents(); let i = index; trackBy: trackStudentById"
+                    (mouseenter)="suggestionHighlightIndex.set(i)"
+                    [class.active]="suggestionHighlightIndex() === i"
+                    (mousedown)="selectSuggestion(i)"
+                >
+                    <span class="student-name">
+                        {{ student.login + (student.name ? ' | ' + student.name : '') }}
+                    </span>
+                </button>
+                @if (nextSuggestedStudentsPageLoading()) {
+                    <div class="loading-row">
+                        <span class="pi pi-spin pi-spinner"></span>
+                    </div>
+                }
+            </cdk-virtual-scroll-viewport>
+        }
+    </div>
+</ng-template>
