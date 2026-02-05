@@ -94,7 +94,7 @@ The following visibility rules apply to **all exercise types**:
 - Teaching Assistants and above can view exercises before release
 
 **Submission Due Date:**
-- Students can only submit before the exercise `dueDate`
+- All users can only submit before the exercise `dueDate`
 - Submissions after due date are rejected (except for exam exercises which have separate handling)
 
 **Own Submission/Participation:**
@@ -108,6 +108,10 @@ The following visibility rules apply to **all exercise types**:
 **Example Solution:**
 - Students can view the example solution only after it has been published (`isExampleSolutionPublished()`)
 - Teaching Assistants and above can view example solutions at any time
+
+<Callout variant={CalloutVariant.info}>
+  **Exam exercises** have separate submission handling and do not follow the standard due date rejection rules.
+</Callout>
 
 ### General Functionality
 
@@ -146,7 +150,7 @@ The following visibility rules apply to **all exercise types**:
 | Clone Repository                  | ✔                | ✔                | ✔                  |                      |
 | Download Repo                     | ✔                | ✔                | ✔                  |                      |
 | Export Instructor Repository      | ✔                | ✔                | ✔                  |                      |
-| Export Student Repository         | ✔                | ✔                | ✔                  | ✔ (own only)         |
+| Export Student Repository         | ✔ (all)          | ✔ (all)          | ✔ (all)            | ✔ (own only)         |
 | Export Solution (if published)    | ✔                | ✔                | ✔                  | ✔                    |
 | Edit in Editor                    | ✔                | ✔                |                    |                      |
 | Manage Hints                      | ✔                | ✔                |                    |                      |
@@ -223,36 +227,36 @@ The following visibility rules apply to **all exercise types**:
 
 ### Quiz Exercises
 
-| Feature                         | Instructor       | Editor           | Teaching Assistant | Student              |
-|---------------------------------|------------------|------------------|--------------------|----------------------|
-| View Quiz (course)              | ✔                | ✔                | ✔                  | ✔ (if released)      |
-| View Quiz (exam)                | ✔                | ✔                |                    |                      |
-| Create Quiz (course)            | ✔                | ✔                |                    |                      |
-| Create Quiz (exam)              | ✔                | ✔                |                    |                      |
-| Update Quiz                     | ✔                | ✔                |                    |                      |
-| Delete Quiz                     | ✔                |                  |                    |                      |
-| Search Quizzes                  | ✔                | ✔                |                    |                      |
-| Set Visible                     | ✔                | ✔                |                    |                      |
-| Start Now                       | ✔                | ✔                |                    |                      |
-| End Now                         | ✔                |                  |                    |                      |
-| Preview                         | ✔                | ✔                | ✔                  |                      |
-| Sample Solution                 | ✔                | ✔                | ✔                  | ✔ (after quiz ends)  |
-| View Statistics                 | ✔                | ✔                | ✔                  |                      |
-| Recalculate Statistics          | ✔                | ✔                | ✔                  |                      |
-| Evaluate Quiz                   | ✔                |                  |                    |                      |
-| Re-evaluate Quiz                | ✔                |                  |                    |                      |
-| Submit (Live Mode)              | ✔                | ✔                | ✔                  | ✔                    |
-| Submit (Practice Mode)          | ✔                | ✔                | ✔                  | ✔ (after quiz ends)  |
-| Submit (Exam Mode)              | ✔                | ✔                | ✔                  | ✔                    |
-| Start Participation             | ✔                | ✔                | ✔                  | ✔ (if released)      |
-| Join Batch                      | ✔                | ✔                | ✔                  | ✔ (if started)       |
-| Create Batch                    | ✔                | ✔                | ✔                  |                      |
-| Start Batch (own)               | ✔                | ✔                | ✔                  |                      |
-| Start Batch (others')           | ✔                |                  |                    |                      |
-| Training Questions              | ✔                | ✔                | ✔                  | ✔                    |
-| Submit Training Answer          | ✔                | ✔                | ✔                  | ✔                    |
-| View Training Leaderboard       | ✔                | ✔                | ✔                  | ✔                    |
-| Update Leaderboard Settings     | ✔                | ✔                | ✔                  | ✔                    |
+| Feature                     | Instructor          | Editor              | Teaching Assistant  | Student             |
+|-----------------------------|---------------------|---------------------|---------------------|---------------------|
+| View Quiz (course)          | ✔                   | ✔                   | ✔                   | ✔ (if released)     |
+| View Quiz (exam)            | ✔                   | ✔                   |                     |                     |
+| Create Quiz (course)        | ✔                   | ✔                   |                     |                     |
+| Create Quiz (exam)          | ✔                   | ✔                   |                     |                     |
+| Update Quiz                 | ✔                   | ✔                   |                     |                     |
+| Delete Quiz                 | ✔                   |                     |                     |                     |
+| Search Quizzes              | ✔                   | ✔                   |                     |                     |
+| Set Visible                 | ✔                   | ✔                   |                     |                     |
+| Start Now                   | ✔                   | ✔                   |                     |                     |
+| End Now                     | ✔                   |                     |                     |                     |
+| Preview                     | ✔                   | ✔                   | ✔                   |                     |
+| Sample Solution             | ✔                   | ✔                   | ✔                   | ✔ (after quiz ends) |
+| View Statistics             | ✔                   | ✔                   | ✔                   |                     |
+| Recalculate Statistics      | ✔                   | ✔                   | ✔                   |                     |
+| Evaluate Quiz               | ✔                   |                     |                     |                     |
+| Re-evaluate Quiz            | ✔                   |                     |                     |                     |
+| Submit (Live Mode)          | ✔                   | ✔                   | ✔                   | ✔                   |
+| Submit (Practice Mode)      | ✔ (after quiz ends) | ✔ (after quiz ends) | ✔ (after quiz ends) | ✔ (after quiz ends) |
+| Submit (Exam Mode)          | ✔             /     | ✔                   | ✔                   | ✔                   |
+| Start Participation         | ✔ (if released)     | ✔ (if released)     | ✔ (if released)     | ✔ (if released)     |
+| Join Batch                  | ✔ (if started)      | ✔ (if started)      | ✔ (if started)      | ✔ (if started)      |
+| Create Batch                | ✔                   | ✔                   | ✔                   |                     |
+| Start Batch (own)           | ✔                   | ✔                   | ✔                   |                     |
+| Start Batch (others')       | ✔                   |                     |                     |                     |
+| Training Questions          | ✔                   | ✔                   | ✔                   | ✔                   |
+| Submit Training Answer      | ✔                   | ✔                   | ✔                   | ✔                   |
+| View Training Leaderboard   | ✔                   | ✔                   | ✔                   | ✔                   |
+| Update Leaderboard Settings | ✔                   | ✔                   | ✔                   | ✔                   |
 
 <Callout variant={CalloutVariant.info}>
     **Exam quiz exercises** require Editor role for viewing details, while **course quiz exercises** only require Teaching Assistant role.
@@ -268,7 +272,7 @@ Quiz exercises support three modes: **SYNCHRONIZED**, **BATCHED**, and **INDIVID
 
 | Operation    | Mode         | Teaching Assistant                     | Student             |
 |--------------|--------------|----------------------------------------|---------------------|
-| Join Batch   | BATCHED/IND. | ✔                                      | ✔ (if quiz started) |
+| Join Batch   | BATCHED/IND. | ✔ (if quiz started)                    | ✔ (if quiz started) |
 | Create Batch | BATCHED/IND. | ✔                                      |                     |
 | Start Batch  | BATCHED/IND. | ✔ (own batches) / INSTRUCTOR (others') |                     |
 
@@ -279,39 +283,39 @@ Quiz exercises support three modes: **SYNCHRONIZED**, **BATCHED**, and **INDIVID
 #### Additional Visibility Rules
 
 **Quiz Started:**
-- Students can join batches only after the quiz has started (not ended)
+- All users can join batches only after the quiz has started (and not ended)
 - Batch joining is not available for exam quiz exercises
 
 **Practice Mode:**
-- Students can submit in practice mode only after the quiz has ended
+- All users can submit in practice mode only after the quiz has ended
 - For exam exercises, practice mode is only available for test exams
 
 ### File Upload Exercises
 
-| Feature                         | Instructor       | Editor           | Teaching Assistant | Student               |
-|---------------------------------|------------------|------------------|--------------------|-----------------------|
-| View Exercise (course)          | ✔                | ✔                | ✔                  | ✔ (if released)       |
-| View Exercise (exam)            | ✔                | ✔                |                    |                       |
-| Create Exercise                 | ✔                | ✔                |                    |                       |
-| Edit Exercise                   | ✔                | ✔                |                    |                       |
-| Delete Exercise                 | ✔                |                  |                    |                       |
-| Import Exercise                 | ✔ (both courses) | ✔ (both courses) |                    |                       |
-| Search Exercises                | ✔                | ✔                |                    |                       |
-| Re-evaluate Exercise            | ✔                | ✔                |                    |                       |
-| View Course Exercises           | ✔                | ✔                | ✔                  |                       |
-| Submit File                     | ✔                | ✔                | ✔                  | ✔ (before due date)   |
-| View Own Submission             | ✔                | ✔                | ✔                  | ✔ (own only)          |
-| View Editor Data                | ✔                | ✔                | ✔                  | ✔ (own only)          |
-| Get Submission (for assessment) | ✔                | ✔                | ✔                  |                       |
-| Get Unassessed Submission       | ✔                | ✔                | ✔                  |                       |
-| List All Submissions            | ✔                | ✔                | ✔                  |                       |
-| Save Assessment                 | ✔                | ✔                | ✔                  |                       |
-| Cancel Assessment               | ✔                | ✔                | ✔                  |                       |
-| Update After Complaint          | ✔                | ✔                | ✔                  |                       |
-| View Assessment Result          | ✔                | ✔                | ✔                  | ✔ (own, after graded) |
-| Delete Assessment               | ✔                |                  |                    |                       |
-| Export Submissions (limited)    | ✔                | ✔                | ✔                  |                       |
-| Export All Submissions          | ✔                |                  |                    |                       |
+| Feature                         | Instructor          | Editor              | Teaching Assistant  | Student               |
+|---------------------------------|---------------------|---------------------|---------------------|-----------------------|
+| View Exercise (course)          | ✔                   | ✔                   | ✔                   | ✔ (if released)       |
+| View Exercise (exam)            | ✔                   | ✔                   |                     |                       |
+| Create Exercise                 | ✔                   | ✔                   |                     |                       |
+| Edit Exercise                   | ✔                   | ✔                   |                     |                       |
+| Delete Exercise                 | ✔                   |                     |                     |                       |
+| Import Exercise                 | ✔ (both courses)    | ✔ (both courses)    |                     |                       |
+| Search Exercises                | ✔                   | ✔                   |                     |                       |
+| Re-evaluate Exercise            | ✔                   | ✔                   |                     |                       |
+| View Course Exercises           | ✔                   | ✔                   | ✔                   |                       |
+| Submit File                     | ✔ (before due date) | ✔ (before due date) | ✔ (before due date) | ✔ (before due date)   |
+| View Own Submission             | ✔                   | ✔                   | ✔                   | ✔ (own only)          |
+| View Editor Data                | ✔                   | ✔                   | ✔                   | ✔ (own only)          |
+| Get Submission (for assessment) | ✔                   | ✔                   | ✔                   |                       |
+| Get Unassessed Submission       | ✔                   | ✔                   | ✔                   |                       |
+| List All Submissions            | ✔                   | ✔                   | ✔                   |                       |
+| Save Assessment                 | ✔                   | ✔                   | ✔                   |                       |
+| Cancel Assessment               | ✔                   | ✔                   | ✔                   |                       |
+| Update After Complaint          | ✔                   | ✔                   | ✔                   |                       |
+| View Assessment Result          | ✔                   | ✔                   | ✔                   | ✔ (own, after graded) |
+| Delete Assessment               | ✔                   |                     |                     |                       |
+| Export Submissions (limited)    | ✔                   | ✔                   | ✔                   |                       |
+| Export All Submissions          | ✔                   |                     |                     |                       |
 
 ### Modeling Exercises
 
