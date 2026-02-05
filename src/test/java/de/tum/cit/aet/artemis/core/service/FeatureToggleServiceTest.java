@@ -36,6 +36,7 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(featureToggleService.isFeatureEnabled(Feature.TutorSuggestions)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.AtlasML)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).isFalse();
+        assertThat(featureToggleService.isFeatureEnabled(Feature.RateLimit)).isFalse();
 
     }
 
@@ -53,6 +54,7 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         featureToggleService.disableFeature(Feature.TutorSuggestions);
         featureToggleService.disableFeature(Feature.AtlasML);
         featureToggleService.disableFeature(Feature.AtlasAgent);
+        featureToggleService.disableFeature(Feature.RateLimit);
     }
 
     @Test
