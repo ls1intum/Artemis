@@ -41,6 +41,7 @@
             "downloadBuildResult": "Build-Ergebnis herunterladen",
             "saving": "Speichert",
             "saveFiles": "Speichern",
+            "refreshing": "Aktualisiert",
             "loadingFile": "Lade ausgewählte Datei",
             "loadingFiles": "Lade Dateien",
             "fileLoadedSuccess": "Datei erfolgreich geladen",
@@ -129,6 +130,7 @@
                 "templateInfo": "Kein Ergebnis verfügbar.",
                 "exerciseHasNoIssues": "Es wurden keine Probleme mit den Repositories identifiziert."
             },
+            "repo": "Repo",
             "switchEditors": "Code-Editor wechseln"
         }
     }

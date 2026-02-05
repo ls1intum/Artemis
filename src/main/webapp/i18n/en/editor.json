@@ -41,6 +41,7 @@
             "downloadBuildResult": "Download Build Result",
             "saving": "Saving",
             "saveFiles": "Save",
+            "refreshing": "Refreshing",
             "loadingFile": "Loading selected file",
             "loadingFiles": "Loading files",
             "fileLoadedSuccess": "File loaded successfully",
@@ -129,6 +130,7 @@
                 "templateInfo": "No result found for the Template Repository.",
                 "exerciseHasNoIssues": "No issues were identified in the repositories."
             },
+            "repo": "Repo",
             "switchEditors": "Switch code editor"
         }
     }
