@@ -15,6 +15,11 @@ import { HttpClient,
         }       from '@angular/common/http';
 import { Observable }                                        from 'rxjs';
 // @ts-ignore
+import { RewriteFaqRequest } from '../model/rewriteFaqRequest';
+// @ts-ignore
+import { RewriteFaqResponse } from '../model/rewriteFaqResponse';
+
+// @ts-ignore
 import { BASE_PATH }                     from '../variables';
 import { Configuration }                                     from '../configuration';
 import { BaseService } from '../api.base.service';
@@ -24,38 +29,35 @@ import { BaseService } from '../api.base.service';
 @Injectable({
   providedIn: 'root'
 })
-export class TutorialGroupSessionApiService extends BaseService {
+export class HyperionFaqApiService extends BaseService {
 
     constructor(protected httpClient: HttpClient, @Optional() @Inject(BASE_PATH) basePath: string|string[], @Optional() configuration?: Configuration) {
         super(basePath, configuration);
     }
 
     /**
-     * @endpoint delete /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}
+     * @endpoint post /api/hyperion/courses/{courseId}/faq/rewrite
      * @param courseId 
-     * @param tutorialGroupId 
-     * @param sessionId 
+     * @param rewriteFaqRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public deleteSession(courseId: number, tutorialGroupId: number, sessionId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public deleteSession(courseId: number, tutorialGroupId: number, sessionId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public deleteSession(courseId: number, tutorialGroupId: number, sessionId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public deleteSession(courseId: number, tutorialGroupId: number, sessionId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public rewriteFaq(courseId: number, rewriteFaqRequest: RewriteFaqRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<RewriteFaqResponse>;
+    public rewriteFaq(courseId: number, rewriteFaqRequest: RewriteFaqRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<RewriteFaqResponse>>;
+    public rewriteFaq(courseId: number, rewriteFaqRequest: RewriteFaqRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<RewriteFaqResponse>>;
+    public rewriteFaq(courseId: number, rewriteFaqRequest: RewriteFaqRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
-            throw new Error('Required parameter courseId was null or undefined when calling deleteSession.');
+            throw new Error('Required parameter courseId was null or undefined when calling rewriteFaq.');
         }
-        if (tutorialGroupId === null || tutorialGroupId === undefined) {
-            throw new Error('Required parameter tutorialGroupId was null or undefined when calling deleteSession.');
-        }
-        if (sessionId === null || sessionId === undefined) {
-            throw new Error('Required parameter sessionId was null or undefined when calling deleteSession.');
+        if (rewriteFaqRequest === null || rewriteFaqRequest === undefined) {
+            throw new Error('Required parameter rewriteFaqRequest was null or undefined when calling rewriteFaq.');
         }
 
         let localVarHeaders = this.defaultHeaders;
 
         const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
         ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
@@ -65,6 +67,15 @@ export class TutorialGroupSessionApiService extends BaseService {
 
         const localVarTransferCache: boolean = options?.transferCache ?? true;
 
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
 
         let responseType_: 'text' | 'json' | 'blob' = 'json';
         if (localVarHttpHeaderAcceptSelected) {
@@ -77,11 +88,12 @@ export class TutorialGroupSessionApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups/${this.configuration.encodeParam({name: "tutorialGroupId", value: tutorialGroupId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/sessions/${this.configuration.encodeParam({name: "sessionId", value: sessionId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}`;
+        let localVarPath = `/api/hyperion/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/faq/rewrite`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('delete', `${basePath}${localVarPath}`,
+        return this.httpClient.request<RewriteFaqResponse>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
+                body: rewriteFaqRequest,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
