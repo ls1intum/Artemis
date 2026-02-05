@@ -65,6 +65,9 @@ describe('MonacoEditorComponent', () => {
 
     it('should catch error during action re-registration', () => {
         fixture.detectChanges();
+        // Suppress console.error as it causes test failure in this environment
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
         const mockAction = {
             id: 'mock-action',
             run: jest.fn(),
@@ -79,6 +82,9 @@ describe('MonacoEditorComponent', () => {
         expect(() => comp['reRegisterActions']()).not.toThrow();
         expect(mockAction.dispose).toHaveBeenCalled();
         expect(mockAction.register).toHaveBeenCalled();
+        expect(consoleErrorSpy).toHaveBeenCalled();
+
+        consoleErrorSpy.mockRestore();
     });
 
     it('should set the text of the editor', () => {
@@ -86,6 +92,47 @@ describe('MonacoEditorComponent', () => {
         comp.setText(singleLineText);
         expect(comp.getText()).toEqual(singleLineText);
     });
+
+    // ... existing tests ...
+
+    it('should layout matching mode with fixed size', fakeAsync(() => {
+        fixture.detectChanges();
+        const layoutSpy = jest.spyOn(comp['_editor'], 'layout');
+
+        // Normal mode
+        comp.layoutWithFixedSize(500, 300);
+        expect(layoutSpy).toHaveBeenCalledWith({ width: 500, height: 300 });
+
+        // Diff mode
+        const mockDiffEditor = createMockDiffEditor();
+        jest.spyOn(comp['monacoEditorService'], 'createStandaloneDiffEditor').mockReturnValue(mockDiffEditor as any);
+        fixture.componentRef.setInput('mode', 'diff');
+        fixture.detectChanges();
+        tick();
+
+        comp.layoutWithFixedSize(600, 400);
+        expect(mockDiffEditor.layout).toHaveBeenCalledWith({ width: 600, height: 400 });
+    }));
+
+    it('should extract file path from model uri on change', fakeAsync(() => {
+        fixture.detectChanges();
+        const emitSpy = jest.spyOn(comp.textChanged, 'emit');
+        // Ensure getText returns content, as extraction relies on it
+        jest.spyOn(comp, 'getText').mockReturnValue('content');
+
+        // Mock model with specific URI
+        const mockModel = {
+            getValue: jest.fn().mockReturnValue('content'),
+            uri: { toString: () => 'inmemory://model/1/path/to/file.ts', path: '/model/1/path/to/file.ts' },
+        };
+        jest.spyOn(comp['_editor'], 'getModel').mockReturnValue(mockModel as any);
+
+        // Trigger change
+        comp['emitTextChangeEvent']();
+        tick();
+
+        expect(emitSpy).toHaveBeenCalledWith({ text: 'content', fileName: 'path/to/file.ts' });
+    }));
 
     it('should notify when the text changes', () => {
         const valueCallbackStub = jest.fn();
@@ -596,42 +643,5 @@ describe('MonacoEditorComponent', () => {
                 modified: mockModel,
             }),
         );
-    }));
-
-    it('should layout matching mode with fixed size', fakeAsync(() => {
-        fixture.detectChanges();
-        const layoutSpy = jest.spyOn(comp['_editor'], 'layout');
-
-        // Normal mode
-        comp.layoutWithFixedSize(500, 300);
-        expect(layoutSpy).toHaveBeenCalledWith({ width: 500, height: 300 });
-
-        // Diff mode
-        const mockDiffEditor = createMockDiffEditor();
-        jest.spyOn(comp['monacoEditorService'], 'createStandaloneDiffEditor').mockReturnValue(mockDiffEditor as any);
-        fixture.componentRef.setInput('mode', 'diff');
-        fixture.detectChanges();
-        tick();
-
-        comp.layoutWithFixedSize(600, 400);
-        expect(mockDiffEditor.layout).toHaveBeenCalledWith({ width: 600, height: 400 });
-    }));
-
-    it('should extract file path from model uri on change', fakeAsync(() => {
-        fixture.detectChanges();
-        const emitSpy = jest.spyOn(comp.textChanged, 'emit');
-
-        // Mock model with specific URI
-        const mockModel = {
-            getValue: jest.fn().mockReturnValue('content'),
-            uri: { toString: () => 'inmemory://model/1/path/to/file.ts', path: '/model/1/path/to/file.ts' },
-        };
-        jest.spyOn(comp['_editor'], 'getModel').mockReturnValue(mockModel as any);
-
-        // Trigger change
-        comp['emitTextChangeEvent']();
-        tick();
-
-        expect(emitSpy).toHaveBeenCalledWith({ text: 'content', fileName: 'path/to/file.ts' });
     }));
 });
