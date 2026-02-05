@@ -164,6 +164,9 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
      */
     generateProblemStatement(): void {
         const exercise = this.programmingExercise();
+        if (!exercise) {
+            return;
+        }
         const prompt = this.userPrompt();
 
         if (!prompt?.trim()) {
