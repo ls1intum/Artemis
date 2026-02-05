@@ -206,9 +206,6 @@
             "courseIdMissing": "Die Kurs ID ist erforderlich.",
             "forbidChangeCourseId": "Die Übungskurs-ID stimmt nicht mit der gespeicherten Kurs-ID überein"
         },
-        "PlagiarismCase": {
-            "studentMissing": "Der Plagiatsfall ist keinem Studierenden zugeordnet."
-        },
         "PlagiarismPost": {
             "idNull": "Der Beitrag muss eine ID besitzen.",
             "courseInformationSharingDisabled": "Beiträge sind in diesem Kurs deaktiviert.",
