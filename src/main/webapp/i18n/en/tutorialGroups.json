@@ -297,8 +297,11 @@
                     }
                 },
                 "registerModal": {
-                    "header": "Register Students",
-                    "fetchSuggestionsError": "An error occured while loading search results. Please try again."
+                    "header": "Register Students"
+                },
+                "registerSearchBar": {
+                    "fetchSuggestionsError": "An error occured while loading search results. Please try again.",
+                    "noResultsText": "No Students Found."
                 }
             },
             "createTutorialGroup": {

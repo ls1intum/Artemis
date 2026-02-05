@@ -297,8 +297,11 @@
                     }
                 },
                 "registerModal": {
-                    "header": "Studenten Registrieren",
-                    "fetchSuggestionsError": "Ein Fehler ist aufgetreten während des Ladens der Suchergebnisse. Bitte versuche es erneut."
+                    "header": "Studenten Registrieren"
+                },
+                "registerSearchBar": {
+                    "fetchSuggestionsError": "Ein Fehler ist aufgetreten während des Ladens der Suchergebnisse. Bitte versuche es erneut.",
+                    "noResultsText": "Keine Studenten gefunden."
                 }
             },
             "createTutorialGroup": {

@@ -14,10 +14,11 @@ import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/enti
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { AlertService } from 'app/shared/service/alert.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-tutorial-registrations-register-search-bar',
-    imports: [Dialog, FormsModule, IconFieldModule, InputIconModule, InputTextModule, OverlayModule, ScrollingModule],
+    imports: [Dialog, FormsModule, IconFieldModule, InputIconModule, InputTextModule, OverlayModule, ScrollingModule, TranslateDirective],
     templateUrl: './tutorial-registrations-register-search-bar.component.html',
     styleUrl: './tutorial-registrations-register-search-bar.component.scss',
 })
@@ -220,7 +221,7 @@ export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestro
                 this.firstSuggestedStudentsPageLoading.set(false);
             },
             error: () => {
-                this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupRegistrations.registerModal.fetchSuggestionsError');
+                this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupRegistrations.registerSearchBar.fetchSuggestionsError');
                 this.firstSuggestedStudentsPageLoading.set(false);
             },
         });
@@ -242,7 +243,7 @@ export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestro
                 this.nextSuggestedStudentsPageLoading.set(false);
             },
             error: () => {
-                this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupRegistrations.registerModal.fetchSuggestionsError');
+                this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupRegistrations.registerSearchBar.fetchSuggestionsError');
                 this.nextSuggestedStudentsPageLoading.set(false);
             },
         });
