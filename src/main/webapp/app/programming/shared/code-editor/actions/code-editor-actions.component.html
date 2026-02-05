@@ -2,9 +2,15 @@
     <jhi-request-feedback-button class="me-3" [exercise]="participation()!.exercise!" />
 }
 @if (isInCourseManagement) {
-    <a class="btn btn-secondary navbar-btn me-3 open-repository-button" [routerLink]="repositoryLink" target="_blank" rel="noopener noreferrer">
+    <a
+        class="btn btn-secondary navbar-btn me-3 open-repository-button"
+        [routerLink]="repositoryLink"
+        target="_blank"
+        rel="noopener noreferrer"
+        [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo' | artemisTranslate"
+    >
         <fa-icon [icon]="faExternalLink" />
-        <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo"></span>
+        <span class="d-none d-lg-inline" jhiTranslate="artemisApp.editor.repo"></span>
     </a>
 }
 @if (commitState === CommitState.CONFLICT) {
@@ -46,7 +52,7 @@
             </span>
         } @else {
             <fa-icon [icon]="faSync" />
-            <span jhiTranslate="artemisApp.editor.refresh.performRefresh"></span>
+            <span class="d-none d-lg-inline" jhiTranslate="artemisApp.editor.refresh.performRefresh"></span>
         }
     </button>
     <button
@@ -65,7 +71,7 @@
     >
         <span>
             <fa-icon [icon]="farPlayCircle" />
-            <span jhiTranslate="artemisApp.editor.submit"></span>
+            <span class="d-none d-lg-inline" jhiTranslate="artemisApp.editor.submit"></span>
         </span>
     </button>
 }
