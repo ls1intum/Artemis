@@ -17,11 +17,11 @@ import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-obser
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FaqConsistencyComponent } from './faq-consistency.component';
-import { RewriteAction } from '../../shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
+import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
+import { ModuleFeature } from 'app/app.constants';
 
 describe('FaqUpdateComponent', () => {
     let faqUpdateComponentFixture: ComponentFixture<FaqUpdateComponent>;
@@ -43,7 +43,9 @@ describe('FaqUpdateComponent', () => {
         faq1.questionAnswer = 'questionAnswer';
         faq1.categories = [new FaqCategory('category1', '#94a11c')];
         courseId = 1;
-        const mockProfileInfo = { activeModuleFeatures: ['iris'] } as ProfileInfo;
+        const mockProfileInfo = {
+            activeModuleFeatures: ['hyperion'] as ModuleFeature[],
+        };
         TestBed.configureTestingModule({
             imports: [FaIconComponent],
             declarations: [
@@ -89,7 +91,8 @@ describe('FaqUpdateComponent', () => {
                 }),
 
                 MockProvider(ProfileService, {
-                    getProfileInfo: () => mockProfileInfo,
+                    // The mock must return a boolean to match the service method signature
+                    isModuleFeatureActive: (feature: ModuleFeature) => mockProfileInfo.activeModuleFeatures.includes(feature),
                 }),
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(AlertService),
@@ -275,15 +278,18 @@ describe('FaqUpdateComponent', () => {
         expect(faqUpdateComponent.faq.questionAnswer).toBe('test');
     });
 
-    it('should have no intelligence action when IRIS is not active', () => {
+    it('should have no intelligence action when HYPERION is not active', () => {
+        const isModuleFeatureActiveSpy = jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
         faqUpdateComponentFixture = TestBed.createComponent(FaqUpdateComponent);
         faqUpdateComponent = faqUpdateComponentFixture.componentInstance;
         faqUpdateComponentFixture.detectChanges();
 
+        expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith('hyperion');
+
         expect(faqUpdateComponent.artemisIntelligenceActions()).toEqual([]);
     });
 
-    it('should have intelligence action when IRIS is active', () => {
+    it('should have intelligence action when HYPERION is active', () => {
         const isModuleFeatureActiveSpy = jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
 
         faqUpdateComponentFixture = TestBed.createComponent(FaqUpdateComponent);
@@ -291,7 +297,7 @@ describe('FaqUpdateComponent', () => {
         faqUpdateComponent.courseId = 1;
         faqUpdateComponentFixture.detectChanges();
 
-        expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith('iris');
+        expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith('hyperion');
 
         const actions = faqUpdateComponent.artemisIntelligenceActions();
         expect(actions).toHaveLength(1);
