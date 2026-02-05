@@ -1,7 +1,7 @@
 import { SafeHtml } from '@angular/platform-browser';
 import { DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, getExerciseCompetencies } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 export function getExerciseGeneralDetailsSection(exercise: Exercise): DetailOverviewSection {
     return {
@@ -63,7 +63,8 @@ export function getExerciseModeDetailSection(exercise: Exercise): DetailOverview
 }
 
 export function getExerciseProblemDetailSection(formattedProblemStatement: SafeHtml | null, exercise: Exercise): DetailOverviewSection {
-    const hasCompetencies = !!exercise.competencyLinks?.length;
+    const competencies = getExerciseCompetencies(exercise);
+    const hasCompetencies = competencies.length > 0;
     const details: Detail[] = [
         {
             title: hasCompetencies ? 'artemisApp.exercise.problemStatement' : undefined,
@@ -76,7 +77,7 @@ export function getExerciseProblemDetailSection(formattedProblemStatement: SafeH
         details.push({
             title: 'artemisApp.competency.link.title',
             type: DetailType.Text,
-            data: { text: exercise.competencyLinks?.map((competencyLink) => competencyLink.competency?.title).join(', ') },
+            data: { text: competencies.map((competency) => competency.title).join(', ') },
         });
     }
     return {
