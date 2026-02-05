@@ -2,6 +2,30 @@
 <div class="chat-layout">
     @if (isChatHistoryAvailable()) {
         <div class="chat-history" [ngClass]="{ 'chat-history-open': isChatHistoryOpen() }">
+            @if (!isChatHistoryOpen()) {
+                <div class="chat-history-collapsed">
+                    <div
+                        class="collapsed-icon-button"
+                        (click)="setChatHistoryVisibility(true)"
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="setChatHistoryVisibility(true)"
+                        (keydown.space)="setChatHistoryVisibility(true)"
+                    >
+                        <fa-icon [icon]="faMagnifyingGlass" />
+                    </div>
+                    <div class="new-chat-button" (click)="openNewSession()" role="button" tabindex="0" (keydown.enter)="openNewSession()" (keydown.space)="openNewSession()">
+                        <fa-icon [icon]="faPenToSquare" class="new-chat-icon" />
+                    </div>
+                    @if (!isChatGptWrapper()) {
+                        <div class="collapsed-bottom">
+                            <a [routerLink]="'/about-iris'" target="_blank" rel="noopener noreferrer" class="collapsed-icon-button">
+                                <fa-icon [icon]="faCircleInfo" class="info-button" />
+                            </a>
+                        </div>
+                    }
+                </div>
+            }
             @if (isChatHistoryOpen()) {
                 <div class="chat-history-container">
                     <div class="chat-history-top">
@@ -9,12 +33,11 @@
                             <jhi-search-filter class="w-100" (newSearchEvent)="setSearchValue($event)" />
                         </div>
 
-                        @if (newChatSessions().length > 0) {
-                            @for (session of newChatSessions(); track session.id) {
-                                <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
-                            }
-                            <div class="chat-history-divider"></div>
-                        }
+                        <div class="new-chat-button" (click)="openNewSession()" role="button" tabindex="0" (keydown.enter)="openNewSession()" (keydown.space)="openNewSession()">
+                            <fa-icon [icon]="faPenToSquare" class="new-chat-icon" />
+                            <span jhiTranslate="artemisApp.iris.chatHistory.newChat"></span>
+                        </div>
+                        <div class="chat-history-divider"></div>
                     </div>
 
                     <div class="chat-history-list">
@@ -91,27 +114,6 @@
                                 </div>
                                 <fa-icon [icon]="faLink" />
                             </button>
-    <div class="chat-body" [class.not-accepted]="!userAccepted()" #chatBody>
-        @if (messages()?.length) {
-            <div class="messages" #messagesElement (scroll)="checkChatScroll()">
-                @if (
-                    suggestions()?.length &&
-                    (userAccepted() === LLMSelectionDecision.CLOUD_AI || userAccepted() === LLMSelectionDecision.LOCAL_AI) &&
-                    active() &&
-                    (!rateLimitInfo()?.rateLimit || rateLimitInfo()?.currentMessageCount !== rateLimitInfo()?.rateLimit) &&
-                    !hasActiveStage()
-                ) {
-                    <div animate.enter="suggestion-entering" animate.leave="suggestion-leaving">
-                        <div class="suggestions-container">
-                            @for (suggestion of suggestions(); track suggestion) {
-                                <button class="suggestion-button" (click)="onSuggestionClick(suggestion)" [disabled]="isLoading()">
-                                    @if (clickedSuggestion() === suggestion) {
-                                        <fa-icon [icon]="faCircleNotch" animation="spin" />
-                                    } @else {
-                                        <span [innerHTML]="suggestion"></span>
-                                    }
-                                </button>
-                            }
                         </div>
                     }
                     @if (rateLimitInfo()?.rateLimit; as rateLimit) {
@@ -258,7 +260,13 @@
                 <div class="p-chat">
                     <div class="message-text" jhiTranslate="artemisApp.exerciseActions.externalLLMUsage.popUpMessage"></div>
                     <div class="button-container">
-                        <button type="button" class="btn btn-primary" #acceptButton (click)="acceptPermission()" jhiTranslate="artemisApp.exerciseChatbot.accept"></button>
+                        <button
+                            type="button"
+                            class="btn btn-primary"
+                            #acceptButton
+                            (click)="acceptPermission(LLMSelectionDecision.CLOUD_AI)"
+                            jhiTranslate="artemisApp.exerciseChatbot.accept"
+                        ></button>
                         @if (showDeclineButton()) {
                             <button type="button" class="btn btn-secondary" (click)="closeChat()" jhiTranslate="artemisApp.exerciseChatbot.decline"></button>
                         }

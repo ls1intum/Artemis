@@ -7,6 +7,7 @@ import {
     faCopy,
     faExpand,
     faLink,
+    faMagnifyingGlass,
     faPaperPlane,
     faPenToSquare,
     faThumbsDown,
@@ -16,6 +17,7 @@ import {
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { Clipboard } from '@angular/cdk/clipboard';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
@@ -93,6 +95,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly faThumbsDown = faThumbsDown;
     protected readonly faPenToSquare = faPenToSquare;
     protected readonly faLink = faLink;
+    protected readonly faMagnifyingGlass = faMagnifyingGlass;
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faCopy = faCopy;
     protected readonly faCheck = faCheck;
@@ -170,7 +173,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly dayTick = signal(new Date().toDateString());
     private dayTickIntervalId: ReturnType<typeof setInterval> | undefined;
 
-    readonly userAccepted = signal(false);
+    readonly userAccepted = signal<LLMSelectionDecision | undefined>(undefined);
     readonly isScrolledToBottom = signal(true);
     readonly resendAnimationActive = signal(false);
     readonly clickedSuggestion = signal<string | undefined>(undefined);
@@ -666,12 +669,15 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             rangeStartDate.setHours(0, 0, 0, 0); // Set to the start of the 'daysAgoOlder' day
         }
 
-        return sessions.filter((session) => {
+        const filtered = sessions.filter((session) => {
             const sessionCreationDate = new Date(session.creationDate);
             const isAfterOrOnStartDate = ignoreOlderBoundary || (rangeStartDate && sessionCreationDate.getTime() >= rangeStartDate.getTime());
             const isBeforeOrOnEndDate = sessionCreationDate.getTime() <= rangeEndDate.getTime();
             return isBeforeOrOnEndDate && (ignoreOlderBoundary || isAfterOrOnStartDate);
         });
+
+        // Sort by creation date descending (most recent first)
+        return filtered.sort((a, b) => new Date(b.creationDate).getTime() - new Date(a.creationDate).getTime());
     }
 
     openNewSession() {

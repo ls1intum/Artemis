@@ -401,6 +401,12 @@ pre {
             box-shadow: none;
             border-color: var(--primary);
         }
+
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: var(--iris-tertiary-background);
+        }
     }
 
     &-inner {
@@ -415,17 +421,29 @@ pre {
     }
 }
 
+.new-chat-button {
+    padding: 8px;
+    margin: 0 8px;
+    cursor: pointer;
+    border-radius: var(--bs-border-radius-lg);
+
+    &:hover {
+        background-color: var(--iris-accent-background);
+        border-radius: 6px;
+        padding: 8px;
+    }
+}
+
 // chat sidebar on client ui
 .chat-history {
-    background-color: var(--iris-secondary-background);
     border-radius: 0.25rem 0 0 0.25rem;
     border-right: 0.5px solid var(--border-color);
-    width: 0;
+    width: 40px;
+    height: 100%;
     flex-shrink: 0;
     overflow-x: hidden;
     transition:
         width 0.3s ease,
-        height 0.3s ease,
         background-color 0.3s ease;
 
     &-container {
@@ -478,7 +496,7 @@ pre {
             cursor: pointer;
             vertical-align: middle;
             font-size: 15px;
-            color: var(--secondary);
+            color: var(--bs-body-color);
         }
     }
 
@@ -494,11 +512,51 @@ pre {
         background-color: var(--bs-border-color);
         margin: 0.5rem 0.75rem;
     }
+
+    &-collapsed {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 16px;
+        height: 100%;
+        gap: 4px;
+
+        .collapsed-icon-button {
+            padding: 6px 8px;
+            cursor: pointer;
+            border-radius: var(--bs-border-radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--bs-body-color);
+
+            &:hover {
+                background-color: var(--iris-accent-background);
+            }
+        }
+
+        .new-chat-button {
+            margin: 0;
+            padding: 6px 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .collapsed-bottom {
+            margin-top: auto;
+            padding-bottom: 4px;
+        }
+    }
 }
 
 .chat-history.chat-history-open {
+    background-color: var(--iris-secondary-background);
     width: 17rem;
-    height: 100%;
+
+    .chat-history-collapsed {
+        display: none;
+    }
 }
 
 .p-chat {

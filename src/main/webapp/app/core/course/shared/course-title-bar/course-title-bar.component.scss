@@ -59,7 +59,7 @@
 }
 
 .btn-sidebar-collapse.is-collapsed {
-    border-color: var(--bs-secondary);
+    background-color: var(--link-item-bg);
 }
 
 .is-collapsed.btn-sidebar-collapse::before {
