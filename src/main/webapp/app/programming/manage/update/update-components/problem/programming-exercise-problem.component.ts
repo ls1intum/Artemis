@@ -201,6 +201,11 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                 this.userPrompt.set('');
                 this.currentGenerationSubscription = undefined;
             },
+            error: () => {
+                this.alertService.error('artemisApp.programmingExercise.problemStatement.generationFailed');
+                this.userPrompt.set('');
+                this.currentGenerationSubscription = undefined;
+            },
         });
     }
 
@@ -214,7 +219,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         const currentContent = this.editableInstructions()?.getCurrentContent() ?? exercise?.problemStatement;
         const prompt = this.userPrompt();
 
-        if (!prompt?.trim() || !currentContent) {
+        if (!prompt?.trim() || !currentContent?.trim()) {
             return;
         }
 
