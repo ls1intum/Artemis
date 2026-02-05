@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exam.web;
 
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExportExamUserDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.ExamUserService;
@@ -165,6 +167,23 @@ public class ExamUserResource {
         examAccessService.checkCourseAndExamAccessForStudentElseThrow(courseId, examId);
         String login = SecurityUtils.getCurrentUserLogin().orElseThrow(() -> new EntityNotFoundException("ERROR: No current user login found!"));
         return ResponseEntity.ok().body(examUserRepository.isAttendanceChecked(examId, login));
+    }
+
+    /**
+     * GET courses/{courseId}/exams/{examId}/export-students : Gets all relevant information about all exam users for exporting
+     *
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
+     * @return export information for all exam users
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/export-students")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<List<ExportExamUserDTO>> exportExamUsers(@PathVariable Long courseId, @PathVariable Long examId) {
+        log.debug("REST request to export exam users for exam with id: {}", examId);
+
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        List<ExportExamUserDTO> exportData = examUserService.exportStudents(examId);
+        return ResponseEntity.ok(exportData);
     }
 
 }

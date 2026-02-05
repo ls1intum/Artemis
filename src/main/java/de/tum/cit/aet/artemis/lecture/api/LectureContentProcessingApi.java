@@ -8,13 +8,15 @@ import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisOrNebulaEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
-import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.service.LectureContentProcessingService;
 
 /**
  * API for lecture content processing operations.
  * This class allows other modules (e.g., nebula, iris) to interact with the lecture
  * content processing pipeline without creating direct dependencies.
+ * <p>
+ * Note: Callback methods for transcription and ingestion completion have been moved to
+ * {@link ProcessingStateCallbackApi} to break the circular dependency between lecture and nebula modules.
  */
 @Conditional(LectureWithIrisOrNebulaEnabled.class)
 @Controller
@@ -36,31 +38,6 @@ public class LectureContentProcessingApi extends AbstractLectureApi {
      */
     public void triggerProcessing(AttachmentVideoUnit unit) {
         lectureContentProcessingService.triggerProcessing(unit);
-    }
-
-    /**
-     * Called when a transcription completes (from the polling scheduler).
-     * This advances the processing to the ingestion phase.
-     *
-     * @param transcription the completed transcription
-     */
-    public void handleTranscriptionComplete(LectureTranscription transcription) {
-        lectureContentProcessingService.handleTranscriptionComplete(transcription);
-    }
-
-    /**
-     * Called when ingestion completes (from the Pyris webhook callback).
-     * This marks the processing as DONE or handles failure.
-     * <p>
-     * The jobToken is validated against the stored token in the processing state.
-     * Stale callbacks from old jobs (after content change/restart) are ignored.
-     *
-     * @param lectureUnitId the ID of the lecture unit
-     * @param jobToken      the job token from the callback (for validation)
-     * @param success       whether ingestion succeeded
-     */
-    public void handleIngestionComplete(Long lectureUnitId, String jobToken, boolean success) {
-        lectureContentProcessingService.handleIngestionComplete(lectureUnitId, jobToken, success);
     }
 
     /**

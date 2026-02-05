@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +22,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
@@ -42,12 +44,10 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
-import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
@@ -72,10 +72,13 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     private CommentThreadGroupRepository commentThreadGroupRepository;
 
     @Autowired
-    private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+    private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationRepository;
 
     @Autowired
-    private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationRepository;
+    private LocalVCService localVCService;
+
+    @Autowired
+    private TempFileUtilService tempFileUtilService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -91,7 +94,6 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @AfterEach
     void tearDown() {
-        RepositoryExportTestUtil.cleanupTrackedRepositories();
     }
 
     @Test
@@ -401,7 +403,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldReturnLatestCommitForTemplateRepo() throws Exception {
-        LocalRepoWithUri repo = createLocalRepository("template");
+        LocalRepoWithGit repo = createLocalRepositoryWithGit("template");
         LocalVCRepositoryUri repositoryUri = repo.uri();
         var templateParticipation = programmingExercise.getTemplateParticipation();
         templateParticipation.setRepositoryUri(repositoryUri.toString());
@@ -416,7 +418,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldReturnLatestCommitForSolutionRepo() throws Exception {
-        LocalRepoWithUri repo = createLocalRepository("solution");
+        LocalRepoWithGit repo = createLocalRepositoryWithGit("solution");
         LocalVCRepositoryUri repositoryUri = repo.uri();
         var solutionParticipation = programmingExercise.getSolutionParticipation();
         solutionParticipation.setRepositoryUri(repositoryUri.toString());
@@ -431,7 +433,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldReturnLatestCommitForTestRepo() throws Exception {
-        LocalRepoWithUri repo = createLocalRepository("tests");
+        LocalRepoWithGit repo = createLocalRepositoryWithGit("tests");
         LocalVCRepositoryUri repositoryUri = repo.uri();
         programmingExercise.setTestRepositoryUri(repositoryUri.toString());
         programmingExerciseRepository.save(programmingExercise);
@@ -444,7 +446,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldReturnLatestCommitForAuxiliaryRepo() throws Exception {
-        LocalRepoWithUri repo = createLocalRepository("aux");
+        LocalRepoWithGit repo = createLocalRepositoryWithGit("aux");
         LocalVCRepositoryUri repositoryUri = repo.uri();
         AuxiliaryRepository auxiliaryRepository = new AuxiliaryRepository();
         auxiliaryRepository.setName("aux");
@@ -492,24 +494,23 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     void shouldMapLineBetweenCommitsInRepository() throws Exception {
-        LocalRepoWithUri repo = createLocalRepository("linemap");
+        LocalRepoWithGit repo = createLocalRepositoryWithGit("linemap");
         LocalVCRepositoryUri repositoryUri = repo.uri();
-        LocalRepository repository = repo.repository();
 
-        Path filePath = repository.workingCopyGitRepoFile.toPath().resolve("src").resolve("Main.java");
+        Path filePath = repo.workingCopyPath().resolve("src").resolve("Main.java");
         Files.createDirectories(filePath.getParent());
 
         String oldText = String.join("\n", "alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta", "iota", "kappa", "");
         FileUtils.writeStringToFile(filePath.toFile(), oldText, StandardCharsets.UTF_8);
-        repository.workingCopyGitRepo.add().addFilepattern(".").call();
-        RevCommit oldCommit = GitService.commit(repository.workingCopyGitRepo).setMessage("Add file").call();
-        repository.workingCopyGitRepo.push().setRemote("origin").call();
+        repo.git().add().addFilepattern(".").call();
+        RevCommit oldCommit = GitService.commit(repo.git()).setMessage("Add file").call();
+        repo.git().push().setRemote("origin").call();
 
         String newText = String.join("\n", "alpha", "inserted", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta-updated", "iota", "kappa", "");
         FileUtils.writeStringToFile(filePath.toFile(), newText, StandardCharsets.UTF_8);
-        repository.workingCopyGitRepo.add().addFilepattern(".").call();
-        RevCommit newCommit = GitService.commit(repository.workingCopyGitRepo).setMessage("Update file").call();
-        repository.workingCopyGitRepo.push().setRemote("origin").call();
+        repo.git().add().addFilepattern(".").call();
+        RevCommit newCommit = GitService.commit(repo.git()).setMessage("Update file").call();
+        repo.git().push().setRemote("origin").call();
 
         LineMappingResult shiftedLine = exerciseReviewService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 2);
         assertThat(shiftedLine.newLine()).isEqualTo(3);
@@ -526,21 +527,20 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     void shouldMapLineMarksDeletedFileAsOutdated() throws Exception {
-        LocalRepoWithUri repo = createLocalRepository("linemap-delete");
+        LocalRepoWithGit repo = createLocalRepositoryWithGit("linemap-delete");
         LocalVCRepositoryUri repositoryUri = repo.uri();
-        LocalRepository repository = repo.repository();
 
-        Path filePath = repository.workingCopyGitRepoFile.toPath().resolve("src").resolve("Main.java");
+        Path filePath = repo.workingCopyPath().resolve("src").resolve("Main.java");
         Files.createDirectories(filePath.getParent());
         FileUtils.writeStringToFile(filePath.toFile(), "a\nb\nc\n", StandardCharsets.UTF_8);
-        repository.workingCopyGitRepo.add().addFilepattern(".").call();
-        RevCommit oldCommit = GitService.commit(repository.workingCopyGitRepo).setMessage("Add file").call();
-        repository.workingCopyGitRepo.push().setRemote("origin").call();
+        repo.git().add().addFilepattern(".").call();
+        RevCommit oldCommit = GitService.commit(repo.git()).setMessage("Add file").call();
+        repo.git().push().setRemote("origin").call();
 
         Files.deleteIfExists(filePath);
-        repository.workingCopyGitRepo.add().addFilepattern(".").call();
-        RevCommit newCommit = GitService.commit(repository.workingCopyGitRepo).setMessage("Delete file").call();
-        repository.workingCopyGitRepo.push().setRemote("origin").call();
+        repo.git().add().addFilepattern(".").call();
+        RevCommit newCommit = GitService.commit(repo.git()).setMessage("Delete file").call();
+        repo.git().push().setRemote("origin").call();
 
         LineMappingResult result = exerciseReviewService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 1);
         assertThat(result.newLine()).isNull();
@@ -549,19 +549,18 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     void shouldMapLineMarksAddedFileAsOutdatedWhenPreviouslyMissing() throws Exception {
-        LocalRepoWithUri repo = createLocalRepository("linemap-add");
+        LocalRepoWithGit repo = createLocalRepositoryWithGit("linemap-add");
         LocalVCRepositoryUri repositoryUri = repo.uri();
-        LocalRepository repository = repo.repository();
 
-        RevCommit oldCommit = GitService.commit(repository.workingCopyGitRepo).setMessage("Initial").call();
-        repository.workingCopyGitRepo.push().setRemote("origin").call();
+        RevCommit oldCommit = GitService.commit(repo.git()).setMessage("Initial").call();
+        repo.git().push().setRemote("origin").call();
 
-        Path filePath = repository.workingCopyGitRepoFile.toPath().resolve("src").resolve("Main.java");
+        Path filePath = repo.workingCopyPath().resolve("src").resolve("Main.java");
         Files.createDirectories(filePath.getParent());
         FileUtils.writeStringToFile(filePath.toFile(), "a\nb\nc\n", StandardCharsets.UTF_8);
-        repository.workingCopyGitRepo.add().addFilepattern(".").call();
-        RevCommit newCommit = GitService.commit(repository.workingCopyGitRepo).setMessage("Add file").call();
-        repository.workingCopyGitRepo.push().setRemote("origin").call();
+        repo.git().add().addFilepattern(".").call();
+        RevCommit newCommit = GitService.commit(repo.git()).setMessage("Add file").call();
+        repo.git().push().setRemote("origin").call();
 
         LineMappingResult result = exerciseReviewService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 1);
         assertThat(result.newLine()).isNull();
@@ -807,36 +806,38 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     private RepoHistory createRepoWithTwoCommits(String suffix) throws Exception {
-        LocalRepoWithUri repo = createLocalRepository(suffix);
-        LocalRepository repository = repo.repository();
+        LocalRepoWithGit repo = createLocalRepositoryWithGit(suffix);
 
-        Path filePath = repository.workingCopyGitRepoFile.toPath().resolve("src").resolve("Main.java");
+        Path filePath = repo.workingCopyPath().resolve("src").resolve("Main.java");
         Files.createDirectories(filePath.getParent());
 
         String oldText = String.join("\n", "alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta", "iota", "kappa", "");
         FileUtils.writeStringToFile(filePath.toFile(), oldText, StandardCharsets.UTF_8);
-        repository.workingCopyGitRepo.add().addFilepattern(".").call();
-        RevCommit oldCommit = GitService.commit(repository.workingCopyGitRepo).setMessage("Add file").call();
-        repository.workingCopyGitRepo.push().setRemote("origin").call();
+        repo.git().add().addFilepattern(".").call();
+        RevCommit oldCommit = GitService.commit(repo.git()).setMessage("Add file").call();
+        repo.git().push().setRemote("origin").call();
 
         String newText = String.join("\n", "alpha", "inserted", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta", "iota", "kappa", "");
         FileUtils.writeStringToFile(filePath.toFile(), newText, StandardCharsets.UTF_8);
-        repository.workingCopyGitRepo.add().addFilepattern(".").call();
-        RevCommit newCommit = GitService.commit(repository.workingCopyGitRepo).setMessage("Update file").call();
-        repository.workingCopyGitRepo.push().setRemote("origin").call();
+        repo.git().add().addFilepattern(".").call();
+        RevCommit newCommit = GitService.commit(repo.git()).setMessage("Update file").call();
+        repo.git().push().setRemote("origin").call();
 
         return new RepoHistory(repo.uri(), oldCommit.getName(), newCommit.getName());
     }
 
-    private LocalRepoWithUri createLocalRepository(String suffix) throws Exception {
+    private LocalRepoWithGit createLocalRepositoryWithGit(String suffix) throws Exception {
         String repositorySlug = programmingExercise.getProjectKey().toLowerCase() + "-" + suffix;
-        LocalRepository repository = RepositoryExportTestUtil
-                .trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(programmingExercise.getProjectKey(), repositorySlug));
-        LocalVCRepositoryUri repositoryUri = new LocalVCRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, programmingExercise.getProjectKey(), repositorySlug));
-        return new LocalRepoWithUri(repository, repositoryUri);
+        localVCService.createProjectForExercise(programmingExercise);
+        localVCService.createRepository(programmingExercise.getProjectKey(), repositorySlug);
+        LocalVCRepositoryUri repositoryUri = new LocalVCRepositoryUri(localVCBaseUri, programmingExercise.getProjectKey(), repositorySlug);
+        Path workingCopyPath = tempFileUtilService.createTempDirectory("review-repo-" + suffix + "-");
+        String localRepositoryUri = repositoryUri.getLocalRepositoryPath(localVCBasePath).toUri().toString();
+        Git git = Git.cloneRepository().setURI(localRepositoryUri).setDirectory(workingCopyPath.toFile()).call();
+        return new LocalRepoWithGit(repositoryUri, workingCopyPath, git);
     }
 
-    private record LocalRepoWithUri(LocalRepository repository, LocalVCRepositoryUri uri) {
+    private record LocalRepoWithGit(LocalVCRepositoryUri uri, Path workingCopyPath, Git git) {
     }
 
     private record RepoHistory(LocalVCRepositoryUri repositoryUri, String oldCommit, String newCommit) {
