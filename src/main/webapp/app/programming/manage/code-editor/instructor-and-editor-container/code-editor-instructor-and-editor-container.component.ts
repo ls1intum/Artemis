@@ -281,6 +281,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     checkConsistencies(exercise: ProgrammingExercise) {
         // Clear previous consistency issues
         this.consistencyIssues.set([]);
+        this.selectedIssue = undefined; // Reset selection to avoid stale state
 
         if (!exercise.id) {
             this.alertService.error(this.translateService.instant('artemisApp.hyperion.consistencyCheck.checkFailedAlert'));

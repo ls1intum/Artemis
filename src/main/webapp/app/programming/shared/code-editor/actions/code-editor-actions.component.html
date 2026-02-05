@@ -10,7 +10,7 @@
         [ngbTooltip]="'artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo' | artemisTranslate"
     >
         <fa-icon [icon]="faExternalLink" />
-        <span jhiTranslate="artemisApp.editor.repo"></span>
+        <span class="d-none d-lg-inline" jhiTranslate="artemisApp.editor.repo"></span>
     </a>
 }
 @if (commitState === CommitState.CONFLICT) {
@@ -52,7 +52,7 @@
             </span>
         } @else {
             <fa-icon [icon]="faSync" />
-            <span jhiTranslate="artemisApp.editor.refresh.performRefresh"></span>
+            <span class="d-none d-lg-inline" jhiTranslate="artemisApp.editor.refresh.performRefresh"></span>
         }
     </button>
     <button

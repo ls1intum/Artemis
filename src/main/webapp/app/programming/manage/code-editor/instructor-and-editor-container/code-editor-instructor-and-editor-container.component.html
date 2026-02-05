@@ -147,7 +147,7 @@
                 <!-- Artemis Intelligence - Consolidated AI Actions -->
                 @if (hyperionEnabled) {
                     <!-- Toolbar divider -->
-                    <div class="toolbar-divider"></div>
+                    <div class="vr mx-2"></div>
 
                     <div ngbDropdown class="btn-group" [autoClose]="'outside'" #aiDropdown="ngbDropdown">
                         <button
@@ -219,7 +219,7 @@
                         >
                             <fa-icon [icon]="faArrowLeft" />
                         </button>
-                        <button class="btn btn-outline-secondary" disabled style="opacity: 1; color: var(--bs-body-color)">
+                        <button class="btn btn-outline-secondary consistency-issue-nav-btn" disabled style="opacity: 1; color: var(--bs-body-color)">
                             @if (selectedIssue) {
                                 <fa-icon [icon]="getSeverityIcon(selectedIssue.severity)" [class]="getSeverityColor(selectedIssue.severity) + ' me-1'" />
                                 <span [jhiTranslate]="'artemisApp.hyperion.consistencyCheck.category.' + selectedIssue.category"></span>
