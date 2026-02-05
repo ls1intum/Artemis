@@ -205,8 +205,13 @@
             "courseIdMissing": "Die Kurs ID ist erforderlich.",
             "forbidChangeCourseId": "Die Übungskurs-ID stimmt nicht mit der gespeicherten Kurs-ID überein"
         },
+        "ProblemStatementGeneration": {
+            "generatedProblemStatementTooLong": "Die generierte Aufgabenbeschreibung ist zu lang. Bitte versuche es erneut mit einer anderen Eingabe.",
+            "generationFailed": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut."
+        },
         "ProblemStatementRefinement": {
             "problemStatementEmpty": "Die Aufgabenbeschreibung darf nicht leer sein.",
+            "userPromptEmpty": "Die Benutzereingabe darf nicht leer sein.",
             "noRefinementInstructions": "Keine Verfeinerungsanweisungen vorhanden. Bitte füge Canvas-Kommentare hinzu, um anzugeben, wie die Aufgabenbeschreibung verfeinert werden soll.",
             "chatClientNotConfigured": "KI-Verfeinerung ist derzeit nicht verfügbar. Bitte kontaktiere den Administrator.",
             "chatClientNotConfigured_detail": "Der KI-Chat-Client ist nicht konfiguriert.",

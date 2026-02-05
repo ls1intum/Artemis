@@ -2,9 +2,7 @@ import { Component, Injector, OnDestroy, OnInit, afterNextRender, computed, inje
 import { CommonModule } from '@angular/common';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { faBan, faSave, faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
-
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
@@ -12,7 +10,6 @@ import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
@@ -20,15 +17,13 @@ import { PopoverModule } from 'primeng/popover';
 import { ButtonModule } from 'primeng/button';
 import { Subscription } from 'rxjs';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
-import { InlineRefinementEvent, isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
+import { isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
-
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { TranslateService } from '@ngx-translate/core';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-
 import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/buttons/button/button.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
@@ -143,9 +138,9 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Cancels the ongoing problem statement generation, refinement, or inline comment application.
+     * Cancels the ongoing problem statement generation, refinement.
      * Preserves the user's prompt so they can retry or modify it.
-     * Resets all in-progress states including inline comment statuses.
+     * Resets all in-progress states.
      */
     cancelGeneration(): void {
         if (this.currentGenerationSubscription) {
@@ -242,7 +237,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
 
     /**
      * Closes the diff view. In live-synced mode, changes are already applied.
-     * The user can use Monaco's inline revert buttons to undo specific hunks.
+     * The user can use Monaco's inline revert buttons to undo specific chunks.
      */
     closeDiffView(): void {
         const exercise = this.programmingExercise();
@@ -294,35 +289,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             exercise.competencyLinks = competencyLinks;
             this.programmingExerciseChange.emit(exercise);
         }
-    }
-
-    /**
-     * Handles inline refinement request from editor selection.
-     * Calls the Hyperion API with the selected text and instruction, then applies changes directly.
-     */
-    onInlineRefinement(event: InlineRefinementEvent): void {
-        const exercise = this.programmingExercise();
-        const currentContent = this.editableInstructions()?.getCurrentContent() ?? exercise?.problemStatement;
-
-        if (!currentContent?.trim()) {
-            return;
-        }
-
-        this.currentGenerationSubscription = this.problemStatementService.refineTargeted(exercise, currentContent, event, this.isGeneratingOrRefining).subscribe({
-            next: (result) => {
-                if (result.success && result.content) {
-                    this.showDiff.set(true);
-                    const refinedContent = result.content;
-                    afterNextRender(
-                        () => {
-                            this.editableInstructions()?.applyRefinedContent(refinedContent);
-                        },
-                        { injector: this.injector },
-                    );
-                }
-                this.currentGenerationSubscription = undefined;
-            },
-        });
     }
 
     onDiffLineChange(event: { ready: boolean; lineChange: LineChange }): void {

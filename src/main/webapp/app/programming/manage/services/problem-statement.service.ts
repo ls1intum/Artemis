@@ -5,10 +5,8 @@ import { FileService } from 'app/shared/service/file.service';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import {
-    InlineRefinementEvent,
     buildGenerationRequest,
     buildGlobalRefinementRequest,
-    buildTargetedRefinementRequest,
     getCourseId,
     isValidGenerationResponse,
     isValidRefinementResponse,
@@ -78,7 +76,7 @@ export class ProblemStatementService {
         const courseId = getCourseId(exercise);
         if (!courseId || !prompt?.trim() || !currentContent?.trim()) {
             if (!currentContent?.trim()) {
-                this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
+                this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
             }
             return of({ success: false });
         }
@@ -88,34 +86,8 @@ export class ProblemStatementService {
             .pipe(
                 this.handleApiResponse(
                     loadingSignal,
-                    'artemisApp.programmingExercise.inlineRefine.success',
-                    'artemisApp.programmingExercise.inlineRefine.error',
-                    isValidRefinementResponse,
-                    (r) => r?.refinedProblemStatement,
-                ),
-            );
-    }
-
-    /** Refines a problem statement with targeted selection-based instructions. */
-    refineTargeted(
-        exercise: ProgrammingExercise | undefined,
-        currentContent: string,
-        event: InlineRefinementEvent,
-        loadingSignal: WritableSignal<boolean>,
-    ): Observable<RefinementResult> {
-        const courseId = getCourseId(exercise);
-        if (!courseId || !currentContent?.trim()) {
-            this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
-            return of({ success: false });
-        }
-        loadingSignal.set(true);
-        return this.hyperionApiService
-            .refineProblemStatementTargeted(courseId, buildTargetedRefinementRequest(currentContent, event))
-            .pipe(
-                this.handleApiResponse(
-                    loadingSignal,
-                    'artemisApp.programmingExercise.inlineRefine.success',
-                    'artemisApp.programmingExercise.inlineRefine.error',
+                    'artemisApp.programmingExercise.problemStatement.refinementSuccess',
+                    'artemisApp.programmingExercise.problemStatement.refinementError',
                     isValidRefinementResponse,
                     (r) => r?.refinedProblemStatement,
                 ),

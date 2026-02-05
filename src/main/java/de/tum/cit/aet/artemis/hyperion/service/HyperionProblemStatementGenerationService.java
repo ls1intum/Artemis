@@ -49,9 +49,11 @@ public class HyperionProblemStatementGenerationService {
      * Generate a problem statement for an exercise
      *
      * @param course     the course context for the problem statement
-     * @param userPrompt the user's requirements and instructions for the problem statement
+     * @param userPrompt the user's requirements and instructions for the problem
+     *                       statement
      * @return the generated problem statement response
-     * @throws InternalServerErrorAlertException if generation fails or response is too long
+     * @throws InternalServerErrorAlertException if generation fails or response is
+     *                                               too long
      */
     public ProblemStatementGenerationResponseDTO generateProblemStatement(Course course, String userPrompt) {
         log.debug("Generating problem statement for course [{}]", course.getId());
@@ -70,7 +72,7 @@ public class HyperionProblemStatementGenerationService {
                 log.warn("Generated problem statement for course [{}] exceeds maximum length: {} characters", course.getId(), generatedProblemStatement.length());
                 throw new InternalServerErrorAlertException(
                         "Generated problem statement is too long (" + generatedProblemStatement.length() + " characters). Maximum allowed: " + MAX_PROBLEM_STATEMENT_LENGTH,
-                        "ProblemStatement", "problemStatementTooLong");
+                        "ProblemStatement", "ProblemStatementGeneration.generatedProblemStatementTooLong");
             }
 
             return new ProblemStatementGenerationResponseDTO(generatedProblemStatement);
@@ -81,7 +83,8 @@ public class HyperionProblemStatementGenerationService {
         }
         catch (Exception e) {
             log.error("Error generating problem statement for course [{}]: {}", course.getId(), e.getMessage(), e);
-            throw new InternalServerErrorAlertException("Failed to generate problem statement: " + e.getMessage(), "ProblemStatement", "problemStatementGenerationFailed");
+            throw new InternalServerErrorAlertException("Failed to generate problem statement: " + e.getMessage(), "ProblemStatement",
+                    "ProblemStatementGeneration.generationFailed");
         }
     }
 }

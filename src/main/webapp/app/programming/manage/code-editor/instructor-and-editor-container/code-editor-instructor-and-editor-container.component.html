@@ -190,7 +190,7 @@
                                 <!-- Backdrop for click-outside-to-close -->
                                 <div class="refinement-backdrop" (click)="toggleRefinementPrompt()"></div>
                                 <div class="refinement-prompt-popup" (keydown.escape)="toggleRefinementPrompt()">
-                                    <div class="refinement-prompt-header">
+                                    <div class="d-flex justify-content-between align-items-center p-3 bg-primary text-white fw-medium">
                                         <span
                                             [jhiTranslate]="
                                                 shouldShowGenerateButton()
@@ -200,7 +200,7 @@
                                         ></span>
                                         <button type="button" class="btn-close" (click)="toggleRefinementPrompt()" aria-label="Close"></button>
                                     </div>
-                                    <div class="refinement-prompt-body">
+                                    <div class="p-3">
                                         <textarea
                                             [value]="refinementPrompt()"
                                             (input)="refinementPrompt.set($any($event.target).value)"
@@ -215,7 +215,7 @@
                                         </textarea>
                                         <div class="text-end text-muted small mt-1">{{ refinementPrompt()?.length || 0 }}/1000</div>
                                     </div>
-                                    <div class="refinement-prompt-footer">
+                                    <div class="d-flex justify-content-end p-3 border-top">
                                         <button type="button" class="btn btn-primary btn-sm" [disabled]="!refinementPrompt()?.trim()" (click)="submitRefinement()">
                                             <fa-icon [icon]="faPaperPlane" class="me-1" />
                                             <span
@@ -361,7 +361,6 @@
                         (diffLineChange)="onDiffLineChange($event)"
                         class="flex-grow-1 overflow-auto"
                         (instructionChange)="onInstructionChanged($event)"
-                        (onInlineRefinement)="onInlineRefinement($event)"
                     />
                 } @else {
                     <!-- Loading state while waiting for templateParticipation -->

@@ -236,7 +236,8 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         String body = "{\"userPrompt\":\"Prompt\"}";
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isInternalServerError()).andExpect(jsonPath("$.title").value("Failed to generate problem statement: AI service unavailable"))
-                .andExpect(jsonPath("$.message").value("error.problemStatementGenerationFailed")).andExpect(jsonPath("$.errorKey").value("problemStatementGenerationFailed"));
+                .andExpect(jsonPath("$.message").value("error.ProblemStatementGeneration.generationFailed"))
+                .andExpect(jsonPath("$.errorKey").value("ProblemStatementGeneration.ProblemStatementGeneration"));
     }
 
     @Test
@@ -248,18 +249,6 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         courseRepository.findById(courseId).orElseThrow();
         String body = "{\"problemStatementText\":\"Original problem statement\",\"userPrompt\":\"Make it better\"}";
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/global", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.refinedProblemStatement").isString());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
-    void shouldRefineProblemStatementTargetedForInstructor() throws Exception {
-        long courseId = persistedCourseId;
-        mockChatSuccess("Refined problem statement generated successfully.");
-        userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        courseRepository.findById(courseId).orElseThrow();
-        String body = "{\"problemStatementText\":\"Original problem statement\",\"instruction\":\"Make it better\",\"startLine\":1,\"endLine\":2}";
-        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.refinedProblemStatement").isString());
     }
 
@@ -322,33 +311,5 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         String body = "{\"problemStatementText\":\"\",\"userPrompt\":\"Make it better\"}";
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/global", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isBadRequest()).andExpect(jsonPath("$.title").value("Method argument not valid")).andExpect(jsonPath("$.message").value("error.validation"));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
-    void shouldReturnBadRequestForInvalidTargetedRefinement() throws Exception {
-        long courseId = persistedCourseId;
-        userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        courseRepository.findById(courseId).orElseThrow();
-
-        // 1. Invalid line range (start > end)
-        String bodyInvalidLines = "{\"problemStatementText\":\"Text\",\"instruction\":\"Fix\",\"startLine\":5,\"endLine\":3}";
-        request.performMvcRequest(
-                post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", courseId).contentType(MediaType.APPLICATION_JSON).content(bodyInvalidLines))
-                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.title").value("Bad Request"))
-                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("startLine must be less than or equal to endLine")));
-
-        // 2. Invalid columns (start > end on same line)
-        String bodyInvalidCols = "{\"problemStatementText\":\"Text\",\"instruction\":\"Fix\",\"startLine\":5,\"endLine\":5,\"startColumn\":10,\"endColumn\":5}";
-        request.performMvcRequest(
-                post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", courseId).contentType(MediaType.APPLICATION_JSON).content(bodyInvalidCols))
-                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.title").value("Bad Request"))
-                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("startColumn must be less than or equal to endColumn")));
-
-        // 3. Mismatched columns (one null, one present)
-        String bodyOneCol = "{\"problemStatementText\":\"Text\",\"instruction\":\"Fix\",\"startLine\":5,\"endLine\":5,\"startColumn\":10}";
-        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", courseId).contentType(MediaType.APPLICATION_JSON).content(bodyOneCol))
-                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.title").value("Bad Request"))
-                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("startColumn and endColumn must be either both null or both non-null")));
     }
 }

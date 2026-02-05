@@ -4,7 +4,6 @@ import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { Provider } from '@angular/core';
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { Subject, of, throwError } from 'rxjs';
-
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
@@ -543,67 +542,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
         jest.clearAllMocks();
     });
 
-    // Inline Refinement Tests
-
-    it('should handle inline refinement successfully', () => {
-        const successSpy = jest.spyOn(alertService, 'success');
-        const mockResponse: ProblemStatementRefinementResponse = { refinedProblemStatement: 'Refined content' };
-        (hyperionApiService.refineProblemStatementTargeted as jest.Mock).mockReturnValue(of(mockResponse));
-
-        comp.onInlineRefinement({ instruction: 'Improve this section', startLine: 1, endLine: 2, startColumn: 0, endColumn: 10 });
-
-        expect(hyperionApiService.refineProblemStatementTargeted).toHaveBeenCalledWith(
-            1,
-            expect.objectContaining({
-                problemStatementText: 'Original problem statement',
-                instruction: 'Improve this section',
-                startLine: 1,
-                endLine: 2,
-                startColumn: 0,
-                endColumn: 10,
-            }),
-        );
-        expect(comp.showDiff()).toBeTrue();
-        expect(successSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.success');
-    });
-
-    it('should show error when inline refinement has no courseId', () => {
-        const errorSpy = jest.spyOn(alertService, 'error');
-        comp.exercise = createMockExercise({ problemStatement: 'Test' });
-        comp.exercise.course = undefined;
-
-        comp.onInlineRefinement({ instruction: 'Test', startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
-
-        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
-    });
-
-    it('should show error when inline refinement has empty problem statement', () => {
-        const errorSpy = jest.spyOn(alertService, 'error');
-        comp.exercise = createMockExercise({ problemStatement: '   ' });
-
-        comp.onInlineRefinement({ instruction: 'Test', startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
-
-        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineComment.applyError');
-    });
-
-    it('should handle inline refinement API error', () => {
-        const errorSpy = jest.spyOn(alertService, 'error');
-        (hyperionApiService.refineProblemStatementTargeted as jest.Mock).mockReturnValue(throwError(() => new Error('API error')));
-
-        comp.onInlineRefinement({ instruction: 'Test', startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
-
-        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
-    });
-
-    it('should handle inline refinement with empty response', () => {
-        const errorSpy = jest.spyOn(alertService, 'error');
-        (hyperionApiService.refineProblemStatementTargeted as jest.Mock).mockReturnValue(of({ refinedProblemStatement: '' }));
-
-        comp.onInlineRefinement({ instruction: 'Test', startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
-
-        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
-    });
-
     // Full Refinement Tests
 
     it('should toggle refinement prompt visibility', () => {
@@ -639,7 +577,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
             expect.objectContaining({ problemStatementText: 'Original problem statement', userPrompt: 'Improve clarity' }),
         );
         expect(comp.showDiff()).toBeTrue();
-        expect(successSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.success');
+        expect(successSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementSuccess');
     });
 
     it('should not submit when prompt is empty or whitespace', () => {
@@ -671,6 +609,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
         comp.refinementPrompt.set('Improve');
         comp.submitRefinement();
 
-        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementError');
     });
 });

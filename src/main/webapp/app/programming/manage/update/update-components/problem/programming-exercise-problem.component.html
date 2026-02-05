@@ -121,7 +121,6 @@
                     (hasUnsavedChanges)="programmingExerciseCreationConfig().hasUnsavedChanges = $event"
                     (instructionChange)="onProblemStatementChange($event)"
                     (exerciseChange)="programmingExerciseChange.emit($event)"
-                    (onInlineRefinement)="onInlineRefinement($event)"
                     [renderSideBySide]="allowSplitView()"
                     (diffLineChange)="onDiffLineChange($event)"
                     [forceRender]="programmingExerciseCreationConfig().rerenderSubject"

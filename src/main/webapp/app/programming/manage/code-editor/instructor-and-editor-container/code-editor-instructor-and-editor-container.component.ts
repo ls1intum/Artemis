@@ -50,14 +50,13 @@ import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actio
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
-
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
 import { getRepoPath } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/buttons/button/button.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
-import { InlineRefinementEvent, isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
+import { isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
 
 const SEVERITY_ORDER = {
     HIGH: 0,
@@ -403,30 +402,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     /**
-     * Handles inline refinement request from editor selection.
-     * Calls the Hyperion API with the selected text and instruction, then shows diff.
-     */
-    onInlineRefinement(event: InlineRefinementEvent): void {
-        if (!this.exercise?.problemStatement?.trim()) {
-            this.alertService.error('artemisApp.programmingExercise.inlineComment.applyError');
-            return;
-        }
-
-        this.currentRefinementSubscription = this.problemStatementService
-            .refineTargeted(this.exercise, this.exercise.problemStatement, event, this.isGeneratingOrRefining)
-            .subscribe({
-                next: (result) => {
-                    if (result.success && result.content) {
-                        this.showDiff.set(true);
-                        const refinedContent = result.content;
-                        afterNextRender(() => this.editableInstructions.applyRefinedContent(refinedContent), { injector: this.injector });
-                    }
-                    this.currentRefinementSubscription = undefined;
-                },
-            });
-    }
-
-    /**
      * Toggles the refinement prompt visibility.
      */
     toggleRefinementPrompt(): void {
@@ -477,7 +452,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     private refineProblemStatement(prompt: string): void {
         if (!this.exercise?.problemStatement?.trim()) {
-            this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
+            this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
             return;
         }
 
