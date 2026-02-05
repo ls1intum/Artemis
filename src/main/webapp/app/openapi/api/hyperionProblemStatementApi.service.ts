@@ -14,7 +14,6 @@ import { HttpClient,
          HttpResponse, HttpEvent, HttpContext 
         }       from '@angular/common/http';
 import { Observable }                                        from 'rxjs';
-
 // @ts-ignore
 import { ConsistencyCheckResponse } from '../model/consistencyCheckResponse';
 // @ts-ignore
@@ -47,6 +46,7 @@ export class HyperionProblemStatementApiService extends BaseService {
      * @param programmingExerciseId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
+     * @param options additional options
      */
     public checkExerciseConsistency(programmingExerciseId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ConsistencyCheckResponse>;
     public checkExerciseConsistency(programmingExerciseId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ConsistencyCheckResponse>>;
@@ -102,6 +102,7 @@ export class HyperionProblemStatementApiService extends BaseService {
      * @param problemStatementGenerationRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
+     * @param options additional options
      */
     public generateProblemStatement(courseId: number, problemStatementGenerationRequest: ProblemStatementGenerationRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProblemStatementGenerationResponse>;
     public generateProblemStatement(courseId: number, problemStatementGenerationRequest: ProblemStatementGenerationRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProblemStatementGenerationResponse>>;
@@ -170,6 +171,7 @@ export class HyperionProblemStatementApiService extends BaseService {
      * @param problemStatementRewriteRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
+     * @param options additional options
      */
     public rewriteProblemStatement(courseId: number, problemStatementRewriteRequest: ProblemStatementRewriteRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProblemStatementRewriteResponse>;
     public rewriteProblemStatement(courseId: number, problemStatementRewriteRequest: ProblemStatementRewriteRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProblemStatementRewriteResponse>>;
