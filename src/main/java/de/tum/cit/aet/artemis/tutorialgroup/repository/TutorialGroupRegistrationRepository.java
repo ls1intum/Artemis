@@ -6,6 +6,8 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,6 +21,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegisteredStudentDTO;
 
 @Conditional(TutorialGroupEnabled.class)
 @Lazy
@@ -68,4 +71,30 @@ public interface TutorialGroupRegistrationRepository extends ArtemisJpaRepositor
             ORDER BY tg.course.title, tg.title
             """)
     List<TutorialGroupRegistration> findAllByStudentIdWithTutorialGroupAndCourse(@Param("userId") long userId);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegisteredStudentDTO(
+                    student.id,
+                    CONCAT(COALESCE(student.firstName, ''), ' ', COALESCE(student.lastName, '')),
+                    student.imageUrl,
+                    student.login,
+                    student.email,
+                    student.registrationNumber
+            )
+            FROM User student
+                JOIN student.groups groupName
+            WHERE groupName = :studentGroupName
+                AND (student.login LIKE %:loginOrName% OR CONCAT(student.firstName, ' ', student.lastName) LIKE %:loginOrName%)
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM TutorialGroupRegistration registration
+                    WHERE registration.tutorialGroup.id = :tutorialGroupId AND registration.student.id = student.id
+                )
+            ORDER BY
+                student.login ASC,
+                CONCAT(COALESCE(student.firstName, ''), ' ', COALESCE(student.lastName, '')) ASC,
+                student.id ASC
+            """)
+    Page<TutorialGroupRegisteredStudentDTO> searchUnregisteredStudents(@Param("tutorialGroupId") long tutorialGroupId, @Param("studentGroupName") String studentGroupName,
+            @Param("loginOrName") String loginOrName, Pageable pageable);
 }

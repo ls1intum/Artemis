@@ -27,6 +27,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -77,6 +79,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegisterStudentDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegisteredStudentDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
@@ -115,10 +118,13 @@ public class TutorialGroupResource {
 
     private final TutorialGroupRegistrationApi tutorialGroupRegistrationApi;
 
+    private final TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
+
     public TutorialGroupResource(AuthorizationCheckService authorizationCheckService, UserRepository userRepository, CourseRepository courseRepository,
             TutorialGroupService tutorialGroupService, TutorialGroupRepository tutorialGroupRepository, TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository,
             TutorialGroupScheduleService tutorialGroupScheduleService, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
-            CourseNotificationService courseNotificationService, TutorialGroupRegistrationApi tutorialGroupRegistrationApi) {
+            CourseNotificationService courseNotificationService, TutorialGroupRegistrationApi tutorialGroupRegistrationApi,
+            TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository) {
         this.tutorialGroupService = tutorialGroupService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
@@ -129,6 +135,7 @@ public class TutorialGroupResource {
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
         this.courseNotificationService = courseNotificationService;
         this.tutorialGroupRegistrationApi = tutorialGroupRegistrationApi;
+        this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
     }
 
     /**
@@ -731,6 +738,23 @@ public class TutorialGroupResource {
         return ResponseEntity.ok().body(registerStudentDTOs);
     }
 
+    @GetMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/unregistered-students")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<Page<TutorialGroupRegisteredStudentDTO>> searchUnregisteredStudents(@PathVariable long courseId, @PathVariable long tutorialGroupId,
+            @RequestParam String loginOrName, @RequestParam int pageIndex, @RequestParam int pageSize) {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        var isUserTutorInTutorialGroup = userRepository.isTutorInTutorialGroup(user.getId(), tutorialGroupId, courseId);
+        var isUserAtLeastEditorInCourse = authorizationCheckService.isAtLeastEditorInCourse(user.getLogin(), courseId);
+        if (!isUserTutorInTutorialGroup && !isUserAtLeastEditorInCourse) {
+            throw new AccessForbiddenException("Only the tutor of the group, editors and instructors are allowed to access unregistered students of a tutorial group.");
+        }
+
+        String studentGroupName = courseRepository.getStudentGroupNameById(courseId);
+        Page<TutorialGroupRegisteredStudentDTO> foundStudents = tutorialGroupRegistrationRepository.searchUnregisteredStudents(tutorialGroupId, studentGroupName, loginOrName,
+                PageRequest.of(pageIndex, pageSize));
+        return ResponseEntity.ok().body(foundStudents);
+    }
+
     @PatchMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/registered-students/{studentId}")
     @EnforceAtLeastTutorInCourse
     public ResponseEntity<Void> moveStudentToOtherGroup(@PathVariable long courseId, @PathVariable long tutorialGroupId, @PathVariable long studentId,
@@ -749,6 +773,5 @@ public class TutorialGroupResource {
         tutorialGroupService.deregisterStudent(studentToMove, tutorialGroup, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION, user);
         tutorialGroupService.registerStudent(studentToMove, otherTutorialGroup, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION, user);
         return ResponseEntity.noContent().build();
-
     }
 }

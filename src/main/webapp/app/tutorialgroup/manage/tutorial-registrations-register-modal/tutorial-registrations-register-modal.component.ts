@@ -38,7 +38,6 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
     suggestedStudents = signal<TutorialGroupRegisteredStudentDTO[]>([]);
     selectedStudents = signal<TutorialGroupRegisteredStudentDTO[]>([]);
     suggestionHighlightIndex = signal<number | undefined>(undefined);
-
     currentPage = signal(0);
     hasMorePages = signal(true);
     firstPageLoading = signal(false);
