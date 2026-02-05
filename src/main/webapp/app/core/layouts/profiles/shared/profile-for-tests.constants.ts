@@ -79,6 +79,7 @@ const buildInformation = {
 };
 
 export const expectedProfileInfo: ProfileInfo = {
+    localLLMDeploymentEnabled: false,
     activeModuleFeatures: [],
     activeProfiles: [PROFILE_PROD, PROFILE_JENKINS, PROFILE_ATHENA, PROFILE_APOLLON],
     allowedEmailPattern: '([a-zA-Z0-9_\\-\\.\\+]+)@((tum\\.de)|(in\\.tum\\.de)|(mytum\\.de))',
