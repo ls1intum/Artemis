@@ -45,9 +45,9 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
     searchString = signal<string>('');
     selectedStudents = signal<TutorialGroupRegisteredStudentDTO[]>([]);
     suggestedStudents = signal<TutorialGroupRegisteredStudentDTO[]>([]);
-    suggestionHighlightIndex = signal<number | undefined>(undefined);
     nextSuggestedStudentsPageIndex = signal(0);
     hasMorePages = signal(true);
+    suggestionHighlightIndex = signal<number | undefined>(undefined);
     firstSuggestedStudentsPageLoading = signal(false);
     nextSuggestedStudentsPageLoading = signal(false);
     inputIsFocused = signal(false);
@@ -70,8 +70,7 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.overlayRef?.dispose();
-        this.overlayRef = undefined;
+        this.closePanel();
     }
 
     open() {
@@ -140,8 +139,7 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
     onInputFocusOut() {
         this.inputIsFocused.set(false);
         this.suggestionHighlightIndex.set(undefined);
-        this.overlayRef?.dispose();
-        this.overlayRef = undefined;
+        this.closePanel();
     }
 
     selectSuggestion(suggestionIndex: number): void {
@@ -154,7 +152,8 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
         );
 
         this.searchString.set('');
-        this.resetSuggestionPanel();
+        this.resetSuggestedStudentsState();
+        this.closePanel();
         this.searchInput()?.nativeElement.focus();
     }
 
@@ -211,8 +210,13 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
         });
     }
 
+    private closePanel() {
+        this.overlayRef?.dispose();
+        this.overlayRef = undefined;
+    }
+
     private loadFirstPage(trimmedSearchString: string) {
-        this.resetSuggestionPanel();
+        this.resetSuggestedStudentsState();
 
         this.firstSuggestedStudentsPageLoading.set(true);
 
@@ -252,13 +256,11 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
         });
     }
 
-    private resetSuggestionPanel() {
+    private resetSuggestedStudentsState() {
         this.suggestedStudents.set([]);
         this.suggestionHighlightIndex.set(undefined);
         this.nextSuggestedStudentsPageIndex.set(0);
         this.hasMorePages.set(true);
-        this.overlayRef?.dispose();
-        this.overlayRef = undefined;
     }
 
     private computeHeader(): string {
