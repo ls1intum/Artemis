@@ -1,45 +1,18 @@
 .editor-title {
     margin-bottom: 0;
     line-height: 1;
-}
+    .editor-sidebar-tabs-card {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 0;
+        border: 0;
+        background: transparent;
+    }
 
-:host ::ng-deep jhi-code-editor-grid.left-sidebar-tabs-active .editor-sidebar-right {
-    display: none;
-}
-
-:host ::ng-deep jhi-code-editor-grid.left-sidebar-tabs-active .rg-sidebar-right {
-    display: none;
-}
-
-:host ::ng-deep jhi-code-editor-grid.left-sidebar-tabs-active .editor-sidebar-left {
-    overflow: hidden;
-}
-
-:host ::ng-deep jhi-code-editor-grid.left-sidebar-tabs-active .editor-sidebar-left:not(.collapsed--horizontal) {
-    min-width: 400px;
-}
-
-:host ::ng-deep jhi-code-editor-grid.left-sidebar-tabs-active .editor-sidebar-left.collapsed--horizontal + .editor-center {
-    margin-left: 8px;
-}
-
-:host ::ng-deep jhi-code-editor-grid.left-sidebar-tabs-active .editor-sidebar-left.collapsed--horizontal {
-    width: 56px !important;
-    min-width: 56px !important;
-    max-width: 56px !important;
-    flex: 0 0 56px !important;
-}
-
-:host ::ng-deep jhi-code-editor-grid.left-sidebar-tabs-active .editor-sidebar-left .card {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    border: 0;
-    background: transparent;
-}
-
-:host ::ng-deep jhi-code-editor-grid.left-sidebar-tabs-active .editor-sidebar-left .card > jhi-code-editor-sidebar-tabs {
-    flex: 1 1 auto;
-    min-height: 0;
-    height: 100%;
+    .editor-sidebar-tabs-card > jhi-code-editor-sidebar-tabs {
+        flex: 1 1 auto;
+        min-height: 0;
+        height: 100%;
+    }
 }

@@ -49,46 +49,44 @@
                 (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.FileBrowser)"
             />
         } @else {
-            <div class="card h-100">
-                <jhi-code-editor-sidebar-tabs [isCollapsed]="grid?.fileBrowserIsCollapsed ?? false" (toggleCollapsed)="toggleFileBrowserCollapsed()">
-                    <ng-container sidebarFiles>
-                        <jhi-code-editor-file-browser
-                            [disableActions]="!editable()"
-                            [displayOnly]="forRepositoryView()"
-                            [showEditorInstructions]="showEditorInstructions()"
-                            [isProblemStatementVisible]="isProblemStatementVisible()"
-                            [unsavedFiles]="unsavedFiles | keys"
-                            [errorFiles]="errorFiles"
-                            [editorState]="editorState"
-                            [isTutorAssessment]="isTutorAssessment()"
-                            [highlightFileChanges]="highlightFileChanges()"
-                            [fileBadges]="fileBadges"
-                            [allowHiddenFiles]="allowHiddenFiles()"
-                            [(selectedFile)]="selectedFile"
-                            [(commitState)]="commitState"
-                            (onFileChange)="onFileChange($event)"
-                            (onError)="onError($event)"
-                            (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.FileBrowser)"
+            <jhi-code-editor-sidebar-tabs [isCollapsed]="grid?.fileBrowserIsCollapsed ?? false" (toggleCollapsed)="toggleFileBrowserCollapsed()">
+                <ng-container sidebarFiles>
+                    <jhi-code-editor-file-browser
+                        [disableActions]="!editable()"
+                        [displayOnly]="forRepositoryView()"
+                        [showEditorInstructions]="showEditorInstructions()"
+                        [isProblemStatementVisible]="isProblemStatementVisible()"
+                        [unsavedFiles]="unsavedFiles | keys"
+                        [errorFiles]="errorFiles"
+                        [editorState]="editorState"
+                        [isTutorAssessment]="isTutorAssessment()"
+                        [highlightFileChanges]="highlightFileChanges()"
+                        [fileBadges]="fileBadges"
+                        [allowHiddenFiles]="allowHiddenFiles()"
+                        [(selectedFile)]="selectedFile"
+                        [(commitState)]="commitState"
+                        (onFileChange)="onFileChange($event)"
+                        (onError)="onError($event)"
+                        (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.FileBrowser)"
+                    />
+                </ng-container>
+                <ng-container sidebarProblemStatement>
+                    <ng-content select="[editorSidebar]" />
+                </ng-container>
+                <ng-container sidebarComments>
+                    @for (thread of reviewCommentThreads(); track thread.id) {
+                        <jhi-review-comment-thread-widget
+                            [thread]="thread"
+                            [showLocation]="true"
+                            (onDelete)="onDeleteReviewComment.emit($event)"
+                            (onReply)="onReplyReviewComment.emit({ threadId: thread.id, text: $event })"
+                            (onUpdate)="onUpdateReviewComment.emit($event)"
+                            (onToggleResolved)="onToggleResolveReviewThread.emit({ threadId: thread.id, resolved: $event })"
+                            (onNavigateToThread)="onNavigateReviewThread.emit($event)"
                         />
-                    </ng-container>
-                    <ng-container sidebarProblemStatement>
-                        <ng-content select="[editorSidebar]" />
-                    </ng-container>
-                    <ng-container sidebarComments>
-                        @for (thread of reviewCommentThreads(); track thread.id) {
-                            <jhi-review-comment-thread-widget
-                                [thread]="thread"
-                                [showLocation]="true"
-                                (onDelete)="onDeleteReviewComment.emit($event)"
-                                (onReply)="onReplyReviewComment.emit({ threadId: thread.id, text: $event })"
-                                (onUpdate)="onUpdateReviewComment.emit($event)"
-                                (onToggleResolved)="onToggleResolveReviewThread.emit({ threadId: thread.id, resolved: $event })"
-                                (onNavigateToThread)="onNavigateReviewThread.emit($event)"
-                            />
-                        }
-                    </ng-container>
-                </jhi-code-editor-sidebar-tabs>
-            </div>
+                    }
+                </ng-container>
+            </jhi-code-editor-sidebar-tabs>
         }
     </ng-container>
     <ng-container editorCenter>

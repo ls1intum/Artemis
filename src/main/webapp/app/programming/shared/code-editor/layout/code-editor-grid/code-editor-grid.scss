@@ -107,6 +107,20 @@
     }
 }
 
+.left-sidebar-tabs-active {
+    .editor-main__content .editor-sidebar-right {
+        display: none;
+    }
+
+    .editor-main__content .rg-sidebar-right {
+        display: none;
+    }
+
+    .editor-main__content .editor-sidebar-left.collapsed--horizontal {
+        width: 64px !important;
+    }
+}
+
 /* ==========================================================================
    Collapsible styling
    ========================================================================== */

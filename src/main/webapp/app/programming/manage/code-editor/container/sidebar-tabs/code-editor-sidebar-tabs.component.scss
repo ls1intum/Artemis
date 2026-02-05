@@ -1,9 +1,30 @@
 .review-sidebar {
     height: 100%;
+    width: 100%;
     min-width: 280px;
     background: transparent;
     min-height: 0;
     gap: 8px;
+    display: flex;
+}
+
+.review-sidebar__panel {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    height: 100%;
+    width: 100%;
+    min-height: 0;
+    border: 1px solid var(--bs-border-color);
+    background: transparent;
+    flex: 1 1 auto;
+}
+
+:host {
+    display: block;
+    height: 100%;
+    min-height: 0;
 }
 
 .review-sidebar__rail {
@@ -55,46 +76,16 @@
     color: var(--bs-white);
 }
 
+.review-sidebar__rail-button:active {
+    transform: scale(0.96);
+}
+
 .review-sidebar__rail-button:hover:not(.is-active) {
     background: var(--bs-primary-bg-subtle, var(--bs-secondary-bg));
 }
 
 .review-sidebar__rail-button.is-active:hover {
     filter: brightness(0.95);
-}
-
-.review-sidebar__rail-button:active {
-    transform: scale(0.96);
-}
-
-.review-sidebar__main {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    min-width: 0;
-    min-height: 0;
-    padding-left: 0;
-    border-left: 0;
-}
-
-.review-sidebar__content {
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    min-height: 0;
-}
-
-.review-sidebar__panel {
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    flex: 1 1 auto;
-    min-height: 0;
-    height: 100%;
-    border: 1px solid var(--bs-border-color);
-    background: transparent;
 }
 
 .review-sidebar__panel-body {
@@ -125,59 +116,14 @@
     height: 100%;
 }
 
-:host ::ng-deep .review-sidebar__panel-body .instructions__content__markdown {
-    padding: 8px 12px 12px;
-    height: auto;
-    max-height: none;
-    overflow: visible;
-    margin-bottom: 0;
-    border-bottom: 0;
-}
-
-:host ::ng-deep .review-sidebar__panel-body .instructions__content {
-    height: auto;
+.review-sidebar__card > jhi-code-editor-file-browser {
+    display: block;
+    flex: 1 1 auto;
     min-height: 0;
-    overflow: visible;
-    margin: 0;
-    padding-bottom: 0;
-    border-bottom: 0;
-}
-
-:host ::ng-deep .review-sidebar__panel-body .markdown-preview {
-    padding-bottom: 0;
-    margin-bottom: 0;
-    border-bottom: 0;
-}
-
-:host ::ng-deep .review-sidebar__panel-body jhi-review-comment-thread-widget:last-child {
-    margin-bottom: 0;
+    height: 100%;
 }
 
 .review-sidebar__panel-body--comments {
     padding-bottom: 8px;
-}
-
-:host ::ng-deep .review-sidebar__panel-body jhi-review-comment-thread-widget {
-    margin-bottom: 8px;
-}
-
-:host ::ng-deep .review-sidebar__panel-body .empty-state-container {
-    margin: 0;
-}
-
-.review-sidebar__panel--files {
-    padding: 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
-
-:host ::ng-deep .review-sidebar__panel--files jhi-code-editor-file-browser {
-    flex: 1 1 auto;
-    min-height: 0;
-}
-
-:host ::ng-deep .review-sidebar__panel--files .file-browser {
-    border: 0;
-    box-shadow: none;
+    gap: 8px;
 }
