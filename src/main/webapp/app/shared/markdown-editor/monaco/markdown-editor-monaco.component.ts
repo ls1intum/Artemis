@@ -312,7 +312,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     uniqueMarkdownEditorId: string;
     resizeObserver?: ResizeObserver;
     /** Disposable for the selection change listener */
-    private selectionChangeDisposable?: { dispose: () => void };
+
     targetWrapperHeight?: number;
     minWrapperHeight?: number;
     constrainDragPositionFn?: (pointerPosition: Point) => Point;
@@ -496,7 +496,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     ngOnDestroy(): void {
         this.resizeObserver?.disconnect();
-        this.selectionChangeDisposable?.dispose();
     }
 
     onTextChanged(event: { text: string; fileName: string }): void {
