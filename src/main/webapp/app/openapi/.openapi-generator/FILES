@@ -1,6 +1,7 @@
 .gitignore
 api.base.service.ts
 api/hyperionCodeGenerationApi.service.ts
+api/hyperionFaqApi.service.ts
 api/hyperionProblemStatementApi.service.ts
 api/tutorialGroupApi.service.ts
 api/tutorialGroupFreePeriodApi.service.ts
@@ -22,6 +23,8 @@ model/problemStatementGlobalRefinementRequest.ts
 model/problemStatementRefinementResponse.ts
 model/problemStatementRewriteRequest.ts
 model/problemStatementRewriteResponse.ts
+model/rewriteFaqRequest.ts
+model/rewriteFaqResponse.ts
 model/student.ts
 model/studentExport.ts
 model/teachingAssistant.ts
