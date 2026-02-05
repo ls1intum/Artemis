@@ -308,6 +308,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                             this.alertService.success(this.translateService.instant('artemisApp.hyperion.consistencyCheck.noInconsistencies'));
                         } else {
                             this.alertService.warning(this.translateService.instant('artemisApp.hyperion.consistencyCheck.inconsistenciesFoundAlert'));
+                            this.selectedIssue = this.consistencyIssues()[0];
+                            this.showConsistencyIssuesToolbar.set(true);
                         }
                     },
                     error: () => {

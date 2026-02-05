@@ -215,6 +215,7 @@
                             class="btn btn-outline-secondary"
                             (click)="navigateGlobal(-1)"
                             [ngbTooltip]="'artemisApp.hyperion.consistencyCheck.prevIssue' | artemisTranslate"
+                            triggers="hover"
                             [attr.aria-label]="'artemisApp.hyperion.consistencyCheck.prevIssue' | artemisTranslate"
                         >
                             <fa-icon [icon]="faArrowLeft" />
@@ -232,6 +233,7 @@
                             class="btn btn-outline-secondary"
                             (click)="navigateGlobal(1)"
                             [ngbTooltip]="'artemisApp.hyperion.consistencyCheck.nextIssue' | artemisTranslate"
+                            triggers="hover"
                             [attr.aria-label]="'artemisApp.hyperion.consistencyCheck.nextIssue' | artemisTranslate"
                         >
                             <fa-icon [icon]="faArrowRight" />
@@ -240,6 +242,7 @@
                             class="btn btn-outline-secondary"
                             (click)="toggleConsistencyIssuesToolbar()"
                             [ngbTooltip]="'artemisApp.hyperion.consistencyCheck.closeIssues' | artemisTranslate"
+                            triggers="hover"
                             [attr.aria-label]="'artemisApp.hyperion.consistencyCheck.closeIssues' | artemisTranslate"
                         >
                             <fa-icon [icon]="faTimes" />
