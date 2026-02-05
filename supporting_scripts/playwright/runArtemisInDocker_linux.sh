@@ -2,12 +2,19 @@
 
 set -e
 
-artemis_path="$(readlink -f "$(dirname "$0")/../..")"
+artemis_path="$(cd "$(dirname "$0")/../.." && pwd -P)"
 
 cd "$artemis_path/docker"
 
 echo "Updating docker group ID in the docker compose file"
-sed -i "s/999/$(getent group docker | cut -d: -f3)/g" artemis-dev-local-vc-local-ci-mysql.yml
+# The compose file uses 999 as a placeholder GID. We replace it with the host's docker group ID
+# so the container can access /var/run/docker.sock. If the group does not exist, we keep 999.
+DOCKER_GID="$(getent group docker 2>/dev/null | cut -d: -f3)"
+if [ -n "$DOCKER_GID" ]; then
+	sed -i "s/999/$DOCKER_GID/g" artemis-dev-local-vc-local-ci-mysql.yml
+else
+	echo "Docker group ID not found, skipping replacement"
+fi
 
 docker compose -f artemis-dev-local-vc-local-ci-mysql.yml up -d
 echo "Finished docker compose"
