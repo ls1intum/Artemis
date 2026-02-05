@@ -15,7 +15,7 @@ import {
     faTrash,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
@@ -32,7 +32,6 @@ import * as _ from 'lodash-es';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ChatStatusBarComponent } from './chat-status-bar/chat-status-bar.component';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AsPipe } from 'app/shared/pipes/as.pipe';
@@ -43,6 +42,9 @@ import { facSidebar } from 'app/shared/icons/icons';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
+import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -69,10 +71,12 @@ import { ContextSelectionComponent } from 'app/iris/overview/context-selection/c
 })
 export class IrisBaseChatbotComponent implements AfterViewInit {
     protected accountService = inject(AccountService);
+    protected modalService = inject(NgbModal);
     protected translateService = inject(TranslateService);
     protected statusService = inject(IrisStatusService);
     protected chatService = inject(IrisChatService);
     protected route = inject(ActivatedRoute);
+    protected llmModalService = inject(LLMSelectionModalService);
     private readonly destroyRef = inject(DestroyRef);
 
     // Icons
@@ -100,6 +104,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly IrisTextMessageContent = IrisTextMessageContent;
     protected readonly IrisSender = IrisSender;
     protected readonly IrisErrorMessageKey = IrisErrorMessageKey;
+    protected readonly LLMSelectionDecision = LLMSelectionDecision;
 
     // Observable-derived signals (using toSignal for reactive state)
     private readonly currentRelatedEntityId = toSignal(this.chatService.currentRelatedEntityId(), { initialValue: undefined });
@@ -128,7 +133,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly isLoading = signal(false);
     readonly isChatHistoryOpen = signal(true);
     readonly searchValue = signal('');
-    readonly userAccepted = signal(false);
+    readonly userAccepted = signal<LLMSelectionDecision | undefined>(undefined);
     readonly isScrolledToBottom = signal(true);
     readonly resendAnimationActive = signal(false);
     readonly clickedSuggestion = signal<string | undefined>(undefined);
@@ -161,7 +166,14 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     constructor() {
         // Initialize user acceptance state
-        this.userAccepted.set(!!this.accountService.userIdentity()?.externalLLMUsageAccepted);
+        this.checkIfUserAcceptedLLMUsage();
+
+        // Show AI selection modal if user hasn't accepted
+        if (!this.userAccepted()) {
+            setTimeout(() => this.showAISelectionModal(), 0);
+        } else {
+            this.focusInputAfterAcceptance();
+        }
 
         // Handle route query params (irisQuestion)
         this.route.queryParams?.pipe(takeUntilDestroyed()).subscribe((params: any) => {
@@ -263,6 +275,44 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         setTimeout(() => (this.shouldAnimate = true), 500);
     }
 
+    checkIfUserAcceptedLLMUsage(): void {
+        this.userAccepted.set(this.accountService.userIdentity()?.selectedLLMUsage);
+        setTimeout(() => this.adjustTextareaRows(), 0);
+    }
+
+    readonly reopenChat = output<void>();
+
+    async showAISelectionModal(): Promise<void> {
+        this.closeChat();
+        const choice = await this.llmModalService.open();
+
+        switch (choice) {
+            case 'cloud':
+                this.acceptPermission(LLMSelectionDecision.CLOUD_AI);
+                this.reopenChat.emit();
+                break;
+            case 'local':
+                this.acceptPermission(LLMSelectionDecision.LOCAL_AI);
+                this.reopenChat.emit();
+                break;
+            case 'no_ai':
+                this.chatService.updateLLMUsageConsent(LLMSelectionDecision.NO_AI);
+                break;
+            case 'none':
+                break;
+        }
+    }
+
+    private focusInputAfterAcceptance() {
+        setTimeout(() => {
+            if (this.messageTextarea()) {
+                this.messageTextarea()!.nativeElement.focus();
+            } else if (this.acceptButton()) {
+                this.acceptButton()!.nativeElement.focus();
+            }
+        }, 150);
+    }
+
     /**
      * Handles the send button click event and sends the user's message.
      */
@@ -335,9 +385,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     /**
      * Accepts the permission to use the chat widget.
      */
-    acceptPermission() {
-        this.chatService.updateExternalLLMUsageConsent(true);
-        this.userAccepted.set(true);
+    acceptPermission(decision: LLMSelectionDecision) {
+        this.chatService.updateLLMUsageConsent(decision);
+        this.userAccepted.set(decision);
     }
 
     /**
