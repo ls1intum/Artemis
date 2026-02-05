@@ -8,7 +8,6 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
-import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,16 +64,15 @@ public class TutorialGroupsConfigurationResource {
      * GET /courses/:courseId/tutorial-groups-configuration/: gets the tutorial groups configuration of the course with the specified id
      *
      * @param courseId the id of the course to which the tutorial groups configuration belongs
-     * @return ResponseEntity with status 200 (OK) and with the body of the tutorial groups configuration dto
+     * @return ResponseEntity with status 200 (OK) and with body the tutorial groups configuration
      */
     @GetMapping("courses/{courseId}/tutorial-groups-configuration")
     @EnforceAtLeastStudent
-    public ResponseEntity<TutorialGroupConfigurationDTO> getOneOfCourse(@PathVariable Long courseId) {
+    public ResponseEntity<TutorialGroupsConfiguration> getOneOfCourse(@PathVariable Long courseId) {
         log.debug("REST request to get tutorial groups configuration of course: {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        var configuration = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).map(TutorialGroupConfigurationDTO::of).orElse(null);
-        return ResponseEntity.ok(configuration);
+        return ResponseEntity.ok().body(tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElse(null));
     }
 
     /**
@@ -90,15 +88,15 @@ public class TutorialGroupsConfigurationResource {
             throws URISyntaxException {
         log.debug("REST request to create TutorialGroupsConfiguration: {} for course: {}", tutorialGroupConfigurationDto, courseId);
         if (tutorialGroupConfigurationDto.id() != null) {
-            throw new BadRequestException("A new tutorial group configuration cannot already have an ID");
+            throw new BadRequestAlertException("A new tutorial group configuration cannot already have an ID", ENTITY_NAME, "idExists");
         }
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         if (tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(course.getId()).isPresent()) {
-            throw new BadRequestException("A tutorial group configuration already exists for this course");
+            throw new BadRequestAlertException("A tutorial group configuration already exists for this course", ENTITY_NAME, "alreadyExists");
         }
         if (course.getTimeZone() == null) {
-            throw new BadRequestException("The course has no time zone");
+            throw new BadRequestAlertException("The course has no time zone", ENTITY_NAME, "courseHasNoTimeZone");
         }
         TutorialGroupsConfiguration configuration = TutorialGroupConfigurationDTO.from(tutorialGroupConfigurationDto);
 
@@ -130,13 +128,13 @@ public class TutorialGroupsConfigurationResource {
             @RequestBody @Valid TutorialGroupConfigurationDTO updatedTutorialGroupConfigurationDto) {
         log.debug("REST request to update TutorialGroupsConfiguration: {} of course: {}", updatedTutorialGroupConfigurationDto, courseId);
         if (updatedTutorialGroupConfigurationDto.id() == null) {
-            throw new BadRequestException("A tutorial group cannot be updated without an id");
+            throw new BadRequestAlertException("A tutorial group cannot be updated without an id", ENTITY_NAME, "idNull");
         }
 
         var configurationFromDatabase = this.tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(updatedTutorialGroupConfigurationDto.id());
         var course = configurationFromDatabase.getCourse();
         if (course.getTimeZone() == null) {
-            throw new BadRequestException("The course has no time zone");
+            throw new BadRequestAlertException("The course has no time zone", ENTITY_NAME, "courseHasNoTimeZone");
         }
 
         TutorialGroupsConfiguration updatedTutorialGroupConfiguration = TutorialGroupConfigurationDTO.from(updatedTutorialGroupConfigurationDto);
@@ -178,14 +176,14 @@ public class TutorialGroupsConfigurationResource {
 
     private static void isValidTutorialGroupConfiguration(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
         if (tutorialGroupsConfiguration.getTutorialPeriodStartInclusive() == null || tutorialGroupsConfiguration.getTutorialPeriodEndInclusive() == null) {
-            throw new BadRequestException("Tutorial period start and end must be set");
+            throw new BadRequestAlertException("Tutorial period start and end must be set", ENTITY_NAME, "tutorialPeriodMissing");
         }
         if (!isIso8601DateString(tutorialGroupsConfiguration.getTutorialPeriodStartInclusive())
                 || !isIso8601DateString(tutorialGroupsConfiguration.getTutorialPeriodEndInclusive())) {
-            throw new BadRequestException("Tutorial period start and end must be valid ISO 8601 date strings");
+            throw new BadRequestAlertException("Tutorial period start and end must be valid ISO 8601 date strings", ENTITY_NAME, "tutorialPeriodInvalidFormat");
         }
         if (LocalDate.parse(tutorialGroupsConfiguration.getTutorialPeriodStartInclusive()).isAfter(LocalDate.parse(tutorialGroupsConfiguration.getTutorialPeriodEndInclusive()))) {
-            throw new BadRequestException("Tutorial period start must be before tutorial period end");
+            throw new BadRequestAlertException("Tutorial period start must be before tutorial period end", ENTITY_NAME, "tutorialPeriodInvalidOrder");
         }
     }
 

@@ -108,9 +108,9 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         // given
         var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY);
         // when
-        var configurationFromRequest = request.get(this.getTutorialGroupsConfigurationPath(courseId), HttpStatus.OK, TutorialGroupConfigurationDTO.class);
+        var configurationFromRequest = request.get(this.getTutorialGroupsConfigurationPath(courseId), HttpStatus.OK, TutorialGroupsConfiguration.class);
         // then
-        assertThat(TutorialGroupConfigurationDTO.of(configuration)).isEqualTo(configurationFromRequest);
+        assertThat(configuration).isEqualTo(configurationFromRequest);
     }
 
     @Test

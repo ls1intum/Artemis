@@ -219,6 +219,19 @@
         "userManagement": {
             "onlySuperAdminCanManageAdmins": "You are not a super administrator and therefore not allowed to manage administrator accounts.",
             "cannotRemoveDefaultAdminRights": "You cannot remove super admin rights from the default admin user."
+        },
+        "tutorialGroupsConfiguration": {
+            "idExists": "A new tutorial group configuration cannot already have an ID.",
+            "alreadyExists": "A tutorial group configuration already exists for this course.",
+            "courseHasNoTimeZone": "The course has no time zone.",
+            "idNull": "A tutorial group configuration cannot be updated without an id.",
+
+            "tutorialPeriodMissing": "Tutorial period start and end must be set.",
+            "tutorialPeriodInvalidFormat": "Tutorial period start and end must be valid ISO 8601 date strings.",
+            "tutorialPeriodInvalidOrder": "Tutorial period start must be before tutorial period end.",
+
+            "courseIdMismatch": "The course id in the path does not match the course of the tutorial group configuration.",
+            "tutorialGroupConfigurationIdMismatch": "The tutorial group configuration id in the path does not match the configuration to be updated."
         }
     }
 }

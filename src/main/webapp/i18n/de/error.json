@@ -219,6 +219,19 @@
         "userManagement": {
             "onlySuperAdminCanManageAdmins": "Du bist kein Super-Administrator und kannst daher keine Administrator-Accounts verwalten.",
             "cannotRemoveDefaultAdminRights": "Du kannst die Super-Admin-Rechte des Standard-Admin-Benutzers nicht entfernen."
+        },
+        "tutorialGroupsConfiguration": {
+            "idExists": "Eine neue Tutoriengruppen-Konfiguration darf noch keine ID besitzen.",
+            "alreadyExists": "Für diesen Kurs existiert bereits eine Tutoriengruppen-Konfiguration.",
+            "courseHasNoTimeZone": "Der Kurs hat keine konfigurierte Zeitzone.",
+            "idNull": "Eine Tutoriengruppen-Konfiguration kann nicht ohne ID aktualisiert werden.",
+
+            "tutorialPeriodMissing": "Start- und Enddatum des Tutorienzeitraums müssen gesetzt sein.",
+            "tutorialPeriodInvalidFormat": "Start- und Enddatum des Tutorienzeitraums müssen gültige ISO-8601-Datumsangaben sein.",
+            "tutorialPeriodInvalidOrder": "Der Start des Tutorienzeitraums muss vor dem Ende liegen.",
+
+            "courseIdMismatch": "Die Kurs-ID im Pfad stimmt nicht mit dem Kurs der Tutoriengruppen-Konfiguration überein.",
+            "tutorialGroupConfigurationIdMismatch": "Die ID der Tutoriengruppen-Konfiguration im Pfad stimmt nicht mit der zu aktualisierenden Konfiguration überein."
         }
     }
 }

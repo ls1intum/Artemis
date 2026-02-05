@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.tutorialgroup.dto;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.jspecify.annotations.Nullable;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
@@ -18,7 +16,7 @@ public record TutorialGroupConfigurationDTO(Long id, @NotNull String tutorialPer
      * @param config the tutorial groups configuration entity
      * @return a DTO representing the given configuration, or {@code null} if the input is {@code null}
      */
-    public static @Nullable TutorialGroupConfigurationDTO of(@Nullable TutorialGroupsConfiguration config) {
+    public static TutorialGroupConfigurationDTO of(TutorialGroupsConfiguration config) {
         if (config == null) {
             return null;
         }
@@ -38,10 +36,7 @@ public record TutorialGroupConfigurationDTO(Long id, @NotNull String tutorialPer
      * @param dto the tutorial group configuration DTO
      * @return a new {@link TutorialGroupsConfiguration} populated with the values from the DTO, or {@code null} if the input is {@code null}
      */
-    public static TutorialGroupsConfiguration from(TutorialGroupConfigurationDTO dto) {
-        if (dto == null) {
-            return null;
-        }
+    public static TutorialGroupsConfiguration from(@NotNull TutorialGroupConfigurationDTO dto) {
         TutorialGroupsConfiguration configuration = new TutorialGroupsConfiguration();
         configuration.setTutorialPeriodStartInclusive(dto.tutorialPeriodStartInclusive());
         configuration.setTutorialPeriodEndInclusive(dto.tutorialPeriodEndInclusive());
