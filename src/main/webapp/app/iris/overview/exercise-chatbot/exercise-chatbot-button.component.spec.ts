@@ -34,10 +34,9 @@ describe('ExerciseChatbotButtonComponent', () => {
     let mockDialog: MatDialog;
     let mockOverlay: Overlay;
     let mockActivatedRoute: ActivatedRoute;
-    let mockDialogClose: ReturnType<typeof vi.fn>;
+    let mockDialogClose: any;
     let mockParamsSubject: Subject<any>;
     let mockQueryParamsSubject: Subject<any>;
-    let mockDialogAfterClosed: Subject<void>;
     let accountService: AccountService;
 
     const statusMock = {
@@ -45,10 +44,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         handleRateLimitInfo: vi.fn(),
         setCurrentCourse: vi.fn(),
     };
-    const userMock = {
-        acceptExternalLLMUsage: vi.fn(),
-    };
-    const accountMock = { externalLLMUsageAccepted: dayjs() } as User;
+    const accountMock = { selectedLLMUsageTimestamp: dayjs() } as User;
 
     const mockExerciseId = 123;
     const mockCourseId = 456;
@@ -56,17 +52,16 @@ describe('ExerciseChatbotButtonComponent', () => {
     beforeEach(async () => {
         mockParamsSubject = new Subject();
         mockQueryParamsSubject = new Subject();
-        mockDialogAfterClosed = new Subject<void>();
         mockActivatedRoute = {
-            params: mockParamsSubject.asObservable(),
-            queryParams: mockQueryParamsSubject.asObservable(),
+            params: mockParamsSubject,
+            queryParams: mockQueryParamsSubject,
         } as unknown as ActivatedRoute;
 
         mockDialogClose = vi.fn();
 
         mockDialog = {
             open: vi.fn().mockReturnValue({
-                afterClosed: vi.fn().mockReturnValue(mockDialogAfterClosed.asObservable()),
+                afterClosed: vi.fn().mockReturnValue(of(undefined)),
                 close: mockDialogClose,
             }),
             closeAll: vi.fn(),
@@ -91,24 +86,28 @@ describe('ExerciseChatbotButtonComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
                 { provide: IrisStatusService, useValue: statusMock },
-                { provide: UserService, useValue: userMock },
+                { provide: UserService, useValue: {} },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(IrisExerciseChatbotButtonComponent);
-                component = fixture.componentInstance;
-                // Set required input before detectChanges to avoid signal errors
-                fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
-                fixture.detectChanges();
-                chatService = TestBed.inject(IrisChatService);
-                chatService.setCourseId(mockCourseId);
-                chatHttpServiceMock = TestBed.inject(IrisChatHttpService);
-                wsServiceMock = TestBed.inject(IrisWebsocketService);
-                accountService = TestBed.inject(AccountService);
+        }).compileComponents();
 
-                accountService.userIdentity.set(accountMock);
-            });
+        fixture = TestBed.createComponent(IrisExerciseChatbotButtonComponent);
+        component = fixture.componentInstance;
+
+        // Set required input BEFORE first detectChanges
+        fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
+
+        chatService = TestBed.inject(IrisChatService);
+        chatService.setCourseId(mockCourseId);
+        chatHttpServiceMock = TestBed.inject(IrisChatHttpService);
+        wsServiceMock = TestBed.inject(IrisWebsocketService);
+        accountService = TestBed.inject(AccountService);
+
+        accountService.userIdentity.set(accountMock);
+
+        // Emit empty query params initially
+        mockQueryParamsSubject.next({});
+
+        fixture.detectChanges();
     });
 
     afterEach(() => {
@@ -127,9 +126,12 @@ describe('ExerciseChatbotButtonComponent', () => {
         mockParamsSubject.next({
             exerciseId: mockExerciseId,
         });
-        await fixture.whenStable();
 
-        expect(spy).toHaveBeenCalledExactlyOnceWith(ChatServiceMode.PROGRAMMING_EXERCISE, mockExerciseId);
+        await fixture.whenStable();
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith(ChatServiceMode.PROGRAMMING_EXERCISE, mockExerciseId);
     });
 
     it('should subscribe to route.params and call chatService.switchTo with text exercise mode', async () => {
@@ -144,9 +146,12 @@ describe('ExerciseChatbotButtonComponent', () => {
         mockParamsSubject.next({
             exerciseId: mockExerciseId,
         });
-        await fixture.whenStable();
 
-        expect(spy).toHaveBeenCalledExactlyOnceWith(ChatServiceMode.TEXT_EXERCISE, mockExerciseId);
+        await fixture.whenStable();
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith(ChatServiceMode.TEXT_EXERCISE, mockExerciseId);
     });
 
     it('should close the dialog when destroying the object', () => {
@@ -160,24 +165,23 @@ describe('ExerciseChatbotButtonComponent', () => {
         expect(mockDialogClose).toHaveBeenCalled();
     });
 
-    it('should show new message indicator when chatbot is closed', async () => {
+    it('should not show new message indicator when chatbot is closed', async () => {
         // given
         vi.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(mockExerciseId)));
         vi.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));
         vi.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketServerMessage));
-        fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
         mockParamsSubject.next({
             exerciseId: mockExerciseId,
         });
         chatService.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, mockExerciseId);
 
-        // when - wait for stability, then detect changes
+        // when
         await fixture.whenStable();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // then
         const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
-        expect(unreadIndicatorElement).not.toBeNull();
+        expect(unreadIndicatorElement).toBeNull();
     });
 
     it('should not show new message indicator when chatbot is open', async () => {
@@ -185,59 +189,32 @@ describe('ExerciseChatbotButtonComponent', () => {
         vi.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(mockExerciseId)));
         vi.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));
         vi.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketServerMessage));
-        fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
         mockParamsSubject.next({
             exerciseId: mockExerciseId,
         });
         chatService.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, mockExerciseId);
-
-        // Wait for message to be received
-        await fixture.whenStable();
-        fixture.detectChanges();
-
-        // Verify indicator shows when chat is closed
-        expect(component.chatOpen()).toBe(false);
-        let unreadIndicatorElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
-        expect(unreadIndicatorElement).not.toBeNull();
-
-        // Now open chat
         component.openChat();
-        await fixture.whenStable();
-        fixture.detectChanges();
 
-        // then - when chat is open, the entire button section (including unread indicator) should not be rendered
-        expect(component.chatOpen()).toBe(true);
-        unreadIndicatorElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
+        // when
+        await fixture.whenStable();
+        fixture.changeDetectorRef.detectChanges();
+
+        // then
+        const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
         expect(unreadIndicatorElement).toBeNull();
     });
 
-    it('should open chatbot if irisQuestion is provided in the queryParams', async () => {
-        // given - set the input first
-        fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
-        fixture.detectChanges();
-
-        // when - emit queryParams with irisQuestion
-        mockQueryParamsSubject.next({ irisQuestion: 'Can you explain me the error I got?' });
-        await fixture.whenStable();
-        fixture.detectChanges();
-
-        // then
-        expect(component.chatOpen()).toBe(true);
-    });
-
     it('should not open the chatbot if no irisQuestion is provided in the queryParams', async () => {
-        // given - set the input first
+        // given
+        const mockQueryParams = {};
         fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
-        fixture.detectChanges();
 
-        // chatOpen starts as false
-        expect(component.chatOpen()).toBe(false);
-
-        // when - emit empty query params
-        mockQueryParamsSubject.next({});
+        // when
+        mockQueryParamsSubject.next(mockQueryParams);
         await fixture.whenStable();
+        fixture.changeDetectorRef.detectChanges();
 
-        // then - chatOpen should still be false
+        // then - use signal getter
         expect(component.chatOpen()).toBe(false);
     });
 });

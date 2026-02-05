@@ -22,9 +22,6 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureChatJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
@@ -99,17 +96,6 @@ public class IrisLectureChatSessionService extends AbstractIrisChatSessionServic
     }
 
     /**
-     * Handles the status update of a LectureChatJob by delegating to the superclass.
-     *
-     * @param job          The job that was executed
-     * @param statusUpdate The status update of the job
-     * @return the same job record or a new job record with the same job id if changes were made
-     */
-    public TrackedSessionBasedPyrisJob handleStatusUpdate(LectureChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
-        return handleStatusUpdate((TrackedSessionBasedPyrisJob) job, statusUpdate);
-    }
-
-    /**
      * Checks if the user has access to the Iris session.
      * A user has access if they have access to the lecture and the session belongs to them.
      *
@@ -118,7 +104,7 @@ public class IrisLectureChatSessionService extends AbstractIrisChatSessionServic
      */
     @Override
     public void checkHasAccessTo(User user, IrisLectureChatSession session) {
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        user.hasOptedIntoLLMUsageElseThrow();
         if (session.getUserId() != user.getId()) {
             throw new AccessForbiddenException("Iris Lecture chat Session", session.getId());
         }
