@@ -115,9 +115,9 @@
             },
             "repoSelect": {
                 "assignmentRepo": "Assignment Repo",
-                "createAssignmentRepo": "Create",
+                "createAssignmentRepo": "Create Assignment Repo",
                 "createAssignmentRepoDisabledTooltip": "The Assignment Repository cannot be created for exam exercises. Please use the test run feature to try out the exercise.",
-                "deleteAssignmentRepo": "Delete",
+                "deleteAssignmentRepo": "Delete Assignment Repo",
                 "templateRepo": "Template Repo",
                 "solutionRepo": "Solution Repo",
                 "testRepo": "Test Repo",

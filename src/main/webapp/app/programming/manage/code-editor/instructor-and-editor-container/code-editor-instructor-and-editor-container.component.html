@@ -57,7 +57,7 @@
                             [disabled]="!exercise || !exercise.templateParticipation || !exercise.templateParticipation.id || !exercise.templateParticipation.repositoryUri"
                             (click)="selectTemplateParticipation()"
                             ngbDropdownItem
-                            [style.background-color]="selectedRepository === RepositoryType.TEMPLATE ? '#3e8acc' : 'transparent'"
+                            [style.background-color]="selectedRepository === RepositoryType.TEMPLATE ? 'var(--link-color)' : 'transparent'"
                         >
                             <span jhiTranslate="artemisApp.editor.repoSelect.templateRepo"></span>
                         </button>
@@ -66,7 +66,6 @@
                             (click)="selectSolutionParticipation()"
                             ngbDropdownItem
                             [style.background-color]="selectedRepository === RepositoryType.SOLUTION ? 'var(--link-color)' : 'transparent'"
-                            jhiTranslate="artemisApp.editor.repoSelect.solutionRepo"
                         >
                             <span jhiTranslate="artemisApp.editor.repoSelect.solutionRepo"></span>
                         </button>
@@ -76,6 +75,8 @@
                                 class="flex-grow-1 text-start"
                                 ngbDropdownItem
                                 [disabled]="
+                                    loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO ||
+                                    loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO ||
                                     !exercise.studentParticipations ||
                                     !exercise.studentParticipations.length ||
                                     (exercise.studentParticipations!.length > 0 && !repositoryUri(exercise.studentParticipations![0]))
@@ -85,40 +86,43 @@
                             >
                                 <span jhiTranslate="artemisApp.editor.repoSelect.assignmentRepo"></span>
                             </button>
-                            @if (exercise.isAtLeastInstructor) {
+                            @if (!exercise.studentParticipations || !exercise.studentParticipations.length) {
                                 <div class="vr my-1"></div>
-                                @if (!exercise.studentParticipations || !exercise.studentParticipations.length) {
-                                    <button
-                                        type="button"
-                                        class="flex-shrink-1 w-auto px-2"
-                                        ngbDropdownItem
-                                        (click)="createAssignmentParticipation()"
-                                        [disabled]="isCreateAssignmentRepoDisabled || loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO"
-                                        [ngbTooltip]="'artemisApp.editor.repoSelect.createAssignmentRepo' | artemisTranslate"
-                                    >
-                                        @if (loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
-                                            <fa-icon [icon]="faCircleNotch" animation="spin" />
-                                        } @else {
-                                            <fa-icon [icon]="faPlus" />
-                                        }
-                                    </button>
-                                }
-                                @if (exercise.studentParticipations && exercise.studentParticipations.length) {
-                                    <button
-                                        type="button"
-                                        class="flex-shrink-1 w-auto px-2 text-danger"
-                                        ngbDropdownItem
-                                        (click)="deleteAssignmentParticipation()"
-                                        [disabled]="loadingState !== LOADING_STATE.CLEAR"
-                                        [ngbTooltip]="'artemisApp.editor.repoSelect.deleteAssignmentRepo' | artemisTranslate"
-                                    >
-                                        @if (loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO) {
-                                            <fa-icon [icon]="faCircleNotch" animation="spin" />
-                                        } @else {
-                                            <fa-icon [icon]="faTimes" />
-                                        }
-                                    </button>
-                                }
+                                <button
+                                    type="button"
+                                    class="flex-shrink-1 w-auto px-2"
+                                    ngbDropdownItem
+                                    (click)="createAssignmentParticipation()"
+                                    [disabled]="isCreateAssignmentRepoDisabled || loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO"
+                                    [ngbTooltip]="
+                                        isCreateAssignmentRepoDisabled
+                                            ? ('artemisApp.editor.repoSelect.createAssignmentRepoDisabledTooltip' | artemisTranslate)
+                                            : ('artemisApp.editor.repoSelect.createAssignmentRepo' | artemisTranslate)
+                                    "
+                                >
+                                    @if (loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
+                                        <fa-icon [icon]="faCircleNotch" animation="spin" />
+                                    } @else {
+                                        <fa-icon [icon]="faPlus" />
+                                    }
+                                </button>
+                            }
+                            @if (exercise.studentParticipations && exercise.studentParticipations.length && exercise.isAtLeastInstructor) {
+                                <div class="vr my-1"></div>
+                                <button
+                                    type="button"
+                                    class="flex-shrink-1 w-auto px-2 text-danger"
+                                    ngbDropdownItem
+                                    (click)="deleteAssignmentParticipation()"
+                                    [disabled]="loadingState !== LOADING_STATE.CLEAR"
+                                    [ngbTooltip]="'artemisApp.editor.repoSelect.deleteAssignmentRepo' | artemisTranslate"
+                                >
+                                    @if (loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO) {
+                                        <fa-icon [icon]="faCircleNotch" animation="spin" />
+                                    } @else {
+                                        <fa-icon [icon]="faTimes" />
+                                    }
+                                </button>
                             }
                         </div>
                         <button
@@ -212,6 +216,7 @@
                 @if (showConsistencyIssuesToolbar() && consistencyIssues().length) {
                     <div class="btn-group ms-2">
                         <button
+                            type="button"
                             class="btn btn-outline-secondary"
                             (click)="navigateGlobal(-1)"
                             [ngbTooltip]="'artemisApp.hyperion.consistencyCheck.prevIssue' | artemisTranslate"
@@ -220,7 +225,7 @@
                         >
                             <fa-icon [icon]="faArrowLeft" />
                         </button>
-                        <button class="btn btn-outline-secondary consistency-issue-nav-btn" disabled style="opacity: 1; color: var(--bs-body-color)">
+                        <button type="button" class="btn btn-outline-secondary consistency-issue-nav-btn" disabled>
                             @if (selectedIssue) {
                                 <fa-icon [icon]="getSeverityIcon(selectedIssue.severity)" [class]="getSeverityColor(selectedIssue.severity) + ' me-1'" />
                                 <span [jhiTranslate]="'artemisApp.hyperion.consistencyCheck.category.' + selectedIssue.category"></span>
@@ -230,6 +235,7 @@
                             }
                         </button>
                         <button
+                            type="button"
                             class="btn btn-outline-secondary"
                             (click)="navigateGlobal(1)"
                             [ngbTooltip]="'artemisApp.hyperion.consistencyCheck.nextIssue' | artemisTranslate"
@@ -239,6 +245,7 @@
                             <fa-icon [icon]="faArrowRight" />
                         </button>
                         <button
+                            type="button"
                             class="btn btn-outline-secondary"
                             (click)="toggleConsistencyIssuesToolbar()"
                             [ngbTooltip]="'artemisApp.hyperion.consistencyCheck.closeIssues' | artemisTranslate"

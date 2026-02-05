@@ -318,6 +318,17 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(comp.hyperionEnabled).toBeTrue();
         });
 
+        it('should compute hyperionEnabled as false when feature disabled', () => {
+            jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
+
+            // Recreate the component so the property initializer runs with the new spy value
+            fixture.destroy();
+            fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+            comp = fixture.componentInstance;
+
+            expect(comp.hyperionEnabled).toBeFalse();
+        });
+
         it('should trigger repository pull on FILE_UPDATED and NEW_FILE events', async () => {
             comp.selectedRepository = RepositoryType.TEMPLATE;
             (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-3' }));
@@ -623,6 +634,63 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             expect((comp as any).codeEditorContainer.jumpToLine).toHaveBeenCalledWith(targetLine);
             expect(comp.lineJumpOnFileLoad).toBeUndefined();
+        });
+
+        it('onFileLoad does nothing if file does not match fileToJumpOn', () => {
+            comp.fileToJumpOn = 'src/solution/Solution.java';
+            comp.lineJumpOnFileLoad = 60;
+
+            comp.onFileLoad('src/tests/ExampleTest.java');
+
+            expect((comp as any).codeEditorContainer.jumpToLine).not.toHaveBeenCalled();
+            expect(comp.lineJumpOnFileLoad).toBe(60);
+        });
+
+        it('onFileLoad does nothing if lineJumpOnFileLoad is undefined', () => {
+            const targetFile = 'src/solution/Solution.java';
+
+            comp.fileToJumpOn = targetFile;
+            comp.lineJumpOnFileLoad = undefined;
+
+            comp.onFileLoad(targetFile);
+
+            expect((comp as any).codeEditorContainer.jumpToLine).not.toHaveBeenCalled();
+            expect(comp.lineJumpOnFileLoad).toBeUndefined();
+        });
+
+        it('shows error and clears jump state when repository selection fails', () => {
+            const issue = mockIssues[3]; // TESTS_REPOSITORY
+            (comp as any).codeEditorContainer.selectedRepository = jest.fn().mockReturnValue('SOLUTION');
+
+            const error = new Error('repo selection failed');
+            jest.spyOn(comp, 'selectTestRepository').mockImplementation(() => {
+                throw error;
+            });
+
+            const alertErrorSpy = jest.spyOn(alertService, 'error');
+            const onEditorLoadedSpy = jest.spyOn(comp, 'onEditorLoaded');
+
+            (comp as any).jumpToLocation(issue, 0);
+
+            expect(alertErrorSpy).toHaveBeenCalled();
+            expect(comp.lineJumpOnFileLoad).toBeUndefined();
+            expect(comp.fileToJumpOn).toBeUndefined();
+            expect(onEditorLoadedSpy).not.toHaveBeenCalled();
+        });
+
+        it('should reset showConsistencyIssuesToolbar when re-running consistency check', () => {
+            comp.consistencyIssues.set(mockIssues);
+            (comp as any).showConsistencyIssuesToolbar.set(true);
+            comp.selectedIssue = mockIssues[0];
+
+            jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
+            jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
+            jest.spyOn(alertService, 'success');
+
+            comp.checkConsistencies(comp.exercise!);
+
+            expect(comp.showConsistencyIssuesToolbar()).toBeFalse();
+            expect(comp.selectedIssue).toBeUndefined();
         });
     });
 });

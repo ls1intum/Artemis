@@ -21,11 +21,12 @@
 }
 
 .consistency-issue-nav-btn {
-    // Calculated based on longest issue text
     width: 27rem;
-    max-width: 27rem;
+    max-width: min(27rem, 40vw);
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    opacity: 1 !important;
+    color: var(--bs-body-color) !important;
 }

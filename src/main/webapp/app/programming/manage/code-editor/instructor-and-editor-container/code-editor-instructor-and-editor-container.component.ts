@@ -74,8 +74,6 @@ const SEVERITY_ORDER = {
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
         ProgrammingExerciseEditableInstructionComponent,
         ProgrammingExerciseInstructionComponent,
-        NgbTooltip,
-        ArtemisTranslatePipe,
     ],
 })
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent {
@@ -279,9 +277,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param {ProgrammingExercise} exercise - The exercise to check.
      */
     checkConsistencies(exercise: ProgrammingExercise) {
-        // Clear previous consistency issues
+        // Clear previous consistency issues and reset toolbar state
         this.consistencyIssues.set([]);
-        this.selectedIssue = undefined; // Reset selection to avoid stale state
+        this.selectedIssue = undefined;
+        this.showConsistencyIssuesToolbar.set(false);
 
         if (!exercise.id) {
             this.alertService.error(this.translateService.instant('artemisApp.hyperion.consistencyCheck.checkFailedAlert'));
