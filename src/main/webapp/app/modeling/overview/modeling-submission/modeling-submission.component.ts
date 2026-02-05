@@ -625,7 +625,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.submission.participation!.submissions = [this.submission];
                     this.participationWebsocketService.addParticipation(this.participation, this.modelingExercise);
                     this.modelingExercise.studentParticipations = [this.participation];
-                    this.modelingExerciseHeader.studentParticipations = [this.participation];
+                    if (this.modelingExerciseHeader) {
+                        this.modelingExerciseHeader.studentParticipations = [this.participation];
+                    }
                     this.result = getLatestSubmissionResult(this.submission);
                     this.retryStarted = false;
 

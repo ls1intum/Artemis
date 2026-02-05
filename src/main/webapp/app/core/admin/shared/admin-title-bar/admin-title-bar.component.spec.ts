@@ -61,7 +61,7 @@ describe('AdminTitleBarComponent', () => {
     it('should display default title when no custom title template is provided', () => {
         const defaultTitle = fixture.debugElement.query(By.css('h5'));
         expect(defaultTitle).toBeTruthy();
-        expect(defaultTitle.attributes['jhiTranslate']).toBe('administration');
+        expect(defaultTitle.attributes['jhiTranslate']).toBe('global.menu.admin.main');
     });
 
     it('should return undefined for customTitleTemplate when service returns undefined', () => {

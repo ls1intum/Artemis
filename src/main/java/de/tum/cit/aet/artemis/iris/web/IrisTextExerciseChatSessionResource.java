@@ -1,15 +1,13 @@
 package de.tum.cit.aet.artemis.iris.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisTextExerciseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
@@ -35,7 +34,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 /**
  * REST controller for managing {@link IrisTextExerciseChatSession}.
  */
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 @Lazy
 @RestController
 @RequestMapping("api/iris/text-exercise-chat/")
@@ -109,7 +108,7 @@ public class IrisTextExerciseChatSessionResource {
 
         irisSettingsService.ensureEnabledForCourseOrElseThrow(textExercise.getCourseViaExerciseGroupOrCourseMember());
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        user.hasOptedIntoLLMUsageElseThrow();
 
         var session = new IrisTextExerciseChatSession(textExercise, user);
         session.setTitle(AbstractIrisChatSessionService.getLocalizedNewChatTitle(user.getLangKey(), messageSource));
@@ -133,7 +132,7 @@ public class IrisTextExerciseChatSessionResource {
 
         irisSettingsService.ensureEnabledForCourseOrElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember());
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        user.hasOptedIntoLLMUsageElseThrow();
 
         var sessions = irisTextExerciseChatSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
         // TODO: Discuss this with the team: should we filter out sessions where the user does not have access, or throw an exception?

@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -12,8 +10,8 @@ import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +29,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
@@ -56,7 +55,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionReposi
  */
 @Lazy
 @Service
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 public class IrisExerciseChatSessionService extends AbstractIrisChatSessionService<IrisProgrammingExerciseChatSession> {
 
     private static final Logger log = LoggerFactory.getLogger(IrisExerciseChatSessionService.class);
@@ -217,7 +216,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     }
 
     /**
-     * Handles the new result event by checking if the user has accepted external LLM usage and
+     * Handles the new result event by checking if the user has accepted LLM usage and
      * if the participation is a student participation. If so, it checks if the build failed or if
      * the student needs intervention based on their recent score trajectory.
      *
@@ -232,8 +231,8 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             return;
         }
 
-        // If the user has not accepted external LLM usage, or participation is of a team, we do not proceed
-        if (!studentParticipation.getStudent().map(User::hasAcceptedExternalLLMUsage).orElse(true)) {
+        // If the user has not accepted LLM usage, or participation is of a team, we do not proceed
+        if (!studentParticipation.getStudent().map(User::hasOptedIntoLLMUsage).orElse(false)) {
             return;
         }
 
@@ -352,7 +351,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @return The current Iris session
      */
     public IrisProgrammingExerciseChatSession getCurrentSessionOrCreateIfNotExists(ProgrammingExercise exercise, User user, boolean sendInitialMessageIfCreated) {
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        user.hasOptedIntoLLMUsageElseThrow();
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         if (course != null) {
             irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
@@ -376,7 +375,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @return The created session
      */
     public IrisProgrammingExerciseChatSession createSession(ProgrammingExercise exercise, User user, boolean sendInitialMessage) {
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        user.hasOptedIntoLLMUsageElseThrow();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         if (course != null) {
