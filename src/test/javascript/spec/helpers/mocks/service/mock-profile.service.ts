@@ -8,7 +8,17 @@ export class MockProfileService {
             activeProfiles: [],
             activeModuleFeatures: [],
             testServer: false,
+            git: {
+                branch: 'develop',
+                commit: {
+                    id: { abbrev: 'abc1234' },
+                    time: new Date().toISOString(),
+                    user: { name: 'Test User' },
+                },
+            },
         }) as unknown as ProfileInfo;
+
+    public isLLMDeploymentEnabled = (): boolean => false;
 
     public isProfileActive = (profile: string): boolean => this.getProfileInfo().activeProfiles?.includes(profile) ?? false;
 
