@@ -160,7 +160,7 @@
                     <div class="messages-inner">
                         @if (
                             suggestions()?.length &&
-                            userAccepted() &&
+                            isAIEnabled() &&
                             active() &&
                             (!rateLimitInfo()?.rateLimit || rateLimitInfo()?.currentMessageCount !== rateLimitInfo()?.rateLimit) &&
                             !hasActiveStage()
@@ -291,7 +291,10 @@
             @if (!active()) {
                 <div class="client-chat-error" [jhiTranslate]="IrisErrorMessageKey.IRIS_NOT_AVAILABLE"></div>
             }
-            @if (userAccepted()) {
+            @if (userAccepted() === LLMSelectionDecision.NO_AI) {
+                <div class="client-chat-error" [jhiTranslate]="IrisErrorMessageKey.AI_USAGE_DECLINED"></div>
+            }
+            @if (isAIEnabled()) {
                 <div class="chat-input">
                     <div class="chat-input-inner">
                         <div class="textarea-wrapper">

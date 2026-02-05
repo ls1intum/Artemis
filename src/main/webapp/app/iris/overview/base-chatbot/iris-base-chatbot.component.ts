@@ -174,6 +174,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private dayTickIntervalId: ReturnType<typeof setInterval> | undefined;
 
     readonly userAccepted = signal<LLMSelectionDecision | undefined>(undefined);
+    readonly isAIEnabled = computed(() => {
+        const decision = this.userAccepted();
+        return decision === LLMSelectionDecision.CLOUD_AI || decision === LLMSelectionDecision.LOCAL_AI;
+    });
     readonly isScrolledToBottom = signal(true);
     readonly resendAnimationActive = signal(false);
     readonly clickedSuggestion = signal<string | undefined>(undefined);
