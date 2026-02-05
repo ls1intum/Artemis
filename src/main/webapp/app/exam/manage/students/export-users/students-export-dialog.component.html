@@ -1,0 +1,25 @@
+<p-dialog [(visible)]="dialogVisible" [modal]="true" [closable]="true" [dismissableMask]="true" (onHide)="closeDialog()" [style]="{ width: '45dvw' }">
+    <ng-template pTemplate="header">
+        <h4>
+            <span jhiTranslate="artemisApp.exam.examUsers.export.dialogTitle"></span>
+        </h4>
+    </ng-template>
+    <form id="studentsExportDialogForm" name="studentsExportForm" role="form" novalidate (keydown.enter)="$event.preventDefault()">
+        <p jhiTranslate="artemisApp.exam.examUsers.export.introText" class="intro-text"></p>
+        @if (lastExportAttemptFailed()) {
+            <div class="alert alert-warning mt-3">
+                <p jhiTranslate="artemisApp.exam.examUsers.export.exportFailed"></p>
+            </div>
+        }
+    </form>
+    <ng-template pTemplate="footer">
+        <button id="cancel-button" type="button" class="btn btn-secondary cancel" (click)="closeDialog()">
+            <fa-icon [icon]="faBan" />
+            <span jhiTranslate="entity.action.cancel" class="m-1"></span>
+        </button>
+        <button class="btn btn-primary" id="finish-button" (click)="exportUsers()">
+            <fa-icon [icon]="faFileExport" />
+            <span jhiTranslate="artemisApp.exam.examUsers.export.finalize" class="m-1"></span>
+        </button>
+    </ng-template>
+</p-dialog>

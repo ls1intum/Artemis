@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { of } from 'rxjs';
+import dayjs from 'dayjs/esm';
 import { MockService } from 'ng-mocks';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -20,6 +21,7 @@ import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { provideHttpClient } from '@angular/common/http';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('AccountService', () => {
     setupTestBed({ zoneless: true });
@@ -618,24 +620,24 @@ describe('AccountService', () => {
         beforeEach(() => {
             vi.useFakeTimers();
             // Set a fixed date for consistent testing
-            vi.setSystemTime(new Date('2024-02-06'));
+            vi.setSystemTime(new Date('2025-11-28'));
         });
 
         afterEach(() => {
             vi.useRealTimers();
         });
 
-        it('should set externalLLMUsageAccepted when user identity exists', () => {
+        it('should set selectedLLMUsageTimestamp when user identity exists', () => {
             // Setup user identity
             accountService.userIdentity.set({ id: 1, groups: ['USER'] } as User);
 
             // Call the function
-            accountService.setUserAcceptedExternalLLMUsage();
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.LOCAL_AI);
 
             // Check if the date was set correctly
-            const acceptedDate = accountService.userIdentity()?.externalLLMUsageAccepted;
+            const acceptedDate = accountService.userIdentity()?.selectedLLMUsageTimestamp;
             expect(acceptedDate).toBeDefined();
-            expect(acceptedDate?.format('YYYY-MM-DD')).toBe('2024-02-06');
+            expect(acceptedDate?.format('YYYY-MM-DD')).toBe('2025-11-28');
         });
 
         it('should not throw error when user identity is undefined', () => {
@@ -643,19 +645,113 @@ describe('AccountService', () => {
             accountService.userIdentity.set(undefined);
 
             // Verify that calling the function doesn't throw an error
-            expect(() => accountService.setUserAcceptedExternalLLMUsage()).not.toThrow();
+            expect(() => accountService.setUserLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI)).not.toThrow();
         });
 
-        it('should clear externalLLMUsageAccepted when accepted is false', () => {
-            // Setup user identity with an existing date
+        it('should set selectedLLMUsage to CLOUD_AI', () => {
             accountService.userIdentity.set({ id: 1, groups: ['USER'] } as User);
-            accountService.setUserAcceptedExternalLLMUsage(true);
-            expect(accountService.userIdentity()?.externalLLMUsageAccepted).toBeDefined();
 
-            // Clear it
-            accountService.setUserAcceptedExternalLLMUsage(false);
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI);
 
-            expect(accountService.userIdentity()?.externalLLMUsageAccepted).toBeUndefined();
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.CLOUD_AI);
+        });
+
+        it('should set selectedLLMUsage to LOCAL_AI', () => {
+            accountService.userIdentity.set({ id: 1, groups: ['USER'] } as User);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.LOCAL_AI);
+
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.LOCAL_AI);
+        });
+
+        it('should set selectedLLMUsage to NO_AI', () => {
+            accountService.userIdentity.set({ id: 1, groups: ['USER'] } as User);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.NO_AI);
+
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.NO_AI);
+        });
+
+        it('should update existing selectedLLMUsage value', () => {
+            accountService.userIdentity.set({
+                id: 1,
+                groups: ['USER'],
+                selectedLLMUsage: LLMSelectionDecision.NO_AI,
+            } as User);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI);
+
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.CLOUD_AI);
+        });
+
+        it('should update timestamp even if selectedLLMUsage was previously set', () => {
+            const oldTimestamp = dayjs('2024-01-01');
+            accountService.userIdentity.set({
+                id: 1,
+                groups: ['USER'],
+                selectedLLMUsage: LLMSelectionDecision.LOCAL_AI,
+                selectedLLMUsageTimestamp: oldTimestamp,
+            } as User);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI);
+
+            const newTimestamp = accountService.userIdentity()?.selectedLLMUsageTimestamp;
+            expect(newTimestamp).toBeDefined();
+            expect(newTimestamp?.format('YYYY-MM-DD')).toBe('2025-11-28');
+            expect(newTimestamp).not.toEqual(oldTimestamp);
+        });
+
+        it('should return undefined when userIdentity is null', () => {
+            accountService.userIdentity.set(undefined);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI);
+
+            expect(accountService.userIdentity()).toBeUndefined();
+        });
+
+        it('should preserve other user properties when updating LLM selection', () => {
+            const originalUser = {
+                id: 1,
+                login: 'testuser',
+                groups: ['USER', 'ADMIN'],
+                authorities: [Authority.ADMIN],
+                email: 'test@example.com',
+            } as User;
+
+            accountService.userIdentity.set(originalUser);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.LOCAL_AI);
+
+            const updatedUser = accountService.userIdentity();
+            expect(updatedUser?.id).toBe(1);
+            expect(updatedUser?.login).toBe('testuser');
+            expect(updatedUser?.groups).toEqual(['USER', 'ADMIN']);
+            expect(updatedUser?.authorities).toEqual([Authority.ADMIN]);
+            expect(updatedUser?.email).toBe('test@example.com');
+        });
+
+        it('should set both timestamp and decision in a single update', () => {
+            accountService.userIdentity.set({ id: 1, groups: ['USER'] } as User);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.NO_AI);
+
+            const user = accountService.userIdentity();
+            expect(user?.selectedLLMUsage).toBe(LLMSelectionDecision.NO_AI);
+            expect(user?.selectedLLMUsageTimestamp).toBeDefined();
+            expect(user?.selectedLLMUsageTimestamp?.format('YYYY-MM-DD')).toBe('2025-11-28');
+        });
+
+        it('should handle multiple consecutive updates correctly', () => {
+            accountService.userIdentity.set({ id: 1, groups: ['USER'] } as User);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI);
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.CLOUD_AI);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.LOCAL_AI);
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.LOCAL_AI);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.NO_AI);
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.NO_AI);
         });
     });
 

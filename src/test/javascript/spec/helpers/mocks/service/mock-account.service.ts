@@ -39,6 +39,7 @@ export class MockAccountService implements IAccountService {
     getToolToken = () => of();
     setUserEnabledMemiris = (enabled: boolean) => of();
     setUserAcceptedExternalLLMUsage = (accepted: boolean) => of();
+    setUserLLMSelectionDecision = (decision: any) => {};
 
     askToSetupPasskey = () => false;
     isLoggedInWithPasskey = () => true;

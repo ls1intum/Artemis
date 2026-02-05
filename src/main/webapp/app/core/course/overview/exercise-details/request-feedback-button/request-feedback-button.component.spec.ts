@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DebugElement, TemplateRef } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { PROFILE_ATHENA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
@@ -18,11 +18,13 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
+import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { UserService } from 'app/core/user/shared/user.service';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import dayjs from 'dayjs/esm';
@@ -40,19 +42,29 @@ describe('RequestFeedbackButtonComponent', () => {
     let userService: UserService;
     let accountService: AccountService;
     let participationWebsocketService: ParticipationWebsocketService;
+    let llmModalService: LLMSelectionModalService;
+
+    const mockLLMModalService = {
+        open: vi.fn().mockResolvedValue('none'),
+    } as any;
+
+    const mockUserService = {
+        updateLLMSelectionDecision: vi.fn().mockReturnValue(of(new HttpResponse<void>())),
+    } as any;
 
     beforeEach(async () => {
-        TestBed.configureTestingModule({
+        await TestBed.configureTestingModule({
             imports: [RequestFeedbackButtonComponent, NgbTooltipModule],
             providers: [
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                { provide: LLMSelectionModalService, useValue: mockLLMModalService },
+                { provide: UserService, useValue: mockUserService },
                 provideHttpClient(),
             ],
-        });
-        await TestBed.compileComponents();
+        }).compileComponents();
         fixture = TestBed.createComponent(RequestFeedbackButtonComponent);
         component = fixture.componentInstance;
         debugElement = fixture.debugElement;
@@ -63,6 +75,7 @@ describe('RequestFeedbackButtonComponent', () => {
         userService = TestBed.inject(UserService);
         accountService = TestBed.inject(AccountService);
         participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
+        llmModalService = TestBed.inject(LLMSelectionModalService);
     });
 
     afterEach(() => {
@@ -119,7 +132,7 @@ describe('RequestFeedbackButtonComponent', () => {
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.TEXT, true, participation);
         setupComponentInputs(exercise);
-        component.hasUserAcceptedExternalLLMUsage = true;
+        component.hasUserAcceptedLLMUsage = true;
 
         vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(
             new Observable<StudentParticipation>((subscriber) => {
@@ -128,173 +141,160 @@ describe('RequestFeedbackButtonComponent', () => {
         );
         vi.spyOn(alertService, 'error');
 
-        const mockTemplateRef = {} as TemplateRef<any>;
-        component.requestAIFeedback(mockTemplateRef);
+        component.requestAIFeedback();
         await vi.advanceTimersByTimeAsync(0);
 
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.someError');
     });
 
-    it('should display the button when Athena is enabled and it is not an exam exercise', async () => {
-        vi.useFakeTimers();
-        setAthenaEnabled(true);
-        const exercise = createBaseExercise(ExerciseType.TEXT, false);
-        setupComponentInputs(exercise);
+    describe('when user has accepted LLM usage', () => {
+        beforeEach(() => {
+            const accountService = TestBed.inject(AccountService);
+            accountService.userIdentity.set({
+                selectedLLMUsage: LLMSelectionDecision.CLOUD_AI,
+            } as any);
+        });
 
-        await initAndTick();
+        it('should display the button when Athena is enabled and it is not an exam exercise', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const exercise = createBaseExercise(ExerciseType.TEXT, false);
+            exercise.allowFeedbackRequests = true;
+            setupComponentInputs(exercise);
 
-        const button = debugElement.query(By.css('button'));
-        expect(button).not.toBeNull();
-        expect(button.nativeElement.disabled).toBe(true);
-    });
+            await initAndTick();
 
-    it('should not display the button when it is an exam exercise', async () => {
-        vi.useFakeTimers();
-        setAthenaEnabled(true);
-        const exercise = createBaseExercise(ExerciseType.TEXT, true);
-        setupComponentInputs(exercise);
+            const button = debugElement.query(By.css('button'));
+            expect(button).not.toBeNull();
+            expect(button.nativeElement.disabled).toBe(true);
+        });
 
-        await initAndTick();
+        it('should not display the button when it is an exam exercise', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const exercise = createBaseExercise(ExerciseType.TEXT, true);
+            setupComponentInputs(exercise);
 
-        const button = debugElement.query(By.css('button'));
-        const link = debugElement.query(By.css('a'));
-        expect(button).toBeNull();
-        expect(link).toBeNull();
-    });
+            await initAndTick();
 
-    it('should disable the button when participation is missing', async () => {
-        vi.useFakeTimers();
-        setAthenaEnabled(true);
-        const exercise = createBaseExercise(ExerciseType.TEXT, false);
-        setupComponentInputs(exercise);
+            const button = debugElement.query(By.css('button'));
+            const link = debugElement.query(By.css('a'));
+            expect(button).toBeNull();
+            expect(link).toBeNull();
+        });
 
-        await initAndTick();
+        it('should disable the button when participation is missing', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const exercise = createBaseExercise(ExerciseType.TEXT, false);
+            setupComponentInputs(exercise);
 
-        const button = debugElement.query(By.css('button'));
-        expect(button).not.toBeNull();
-        expect(button.nativeElement.disabled).toBe(true);
-    });
+            await initAndTick();
 
-    it('should display the correct button label and style when Athena is enabled', async () => {
-        vi.useFakeTimers();
-        setAthenaEnabled(true);
-        const participation = createParticipation();
-        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
-        setupComponentInputs(exercise);
-        component.isExamExercise = false;
+            const button = debugElement.query(By.css('button'));
+            expect(button).not.toBeNull();
+            expect(button.nativeElement.disabled).toBe(true);
+        });
 
-        await initAndTick();
+        it('should display the correct button label and style when Athena is enabled', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const participation = createParticipation();
+            const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+            setupComponentInputs(exercise);
+            component.isExamExercise = false;
 
-        const button = debugElement.query(By.css('button'));
-        expect(button).not.toBeNull();
+            await initAndTick();
 
-        const span = button.query(By.css('span'));
-        expect(span.nativeElement.textContent).toContain('artemisApp.exerciseActions.requestAutomaticFeedback');
-    });
+            const button = debugElement.query(By.css('button'));
+            expect(button).not.toBeNull();
 
-    it('should call requestAIFeedback() when button is clicked', async () => {
-        vi.useFakeTimers();
-        setAthenaEnabled(true);
-        const participation = createParticipation();
-        const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
-        setupComponentInputs(exercise);
-        component.hasUserAcceptedExternalLLMUsage = true;
+            const span = button.query(By.css('span'));
+            expect(span.nativeElement.textContent).toContain('artemisApp.exerciseActions.requestAutomaticFeedback');
+        });
 
-        await initAndTick();
+        it('should call requestAIFeedback() when button is clicked', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const participation = createParticipation();
+            const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
+            setupComponentInputs(exercise);
+            component.hasUserAcceptedLLMUsage = true;
 
-        vi.spyOn(component, 'requestAIFeedback');
-        vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
+            await initAndTick();
 
-        const button = debugElement.query(By.css('button'));
-        expect(button).not.toBeNull();
-        button.nativeElement.click();
-        await vi.advanceTimersByTimeAsync(0);
+            vi.spyOn(component, 'requestAIFeedback');
+            vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
 
-        expect(component.requestAIFeedback).toHaveBeenCalled();
-    });
+            const button = debugElement.query(By.css('button'));
+            expect(button).not.toBeNull();
+            button.nativeElement.click();
+            await vi.advanceTimersByTimeAsync(0);
 
-    it('should show an alert when requestAIFeedback() is called and conditions are not satisfied', async () => {
-        vi.useFakeTimers();
-        setAthenaEnabled(true);
-        const exercise = createBaseExercise(ExerciseType.TEXT, false);
-        setupComponentInputs(exercise);
-        component.hasUserAcceptedExternalLLMUsage = true;
+            expect(component.requestAIFeedback).toHaveBeenCalled();
+        });
 
-        vi.spyOn(component, 'hasAthenaResultForLatestSubmission').mockReturnValue(true);
-        vi.spyOn(alertService, 'warning');
+        it('should show an alert when requestAIFeedback() is called and conditions are not satisfied', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const exercise = createBaseExercise(ExerciseType.TEXT, false);
+            setupComponentInputs(exercise);
+            component.hasUserAcceptedLLMUsage = true;
 
-        component.requestAIFeedback({} as any);
+            vi.spyOn(component, 'hasAthenaResultForLatestSubmission').mockReturnValue(true);
+            vi.spyOn(alertService, 'warning');
 
-        expect(alertService.warning).toHaveBeenCalled();
-    });
+            component.requestAIFeedback();
+            await vi.advanceTimersByTimeAsync(0);
 
-    it('should disable the button if latest submission is not submitted or feedback is generating', async () => {
-        vi.useFakeTimers();
-        setAthenaEnabled(true);
-        const participation = createParticipation();
-        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
-        setupComponentInputs(exercise, false, false);
+            expect(alertService.warning).toHaveBeenCalled();
+        });
 
-        await initAndTick();
+        it('should disable the button if latest submission is not submitted or feedback is generating', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const participation = createParticipation();
+            const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+            setupComponentInputs(exercise, false, false);
 
-        const button = debugElement.query(By.css('button'));
-        expect(button).not.toBeNull();
-        expect(button.nativeElement.disabled).toBe(true);
-    });
+            await initAndTick();
 
-    it('should enable the button if latest submission is submitted and feedback is not generating', async () => {
-        vi.useFakeTimers();
-        setAthenaEnabled(true);
-        const participation = createParticipation();
-        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
-        setupComponentInputs(exercise, true, false);
+            const button = debugElement.query(By.css('button'));
+            expect(button).not.toBeNull();
+            expect(button.nativeElement.disabled).toBe(true);
+        });
 
-        await initAndTick();
+        it('should enable the button if latest submission is submitted and feedback is not generating', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const participation = createParticipation();
+            const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+            setupComponentInputs(exercise, true, false);
 
-        const button = debugElement.query(By.css('button'));
-        expect(button).not.toBeNull();
-        expect(button.nativeElement.disabled).toBe(false);
-    });
+            await initAndTick();
 
-    it('should open modal when hasUserAcceptedExternalLLMUsage is false and requestAIFeedback is clicked', async () => {
-        vi.useFakeTimers();
-        setAthenaEnabled(true);
-        const participation = createParticipation();
-        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
-        setupComponentInputs(exercise, true, false);
-        component.hasUserAcceptedExternalLLMUsage = false;
+            const button = debugElement.query(By.css('button'));
+            expect(button).not.toBeNull();
+            expect(button.nativeElement.disabled).toBe(false);
+        });
 
-        const modalService = TestBed.inject(NgbModal);
-        const modalSpy = vi.spyOn(modalService, 'open').mockReturnValue({} as any);
+        it('should not open modal when hasUserAcceptedLLMUsage is true and requestAIFeedback is clicked', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const participation = createParticipation();
+            const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+            setupComponentInputs(exercise, true, false);
+            component.hasUserAcceptedLLMUsage = true;
 
-        await initAndTick();
+            const modalSpy = vi.spyOn(llmModalService, 'open');
+            const processFeedbackSpy = vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
 
-        const button = debugElement.query(By.css('button'));
-        expect(button).not.toBeNull();
-        button.nativeElement.click();
-        await vi.advanceTimersByTimeAsync(0);
+            component.requestAIFeedback();
+            await vi.advanceTimersByTimeAsync(0);
 
-        expect(modalSpy).toHaveBeenCalled();
-    });
-
-    it('should not open modal when hasUserAcceptedExternalLLMUsage is true and requestAIFeedback is clicked', async () => {
-        vi.useFakeTimers();
-        setAthenaEnabled(true);
-        const participation = createParticipation();
-        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
-        setupComponentInputs(exercise, true, false);
-        component.hasUserAcceptedExternalLLMUsage = true;
-
-        const modalService = TestBed.inject(NgbModal);
-        const modalSpy = vi.spyOn(modalService, 'open');
-        const processFeedbackSpy = vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
-
-        const mockTemplateRef = {} as TemplateRef<any>;
-        component.requestAIFeedback(mockTemplateRef);
-        await vi.advanceTimersByTimeAsync(0);
-
-        expect(modalSpy).not.toHaveBeenCalled();
-        expect(processFeedbackSpy).toHaveBeenCalledWith(exercise.id);
+            expect(modalSpy).not.toHaveBeenCalled();
+            expect(processFeedbackSpy).toHaveBeenCalledWith(exercise.id);
+        });
     });
 
     it('should unsubscribe from listeners on destroy', async () => {
@@ -334,43 +334,124 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.errors.notFound');
     });
 
-    it('should set hasUserAcceptedExternalLLMUsage based on account service', () => {
-        vi.spyOn(accountService, 'userIdentity').mockReturnValue({ externalLLMUsageAccepted: true } as any);
+    it('should set hasUserAcceptedLLMUsage based on account service', () => {
+        vi.spyOn(accountService, 'userIdentity').mockReturnValue({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
 
-        component.setUserAcceptedExternalLLMUsage();
+        component.setUserAcceptedLLMUsage();
 
-        expect(component.hasUserAcceptedExternalLLMUsage).toBe(true);
+        expect(component.hasUserAcceptedLLMUsage).toBe(true);
     });
 
-    it('should set hasUserAcceptedExternalLLMUsage to false when user identity is undefined', () => {
+    it('should set hasUserAcceptedLLMUsage to false when user identity is undefined', () => {
         vi.spyOn(accountService, 'userIdentity').mockReturnValue(undefined);
 
-        component.setUserAcceptedExternalLLMUsage();
+        component.setUserAcceptedLLMUsage();
 
-        expect(component.hasUserAcceptedExternalLLMUsage).toBe(false);
+        expect(component.hasUserAcceptedLLMUsage).toBe(false);
     });
 
-    it('should accept external LLM usage and close modal', async () => {
+    it('should set hasUserAcceptedLLMUsage to false when selectedLLMUsage is not CLOUD_AI', () => {
+        vi.spyOn(accountService, 'userIdentity').mockReturnValue({ selectedLLMUsage: LLMSelectionDecision.LOCAL_AI } as any);
+
+        component.setUserAcceptedLLMUsage();
+
+        expect(component.hasUserAcceptedLLMUsage).toBe(false);
+    });
+
+    it('should open LLM modal when hasUserAcceptedLLMUsage is false', async () => {
+        vi.useFakeTimers();
+        setAthenaEnabled(true);
+        const participation = createParticipation();
+        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+        setupComponentInputs(exercise, true, false);
+        component.hasUserAcceptedLLMUsage = false;
+
+        const modalSpy = vi.spyOn(llmModalService, 'open').mockResolvedValue('none');
+
+        await initAndTick();
+
+        component.requestAIFeedback();
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(modalSpy).toHaveBeenCalled();
+    });
+
+    it('should accept cloud LLM usage when modal returns cloud', async () => {
         vi.useFakeTimers();
         setAthenaEnabled(true);
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
         setupComponentInputs(exercise);
         await initAndTick();
-        component.hasUserAcceptedExternalLLMUsage = false;
+        component.hasUserAcceptedLLMUsage = false;
 
-        const mockModal = { close: vi.fn() };
-        vi.spyOn(userService, 'updateExternalLLMUsageConsent').mockReturnValue(of(new HttpResponse<void>({})));
-        vi.spyOn(accountService, 'setUserAcceptedExternalLLMUsage');
+        vi.spyOn(llmModalService, 'open').mockResolvedValue('cloud');
+        vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>({})));
+        vi.spyOn(accountService, 'setUserLLMSelectionDecision');
         vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
 
-        component.acceptExternalLLMUsage(mockModal);
+        await component.showLLMSelectionModal();
         await vi.advanceTimersByTimeAsync(0);
 
-        expect(userService.updateExternalLLMUsageConsent).toHaveBeenCalledWith(true);
-        expect(component.hasUserAcceptedExternalLLMUsage).toBe(true);
-        expect(accountService.setUserAcceptedExternalLLMUsage).toHaveBeenCalled();
-        expect(mockModal.close).toHaveBeenCalled();
+        expect(userService.updateLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
+        expect(component.hasUserAcceptedLLMUsage).toBe(true);
+        expect(accountService.setUserLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
+    });
+
+    it('should accept local LLM usage when modal returns local', async () => {
+        vi.useFakeTimers();
+        setAthenaEnabled(true);
+        const participation = createParticipation();
+        const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
+        setupComponentInputs(exercise);
+        await initAndTick();
+
+        vi.spyOn(llmModalService, 'open').mockResolvedValue('local');
+        vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>({})));
+        vi.spyOn(accountService, 'setUserLLMSelectionDecision');
+
+        await component.showLLMSelectionModal();
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(userService.updateLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
+        expect(accountService.setUserLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
+    });
+
+    it('should handle no_ai choice from modal', async () => {
+        vi.useFakeTimers();
+        setAthenaEnabled(true);
+        const participation = createParticipation();
+        const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
+        setupComponentInputs(exercise);
+        await initAndTick();
+
+        vi.spyOn(llmModalService, 'open').mockResolvedValue('no_ai');
+        vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>({})));
+        vi.spyOn(accountService, 'setUserLLMSelectionDecision');
+
+        await component.showLLMSelectionModal();
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(userService.updateLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
+        expect(accountService.setUserLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
+    });
+
+    it('should not update when modal returns none', async () => {
+        vi.useFakeTimers();
+        setAthenaEnabled(true);
+        const participation = createParticipation();
+        const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
+        setupComponentInputs(exercise);
+        await initAndTick();
+
+        vi.spyOn(llmModalService, 'open').mockResolvedValue('none');
+        // Reset the mock to clear any calls from previous tests
+        mockUserService.updateLLMSelectionDecision.mockClear();
+
+        await component.showLLMSelectionModal();
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(mockUserService.updateLLMSelectionDecision).not.toHaveBeenCalled();
     });
 
     it('should handle Athena assessment result and increment feedback count', async () => {
@@ -514,7 +595,7 @@ describe('RequestFeedbackButtonComponent', () => {
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
         setupComponentInputs(exercise);
-        component.hasUserAcceptedExternalLLMUsage = true;
+        component.hasUserAcceptedLLMUsage = true;
 
         const generatingFeedbackSpy = vi.fn();
         component.generatingFeedback.subscribe(generatingFeedbackSpy);
@@ -522,8 +603,7 @@ describe('RequestFeedbackButtonComponent', () => {
         vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of(participation));
         vi.spyOn(alertService, 'success');
 
-        const mockTemplateRef = {} as TemplateRef<any>;
-        component.requestAIFeedback(mockTemplateRef);
+        component.requestAIFeedback();
         await vi.advanceTimersByTimeAsync(0);
 
         expect(generatingFeedbackSpy).toHaveBeenCalled();
@@ -533,6 +613,8 @@ describe('RequestFeedbackButtonComponent', () => {
     it('should display programming exercise button without disabled attribute', async () => {
         vi.useFakeTimers();
         setAthenaEnabled(true);
+        // Set user with accepted LLM usage so button is visible
+        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
         setupComponentInputs(exercise);
@@ -547,6 +629,8 @@ describe('RequestFeedbackButtonComponent', () => {
     it('should display modeling exercise button with correct disabled logic', async () => {
         vi.useFakeTimers();
         setAthenaEnabled(true);
+        // Set user with accepted LLM usage so button is visible
+        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.MODELING, false, participation);
         setupComponentInputs(exercise, true, false);

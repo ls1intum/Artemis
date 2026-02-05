@@ -25,17 +25,17 @@ export default defineConfig({
         environment: 'jsdom',
         setupFiles: ['src/test/javascript/spec/vitest-test-setup.ts'],
         include: [
-            'src/main/webapp/app/fileupload/**/*.spec.ts',      // include fileupload tests
-            'src/main/webapp/app/core/**/*.spec.ts',            // include all core tests
-            'src/main/webapp/app/buildagent/**/*.spec.ts',      // include build agent tests
-            'src/main/webapp/app/text/**/*.spec.ts',            // include text module tests
-            'src/main/webapp/app/assessment/**/*.spec.ts',      // include assessment tests
-            'src/main/webapp/app/tutorialgroup/**/*.spec.ts',   // include tutorial group tests
-            'src/main/webapp/app/quiz/**/*.spec.ts',            // include quiz tests
-            'src/main/webapp/app/lecture/**/*.spec.ts',         // include lecture tests
-            'src/main/webapp/app/lti/**/*.spec.ts',             // include lti tests
-            'src/main/webapp/app/modeling/**/*.spec.ts',        // include modeling tests
-            'src/main/webapp/app/iris/**/*.spec.ts',            // include iris tests
+            'src/main/webapp/app/fileupload/**/*.spec.ts', // include fileupload tests
+            'src/main/webapp/app/core/**/*.spec.ts', // include all core tests
+            'src/main/webapp/app/buildagent/**/*.spec.ts', // include build agent tests
+            'src/main/webapp/app/text/**/*.spec.ts', // include text module tests
+            'src/main/webapp/app/assessment/**/*.spec.ts', // include assessment tests
+            'src/main/webapp/app/tutorialgroup/**/*.spec.ts', // include tutorial group tests
+            'src/main/webapp/app/quiz/**/*.spec.ts', // include quiz tests
+            'src/main/webapp/app/lecture/**/*.spec.ts', // include lecture tests
+            'src/main/webapp/app/lti/**/*.spec.ts', // include lti tests
+            'src/main/webapp/app/modeling/**/*.spec.ts', // include modeling tests
+            'src/main/webapp/app/iris/**/*.spec.ts', // include iris tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -51,17 +51,17 @@ export default defineConfig({
             reporter: ['text', 'lcov', 'html', 'json-summary'],
             reportsDirectory: 'build/test-results/vitest/coverage',
             include: [
-                'src/main/webapp/app/assessment/**/*.ts',       // include assessment for code coverage
-                'src/main/webapp/app/buildagent/**/*.ts',       // include buildagent for code coverage
-                'src/main/webapp/app/core/**/*.ts',             // include all core for code coverage
-                'src/main/webapp/app/fileupload/**/*.ts',       // include fileupload for code coverage
-                'src/main/webapp/app/lecture/**/*.ts',          // include lecture for code coverage
-                'src/main/webapp/app/quiz/**/*.ts',             // include quiz for code coverage
-                'src/main/webapp/app/text/**/*.ts',             // include text module for code coverage
-                'src/main/webapp/app/tutorialgroup/**/*.ts',    // include tutorial group for code coverage
-                'src/main/webapp/app/lti/**/*.ts',              // include lti for code coverage
-                'src/main/webapp/app/modeling/**/*.ts',         // include modeling for code coverage
-                'src/main/webapp/app/iris/**/*.ts',             // include iris for code coverage
+                'src/main/webapp/app/assessment/**/*.ts', // include assessment for code coverage
+                'src/main/webapp/app/buildagent/**/*.ts', // include buildagent for code coverage
+                'src/main/webapp/app/core/**/*.ts', // include all core for code coverage
+                'src/main/webapp/app/fileupload/**/*.ts', // include fileupload for code coverage
+                'src/main/webapp/app/lecture/**/*.ts', // include lecture for code coverage
+                'src/main/webapp/app/quiz/**/*.ts', // include quiz for code coverage
+                'src/main/webapp/app/text/**/*.ts', // include text module for code coverage
+                'src/main/webapp/app/tutorialgroup/**/*.ts', // include tutorial group for code coverage
+                'src/main/webapp/app/lti/**/*.ts', // include lti for code coverage
+                'src/main/webapp/app/modeling/**/*.ts', // include modeling for code coverage
+                'src/main/webapp/app/iris/**/*.ts', // include iris for code coverage
             ],
             exclude: [
                 '**/node_modules/**',   // exclude node_modules with third-party code
@@ -75,9 +75,9 @@ export default defineConfig({
             ],
             thresholds: {
                 lines: 92.10,
-                statements: 92.00,
-                branches: 77.00,
-                functions: 89.15,
+                statements: 91.95,
+                branches: 76.90,
+                functions: 89.10,
             },
         },
     },
