@@ -319,7 +319,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             // Since beforeEach recreates the component, it should be true.
             expect(comp.hyperionEnabled).toBeTrue();
         });
-        
+
         it('should compute hyperionEnabled as false when feature disabled', () => {
             jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
 
@@ -344,7 +344,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             job$.next({ type: 'FILE_UPDATED' });
             job$.next({ type: 'NEW_FILE' });
-          
+
             expect(pullSpy).toHaveBeenCalledTimes(2);
         });
 
@@ -374,9 +374,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                 }),
             );
         });
-        it('should compute hyperionEnabled from profile service', async () => {
-            const isModuleFeatureActiveSpy = jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
-
         it('should call executeRefresh and cleanup on DONE', async () => {
             comp.selectedRepository = RepositoryType.SOLUTION;
             (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-4' }));
