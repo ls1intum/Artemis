@@ -237,7 +237,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isInternalServerError()).andExpect(jsonPath("$.title").value("Failed to generate problem statement: AI service unavailable"))
                 .andExpect(jsonPath("$.message").value("error.ProblemStatementGeneration.generationFailed"))
-                .andExpect(jsonPath("$.errorKey").value("ProblemStatementGeneration.ProblemStatementGeneration"));
+                .andExpect(jsonPath("$.errorKey").value("ProblemStatementGeneration.generationFailed"));
     }
 
     @Test

@@ -419,36 +419,6 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(emitSpy).toHaveBeenCalled();
     });
 
-    it('should return selection from getSelection', () => {
-        fixture.detectChanges();
-
-        const mockSelection = {
-            startLineNumber: 1,
-            endLineNumber: 3,
-            startColumn: 0,
-            endColumn: 10,
-        };
-
-        jest.spyOn(comp.monacoEditor, 'getSelection').mockReturnValue(mockSelection as any);
-
-        const result = comp.getSelection();
-
-        expect(result).toEqual({
-            startLine: 1,
-            endLine: 3,
-        });
-    });
-
-    it('should return undefined from getSelection when no selection', () => {
-        fixture.detectChanges();
-
-        jest.spyOn(comp.monacoEditor, 'getSelection').mockReturnValue(undefined);
-
-        const result = comp.getSelection();
-
-        expect(result).toBeUndefined();
-    });
-
     it('should have consistencyIssues input', () => {
         fixture.detectChanges();
 

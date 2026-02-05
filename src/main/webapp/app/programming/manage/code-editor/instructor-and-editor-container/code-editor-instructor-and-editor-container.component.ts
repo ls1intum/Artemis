@@ -435,7 +435,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     const draftContent = result.content;
 
                     // Update the editor directly
-                    this.editableInstructions.setText(draftContent);
+                    this.editableInstructions?.setText(draftContent);
 
                     // Update model and trigger change
                     if (this.exercise) {
@@ -446,6 +446,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 }
                 this.refinementPrompt.set('');
                 this.currentRefinementSubscription = undefined;
+            },
+            error: () => {
+                this.alertService.error('artemisApp.programmingExercise.problemStatement.generationFailed');
+                this.refinementPrompt.set('');
+                this.currentRefinementSubscription = undefined;
+                this.showRefinementPrompt.set(false);
             },
         });
     }
@@ -469,6 +475,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     }
                     this.refinementPrompt.set('');
                     this.currentRefinementSubscription = undefined;
+                },
+                error: () => {
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementFailed');
+                    this.refinementPrompt.set('');
+                    this.currentRefinementSubscription = undefined;
+                    this.showRefinementPrompt.set(false);
                 },
             });
     }

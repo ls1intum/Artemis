@@ -511,7 +511,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let comp: CodeEditorInstructorAndEditorContainerComponent;
     let alertService: AlertService;
-    let hyperionApiService: jest.Mocked<Pick<HyperionProblemStatementApiService, 'refineProblemStatementTargeted' | 'refineProblemStatementGlobally' | 'generateProblemStatement'>>;
+    let hyperionApiService: jest.Mocked<Pick<HyperionProblemStatementApiService, 'refineProblemStatementGlobally' | 'generateProblemStatement'>>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -520,7 +520,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
                 ...getBaseProviders(),
                 {
                     provide: HyperionProblemStatementApiService,
-                    useValue: { refineProblemStatementTargeted: jest.fn(), refineProblemStatementGlobally: jest.fn(), generateProblemStatement: jest.fn() },
+                    useValue: { refineProblemStatementGlobally: jest.fn(), generateProblemStatement: jest.fn() },
                 },
             ],
         })
@@ -529,7 +529,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
 
         alertService = TestBed.inject(AlertService);
         hyperionApiService = TestBed.inject(HyperionProblemStatementApiService) as unknown as jest.Mocked<
-            Pick<HyperionProblemStatementApiService, 'refineProblemStatementTargeted' | 'refineProblemStatementGlobally' | 'generateProblemStatement'>
+            Pick<HyperionProblemStatementApiService, 'refineProblemStatementGlobally' | 'generateProblemStatement'>
         >;
 
         fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);

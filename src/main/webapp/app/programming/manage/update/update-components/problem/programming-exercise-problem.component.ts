@@ -24,6 +24,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/buttons/button/button.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
@@ -79,6 +80,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
 
     private translateService = inject(TranslateService);
     private problemStatementService = inject(ProblemStatementService);
+    private alertService = inject(AlertService);
     private injector = inject(Injector);
 
     /**
@@ -230,6 +232,11 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
 
                     this.userPrompt.set('');
                 }
+                this.currentGenerationSubscription = undefined;
+            },
+            error: () => {
+                this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementFailed');
+                this.userPrompt.set('');
                 this.currentGenerationSubscription = undefined;
             },
         });
