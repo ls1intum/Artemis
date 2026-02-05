@@ -45,10 +45,6 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     private static final String THREAD_ENTITY_NAME = "exerciseReviewCommentThread";
 
-    private static final String COMMENT_ENTITY_NAME = "exerciseReviewComment";
-
-    private static final String THREAD_GROUP_ENTITY_NAME = "exerciseReviewCommentThreadGroup";
-
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
@@ -397,6 +393,25 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         var threads = request.getList(reviewThreadsPath(exercise.getId()), HttpStatus.OK, CommentThreadDTO.class);
         assertThat(threads).hasSize(2);
         assertThat(threads).allMatch(thread -> thread.groupId() == null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldDeleteThreadGroupWhenLastThreadDeleted() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CommentThreadDTO first = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("First")), CommentThreadDTO.class,
+                HttpStatus.CREATED);
+        CommentThreadDTO second = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Second")), CommentThreadDTO.class,
+                HttpStatus.CREATED);
+
+        CreateCommentThreadGroupDTO groupRequest = new CreateCommentThreadGroupDTO(List.of(first.id(), second.id()));
+        CommentThreadGroupDTO group = request.postWithResponseBody(reviewThreadGroupsPath(exercise.getId()), groupRequest, CommentThreadGroupDTO.class, HttpStatus.CREATED);
+
+        request.delete(reviewCommentPath(exercise.getId(), first.comments().getFirst().id()), HttpStatus.OK);
+        assertThat(commentThreadGroupRepository.findById(group.id())).isPresent();
+
+        request.delete(reviewCommentPath(exercise.getId(), second.comments().getFirst().id()), HttpStatus.OK);
+        assertThat(commentThreadGroupRepository.findById(group.id())).isNotPresent();
     }
 
     @Test

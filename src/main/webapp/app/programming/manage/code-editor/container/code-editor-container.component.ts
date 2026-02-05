@@ -181,19 +181,23 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     }
 
     /**
-     * Update the file badges for the code editor (currently only feedback suggestions)
+     * Update the file badges for the code editor (includes both ungraded feedback suggestions and graded feedbacks)
      */
     updateFileBadges() {
         this.fileBadges = {};
-        // Create badges for feedback suggestions
-        // Get file paths from feedback suggestions:
-        const filePathsWithSuggestions = this.feedbackSuggestions()
-            .map((feedback) => Feedback.getReferenceFilePath(feedback))
-            .filter((filePath) => filePath !== undefined) as string[];
-        for (const filePath of filePathsWithSuggestions) {
-            // Count the number of suggestions for this file
-            const suggestionsCount = this.feedbackSuggestions().filter((feedback) => Feedback.getReferenceFilePath(feedback) === filePath).length;
-            this.fileBadges[filePath] = [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, suggestionsCount)];
+
+        // Combine feedback suggestions (ungraded) and graded feedbacks from submission
+        const allFeedbacks = this.feedbackSuggestions().concat(this.feedbackForSubmission());
+
+        // Get unique file paths with feedback
+        const filePathsWithFeedback = Array.from(
+            new Set(allFeedbacks.map((feedback: Feedback) => Feedback.getReferenceFilePath(feedback)).filter((filePath): filePath is string => filePath !== undefined)),
+        );
+
+        for (const filePath of filePathsWithFeedback) {
+            // Count the number of feedbacks for this file
+            const feedbackCount = allFeedbacks.filter((feedback: Feedback) => Feedback.getReferenceFilePath(feedback) === filePath).length;
+            this.fileBadges[filePath] = [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, feedbackCount)];
         }
     }
 

@@ -137,6 +137,7 @@ public class ExerciseReviewService {
      *
      * @param threadId the thread id
      * @return list of comments
+     * @throws EntityNotFoundException if the thread does not exist
      */
     public List<Comment> findCommentsByThreadId(long threadId) {
         CommentThread thread = findThreadByIdElseThrow(threadId);
@@ -150,6 +151,8 @@ public class ExerciseReviewService {
      * @param exerciseId the exercise id
      * @param dto        the thread creation payload
      * @return the persisted thread
+     * @throws BadRequestAlertException if validation fails
+     * @throws EntityNotFoundException  if the exercise does not exist
      */
     public CommentThread createThread(long exerciseId, CreateCommentThreadDTO dto) {
         if (dto == null) {
@@ -173,6 +176,8 @@ public class ExerciseReviewService {
      * @param threadId the thread id
      * @param dto      the comment content to create
      * @return the persisted comment
+     * @throws EntityNotFoundException  if the thread does not exist
+     * @throws BadRequestAlertException if validation fails
      */
     public Comment createUserComment(long threadId, UserCommentContentDTO dto) {
         if (dto == null) {
@@ -197,14 +202,19 @@ public class ExerciseReviewService {
      * Delete a comment by id.
      *
      * @param commentId the comment id
+     * @throws EntityNotFoundException if the comment does not exist
      */
     public void deleteComment(long commentId) {
         Comment comment = commentRepository.findWithThreadById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment", commentId));
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, comment.getThread().getExercise().getId());
         CommentThread thread = comment.getThread();
+        CommentThreadGroup group = thread.getGroup();
         commentRepository.delete(comment);
         if (commentRepository.countByThreadId(thread.getId()) == 0) {
             commentThreadRepository.delete(thread);
+            if (group != null && commentThreadRepository.countByGroupId(group.getId()) == 0) {
+                commentThreadGroupRepository.delete(group);
+            }
         }
     }
 
@@ -214,6 +224,8 @@ public class ExerciseReviewService {
      * @param threadId the thread id
      * @param dto      whether the thread is resolved
      * @return the updated thread
+     * @throws EntityNotFoundException  if the thread does not exist
+     * @throws BadRequestAlertException if validation fails
      */
     public CommentThread updateThreadResolvedState(long threadId, UpdateThreadResolvedStateDTO dto) {
         if (dto == null) {
@@ -232,6 +244,8 @@ public class ExerciseReviewService {
      * @param commentId the comment id
      * @param dto       the new comment content
      * @return the updated comment
+     * @throws EntityNotFoundException  if the comment does not exist
+     * @throws BadRequestAlertException if validation fails
      */
     public Comment updateUserCommentContent(long commentId, UserCommentContentDTO dto) {
         if (dto == null) {
@@ -251,6 +265,8 @@ public class ExerciseReviewService {
      * @param exerciseId the exercise id
      * @param dto        the group creation payload
      * @return the persisted group
+     * @throws EntityNotFoundException  if the exercise does not exist
+     * @throws BadRequestAlertException if validation fails
      */
     public CommentThreadGroup createGroup(long exerciseId, CreateCommentThreadGroupDTO dto) {
         if (dto == null) {
@@ -293,6 +309,7 @@ public class ExerciseReviewService {
      * Delete a comment thread group by id.
      *
      * @param groupId the group id
+     * @throws EntityNotFoundException if the group does not exist
      */
     public void deleteGroup(long groupId) {
         CommentThreadGroup group = commentThreadGroupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("CommentThreadGroup", groupId));
@@ -349,6 +366,18 @@ public class ExerciseReviewService {
     private void validateThreadPayload(CreateCommentThreadDTO dto) {
         if (dto == null) {
             throw new BadRequestAlertException("Thread DTO must be set", THREAD_ENTITY_NAME, "bodyMissing");
+        }
+        if (dto.targetType() == null) {
+            throw new BadRequestAlertException("Thread target type must be set", THREAD_ENTITY_NAME, "targetTypeMissing");
+        }
+        if (dto.initialLineNumber() == null) {
+            throw new BadRequestAlertException("Initial line number must be set", THREAD_ENTITY_NAME, "initialLineNumberMissing");
+        }
+        if (dto.initialLineNumber() < 1) {
+            throw new BadRequestAlertException("Initial line number must be at least 1", THREAD_ENTITY_NAME, "initialLineNumberInvalid");
+        }
+        if (dto.initialComment() == null) {
+            throw new BadRequestAlertException("Initial comment must be set", THREAD_ENTITY_NAME, "initialCommentMissing");
         }
         if (dto.targetType() != CommentThreadLocationType.PROBLEM_STATEMENT && dto.initialFilePath() == null) {
             throw new BadRequestAlertException("Initial file path is required for repository threads", THREAD_ENTITY_NAME, "initialFilePathMissing");
@@ -449,6 +478,7 @@ public class ExerciseReviewService {
      * @param newCommit     target commit hash
      * @param oldLine       1-based line number in the old commit
      * @return mapping result containing the new line or outdated state
+     * @throws GitException if repository access fails or the commit trees cannot be resolved
      */
     public LineMappingResult mapLine(LocalVCRepositoryUri repositoryUri, String filePath, String oldCommit, String newCommit, int oldLine) {
         if (oldLine <= 0) {
@@ -653,6 +683,7 @@ public class ExerciseReviewService {
      * @param targetType the thread target type
      * @param exerciseId the exercise id
      * @return the initial exercise version, or {@code null} for repository-based threads
+     * @throws BadRequestAlertException if no exercise version exists for the problem statement
      */
     public ExerciseVersion resolveInitialVersion(CommentThreadLocationType targetType, long exerciseId) {
         if (targetType != CommentThreadLocationType.PROBLEM_STATEMENT) {
@@ -669,6 +700,7 @@ public class ExerciseReviewService {
      * @param auxiliaryRepositoryId the auxiliary repository id when {@code targetType} is {@code AUXILIARY_REPO}
      * @param exerciseId            the exercise id
      * @return the latest commit SHA, or {@code null} for problem-statement threads or missing repository URIs
+     * @throws BadRequestAlertException if the exercise is not a programming exercise
      */
     public String resolveLatestCommitSha(CommentThreadLocationType targetType, Long auxiliaryRepositoryId, long exerciseId) {
         if (targetType == CommentThreadLocationType.PROBLEM_STATEMENT) {
