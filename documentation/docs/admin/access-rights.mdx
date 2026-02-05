@@ -77,6 +77,38 @@ For detailed information about passkey authentication, configuration, and the ap
 
 ## Exercises
 
+### Common Prerequisites
+
+The following prerequisites apply to **all exercise types** unless otherwise noted:
+
+- **Course Enrollment**: All exercise access requires enrollment in the course (except for Admins)
+- **Admin Override**: Admins can access all exercises regardless of course membership
+- **Exam vs Course**: Exam exercises require Editor role for viewing details; course exercises only require TA role
+
+### Common Visibility Rules
+
+The following visibility rules apply to **all exercise types**:
+
+**Exercise Release:**
+- Students can only view and participate in exercises after the `releaseDate` has passed
+- Teaching Assistants and above can view exercises before release
+
+**Submission Due Date:**
+- Students can only submit before the exercise `dueDate`
+- Submissions after due date are rejected (except for exam exercises which have separate handling)
+
+**Own Submission/Participation:**
+- Students can only view their own participations and submissions
+- Teaching Assistants and above can view all participations and submissions
+
+**Assessment Results:**
+- Students can view their assessment results only after the assessment is finalized AND the assessment due date has passed
+- Assessor information is hidden from students until assessment is finalized
+
+**Example Solution:**
+- Students can view the example solution only after it has been published (`isExampleSolutionPublished()`)
+- Teaching Assistants and above can view example solutions at any time
+
 ### General Functionality
 
 | Feature                             | Instructor | Editor | Teaching Assistant | Student |
@@ -96,6 +128,10 @@ For detailed information about passkey authentication, configuration, and the ap
 | Export Submissions                  | ✔          |        |                    |         |
 | Add External Submission             | ✔          |        |                    |         |
 | Delete                              | ✔          |        |                    |         |
+
+<Callout variant={CalloutVariant.info}>
+    **Import Exercise** requires at least Editor role in **both** the source and target course.
+</Callout>
 
 ### Programming Exercises
 
@@ -148,20 +184,20 @@ For detailed information about passkey authentication, configuration, and the ap
     **Exam exercises** require Editor role for viewing details, while **course exercises** only require Teaching Assistant role.
 </Callout>
 
-### Programming Exercises - Repository Access
+#### Repository Access
 
 **Action Types:**
 - **READ** (fetch, pull)
 - **WRITE** (push)
 - **RESET** (reset to origin head)
 
-#### Access to all repositories of a course
+**Access to all repositories of a course:**
 
 | Admin / Instructor / Editor | Teaching Assistant | Student    |
 |-----------------------------|--------------------|------------|
 | *READ*, *WRITE*, *RESET*    | *READ*             | restricted |
 
-#### Access for Teaching Assistants and Students on their own repositories (graded participation)
+**Access for Teaching Assistants and Students on their own repositories (graded participation):**
 
 | Context                                        | Teaching Assistant       | Student                  |
 |------------------------------------------------|--------------------------|--------------------------|
@@ -174,29 +210,7 @@ For detailed information about passkey authentication, configuration, and the ap
     **Practice** repositories also allow *WRITE* and *RESET* access after the due date.
 </Callout>
 
-### Programming Exercises - Summary
-
-| Role       | Capabilities                                                               |
-|------------|----------------------------------------------------------------------------|
-| Student    | Participate, view own results, trigger own builds, export own repository   |
-| TA         | Same as Student + view all submissions, assess, export repositories        |
-| Editor     | Same as TA + create/edit exercises, manage test cases, SCA, plagiarism     |
-| Instructor | Same as Editor + delete exercises, manage submission policies, re-evaluate |
-| Admin      | Full access to all programming exercises                                   |
-
-### Programming Exercises - Prerequisites
-
-- **Course Enrollment**: All exercise access requires enrollment in the course (except for Admins)
-- **Admin Override**: Admins can access all programming exercises regardless of course membership
-- **Exam vs Course**: Exam exercises require Editor role for viewing details; course exercises only require TA role
-
-### Programming Exercises - Visibility Rules
-
-Visibility conditions marked as "(if released)" in the tables above are defined as follows:
-
-**Exercise Release:**
-- Students can only view and participate in exercises after the `releaseDate` has passed
-- Teaching Assistants and above can view exercises before release
+#### Additional Visibility Rules
 
 **Test Case Visibility:**
 - Test case visibility is controlled per test case via the `Visibility` enum: `ALWAYS`, `AFTER_DUE_DATE`, `NEVER`
@@ -248,7 +262,7 @@ Visibility conditions marked as "(if released)" in the tables above are defined 
     **End Now** requires Instructor role (higher than Start Now which only requires Editor).
 </Callout>
 
-### Quiz Exercises - Batch Mode
+#### Batch Mode
 
 Quiz exercises support three modes: **SYNCHRONIZED**, **BATCHED**, and **INDIVIDUAL**.
 
@@ -262,29 +276,7 @@ Quiz exercises support three modes: **SYNCHRONIZED**, **BATCHED**, and **INDIVID
     Batch operations are not allowed for exam quiz exercises - they are only available for course quizzes.
 </Callout>
 
-### Quiz Exercises - Summary
-
-| Role       | Capabilities                                                                     |
-|------------|----------------------------------------------------------------------------------|
-| Student    | Participate, submit answers, view results after quiz ends, access training mode  |
-| TA         | Same as Student + preview, view statistics, create/start own batches             |
-| Editor     | Same as TA + create/update quizzes, start/set visible, search quizzes            |
-| Instructor | Same as Editor + delete quizzes, evaluate/re-evaluate, end quiz, start any batch |
-| Admin      | Full access to all quiz exercises                                                |
-
-### Quiz Exercises - Prerequisites
-
-- **Course Enrollment**: All quiz access requires enrollment in the course (except for Admins)
-- **Admin Override**: Admins can access all quizzes regardless of course membership
-- **Exam vs Course**: Exam quiz exercises require Editor role for viewing details; course quizzes only require TA role
-
-### Quiz Exercises - Visibility Rules
-
-Visibility conditions marked as "(if released)" or "(if started)" in the tables above are defined as follows:
-
-**Quiz Release:**
-- Students can only view quizzes after the `releaseDate` has passed
-- Teaching Assistants and above can view quizzes before release
+#### Additional Visibility Rules
 
 **Quiz Started:**
 - Students can join batches only after the quiz has started (not ended)
@@ -293,10 +285,6 @@ Visibility conditions marked as "(if released)" or "(if started)" in the tables 
 **Practice Mode:**
 - Students can submit in practice mode only after the quiz has ended
 - For exam exercises, practice mode is only available for test exams
-
-**Sample Solution:**
-- Students can view the sample solution only after the quiz has ended
-- Teaching Assistants and above can view sample solutions at any time
 
 ### File Upload Exercises
 
@@ -324,54 +312,6 @@ Visibility conditions marked as "(if released)" or "(if started)" in the tables 
 | Delete Assessment               | ✔                |                  |                    |                       |
 | Export Submissions (limited)    | ✔                | ✔                | ✔                  |                       |
 | Export All Submissions          | ✔                |                  |                    |                       |
-
-<Callout variant={CalloutVariant.info}>
-    **Import Exercise** requires at least Editor role in **both** the source and target course.
-</Callout>
-
-<Callout variant={CalloutVariant.warning}>
-    **Exam exercises** require Editor role for viewing details, while **course exercises** only require Teaching Assistant role.
-</Callout>
-
-### File Upload Exercises - Summary
-
-| Role       | Capabilities                                                                      |
-|------------|-----------------------------------------------------------------------------------|
-| Student    | Submit files, view own submission/results, view editor data for own participation |
-| TA         | Same as Student + view all submissions, assess, lock submissions, limited export  |
-| Editor     | Same as TA + create/edit/import exercises, search exercises, re-evaluate          |
-| Instructor | Same as Editor + delete exercises, delete assessments, export all submissions     |
-| Admin      | Full access to all file upload exercises                                          |
-
-### File Upload Exercises - Prerequisites
-
-- **Course Enrollment**: All exercise access requires enrollment in the course (except for Admins)
-- **Admin Override**: Admins can access all file upload exercises regardless of course membership
-- **Exam vs Course**: Exam exercises require Editor role for viewing details; course exercises only require TA role
-
-### File Upload Exercises - Visibility Rules
-
-Visibility conditions marked as "(if released)", "(before due date)", "(own only)", or "(own, after graded)" in the tables above are defined as follows:
-
-**Exercise Release:**
-- Students can only view and participate in exercises after the `releaseDate` has passed
-- Teaching Assistants and above can view exercises before release
-
-**Submission Due Date:**
-- Students can only submit files before the exercise `dueDate`
-- Submissions after due date are rejected (except for exam exercises which have separate handling)
-
-**Own Submission/Participation:**
-- Students can only view their own participations and submissions
-- Teaching Assistants and above can view all participations and submissions
-
-**Assessment Results:**
-- Students can view their assessment results only after the assessment is finalized AND the assessment due date has passed
-- Assessor information is hidden from students until assessment is finalized
-
-**Example Solution:**
-- Students can view the example solution only after it has been published (`isExampleSolutionPublished()`)
-- Teaching Assistants and above can view example solutions at any time
 
 ### Modeling Exercises
 
@@ -408,55 +348,10 @@ Visibility conditions marked as "(if released)", "(before due date)", "(own only
 | Convert Model to PDF            | ✔                | ✔                | ✔                  | ✔                     |
 
 <Callout variant={CalloutVariant.info}>
-    **Import Exercise** requires at least Editor role in **both** the source and target course.
+    Double-blind assessment is supported: TAs cannot see student/team information during assessment.
 </Callout>
 
-<Callout variant={CalloutVariant.warning}>
-    **Exam exercises** require Editor role for viewing details, while **course exercises** only require Teaching Assistant role.
-</Callout>
-
-### Modeling Exercises - Summary
-
-| Role       | Capabilities                                                                                      |
-|------------|---------------------------------------------------------------------------------------------------|
-| Student    | Submit models, view own submission/results, view diagram titles, convert models to PDF            |
-| TA         | Same as Student + view all submissions, assess, lock submissions, limited export, manage diagrams |
-| Editor     | Same as TA + create/edit/import exercises, search exercises, re-evaluate, delete diagrams         |
-| Instructor | Same as Editor + delete exercises, delete assessments, export all submissions                     |
-| Admin      | Full access to all modeling exercises                                                             |
-
-### Modeling Exercises - Prerequisites
-
-- **Course Enrollment**: All exercise access requires enrollment in the course (except for Admins)
-- **Admin Override**: Admins can access all modeling exercises regardless of course membership
-- **Exam vs Course**: Exam exercises require Editor role for viewing details; course exercises only require TA role
-
-### Modeling Exercises - Visibility Rules
-
-Visibility conditions marked as "(if released)", "(before due date)", "(own only)", or "(own, after graded)" in the tables above are defined as follows:
-
-**Exercise Release:**
-- Students can only view and participate in exercises after the `releaseDate` has passed
-- Teaching Assistants and above can view exercises before release
-
-**Submission Due Date:**
-- Students can only submit models before the exercise `dueDate`
-- Submissions after due date are rejected (except for exam exercises which have separate handling)
-
-**Own Submission/Participation:**
-- Students can only view their own participations and submissions
-- Teaching Assistants and above can view all participations and submissions
-
-**Assessment Results:**
-- Students can view their assessment results only after the assessment is finalized AND the assessment due date has passed
-- Assessor information is hidden from students until assessment is finalized
-- Double-blind assessment is supported: TAs cannot see student/team information during assessment
-
-**Example Solution:**
-- Students can view the example solution model only after it has been published (`isExampleSolutionPublished()`)
-- Teaching Assistants and above can view example solutions at any time
-
-### Modeling Exercises - Apollon Diagram Templates
+#### Apollon Diagram Templates
 
 Apollon diagram templates are reusable diagram structures that instructors can create for use in exercises.
 
@@ -502,57 +397,9 @@ Apollon diagram templates are reusable diagram structures that instructors can c
 | View Assessment Events (Admin)  | Admin only       |                  |                    |                       |
 
 <Callout variant={CalloutVariant.info}>
-    **Import Exercise** requires at least Editor role in **both** the source and target course.
+    Double-blind assessment is supported: TAs cannot see student/team information during assessment.
+    Text exercises also support Athena AI feedback suggestions (if enabled).
 </Callout>
-
-<Callout variant={CalloutVariant.warning}>
-    **Exam exercises** require Editor role for viewing details, while **course exercises** only require Teaching Assistant role.
-</Callout>
-
-### Text Exercises - Summary
-
-| Role       | Capabilities                                                                                        |
-|------------|-----------------------------------------------------------------------------------------------------|
-| Student    | Submit text, view own submission/results, view text editor data for own participation               |
-| TA         | Same as Student + view all submissions, assess, lock submissions, limited export, add events        |
-| Editor     | Same as TA + create/edit/import exercises, search exercises, re-evaluate, plagiarism, save examples |
-| Instructor | Same as Editor + delete exercises, delete assessments, export all submissions, view analytics       |
-| Admin      | Full access to all text exercises including assessment event analytics                              |
-
-### Text Exercises - Prerequisites
-
-- **Course Enrollment**: All exercise access requires enrollment in the course (except for Admins)
-- **Admin Override**: Admins can access all text exercises regardless of course membership
-- **Exam vs Course**: Exam exercises require Editor role for viewing details; course exercises only require TA role
-
-### Text Exercises - Visibility Rules
-
-Visibility conditions marked as "(if released)", "(before due date)", "(own only)", or "(own, after graded)" in the tables above are defined as follows:
-
-**Exercise Release:**
-- Students can only view and participate in exercises after the `releaseDate` has passed
-- Teaching Assistants and above can view exercises before release
-
-**Submission Due Date:**
-- Students can only submit text before the exercise `dueDate`
-- Submissions after due date are rejected (except for exam exercises which have separate handling)
-
-**Own Submission/Participation:**
-- Students can only view their own participations and submissions
-- Teaching Assistants and above can view all participations and submissions
-
-**Assessment Results:**
-- Students can view their assessment results only after the assessment is finalized AND the assessment due date has passed
-- Assessor information is hidden from students until assessment is finalized
-- Double-blind assessment is supported: TAs cannot see student/team information during assessment
-
-**Example Solution:**
-- Students can view the example solution only after it has been published (`isExampleSolutionPublished()`)
-- Teaching Assistants and above can view example solutions at any time
-
-**Athena AI Feedback:**
-- Text exercises support Athena AI feedback suggestions (if enabled)
-- AI-generated preliminary feedback is available before assessment due date
 
 ## Lectures
 
