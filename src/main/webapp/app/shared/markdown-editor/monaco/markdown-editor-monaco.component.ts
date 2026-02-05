@@ -311,8 +311,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     inEditMode = true;
     uniqueMarkdownEditorId: string;
     resizeObserver?: ResizeObserver;
-    /** Disposable for the selection change listener */
-
     targetWrapperHeight?: number;
     minWrapperHeight?: number;
     constrainDragPositionFn?: (pointerPosition: Point) => Point;
@@ -740,21 +738,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     onCloseButtonClick(): void {
         this.closeEditor.emit();
-    }
-
-    /**
-     * Gets the current selection in the editor.
-     * @returns The current selection or undefined.
-     */
-    getSelection(): { startLine: number; endLine: number } | undefined {
-        const sel = this.monacoEditor.getSelection();
-        if (!sel) {
-            return undefined;
-        }
-        return {
-            startLine: sel.startLineNumber,
-            endLine: sel.endLineNumber,
-        };
     }
 
     /**

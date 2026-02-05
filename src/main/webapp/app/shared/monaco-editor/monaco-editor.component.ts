@@ -265,12 +265,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.focusEditorTextListener?.dispose();
         this.diffUpdateListener?.dispose();
 
-        // Dispose selection change listeners
-        for (const listenerEntry of this.selectionChangeListeners) {
-            listenerEntry.disposable?.dispose();
-        }
-        this.selectionChangeListeners = [];
-
         // Dispose snapshot model if present
         this.disposeDiffSnapshotModel();
 
@@ -801,19 +795,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 }
             }
         }
-    }
-
-    getSelection(): EditorRange | undefined {
-        const selection = this.getActiveEditor().getSelection();
-        if (!selection || selection.isEmpty()) {
-            return undefined;
-        }
-        return {
-            startLineNumber: selection.startLineNumber,
-            endLineNumber: selection.endLineNumber,
-            startColumn: selection.startColumn,
-            endColumn: selection.endColumn,
-        };
     }
 
     setWordWrap(value: boolean): void {
