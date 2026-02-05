@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BuildJobQueueItem(@NonNull String id, @NonNull String name, @NonNull BuildAgentDTO buildAgent, long participationId, long courseId, long exerciseId, int retryCount,
         int priority, @Nullable BuildStatus status, @NonNull RepositoryInfo repositoryInfo, @NonNull JobTimingInfo jobTimingInfo, @NonNull BuildConfig buildConfig,
-        @Nullable ResultDTO submissionResult) implements Serializable, Comparable<BuildJobQueueItem> {
+        @Nullable ResultDTO submissionResult) implements BuildJobDTO, Serializable, Comparable<BuildJobQueueItem> {
 
     @Serial
     private static final long serialVersionUID = 1L;
