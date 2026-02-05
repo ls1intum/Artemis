@@ -66,7 +66,7 @@ def summarize_report(report_md_path: str, summary_md_path: str) -> None:
         new_summary_text = []
         inserted_reference = False
         for line in summary_text:
-            if not inserted_reference and line.startswith("| artemis-benchmark "):
+            if not inserted_reference and line.startswith("| artemis-"):
                 new_summary_text.append(line)
                 new_summary_text.append(REFERENCE + "\n")
                 inserted_reference = True

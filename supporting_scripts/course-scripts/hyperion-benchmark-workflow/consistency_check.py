@@ -126,7 +126,7 @@ def consistency_check_io(session: Session, server_url: str, exercise_local_id: s
     # File Write (I/O)
     variant_json_file = os.path.join(exercise_results_dir, f"{variant}.json")
     try:
-        with open(variant_json_file, "w") as file:
+        with open(variant_json_file, "w", encoding="utf-8") as file:
             json.dump(consistency_issue, file, indent=4)
         return f"[{exercise_local_id}] success"
     except Exception as e:

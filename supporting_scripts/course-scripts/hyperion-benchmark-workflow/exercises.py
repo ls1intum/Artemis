@@ -301,7 +301,7 @@ def convert_variant_to_zip(pecv_bench_dir: str, version: str, course: str, exerc
     config_file_path = os.path.join(variant_path, config_file)
     try:
         logging.info("Overwriting problem statement, exercise ID, course ID, title and shortName in the config file.")
-        with open(config_file_path, 'r') as cf:
+        with open(config_file_path, 'r', encoding='utf-8') as cf:
             exercise_details: Dict[str, Any] = json.load(cf)
 
             exercise_details['id'] = None
@@ -325,7 +325,7 @@ def convert_variant_to_zip(pecv_bench_dir: str, version: str, course: str, exerc
             exercise_details["projectKey"] = f"{variant_id}{course_name}{exercise_details['shortName']}"
 
 
-        with open(config_file_path, 'w') as cf:
+        with open(config_file_path, 'w', encoding='utf-8') as cf:
             json.dump(exercise_details, cf, indent=4)
             logging.info(f"Updated programming exercise details in {config_file_path}")
     except OSError as e:
@@ -416,7 +416,7 @@ def import_exercise_variant_request(session: requests.Session,
     exercise_zip = os.path.join(variant_dir, f"{variant_id}-FullExercise.zip")
 
     try:
-        with open(config_file, 'r') as cnfg_file:
+        with open(config_file, 'r', encoding='utf-8') as cnfg_file:
             exercise_details: Dict[str, Any] = json.load(cnfg_file)
         exercise_details_str = json.dumps(exercise_details)
         logging.info(f"Loaded programming exercise details from {config_file}")
@@ -578,7 +578,7 @@ def test_convert_base_exercise_to_zip(exercise_path: str, course_id: int) -> Non
 
     config_file_path = os.path.join(exercise_path, config_file)
     try:
-        with open(config_file_path, 'r') as cf:
+        with open(config_file_path, 'r', encoding='utf-8') as cf:
             exercise_details: Dict[str, Any] = json.load(cf)
             exercise_details['id'] = None
             if problem_statement_content is not None:
@@ -591,7 +591,7 @@ def test_convert_base_exercise_to_zip(exercise_path: str, course_id: int) -> Non
             exercise_details['title'] = f"{variant_id} - {exercise_name}"
             exercise_details['shortName'] = __sanitize_exercise_name(exercise_name, int(variant_id))
             exercise_details["projectKey"] = f"{variant_id}{course_name}{exercise_details['shortName']}"
-        with open(config_file_path, 'w') as cf:
+        with open(config_file_path, 'w', encoding='utf-8') as cf:
             json.dump(exercise_details, cf, indent=4)
     except Exception as e:
         logging.error(f"Failed to update config file: {e}")
