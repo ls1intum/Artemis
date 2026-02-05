@@ -10,6 +10,8 @@
                 [placeholder]="searchBarPlaceholder()"
                 [(ngModel)]="searchString"
                 (keydown)="onKeyDown($event)"
+                (focusout)="onInputFocusOut()"
+                (focusin)="onInputFocusIn()"
             />
             @if (firstSuggestedStudentsPageLoading()) {
                 <p-inputicon class="pi pi-spin pi-spinner" />
@@ -29,7 +31,7 @@
                 *cdkVirtualFor="let student of suggestedStudents(); let i = index; trackBy: trackStudentById"
                 (mouseenter)="suggestionHighlightIndex.set(i)"
                 [class.active]="suggestionHighlightIndex() === i"
-                (click)="selectSuggestion(i)"
+                (mousedown)="selectSuggestion(i)"
             >
                 <span class="student-name">
                     {{ student.login + (student.name ? ' | ' + student.name : '') }}

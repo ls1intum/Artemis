@@ -50,11 +50,15 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
     hasMorePages = signal(true);
     firstSuggestedStudentsPageLoading = signal(false);
     nextSuggestedStudentsPageLoading = signal(false);
+    inputIsFocused = signal(false);
 
     constructor() {
         effect(() => {
-            if (this.suggestedStudents().length > 0) {
-                this.openPanelIfNotAlreadyOpen();
+            const panelNotAlreadyOpen = this.overlayRef === undefined;
+            const suggestedStudentsExist = this.suggestedStudents().length > 0;
+            const inputIsFocused = this.inputIsFocused();
+            if (inputIsFocused && suggestedStudentsExist && panelNotAlreadyOpen) {
+                this.openPanel();
             }
         });
 
@@ -74,7 +78,7 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
         this.isOpen.set(true);
     }
 
-    onKeyDown(event: KeyboardEvent): void {
+    onKeyDown(event: KeyboardEvent) {
         const viewport = this.viewport();
         if (!viewport) return;
 
@@ -124,6 +128,22 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
         }
     }
 
+    onInputFocusIn() {
+        this.inputIsFocused.set(true);
+        const panelNotAlreadyOpen = this.overlayRef === undefined;
+        const suggestedStudentsExist = this.suggestedStudents().length > 0;
+        if (suggestedStudentsExist && panelNotAlreadyOpen) {
+            this.openPanel();
+        }
+    }
+
+    onInputFocusOut() {
+        this.inputIsFocused.set(false);
+        this.suggestionHighlightIndex.set(undefined);
+        this.overlayRef?.dispose();
+        this.overlayRef = undefined;
+    }
+
     selectSuggestion(suggestionIndex: number): void {
         const students = this.suggestedStudents();
         const student = students[suggestionIndex];
@@ -142,9 +162,7 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
         return student.id;
     }
 
-    private openPanelIfNotAlreadyOpen(): void {
-        if (this.overlayRef) return;
-
+    private openPanel(): void {
         const searchInput = this.searchInput()?.nativeElement;
         const panelTemplate = this.panelTemplate();
         if (!searchInput || !panelTemplate) return;
