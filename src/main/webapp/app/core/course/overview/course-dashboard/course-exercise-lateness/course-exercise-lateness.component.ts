@@ -1,5 +1,5 @@
-import { Component, DestroyRef, OnInit, computed, inject, input } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, computed, inject, input } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, LineChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
@@ -26,9 +26,10 @@ const AVERAGE_GRAPH_COLOR = GraphColors.YELLOW;
     styleUrls: ['./course-exercise-lateness.component.scss'],
     imports: [TranslateDirective, HelpIconComponent, LineChartModule, ArtemisTranslatePipe],
 })
-export class CourseExerciseLatenessComponent implements OnInit {
+export class CourseExerciseLatenessComponent {
     private translateService = inject(TranslateService);
-    private destroyRef = inject(DestroyRef);
+    // Track language changes as a signal to make computed translations reactive
+    private readonly langChange = toSignal(this.translateService.onLangChange);
 
     readonly exerciseLateness = input<ExerciseLateness[]>([]);
 
@@ -42,8 +43,14 @@ export class CourseExerciseLatenessComponent implements OnInit {
     protected readonly YOUR_GRAPH_COLOR = YOUR_GRAPH_COLOR;
     protected readonly AVERAGE_GRAPH_COLOR = AVERAGE_GRAPH_COLOR;
 
-    readonly yourLatenessLabel = computed(() => this.translateService.instant('artemisApp.courseStudentDashboard.exerciseLateness.yourLatenessLabel'));
-    readonly averageLatenessLabel = computed(() => this.translateService.instant('artemisApp.courseStudentDashboard.exerciseLateness.averageLatenessLabel'));
+    readonly yourLatenessLabel = computed(() => {
+        this.langChange(); // Establish dependency on language changes
+        return this.translateService.instant('artemisApp.courseStudentDashboard.exerciseLateness.yourLatenessLabel');
+    });
+    readonly averageLatenessLabel = computed(() => {
+        this.langChange(); // Establish dependency on language changes
+        return this.translateService.instant('artemisApp.courseStudentDashboard.exerciseLateness.averageLatenessLabel');
+    });
 
     readonly ngxData = computed<NgxChartsMultiSeriesDataEntry[]>(() => {
         return [
@@ -84,8 +91,4 @@ export class CourseExerciseLatenessComponent implements OnInit {
         const data = this.ngxData();
         return data && data.length > 0 && data.some((d) => d.series.length > 0);
     });
-
-    ngOnInit(): void {
-        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
-    }
 }

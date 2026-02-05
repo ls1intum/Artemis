@@ -2,7 +2,7 @@ import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } fr
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { combineLatest } from 'rxjs';
+import { Subscription, combineLatest } from 'rxjs';
 import { filter, skip } from 'rxjs/operators';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
@@ -301,6 +301,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this._exampleSolutionInfo.set(value);
     }
 
+    // Subscription tracking for methods called on each exercise load
+    private participationUpdateListener?: Subscription;
+    private teamAssignmentUpdateListener?: Subscription;
+
     // Icons
     faBook = faBook;
     faEye = faEye;
@@ -452,6 +456,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     subscribeForNewResults() {
+        // Cancel previous subscription to avoid duplicates when exercise changes
+        this.participationUpdateListener?.unsubscribe();
+
         const participations = this._studentParticipations();
         if (this.exercise && participations?.length) {
             participations.forEach((participation) => {
@@ -459,7 +466,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             });
         }
 
-        this.participationWebsocketService
+        this.participationUpdateListener = this.participationWebsocketService
             .subscribeForParticipationChanges()
             // Skip the first event, as it is the initial state. All data should already be loaded.
             .pipe(skip(1), takeUntilDestroyed(this.destroyRef))
@@ -504,13 +511,17 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * Receives team assignment changes and applies them if they belong to this exercise
      */
     async subscribeToTeamAssignmentUpdates() {
-        (await this.teamService.teamAssignmentUpdates)
+        // Cancel previous subscription to avoid duplicates when exercise changes
+        this.teamAssignmentUpdateListener?.unsubscribe();
+
+        this.teamAssignmentUpdateListener = (await this.teamService.teamAssignmentUpdates)
             .pipe(
                 filter(({ exerciseId }: TeamAssignmentPayload) => exerciseId === this.exercise?.id),
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe((teamAssignment) => {
                 if (this.exercise && teamAssignment.studentParticipations) {
+                    this.exercise.studentAssignedTeamId = teamAssignment.teamId;
                     this._studentParticipations.set(teamAssignment.studentParticipations);
                     this.mergeResultsAndSubmissionsForParticipations();
                 }

@@ -1,4 +1,4 @@
-import { Component, HostBinding, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
@@ -49,6 +49,10 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
     selector: 'jhi-exercise-details-student-actions',
     templateUrl: './exercise-details-student-actions.component.html',
     styleUrls: ['../../course-overview/course-overview.scss'],
+    host: {
+        '[class.col]': 'equalColumns()',
+        '[class.col-auto]': 'smallColumns()',
+    },
 })
 export class ExerciseDetailsStudentActionsComponent {
     protected readonly faFolderOpen = faFolderOpen;
@@ -83,9 +87,7 @@ export class ExerciseDetailsStudentActionsComponent {
         });
     }
 
-    @HostBinding('class.col')
     readonly equalColumns = input(true);
-    @HostBinding('class.col-auto')
     readonly smallColumns = input(false);
 
     readonly exercise = input<Exercise>(undefined!);

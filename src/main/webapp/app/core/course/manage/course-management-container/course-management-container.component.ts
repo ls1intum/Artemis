@@ -118,6 +118,8 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     // Keep progressSubscription as it needs manual management due to dynamic re-subscription
     private progressSubscription?: Subscription;
+    // Keep courseSub as it needs manual management due to dynamic re-subscription on course change
+    private courseSub?: Subscription;
     // Keep eventSubscriber as EventManager.subscribe() returns Subscription, not Observable
     private eventSubscriber?: Subscription;
 
@@ -264,7 +266,8 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     private subscribeToCourseUpdates(courseId: number) {
-        this.courseManagementService.find(courseId).subscribe((courseResponse) => {
+        this.courseSub?.unsubscribe();
+        this.courseSub = this.courseManagementService.find(courseId).subscribe((courseResponse) => {
             if (courseResponse.body) {
                 this.course.set(courseResponse.body!);
             }
@@ -441,6 +444,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     ngOnDestroy() {
         super.ngOnDestroy();
+        this.courseSub?.unsubscribe();
         this.progressSubscription?.unsubscribe();
         this.eventSubscriber?.unsubscribe();
     }

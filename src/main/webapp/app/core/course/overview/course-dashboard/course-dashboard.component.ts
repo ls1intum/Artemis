@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, computed, inject, signal, viewChildren } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnDestroy, computed, inject, signal, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { Subscription, switchMap, tap } from 'rxjs';
@@ -41,7 +41,7 @@ import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/f
         FeatureOverlayComponent,
     ],
 })
-export class CourseDashboardComponent {
+export class CourseDashboardComponent implements OnDestroy {
     private courseStorageService = inject(CourseStorageService);
     private alertService = inject(AlertService);
     private route = inject(ActivatedRoute);
@@ -249,6 +249,10 @@ export class CourseDashboardComponent {
 
     handleToggle(event: CompetencyAccordionToggleEvent) {
         this._openedAccordionIndex.set(event.opened ? event.index : undefined);
+    }
+
+    ngOnDestroy() {
+        this.metricsSubscription?.unsubscribe();
     }
 
     navigateToLearningPaths() {

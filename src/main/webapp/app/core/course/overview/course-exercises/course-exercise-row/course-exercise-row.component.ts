@@ -4,9 +4,11 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/core/course/shared/entities/course.model';
+import { AccountService } from 'app/core/auth/account.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { Exercise, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { RouterLink } from '@angular/router';
@@ -40,7 +42,9 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
     ],
 })
 export class CourseExerciseRowComponent implements OnInit {
+    private accountService = inject(AccountService);
     private participationService = inject(ParticipationService);
+    private exerciseService = inject(ExerciseService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private destroyRef = inject(DestroyRef);
 
@@ -122,8 +126,24 @@ export class CourseExerciseRowComponent implements OnInit {
             this._gradedStudentParticipation.set(this.participationService.getSpecificStudentParticipation(cachedParticipations, false));
         }
         this._dueDate.set(getExerciseDueDate(exercise, this._gradedStudentParticipation()));
+
+        // Restore role checks that downstream components depend on
+        const courseForRoleCheck = course || exercise.exerciseGroup?.exam?.course;
+        exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(courseForRoleCheck);
+        exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(courseForRoleCheck);
+        exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(courseForRoleCheck);
+
         this._isAfterAssessmentDueDate.set(!exercise.assessmentDueDate || dayjs().isAfter(exercise.assessmentDueDate));
+
+        // Restore quiz-specific setup
+        if (exercise.type === ExerciseType.QUIZ) {
+            const quizExercise = exercise as QuizExercise;
+            quizExercise.isActiveQuiz = this.exerciseService.isActiveQuiz(quizExercise);
+            quizExercise.isPracticeModeAvailable = quizExercise.quizEnded;
+        }
+
         this._exerciseCategories.set(exercise.categories || []);
+        exercise.course = course;
     }
 
     getUrgentClass(date?: dayjs.Dayjs) {

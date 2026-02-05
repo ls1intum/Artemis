@@ -12,7 +12,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/shared/types/sidebar';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { forkJoin } from 'rxjs';
+import { Subscription, forkJoin } from 'rxjs';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
@@ -67,6 +67,7 @@ export class CourseExercisesComponent {
     private readonly _isShownViaLti = signal(false);
     private readonly _isMultiLaunch = signal(false);
     private readonly _multiLaunchExerciseIDs = signal<number[]>([]);
+    private courseUpdateSubscription?: Subscription;
 
     readonly course = computed(() => this._course());
     readonly courseId = computed(() => this._courseId());
@@ -114,7 +115,9 @@ export class CourseExercisesComponent {
         this.onCourseLoad();
         this.prepareSidebarData();
 
-        this.courseStorageService
+        // Cancel previous course update subscription to avoid duplicates when courseId changes
+        this.courseUpdateSubscription?.unsubscribe();
+        this.courseUpdateSubscription = this.courseStorageService
             .subscribeToCourseUpdates(this._courseId())
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((course: Course) => {
