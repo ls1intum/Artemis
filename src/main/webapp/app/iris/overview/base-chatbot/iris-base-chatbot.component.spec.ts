@@ -389,7 +389,7 @@ describe('IrisBaseChatbotComponent', () => {
 
     it('should adjust textarea rows and call adjustChatBodyHeight', () => {
         // The textarea is only rendered when userAccepted is true
-        component.userAccepted.set(true);
+        component.userAccepted.set(LLMSelectionDecision.CLOUD_AI);
         fixture.detectChanges();
 
         const textarea = fixture.nativeElement.querySelector('textarea');
@@ -921,7 +921,7 @@ describe('IrisBaseChatbotComponent', () => {
 
     describe('adjustTextareaRows', () => {
         it('should reset height and return early when textarea is empty', () => {
-            component.userAccepted.set(true);
+            component.userAccepted.set(LLMSelectionDecision.CLOUD_AI);
             fixture.detectChanges();
 
             const textarea = fixture.nativeElement.querySelector('textarea');
@@ -935,7 +935,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should reset height and return early when textarea has only whitespace', () => {
-            component.userAccepted.set(true);
+            component.userAccepted.set(LLMSelectionDecision.CLOUD_AI);
             fixture.detectChanges();
 
             const textarea = fixture.nativeElement.querySelector('textarea');

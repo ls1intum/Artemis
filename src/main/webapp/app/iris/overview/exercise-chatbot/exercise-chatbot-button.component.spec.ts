@@ -35,6 +35,7 @@ describe('ExerciseChatbotButtonComponent', () => {
     let mockOverlay: Overlay;
     let mockActivatedRoute: ActivatedRoute;
     let mockDialogClose: any;
+    let mockDialogAfterClosed: Subject<void>;
     let mockParamsSubject: Subject<any>;
     let mockQueryParamsSubject: Subject<any>;
     let accountService: AccountService;
@@ -58,10 +59,11 @@ describe('ExerciseChatbotButtonComponent', () => {
         } as unknown as ActivatedRoute;
 
         mockDialogClose = vi.fn();
+        mockDialogAfterClosed = new Subject<void>();
 
         mockDialog = {
             open: vi.fn().mockReturnValue({
-                afterClosed: vi.fn().mockReturnValue(of(undefined)),
+                afterClosed: vi.fn().mockReturnValue(mockDialogAfterClosed.asObservable()),
                 close: mockDialogClose,
             }),
             closeAll: vi.fn(),
