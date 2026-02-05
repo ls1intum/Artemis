@@ -35,13 +35,13 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
     header = computed<string>(() => this.computeHeader());
     searchBarPlaceholder = computed<string>(() => this.computeSearchBarPlaceholder());
     searchString = signal<string>('');
-    suggestedStudents = signal<TutorialGroupRegisteredStudentDTO[]>([]);
     selectedStudents = signal<TutorialGroupRegisteredStudentDTO[]>([]);
+    suggestedStudents = signal<TutorialGroupRegisteredStudentDTO[]>([]);
     suggestionHighlightIndex = signal<number | undefined>(undefined);
-    currentPage = signal(0);
+    nextSuggestedStudentsPageIndex = signal(0);
     hasMorePages = signal(true);
-    firstPageLoading = signal(false);
-    nextPageLoading = signal(false);
+    firstSuggestedStudentsPageLoading = signal(false);
+    nextSuggestedStudentsPageLoading = signal(false);
 
     constructor() {
         effect(() => {
@@ -51,9 +51,8 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
         });
 
         effect(() => {
-            const query = this.searchString().trim();
-            if (!query) return;
-
+            const trimmedSearchString = this.searchString().trim();
+            if (!trimmedSearchString) return;
             this.loadFirstPage();
         });
     }
@@ -127,12 +126,7 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
         );
 
         this.searchString.set('');
-        this.suggestionHighlightIndex.set(undefined);
-        this.suggestedStudents.set([]);
-
-        this.overlayRef?.dispose();
-        this.overlayRef = undefined;
-
+        this.resetSuggestionPanel();
         this.searchInput()?.nativeElement.focus();
     }
 
@@ -192,37 +186,43 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
     }
 
     private async loadFirstPage(): Promise<void> {
-        this.currentPage.set(0);
-        this.hasMorePages.set(true);
-        this.suggestedStudents.set([]);
+        this.resetSuggestionPanel();
 
-        this.firstPageLoading.set(true);
+        this.firstSuggestedStudentsPageLoading.set(true);
 
         const page = await fetchPage(0);
 
         this.suggestedStudents.set(page);
-        this.currentPage.set(1);
-
+        this.nextSuggestedStudentsPageIndex.set(1);
         this.hasMorePages.set(page.length === PAGE_SIZE);
 
-        this.firstPageLoading.set(false);
+        this.firstSuggestedStudentsPageLoading.set(false);
     }
 
     private async loadNextPage(): Promise<void> {
-        if (this.nextPageLoading()) return;
+        if (this.nextSuggestedStudentsPageLoading()) return;
         if (!this.hasMorePages()) return;
 
-        this.nextPageLoading.set(true);
+        this.nextSuggestedStudentsPageLoading.set(true);
 
-        const pageIndex = this.currentPage();
+        const pageIndex = this.nextSuggestedStudentsPageIndex();
         const page = await fetchPage(pageIndex);
 
         this.suggestedStudents.update((current) => [...current, ...page]);
-        this.currentPage.set(pageIndex + 1);
+        this.nextSuggestedStudentsPageIndex.update((index) => index + 1);
 
         this.hasMorePages.set(page.length === PAGE_SIZE);
 
-        this.nextPageLoading.set(false);
+        this.nextSuggestedStudentsPageLoading.set(false);
+    }
+
+    private resetSuggestionPanel() {
+        this.suggestedStudents.set([]);
+        this.suggestionHighlightIndex.set(undefined);
+        this.nextSuggestedStudentsPageIndex.set(0);
+        this.hasMorePages.set(true);
+        this.overlayRef?.dispose();
+        this.overlayRef = undefined;
     }
 
     private computeHeader(): string {
