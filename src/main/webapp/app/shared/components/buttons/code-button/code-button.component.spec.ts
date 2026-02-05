@@ -27,7 +27,7 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PROFILE_THEIA } from '../../../../app.constants';
-import { expectedProfileInfo } from 'app/core/layouts/profiles/shared/profile-for-tests.constants';
+import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
 
 describe('CodeButtonComponent', () => {
     setupTestBed({ zoneless: true });
@@ -288,7 +288,7 @@ describe('CodeButtonComponent', () => {
         fixture.componentRef.setInput('participations', []);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(component.isTeamParticipation()).toBeFalsy();
+        expect(component.isTeamParticipation()).toBe(false);
         expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.solution.git');
     });
 
@@ -296,9 +296,9 @@ describe('CodeButtonComponent', () => {
         fixture.detectChanges();
         vi.useFakeTimers();
         component.onCopyFinished(true);
-        expect(component.wasCopied()).toBeTruthy();
+        expect(component.wasCopied()).toBe(true);
         vi.advanceTimersByTime(3000);
-        expect(component.wasCopied()).toBeFalsy();
+        expect(component.wasCopied()).toBe(false);
         vi.useRealTimers();
     });
 
@@ -306,7 +306,7 @@ describe('CodeButtonComponent', () => {
         fixture.detectChanges();
         component.onCopyFinished(false);
         fixture.detectChanges();
-        expect(component.wasCopied()).toBeFalsy();
+        expect(component.wasCopied()).toBe(false);
     });
 
     it('should fetch and store ssh preference', () => {
@@ -319,7 +319,7 @@ describe('CodeButtonComponent', () => {
 
         fixture.changeDetectorRef.detectChanges();
 
-        expect(component.useSsh()).toBeFalsy();
+        expect(component.useSsh()).toBe(false);
 
         fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
         fixture.detectChanges();
@@ -328,20 +328,20 @@ describe('CodeButtonComponent', () => {
         expect(useSSHButton).not.toBeNull();
         useSSHButton.nativeElement.click();
         expect(localStorageMock.store).toHaveBeenNthCalledWith(2, 'code-button-state', 'ssh');
-        expect(component.useSsh()).toBeTruthy();
+        expect(component.useSsh()).toBe(true);
 
         const useHTTPSButton = fixture.debugElement.query(By.css('#useHTTPSButton'));
         expect(useHTTPSButton).not.toBeNull();
         useHTTPSButton.nativeElement.click();
         expect(localStorageMock.store).toHaveBeenNthCalledWith(3, 'code-button-state', 'password');
-        expect(component.useSsh()).toBeFalsy();
+        expect(component.useSsh()).toBe(false);
 
         const useHTTPSWithTokenButton = fixture.debugElement.query(By.css('#useHTTPSWithTokenButton'));
         expect(useHTTPSWithTokenButton).not.toBeNull();
         useHTTPSWithTokenButton.nativeElement.click();
         expect(localStorageMock.store).toHaveBeenNthCalledWith(4, 'code-button-state', 'token');
-        expect(component.useSsh()).toBeFalsy();
-        expect(component.useToken()).toBeTruthy();
+        expect(component.useSsh()).toBe(false);
+        expect(component.useToken()).toBe(true);
     });
 
     it.each([

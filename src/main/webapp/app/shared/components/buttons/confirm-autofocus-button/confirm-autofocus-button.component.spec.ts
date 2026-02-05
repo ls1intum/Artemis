@@ -32,11 +32,11 @@ describe('ConfirmAutofocusButtonComponent', () => {
 
     describe('default values', () => {
         it('should have default disabled as false', () => {
-            expect(comp.disabled()).toBeFalsy();
+            expect(comp.disabled()).toBe(false);
         });
 
         it('should have default isLoading as false', () => {
-            expect(comp.isLoading()).toBeFalsy();
+            expect(comp.isLoading()).toBe(false);
         });
 
         it('should have default btnType as PRIMARY', () => {
@@ -104,7 +104,7 @@ describe('ConfirmAutofocusButtonComponent', () => {
 
             expect(openSpy).toHaveBeenCalledOnce();
             expect(mockModalRef.componentInstance!.text).toBe('Plain text content');
-            expect(mockModalRef.componentInstance!.textIsMarkdown).toBeFalsy();
+            expect(mockModalRef.componentInstance!.textIsMarkdown).toBe(false);
             expect(mockModalRef.componentInstance!.title).toBe('Test Title');
         });
 
@@ -118,7 +118,7 @@ describe('ConfirmAutofocusButtonComponent', () => {
             comp.onOpenConfirmationModal();
 
             expect(openSpy).toHaveBeenCalledOnce();
-            expect(mockModalRef.componentInstance!.textIsMarkdown).toBeTruthy();
+            expect(mockModalRef.componentInstance!.textIsMarkdown).toBe(true);
         });
 
         it('should set translateText to true when specified', () => {
@@ -128,7 +128,7 @@ describe('ConfirmAutofocusButtonComponent', () => {
 
             comp.onOpenConfirmationModal();
 
-            expect(mockModalRef.componentInstance!.translateText).toBeTruthy();
+            expect(mockModalRef.componentInstance!.translateText).toBe(true);
         });
 
         it('should set translateText to false when not specified', () => {
@@ -138,7 +138,7 @@ describe('ConfirmAutofocusButtonComponent', () => {
 
             comp.onOpenConfirmationModal();
 
-            expect(mockModalRef.componentInstance!.translateText).toBeFalsy();
+            expect(mockModalRef.componentInstance!.translateText).toBe(false);
         });
 
         it('should pass titleTranslationParams to modal', () => {

@@ -21,8 +21,8 @@ export class MockAccountService implements IAccountService {
     hasAuthority = (authority: string) => Promise.resolve(true);
     isAtLeastTutor = () => this.hasAnyAuthorityDirect(['ROLE_TUTOR']);
     isAtLeastTutorInCourse = (course: Course) => true;
-    isAtLeastEditorInCourse = (course?: Course) => course?.isAtLeastEditor!;
-    isAtLeastInstructorInCourse = (course?: Course) => course?.isAtLeastInstructor!;
+    isAtLeastEditorInCourse = (course?: Course) => course?.isAtLeastEditor ?? false;
+    isAtLeastInstructorInCourse = (course?: Course) => course?.isAtLeastInstructor ?? false;
     isAtLeastTutorForExercise = (exercise?: Exercise) => true;
     isAtLeastEditorForExercise = (exercise?: Exercise) => true;
     isAtLeastInstructorForExercise = (exercise?: Exercise) => true;

@@ -53,10 +53,10 @@ describe('JhiCopyIconButtonComponent', () => {
         const copyButton = fixture.debugElement.nativeElement.querySelector('#copyButton');
         copyButton.click();
 
-        expect(component.wasCopied()).toBeTruthy();
+        expect(component.wasCopied()).toBe(true);
         vi.advanceTimersByTime(3000);
         fixture.detectChanges();
-        expect(component.wasCopied()).toBeFalsy();
+        expect(component.wasCopied()).toBe(false);
         vi.useRealTimers();
     });
 });

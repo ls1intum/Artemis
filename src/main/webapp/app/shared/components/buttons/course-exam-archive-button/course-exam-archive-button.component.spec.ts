@@ -113,13 +113,13 @@ describe('Course Exam Archive Button Component', () => {
         it('should not display archiving and cleanup controls', () => {
             comp.ngOnInit();
 
-            expect(comp.canArchive()).toBeFalsy();
-            expect(comp.canCleanup()).toBeFalsy();
-            expect(comp.canDownloadArchive()).toBeFalsy();
+            expect(comp.canArchive()).toBe(false);
+            expect(comp.canCleanup()).toBe(false);
+            expect(comp.canDownloadArchive()).toBe(false);
         });
     });
 
-    describe('onInit for course that is over', () => {
+    describe('onInit for course that is over but user is not instructor', () => {
         const course = { id: 123, endDate: dayjs().subtract(5, 'minutes') };
 
         beforeEach(() => {
@@ -133,9 +133,9 @@ describe('Course Exam Archive Button Component', () => {
 
             comp.ngOnInit();
 
-            expect(comp.canArchive()).toBeFalsy();
-            expect(comp.canCleanup()).toBeFalsy();
-            expect(comp.canDownloadArchive()).toBeFalsy();
+            expect(comp.canArchive()).toBe(false);
+            expect(comp.canCleanup()).toBe(false);
+            expect(comp.canDownloadArchive()).toBe(false);
         });
     });
 
@@ -151,9 +151,9 @@ describe('Course Exam Archive Button Component', () => {
         it('should not display an archive course button', () => {
             comp.ngOnInit();
 
-            expect(comp.canArchive()).toBeTruthy();
-            expect(comp.canCleanup()).toBeFalsy();
-            expect(comp.canDownloadArchive()).toBeFalsy();
+            expect(comp.canArchive()).toBe(true);
+            expect(comp.canCleanup()).toBe(false);
+            expect(comp.canDownloadArchive()).toBe(false);
         });
     });
 
@@ -172,9 +172,9 @@ describe('Course Exam Archive Button Component', () => {
         });
 
         it('should not display an archive course button', () => {
-            expect(comp.canArchive()).toBeTruthy();
-            expect(comp.canCleanup()).toBeTruthy();
-            expect(comp.canDownloadArchive()).toBeTruthy();
+            expect(comp.canArchive()).toBe(true);
+            expect(comp.canCleanup()).toBe(true);
+            expect(comp.canDownloadArchive()).toBe(true);
         });
 
         it('should cleanup archive for course', () => {
@@ -216,7 +216,7 @@ describe('Course Exam Archive Button Component', () => {
             const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED', message: '' };
             comp.handleArchiveStateChanges(archiveState);
 
-            expect(comp.isBeingArchived()).toBeFalsy();
+            expect(comp.isBeingArchived()).toBe(false);
             expect(alertServiceSpy).toHaveBeenCalledOnce();
             expect(comp.course()).toBeDefined();
         });
@@ -231,7 +231,7 @@ describe('Course Exam Archive Button Component', () => {
             const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED_WITH_WARNINGS', message: 'warning 1\nwarning 2' };
             comp.handleArchiveStateChanges(archiveState);
 
-            expect(comp.isBeingArchived()).toBeFalsy();
+            expect(comp.isBeingArchived()).toBe(false);
             expect(comp.archiveWarnings()).toEqual(archiveState.message.split('\n'));
             expect(comp.course()).toBeDefined();
         });
@@ -254,9 +254,9 @@ describe('Course Exam Archive Button Component', () => {
         });
 
         it('should display an archive and cleanup button', () => {
-            expect(comp.canArchive()).toBeTruthy();
-            expect(comp.canCleanup()).toBeTruthy();
-            expect(comp.canDownloadArchive()).toBeTruthy();
+            expect(comp.canArchive()).toBe(true);
+            expect(comp.canCleanup()).toBe(true);
+            expect(comp.canDownloadArchive()).toBe(true);
         });
 
         it('should cleanup archive for exam', () => {
@@ -268,7 +268,7 @@ describe('Course Exam Archive Button Component', () => {
             comp.cleanup();
 
             expect(cleanupStub).not.toHaveBeenCalled();
-            expect(comp.canCleanup()).toBeTruthy();
+            expect(comp.canCleanup()).toBe(true);
         });
 
         it('should download archive for exam', () => {
@@ -297,7 +297,7 @@ describe('Course Exam Archive Button Component', () => {
             const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED', message: '' };
             comp.handleArchiveStateChanges(archiveState);
 
-            expect(comp.isBeingArchived()).toBeFalsy();
+            expect(comp.isBeingArchived()).toBe(false);
             expect(alertServiceSpy).toHaveBeenCalledOnce();
             expect(comp.exam()).toBeDefined();
         });

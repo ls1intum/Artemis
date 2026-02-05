@@ -45,7 +45,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
 
     ButtonSize = ButtonSize;
     ActionType = ActionType;
-    FeatureToggle = FeatureToggle;
+    readonly FeatureToggle = FeatureToggle;
 
     // signals
     archiveMode = input<'Exam' | 'Course'>('Course');
@@ -163,6 +163,9 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
             }
         });
 
+        // NOTE: The websocket subscription is registered only once and will NOT re-register
+        // if the course/exam inputs change after initial render. This is acceptable because the
+        // archive button is rendered once per course/exam page and the inputs do not change.
         effect(() => {
             if (this.websocketRegistered) return;
 
