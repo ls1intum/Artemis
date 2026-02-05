@@ -53,7 +53,7 @@ export class DocumentationButtonComponent {
     readonly type = input.required<DocumentationType>();
 
     getTooltipForType() {
-        const typeKey = 'artemisApp.documentationLinks.' + this.type()?.toLowerCase();
+        const typeKey = 'artemisApp.documentationLinks.' + this.type().toLowerCase();
         return this.translateService.instant('artemisApp.documentationLinks.prefix') + this.translateService.instant(typeKey);
     }
 }

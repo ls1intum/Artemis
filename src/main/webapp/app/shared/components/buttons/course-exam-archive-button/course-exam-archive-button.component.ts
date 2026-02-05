@@ -192,7 +192,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
      */
     ngOnDestroy() {
         this.archiveSubscription?.unsubscribe();
-        this.dialogErrorSource.unsubscribe();
+        this.dialogErrorSource.complete();
         this.changeLangSubscription?.unsubscribe();
     }
 

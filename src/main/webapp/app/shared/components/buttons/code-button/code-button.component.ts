@@ -87,11 +87,11 @@ export class CodeButtonComponent implements OnInit {
     exercise = input<ProgrammingExercise>();
     hideLabelMobile = input<boolean>(false);
 
-    // Fields
+    // Fields (immutable after construction)
     sshEnabled = false;
     sshTemplateUrl?: string;
     versionControlUrl: string;
-    isInCourseManagement = false;
+    readonly isInCourseManagement: boolean;
     sshSettingsUrl: string;
     vcsTokenSettingsUrl: string;
     user: User;

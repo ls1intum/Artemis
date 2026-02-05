@@ -23,8 +23,8 @@ export class ConfirmAutofocusButtonComponent {
     confirmationTitle = input<string>('');
     confirmationTitleTranslationParams = input<Record<string, string>>();
     confirmationText = input<string>('');
-    translateText = input<boolean>();
-    textIsMarkdown = input<boolean>();
+    translateText = input<boolean>(false);
+    textIsMarkdown = input<boolean>(false);
     onConfirm = output<void>();
     onCancel = output<void>();
 
@@ -38,21 +38,12 @@ export class ConfirmAutofocusButtonComponent {
             size: 'lg',
             backdrop: 'static',
         });
-        if (this.textIsMarkdown() === true) {
-            modalRef.componentInstance.text = htmlForMarkdown(this.confirmationText());
-            modalRef.componentInstance.textIsMarkdown = true;
-        } else {
-            modalRef.componentInstance.text = this.confirmationText();
-            modalRef.componentInstance.textIsMarkdown = false;
-        }
+        const isMarkdown = this.textIsMarkdown();
+        modalRef.componentInstance.text = isMarkdown ? htmlForMarkdown(this.confirmationText()) : this.confirmationText();
+        modalRef.componentInstance.textIsMarkdown = isMarkdown;
         modalRef.componentInstance.title = this.confirmationTitle();
         modalRef.componentInstance.titleTranslationParams = this.confirmationTitleTranslationParams();
-        const translateText = this.translateText();
-        if (translateText !== undefined) {
-            modalRef.componentInstance.translateText = translateText;
-        } else {
-            modalRef.componentInstance.translateText = false;
-        }
+        modalRef.componentInstance.translateText = this.translateText();
         modalRef.componentInstance.contentRef = this.content();
         modalRef.result.then(
             () => {
