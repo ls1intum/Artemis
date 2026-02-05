@@ -4,6 +4,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGENT;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -164,6 +166,9 @@ public class EurekaInstanceHelper {
 
     /**
      * Checks if the given service instance is the current instance.
+     * <p>
+     * This method compares both the direct host strings and their resolved IP addresses
+     * to handle Docker environments where hostnames and IP addresses may be used interchangeably.
      *
      * @param instance the service instance to check
      * @return true if this is the current instance
@@ -172,10 +177,47 @@ public class EurekaInstanceHelper {
         if (registration.isEmpty()) {
             return false;
         }
+
+        // First check: port must match
+        if (registration.get().getPort() != instance.getPort()) {
+            return false;
+        }
+
         String ownHost = normalizeHost(registration.get().getHost());
         String instanceHost = normalizeHost(instance.getHost());
-        // Use Objects.equals for null-safe comparison (getHost() may return null)
-        return Objects.equals(ownHost, instanceHost) && registration.get().getPort() == instance.getPort();
+
+        // Direct string comparison (handles most cases)
+        if (Objects.equals(ownHost, instanceHost)) {
+            return true;
+        }
+
+        // IP resolution comparison (handles Docker hostname/IP mismatches)
+        // This is necessary when Eureka uses IP but instance uses hostname, or vice versa
+        return hostsResolveToSameIp(ownHost, instanceHost);
+    }
+
+    /**
+     * Checks if two hosts resolve to the same IP address.
+     * This handles cases where one host is a hostname and the other is an IP address,
+     * or both are different representations of the same machine.
+     *
+     * @param host1 first host (hostname or IP)
+     * @param host2 second host (hostname or IP)
+     * @return true if both hosts resolve to the same IP address
+     */
+    private boolean hostsResolveToSameIp(String host1, String host2) {
+        if (host1 == null || host2 == null) {
+            return false;
+        }
+        try {
+            InetAddress addr1 = InetAddress.getByName(host1);
+            InetAddress addr2 = InetAddress.getByName(host2);
+            return addr1.getHostAddress().equals(addr2.getHostAddress());
+        }
+        catch (UnknownHostException e) {
+            log.debug("Could not resolve hosts for comparison: {} vs {}: {}", host1, host2, e.getMessage());
+            return false;
+        }
     }
 
     /**
