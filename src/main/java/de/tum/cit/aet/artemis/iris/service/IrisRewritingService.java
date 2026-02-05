@@ -1,11 +1,9 @@
 package de.tum.cit.aet.artemis.iris.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.util.Optional;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -14,6 +12,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting.PyrisRewritingPipelineExecutionDTO;
@@ -27,7 +26,7 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
  */
 @Lazy
 @Service
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 public class IrisRewritingService {
 
     private final PyrisPipelineService pyrisPipelineService;
@@ -64,6 +63,7 @@ public class IrisRewritingService {
         // @formatter:off
         pyrisPipelineService.executePipeline(
             "rewriting",
+            user.getSelectedLLMUsage(),
             variant.name().toLowerCase(),
             Optional.empty(),
             pyrisJobService.createTokenForJob(token -> new RewritingJob(token, course.getId(), user.getId())),

@@ -1,0 +1,192 @@
+{
+    "description": "Mapping between source code modules and e2e test folders. Used to determine which e2e tests to run based on changed files.",
+    "allTestPaths": [
+        "e2e/atlas/",
+        "e2e/course/",
+        "e2e/exam/",
+        "e2e/exercise/",
+        "e2e/lecture/",
+        "e2e/Login.spec.ts",
+        "e2e/Logout.spec.ts",
+        "e2e/SystemHealth.spec.ts"
+    ],
+    "mappings": {
+        "atlas": {
+            "sourcePaths": [
+                "src/main/java/de/tum/cit/aet/artemis/atlas/",
+                "src/main/webapp/app/atlas/"
+            ],
+            "testPaths": [
+                "e2e/atlas/"
+            ]
+        },
+        "exam": {
+            "sourcePaths": [
+                "src/main/java/de/tum/cit/aet/artemis/exam/",
+                "src/main/webapp/app/exam/"
+            ],
+            "testPaths": [
+                "e2e/exam/"
+            ]
+        },
+        "lecture": {
+            "sourcePaths": [
+                "src/main/java/de/tum/cit/aet/artemis/lecture/",
+                "src/main/webapp/app/lecture/"
+            ],
+            "testPaths": [
+                "e2e/lecture/"
+            ]
+        },
+        "quiz": {
+            "sourcePaths": [
+                "src/main/java/de/tum/cit/aet/artemis/quiz/",
+                "src/main/webapp/app/quiz/"
+            ],
+            "testPaths": [
+                "e2e/exercise/quiz-exercise/"
+            ]
+        },
+        "programming": {
+            "sourcePaths": [
+                "src/main/java/de/tum/cit/aet/artemis/programming/",
+                "src/main/webapp/app/programming/"
+            ],
+            "testPaths": [
+                "e2e/exercise/programming/"
+            ]
+        },
+        "modeling": {
+            "sourcePaths": [
+                "src/main/java/de/tum/cit/aet/artemis/modeling/",
+                "src/main/webapp/app/modeling/"
+            ],
+            "testPaths": [
+                "e2e/exercise/modeling/"
+            ]
+        },
+        "fileupload": {
+            "sourcePaths": [
+                "src/main/java/de/tum/cit/aet/artemis/fileupload/",
+                "src/main/webapp/app/fileupload/"
+            ],
+            "testPaths": [
+                "e2e/exercise/file-upload/"
+            ]
+        },
+        "text": {
+            "sourcePaths": [
+                "src/main/java/de/tum/cit/aet/artemis/text/",
+                "src/main/webapp/app/text/"
+            ],
+            "testPaths": [
+                "e2e/exercise/text/"
+            ]
+        },
+        "communication": {
+            "sourcePaths": [
+                "src/main/java/de/tum/cit/aet/artemis/communication/",
+                "src/main/webapp/app/communication/"
+            ],
+            "testPaths": [
+                "e2e/course/CourseMessages.spec.ts"
+            ]
+        },
+        "exercise": {
+            "sourcePaths": [
+                "src/main/java/de/tum/cit/aet/artemis/exercise/",
+                "src/main/webapp/app/exercise/"
+            ],
+            "testPaths": [
+                "e2e/exercise/ExerciseImport.spec.ts",
+                "e2e/course/CourseExercise.spec.ts"
+            ]
+        },
+        "assessment": {
+            "sourcePaths": [
+                "src/main/java/de/tum/cit/aet/artemis/assessment/",
+                "src/main/webapp/app/assessment/"
+            ],
+            "testPaths": [
+                "e2e/exercise/file-upload/FileUploadExerciseAssessment.spec.ts",
+                "e2e/exercise/modeling/ModelingExerciseAssessment.spec.ts",
+                "e2e/exercise/programming/ProgrammingExerciseAssessment.spec.ts",
+                "e2e/exercise/quiz-exercise/QuizExerciseAssessment.spec.ts",
+                "e2e/exercise/text/TextExerciseAssessment.spec.ts",
+                "e2e/exam/ExamAssessment.spec.ts"
+            ]
+        },
+        "core": {
+            "sourcePaths": [
+                "src/main/java/de/tum/cit/aet/artemis/core/",
+                "src/main/webapp/app/core/"
+            ],
+            "testPaths": [
+                "e2e/Login.spec.ts",
+                "e2e/Logout.spec.ts",
+                "e2e/SystemHealth.spec.ts",
+                "e2e/course/CourseManagement.spec.ts"
+            ]
+        },
+        "buildagent": {
+            "sourcePaths": [
+                "src/main/java/de/tum/cit/aet/artemis/buildagent/",
+                "src/main/webapp/app/buildagent/"
+            ],
+            "testPaths": [
+                "e2e/exercise/programming/"
+            ]
+        },
+        "plagiarism": {
+            "sourcePaths": [
+                "src/main/java/de/tum/cit/aet/artemis/plagiarism/",
+                "src/main/webapp/app/plagiarism/"
+            ],
+            "testPaths": []
+        },
+        "tutorialgroup": {
+            "sourcePaths": [
+                "src/main/java/de/tum/cit/aet/artemis/tutorialgroup/",
+                "src/main/webapp/app/tutorialgroup/"
+            ],
+            "testPaths": []
+        },
+        "lti": {
+            "sourcePaths": [
+                "src/main/java/de/tum/cit/aet/artemis/lti/",
+                "src/main/webapp/app/lti/"
+            ],
+            "testPaths": []
+        },
+        "iris": {
+            "sourcePaths": [
+                "src/main/java/de/tum/cit/aet/artemis/iris/",
+                "src/main/webapp/app/iris/"
+            ],
+            "testPaths": []
+        },
+        "athena": {
+            "sourcePaths": [
+                "src/main/java/de/tum/cit/aet/artemis/athena/"
+            ],
+            "testPaths": []
+        },
+        "shared": {
+            "sourcePaths": [
+                "src/main/webapp/app/shared/"
+            ],
+            "testPaths": []
+        }
+    },
+    "alwaysRunTests": [
+        "e2e/Login.spec.ts",
+        "e2e/Logout.spec.ts",
+        "e2e/SystemHealth.spec.ts"
+    ],
+    "runAllTestsPatterns": [
+        "src/main/resources/config/",
+        "docker/",
+        "build.gradle",
+        "angular.json"
+    ]
+}

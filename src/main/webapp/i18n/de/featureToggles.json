@@ -35,10 +35,6 @@
                     "name": "Athena (KI-Bewertung)",
                     "description": "Aktiviert Athena ML-basierte automatisierte Feedback-Vorschläge für Text- und Programmieraufgaben."
                 },
-                "lti": {
-                    "name": "LTI-Integration",
-                    "description": "Aktiviert Learning Tools Interoperability (LTI) für die Integration mit externen Lernmanagementsystemen."
-                },
                 "apollon": {
                     "name": "Apollon (Modellierung)",
                     "description": "Aktiviert den Apollon-UML-Modellierungseditor zum Erstellen und Bearbeiten von Diagrammen in Modellierungsaufgaben."
@@ -116,6 +112,10 @@
                 "sharing": {
                     "name": "Aufgaben-Sharing",
                     "description": "Aktiviert das Teilen und Importieren von Programmieraufgaben zwischen Kursen und Institutionen."
+                },
+                "lti": {
+                    "name": "LTI-Integration",
+                    "description": "Aktiviert Learning Tools Interoperability (LTI) für die Integration mit externen Lernmanagementsystemen."
                 },
                 "passkey": {
                     "name": "Passkey-Authentifizierung",

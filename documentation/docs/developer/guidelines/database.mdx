@@ -3,6 +3,102 @@ import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 
 # Database
 
+<Callout variant={CalloutVariant.info}>
+  <strong>Important:</strong> For REST API design and Data Transfer Objects (DTOs), see the <a href="/developer/guidelines/rest-api">REST API Guidelines</a>. Entities must never be used directly in REST API request or response bodies.
+</Callout>
+
+## Structural Migration with Liquibase
+
+To prevent accidental irreversible database modifications, we use [Liquibase](https://docs.liquibase.com/home.html) to prepare changes when developing that can be confirmed in the review process.
+
+### Gradle Commands
+
+We offer two Gradle commands with Liquibase:
+
+- `liquibaseClearChecksums`: Use this whenever Liquibase detects inconsistencies between the database changelog and the XML changelog
+- `liquibaseDiffChangeLog`: Generates a new changelog from the current database state. The command appears to not work for all operating systems, and you might have to add a changelog manually.
+
+### Changelog
+
+The changelog manifest lies in `src/main/resources/config/liquibase/master.xml`, which imports all single changelog files. To create a new change, you have to do the following:
+
+1. Get the current time in the format `YYYYMMDDHHmmss`.
+2. Create a new file in `/changelog` named `<formatted-time>_changelog.xml` and include this file at the bottom of the `master.xml` as every other file.
+3. Add your changelog in your newly created file. Take other changes and the Liquibase documentation as inspiration.
+
+#### MySQL and PostgreSQL Compatibility
+
+We support both PostgreSQL and MySQL databases. In case you introduce database changes, carefully check the results of the continuous integration tests run against the different databases to make sure the migration works on both of them.
+
+<Callout variant={CalloutVariant.warning}>
+  Especially for manually written SQL statements (<code>&lt;sql&gt;…&lt;/sql&gt;</code> blocks in the changelog) you have to make sure they are compatible with both database types.
+</Callout>
+
+Only in special cases where you cannot avoid different SQL statements depending on the database type, you can use preconditions as part of your changeset to apply it only to one database type.
+
+<Callout variant={CalloutVariant.info}>
+  Only use those preconditions in exceptional cases where it definitely cannot be avoided. They increase the risk of migrations that are inconsistent between the two different database types.
+</Callout>
+
+```xml title="Pattern for database changes with preconditions depending on the database type"
+<databaseChangelog>
+    <!-- … -->
+
+    <changeSet id="00000000000000m" author="you">
+        <!-- Only runs for MySQL -->
+        <preConditions onFail="CONTINUE">
+            <dbms type="mysql"/>
+        </preConditions>
+
+        <!-- your <sql> and other Liquibase changes here -->
+    </changeSet>
+
+    <changeSet id="00000000000000p" author="you">
+        <!-- Only runs for PostgreSQL -->
+        <preConditions onFail="CONTINUE">
+            <dbms type="postgresql"/>
+        </preConditions>
+
+        <!-- your <sql> and other Liquibase changes here -->
+    </changeSet>
+
+    <!-- … -->
+</databaseChangelog>
+```
+
+#### DATETIME Data Type
+
+The recommended default data type for storing values that involve date and time, such as creation dates and timestamps, is `datetime(3)`. Liquibase will translate this to `datetime(3)` for MySQL and `timestamp(3)` for PostgreSQL. This choice ensures consistent support for milliseconds across both MySQL and PostgreSQL databases.
+
+### Development Best Practices
+
+- All executed entries are saved in the table `databasechangelog`. If you delete something, it gets executed again.
+- Test your changes locally first, and only commit changes you are confident that work.
+- Before deploying any database changes to a test server, ask for official permission from the project lead. If the changes don't get approved, manual rollbacks can be necessary, which are avoidable.
+- Make sure to add your name to the `changeSet` in your file as well as your formatted time as the `id`. Refer to other changes for further help.
+
+## Data Migration with Java
+
+<Callout variant={CalloutVariant.warning}>
+  This type of migration should only be used if the logic cannot be implemented in SQL as part of a Liquibase changelog. Java migrations are <strong>significantly slower</strong> since they need to load and convert data from the DBMS into Java objects, apply the changes, and then write the new data back to the database.
+</Callout>
+
+### Changelog
+
+The changelog can be found in `src/main/java/config/migration/MigrationRegistry.java`. To create a new change, follow these steps:
+
+1. Get the current time in the format `YYYYMMDD_HHmmss`.
+2. Create a new file in `/entries` named `MigrationEntry<formatted-time>.java` containing a class extending `MigrationEntry`.
+3. Implement the required methods in your class and follow the JavaDoc.
+4. Add the class to the `migrationEntryMap` attribute in the `MigrationRegistry.java` together with the next Integer key inside the constructor.
+
+### Development Best Practices for Java Migrations
+
+- All executed entries are saved in the table `migration_changelog`. If you delete entries, they get executed again.
+- Test your changes locally first, and only commit changes you are confident that work.
+- Before deploying any database changes to a test server, ask for official permission from the project lead. If the changes don't get approved, manual rollbacks can be necessary, which are avoidable.
+- If queries fail due to the authorization object being null, call `SecurityUtils.setAuthorizationObject()` beforehand to set a dummy object.
+
 ## General Guidelines
 
 ### Weekly Database Meeting
@@ -177,6 +273,73 @@ If the source entity is refreshed, it cascades the refresh to the target of the 
 
 <Callout variant={CalloutVariant.info}>
   This cascade type is not used in Artemis yet.
+</Callout>
+
+## Saving and Deleting Entities with Cascade and OrphanRemoval
+
+When using `CascadeType.REMOVE` and `orphanRemoval = true` on `@OneToMany` relationships, special care must be taken
+to properly save new child entities and delete parent entities, especially when Hibernate L2 cache is enabled.
+
+### Saving New Child Entities
+
+When adding a new child entity to a parent's collection with `CascadeType.REMOVE` and `orphanRemoval = true`:
+
+1. Set the child's reference to the parent: `child.setParent(parent)`
+2. Save the child entity via its repository: `childRepository.save(child)`
+3. Add to the parent's collection for in-memory consistency: `parent.addChild(child)`
+
+The foreign key is on the child side, so the parent does NOT need to be saved again after adding a child (assuming the parent is managed in the current persistence context; otherwise merge/save it).
+
+```java
+// Example: Adding a submission to a participation
+submission.setParticipation(participation);
+submission = submissionRepository.save(submission);
+participation.addSubmission(submission);  // For in-memory consistency only
+```
+
+### Deleting Parent Entities with Cached Collections
+
+When explicitly deleting child entities before deleting a parent entity, you must reload the parent
+with its collection to refresh the L2 cache. Without this step, Hibernate's cascade mechanism will
+load stale references from the L2 cache and throw `EntityNotFoundException`.
+
+**The Problem:**
+
+1. You explicitly delete child entities (e.g., via `childRepository.deleteById()`)
+2. The L2 cache still contains the old collection with references to deleted children
+3. When you delete the parent, cascade tries to process the collection
+4. Hibernate loads the collection from L2 cache (stale data)
+5. `EntityNotFoundException` is thrown for already-deleted children
+
+**The Solution:**
+
+After deleting children explicitly, reload the parent entity with its collection before deleting:
+
+```java
+// Example: Deleting a participation with its submissions
+public void delete(long participationId) {
+    // Step 1: Delete children explicitly (for special cleanup like build logs)
+    deleteSubmissionsOfParticipation(participationId);
+
+    // Step 2: Reload parent WITH the collection to refresh L2 cache
+    // The collection will now be empty since children were deleted
+    var participation = participationRepository.findByIdWithSubmissionsElseThrow(participationId);
+
+    // Step 3: Delete the parent - cascade has nothing to do
+    participationRepository.delete(participation);
+}
+```
+
+This pattern is used in several places in Artemis:
+
+* `ParticipationDeletionService.delete()` - reloads participation with submissions
+* `ExampleParticipationService.deleteById()` - reloads example participation with submissions
+* `ExerciseDeletionService` - reloads exercise with participations
+* `ProgrammingExerciseDeletionService` - reloads exercise with participations
+
+<Callout variant={CalloutVariant.danger}>
+  Do NOT skip the reload step when using <code>CascadeType.REMOVE</code> with L2 cache. The stale cache
+  references will cause <code>EntityNotFoundException</code> during cascade processing.
 </Callout>
 
 ## Dynamic Fetching

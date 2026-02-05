@@ -68,6 +68,7 @@ describe('AdminContainerComponent', () => {
         useExternal: false,
         versionControlName: '',
         versionControlUrl: '',
+        localLLMDeploymentEnabled: false,
     };
 
     beforeEach(async () => {
@@ -135,8 +136,8 @@ describe('AdminContainerComponent', () => {
     it('should detect feature flags from profile info', () => {
         const profileInfoWithFeatures: ProfileInfo = {
             ...mockProfileInfo,
-            activeProfiles: ['localci', 'lti'],
-            activeModuleFeatures: ['atlas', 'exam'],
+            activeProfiles: ['localci'],
+            activeModuleFeatures: ['atlas', 'exam', 'lti'],
         };
 
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoWithFeatures);

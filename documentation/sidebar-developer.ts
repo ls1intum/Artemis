@@ -22,7 +22,7 @@ const sidebars: SidebarsConfig = {
                 {
                     type: 'category',
                     label: 'Server Guidelines',
-                    items: ['guidelines/server-development', 'guidelines/server-tests', 'guidelines/database', 'guidelines/performance', 'guidelines/criteria-builder'],
+                    items: ['guidelines/server-development', 'guidelines/rest-api', 'guidelines/server-tests', 'guidelines/database', 'guidelines/performance', 'guidelines/criteria-builder'],
                 },
                 {
                     type: 'category',
@@ -38,7 +38,6 @@ const sidebars: SidebarsConfig = {
         'builds-and-dependencies',
         'e2e-testing-playwright',
         'spring-ai',
-        'jenkins-localvc',
         'aeolus',
         'openapi',
         'docker-compose',

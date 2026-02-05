@@ -1,18 +1,4 @@
-import {
-    ChangeDetectionStrategy,
-    ChangeDetectorRef,
-    Component,
-    EventEmitter,
-    HostListener,
-    Input,
-    OnChanges,
-    Output,
-    SimpleChanges,
-    ViewChild,
-    inject,
-    input,
-    output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, ViewChild, effect, inject, input, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -66,7 +52,7 @@ export enum CollapsableCodeEditorElement {
         KeysPipe,
     ],
 })
-export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeactivate {
+export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
     private fileService = inject(CodeEditorFileService);
@@ -76,65 +62,40 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     readonly EditorState = EditorState;
     readonly CollapsableCodeEditorElement = CollapsableCodeEditorElement;
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
-
     @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
     @ViewChild(CodeEditorActionsComponent, { static: false }) actions: CodeEditorActionsComponent;
     @ViewChild(CodeEditorBuildOutputComponent, { static: false }) buildOutput: CodeEditorBuildOutputComponent;
     @ViewChild(CodeEditorMonacoComponent, { static: false }) monacoEditor: CodeEditorMonacoComponent;
     @ViewChild(CodeEditorInstructionsComponent, { static: false }) instructions: CodeEditorInstructionsComponent;
 
-    @Input()
-    editable = true;
-    @Input()
-    forRepositoryView = false;
-    @Input()
-    showInlineFeedback = true;
-    @Input()
-    buildable = true;
-    @Input()
-    showEditorInstructions = true;
-    @Input()
-    isTutorAssessment = false;
-    @Input()
-    highlightFileChanges = false;
-    @Input()
-    allowHiddenFiles = false;
-    @Input()
-    feedbackSuggestions: Feedback[] = [];
-    @Input()
-    readOnlyManualFeedback = false;
-    @Input()
-    highlightDifferences: boolean;
-    @Input()
-    disableAutoSave = false;
-
-    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
-
+    editable = input<boolean>(true);
+    forRepositoryView = input<boolean>(false);
+    showInlineFeedback = input<boolean>(true);
+    buildable = input<boolean>(true);
+    showEditorInstructions = input<boolean>(true);
+    isTutorAssessment = input<boolean>(false);
+    highlightFileChanges = input<boolean>(false);
+    allowHiddenFiles = input<boolean>(false);
+    feedbackSuggestions = input<Feedback[]>([]);
+    readOnlyManualFeedback = input<boolean>(false);
+    highlightDifferences = input<boolean>(false);
+    disableAutoSave = input<boolean>(false);
+    consistencyIssues = input<ConsistencyIssue[]>([]);
     isProblemStatementVisible = input<boolean>(true);
-
-    @Output()
-    onCommitStateChange = new EventEmitter<CommitState>();
-    @Output()
-    onFileChanged = new EventEmitter<void>();
-    @Output()
-    onUpdateFeedback = new EventEmitter<Feedback[]>();
-    @Output()
-    onFileLoad = new EventEmitter<string>();
-    @Output()
-    onAcceptSuggestion = new EventEmitter<Feedback>();
-    @Output()
-    onDiscardSuggestion = new EventEmitter<Feedback>();
-    @Input()
-    course?: Course;
-
-    onEditorLoaded = output<void>();
-
+    course = input<Course | undefined>();
     selectedRepository = input<RepositoryType>();
+
+    onCommitStateChange = output<CommitState>();
+    onFileChanged = output<void>();
+    onUpdateFeedback = output<Feedback[]>();
+    onFileLoad = output<string>();
+    onAcceptSuggestion = output<Feedback>();
+    onDiscardSuggestion = output<Feedback>();
+    onEditorLoaded = output<void>();
 
     /** Work in Progress: temporary properties needed to get first prototype working */
 
-    @Input()
-    participation: Participation;
+    participation = input.required<Participation>();
 
     /** END WIP */
 
@@ -156,7 +117,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     }
 
     shouldShowProblemStatement(): boolean {
-        return this.selectedFile === this.problemStatementIdentifier && this.showEditorInstructions && this.isProblemStatementVisible();
+        return this.selectedFile === this.problemStatementIdentifier && this.showEditorInstructions() && this.isProblemStatementVisible();
     }
 
     /** Code Editor State Variables **/
@@ -168,13 +129,10 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
 
     constructor() {
         this.initializeProperties();
-    }
 
-    ngOnChanges(changes: SimpleChanges) {
-        // Update file badges when feedback suggestions change
-        if (changes.feedbackSuggestions) {
+        effect(() => {
             this.updateFileBadges();
-        }
+        });
     }
 
     get unsavedFiles() {
@@ -204,19 +162,23 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     }
 
     /**
-     * Update the file badges for the code editor (currently only feedback suggestions)
+     * Update the file badges for the code editor (includes both ungraded feedback suggestions and graded feedbacks)
      */
     updateFileBadges() {
         this.fileBadges = {};
-        // Create badges for feedback suggestions
-        // Get file paths from feedback suggestions:
-        const filePathsWithSuggestions = this.feedbackSuggestions
-            .map((feedback) => Feedback.getReferenceFilePath(feedback))
-            .filter((filePath) => filePath !== undefined) as string[];
-        for (const filePath of filePathsWithSuggestions) {
-            // Count the number of suggestions for this file
-            const suggestionsCount = this.feedbackSuggestions.filter((feedback) => Feedback.getReferenceFilePath(feedback) === filePath).length;
-            this.fileBadges[filePath] = [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, suggestionsCount)];
+
+        // Combine feedback suggestions (ungraded) and graded feedbacks from submission
+        const allFeedbacks = this.feedbackSuggestions().concat(this.feedbackForSubmission());
+
+        // Get unique file paths with feedback
+        const filePathsWithFeedback = Array.from(
+            new Set(allFeedbacks.map((feedback: Feedback) => Feedback.getReferenceFilePath(feedback)).filter((filePath): filePath is string => filePath !== undefined)),
+        );
+
+        for (const filePath of filePathsWithFeedback) {
+            // Count the number of feedbacks for this file
+            const feedbackCount = allFeedbacks.filter((feedback: Feedback) => Feedback.getReferenceFilePath(feedback) === filePath).length;
+            this.fileBadges[filePath] = [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, feedbackCount)];
         }
     }
 
@@ -362,9 +324,9 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
      * Returns the feedbacks for the current submission or an empty array if no feedbacks are available.
      */
     feedbackForSubmission(): Feedback[] {
-        const submission = this.participation?.submissions?.[0];
+        const submission = this.participation().submissions?.[0];
         const result = submission?.results?.[0];
-        return this.showInlineFeedback && result?.feedbacks ? result.feedbacks : [];
+        return this.showInlineFeedback() && result?.feedbacks ? result.feedbacks : [];
     }
 
     /**
