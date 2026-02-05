@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { Dialog } from 'primeng/dialog';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
@@ -14,6 +14,8 @@ import { ViewContainerRef } from '@angular/core';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 @Component({
     selector: 'jhi-tutorial-registrations-register-modal',
@@ -22,7 +24,11 @@ import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
     styleUrl: './tutorial-registrations-register-modal.component.scss',
 })
 export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
+    private readonly PAGE_SIZE = 25;
+
     private translateService = inject(TranslateService);
+    private tutorialGroupsService = inject(TutorialGroupsService);
+    private alertService = inject(AlertService);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
     private overlay = inject(Overlay);
     private overlayRef: OverlayRef | undefined = undefined;
@@ -31,6 +37,8 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
     private panelTemplate = viewChild<TemplateRef<unknown>>('panelTemplate');
     private viewport = viewChild<CdkVirtualScrollViewport>(CdkVirtualScrollViewport);
 
+    courseId = input.required<number>();
+    tutorialGroupId = input.required<number>();
     isOpen = signal(false);
     header = computed<string>(() => this.computeHeader());
     searchBarPlaceholder = computed<string>(() => this.computeSearchBarPlaceholder());
@@ -53,7 +61,7 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
         effect(() => {
             const trimmedSearchString = this.searchString().trim();
             if (!trimmedSearchString) return;
-            this.loadFirstPage();
+            this.loadFirstPage(trimmedSearchString);
         });
     }
 
@@ -185,35 +193,45 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
         });
     }
 
-    private async loadFirstPage(): Promise<void> {
+    private loadFirstPage(trimmedSearchString: string) {
         this.resetSuggestionPanel();
 
         this.firstSuggestedStudentsPageLoading.set(true);
 
-        const page = await fetchPage(0);
-
-        this.suggestedStudents.set(page);
-        this.nextSuggestedStudentsPageIndex.set(1);
-        this.hasMorePages.set(page.length === PAGE_SIZE);
-
-        this.firstSuggestedStudentsPageLoading.set(false);
+        this.tutorialGroupsService.getUnregisteredStudentDTOs(this.courseId(), this.tutorialGroupId(), trimmedSearchString, 0, this.PAGE_SIZE).subscribe({
+            next: (page) => {
+                this.suggestedStudents.set(page);
+                this.nextSuggestedStudentsPageIndex.set(1);
+                this.hasMorePages.set(page.length === this.PAGE_SIZE);
+                this.firstSuggestedStudentsPageLoading.set(false);
+            },
+            error: () => {
+                this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupRegistrations.registerModal.fetchSuggestionsError');
+                this.firstSuggestedStudentsPageLoading.set(false);
+            },
+        });
     }
 
-    private async loadNextPage(): Promise<void> {
+    private loadNextPage() {
         if (this.nextSuggestedStudentsPageLoading()) return;
         if (!this.hasMorePages()) return;
 
         this.nextSuggestedStudentsPageLoading.set(true);
 
-        const pageIndex = this.nextSuggestedStudentsPageIndex();
-        const page = await fetchPage(pageIndex);
-
-        this.suggestedStudents.update((current) => [...current, ...page]);
-        this.nextSuggestedStudentsPageIndex.update((index) => index + 1);
-
-        this.hasMorePages.set(page.length === PAGE_SIZE);
-
-        this.nextSuggestedStudentsPageLoading.set(false);
+        const nextPageIndex = this.nextSuggestedStudentsPageIndex();
+        const trimmedSearchString = this.searchString().trim();
+        this.tutorialGroupsService.getUnregisteredStudentDTOs(this.courseId(), this.tutorialGroupId(), trimmedSearchString, nextPageIndex, this.PAGE_SIZE).subscribe({
+            next: (page) => {
+                this.suggestedStudents.update((current) => [...current, ...page]);
+                this.nextSuggestedStudentsPageIndex.update((i) => i + 1);
+                this.hasMorePages.set(page.length === this.PAGE_SIZE);
+                this.nextSuggestedStudentsPageLoading.set(false);
+            },
+            error: () => {
+                this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupRegistrations.registerModal.fetchSuggestionsError');
+                this.nextSuggestedStudentsPageLoading.set(false);
+            },
+        });
     }
 
     private resetSuggestionPanel() {
@@ -233,36 +251,4 @@ export class TutorialRegistrationsRegisterModalComponent implements OnDestroy {
     private computeSearchBarPlaceholder(): string {
         return 'Search by Login or Name';
     }
-}
-
-const PAGE_SIZE = 25;
-
-const MOCK_PAGES: TutorialGroupRegisteredStudentDTO[][] = generateMockPages();
-
-function generateMockPages(): TutorialGroupRegisteredStudentDTO[][] {
-    const pages: TutorialGroupRegisteredStudentDTO[][] = [];
-    let id = 1;
-
-    for (let p = 0; p < 4; p++) {
-        const page: TutorialGroupRegisteredStudentDTO[] = [];
-        for (let i = 0; i < 25; i++) {
-            const currentId = id++;
-            page.push({
-                id: currentId,
-                login: `jauser${currentId}`,
-                name: `JaUser ${currentId}`,
-            });
-        }
-        pages.push(page);
-    }
-
-    return pages;
-}
-
-function fetchPage(page: number): Promise<TutorialGroupRegisteredStudentDTO[]> {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve(MOCK_PAGES[page] ?? []);
-        }, 2000);
-    });
 }

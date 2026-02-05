@@ -6,7 +6,6 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -95,6 +94,6 @@ public interface TutorialGroupRegistrationRepository extends ArtemisJpaRepositor
                 CONCAT(COALESCE(student.firstName, ''), ' ', COALESCE(student.lastName, '')) ASC,
                 student.id ASC
             """)
-    Page<TutorialGroupRegisteredStudentDTO> searchUnregisteredStudents(@Param("tutorialGroupId") long tutorialGroupId, @Param("studentGroupName") String studentGroupName,
+    List<TutorialGroupRegisteredStudentDTO> searchUnregisteredStudents(@Param("tutorialGroupId") long tutorialGroupId, @Param("studentGroupName") String studentGroupName,
             @Param("loginOrName") String loginOrName, Pageable pageable);
 }

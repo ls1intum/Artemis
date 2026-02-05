@@ -27,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -740,7 +739,7 @@ public class TutorialGroupResource {
 
     @GetMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/unregistered-students")
     @EnforceAtLeastTutorInCourse
-    public ResponseEntity<Page<TutorialGroupRegisteredStudentDTO>> searchUnregisteredStudents(@PathVariable long courseId, @PathVariable long tutorialGroupId,
+    public ResponseEntity<List<TutorialGroupRegisteredStudentDTO>> searchUnregisteredStudents(@PathVariable long courseId, @PathVariable long tutorialGroupId,
             @RequestParam String loginOrName, @RequestParam int pageIndex, @RequestParam int pageSize) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var isUserTutorInTutorialGroup = userRepository.isTutorInTutorialGroup(user.getId(), tutorialGroupId, courseId);
@@ -750,8 +749,9 @@ public class TutorialGroupResource {
         }
 
         String studentGroupName = courseRepository.getStudentGroupNameById(courseId);
-        Page<TutorialGroupRegisteredStudentDTO> foundStudents = tutorialGroupRegistrationRepository.searchUnregisteredStudents(tutorialGroupId, studentGroupName, loginOrName,
+        List<TutorialGroupRegisteredStudentDTO> foundStudents = tutorialGroupRegistrationRepository.searchUnregisteredStudents(tutorialGroupId, studentGroupName, loginOrName,
                 PageRequest.of(pageIndex, pageSize));
+
         return ResponseEntity.ok().body(foundStudents);
     }
 

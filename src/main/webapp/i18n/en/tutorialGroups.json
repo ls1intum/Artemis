@@ -297,7 +297,8 @@
                     }
                 },
                 "registerModal": {
-                    "header": "Register Students"
+                    "header": "Register Students",
+                    "fetchSuggestionsError": "An error occured while loading search results. Please try again."
                 }
             },
             "createTutorialGroup": {

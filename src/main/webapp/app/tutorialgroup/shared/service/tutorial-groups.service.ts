@@ -17,6 +17,7 @@ import { Student } from 'app/openapi/model/student';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 import { TutorialGroupRegistrationImport } from 'app/openapi/model/tutorialGroupRegistrationImport';
 import { TutorialGroupExport } from 'app/openapi/model/tutorialGroupExport';
+import { HttpParams } from '@angular/common/http';
 
 type EntityResponseType = HttpResponse<TutorialGroup>;
 type EntityArrayResponseType = HttpResponse<TutorialGroup[]>;
@@ -58,6 +59,19 @@ export class TutorialGroupsService {
 
     getRegisteredStudentDTOs(courseId: number, tutorialGroupId: number): Observable<TutorialGroupRegisteredStudentDTO[]> {
         return this.httpClient.get<TutorialGroupRegisteredStudentDTO[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/registered-students`);
+    }
+
+    getUnregisteredStudentDTOs(
+        courseId: number,
+        tutorialGroupId: number,
+        loginOrName: string,
+        pageIndex: number,
+        pageSize: number,
+    ): Observable<TutorialGroupRegisteredStudentDTO[]> {
+        const params = new HttpParams().set('loginOrName', loginOrName).set('pageIndex', pageIndex).set('pageSize', pageSize);
+        return this.httpClient.get<TutorialGroupRegisteredStudentDTO[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/unregistered-students`, {
+            params,
+        });
     }
 
     moveStudentToOtherGroup(courseId: number, tutorialGroupId: number, studentId: number, otherTutorialGroupId: number): Observable<void> {

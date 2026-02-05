@@ -297,7 +297,8 @@
                     }
                 },
                 "registerModal": {
-                    "header": "Studenten Registrieren"
+                    "header": "Studenten Registrieren",
+                    "fetchSuggestionsError": "Ein Fehler ist aufgetreten während des Ladens der Suchergebnisse. Bitte versuche es erneut."
                 }
             },
             "createTutorialGroup": {
