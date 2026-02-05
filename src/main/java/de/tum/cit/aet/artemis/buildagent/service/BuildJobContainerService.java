@@ -135,6 +135,12 @@ public class BuildJobContainerService {
 
     /**
      * Configure a container with the Docker image, the container name, optional proxy config variables, and set the command that runs when the container starts.
+     * <p>
+     * This method first removes any existing container with the same name to handle cases where:
+     * <ul>
+     * <li>A previous build job was interrupted and the container wasn't cleaned up</li>
+     * <li>A re-queued job (after agent disconnect) is picked up by the same or different agent</li>
+     * </ul>
      *
      * @param containerName the name of the container to be created
      * @param image         the Docker image to use for the container
@@ -143,6 +149,9 @@ public class BuildJobContainerService {
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
     public CreateContainerResponse configureContainer(String containerName, String image, String buildScript, DockerRunConfig runConfig) {
+        // Remove any existing container with the same name to avoid ConflictException.
+        // This can happen when a job is re-queued after agent disconnect (same job ID = same container name).
+        removeExistingContainer(containerName);
         // get all record fields here because we need them more than once
         List<String> exerciseEnvVars = runConfig.env();
         String network = runConfig.network();
@@ -401,6 +410,23 @@ public class BuildJobContainerService {
             finally {
                 executor.shutdown();
             }
+        }
+    }
+
+    /**
+     * Removes an existing container with the given name if it exists.
+     * This is used to clean up leftover containers before creating a new one with the same name,
+     * which can happen when a job is re-queued after agent disconnect (the job ID and thus container
+     * name remain the same).
+     *
+     * @param containerName The name of the container to remove if it exists.
+     */
+    private void removeExistingContainer(String containerName) {
+        Container existingContainer = getContainerForName(containerName);
+        if (existingContainer != null) {
+            String containerId = existingContainer.getId();
+            log.warn("Found existing container with name '{}' (id: {}). Removing it before creating new container.", containerName, containerId);
+            stopUnresponsiveContainer(containerId);
         }
     }
 
