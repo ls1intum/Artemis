@@ -12,7 +12,7 @@ Moreover, `test.cabal` provides an executable to test the template repository lo
 For this, it expects the template repository in the `template` subdirectory.
 
 You can find a script to conveniently set up this folder structure when checking out a new exercise in
-the [programming exercise setup documentation](https://docs.artemis.cit.tum.de/user/exercises/programming/#setup).
+the [programming exercise setup documentation](https://docs.artemis.tum.de/instructor/exercises/programming-exercise#exercise-templates).
 
 ## Running Tests
 

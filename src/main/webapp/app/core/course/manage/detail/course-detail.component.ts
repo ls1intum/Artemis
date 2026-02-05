@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { MODULE_FEATURE_IRIS, MODULE_FEATURE_LTI, PROFILE_ATHENA } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS, MODULE_FEATURE_LTI, PROFILE_ATHENA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Subscription, firstValueFrom } from 'rxjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -76,6 +76,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     readonly irisChatEnabled = signal(false);
     readonly ltiEnabled = signal(false);
     readonly isAthenaEnabled = signal(false);
+    readonly isHyperionEnabled = signal(false);
 
     readonly isAdmin = signal(false);
 
@@ -88,6 +89,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     async ngOnInit() {
         this.ltiEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI));
         this.isAthenaEnabled.set(this.profileService.isProfileActive(PROFILE_ATHENA));
+        this.isHyperionEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION));
         this.irisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
 
         this.route.data.subscribe(({ course }) => {
