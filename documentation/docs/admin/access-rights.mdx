@@ -201,14 +201,14 @@ The following visibility rules apply to **all exercise types**:
 |-----------------------------|--------------------|------------|
 | *READ*, *WRITE*, *RESET*    | *READ*             | restricted |
 
-**Access for Teaching Assistants and Students on their own repositories (graded participation):**
+**Access on own repositories (graded participation):**
 
-| Context                                        | Teaching Assistant       | Student                  |
-|------------------------------------------------|--------------------------|--------------------------|
-| Before start                                   | *READ*, *WRITE*, *RESET* | restricted               |
-| After start but before due date and not locked | *READ*, *WRITE*, *RESET* | *READ*, *WRITE*, *RESET* |
-| After due date                                 | *READ*                   | *READ*                   |
-| Locked                                         | *READ*                   | *READ*                   |
+| Context                                        | Instructor / Editor      | Teaching Assistant       | Student                  |
+|------------------------------------------------|--------------------------|--------------------------|--------------------------|
+| Before start                                   | *READ*, *WRITE*, *RESET* | *READ*, *WRITE*, *RESET* | restricted               |
+| After start but before due date and not locked | *READ*, *WRITE*, *RESET* | *READ*, *WRITE*, *RESET* | *READ*, *WRITE*, *RESET* |
+| After due date                                 | *READ*, *WRITE*, *RESET* | *READ*                   | *READ*                   |
+| Locked                                         | *READ*, *WRITE*, *RESET* | *READ*                   | *READ*                   |
 
 <Callout variant={CalloutVariant.info}>
     **Practice** repositories also allow *WRITE* and *RESET* access after the due date.
