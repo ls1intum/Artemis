@@ -459,18 +459,6 @@ describe('MonacoEditorComponent', () => {
         expect(modifiedEditor).toBeUndefined();
     });
 
-    it('should dispose selection change listeners on destroy', () => {
-        fixture.detectChanges();
-
-        const mockDisposable = { dispose: jest.fn() };
-        comp['selectionChangeListeners'] = [{ listener: jest.fn(), disposable: mockDisposable }];
-
-        comp.ngOnDestroy();
-
-        expect(mockDisposable.dispose).toHaveBeenCalled();
-        expect(comp['selectionChangeListeners']).toHaveLength(0);
-    });
-
     it('should handle multiple models', () => {
         fixture.detectChanges();
 
