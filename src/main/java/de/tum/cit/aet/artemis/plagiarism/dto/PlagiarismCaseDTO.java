@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.plagiarism.dto;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -19,7 +19,7 @@ public record PlagiarismCaseDTO(Long id, PlagiarismVerdict verdict, Long student
      * @param plagiarismCase the plagiarism case entity
      * @return a DTO containing the relevant plagiarism case information
      */
-    public static PlagiarismCaseDTO of(@NonNull PlagiarismCase plagiarismCase) {
+    public static PlagiarismCaseDTO of(@NotNull PlagiarismCase plagiarismCase) {
         return new PlagiarismCaseDTO(plagiarismCase.getId(), plagiarismCase.getVerdict(), plagiarismCase.getStudent() != null ? plagiarismCase.getStudent().getId() : null);
     }
 }

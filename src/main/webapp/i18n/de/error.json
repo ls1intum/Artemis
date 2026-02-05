@@ -211,9 +211,9 @@
         },
         "PlagiarismPost": {
             "idNull": "Der Beitrag muss eine ID besitzen.",
+            "courseInformationSharingDisabled": "Beiträge sind in diesem Kurs deaktiviert.",
             "plagiarismCaseMissing": "Der Beitrag muss einem Plagiatsfall zugeordnet sein."
         },
-        "courseInformationSharingDisabled": "Beiträge sind in diesem Kurs deaktiviert.",
         "noCourse": "Eine Klausur muss zu einem Kurs gehören.",
         "wrongCourseId": "Die Kurs-ID stimmt nicht mit dem Kurs der Klausur überein.",
         "examTimes": "Ungültige Klausurzeiten: Bitte stelle sicher, dass das Sichtbarkeitsdatum vor dem Startdatum liegt, das Startdatum vor dem Enddatum liegt und das Veröffentlichungsdatum der Beispiellösung (falls gesetzt) nach dem Enddatum liegt.",

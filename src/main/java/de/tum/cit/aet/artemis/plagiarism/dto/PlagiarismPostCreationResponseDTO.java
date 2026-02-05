@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.plagiarism.dto;
 
 import java.time.ZonedDateTime;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -15,8 +15,9 @@ import de.tum.cit.aet.artemis.communication.domain.UserRole;
  * Exposes only the fields relevant for plagiarism workflows.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismPostCreationResponseDTO(Long id, String content, String title, Boolean visibleForStudents, ZonedDateTime creationDate, UserRole authorRole,
-        boolean resolved, DisplayPriority displayPriority, PlagiarismCaseDTO plagiarismCase) {
+public record PlagiarismPostCreationResponseDTO(@NotNull(message = "The post must have an id.") Long id, @NotNull(message = "The post must have contents.") String content,
+        @NotNull(message = "The post must have a title.") String title, Boolean visibleForStudents, @NotNull ZonedDateTime creationDate, @NotNull UserRole authorRole,
+        boolean resolved, DisplayPriority displayPriority, @NotNull(message = "The post must be associated with a plagiarism case.") PlagiarismCaseDTO plagiarismCase) {
 
     /**
      * Creates a {@link PlagiarismPostCreationResponseDTO} from a {@link Post} entity.
@@ -24,7 +25,7 @@ public record PlagiarismPostCreationResponseDTO(Long id, String content, String 
      * @param post the persisted post-entity
      * @return a DTO containing the relevant plagiarism-related post-data
      */
-    public static PlagiarismPostCreationResponseDTO of(@NonNull Post post) {
+    public static PlagiarismPostCreationResponseDTO of(@NotNull Post post) {
         return new PlagiarismPostCreationResponseDTO(post.getId(), post.getContent(), post.getTitle(), post.isVisibleForStudents(), post.getCreationDate(), post.getAuthorRole(),
                 post.isResolved(), post.getDisplayPriority(), PlagiarismCaseDTO.of(post.getPlagiarismCase()));
     }

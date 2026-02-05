@@ -45,6 +45,8 @@ public class PlagiarismPostService extends PostingService {
 
     private final PlagiarismCaseService plagiarismCaseService;
 
+    private static final String PLAGIARISM_POST_ENTITY_NAME = "PlagiarismPost";
+
     protected PlagiarismPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             SavedPostRepository savedPostRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, WebsocketMessagingService websocketMessagingService,
             PlagiarismCaseService plagiarismCaseService, PlagiarismCaseRepository plagiarismCaseRepository, ConversationParticipantRepository conversationParticipantRepository) {
@@ -77,7 +79,7 @@ public class PlagiarismPostService extends PostingService {
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
         if (course.getCourseInformationSharingConfiguration() == CourseInformationSharingConfiguration.DISABLED) {
-            throw new BadRequestAlertException("Posting is disabled for this course.", METIS_POST_ENTITY_NAME, "courseInformationSharingDisabled");
+            throw new BadRequestAlertException("Posting is disabled for this course.", PLAGIARISM_POST_ENTITY_NAME, "courseInformationSharingDisabled");
         }
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
@@ -134,7 +136,7 @@ public class PlagiarismPostService extends PostingService {
             existingPost.setUpdatedDate(ZonedDateTime.now());
         }
 
-        // update: allow overwriting of values only for depicted fields if the user is at least a student
+        // update: allow overwriting of values only for depicted fields if the user is at least an INSTRUCTOR
         existingPost.setTitle(post.getTitle());
         existingPost.setContent(post.getContent());
 

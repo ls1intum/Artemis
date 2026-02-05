@@ -206,14 +206,11 @@
             "courseIdMissing": "The courseId is required.",
             "forbidChangeCourseId": "Exercise course id does not match the stored course id"
         },
-        "PlagiarismCase": {
-            "studentMissing": "The plagiarism case is not associated with a student."
-        },
         "PlagiarismPost": {
             "idNull": "The plagiarism post must have an id.",
+            "courseInformationSharingDisabled": "Posting is disabled for this course.",
             "plagiarismCaseMissing": "The post must be associated with a plagiarism case."
         },
-        "courseInformationSharingDisabled": "Posting is disabled for this course.",
         "noCourse": "An exam must belong to a course.",
         "wrongCourseId": "The course ID does not match the course connected to the exam.",
         "examTimes": "Invalid exam times: Please check that visible date is before start date, start date is before end date, and example solution publication date (if set) is after end date.",
