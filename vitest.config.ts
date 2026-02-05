@@ -50,7 +50,7 @@ export default defineConfig({
             },
         },
         coverage: {
-            provider: 'v8',
+            provider: 'istanbul',
             reporter: ['text', 'lcov', 'html', 'json-summary'],
             reportsDirectory: 'build/test-results/vitest/coverage',
             include: [
@@ -69,7 +69,16 @@ export default defineConfig({
                 'src/main/webapp/app/iris/**/*.ts', // include iris for code coverage
                 'src/main/webapp/app/shared/components/buttons/**/*.ts', // include shared buttons for code coverage
             ],
-            exclude: ['**/node_modules/**', '**/*.spec.ts', '**/*.route.ts', '**/*.routes.ts', '**/*.model.ts'],
+            exclude: [
+                '**/node_modules/**',   // exclude node_modules with third-party code
+                '**/*.spec.ts',         // exclude test specification files
+                '**/*.route.ts',        // exclude route definition files (not really testable)
+                '**/*.routes.ts',       // exclude route definition files (not really testable)
+                '**/*.model.ts',        // exclude data model files (not really testable)
+                'src/main/webapp/app/core/config/dayjs.ts',             // exclude dayjs configuration file (not really testable)
+                'src/main/webapp/app/core/config/monaco.config.ts',     // exclude monaco configuration file (not really testable)
+                'src/main/webapp/app/core/config/prod.config.ts',       // exclude dayjs configuration file (not really testable)
+            ],
             thresholds: {
                 lines: 92.10,
                 statements: 91.95,
