@@ -643,8 +643,6 @@ components:
           type: array
           description: List of consistency issues found
           items: {$ref: '#/components/schemas/ConsistencyIssue'}
-        timing: {$ref: '#/components/schemas/Timing', description: Execution timing
-            details}
       required: [issues]
     TeachingAssistant:
       type: object
