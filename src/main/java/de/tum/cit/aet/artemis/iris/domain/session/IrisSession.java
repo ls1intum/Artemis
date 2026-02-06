@@ -123,6 +123,6 @@ public abstract class IrisSession extends DomainObject {
         this.citationInfo = citationInfo != null ? citationInfo : List.of();
     }
 
-    public abstract boolean shouldAcceptExternalLLMUsage();
+    public abstract boolean shouldSelectLLMUsage();
 
 }

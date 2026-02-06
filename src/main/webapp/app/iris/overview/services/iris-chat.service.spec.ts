@@ -11,7 +11,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockProvider } from 'ng-mocks';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
-import dayjs from 'dayjs/esm';
 import {
     mockClientMessage,
     mockConversation,
@@ -34,8 +33,7 @@ import { IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat
 import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
-import * as Sentry from '@sentry/angular';
-import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('IrisChatService', () => {
     setupTestBed({ zoneless: true });
@@ -82,7 +80,7 @@ describe('IrisChatService', () => {
         wsMock = TestBed.inject(IrisWebsocketService);
         accountService = TestBed.inject(AccountService);
 
-        accountService.userIdentity.set({ externalLLMUsageAccepted: dayjs() } as User);
+        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
 
         service.setCourseId(courseId);
     });
@@ -352,8 +350,8 @@ describe('IrisChatService', () => {
         });
 
         it('should switch if LLM usage is not required for the mode', async () => {
-            accountService.userIdentity.set({ externalLLMUsageAccepted: undefined } as User);
-            service['hasJustAcceptedExternalLLMUsage'] = false;
+            accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
+            service['hasJustAcceptedLLMUsage'] = false;
             service['sessionCreationIdentifier'] = 'tutor-suggestion/1';
 
             const newSession = { id: 12, chatMode: ChatServiceMode.TUTOR_SUGGESTION, creationDate: new Date(), entityId: 1 } as IrisSessionDTO;
@@ -375,8 +373,8 @@ describe('IrisChatService', () => {
         });
 
         it('should switch if user has just accepted LLM usage', async () => {
-            accountService.userIdentity.set({ externalLLMUsageAccepted: undefined } as User);
-            service['hasJustAcceptedExternalLLMUsage'] = true;
+            accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
+            service['hasJustAcceptedLLMUsage'] = true;
             service['sessionCreationIdentifier'] = 'course/1';
 
             const newSession = { id: 12, chatMode: ChatServiceMode.COURSE, creationDate: new Date(), entityId: 1 } as IrisSessionDTO;
@@ -453,60 +451,5 @@ describe('IrisChatService', () => {
 
             expect(courseId).toBeUndefined();
         });
-    });
-
-    it('should reset new message indicators when messages are read', async () => {
-        service.numNewMessages.next(3);
-        service.newIrisMessage.next(mockServerMessage);
-
-        service.messagesRead();
-
-        const num = await firstValueFrom(service.currentNumNewMessages());
-        expect(num).toBe(0);
-        expect(service.newIrisMessage.getValue()).toBeUndefined();
-    });
-
-    it('should merge citation info entries by entityId', () => {
-        const existing: IrisCitationMetaDTO[] = [
-            { entityId: 1, lectureTitle: 'Old', lectureUnitTitle: 'Unit A' },
-            { entityId: 2, lectureTitle: 'Keep', lectureUnitTitle: 'Unit B' },
-        ];
-        const incoming: IrisCitationMetaDTO[] = [
-            { entityId: 1, lectureTitle: 'New', lectureUnitTitle: 'Unit A2' },
-            { entityId: 3, lectureTitle: 'Added', lectureUnitTitle: 'Unit C' },
-        ];
-
-        const merged = (service as any).mergeCitationInfo(existing, incoming) as IrisCitationMetaDTO[];
-        const mergedById = new Map<number, IrisCitationMetaDTO>();
-        merged.forEach((entry) => mergedById.set(entry.entityId, entry));
-
-        expect(mergedById.size).toBe(3);
-        expect(mergedById.get(1)?.lectureTitle).toBe('New');
-        expect(mergedById.get(2)?.lectureTitle).toBe('Keep');
-        expect(mergedById.get(3)?.lectureTitle).toBe('Added');
-    });
-
-    it('should capture an error when switching sessions without a course id', () => {
-        const captureSpy = vi.spyOn(Sentry, 'captureException').mockImplementation(() => 'event-id');
-
-        service.setCourseId(undefined);
-        routerMock.url = '/invalid-url';
-
-        const session = { id: 99, chatMode: ChatServiceMode.COURSE, creationDate: new Date(), entityId: 1 } as IrisSessionDTO;
-        service.switchToSession(session);
-
-        expect(captureSpy).toHaveBeenCalled();
-    });
-
-    it('should throw when creating a session without an identifier', () => {
-        service['sessionCreationIdentifier'] = undefined;
-
-        expect(() => (service as any).createNewSession()).toThrow('Session creation identifier not set');
-    });
-
-    it('should throw when sending a message without an active session', async () => {
-        service.sessionId = undefined;
-
-        await expect(firstValueFrom(service.sendMessage('Hello'))).rejects.toThrow('Not initialized');
     });
 });

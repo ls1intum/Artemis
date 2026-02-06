@@ -101,6 +101,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     };
 
     private resolvedLectureId: number | undefined;
+    private retryProcessingTimeouts = new Map<number, ReturnType<typeof setTimeout>>();
 
     ngOnInit(): void {
         this.resolvedLectureId = this.lectureId() ?? Number(this.activatedRoute?.parent?.snapshot.paramMap.get('lectureId'));
@@ -112,6 +113,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
+        for (const timeoutId of this.retryProcessingTimeouts.values()) {
+            clearTimeout(timeoutId);
+        }
+        this.retryProcessingTimeouts.clear();
         this.dialogErrorSource.unsubscribe();
     }
 

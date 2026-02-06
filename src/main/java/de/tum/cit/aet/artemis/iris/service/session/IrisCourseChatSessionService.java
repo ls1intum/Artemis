@@ -89,7 +89,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      */
     @Override
     public void checkHasAccessTo(User user, IrisCourseChatSession session) {
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        user.hasOptedIntoLLMUsageElseThrow();
         var course = courseRepository.findByIdElseThrow(session.getCourseId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         if (!Objects.equals(session.getUserId(), user.getId())) {
@@ -155,7 +155,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         var course = competencyJol.getCompetency().getCourse();
         var user = competencyJol.getUser();
 
-        if (!user.hasAcceptedExternalLLMUsage()) {
+        if (!user.hasOptedIntoLLMUsage()) {
             return;
         }
 
@@ -183,7 +183,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      * @return The current Iris session
      */
     public IrisCourseChatSession getCurrentSessionOrCreateIfNotExists(Course course, User user, boolean sendInitialMessageIfCreated) {
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        user.hasOptedIntoLLMUsageElseThrow();
         irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
         return getCurrentSessionOrCreateIfNotExistsInternal(course, user, sendInitialMessageIfCreated);
     }
@@ -213,7 +213,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      * @return The created Iris session
      */
     public IrisCourseChatSession createSession(Course course, User user, boolean sendInitialMessage) {
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        user.hasOptedIntoLLMUsageElseThrow();
         irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
         return createSessionInternal(course, user, sendInitialMessage);
     }

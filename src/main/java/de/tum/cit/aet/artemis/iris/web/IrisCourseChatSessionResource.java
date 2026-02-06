@@ -83,7 +83,7 @@ public class IrisCourseChatSessionResource {
     public ResponseEntity<IrisCourseChatSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long courseId) throws URISyntaxException {
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        user.hasOptedIntoLLMUsageElseThrow();
 
         var session = irisCourseChatSessionService.getCurrentSessionOrCreateIfNotExists(course, user, true);
         IrisSession sessionWithContents = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
@@ -104,7 +104,7 @@ public class IrisCourseChatSessionResource {
 
         irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        user.hasOptedIntoLLMUsageElseThrow();
 
         var sessions = irisCourseChatSessionRepository.findByExerciseIdAndUserIdElseThrow(course.getId(), user.getId());
         sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
@@ -124,7 +124,7 @@ public class IrisCourseChatSessionResource {
     public ResponseEntity<IrisCourseChatSession> createSessionForCourse(@PathVariable Long courseId) throws URISyntaxException {
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        user.hasOptedIntoLLMUsageElseThrow();
 
         var session = irisCourseChatSessionService.createSession(course, user, false);
         var uriString = "/api/iris/sessions/" + session.getId();

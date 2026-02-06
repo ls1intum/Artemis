@@ -15,10 +15,9 @@ import {
     faTrash,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { DomSanitizer, type SafeHtml } from '@angular/platform-browser';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
@@ -26,26 +25,25 @@ import { TranslateService } from '@ngx-translate/core';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
-import { IrisMessageContentType, IrisTextMessageContent, isTextContent } from 'app/iris/shared/entities/iris-content-type.model';
-import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
+import { IrisMessageContentType, IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import * as _ from 'lodash-es';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ChatStatusBarComponent } from './chat-status-bar/chat-status-bar.component';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AsPipe } from 'app/shared/pipes/as.pipe';
-import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
 import { NgClass } from '@angular/common';
 import { facSidebar } from 'app/shared/icons/icons';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
-import { IrisCitationParsed, escapeHtml, formatCitationLabel, replaceCitationBlocks, resolveCitationTypeClass } from 'app/iris/overview/shared/iris-citation.util';
-import { map } from 'rxjs/operators';
+import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -62,6 +60,7 @@ import { map } from 'rxjs/operators';
         ButtonComponent,
         ArtemisTranslatePipe,
         AsPipe,
+        HtmlForMarkdownPipe,
         ChatHistoryItemComponent,
         NgClass,
         SearchFilterComponent,
@@ -70,11 +69,12 @@ import { map } from 'rxjs/operators';
 })
 export class IrisBaseChatbotComponent implements AfterViewInit {
     protected accountService = inject(AccountService);
+    protected modalService = inject(NgbModal);
     protected translateService = inject(TranslateService);
     protected statusService = inject(IrisStatusService);
     protected chatService = inject(IrisChatService);
     protected route = inject(ActivatedRoute);
-    private readonly sanitizer = inject(DomSanitizer);
+    protected llmModalService = inject(LLMSelectionModalService);
     private readonly destroyRef = inject(DestroyRef);
 
     // Icons
@@ -102,6 +102,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly IrisTextMessageContent = IrisTextMessageContent;
     protected readonly IrisSender = IrisSender;
     protected readonly IrisErrorMessageKey = IrisErrorMessageKey;
+    protected readonly LLMSelectionDecision = LLMSelectionDecision;
 
     // Observable-derived signals (using toSignal for reactive state)
     private readonly currentRelatedEntityId = toSignal(this.chatService.currentRelatedEntityId(), { initialValue: undefined });
@@ -117,18 +118,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly numNewMessages = toSignal(this.chatService.currentNumNewMessages(), { initialValue: 0 });
     readonly rateLimitInfo = toSignal(this.statusService.currentRatelimitInfo(), { requireSync: true });
     readonly active = toSignal(this.statusService.getActiveStatus(), { initialValue: true });
-    readonly citationInfo = toSignal(this.chatService.currentCitationInfo(), { initialValue: [] as IrisCitationMetaDTO[] });
-    readonly currentLanguage = toSignal(this.translateService.onLangChange.pipe(map((event) => event.lang)), {
-        initialValue: this.translateService.getCurrentLang(),
-    });
 
     // Messages with processing
     private readonly rawMessages = toSignal(this.chatService.currentMessages(), { initialValue: [] as IrisMessage[] });
-    readonly messages = computed(() => {
-        const citationInfo = this.citationInfo();
-        this.currentLanguage();
-        return this.processMessages(this.rawMessages(), citationInfo);
-    });
+    readonly messages = computed(() => this.processMessages(this.rawMessages()));
 
     // Computed state
     readonly hasActiveStage = computed(() => this.stages()?.some((stage) => [IrisStageStateDTO.IN_PROGRESS, IrisStageStateDTO.NOT_STARTED].includes(stage.state)) ?? false);
@@ -138,7 +131,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly isLoading = signal(false);
     readonly isChatHistoryOpen = signal(true);
     readonly searchValue = signal('');
-    readonly userAccepted = signal(false);
+    readonly userAccepted = signal<LLMSelectionDecision | undefined>(undefined);
     readonly isScrolledToBottom = signal(true);
     readonly resendAnimationActive = signal(false);
     readonly clickedSuggestion = signal<string | undefined>(undefined);
@@ -149,76 +142,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private previousSessionId: number | undefined;
     private previousMessageCount = 0;
     private previousMessageIds = new Set<number>();
-    private hoverMessagesElement?: HTMLElement;
-    /**
-     * Keeps citation summaries within the visible message boundary on hover.
-     * @param event The mouseover event.
-     */
-    private readonly handleCitationMouseOver = (event: MouseEvent) => {
-        const messagesElement = this.hoverMessagesElement;
-        if (!messagesElement) {
-            return;
-        }
-        const target = event.target as HTMLElement | null;
-        const citation = target?.closest('.iris-citation--has-summary, .iris-citation-group--has-summary') as HTMLElement | null;
-        if (!citation || !messagesElement.contains(citation)) {
-            return;
-        }
-        const summary = citation.querySelector('.iris-citation__summary') as HTMLElement | null;
-        if (!summary) {
-            return;
-        }
-        const bubble = citation.closest('.bubble-left') as HTMLElement | null;
-        const boundary = bubble ?? messagesElement;
-        citation.style.setProperty('--iris-citation-shift', '0px');
-        const boundaryRect = boundary.getBoundingClientRect();
-        const summaryRect = summary.getBoundingClientRect();
-        const padding = 8;
-        let shift = 0;
-        if (summaryRect.left < boundaryRect.left + padding) {
-            shift = boundaryRect.left + padding - summaryRect.left;
-        } else if (summaryRect.right > boundaryRect.right - padding) {
-            shift = boundaryRect.right - summaryRect.right;
-        }
-        if (shift !== 0) {
-            citation.style.setProperty('--iris-citation-shift', `${shift}px`);
-        }
-    };
-    /**
-     * Resets citation summary state when the pointer leaves a citation element.
-     * @param event The mouseout event.
-     */
-    private readonly handleCitationMouseOut = (event: MouseEvent) => {
-        const messagesElement = this.hoverMessagesElement;
-        if (!messagesElement) {
-            return;
-        }
-        const target = event.target as HTMLElement | null;
-        const citation = target?.closest('.iris-citation--has-summary, .iris-citation-group--has-summary') as HTMLElement | null;
-        if (!citation) {
-            return;
-        }
-        const relatedTarget = event.relatedTarget as HTMLElement | null;
-        if (relatedTarget && citation.contains(relatedTarget)) {
-            return;
-        }
-        citation.style.setProperty('--iris-citation-shift', '0px');
-        this.resetCitationGroupSummary(citation);
-        this.clearCitationFocus(citation);
-    };
-    /**
-     * Handles clicks on citation group navigation buttons.
-     * @param event The click event.
-     */
-    private readonly handleCitationNavigationClick = (event: MouseEvent) => {
-        const navButton = this.getCitationNavButton(event.target);
-        if (!navButton) {
-            return;
-        }
-        event.preventDefault();
-        event.stopPropagation();
-        this.navigateCitationGroup(navButton);
-    };
     public ButtonType = ButtonType;
 
     showDeclineButton = input<boolean>(true);
@@ -238,7 +161,14 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     constructor() {
         // Initialize user acceptance state
-        this.userAccepted.set(!!this.accountService.userIdentity()?.externalLLMUsageAccepted);
+        this.checkIfUserAcceptedLLMUsage();
+
+        // Show AI selection modal if user hasn't accepted
+        if (!this.userAccepted()) {
+            setTimeout(() => this.showAISelectionModal(), 0);
+        } else {
+            this.focusInputAfterAcceptance();
+        }
 
         // Handle route query params (irisQuestion)
         this.route.queryParams?.pipe(takeUntilDestroyed()).subscribe((params: any) => {
@@ -257,22 +187,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 onCleanup(() => clearTimeout(timeoutId));
             }
             this.previousSessionId = sessionId;
-        });
-
-        effect(() => {
-            const messagesElement = this.messagesElement()?.nativeElement as HTMLElement | undefined;
-            if (!messagesElement || messagesElement === this.hoverMessagesElement) {
-                return;
-            }
-            if (this.hoverMessagesElement) {
-                this.hoverMessagesElement.removeEventListener('mouseover', this.handleCitationMouseOver);
-                this.hoverMessagesElement.removeEventListener('mouseout', this.handleCitationMouseOut);
-                this.hoverMessagesElement.removeEventListener('click', this.handleCitationNavigationClick);
-            }
-            this.hoverMessagesElement = messagesElement;
-            messagesElement.addEventListener('mouseover', this.handleCitationMouseOver);
-            messagesElement.addEventListener('mouseout', this.handleCitationMouseOut);
-            messagesElement.addEventListener('click', this.handleCitationNavigationClick);
         });
 
         // Handle message scroll on new messages
@@ -338,251 +252,60 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     /**
      * Process messages for display (clone, reverse, format)
      */
-    private processMessages(rawMessages: IrisMessage[], citationInfo: IrisCitationMetaDTO[]): IrisMessage[] {
+    private processMessages(rawMessages: IrisMessage[]): IrisMessage[] {
         const processed = _.cloneDeep(rawMessages).reverse();
         processed.forEach((message) => {
-            message.content?.forEach((content) => {
-                if (!isTextContent(content)) {
-                    return;
-                }
-                content.textContent = content.textContent.replace(/\n\n/g, '\n\u00A0\n');
-                content.textContent = content.textContent.replace(/\n/g, '\n\n');
-                if (message.sender === IrisSender.LLM) {
-                    content.renderedContent = this.renderMessageContent(content, citationInfo);
-                }
-            });
+            if (message.content?.[0] && 'textContent' in message.content[0]) {
+                const cnt = message.content[0] as IrisTextMessageContent;
+                cnt.textContent = cnt.textContent.replace(/\n\n/g, '\n\u00A0\n');
+                cnt.textContent = cnt.textContent.replace(/\n/g, '\n\n');
+            }
         });
         return processed;
     }
 
-    /**
-     * Renders a message as sanitized HTML and marks it safe for binding.
-     * @param content The text content to render.
-     * @param citationInfo Metadata used to enrich citation rendering.
-     * @returns The rendered HTML marked as SafeHtml for display.
-     */
-    private renderMessageContent(content: IrisTextMessageContent, citationInfo: IrisCitationMetaDTO[]): SafeHtml {
-        const withCitations = this.replaceCitations(content.textContent ?? '', citationInfo);
-        const renderedHtml = htmlForMarkdown(withCitations);
-        return this.sanitizer.bypassSecurityTrustHtml(renderedHtml);
-    }
-
-    /**
-     * Replaces citation blocks in text with rendered citation HTML.
-     * @param text The raw message text.
-     * @param citationInfo Metadata used to enrich citation rendering.
-     * @returns The text with citation blocks replaced by HTML.
-     */
-    private replaceCitations(text: string, citationInfo: IrisCitationMetaDTO[]): string {
-        return replaceCitationBlocks(text, citationInfo, {
-            renderSingle: (parsed, meta) => this.renderCitationHtml(parsed, meta),
-            renderGroup: (parsed, metas) => this.renderCitationGroupHtml(parsed, metas),
-        });
-    }
-
-    /**
-     * Builds the HTML for a single citation, including its summary bubble.
-     * @param parsed The parsed citation token.
-     * @param meta Optional metadata for lecture citations.
-     * @returns The rendered citation HTML.
-     */
-    private renderCitationHtml(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
-        const summaryText = this.formatSummary(parsed, meta);
-        const label = formatCitationLabel(parsed);
-        const typeClass = resolveCitationTypeClass(parsed);
-        const hasSummary = summaryText.length > 0;
-        const classes = ['iris-citation', typeClass, hasSummary ? 'iris-citation--has-summary' : undefined].filter(Boolean).join(' ');
-
-        const summaryHtml = hasSummary
-            ? `<span class="iris-citation__summary"><span class="iris-citation__summary-content"><span class="iris-citation__summary-item is-active">${summaryText}</span></span></span>`
-            : '';
-
-        return `<span class="${classes}"><span class="iris-citation__icon"></span><span class="iris-citation__text">${label}</span>${summaryHtml}</span>`;
-    }
-
-    /**
-     * Builds the HTML for a group of citations with navigation controls.
-     * @param parsed The parsed citations within the group.
-     * @param metas Metadata entries mapped to the parsed citations.
-     * @returns The rendered citation group HTML.
-     */
-    private renderCitationGroupHtml(parsed: IrisCitationParsed[], metas: Array<IrisCitationMetaDTO | undefined>): string {
-        const first = parsed[0];
-        const label = formatCitationLabel(first);
-        const typeClass = resolveCitationTypeClass(first);
-        const summaryItems = parsed
-            .map((entry, index) => {
-                const summaryText = this.formatGroupSummaryItem(entry, metas[index]);
-                if (!summaryText) {
-                    return '';
-                }
-                const activeClass = index === 0 ? ' is-active' : '';
-                return `<span class="iris-citation__summary-item${activeClass}">${summaryText}</span>`;
-            })
-            .filter((value) => value.length > 0);
-        const hasSummary = summaryItems.length > 0;
-        const classes = ['iris-citation-group', typeClass, hasSummary ? 'iris-citation-group--has-summary' : undefined].filter(Boolean).join(' ');
-        const count = parsed.length - 1;
-        const navHtml = summaryItems.length > 1 ? this.renderCitationNavHtml(summaryItems.length) : '';
-        const summaryHtml = hasSummary ? `<span class="iris-citation__summary"><span class="iris-citation__summary-content">${summaryItems.join('')}</span>${navHtml}</span>` : '';
-
-        return `<span class="${classes}"><span class="iris-citation ${typeClass}"><span class="iris-citation__icon"></span><span class="iris-citation__text">${label}</span></span><span class="iris-citation__count">+${count}</span>${summaryHtml}</span>`;
-    }
-
-    /**
-     * Generates the navigation markup for cycling through citation summaries.
-     * @param count The number of summary items in the group.
-     * @returns The rendered navigation HTML.
-     */
-    private renderCitationNavHtml(count: number): string {
-        return `<span class="iris-citation__nav">
-            <button class="iris-citation__nav-button iris-citation__nav-button--prev" type="button" aria-label="Previous citation">
-                <span class="iris-citation__nav-icon iris-citation__nav-icon--prev" aria-hidden="true"></span>
-            </button>
-            <span class="iris-citation__nav-count" aria-live="polite" aria-atomic="true">1/${count}</span>
-            <button class="iris-citation__nav-button iris-citation__nav-button--next" type="button" aria-label="Next citation">
-                <span class="iris-citation__nav-icon iris-citation__nav-icon--next" aria-hidden="true"></span>
-            </button>
-        </span>`;
-    }
-
-    /**
-     * Resolves the navigation button element from an event target.
-     * @param target The event target to inspect.
-     * @returns The matching nav button or null when not found.
-     */
-    private getCitationNavButton(target: EventTarget | null): HTMLElement | null {
-        const rawTarget = target as Node | null;
-        const element = rawTarget instanceof HTMLElement ? rawTarget : rawTarget?.parentElement;
-        return element?.closest('button.iris-citation__nav-button') as HTMLElement | null;
-    }
-
-    /**
-     * Moves the active summary within a citation group based on nav button direction.
-     * @param navButton The navigation button that was activated.
-     */
-    private navigateCitationGroup(navButton: HTMLElement) {
-        const citationGroup = navButton.closest('.iris-citation-group') as HTMLElement | null;
-        if (!citationGroup) {
-            return;
-        }
-        const summaryItems = Array.from(citationGroup.querySelectorAll<HTMLElement>('.iris-citation__summary-item'));
-        if (summaryItems.length === 0) {
-            return;
-        }
-        const currentIndex = summaryItems.findIndex((item) => item.classList.contains('is-active'));
-        const normalizedIndex = currentIndex < 0 ? 0 : currentIndex;
-        const isPrev = navButton.classList.contains('iris-citation__nav-button--prev');
-        const delta = isPrev ? -1 : 1;
-        const nextIndex = (normalizedIndex + delta + summaryItems.length) % summaryItems.length;
-        this.updateCitationGroupSummary(citationGroup, nextIndex);
-    }
-
-    /**
-     * Formats a summary line for a grouped citation, falling back to the label.
-     * @param parsed The parsed citation entry.
-     * @param meta Optional metadata for lecture citations.
-     * @returns The formatted summary or label.
-     */
-    private formatGroupSummaryItem(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
-        const summaryText = this.formatSummary(parsed, meta);
-        if (summaryText) {
-            return summaryText;
-        }
-        return formatCitationLabel(parsed);
-    }
-
-    /**
-     * Formats the summary HTML for a citation, including lecture metadata.
-     * @param parsed The parsed citation entry.
-     * @param meta Optional metadata used for lecture summaries.
-     * @returns The formatted summary HTML.
-     */
-    private formatSummary(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
-        const summaryValue = parsed.summary.trim() ? escapeHtml(parsed.summary.trim()) : '';
-
-        let firstLine: string;
-        if (parsed.type === 'L' && meta?.lectureTitle?.trim()) {
-            firstLine = escapeHtml(meta.lectureTitle.trim());
-        } else if (parsed.type === 'F') {
-            firstLine = 'FAQ';
-        } else {
-            firstLine = 'Source';
-        }
-
-        if (!firstLine && !summaryValue) {
-            return '';
-        }
-
-        let unitHtml = '';
-        if (parsed.type === 'L') {
-            const unitTitle = meta?.lectureUnitTitle?.trim();
-            if (unitTitle) {
-                const lectureUnitLabel = this.translateService.instant('artemisApp.iris.citations.lectureUnitLabel');
-                unitHtml = `<br /><span class="iris-citation__summary-meta">${lectureUnitLabel}: "${escapeHtml(unitTitle)}"</span>`;
-            }
-        }
-
-        const summaryHtml = summaryValue ? `<br />${summaryValue}` : '';
-
-        return `<span class="iris-citation__summary-keyword">${firstLine}</span>${unitHtml}${summaryHtml}`;
-    }
-
-    /**
-     * Updates which summary item is active and syncs the nav counter.
-     * @param citationGroup The citation group container element.
-     * @param nextIndex The index of the summary item to activate.
-     */
-    private updateCitationGroupSummary(citationGroup: HTMLElement, nextIndex: number) {
-        const summaryItems = Array.from(citationGroup.querySelectorAll<HTMLElement>('.iris-citation__summary-item'));
-        if (summaryItems.length === 0) {
-            return;
-        }
-        summaryItems.forEach((item, index) => {
-            item.classList.toggle('is-active', index === nextIndex);
-        });
-        const navCount = citationGroup.querySelector<HTMLElement>('.iris-citation__nav-count');
-        if (navCount) {
-            navCount.textContent = `${nextIndex + 1}/${summaryItems.length}`;
-        }
-    }
-
-    /**
-     * Resets the citation group summary to the first item.
-     * @param citationElement The citation element that triggered the reset.
-     */
-    private resetCitationGroupSummary(citationElement: HTMLElement) {
-        const citationGroup = citationElement.classList.contains('iris-citation-group') ? citationElement : citationElement.closest('.iris-citation-group');
-        if (!(citationGroup instanceof HTMLElement)) {
-            return;
-        }
-        this.updateCitationGroupSummary(citationGroup, 0);
-    }
-
-    /**
-     * Clears focus from citation navigation to prevent sticky summaries after mouseout.
-     * @param citationElement The citation element that is losing hover state.
-     */
-    private clearCitationFocus(citationElement: HTMLElement) {
-        const activeElement = document.activeElement;
-        if (activeElement instanceof HTMLElement && citationElement.contains(activeElement)) {
-            activeElement.blur();
-        }
-    }
-
-    /**
-     * Enables animations after view init and cleans up citation listeners on destroy.
-     */
     ngAfterViewInit() {
+        // Enable animations after initial messages have loaded
+        // Delay ensures initial message batch doesn't trigger animations
         setTimeout(() => (this.shouldAnimate = true), 500);
-        this.destroyRef.onDestroy(() => {
-            if (!this.hoverMessagesElement) {
-                return;
+    }
+
+    checkIfUserAcceptedLLMUsage(): void {
+        this.userAccepted.set(this.accountService.userIdentity()?.selectedLLMUsage);
+        setTimeout(() => this.adjustTextareaRows(), 0);
+    }
+
+    readonly reopenChat = output<void>();
+
+    async showAISelectionModal(): Promise<void> {
+        this.closeChat();
+        const choice = await this.llmModalService.open();
+
+        switch (choice) {
+            case 'cloud':
+                this.acceptPermission(LLMSelectionDecision.CLOUD_AI);
+                this.reopenChat.emit();
+                break;
+            case 'local':
+                this.acceptPermission(LLMSelectionDecision.LOCAL_AI);
+                this.reopenChat.emit();
+                break;
+            case 'no_ai':
+                this.chatService.updateLLMUsageConsent(LLMSelectionDecision.NO_AI);
+                break;
+            case 'none':
+                break;
+        }
+    }
+
+    private focusInputAfterAcceptance() {
+        setTimeout(() => {
+            if (this.messageTextarea()) {
+                this.messageTextarea()!.nativeElement.focus();
+            } else if (this.acceptButton()) {
+                this.acceptButton()!.nativeElement.focus();
             }
-            this.hoverMessagesElement.removeEventListener('mouseover', this.handleCitationMouseOver);
-            this.hoverMessagesElement.removeEventListener('mouseout', this.handleCitationMouseOut);
-            this.hoverMessagesElement.removeEventListener('click', this.handleCitationNavigationClick);
-        });
+        }, 150);
     }
 
     /**
@@ -657,9 +380,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     /**
      * Accepts the permission to use the chat widget.
      */
-    acceptPermission() {
-        this.chatService.updateExternalLLMUsageConsent(true);
-        this.userAccepted.set(true);
+    acceptPermission(decision: LLMSelectionDecision) {
+        this.chatService.updateLLMUsageConsent(decision);
+        this.userAccepted.set(decision);
     }
 
     /**

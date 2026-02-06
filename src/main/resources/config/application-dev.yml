@@ -105,6 +105,7 @@ info:
     operatorName: Some Artemis Operator # Must be set before starting the application in production. Shown in the about us page and sent to the telemetry service (e.g. the name of the university "Technische Universität München")
     operatorAdminName: Admin # Can be set to be shown in the about us page, and to be sent to the telemetry service
     contact: admin@uni.de # The admins contact email address, shown in the about us page, and sent to the telemetry service
+    localLLMDeploymentEnabled: false # Defines whether local on-premise LLMs are available or not
 
 # Eureka configuration
 eureka:
