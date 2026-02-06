@@ -1,3 +1,4 @@
+import { expect } from 'vitest';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -57,25 +58,25 @@ describe('ExerciseUtils', () => {
     describe('hasExerciseDueDatePassed()', () => {
         it('the due date should not have passed if the exercise has no due date', () => {
             const exercise = exerciseWithDueDate(undefined);
-            expect(hasExerciseDueDatePassed(exercise)).toBeFalse();
+            expect(hasExerciseDueDatePassed(exercise)).toBe(false);
 
             const participation = participationWithDueDate(dayjs().subtract(1, 'hour'));
-            expect(hasExerciseDueDatePassed(exercise, participation)).toBeFalse();
+            expect(hasExerciseDueDatePassed(exercise, participation)).toBe(false);
         });
 
         it('the due date should have passed if the exercise due date has passed and no individual due date exists', () => {
             const exercise = exerciseWithDueDate(dayjs().subtract(1, 'hour'));
             const participation = participationWithDueDate(undefined);
 
-            expect(hasExerciseDueDatePassed(exercise)).toBeTrue();
-            expect(hasExerciseDueDatePassed(exercise, participation)).toBeTrue();
+            expect(hasExerciseDueDatePassed(exercise)).toBe(true);
+            expect(hasExerciseDueDatePassed(exercise, participation)).toBe(true);
         });
 
         it('the due date should not have passed if the individual due date is in the future', () => {
             const exercise = exerciseWithDueDate(dayjs().subtract(1, 'hour'));
             const participation = participationWithDueDate(dayjs().add(1, 'hour'));
 
-            expect(hasExerciseDueDatePassed(exercise, participation)).toBeFalse();
+            expect(hasExerciseDueDatePassed(exercise, participation)).toBe(false);
         });
     });
 
@@ -119,7 +120,7 @@ describe('ExerciseUtils', () => {
                 type,
             };
 
-            expect(isStartPracticeAvailable(exercise)).toBeFalse();
+            expect(isStartPracticeAvailable(exercise)).toBe(false);
         });
 
         it.each([

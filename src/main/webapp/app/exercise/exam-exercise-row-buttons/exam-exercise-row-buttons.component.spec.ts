@@ -1,4 +1,6 @@
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -26,6 +28,7 @@ import { EventManager } from 'app/shared/service/event-manager.service';
 import { ExamExerciseRowButtonsComponent } from 'app/exercise/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 
 describe('ExamExerciseRowButtonsComponent', () => {
+    setupTestBed({ zoneless: true });
     const course = { id: 3 } as Course;
     const exam = { id: 4 } as Exam;
 
@@ -42,22 +45,22 @@ describe('ExamExerciseRowButtonsComponent', () => {
     const programmingExercise = { id: 963, type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
     const quizResponse = { body: { id: 789, type: ExerciseType.QUIZ, quizQuestions: {} } as QuizExercise };
 
-    let deleteTextExerciseStub: jest.SpyInstance;
-    let deleteModelingExerciseStub: jest.SpyInstance;
-    let deleteQuizExerciseStub: jest.SpyInstance;
-    let deleteFileUploadExerciseStub: jest.SpyInstance;
-    let deleteProgrammingExerciseStub: jest.SpyInstance;
-    let quizExerciseServiceFindStub: jest.SpyInstance;
+    let deleteTextExerciseStub: ReturnType<typeof vi.spyOn>;
+    let deleteModelingExerciseStub: ReturnType<typeof vi.spyOn>;
+    let deleteQuizExerciseStub: ReturnType<typeof vi.spyOn>;
+    let deleteFileUploadExerciseStub: ReturnType<typeof vi.spyOn>;
+    let deleteProgrammingExerciseStub: ReturnType<typeof vi.spyOn>;
+    let quizExerciseServiceFindStub: ReturnType<typeof vi.spyOn>;
 
-    let onDeleteExerciseEmitSpy: jest.SpyInstance;
-    let quizExerciseExportSpy: jest.SpyInstance;
+    let onDeleteExerciseEmitSpy: ReturnType<typeof vi.spyOn>;
+    let quizExerciseExportSpy: ReturnType<typeof vi.spyOn>;
 
     let fixture: ComponentFixture<ExamExerciseRowButtonsComponent>;
     let component: ExamExerciseRowButtonsComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ExamExerciseRowButtonsComponent, TranslatePipeMock, MockDirective(DeleteButtonDirective), MockRouterLinkDirective],
+            imports: [TranslatePipeMock, MockDirective(DeleteButtonDirective), MockRouterLinkDirective, ExamExerciseRowButtonsComponent],
             providers: [
                 MockProvider(TextExerciseService),
                 MockProvider(FileUploadExerciseService),
@@ -81,41 +84,41 @@ describe('ExamExerciseRowButtonsComponent', () => {
                 component.course = course;
                 component.exam = exam;
 
-                deleteTextExerciseStub = jest.spyOn(textExerciseService, 'delete');
-                deleteModelingExerciseStub = jest.spyOn(modelingExerciseService, 'delete');
-                deleteQuizExerciseStub = jest.spyOn(quizExerciseService, 'delete');
-                deleteFileUploadExerciseStub = jest.spyOn(fileUploadExerciseService, 'delete');
-                deleteProgrammingExerciseStub = jest.spyOn(programmingExerciseService, 'delete');
-                quizExerciseServiceFindStub = jest.spyOn(quizExerciseService, 'find');
-                onDeleteExerciseEmitSpy = jest.spyOn(component.onDeleteExercise, 'emit');
-                quizExerciseExportSpy = jest.spyOn(quizExerciseService, 'exportQuiz');
+                deleteTextExerciseStub = vi.spyOn(textExerciseService, 'delete');
+                deleteModelingExerciseStub = vi.spyOn(modelingExerciseService, 'delete');
+                deleteQuizExerciseStub = vi.spyOn(quizExerciseService, 'delete');
+                deleteFileUploadExerciseStub = vi.spyOn(fileUploadExerciseService, 'delete');
+                deleteProgrammingExerciseStub = vi.spyOn(programmingExerciseService, 'delete');
+                quizExerciseServiceFindStub = vi.spyOn(quizExerciseService, 'find');
+                onDeleteExerciseEmitSpy = vi.spyOn(component.onDeleteExercise, 'emit');
+                quizExerciseExportSpy = vi.spyOn(quizExerciseService, 'exportQuiz');
             });
     });
 
     describe('isExamOver', () => {
         it('should return true if over', () => {
             component.latestIndividualEndDate = dayjs().subtract(1, 'hours');
-            expect(component.isExamOver()).toBeTrue();
+            expect(component.isExamOver()).toBe(true);
         });
         it('should return false if not yet over', () => {
             component.latestIndividualEndDate = dayjs().add(1, 'hours');
-            expect(component.isExamOver()).toBeFalse();
+            expect(component.isExamOver()).toBe(false);
         });
         it('should return false if endDate is undefined', () => {
-            expect(component.isExamOver()).toBeFalse();
+            expect(component.isExamOver()).toBe(false);
         });
     });
     describe('hasExamStarted', () => {
         it('should return true if started', () => {
             component.exam.startDate = dayjs().subtract(1, 'hours');
-            expect(component.hasExamStarted()).toBeTrue();
+            expect(component.hasExamStarted()).toBe(true);
         });
         it('should return false if not yet started', () => {
             component.exam.startDate = dayjs().add(1, 'hours');
-            expect(component.hasExamStarted()).toBeFalse();
+            expect(component.hasExamStarted()).toBe(false);
         });
         it('should return false if startDate is undefined', () => {
-            expect(component.hasExamStarted()).toBeFalse();
+            expect(component.hasExamStarted()).toBe(false);
         });
     });
     describe('deleteExercise', () => {

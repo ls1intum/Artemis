@@ -1,5 +1,7 @@
+import { expect, vi } from 'vitest';
 import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercise/submission/submission.service';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { take } from 'rxjs/operators';
@@ -15,6 +17,7 @@ import dayjs from 'dayjs/esm';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 
 describe('Submission Service', () => {
+    setupTestBed({ zoneless: true });
     let service: SubmissionService;
     let httpMock: HttpTestingController;
     let expectedResult: any;
@@ -55,19 +58,17 @@ describe('Submission Service', () => {
 
     afterEach(() => {
         httpMock.verify();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should delete an existing submission', fakeAsync(() => {
+    it('should delete an existing submission', () => {
         service.delete(187).subscribe((resp) => (expectedResult = resp.ok));
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });
-        tick();
+        expect(expectedResult).toBe(true);
+    });
 
-        expect(expectedResult).toBeTrue();
-    }));
-
-    it('should find all submissions of a given participation', fakeAsync(() => {
+    it('should find all submissions of a given participation', () => {
         const participationId = 1;
         const returnedFromService = [...[submission]];
         const expected = [...[submission]];
@@ -77,10 +78,9 @@ describe('Submission Service', () => {
             .subscribe((resp) => expect(resp.body).toEqual(expected));
         const req = httpMock.expectOne({ url: `api/exercise/participations/${participationId}/submissions`, method: 'GET' });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should get test run submission for a given exercise', fakeAsync(() => {
+    it('should get test run submission for a given exercise', () => {
         const exerciseId = 1;
 
         const returnedFromService = [submission];
@@ -96,8 +96,7 @@ describe('Submission Service', () => {
             .subscribe((resp) => expect(resp.body).toEqual(expected));
         const req = httpMock.expectOne({ url: `api/exercise/exercises/${exerciseId}/test-run-submissions`, method: 'GET' });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
     it('should handle feedback correction round tag', () => {
         const firstFeedback: Feedback = {
@@ -156,7 +155,7 @@ describe('Submission Service', () => {
         expect(result.completionDate).toEqual(date);
     });
 
-    it('should get submissions with complaints for tutor', fakeAsync(() => {
+    it('should get submissions with complaints for tutor', () => {
         const exerciseId = 1;
         const submissionDateStr = '2022-02-02T12:34:56.789Z';
         const complaintSubmittedTimeStr = '2022-02-03T22:11:33.444Z';
@@ -183,6 +182,5 @@ describe('Submission Service', () => {
             });
         const req = httpMock.expectOne({ url: `api/exercise/exercises/${exerciseId}/submissions-with-complaints`, method: 'GET' });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 });

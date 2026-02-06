@@ -1,4 +1,6 @@
+import { expect } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -9,6 +11,7 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 
 describe('Exercise Info Component', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ExerciseInfoComponent>;
     let comp: ExerciseInfoComponent;
 
@@ -18,7 +21,7 @@ describe('Exercise Info Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ExerciseInfoComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
+            imports: [MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), ExerciseInfoComponent],
             providers: [MockProvider(TranslateService)],
         })
             .compileComponents()

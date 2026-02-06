@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { expect } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
@@ -17,6 +19,7 @@ import { GradingCriterionAction } from 'app/shared/monaco-editor/model/actions/g
 import { TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 describe('GradingInstructionsDetailsComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: GradingInstructionsDetailsComponent;
     let fixture: ComponentFixture<GradingInstructionsDetailsComponent>;
     let gradingInstruction: GradingInstruction;
@@ -37,6 +40,7 @@ describe('GradingInstructionsDetailsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [GradingInstructionsDetailsComponent],
             providers: [LocalStorageService, SessionStorageService, { provide: TranslateService, useClass: MockTranslateService }],
         })
             .overrideTemplate(GradingInstructionsDetailsComponent, '')
@@ -53,21 +57,20 @@ describe('GradingInstructionsDetailsComponent', () => {
     });
 
     describe('onInit', () => {
-        it('should initialize the component', fakeAsync(() => {
+        it('should initialize the component', () => {
             // WHEN
             component.ngOnInit();
 
             // THEN
             expect(component).toBeTruthy();
-        }));
-        it('should set the grading criteria based on the exercise', fakeAsync(() => {
+        });
+        it('should set the grading criteria based on the exercise', () => {
             component.exercise.gradingCriteria = [gradingCriterion];
             // WHEN
             component.ngOnInit();
-            tick(); // simulate async
             // THEN
             expect(component.markdownEditorText).toEqual('Add Assessment Instruction text here\n\n' + criterionMarkdownText);
-        }));
+        });
     });
 
     it('should return grading criteria index', () => {

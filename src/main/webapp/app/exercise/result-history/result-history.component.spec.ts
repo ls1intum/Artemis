@@ -1,4 +1,6 @@
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -9,6 +11,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ResultHistoryComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: ResultHistoryComponent;
     let fixture: ComponentFixture<ResultHistoryComponent>;
 
@@ -25,7 +28,7 @@ describe('ResultHistoryComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize with same rated results', () => {
@@ -43,7 +46,7 @@ describe('ResultHistoryComponent', () => {
             { rated: true, id: 2, participation },
             { rated: true, id: 3, participation },
         ]);
-        expect(component.showPreviousDivider).toBeFalse();
+        expect(component.showPreviousDivider).toBe(false);
         expect(component.movedLastRatedResult).toBeFalsy();
 
         fixture.componentRef.setInput('results', [
@@ -63,7 +66,7 @@ describe('ResultHistoryComponent', () => {
             { rated: false, id: 5, participation },
             { rated: false, id: 6, participation },
         ]);
-        expect(component.showPreviousDivider).toBeTrue();
+        expect(component.showPreviousDivider).toBe(true);
         expect(component.movedLastRatedResult).toBeFalsy();
     });
 
@@ -82,7 +85,7 @@ describe('ResultHistoryComponent', () => {
             { rated: false, id: 2, participation },
             { rated: false, id: 3, participation },
         ]);
-        expect(component.showPreviousDivider).toBeFalse();
+        expect(component.showPreviousDivider).toBe(false);
         expect(component.movedLastRatedResult).toBeFalsy();
 
         fixture.componentRef.setInput('results', [
@@ -102,7 +105,7 @@ describe('ResultHistoryComponent', () => {
             { rated: false, id: 5, participation },
             { rated: false, id: 6, participation },
         ]);
-        expect(component.showPreviousDivider).toBeTrue();
-        expect(component.movedLastRatedResult).toBeTrue();
+        expect(component.showPreviousDivider).toBe(true);
+        expect(component.movedLastRatedResult).toBe(true);
     });
 });

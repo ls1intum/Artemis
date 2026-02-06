@@ -1,4 +1,6 @@
+import { expect } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -7,6 +9,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 
 describe('PresentationScoreComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: PresentationScoreComponent;
     let componentFixture: ComponentFixture<PresentationScoreComponent>;
 
@@ -38,6 +41,7 @@ describe('PresentationScoreComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
+            imports: [PresentationScoreComponent],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         })
             .overrideTemplate(PresentationScoreComponent, '')
@@ -53,12 +57,12 @@ describe('PresentationScoreComponent', () => {
     it('should show the presentation score checkbox', () => {
         component.exercise = exercise1;
         componentFixture.detectChanges();
-        expect(component.showPresentationScoreCheckbox()).toBeTrue();
+        expect(component.showPresentationScoreCheckbox()).toBe(true);
     });
 
     it('should hide the presentation score checkbox', () => {
         component.exercise = exercise2;
         componentFixture.detectChanges();
-        expect(component.showPresentationScoreCheckbox()).toBeFalse();
+        expect(component.showPresentationScoreCheckbox()).toBe(false);
     });
 });

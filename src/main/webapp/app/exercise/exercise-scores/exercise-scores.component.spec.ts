@@ -1,5 +1,7 @@
+import { expect, vi } from 'vitest';
 import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute } from '@angular/router';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -30,6 +32,7 @@ import { MockResultService } from 'test/helpers/mocks/service/mock-result.servic
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 
 describe('Exercise Scores Component', () => {
+    setupTestBed({ zoneless: true });
     let component: ExerciseScoresComponent;
     let fixture: ComponentFixture<ExerciseScoresComponent>;
     let resultService: ResultService;
@@ -110,8 +113,9 @@ describe('Exercise Scores Component', () => {
         });
     });
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ExerciseScoresComponent],
             providers: [
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: ActivatedRoute, useValue: route },
@@ -121,36 +125,34 @@ describe('Exercise Scores Component', () => {
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
                 { provide: ParticipationService, useClass: MockParticipationService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExerciseScoresComponent);
-                component = fixture.componentInstance;
-                resultService = TestBed.inject(ResultService);
-                participationService = TestBed.inject(ParticipationService);
-                programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
-                courseService = TestBed.inject(CourseManagementService);
-                exerciseService = TestBed.inject(ExerciseService);
-                component.exercise = exercise;
-                jest.spyOn(programmingSubmissionService, 'unsubscribeAllWebsocketTopics');
-                component.paramSub = new Subscription();
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(ExerciseScoresComponent);
+        component = fixture.componentInstance;
+        resultService = TestBed.inject(ResultService);
+        participationService = TestBed.inject(ParticipationService);
+        programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
+        courseService = TestBed.inject(CourseManagementService);
+        exerciseService = TestBed.inject(ExerciseService);
+        component.exercise = exercise;
+        vi.spyOn(programmingSubmissionService, 'unsubscribeAllWebsocketTopics');
+        component.paramSub = new Subscription();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
+        vi.clearAllTimers();
+        vi.useRealTimers();
     });
 
-    it('should be correctly set onInit', fakeAsync(() => {
-        const findCourseSpy = jest.spyOn(courseService, 'find');
-        const findExerciseSpy = jest.spyOn(exerciseService, 'find');
-        const getParticipationsMock = jest
+    it('should be correctly set onInit', () => {
+        const findCourseSpy = vi.spyOn(courseService, 'find');
+        const findExerciseSpy = vi.spyOn(exerciseService, 'find');
+        const getParticipationsMock = vi
             .spyOn(participationService, 'findAllParticipationsByExercise')
             .mockReturnValue(of(new HttpResponse<Result[]>({ body: participationsToFilter })));
 
         component.ngOnInit();
-        tick();
-
         expect(findCourseSpy).toHaveBeenCalledOnce();
         expect(findCourseSpy).toHaveBeenCalledWith(1);
         expect(findExerciseSpy).toHaveBeenCalledOnce();
@@ -165,7 +167,7 @@ describe('Exercise Scores Component', () => {
                 ['Unsuccessful', 9],
             ]),
         );
-    }));
+    });
 
     it('should get exercise participation link for exercise without an exercise group', () => {
         const expectedLink = ['/course-management', course.id!.toString(), 'programming-exercises', exercise.id!.toString(), 'participations', '1', 'submissions'];
@@ -202,14 +204,15 @@ describe('Exercise Scores Component', () => {
         expect(returnedLink).toEqual(expectedLink);
     });
 
-    it('should update result', fakeAsync(() => {
+    it('should update result', () => {
+        vi.useFakeTimers();
         component.updateParticipationFilter(component.FilterProp.MANUAL);
 
-        expect(component.isLoading).toBeTrue();
-        tick();
+        expect(component.isLoading).toBe(true);
+        vi.runAllTimers();
         expect(component.resultCriteria.filterProp).toBe(component.FilterProp.MANUAL);
-        expect(component.isLoading).toBeFalse();
-    }));
+        expect(component.isLoading).toBe(false);
+    });
 
     it.each([
         [FilterProp.ALL, {} as Participation, true],
@@ -291,7 +294,7 @@ describe('Exercise Scores Component', () => {
     it('should export names correctly for student participation', () => {
         component.participations = [participation];
         const rows = ['participantName'];
-        const resultServiceStub = jest.spyOn(resultService, 'triggerDownloadCSV');
+        const resultServiceStub = vi.spyOn(resultService, 'triggerDownloadCSV');
 
         component.exportNames();
 
@@ -303,7 +306,7 @@ describe('Exercise Scores Component', () => {
         participation.team = team;
         component.participations = [participation];
         const rows = ['Team Name,Team Short Name,Students', 'name,shortName,"name1, name2"'];
-        const resultServiceStub = jest.spyOn(resultService, 'triggerDownloadCSV');
+        const resultServiceStub = vi.spyOn(resultService, 'triggerDownloadCSV');
 
         component.exportNames();
 
@@ -342,7 +345,7 @@ describe('Exercise Scores Component', () => {
     });
 
     it('should refresh properly', () => {
-        const participationServiceStub = jest
+        const participationServiceStub = vi
             .spyOn(participationService, 'findAllParticipationsByExercise')
             .mockReturnValue(of(new HttpResponse<Result[]>({ body: [participation] })));
 
@@ -352,7 +355,7 @@ describe('Exercise Scores Component', () => {
         expect(participationServiceStub).toHaveBeenCalledWith(1, true);
         expect(component.participations).toEqual([participation]);
         expect(component.filteredParticipations).toEqual([participation]);
-        expect(component.isLoading).toBeFalse();
+        expect(component.isLoading).toBe(false);
     });
 
     it.each(filterRanges)('should filter results correctly and reset the filter', (rangeFilter: Range) => {

@@ -1,4 +1,6 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { expect, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -29,15 +31,16 @@ import {
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import * as Sentry from '@sentry/angular';
 // Preliminary mock before import to prevent errors
-jest.mock('@sentry/angular', () => {
-    const originalModule = jest.requireActual('@sentry/angular');
+vi.mock('@sentry/angular', async () => {
+    const originalModule = await vi.importActual('@sentry/angular');
     return {
         ...originalModule,
-        captureException: jest.fn(),
+        captureException: vi.fn(),
     };
 });
 
 describe('ResultService', () => {
+    setupTestBed({ zoneless: true });
     let resultService: ResultService;
     let translateService: TranslateService;
     let http: HttpClient;
@@ -159,7 +162,7 @@ describe('ResultService', () => {
         http = TestBed.inject(HttpClient);
     });
 
-    it('should convert the dates and points map when receiving a result with points from the server', fakeAsync(() => {
+    it('should convert the dates and points map when receiving a result with points from the server', () => {
         const resultWithPoints1 = new ResultWithPointsPerGradingCriterion();
         resultWithPoints1.result = result1;
         resultWithPoints1.totalPoints = 100;
@@ -171,7 +174,7 @@ describe('ResultService', () => {
 
         const results = [resultWithPoints1, resultWithPoints2];
 
-        const httpStub = jest.spyOn(http, 'get').mockReturnValue(of({ body: results }));
+        const httpStub = vi.spyOn(http, 'get').mockReturnValue(of({ body: results }));
 
         resultService.getResultsWithPointsPerGradingCriterion(programmingExercise).subscribe((res) => {
             const resultsWithScores: ResultWithPointsPerGradingCriterion[] = res.body!;
@@ -192,16 +195,14 @@ describe('ResultService', () => {
             expect(receivedResult2!.pointsPerCriterion).toEqual(expectedPointsMap);
         });
 
-        tick();
-
         expect(httpStub).toHaveBeenCalledOnce();
         expect(httpStub).toHaveBeenCalledWith(`api/assessment/exercises/${programmingExercise.id}/results-with-points-per-criterion`, expect.anything());
-    }));
+    });
 
     it('should convert Result Response from Server', () => {
         const emptyResponse: EntityResponseType = new HttpResponse<Result>({ body: undefined });
         const response: EntityResponseType = new HttpResponse<Result>({ body: result1 });
-        const converResultsSpy = jest.spyOn(resultService as any, 'convertResultDatesFromServer');
+        const converResultsSpy = vi.spyOn(resultService as any, 'convertResultDatesFromServer');
         const result = resultService.convertResultResponseDatesFromServer(emptyResponse);
         expect(result).toBe(emptyResponse);
         expect(converResultsSpy).toHaveBeenCalledTimes(0);
@@ -210,16 +211,16 @@ describe('ResultService', () => {
     });
 
     it('should trigger csv download', () => {
-        const createASpy = jest.spyOn(document, 'createElement');
+        const createASpy = vi.spyOn(document, 'createElement');
         resultService.triggerDownloadCSV(['row1', 'row2'], 'filename');
         expect(createASpy).toHaveBeenCalledOnce();
     });
 
     describe('getResultString', () => {
-        let translateServiceSpy: jest.SpyInstance;
+        let translateServiceSpy: ReturnType<typeof vi.spyOn>;
 
         beforeEach(() => {
-            translateServiceSpy = jest.spyOn(translateService, 'instant');
+            translateServiceSpy = vi.spyOn(translateService, 'instant');
         });
 
         it('should return correct string for non programming exercise long format', () => {
@@ -350,7 +351,7 @@ describe('ResultService', () => {
 
         it('reports to Sentry if result or exercise is undefined', () => {
             // Re-mock to get reference because direct import doesn't work here
-            const captureExceptionSpy = jest.spyOn(Sentry, 'captureException');
+            const captureExceptionSpy = vi.spyOn(Sentry, 'captureException');
             captureExceptionSpy.mockClear();
             expect(resultService.getResultString(undefined, undefined, undefined)).toBe('');
             expect(captureExceptionSpy).toHaveBeenCalledOnce();

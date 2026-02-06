@@ -1,5 +1,7 @@
+import { expect, vi } from 'vitest';
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TeamService } from 'app/exercise/team/team.service';
@@ -9,7 +11,10 @@ import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle
 import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { mockTeams } from 'test/helpers/mocks/service/mock-team.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 describe('TeamsExportButtonComponent', () => {
+    setupTestBed({ zoneless: true });
     let comp: TeamsExportButtonComponent;
     let fixture: ComponentFixture<TeamsExportButtonComponent>;
     let debugElement: DebugElement;
@@ -19,13 +24,12 @@ describe('TeamsExportButtonComponent', () => {
         comp.teams = mockTeams;
     }
 
-    beforeEach(waitForAsync(() => {
-        TestBed.configureTestingModule({
-            imports: [MockModule(NgbModule), MockDirective(FeatureToggleDirective)],
-            declarations: [TeamsExportButtonComponent, ButtonComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
-            providers: [MockProvider(TeamService)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ButtonComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), MockModule(NgbModule), MockDirective(FeatureToggleDirective)],
+            providers: [MockProvider(TeamService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
-    }));
+    });
     beforeEach(() => {
         fixture = TestBed.createComponent(TeamsExportButtonComponent);
         comp = fixture.componentInstance;
@@ -34,13 +38,13 @@ describe('TeamsExportButtonComponent', () => {
     });
 
     describe('exportTeams', () => {
-        let exportTeamsStub: jest.SpyInstance;
+        let exportTeamsStub: ReturnType<typeof vi.spyOn>;
         beforeEach(() => {
             resetComponent();
-            exportTeamsStub = jest.spyOn(teamService, 'exportTeams');
+            exportTeamsStub = vi.spyOn(teamService, 'exportTeams');
         });
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
         it('should call export teams from team service when called', () => {
             const button = debugElement.nativeElement.querySelector('button');

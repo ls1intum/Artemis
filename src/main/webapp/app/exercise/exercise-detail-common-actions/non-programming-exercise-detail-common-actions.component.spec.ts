@@ -1,4 +1,6 @@
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
@@ -29,6 +31,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('Exercise detail common actions Component', () => {
+    setupTestBed({ zoneless: true });
     let comp: NonProgrammingExerciseDetailCommonActionsComponent;
     let fixture: ComponentFixture<NonProgrammingExerciseDetailCommonActionsComponent>;
 
@@ -36,13 +39,12 @@ describe('Exercise detail common actions Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [FaIconComponent],
-            declarations: [
-                NonProgrammingExerciseDetailCommonActionsComponent,
+            imports: [
                 MockComponent(SubmissionExportButtonComponent),
                 MockDirective(DeleteButtonDirective),
                 MockComponent(ExternalSubmissionButtonComponent),
                 MockRouterLinkDirective,
+                FaIconComponent,
             ],
             providers: [
                 MockProvider(TextExerciseService),
@@ -54,7 +56,7 @@ describe('Exercise detail common actions Component', () => {
                 MockProvider(ProfileService),
             ],
         }).compileComponents();
-        jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({} as ProfileInfo);
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({} as ProfileInfo);
         fixture = TestBed.createComponent(NonProgrammingExerciseDetailCommonActionsComponent);
         comp = fixture.componentInstance;
     });
@@ -180,9 +182,9 @@ describe('Exercise detail common actions Component', () => {
         const fileUploadExerciseService = TestBed.inject(FileUploadExerciseService);
         const modelingExerciseService = TestBed.inject(ModelingExerciseService);
 
-        const deleteTextExerciseService = jest.spyOn(textExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
-        const deleteFileUploadExerciseStub = jest.spyOn(fileUploadExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
-        const deleteModelingExerciseService = jest.spyOn(modelingExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
+        const deleteTextExerciseService = vi.spyOn(textExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
+        const deleteFileUploadExerciseStub = vi.spyOn(fileUploadExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
+        const deleteModelingExerciseService = vi.spyOn(modelingExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
 
         fixture.componentRef.setInput('course', course);
 

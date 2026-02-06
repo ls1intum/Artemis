@@ -1,4 +1,6 @@
+import { expect } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -8,13 +10,13 @@ import { LocaleConversionService } from 'app/shared/service/locale-conversion.se
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('AdditionalFeedbackComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<AdditionalFeedbackComponent>;
     let comp: AdditionalFeedbackComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [FaIconComponent],
-            declarations: [AdditionalFeedbackComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [MockPipe(ArtemisTranslatePipe), FaIconComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(LocaleConversionService, {

@@ -1,6 +1,8 @@
+import { expect, vi } from 'vitest';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { ParticipationComponent } from 'app/exercise/participation/participation.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -31,6 +33,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { EventManager } from 'app/shared/service/event-manager.service';
 
 describe('ParticipationComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: ParticipationComponent;
     let componentFixture: ComponentFixture<ParticipationComponent>;
     let participationService: ParticipationService;
@@ -49,6 +52,7 @@ describe('ParticipationComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [ParticipationComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -77,62 +81,61 @@ describe('ParticipationComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
+        vi.clearAllTimers();
+        vi.useRealTimers();
     });
 
     it('should initialize with exerciseId from route', () => {
         // @ts-ignore
         component.exercise = undefined;
-        const exerciseFindStub = jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+        const exerciseFindStub = vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
         component.ngOnInit();
 
-        expect(exerciseFindStub).toHaveBeenCalledExactlyOnceWith(exercise.id);
+        expect(exerciseFindStub).toHaveBeenCalledOnce();
+        expect(exerciseFindStub).toHaveBeenCalledWith(exercise.id);
         expect(component.exercise).toEqual(exercise);
     });
 
-    it('should initialize for non programming exercise', fakeAsync(() => {
+    it('should initialize for non programming exercise', () => {
         const theExercise = { ...exercise, type: ExerciseType.FILE_UPLOAD };
-        const exerciseFindStub = jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: theExercise })));
+        const exerciseFindStub = vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: theExercise })));
 
         const student: User = { id: 2, login: 'student', name: 'Max', internal: true };
         const participation: StudentParticipation = { id: 3, student };
-        const participationFindStub = jest.spyOn(participationService, 'findAllParticipationsByExercise').mockReturnValue(of(new HttpResponse({ body: [participation] })));
+        const participationFindStub = vi.spyOn(participationService, 'findAllParticipationsByExercise').mockReturnValue(of(new HttpResponse({ body: [participation] })));
 
         component.ngOnInit();
-        tick();
-
-        expect(component.isLoading).toBeFalse();
+        expect(component.isLoading).toBe(false);
         expect(component.participations).toHaveLength(1);
         expect(component.participations[0].id).toBe(participation.id);
-        expect(component.basicPresentationEnabled).toBeFalse();
+        expect(component.basicPresentationEnabled).toBe(false);
 
         expect(exerciseFindStub).toHaveBeenCalledOnce();
         expect(exerciseFindStub).toHaveBeenCalledWith(theExercise.id);
         expect(participationFindStub).toHaveBeenCalledOnce();
         expect(participationFindStub).toHaveBeenCalledWith(theExercise.id, false);
-    }));
+    });
 
-    it('should initialize for programming exercise', fakeAsync(() => {
+    it('should initialize for programming exercise', () => {
         const theExercise = { ...exercise, type: ExerciseType.PROGRAMMING };
-        const exerciseFindStub = jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: theExercise })));
+        const exerciseFindStub = vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: theExercise })));
 
         const student: User = { id: 2, login: 'student', name: 'Max', internal: true };
         const participation: StudentParticipation = { id: 3, student };
-        const participationFindStub = jest.spyOn(participationService, 'findAllParticipationsByExercise').mockReturnValue(of(new HttpResponse({ body: [participation] })));
+        const participationFindStub = vi.spyOn(participationService, 'findAllParticipationsByExercise').mockReturnValue(of(new HttpResponse({ body: [participation] })));
 
         const submissionState: ProgrammingSubmissionStateObj = {
             participationId: participation.id!,
             submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION,
         };
-        const submissionGetStateStub = jest.spyOn(submissionService, 'getSubmissionStateOfExercise').mockReturnValue(of(submissionState));
+        const submissionGetStateStub = vi.spyOn(submissionService, 'getSubmissionStateOfExercise').mockReturnValue(of(submissionState));
 
         component.ngOnInit();
-        tick();
-
-        expect(component.isLoading).toBeFalse();
+        expect(component.isLoading).toBe(false);
         expect(component.participations).toHaveLength(1);
         expect(component.participations[0].id).toBe(participation.id);
-        expect(component.basicPresentationEnabled).toBeFalse();
+        expect(component.basicPresentationEnabled).toBe(false);
         expect(component.exerciseSubmissionState).toEqual(submissionState);
 
         expect(exerciseFindStub).toHaveBeenCalledOnce();
@@ -141,7 +144,7 @@ describe('ParticipationComponent', () => {
         expect(participationFindStub).toHaveBeenCalledWith(theExercise.id, false);
         expect(submissionGetStateStub).toHaveBeenCalledOnce();
         expect(submissionGetStateStub).toHaveBeenCalledWith(theExercise.id);
-    }));
+    });
 
     it('should format student login or team name from participation', () => {
         const student: User = { id: 1, login: 'student', name: 'Max', internal: true };
@@ -179,19 +182,19 @@ describe('ParticipationComponent', () => {
         const participation: StudentParticipation = { id: 1, student, team };
 
         component.participationCriteria.filterProp = component.FilterProp.ALL;
-        expect(component.filterParticipationByProp(participation)).toBeTrue();
+        expect(component.filterParticipationByProp(participation)).toBe(true);
 
         // Returns true only if submission count is 0
         component.participationCriteria.filterProp = component.FilterProp.NO_SUBMISSIONS;
-        expect(component.filterParticipationByProp(participation)).toBeFalse();
+        expect(component.filterParticipationByProp(participation)).toBe(false);
         participation.submissionCount = 0;
-        expect(component.filterParticipationByProp(participation)).toBeTrue();
+        expect(component.filterParticipationByProp(participation)).toBe(true);
         participation.submissionCount = 1;
-        expect(component.filterParticipationByProp(participation)).toBeFalse();
+        expect(component.filterParticipationByProp(participation)).toBe(false);
 
         component.exerciseSubmissionState = {};
         component.participationCriteria.filterProp = component.FilterProp.FAILED;
-        expect(component.filterParticipationByProp(participation)).toBeFalse();
+        expect(component.filterParticipationByProp(participation)).toBe(false);
 
         // Test different submission states
         Object.values(ProgrammingSubmissionState).forEach((programmingSubmissionState) => {
@@ -239,7 +242,7 @@ describe('ParticipationComponent', () => {
         expect(component.participationsChangedDueDate).toEqual(expectedMap);
     });
 
-    it('should send all changed participations to the server when updating their due dates', fakeAsync(() => {
+    it('should send all changed participations to the server when updating their due dates', () => {
         const participation1 = participationWithIndividualDueDate(1, dayjs());
         const participation2 = participationWithIndividualDueDate(2, dayjs());
         const participation2NoDueDate = participationWithIndividualDueDate(2, undefined);
@@ -256,29 +259,27 @@ describe('ParticipationComponent', () => {
         expectedMap.set(2, participationWithIndividualDueDate(2, undefined));
         expect(component.participationsChangedDueDate).toEqual(expectedMap);
 
-        const updateDueDateStub = jest
+        const updateDueDateStub = vi
             .spyOn(participationService, 'updateIndividualDueDates')
             .mockReturnValue(of(new HttpResponse({ body: [participation1, participation2NoDueDate] })));
         const expectedSent = [participation1, participation2NoDueDate];
 
         component.saveChangedDueDates();
-        tick();
-
         expect(updateDueDateStub).toHaveBeenCalledOnce();
         expect(updateDueDateStub).toHaveBeenCalledWith(component.exercise, expectedSent);
         expect(component.participations).toEqual(expectedSent);
         expect(component.participationsChangedDueDate).toEqual(new Map());
-        expect(component.isSaving).toBeFalse();
-    }));
+        expect(component.isSaving).toBe(false);
+    });
 
     it('should error on save changedDueDate', () => {
-        const errorSpy = jest.spyOn(alertService, 'error');
-        jest.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(throwError(() => new HttpResponse({ body: null })));
+        const errorSpy = vi.spyOn(alertService, 'error');
+        vi.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(throwError(() => new HttpResponse({ body: null })));
         component.saveChangedDueDates();
         expect(errorSpy).toHaveBeenCalledOnce();
     });
 
-    it('should remove a participation from the change map when it has been deleted', fakeAsync(() => {
+    it('should remove a participation from the change map when it has been deleted', () => {
         const participation1 = participationWithIndividualDueDate(1, dayjs());
         component.changedIndividualDueDate(participation1);
 
@@ -286,19 +287,17 @@ describe('ParticipationComponent', () => {
         expectedMap.set(1, participation1);
         expect(component.participationsChangedDueDate).toEqual(expectedMap);
 
-        const deleteStub = jest.spyOn(participationService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        const deleteStub = vi.spyOn(participationService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
 
         component.deleteParticipation(1);
-        tick();
-
         expect(deleteStub).toHaveBeenCalledOnce();
         expect(component.participationsChangedDueDate).toEqual(new Map());
-    }));
+    });
 
     it('should update participation filter', async () => {
-        jest.useFakeTimers();
+        vi.useFakeTimers();
         component.updateParticipationFilter(component.FilterProp.NO_SUBMISSIONS);
-        jest.runAllTimers();
+        vi.runAllTimers();
         expect(component.isLoading).toBeFalsy();
         expect(component.participationCriteria.filterProp).toBe(component.FilterProp.NO_SUBMISSIONS);
     });
@@ -311,14 +310,14 @@ describe('ParticipationComponent', () => {
     };
 
     describe('Presentation Score', () => {
-        let updateStub: jest.SpyInstance;
+        let updateStub: ReturnType<typeof vi.spyOn>;
 
         beforeEach(() => {
-            updateStub = jest.spyOn(participationService, 'update').mockReturnValue(of(new HttpResponse({ body: new StudentParticipation() })));
+            updateStub = vi.spyOn(participationService, 'update').mockReturnValue(of(new HttpResponse({ body: new StudentParticipation() })));
         });
 
         afterEach(() => {
-            jest.restoreAllMocks();
+            vi.restoreAllMocks();
         });
 
         const courseWithBasicPresentations = {
@@ -374,108 +373,94 @@ describe('ParticipationComponent', () => {
             exercise: exercise1,
         } as StudentParticipation;
 
-        it('should add a presentation score if basic presentations is enabled', fakeAsync(() => {
+        it('should add a presentation score if basic presentations is enabled', () => {
             component.exercise = exercise1;
             component.basicPresentationEnabled = component.checkBasicPresentationConfig();
 
             component.addBasicPresentation(participation);
-            tick();
-
             expect(updateStub).toHaveBeenCalledOnce();
             expect(updateStub).toHaveBeenCalledWith(exercise1, participation);
-        }));
+        });
 
-        it('should add a presentation score if graded presentations is enabled', fakeAsync(() => {
+        it('should add a presentation score if graded presentations is enabled', () => {
             component.exercise = exercise3;
             component.gradeStepsDTO = gradingScaleWithGradedPresentation;
             component.gradedPresentationEnabled = component.checkGradedPresentationConfig();
 
             participation.presentationScore = 20;
             component.addGradedPresentation(participation);
-            tick();
-
             expect(updateStub).toHaveBeenCalledOnce();
             expect(updateStub).toHaveBeenCalledWith(exercise3, participation);
-        }));
+        });
 
-        it('should not add an invalid presentation score if graded presentations is enabled', fakeAsync(() => {
+        it('should not add an invalid presentation score if graded presentations is enabled', () => {
             component.exercise = exercise3;
             component.gradeStepsDTO = gradingScaleWithGradedPresentation;
             component.gradedPresentationEnabled = component.checkGradedPresentationConfig();
 
             participation.presentationScore = 200;
             component.addGradedPresentation(participation);
-            tick();
-
             expect(updateStub).not.toHaveBeenCalled();
-        }));
+        });
 
-        it('should not add a presentation score if presentations is disabled', fakeAsync(() => {
+        it('should not add a presentation score if presentations is disabled', () => {
             component.exercise = exercise2;
             component.basicPresentationEnabled = component.checkBasicPresentationConfig();
             component.gradedPresentationEnabled = component.checkGradedPresentationConfig();
 
             component.addBasicPresentation(participation);
-            tick();
-
             expect(updateStub).not.toHaveBeenCalled();
-        }));
+        });
 
-        it('should remove a presentation score if basic presentations is enabled', fakeAsync(() => {
+        it('should remove a presentation score if basic presentations is enabled', () => {
             component.exercise = exercise1;
             component.basicPresentationEnabled = component.checkBasicPresentationConfig();
 
             component.removePresentation(participation);
-            tick();
-
             expect(updateStub).toHaveBeenCalledOnce();
             expect(updateStub).toHaveBeenCalledWith(exercise1, participation);
-        }));
+        });
 
-        it('should remove a presentation score if graded presentations is enabled', fakeAsync(() => {
+        it('should remove a presentation score if graded presentations is enabled', () => {
             component.exercise = exercise3;
             component.gradeStepsDTO = gradingScaleWithGradedPresentation;
             component.gradedPresentationEnabled = component.checkGradedPresentationConfig();
 
             component.removePresentation(participation);
-            tick();
-
             expect(updateStub).toHaveBeenCalledOnce();
             expect(updateStub).toHaveBeenCalledWith(exercise3, participation);
-        }));
+        });
 
-        it('should do nothing on removal of a presentation score if presentations is disabled', fakeAsync(() => {
+        it('should do nothing on removal of a presentation score if presentations is disabled', () => {
             component.exercise = exercise2;
             component.basicPresentationEnabled = component.checkBasicPresentationConfig();
             component.gradedPresentationEnabled = component.checkGradedPresentationConfig();
 
             component.removePresentation(participation);
-            tick();
-
             expect(updateStub).not.toHaveBeenCalled();
-        }));
+        });
 
         it('should check if the presentation score actions should be displayed', () => {
             component.exercise = exercise1;
-            expect(component.checkBasicPresentationConfig()).toBeTrue();
-            expect(component.checkGradedPresentationConfig()).toBeFalse();
+            expect(component.checkBasicPresentationConfig()).toBe(true);
+            expect(component.checkGradedPresentationConfig()).toBe(false);
 
             component.exercise = exercise2;
-            expect(component.checkBasicPresentationConfig()).toBeFalse();
-            expect(component.checkGradedPresentationConfig()).toBeFalse();
+            expect(component.checkBasicPresentationConfig()).toBe(false);
+            expect(component.checkGradedPresentationConfig()).toBe(false);
 
             component.exercise = exercise3;
             component.gradeStepsDTO = gradingScaleWithGradedPresentation;
-            expect(component.checkBasicPresentationConfig()).toBeFalse();
-            expect(component.checkGradedPresentationConfig()).toBeTrue();
+            expect(component.checkBasicPresentationConfig()).toBe(false);
+            expect(component.checkGradedPresentationConfig()).toBe(true);
         });
 
-        it('should not add a presentation score if student gave max number of presentations', fakeAsync(() => {
+        it('should not add a presentation score if student gave max number of presentations', () => {
             const errorResponse = new HttpErrorResponse({
                 error: { errorKey: 'invalid.presentations.maxNumberOfPresentationsExceeded' },
                 status: 400,
             });
-            updateStub = jest.spyOn(participationService, 'update').mockReturnValue(throwError(() => errorResponse));
+            updateStub = vi.spyOn(participationService, 'update').mockReturnValue(throwError(() => errorResponse));
 
             component.exercise = exercise3;
             component.gradeStepsDTO = gradingScaleWithGradedPresentation;
@@ -483,12 +468,10 @@ describe('ParticipationComponent', () => {
 
             participation.presentationScore = 40;
             component.addGradedPresentation(participation);
-            tick();
-
             expect(participation.presentationScore).toBeUndefined();
             expect(updateStub).toHaveBeenCalledOnce();
             expect(updateStub).toHaveBeenCalledWith(exercise3, participation);
-        }));
+        });
     });
 
     describe('getScoresRoute', () => {
