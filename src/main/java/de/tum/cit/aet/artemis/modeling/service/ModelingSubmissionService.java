@@ -87,14 +87,18 @@ public class ModelingSubmissionService extends SubmissionService {
      *
      * @param submissionId the id of the submission
      * @return the assessment data containing submission, participation, exercise, and result
-     * @throws EntityNotFoundException if the submission or result is not found
+     * @throws EntityNotFoundException if the submission, participation, or result is not found
      */
     public SubmissionAssessmentData getSubmissionAssessmentData(Long submissionId) {
         Submission submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNoteAndTeamStudents(submissionId);
         if (submission == null) {
             throw new EntityNotFoundException("Submission", submissionId);
         }
-        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
+
+        if (!(submission.getParticipation() instanceof StudentParticipation participation)) {
+            throw new EntityNotFoundException("StudentParticipation for submission", submissionId);
+        }
+
         Exercise exercise = participation.getExercise();
 
         Result result = submission.getLatestCompletedResult();
@@ -141,9 +145,9 @@ public class ModelingSubmissionService extends SubmissionService {
             modelingSubmission.setResults(athenaResults);
         }
 
-        Result resultToFilter = getLatestResultByCompletionDate(modelingSubmission);
-        if (resultToFilter != null && !isAtLeastTutor) {
-            resultToFilter.filterSensitiveInformation();
+        // Filter sensitive information from all results for non-tutors
+        if (!isAtLeastTutor && modelingSubmission.getResults() != null) {
+            modelingSubmission.getResults().stream().filter(result -> result != null).forEach(Result::filterSensitiveInformation);
         }
 
         // make sure sensitive information are not sent to the client
