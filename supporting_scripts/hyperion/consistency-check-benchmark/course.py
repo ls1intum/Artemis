@@ -137,7 +137,6 @@ def delete_course_request(session: requests.Session,max_retries: int = 3) -> boo
     This approach fixes this.
 
     :param Session session: The active requests Session object.
-    :param str course_short_name: The short name of the course to delete.
     :param int max_retries: Maximum number of deletion attempts. Defaults to 3.
     :return: True if the course was successfully deleted, False otherwise.
     :rtype: bool
@@ -268,7 +267,7 @@ def __transform_exercise_json_keys(input_dict: Dict[str, int]) -> Dict[str, int]
             transformed_dict[new_key] = value
         else:
             # Fallback if pattern doesn't match (keep original or log error)
-            print(f"Warning: Could not parse key '{original_key}'")
+            logging.warning(f"Could not parse key '{original_key}'")
             transformed_dict[original_key] = value
 
     return transformed_dict

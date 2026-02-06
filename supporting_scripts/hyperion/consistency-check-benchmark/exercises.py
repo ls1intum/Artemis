@@ -490,7 +490,7 @@ def import_exercise_variants(session: requests.Session) -> None:
     total_variants_imported = 0
     total_variants_failed = 0
 
-    logging.info(f"Preparing to import variants for {sum(len(ex) for ex in COURSE_EXERCISES.values())} exercises across {len(COURSE_EXERCISES)} courses using {MAX_THREADS} threads")
+    logging.info(f"Preparing to import variants for {sum(len(ex) for ex in exercises_to_import.values())} exercises across {len(exercises_to_import)} courses using {MAX_THREADS} threads")
     with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
         futures = []
         # submit all tasks
@@ -622,7 +622,7 @@ if __name__ == "__main__":
     logging.info("Step 2: Logging in as admin")
     login_as_admin(session=session)
 
-    logging.info("Step 3: geting pecv-bench directory")
+    logging.info("Step 3: getting pecv-bench directory")
     pecv_bench_dir = get_pecv_bench_dir()
 
     logging.info("Step 4: cloning pecv-bench repository")
