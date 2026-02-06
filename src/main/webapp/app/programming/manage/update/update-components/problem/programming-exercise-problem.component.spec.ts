@@ -284,7 +284,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         // Mock editableInstructions to return refined content
         const mockEditable = { getCurrentContent: jest.fn().mockReturnValue('Refined content'), revertAll: jest.fn() };
-        (comp as any).editableInstructions = () => mockEditable;
+        (comp as any).editableInstructions = () => mockEditableInstructions;
 
         comp.showDiff.set(true);
         comp.closeDiffView();
