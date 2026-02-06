@@ -27,6 +27,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -411,14 +412,26 @@ public final class RepositoryExportTestUtil {
                 // Try to open the bare repository and resolve HEAD
                 // This verifies the repo is accessible and has a valid HEAD reference
                 try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
-                    var headRef = git.getRepository().resolve("HEAD");
+                    var jgitRepo = git.getRepository();
+                    var headRef = jgitRepo.resolve("HEAD");
                     if (headRef == null) {
                         log.debug("Bare repository HEAD is null, waiting...");
                         return false;
                     }
-                    // Verify we can read the commit object
-                    try (RevWalk revWalk = new RevWalk(git.getRepository())) {
-                        revWalk.parseCommit(headRef);
+                    // Verify we can read the commit object and traverse the full tree
+                    // This ensures all pack objects (trees + blobs) are flushed to disk,
+                    // preventing IOException when the server reads file contents at this commit.
+                    try (RevWalk revWalk = new RevWalk(jgitRepo)) {
+                        var commit = revWalk.parseCommit(headRef);
+                        try (TreeWalk treeWalk = new TreeWalk(jgitRepo)) {
+                            treeWalk.addTree(commit.getTree());
+                            treeWalk.setRecursive(true);
+                            while (treeWalk.next()) {
+                                // Read each blob to verify the object is accessible on disk
+                                var objectId = treeWalk.getObjectId(0);
+                                jgitRepo.open(objectId).openStream().close();
+                            }
+                        }
                     }
                     return true;
                 }
