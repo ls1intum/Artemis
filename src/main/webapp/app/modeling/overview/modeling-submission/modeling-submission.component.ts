@@ -367,18 +367,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.updateModelAndExplanation();
 
         this.subscribeToWebsockets();
-        const latestResult = getLatestSubmissionResult(this.submission);
-        if ((latestResult && this.isAfterAssessmentDueDate) || this.isFeedbackView) {
-            // Athena results are preliminary feedback and should not block editing or trigger the read-only assessment view
-            if (latestResult?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA || this.isFeedbackView) {
-                this.result = latestResult;
-            }
+        if ((getLatestSubmissionResult(this.submission) && this.isAfterAssessmentDueDate) || this.isFeedbackView) {
+            this.result = getLatestSubmissionResult(this.submission);
             if (this.isFeedbackView && this.submissionId) {
                 this.result = this.sortedSubmissionHistory.find((submission) => submission.id === this.submissionId)?.latestResult;
             }
         }
         this.resultWithComplaint = getFirstResultWithComplaint(this.submission);
-        if (this.submission.submitted && this.result && this.result.completionDate) {
+        if (this.submission.submitted && this.result && this.result.completionDate && !this.isAutomaticResult) {
             if (!this.isFeedbackView) {
                 this.modelingAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
                     this.assessmentResult = assessmentResult;
@@ -730,9 +726,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         return undefined;
     }
 
-    /*
-     * Check if the latest submission has an Athena result
-     */
+    get isAutomaticResult(): boolean {
+        return this.result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
+    }
+
     get hasAthenaResultForLatestSubmission(): boolean {
         const latestResult = getLatestSubmissionResult(this.submission);
         return latestResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
