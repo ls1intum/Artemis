@@ -30,7 +30,7 @@
     </div>
 
     @if (leftSidebarTab() === 'FILES') {
-        <div class="review-sidebar__panel">
+        <div class="review-sidebar__panel review-sidebar__panel--files">
             <ng-content select="[sidebarFiles]" />
         </div>
     } @else if (leftSidebarTab() === 'PROBLEM_STATEMENT') {
@@ -58,6 +58,14 @@
                     </span>
                 </h3>
                 <fa-icon class="ms-auto clickable" [icon]="faChevronLeft" />
+            </div>
+            <div class="card-second-header">
+                <button type="button" class="btn" title="Filter">
+                    <fa-icon [icon]="faFilter" />
+                </button>
+                <button type="button" class="btn ms-auto" title="Toggle visibility" (click)="toggleCommentsVisibility($event)">
+                    <fa-icon [icon]="commentsVisible() ? faEye : faEyeSlash" />
+                </button>
             </div>
             <div class="review-sidebar__panel-body review-sidebar__panel-body--comments card-body">
                 <ng-content select="[sidebarComments]" />

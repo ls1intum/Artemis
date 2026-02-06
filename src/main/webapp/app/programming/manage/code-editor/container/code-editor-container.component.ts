@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, ViewChild, computed, effect, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, ViewChild, computed, effect, inject, input, output, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -91,6 +91,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     readonly enableExerciseReviewComments = input<boolean>(false);
     readonly reviewCommentThreads = input<CommentThread[]>([]);
     readonly selectedAuxiliaryRepositoryId = input<number | undefined>();
+
+    readonly reviewCommentsVisible = signal<boolean>(true);
 
     isProblemStatementVisible = input<boolean>(true);
     course = input<Course | undefined>();

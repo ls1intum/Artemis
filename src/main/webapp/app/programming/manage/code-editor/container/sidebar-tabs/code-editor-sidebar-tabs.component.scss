@@ -21,6 +21,10 @@
     flex: 1 1 auto;
 }
 
+.review-sidebar__panel--files {
+    border: 0;
+}
+
 :host {
     display: block;
     height: 100%;
@@ -99,6 +103,16 @@
     border-bottom: 0;
 }
 
+.review-sidebar__panel .card-second-header {
+    display: flex;
+    background-color: var(--code-editor-file-browser-header-background);
+    border-bottom: 1px solid var(--code-editor-file-browser-header-border);
+}
+
+.review-sidebar__panel .card-second-header button {
+    width: 60px;
+}
+
 .review-sidebar__card {
     height: 100%;
     border: 0;
@@ -124,6 +138,7 @@
 }
 
 .review-sidebar__panel-body--comments {
+    padding-top: 1rem;
     padding-bottom: 8px;
     gap: 8px;
 }

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChevronLeft, faComments, faFolder, faListAlt } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faComments, faEye, faEyeSlash, faFilter, faFolder, faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 type SidebarTab = 'FILES' | 'PROBLEM_STATEMENT' | 'COMMENTS';
@@ -17,10 +17,14 @@ export class CodeEditorSidebarTabsComponent {
     readonly isCollapsed = input<boolean>(false);
     readonly toggleCollapsed = output<void>();
     readonly leftSidebarTab = signal<SidebarTab>('FILES');
+    readonly commentsVisible = signal<boolean>(true);
     readonly faFolder = faFolder;
     readonly faListAlt = faListAlt;
     readonly faComments = faComments;
     readonly faChevronLeft = faChevronLeft;
+    readonly faFilter = faFilter;
+    readonly faEye = faEye;
+    readonly faEyeSlash = faEyeSlash;
 
     selectTab(tab: SidebarTab) {
         const isSameTab = this.leftSidebarTab() === tab;
@@ -40,4 +44,13 @@ export class CodeEditorSidebarTabsComponent {
         event.stopPropagation();
         this.toggleCollapsed.emit();
     }
+
+    toggleCommentsVisibility(event: MouseEvent) {
+        event.stopPropagation();
+        const next = !this.commentsVisible();
+        this.commentsVisible.set(next);
+        this.commentsVisibilityChange.emit(next);
+    }
+
+    readonly commentsVisibilityChange = output<boolean>();
 }

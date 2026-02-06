@@ -118,6 +118,13 @@
     margin: 0;
 }
 
+.monaco-review-comment-thread-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
 .monaco-review-comment-thread-header--collapsed {
     margin: 0;
 }
@@ -129,7 +136,7 @@
 }
 
 .monaco-review-comment-thread-title {
-    font-size: 0.75rem;
+    font-size: 0.9rem;
     display: flex;
     align-items: baseline;
     gap: 0.35rem;
@@ -143,11 +150,11 @@
 .monaco-review-comment-thread-tag {
     display: inline-flex;
     align-items: center;
-    font-size: 0.72rem;
+    font-size: 0.6rem;
     font-weight: 600;
-    padding: 0.02rem 0.4rem;
+    padding: 0.1rem 0.35rem;
+    line-height: 1.2;
     border-radius: 999px;
-    margin-left: 0.35rem;
     background-color: var(--border-color);
     color: var(--secondary-text-color);
 }
@@ -160,6 +167,13 @@
 .monaco-review-comment-thread-tag--outdated {
     background-color: var(--artemis-alert-neutral-background);
     color: var(--artemis-alert-neutral-color);
+}
+
+.monaco-review-comment-thread-tags {
+    display: flex;
+    gap: 0.2rem;
+    margin-top: 0.15rem;
+    margin-bottom: 0.15rem;
 }
 
 .monaco-review-comment-thread-meta--truncate {
@@ -180,7 +194,7 @@
     border: 0;
     background: transparent;
     color: var(--secondary-text-color);
-    font-size: 0.7rem;
+    font-size: 0.8rem;
     padding: 0;
     cursor: pointer;
     max-width: 100%;
@@ -188,7 +202,8 @@
 }
 
 .monaco-review-comment-thread-location-text {
-    max-width: 140px;
+    font-size: 0.8rem;
+    max-width: 180px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -196,17 +211,14 @@
 
 .monaco-review-comment-thread-location-repo {
     flex: 0 0 auto;
-    font-size: 0.65rem;
+    font-size: 0.8rem;
     font-weight: 600;
-    padding: 0.1rem 0.35rem;
     line-height: 1.2;
-    border-radius: 999px;
-    background-color: var(--border-color);
-    color: var(--secondary-text-color);
+    color: var(--bs-white) !important;
 }
 
 .monaco-review-comment-thread-location-icon {
-    font-size: 0.7rem;
+    font-size: 0.8rem;
 }
 
 .monaco-review-comment-thread-toggle {
