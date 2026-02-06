@@ -87,13 +87,7 @@
                             <jhi-fullscreen>
                                 <div class="column" style="display: flex; flex-direction: column; flex-grow: 1">
                                     <div class="row" style="flex-grow: 1; display: flex">
-                                        @if (
-                                            submission &&
-                                            (isActive || isLate) &&
-                                            (!result || hasAthenaResultForLatestSubmission) &&
-                                            (!isLate || !submission.submitted) &&
-                                            !isFeedbackView
-                                        ) {
+                                        @if (submission && (isActive || isLate) && !result && (!isLate || !submission.submitted) && !isFeedbackView) {
                                             <div class="col-12 editor-large">
                                                 <jhi-modeling-editor
                                                     [readOnly]="!isOwnerOfParticipation"
@@ -118,7 +112,7 @@
                                                 }
                                             </div>
                                         }
-                                        @if (((!isActive || (result && !hasAthenaResultForLatestSubmission)) && (!isLate || submission.submitted)) || isFeedbackView) {
+                                        @if (((!isActive || result) && (!isLate || submission.submitted)) || isFeedbackView) {
                                             <div class="col-8 editor-assessment">
                                                 <jhi-modeling-assessment
                                                     [umlModel]="umlModel"
