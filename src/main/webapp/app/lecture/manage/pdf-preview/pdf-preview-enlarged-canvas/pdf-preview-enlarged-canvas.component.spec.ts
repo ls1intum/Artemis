@@ -49,7 +49,6 @@ function createMockCanvas(width = 500, height = 400): HTMLCanvasElement {
 
 function createMockEvent(target: Element, eventType = 'click'): MouseEvent {
     const event = new MouseEvent(eventType, {
-        view: window,
         bubbles: true,
         cancelable: true,
     });
