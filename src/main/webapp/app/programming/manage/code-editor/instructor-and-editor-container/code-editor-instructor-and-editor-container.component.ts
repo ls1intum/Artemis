@@ -426,7 +426,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     submitRefinement(): void {
         const prompt = this.refinementPrompt().trim();
-        if (!prompt) return;
+        if (!prompt || !this.exercise) return;
 
         this.currentRefinementSubscription?.unsubscribe();
         this.currentRefinementSubscription = undefined;

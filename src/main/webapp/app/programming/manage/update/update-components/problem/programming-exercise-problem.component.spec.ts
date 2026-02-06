@@ -30,7 +30,6 @@ describe('ProgrammingExerciseProblemComponent', () => {
     const mockHyperionApiService = {
         generateProblemStatement: jest.fn(),
         refineProblemStatementGlobally: jest.fn(),
-        refineProblemStatementTargeted: jest.fn(),
     };
 
     const mockAlertService = {
