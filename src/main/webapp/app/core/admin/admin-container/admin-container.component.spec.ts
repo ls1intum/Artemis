@@ -68,6 +68,7 @@ describe('AdminContainerComponent', () => {
         useExternal: false,
         versionControlName: '',
         versionControlUrl: '',
+        localLLMDeploymentEnabled: false,
     };
 
     beforeEach(async () => {
