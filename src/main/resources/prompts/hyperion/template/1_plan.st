@@ -16,7 +16,12 @@ Your task is to create a detailed plan for generating template code that provide
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
-Use the issues above to align the template plan with the problem statement and repositories.
+Treat the issues above as hard constraints. Be critical and explicit:
+1. Identify which requirements, files, and repository artifacts each issue touches.
+2. Explain the likely root cause or mismatch implied by the issue.
+3. Update the template plan to resolve the issue with the minimal, safest change.
+4. Verify the plan remains consistent with the problem statement and existing repository patterns.
+5. If multiple approaches are possible, pick the most conservative and justify it.
 
 **Important:** Only modify files in the `/src/` directory. Do not change build files, write tests, configuration files, or any files outside the source directory.
 

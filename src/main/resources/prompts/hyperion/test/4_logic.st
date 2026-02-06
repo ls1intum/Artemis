@@ -16,7 +16,12 @@ Your task is to implement the core logic for each test method based on the testi
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
-Use the issues above to keep the tests consistent with the problem statement and repositories.
+Treat the issues above as hard constraints. Be critical and explicit:
+1. Identify which methods, files, and repository artifacts each issue touches.
+2. Explain the likely root cause in the current code, headers, or plan.
+3. Choose the minimal, safest logic change that resolves the issue without introducing new behavior.
+4. Verify the fix aligns with the problem statement, the plan, and existing repository patterns.
+5. If multiple fixes are possible, pick the most conservative change and justify it.
 
 **Important:** Only modify files in the `/test/` directory. Do not change source code, build files, or configuration files.
 First, think step-by-step for each test method.

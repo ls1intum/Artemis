@@ -16,7 +16,12 @@ Your task is to generate the boilerplate code for each test file based on the te
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
-Use the issues above to align test headers with the problem statement and repositories.
+Treat the issues above as hard constraints. Be critical and explicit:
+1. Identify which test classes, methods, and files each issue touches.
+2. Explain the mismatch between required test APIs and the current headers.
+3. Apply the minimal header changes needed to resolve the issue.
+4. Verify signatures and docstrings stay consistent with the testing plan and repository patterns.
+5. If multiple options exist, pick the most conservative and justify it.
 
 **Important:** Only modify files in the `/test/` directory. Do not change source code, build files, or configuration files.
 First, think step-by-step for each test file.

@@ -13,7 +13,12 @@ Based on the following testing plan and programming language, determine the nece
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
-Use the issues above to align the test file structure with the problem statement and repositories.
+Treat the issues above as hard constraints. Be critical and explicit:
+1. Identify which test files, packages, and repository artifacts each issue touches.
+2. Explain the mismatch between the required structure and the current or planned structure.
+3. Propose the minimal structural changes needed to resolve the issue.
+4. Verify the structure stays consistent with the testing plan and repository conventions.
+5. If multiple structures are possible, pick the most conservative and justify it.
 
 **Important:** Only modify files in the `/test/` directory. Do not change source code, build files, or configuration files.
 First, think step-by-step.
