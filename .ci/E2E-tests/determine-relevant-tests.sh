@@ -19,7 +19,7 @@ BASE_BRANCH="${1:-origin/develop}"
 write_output() {
     local key="$1"
     local value="$2"
-    
+
     if [ -n "$GITHUB_OUTPUT" ]; then
         echo "$key=$value" >> "$GITHUB_OUTPUT"
     fi
@@ -81,15 +81,14 @@ if [ ! -f "$MAPPING_FILE" ]; then
     write_output "RUN_ALL_TESTS" "true"
     write_output "RELEVANT_TESTS" ""
     write_output "REMAINING_TESTS" ""
-    write_output "IGNORE_TESTS" ""
     write_output "RELEVANT_COUNT" "0"
     write_output "REMAINING_COUNT" "0"
     exit 0
 fi
 
-# All e2e test directories/files (top-level)
+# All e2e test directories/files
 # Source of truth: .ci/E2E-tests/e2e-test-mapping.json (allTestPaths)
-# Safety net: auto-discover top-level e2e paths so new folders still run in remaining tests.
+# Safety net: auto-discover e2e paths so new folders still run in remaining tests.
 declare -A ALL_TEST_PATH_SET
 
 ALL_TEST_PATHS_FROM_MAPPING=$(jq -r '.allTestPaths[]' "$MAPPING_FILE" 2>/dev/null || echo "")
@@ -99,6 +98,7 @@ for test_path in $ALL_TEST_PATHS_FROM_MAPPING; do
     fi
 done
 
+# Auto-discover top-level e2e paths so newly added folders are included in remaining tests.
 while IFS= read -r path; do
     if [ -n "$path" ]; then
         if [ -d "$REPO_ROOT/src/test/playwright/$path" ]; then
@@ -108,6 +108,18 @@ while IFS= read -r path; do
         fi
     fi
 done < <(cd "$REPO_ROOT/src/test/playwright" && find e2e -maxdepth 1 -mindepth 1 \( -type d -o -name '*.spec.ts' \) -print)
+
+# Remove parent paths whose children are also in the set. This prevents
+# passing both e2e/exercise/ and e2e/exercise/file-upload/ to Playwright
+# which would cause duplicate test execution.
+for parent in "${!ALL_TEST_PATH_SET[@]}"; do
+    for child in "${!ALL_TEST_PATH_SET[@]}"; do
+        if [ "$parent" != "$child" ] && [[ "$child" == "$parent"* ]]; then
+            unset 'ALL_TEST_PATH_SET[$parent]'
+            break
+        fi
+    done
+done
 
 ALL_TEST_PATHS=()
 for test_path in "${!ALL_TEST_PATH_SET[@]}"; do
@@ -128,7 +140,6 @@ if [ -z "$CHANGED_FILES" ]; then
     write_output "RUN_ALL_TESTS" "true"
     write_output "RELEVANT_TESTS" ""
     write_output "REMAINING_TESTS" ""
-    write_output "IGNORE_TESTS" ""
     write_output "RELEVANT_COUNT" "0"
     write_output "REMAINING_COUNT" "0"
     exit 0
@@ -146,7 +157,7 @@ echo ""
 # 1) RUN_ALL_TESTS=true (no changes detected, mapping file missing, runAllTestsPatterns match,
 #    or Playwright infrastructure change) => run the full suite.
 # 2) Only Playwright spec changes (no infrastructure change) => run only RELEVANT_TESTS (skip REMAINING_TESTS).
-# 3) All other changes run RELEVANT_TESTS first, then REMAINING_TESTS (excluding covered paths).
+# 3) All other changes run RELEVANT_TESTS first, then REMAINING_TESTS.
 #
 # Check if we should run all tests (config changes, playwright changes, etc.)
 # Patterns are treated as literal path prefixes (not regex).
@@ -186,7 +197,6 @@ if [ "$RUN_ALL_TESTS" = "true" ] || [ "$PLAYWRIGHT_INFRA_CHANGE" = "true" ]; the
     write_output "RUN_ALL_TESTS" "true"
     write_output "RELEVANT_TESTS" ""
     write_output "REMAINING_TESTS" ""
-    write_output "IGNORE_TESTS" ""
     write_output "RELEVANT_COUNT" "0"
     write_output "REMAINING_COUNT" "0"
     exit 0
@@ -221,22 +231,17 @@ if [ "$ONLY_PLAYWRIGHT_TEST_CHANGES" = "true" ] && [ "$PLAYWRIGHT_INFRA_CHANGE" 
     SKIP_REMAINING_TESTS=true
 fi
 
-# Determine remaining tests (all tests minus relevant tests)
-# This is a bit tricky because we need to handle partial overlaps
-# IGNORE_PATH_SET tracks child paths already executed in Phase 1.
+# Determine remaining tests (all tests minus relevant tests).
+# A test path is covered (not remaining) if:
+# 1. It equals a relevant path exactly
+# 2. It starts with a relevant path (relevant is a parent, e.g. e2e/exam/ covers e2e/exam/ExamAssessment.spec.ts)
 REMAINING_TESTS=()
-declare -A IGNORE_PATH_SET
 
 if [ "$SKIP_REMAINING_TESTS" = "false" ]; then
     for test_path in "${ALL_TEST_PATHS[@]}"; do
         IS_COVERED=false
-        
+
         for relevant in "${RELEVANT_TESTS[@]}"; do
-            # Check if this test path is covered by a relevant test
-            # A test path is covered if:
-            # 1. It equals a relevant path
-            # 2. It starts with a relevant path (e.g., e2e/exam/ covers e2e/exam/*)
-            # 3. A relevant path starts with it (more specific test path covers general)
             if [ "$test_path" = "$relevant" ]; then
                 IS_COVERED=true
                 break
@@ -244,13 +249,9 @@ if [ "$SKIP_REMAINING_TESTS" = "false" ]; then
                 # relevant is a parent of test_path
                 IS_COVERED=true
                 break
-            elif [[ "$relevant" == "$test_path"* ]]; then
-                # relevant is a child of test_path - avoid duplicate runs
-                IS_COVERED=true
-                IGNORE_PATH_SET["$relevant"]=1
             fi
         done
-        
+
         if [ "$IS_COVERED" = "false" ]; then
             REMAINING_TESTS+=("$test_path")
         fi
@@ -268,17 +269,6 @@ if [ ${#REMAINING_TESTS[@]} -gt 0 ]; then
     mapfile -t REMAINING_TESTS_SORTED < <(printf '%s\n' "${REMAINING_TESTS[@]}" | sort -u)
 else
     REMAINING_TESTS_SORTED=()
-fi
-
-IGNORE_PATHS=()
-for ignore_path in "${!IGNORE_PATH_SET[@]}"; do
-    IGNORE_PATHS+=("$ignore_path")
-done
-
-if [ ${#IGNORE_PATHS[@]} -gt 0 ]; then
-    mapfile -t IGNORE_PATHS_SORTED < <(printf '%s\n' "${IGNORE_PATHS[@]}" | sort -u)
-else
-    IGNORE_PATHS_SORTED=()
 fi
 
 echo ""
@@ -317,19 +307,9 @@ for test in "${REMAINING_TESTS_SORTED[@]}"; do
     fi
 done
 
-IGNORE_TESTS_STRING=""
-for test in "${IGNORE_PATHS_SORTED[@]}"; do
-    if [ -n "$IGNORE_TESTS_STRING" ]; then
-        IGNORE_TESTS_STRING="$IGNORE_TESTS_STRING $test"
-    else
-        IGNORE_TESTS_STRING="$test"
-    fi
-done
-
 write_output "RUN_ALL_TESTS" "false"
 write_output "RELEVANT_TESTS" "$RELEVANT_TESTS_STRING"
 write_output "REMAINING_TESTS" "$REMAINING_TESTS_STRING"
-write_output "IGNORE_TESTS" "$IGNORE_TESTS_STRING"
 write_output "RELEVANT_COUNT" "${#RELEVANT_TESTS_SORTED[@]}"
 write_output "REMAINING_COUNT" "${#REMAINING_TESTS_SORTED[@]}"
 
