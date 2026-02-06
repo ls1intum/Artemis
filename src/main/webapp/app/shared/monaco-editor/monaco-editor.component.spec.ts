@@ -93,8 +93,6 @@ describe('MonacoEditorComponent', () => {
         expect(comp.getText()).toEqual(singleLineText);
     });
 
-    // ... existing tests ...
-
     it('should layout matching mode with fixed size', fakeAsync(() => {
         fixture.detectChanges();
         const layoutSpy = jest.spyOn(comp['_editor'], 'layout');
