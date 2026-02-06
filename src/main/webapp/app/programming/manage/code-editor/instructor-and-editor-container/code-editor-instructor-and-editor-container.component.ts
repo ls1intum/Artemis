@@ -678,9 +678,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         return super.loadExercise(exerciseId).pipe(
             tap((exercise) => {
                 this.loadTemplate(exercise);
-                if (exercise.problemStatement) {
-                    this.currentProblemStatement.set(exercise.problemStatement);
-                }
+                this.currentProblemStatement.set(exercise.problemStatement ?? '');
             }),
         );
     }

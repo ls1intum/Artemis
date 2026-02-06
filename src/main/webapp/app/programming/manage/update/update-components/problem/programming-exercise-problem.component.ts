@@ -131,9 +131,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         const exercise = this.programmingExercise();
 
-        if (exercise?.problemStatement) {
-            this.currentProblemStatement.set(exercise.problemStatement);
-        }
+        this.currentProblemStatement.set(exercise?.problemStatement ?? '');
         this.problemStatementService.loadTemplate(exercise, this.templateProblemStatement, this.templateLoaded);
     }
 
@@ -199,6 +197,8 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                             { injector: this.injector },
                         );
                     }
+                } else {
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.generationFailed');
                 }
                 this.userPrompt.set('');
             },
@@ -235,9 +235,10 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                         },
                         { injector: this.injector },
                     );
-
-                    this.userPrompt.set('');
+                } else {
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementFailed');
                 }
+                this.userPrompt.set('');
             },
             error: () => {
                 this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementFailed');
