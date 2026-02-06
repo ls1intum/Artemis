@@ -1,6 +1,7 @@
-# Artemis Course Setup Scripts
+# PECV Bench Setup Scripts
 
-This project contains Python scripts that automate the PECV Bench Course setup and management of programming exercises in an Artemis instance.
+This project contains Python scripts that automate the [PECV Bench Course](https://github.com/ls1intum/PECV-bench) setup and management of programming exercises in an Artemis instance.
+They are intended to use for benchmarking of consistency check approaches, of the Hyperion Module
 
 # Setup
 
@@ -10,7 +11,7 @@ This project contains Python scripts that automate the PECV Bench Course setup a
 - Python 3.13 (other versions might not work due to model incompatibility)
 - pip
 
-## 1. Create and activate a virtual environment in **hyperion-benchmark-workflow** folder
+## 1. Create and activate a virtual environment in **consistency-check-benchmark** folder
 It is recommended to use a virtual environment to manage dependencies in isolation from the global Python environment. This approach can prevent version conflicts and keep your system environment clean.
 
 1. Install `virtualenv` if it's not already installed:
@@ -23,7 +24,7 @@ It is recommended to use a virtual environment to manage dependencies in isolati
       python3.13 -m pip install virtualenv
       ```
 
-2. Create a virtual environment in **hyperion-benchmark-workflow** folder:
+2. Create a virtual environment in **consistency-check-benchmark** folder:
     ```shell
     python3.13 -m venv venv
     ```
@@ -70,11 +71,11 @@ pip install -r requirements.txt
 
 ## 3. Configure the Environment
 1. Start your local Artemis instance.
-2. Configure the values in [hyperion-benchmark-workflow/config.ini](./config.ini) according to your local setup. (But for testing can be left as it is)
+2. Configure the values in [./config.ini](./config.ini) according to your local setup. (But for testing can be left as it is)
 
 
 **Note:**
-1. Ensure that the [hyperion-benchmark-workflow/config.ini](./config.ini) file is correctly configured before running any scripts.
+1. Ensure that the [./config.ini](./config.ini) file is correctly configured before running any scripts.
 2. **Always test the scripts on a local setup before running them on a production or test server! ⚠️**
 
 # Usage
