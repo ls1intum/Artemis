@@ -16,7 +16,6 @@ import org.springframework.lang.CheckReturnValue;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -721,14 +720,8 @@ public class AuthorizationCheckService {
             return true;
         }
 
-        boolean isStudentAndOwnerOrInstructor = isAtLeastStudentForExercise(exercise) && (isOwnerOfParticipation(participation) || isAtLeastInstructorForExercise(exercise));
-
-        // Athena results are automatic and don't have an assessor, so we only require a completionDate
-        if (result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA) {
-            return isStudentAndOwnerOrInstructor && result.getCompletionDate() != null;
-        }
-
-        return isStudentAndOwnerOrInstructor && ExerciseDateService.isAfterAssessmentDueDate(exercise) && result.getAssessor() != null && result.getCompletionDate() != null;
+        return isAtLeastStudentForExercise(exercise) && (isOwnerOfParticipation(participation) || isAtLeastInstructorForExercise(exercise))
+                && ExerciseDateService.isAfterAssessmentDueDate(exercise) && result.getAssessor() != null && result.getCompletionDate() != null;
     }
 
     /**
