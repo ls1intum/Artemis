@@ -26,19 +26,12 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Save triggering workflow info
+    - name: Log triggering workflow info
       shell: bash
       run: |
-        echo "TRIGGERING_WORKFLOW_RUN_ID=${{ inputs.workflow-run-id }}" > workflow-context.txt
-        echo "TRIGGERING_WORKFLOW_HEAD_BRANCH=${{ inputs.workflow-head-branch }}" >> workflow-context.txt
-        echo "TRIGGERING_WORKFLOW_HEAD_SHA=${{ inputs.workflow-head-sha }}" >> workflow-context.txt
-        cat workflow-context.txt
-
-    - name: Upload workflow context
-      uses: actions/upload-artifact@v5
-      with:
-        name: workflow-context${{ inputs.artifact-name-suffix && format('-{0}', inputs.artifact-name-suffix) || '' }}
-        path: workflow-context.txt
+        echo "TRIGGERING_WORKFLOW_RUN_ID=${{ inputs.workflow-run-id }}"
+        echo "TRIGGERING_WORKFLOW_HEAD_BRANCH=${{ inputs.workflow-head-branch }}"
+        echo "TRIGGERING_WORKFLOW_HEAD_SHA=${{ inputs.workflow-head-sha }}"
 
     - name: Add link to triggering workflow
       shell: bash
@@ -47,11 +40,6 @@ runs:
         if [ -n "${{ inputs.test-notice }}" ]; then
           echo "::notice title=Test Selection::${{ inputs.test-notice }}"
         fi
-
-    - name: Git Checkout
-      uses: actions/checkout@v6
-      with:
-        ref: ${{ inputs.workflow-head-branch }}
 
     - name: Download Docker tag
       uses: actions/download-artifact@v6
@@ -81,3 +69,11 @@ runs:
     - name: Run cleanup script (before E2E)
       shell: bash
       run: .ci/E2E-tests/cleanup.sh
+
+    - name: Clean old test results
+      shell: bash
+      run: |
+        echo "Cleaning up old test results from previous runs..."
+        rm -rf src/test/playwright/test-reports/*.xml || true
+        ls -la src/test/playwright/test-reports/ 2>/dev/null || echo "test-reports directory does not exist yet"
+        echo "Test results cleanup complete"

@@ -424,11 +424,20 @@ export const courseManagementRoutes: Routes = [
                         canActivate: [UserRouteAccessService],
                     },
                     {
-                        path: 'build-queue',
+                        path: 'build-overview',
                         loadComponent: () => import('app/buildagent/build-queue/build-overview.component').then((m) => m.BuildOverviewComponent),
                         data: {
                             authorities: IS_AT_LEAST_INSTRUCTOR,
                             pageTitle: 'artemisApp.buildQueue.title',
+                        },
+                        canActivate: [UserRouteAccessService, LocalCIGuard],
+                    },
+                    {
+                        path: 'build-overview/:jobId/job-details',
+                        loadComponent: () => import('app/buildagent/build-queue/build-job-detail/build-job-detail.component').then((m) => m.BuildJobDetailComponent),
+                        data: {
+                            authorities: IS_AT_LEAST_INSTRUCTOR,
+                            pageTitle: 'artemisApp.buildQueue.detail.title',
                         },
                         canActivate: [UserRouteAccessService, LocalCIGuard],
                     },
