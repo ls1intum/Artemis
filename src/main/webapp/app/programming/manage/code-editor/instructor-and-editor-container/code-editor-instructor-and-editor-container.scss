@@ -1,6 +1,13 @@
 @import 'bootstrap/scss/functions';
 @import 'bootstrap/scss/variables';
 
+// Custom sizing variables (no Bootstrap equivalents)
+$ai-dropdown-min-width: 17.5rem;
+$consistency-nav-btn-width: 27rem;
+$consistency-nav-btn-max-vw: 40vw;
+$refinement-popup-max-vw: 90vw;
+$refinement-textarea-min-height: 8rem;
+
 .btn-outline-primary:not(.list-group-item).dropdown-toggle.show {
     color: var(--default-btn-font);
 }
@@ -16,16 +23,16 @@
 .consistency-issue-item,
 .consistency-issue-item__meta,
 .consistency-issue-item__actions {
-    gap: 0.25rem;
+    gap: map-get($spacers, 1);
 }
 
 .ai-dropdown-menu {
-    min-width: 17.5rem;
+    min-width: $ai-dropdown-min-width;
 }
 
 .consistency-issue-nav-btn {
-    width: 27rem;
-    max-width: min(27rem, 40vw);
+    width: $consistency-nav-btn-width;
+    max-width: min($consistency-nav-btn-width, $consistency-nav-btn-max-vw);
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
@@ -52,7 +59,7 @@
     right: 0;
     z-index: $zindex-modal;
     width: $modal-md;
-    max-width: 90vw;
+    max-width: $refinement-popup-max-vw;
     background: var(--bs-body-bg);
     border: $border-width solid var(--bs-primary);
     border-radius: $modal-content-border-radius;
@@ -60,7 +67,7 @@
     overflow: hidden;
 
     .btn-close {
-        filter: brightness(0) invert(1);
+        filter: $btn-close-white-filter;
         opacity: $btn-close-opacity;
 
         &:hover {
@@ -69,7 +76,7 @@
     }
 
     .refinement-textarea {
-        min-height: 8rem;
+        min-height: $refinement-textarea-min-height;
         resize: vertical;
         font-size: $font-size-sm;
     }
