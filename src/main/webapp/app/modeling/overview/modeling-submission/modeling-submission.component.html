@@ -112,7 +112,7 @@
                                                 }
                                             </div>
                                         }
-                                        @if (((!isActive || (result && !isAutomaticResult)) && (!isLate || submission.submitted)) || isFeedbackView) {
+                                        @if (((!isActive || result) && (!isLate || submission.submitted)) || isFeedbackView) {
                                             <div class="col-8 editor-assessment">
                                                 <jhi-modeling-assessment
                                                     [umlModel]="umlModel"
