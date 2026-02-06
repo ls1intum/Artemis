@@ -7,11 +7,9 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
 import { HealthComponent } from 'app/core/admin/health/health.component';
 import { HealthService } from 'app/core/admin/health/health.service';
-import { HealthModalComponent } from 'app/core/admin/health/health-modal.component';
 import { Health } from 'app/core/admin/health/health.model';
 
 describe('HealthComponent', () => {
@@ -20,12 +18,11 @@ describe('HealthComponent', () => {
     let comp: HealthComponent;
     let fixture: ComponentFixture<HealthComponent>;
     let healthService: HealthService;
-    let modalService: NgbModal;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [HealthComponent],
-            providers: [provideHttpClient(), provideHttpClientTesting(), NgbModal],
+            providers: [provideHttpClient(), provideHttpClientTesting()],
         })
             .overrideTemplate(HealthComponent, '')
             .compileComponents();
@@ -33,7 +30,6 @@ describe('HealthComponent', () => {
         fixture = TestBed.createComponent(HealthComponent);
         comp = fixture.componentInstance;
         healthService = TestBed.inject(HealthService);
-        modalService = TestBed.inject(NgbModal);
     });
 
     it('should return bg-success class for UP status', () => {
@@ -64,16 +60,11 @@ describe('HealthComponent', () => {
         expect(comp.health()).toEqual(health);
     });
 
-    it('should open modal with health details when showHealth is called', () => {
-        const healthSetSpy = vi.fn();
-        const mockModalRef = { componentInstance: { health: { set: healthSetSpy } } } as unknown as NgbModalRef;
-        const modalServiceSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
-
+    it('should set selectedHealth and show modal when showHealth is called', () => {
         const healthDetails = { key: 'mail', value: { status: 'UP', details: { mailDetail: 'mail' } } };
         comp.showHealth(healthDetails as any);
 
-        expect(modalServiceSpy).toHaveBeenCalledOnce();
-        expect(modalServiceSpy).toHaveBeenCalledWith(HealthModalComponent);
-        expect(healthSetSpy).toHaveBeenCalledWith(healthDetails);
+        expect(comp.selectedHealth()).toEqual(healthDetails);
+        expect(comp.showHealthModal()).toBe(true);
     });
 });

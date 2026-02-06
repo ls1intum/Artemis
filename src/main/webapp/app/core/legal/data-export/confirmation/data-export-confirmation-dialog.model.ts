@@ -1,8 +1,8 @@
-import { OutputEmitterRef } from '@angular/core';
 import { Observable } from 'rxjs';
 
 /**
- * Data that will be passed to the data export confirmation dialog component
+ * @deprecated This model is no longer used. The DataExportConfirmationDialogComponent
+ * now uses input() signals and output() events directly.
  */
 export class DataExportConfirmationDialogData {
     // error message emitted from the component delete method, that will be handled by the dialog
@@ -13,9 +13,4 @@ export class DataExportConfirmationDialogData {
 
     // true if it is the dialog for an admin with additional options
     adminDialog: boolean;
-    // output event passed to the confirmation dialog
-    dataExportRequest: OutputEmitterRef<void>;
-
-    //output event passed to the confirmation dialog, emitting the entered login
-    dataExportRequestForAnotherUser: OutputEmitterRef<string>;
 }

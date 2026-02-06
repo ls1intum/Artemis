@@ -6,7 +6,6 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -21,17 +20,10 @@ describe('LtiInitializerModalComponent', () => {
     let component: LtiInitializerModalComponent;
     let alertService: AlertService;
     let router: Router;
-    let activeModal: NgbActiveModal;
     let activatedRoute: ActivatedRoute;
 
     let infoSpy: ReturnType<typeof vi.spyOn>;
     let navigateSpy: ReturnType<typeof vi.spyOn>;
-    let dismissSpy: ReturnType<typeof vi.spyOn>;
-
-    const activeModalStub = {
-        close: vi.fn(),
-        dismiss: vi.fn(),
-    };
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
@@ -39,7 +31,6 @@ describe('LtiInitializerModalComponent', () => {
             providers: [
                 provideRouter([]),
                 MockProvider(AlertService),
-                { provide: NgbActiveModal, useValue: activeModalStub },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
             ],
@@ -49,12 +40,10 @@ describe('LtiInitializerModalComponent', () => {
         component = fixture.componentInstance;
         alertService = TestBed.inject(AlertService);
         router = TestBed.inject(Router);
-        activeModal = TestBed.inject(NgbActiveModal);
         activatedRoute = TestBed.inject(ActivatedRoute);
 
         infoSpy = vi.spyOn(alertService, 'info');
         navigateSpy = vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
-        dismissSpy = vi.spyOn(activeModal, 'dismiss');
     });
 
     afterEach(() => {
@@ -70,9 +59,11 @@ describe('LtiInitializerModalComponent', () => {
         expect(component.passwordResetLocation).toEqual(['account', 'reset', 'request']);
     });
 
-    it('should clear dialog, show info message, navigate and dismiss modal', () => {
-        component.password = 'testPassword123';
-        component.loginName = 'testUser';
+    it('should clear dialog, show info message, navigate and set visible to false', () => {
+        fixture.componentRef.setInput('password', 'testPassword123');
+        fixture.componentRef.setInput('loginName', 'testUser');
+        component.visible.set(true);
+        fixture.detectChanges();
 
         component.clear();
 
@@ -86,15 +77,16 @@ describe('LtiInitializerModalComponent', () => {
             queryParamsHandling: 'merge',
         });
 
-        expect(dismissSpy).toHaveBeenCalledOnce();
+        expect(component.visible()).toBe(false);
     });
 
-    it('should have password and loginName properties that can be set', () => {
-        component.password = 'myPassword';
-        component.loginName = 'myLogin';
+    it('should have password and loginName as input signals', () => {
+        fixture.componentRef.setInput('password', 'myPassword');
+        fixture.componentRef.setInput('loginName', 'myLogin');
+        fixture.detectChanges();
 
-        expect(component.password).toBe('myPassword');
-        expect(component.loginName).toBe('myLogin');
+        expect(component.password()).toBe('myPassword');
+        expect(component.loginName()).toBe('myLogin');
     });
 
     it('should toggle readAndUnderstood property', () => {

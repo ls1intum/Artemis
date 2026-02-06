@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockDirective, MockProvider } from 'ng-mocks';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from './setup-passkey-modal.component';
@@ -18,14 +17,12 @@ describe('SetupPasskeyModalComponent', () => {
 
     let component: SetupPasskeyModalComponent;
     let fixture: ComponentFixture<SetupPasskeyModalComponent>;
-    let activeModal: NgbActiveModal;
     let localStorageService: LocalStorageService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [SetupPasskeyModalComponent, MockDirective(TranslateDirective)],
             providers: [
-                MockProvider(NgbActiveModal),
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -36,7 +33,6 @@ describe('SetupPasskeyModalComponent', () => {
 
         fixture = TestBed.createComponent(SetupPasskeyModalComponent);
         component = fixture.componentInstance;
-        activeModal = TestBed.inject(NgbActiveModal);
         localStorageService = TestBed.inject(LocalStorageService);
         fixture.detectChanges();
     });
@@ -45,17 +41,17 @@ describe('SetupPasskeyModalComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should close the modal', () => {
-        const closeModalSpy = vi.spyOn(activeModal, 'close');
+    it('should close the modal by setting visible to false', () => {
+        component.visible.set(true);
 
         component.closeModal();
 
-        expect(closeModalSpy).toHaveBeenCalled();
+        expect(component.visible()).toBe(false);
     });
 
     it('should set reminder date in localStorage and close the modal', () => {
         const localStorageServiceSpy = vi.spyOn(localStorageService, 'store');
-        const closeModalSpy = vi.spyOn(activeModal, 'close');
+        component.visible.set(true);
 
         const expectedDateOnlyWithDayToEnsureTestIsNotFlaky = new Date();
         expectedDateOnlyWithDayToEnsureTestIsNotFlaky.setDate(expectedDateOnlyWithDayToEnsureTestIsNotFlaky.getDate() + 30);
@@ -70,6 +66,6 @@ describe('SetupPasskeyModalComponent', () => {
         expect(savedDateOnlyWithDay.getTime()).toBe(expectedDateOnlyWithDayToEnsureTestIsNotFlaky.getTime());
 
         expect(localStorageServiceSpy).toHaveBeenCalledWith(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, savedDate);
-        expect(closeModalSpy).toHaveBeenCalled();
+        expect(component.visible()).toBe(false);
     });
 });

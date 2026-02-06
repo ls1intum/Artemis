@@ -4,7 +4,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 import { MetricsModalThreadsComponent } from 'app/core/admin/metrics/blocks/metrics-modal-threads/metrics-modal-threads.component';
 import { Thread, ThreadState } from 'app/core/admin/metrics/metrics.model';
@@ -17,7 +16,6 @@ describe('MetricsModalThreadsComponent', () => {
 
     let comp: MetricsModalThreadsComponent;
     let fixture: ComponentFixture<MetricsModalThreadsComponent>;
-    let activeModal: NgbActiveModal;
 
     function createThread(threadId: number, threadState: ThreadState): Thread {
         return {
@@ -45,14 +43,12 @@ describe('MetricsModalThreadsComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [MetricsModalThreadsComponent],
-            providers: [NgbActiveModal],
         })
             .overrideTemplate(MetricsModalThreadsComponent, '')
             .compileComponents();
 
         fixture = TestBed.createComponent(MetricsModalThreadsComponent);
         comp = fixture.componentInstance;
-        activeModal = TestBed.inject(NgbActiveModal);
 
         runnableThreads = [createThread(1, ThreadState.Runnable), createThread(2, ThreadState.Runnable), createThread(3, ThreadState.Runnable)];
         waitingThreads = [createThread(4, ThreadState.Waiting), createThread(5, ThreadState.Waiting), createThread(6, ThreadState.Waiting), createThread(7, ThreadState.Waiting)];
@@ -64,11 +60,10 @@ describe('MetricsModalThreadsComponent', () => {
 
     describe('onInit', () => {
         it('should count all thread types', () => {
-            comp.threads = runnableThreads.concat(waitingThreads);
+            fixture.componentRef.setInput('threads', runnableThreads.concat(waitingThreads));
+            fixture.detectChanges();
 
-            comp.ngOnInit();
-
-            expect(comp.threadDumpAll).toBe(comp.threads.length);
+            expect(comp.threadDumpAll).toBe(comp.threads().length);
             expect(comp.threadDumpBlocked).toBe(0);
             expect(comp.threadDumpRunnable).toBe(runnableThreads.length);
             expect(comp.threadDumpTimedWaiting).toBe(0);
@@ -89,7 +84,8 @@ describe('MetricsModalThreadsComponent', () => {
 
     describe('filters', () => {
         it('should return all threads when no filter is applied', () => {
-            comp.threads = runnableThreads.concat(waitingThreads);
+            fixture.componentRef.setInput('threads', runnableThreads.concat(waitingThreads));
+            fixture.detectChanges();
             comp.selectedThreadState = undefined;
 
             comp.refreshFilteredThreads();
@@ -98,7 +94,8 @@ describe('MetricsModalThreadsComponent', () => {
         });
 
         it('should filter threads by selected thread state', () => {
-            comp.threads = runnableThreads.concat(waitingThreads);
+            fixture.componentRef.setInput('threads', runnableThreads.concat(waitingThreads));
+            fixture.detectChanges();
             comp.selectedThreadState = ThreadState.Runnable;
 
             comp.refreshFilteredThreads();
@@ -107,7 +104,8 @@ describe('MetricsModalThreadsComponent', () => {
         });
 
         it('should return all threads when filter text is undefined', () => {
-            comp.threads = runnableThreads.concat(waitingThreads);
+            fixture.componentRef.setInput('threads', runnableThreads.concat(waitingThreads));
+            fixture.detectChanges();
             comp.threadFilter = undefined;
 
             comp.refreshFilteredThreads();
@@ -116,7 +114,8 @@ describe('MetricsModalThreadsComponent', () => {
         });
 
         it('should filter threads by filter text', () => {
-            comp.threads = runnableThreads.concat(waitingThreads);
+            fixture.componentRef.setInput('threads', runnableThreads.concat(waitingThreads));
+            fixture.detectChanges();
             comp.threadFilter = '2';
 
             comp.refreshFilteredThreads();
@@ -125,7 +124,8 @@ describe('MetricsModalThreadsComponent', () => {
         });
 
         it('should filter by both thread state and filter text', () => {
-            comp.threads = runnableThreads.concat(waitingThreads);
+            fixture.componentRef.setInput('threads', runnableThreads.concat(waitingThreads));
+            fixture.detectChanges();
             comp.threadFilter = '2';
             comp.selectedThreadState = ThreadState.Waiting;
 
@@ -136,12 +136,12 @@ describe('MetricsModalThreadsComponent', () => {
     });
 
     describe('dismiss', () => {
-        it('should call activeModal.dismiss()', () => {
-            const dismissSpy = vi.spyOn(activeModal, 'dismiss').mockImplementation(() => {});
+        it('should set visible to false', () => {
+            comp.visible.set(true);
 
             comp.dismiss();
 
-            expect(dismissSpy).toHaveBeenCalledOnce();
+            expect(comp.visible()).toBe(false);
         });
     });
 });

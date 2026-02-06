@@ -106,3 +106,22 @@
         <span jhiTranslate="artemisApp.standardizedCompetency.manage.empty"></span>
     }
 </div>
+
+<!-- Cancel confirmation dialog (replaces NgbModal + ConfirmAutofocusModalComponent) -->
+<p-dialog
+    [(visible)]="confirmDialogVisible"
+    [modal]="true"
+    [closable]="true"
+    [closeOnEscape]="true"
+    [dismissableMask]="true"
+    [draggable]="false"
+    [appendTo]="'body'"
+    [style]="{ width: '35dvw' }"
+    [header]="confirmDialogTitle() | artemisTranslate"
+>
+    <div [innerHTML]="confirmDialogText()"></div>
+    <ng-template #footer>
+        <button type="button" class="btn btn-outline-secondary" (click)="onConfirmDialogCancel()" jhiTranslate="global.form.cancel"></button>
+        <button type="button" class="btn btn-danger" (click)="onConfirmDialogConfirm()" jhiTranslate="global.form.confirm"></button>
+    </ng-template>
+</p-dialog>

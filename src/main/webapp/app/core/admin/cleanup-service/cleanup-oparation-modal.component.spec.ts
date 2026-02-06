@@ -7,7 +7,6 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { signal } from '@angular/core';
 
 import { CleanupOperationModalComponent } from 'app/core/admin/cleanup-service/cleanup-operation-modal.component';
@@ -19,24 +18,16 @@ describe('CleanupOperationModalComponent', () => {
     let comp: CleanupOperationModalComponent;
     let fixture: ComponentFixture<CleanupOperationModalComponent>;
     let cleanupService: DataCleanupService;
-    let activeModal: NgbActiveModal;
 
     const mockCleanupService = {
         deletePlagiarismComparisons: vi.fn(),
         countPlagiarismComparisons: vi.fn(),
     };
 
-    const mockActiveModal = {
-        close: vi.fn(),
-    };
-
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [CleanupOperationModalComponent],
-            providers: [
-                { provide: DataCleanupService, useValue: mockCleanupService },
-                { provide: NgbActiveModal, useValue: mockActiveModal },
-            ],
+            providers: [{ provide: DataCleanupService, useValue: mockCleanupService }],
         })
             .overrideTemplate(CleanupOperationModalComponent, '')
             .compileComponents();
@@ -44,14 +35,13 @@ describe('CleanupOperationModalComponent', () => {
         fixture = TestBed.createComponent(CleanupOperationModalComponent);
         comp = fixture.componentInstance;
         cleanupService = TestBed.inject(DataCleanupService);
-        activeModal = TestBed.inject(NgbActiveModal);
     });
 
     afterEach(() => {
         vi.clearAllMocks();
     });
 
-    it('should initialize and fetch counts on init', () => {
+    it('should initialize and fetch counts when visible', () => {
         const mockCounts: PlagiarismComparisonCleanupCountDTO = {
             totalCount: 10,
             plagiarismComparison: 5,
@@ -69,6 +59,7 @@ describe('CleanupOperationModalComponent', () => {
             datesValid: signal(true),
         };
         fixture.componentRef.setInput('operation', operation);
+        comp.visible.set(true);
         fixture.detectChanges();
 
         expect(cleanupService.countPlagiarismComparisons).toHaveBeenCalledOnce();
@@ -137,10 +128,11 @@ describe('CleanupOperationModalComponent', () => {
         expect(errorMessage).toBe('Http failure response for https://artemis.ase.in.tum.de/api/plagiarism/admin/plagiarism-comparisons: 500 Internal Server Error');
     });
 
-    it('should close the modal', () => {
+    it('should close the modal by setting visible to false', () => {
+        comp.visible.set(true);
         comp.close();
 
-        expect(activeModal.close).toHaveBeenCalledOnce();
+        expect(comp.visible()).toBe(false);
     });
 
     it('should compute hasEntriesToDelete correctly', () => {

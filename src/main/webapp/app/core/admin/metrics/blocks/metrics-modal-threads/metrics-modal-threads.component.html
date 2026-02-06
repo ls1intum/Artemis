@@ -1,8 +1,7 @@
-<div class="modal-header">
-    <h4 class="modal-title" jhiTranslate="metrics.jvm.threads.dump.title"></h4>
-    <button type="button" class="close" (click)="dismiss()">&times;</button>
-</div>
-<div class="modal-body">
+<p-dialog [(visible)]="visible" [modal]="true" [closable]="true" [dismissableMask]="true" [draggable]="false" [appendTo]="'body'" [style]="{ width: '70dvw' }" header="">
+    <ng-template #header>
+        <h4 jhiTranslate="metrics.jvm.threads.dump.title"></h4>
+    </ng-template>
     <div class="mb-3">
         <span class="badge bg-primary hand" (click)="selectedThreadState = undefined">
             @if (selectedThreadState === undefined) {
@@ -91,7 +90,7 @@
             </table>
         </div>
     }
-</div>
-<div class="modal-footer">
-    <button type="button" class="btn btn-secondary float-left" data-dismiss="modal" (click)="dismiss()">Done</button>
-</div>
+    <ng-template #footer>
+        <button type="button" class="btn btn-secondary float-left" (click)="dismiss()">Done</button>
+    </ng-template>
+</p-dialog>

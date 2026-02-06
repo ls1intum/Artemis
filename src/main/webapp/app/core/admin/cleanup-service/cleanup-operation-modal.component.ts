@@ -1,6 +1,5 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, computed, effect, inject, input, model, signal, untracked } from '@angular/core';
 import { CleanupOperation } from 'app/core/admin/cleanup-service/cleanup-operation.model';
 import { CleanupCount, DataCleanupService } from 'app/core/admin/cleanup-service/data-cleanup.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -10,6 +9,7 @@ import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { DialogModule } from 'primeng/dialog';
 
 /**
  * Modal component for executing and monitoring cleanup operations.
@@ -18,9 +18,12 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 @Component({
     selector: 'jhi-cleanup-operation-modal',
     templateUrl: './cleanup-operation-modal.component.html',
-    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, FontAwesomeModule],
+    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, FontAwesomeModule, DialogModule],
 })
-export class CleanupOperationModalComponent implements OnInit {
+export class CleanupOperationModalComponent {
+    /** Whether the dialog is visible */
+    readonly visible = model<boolean>(false);
+
     /** The cleanup operation to execute */
     readonly operation = input.required<CleanupOperation>();
 
@@ -33,7 +36,6 @@ export class CleanupOperationModalComponent implements OnInit {
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
 
-    public readonly activeModal = inject(NgbActiveModal);
     private readonly dataCleanupService = inject(DataCleanupService);
 
     protected readonly faTimes = faTimes;
@@ -45,18 +47,19 @@ export class CleanupOperationModalComponent implements OnInit {
     /** Computed property to check if there are any entries to delete */
     readonly hasEntriesToDelete = computed(() => Object.values(this.counts()).some((count) => count > 0));
 
+    constructor() {
+        effect(() => {
+            if (this.visible()) {
+                untracked(() => this.updateCounts());
+            }
+        });
+    }
+
     /**
      * Close the modal.
      */
     close(): void {
-        this.activeModal.close();
-    }
-
-    /**
-     * Initialize component: fetch initial counts for the operation.
-     */
-    ngOnInit(): void {
-        this.updateCounts();
+        this.visible.set(false);
     }
 
     /**

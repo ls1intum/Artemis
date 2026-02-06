@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { ChangeDetectionStrategy, Component, input, model } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DialogModule } from 'primeng/dialog';
 
 /**
  * Modal dialog shown to external/SSO users who attempt to reset their password.
@@ -10,28 +10,26 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 @Component({
     selector: 'jhi-external-user-password-reset-modal',
     templateUrl: './external-user-password-reset-modal.component.html',
-    imports: [TranslateDirective],
+    imports: [TranslateDirective, DialogModule],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExternalUserPasswordResetModalComponent {
-    private activeModal = inject(NgbActiveModal);
+    readonly visible = model<boolean>(false);
 
     /**
      * Name of the external credential provider (e.g., "TUM SSO", "University LDAP").
-     * Set via NgbModal.componentInstance when opening the modal.
      */
-    externalCredentialProvider: string;
+    readonly externalCredentialProvider = input<string>('');
 
     /**
      * URL to the external password reset page, localized to user's language.
-     * Set via NgbModal.componentInstance when opening the modal.
      */
-    externalPasswordResetLink: string;
+    readonly externalPasswordResetLink = input<string>('');
 
     /**
      * Dismisses the modal dialog without any action.
      */
     dismiss(): void {
-        this.activeModal.dismiss();
+        this.visible.set(false);
     }
 }

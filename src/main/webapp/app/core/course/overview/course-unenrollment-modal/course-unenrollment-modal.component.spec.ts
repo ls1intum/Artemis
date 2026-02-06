@@ -9,11 +9,10 @@ import { MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseUnenrollmentModalComponent } from 'app/core/course/overview/course-unenrollment-modal/course-unenrollment-modal.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { By } from '@angular/platform-browser';
+
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { Router, provideRouter } from '@angular/router';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -30,28 +29,20 @@ describe('CourseUnenrollmentModalComponent', () => {
     let router: Router;
     let navigateStub: ReturnType<typeof vi.spyOn>;
 
-    const activeModalStub = {
-        close: () => {},
-        dismiss: () => {},
-    };
+    const testCourse = new Course();
 
     beforeEach(async () => {
+        testCourse.id = 1;
+        testCourse.title = 'Unenrollment Test Course Title';
+
         TestBed.configureTestingModule({
             imports: [CourseUnenrollmentModalComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
-            providers: [
-                provideRouter([]),
-                MockProvider(CourseManagementService),
-                MockProvider(AlertService),
-                { provide: NgbActiveModal, useValue: activeModalStub },
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
+            providers: [provideRouter([]), MockProvider(CourseManagementService), MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }],
         });
         await TestBed.compileComponents();
         fixture = TestBed.createComponent(CourseUnenrollmentModalComponent);
         component = fixture.componentInstance;
-        component.course = new Course();
-        component.course.id = 1;
-        component.course.title = 'Unenrollment Test Course Title';
+        fixture.componentRef.setInput('course', testCourse);
         courseService = TestBed.inject(CourseManagementService);
         unenrollFromCourseStub = vi.spyOn(courseService, 'unenrollFromCourse').mockReturnValue(of(new HttpResponse({ body: ['student-group-name'] })));
         alertService = TestBed.inject(AlertService);
@@ -67,8 +58,11 @@ describe('CourseUnenrollmentModalComponent', () => {
     });
 
     it('should disable unenrollment button when confirmation input is invalid', () => {
-        const confirmationInput = fixture.nativeElement.querySelector('input');
-        const unenrollButton = fixture.debugElement.query(By.css('#course-unenrollment-accept-button')).nativeElement;
+        component.visible.set(true);
+        fixture.detectChanges();
+        // p-dialog with appendTo="'body'" renders content in document.body, not inside fixture.nativeElement
+        const confirmationInput = document.querySelector<HTMLInputElement>('input')!;
+        const unenrollButton = document.querySelector<HTMLButtonElement>('#course-unenrollment-accept-button')!;
         fixture.detectChanges();
         expect(unenrollButton.disabled).toBe(true);
         const inputEvent = new Event('input');
@@ -79,8 +73,11 @@ describe('CourseUnenrollmentModalComponent', () => {
     });
 
     it('should enable unenrollment button when confirmation input is valid', () => {
-        const confirmationInput = fixture.nativeElement.querySelector('input');
-        const unenrollButton = fixture.debugElement.query(By.css('#course-unenrollment-accept-button')).nativeElement;
+        component.visible.set(true);
+        fixture.detectChanges();
+        // p-dialog with appendTo="'body'" renders content in document.body, not inside fixture.nativeElement
+        const confirmationInput = document.querySelector<HTMLInputElement>('input')!;
+        const unenrollButton = document.querySelector<HTMLButtonElement>('#course-unenrollment-accept-button')!;
         const inputEvent = new Event('input');
         confirmationInput.value = 'Unenrollment Test Course Title';
         confirmationInput.dispatchEvent(inputEvent);
@@ -109,18 +106,32 @@ describe('CourseUnenrollmentModalComponent', () => {
     });
 
     it('should report student can enroll again for valid', () => {
-        component.course.unenrollmentEnabled = true;
-        component.course.enrollmentEnabled = true;
-        component.course.enrollmentEndDate = dayjs().add(1, 'day');
+        const courseWithEnrollment = new Course();
+        courseWithEnrollment.id = 1;
+        courseWithEnrollment.title = 'Unenrollment Test Course Title';
+        courseWithEnrollment.unenrollmentEnabled = true;
+        courseWithEnrollment.enrollmentEnabled = true;
+        courseWithEnrollment.enrollmentEndDate = dayjs().add(1, 'day');
+        fixture.componentRef.setInput('course', courseWithEnrollment);
         fixture.changeDetectorRef.detectChanges();
         expect(component.canEnrollAgain).toBe(true);
     });
 
     it('should not report student can enroll again for invalid', () => {
-        component.course.unenrollmentEnabled = true;
-        component.course.enrollmentEnabled = true;
-        component.course.enrollmentEndDate = dayjs().subtract(1, 'day');
+        const courseWithEnrollment = new Course();
+        courseWithEnrollment.id = 1;
+        courseWithEnrollment.title = 'Unenrollment Test Course Title';
+        courseWithEnrollment.unenrollmentEnabled = true;
+        courseWithEnrollment.enrollmentEnabled = true;
+        courseWithEnrollment.enrollmentEndDate = dayjs().subtract(1, 'day');
+        fixture.componentRef.setInput('course', courseWithEnrollment);
         fixture.changeDetectorRef.detectChanges();
         expect(component.canEnrollAgain).toBe(false);
+    });
+
+    it('should set visible to false when onCancel is called', () => {
+        component.visible.set(true);
+        component.onCancel();
+        expect(component.visible()).toBe(false);
     });
 });

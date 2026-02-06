@@ -19,7 +19,7 @@ import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/sh
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { NgbDropdown, NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
@@ -155,7 +155,6 @@ describe('CourseOverviewComponent', () => {
     let findAllForDropdownSpy: ReturnType<typeof vi.spyOn>;
     let courseSidebarService: CourseSidebarService;
     let profileService: ProfileService;
-    let modalService: NgbModal;
     let courseNotificationSettingService: CourseNotificationSettingService;
     let courseNotificationService: CourseNotificationService;
 
@@ -225,7 +224,6 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(TutorialGroupsConfigurationService),
                 MockProvider(MetisConversationService),
                 MockProvider(CourseAccessStorageService),
-                MockProvider(NgbModal),
                 MockProvider(CourseNotificationSettingService),
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: route },
@@ -249,7 +247,6 @@ describe('CourseOverviewComponent', () => {
         examParticipationService = TestBed.inject(ExamParticipationService);
         teamService = TestBed.inject(TeamService);
         profileService = TestBed.inject(ProfileService);
-        modalService = TestBed.inject(NgbModal);
         tutorialGroupsService = TestBed.inject(TutorialGroupsService);
         tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
         jhiWebsocketService = TestBed.inject(WebsocketService);
@@ -561,11 +558,10 @@ describe('CourseOverviewComponent', () => {
         expect(courseActionItems[0].title).toContain('Unenroll');
     });
 
-    it('should open modal on triggering unenrollment option', () => {
-        const mockModalRef = { componentInstance: {} } as NgbModalRef;
-        const modalServiceSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+    it('should set showUnenrollModal to true on triggering unenrollment option', () => {
+        expect(component.showUnenrollModal()).toBe(false);
         component.courseActionItemClick(component.getUnenrollItem());
-        expect(modalServiceSpy).toHaveBeenCalledOnce();
+        expect(component.showUnenrollModal()).toBe(true);
     });
 
     it('should have competencies and tutorial groups', () => {

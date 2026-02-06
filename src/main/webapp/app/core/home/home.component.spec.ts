@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HomeComponent } from './home.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
 import { LoginService } from 'app/core/login/login.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -22,7 +21,6 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { User } from 'app/core/user/user.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
@@ -32,7 +30,6 @@ describe('HomeComponent', () => {
     let component: HomeComponent;
     let fixture: ComponentFixture<HomeComponent>;
     let accountService: AccountService;
-    let modalService: NgbModal;
     let loginService: LoginService;
     let localStorageService: LocalStorageService;
 
@@ -56,13 +53,11 @@ describe('HomeComponent', () => {
                 { provide: Router, useValue: router },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(LoginService),
                 MockProvider(EventManager),
                 MockProvider(AlertService),
                 MockProvider(WebauthnService),
                 MockProvider(WebauthnApiService),
-                MockProvider(NgbModal),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -73,7 +68,6 @@ describe('HomeComponent', () => {
         fixture = TestBed.createComponent(HomeComponent);
         component = fixture.componentInstance;
         accountService = TestBed.inject(AccountService);
-        modalService = TestBed.inject(NgbModal);
         loginService = TestBed.inject(LoginService);
         fixture.detectChanges();
     });
@@ -155,33 +149,30 @@ describe('HomeComponent', () => {
     describe('openSetupPasskeyModal', () => {
         it('should not open the modal if passkey feature is disabled', () => {
             component.isPasskeyEnabled = false;
-            const openModalSpy = vi.spyOn(modalService, 'open');
             accountService.userIdentity.set({ askToSetupPasskey: true } as User);
 
             component.openSetupPasskeyModal();
 
-            expect(openModalSpy).not.toHaveBeenCalled();
+            expect(component.showPasskeyModal()).toBe(false);
         });
 
         it('should not open the modal if the user has already registered a passkey', () => {
             component.isPasskeyEnabled = true;
-            const openModalSpy = vi.spyOn(modalService, 'open');
             accountService.userIdentity.set({ askToSetupPasskey: false } as User);
 
             component.openSetupPasskeyModal();
 
-            expect(openModalSpy).not.toHaveBeenCalled();
+            expect(component.showPasskeyModal()).toBe(false);
         });
 
         it('should open the modal if the passkey feature is enabled, the user is authenticated, and no passkey is registered', () => {
             component.isPasskeyEnabled = true;
-            const openModalSpy = vi.spyOn(modalService, 'open');
 
             accountService.userIdentity.set({ askToSetupPasskey: true } as User);
 
             component.openSetupPasskeyModal();
 
-            expect(openModalSpy).toHaveBeenCalledWith(SetupPasskeyModalComponent, { size: 'lg', backdrop: 'static' });
+            expect(component.showPasskeyModal()).toBe(true);
         });
 
         it('should return early if the user disabled the reminder for the current timeframe', () => {
@@ -191,11 +182,10 @@ describe('HomeComponent', () => {
             localStorageService.store(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, futureDate);
 
             accountService.userIdentity.set({ askToSetupPasskey: true } as User);
-            const openModalSpy = vi.spyOn(modalService, 'open');
 
             component.openSetupPasskeyModal();
 
-            expect(openModalSpy).not.toHaveBeenCalled();
+            expect(component.showPasskeyModal()).toBe(false);
         });
 
         it('should not return early if the reminder date is in the past', () => {
@@ -205,11 +195,10 @@ describe('HomeComponent', () => {
             localStorageService.store(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, dateInPast);
 
             accountService.userIdentity.set({ askToSetupPasskey: true } as User);
-            const openModalSpy = vi.spyOn(modalService, 'open');
 
             component.openSetupPasskeyModal();
 
-            expect(openModalSpy).toHaveBeenCalled();
+            expect(component.showPasskeyModal()).toBe(true);
         });
     });
 });

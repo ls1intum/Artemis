@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, TemplateRef, inject, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -13,7 +13,8 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angul
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/shared/constants/pagination.constants';
 import { faEye, faFilter, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { NgbHighlight, NgbModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { DialogModule } from 'primeng/dialog';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AdminUserService } from 'app/core/user/shared/admin-user.service';
@@ -128,6 +129,7 @@ type Filter = typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
+        DialogModule,
     ],
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
@@ -138,11 +140,10 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     private readonly router = inject(Router);
     private readonly eventManager = inject(EventManager);
     private readonly localStorageService = inject(LocalStorageService);
-    private readonly modalService = inject(NgbModal);
     private readonly profileService = inject(ProfileService);
 
-    /** Reference to the filter modal template */
-    readonly filterModal = viewChild<TemplateRef<any>>('filterModal');
+    /** Whether the filter modal dialog is visible */
+    readonly filterModalVisible = signal(false);
 
     /** Subject to trigger search */
     readonly search = new Subject<void>();
@@ -425,10 +426,10 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Opens the modal.
+     * Opens the filter modal.
      */
-    open(content: any) {
-        this.modalService.open(content);
+    openFilterModal() {
+        this.filterModalVisible.set(true);
     }
 
     /**
@@ -436,7 +437,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     applyFilter() {
         this.loadAll();
-        this.modalService.dismissAll();
+        this.filterModalVisible.set(false);
     }
 
     /**

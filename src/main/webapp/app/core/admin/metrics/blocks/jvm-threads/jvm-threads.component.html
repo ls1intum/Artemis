@@ -29,3 +29,5 @@
 <button class="hand btn btn-primary btn-sm" (click)="open()" data-toggle="modal" data-target="#threadDump">
     <span>Expand</span>
 </button>
+
+<jhi-thread-modal [(visible)]="showThreadsModal" [threads]="threads()" />

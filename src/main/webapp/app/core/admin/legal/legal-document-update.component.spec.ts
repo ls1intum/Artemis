@@ -8,14 +8,12 @@ import { Observable, of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 
 import { LegalDocumentUpdateComponent } from 'app/core/admin/legal/legal-document-update.component';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
 import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/core/shared/entities/legal-document.model';
 import { PrivacyStatement } from 'app/core/shared/entities/privacy-statement.model';
-import { UnsavedChangesWarningComponent } from 'app/core/admin/legal/unsaved-changes-warning/unsaved-changes-warning.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 
@@ -24,15 +22,10 @@ describe('LegalDocumentUpdateComponent', () => {
 
     let component: LegalDocumentUpdateComponent;
     let fixture: ComponentFixture<LegalDocumentUpdateComponent>;
-    let modalService: NgbModal;
     let legalDocumentService: LegalDocumentService;
 
     const defaultPrivacyStatement = new LegalDocument(LegalDocumentType.PRIVACY_STATEMENT, LegalDocumentLanguage.GERMAN);
     defaultPrivacyStatement.text = 'default text';
-
-    const mockModalService = {
-        open: vi.fn(),
-    };
 
     const mockLegalDocumentService = {
         getPrivacyStatementForUpdate: vi.fn().mockReturnValue(of(defaultPrivacyStatement)),
@@ -55,7 +48,6 @@ describe('LegalDocumentUpdateComponent', () => {
         await TestBed.configureTestingModule({
             imports: [LegalDocumentUpdateComponent],
             providers: [
-                { provide: NgbModal, useValue: mockModalService },
                 { provide: LegalDocumentService, useValue: mockLegalDocumentService },
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -69,7 +61,6 @@ describe('LegalDocumentUpdateComponent', () => {
 
         fixture = TestBed.createComponent(LegalDocumentUpdateComponent);
         component = fixture.componentInstance;
-        modalService = TestBed.inject(NgbModal);
         legalDocumentService = TestBed.inject(LegalDocumentService);
     });
 
@@ -80,18 +71,13 @@ describe('LegalDocumentUpdateComponent', () => {
     it('should show warning on language change with unsaved changes', () => {
         fixture.detectChanges();
 
-        const mockReturnValue = {
-            result: Promise.resolve({ type: LegalDocumentType.IMPRINT } as LegalDocument),
-            componentInstance: {},
-        } as NgbModalRef;
-        const open = vi.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
         component.unsavedChanges.set(true);
         component.currentLanguage.set(LegalDocumentLanguage.ENGLISH);
 
         component.onLanguageChange(LegalDocumentLanguage.GERMAN);
 
-        expect(open).toHaveBeenCalledOnce();
-        expect(open).toHaveBeenCalledWith(UnsavedChangesWarningComponent, { size: 'lg', backdrop: 'static' });
+        expect(component.showUnsavedChangesWarning()).toBe(true);
+        expect(component.warningTextMessage()).toBe('artemisApp.legal.privacyStatement.unsavedChangesWarning');
     });
 
     it('should load privacy statement in German on init', () => {
@@ -181,5 +167,23 @@ describe('LegalDocumentUpdateComponent', () => {
 
         expect(legalDocumentService.getPrivacyStatementForUpdate).toHaveBeenCalledWith(LegalDocumentLanguage.GERMAN);
         expect(component.legalDocument()?.text).toBe('new content');
+    });
+
+    it('should handle discard changes and proceed with language change', () => {
+        fixture.detectChanges();
+
+        const returnValue = new LegalDocument(LegalDocumentType.PRIVACY_STATEMENT, LegalDocumentLanguage.ENGLISH);
+        returnValue.text = 'english text';
+        vi.spyOn(legalDocumentService, 'getPrivacyStatementForUpdate').mockReturnValue(of(returnValue));
+
+        component.unsavedChanges.set(true);
+        component.showWarning(LegalDocumentLanguage.ENGLISH);
+
+        expect(component.showUnsavedChangesWarning()).toBe(true);
+
+        component.onDiscardChanges();
+
+        expect(component.unsavedChanges()).toBe(false);
+        expect(legalDocumentService.getPrivacyStatementForUpdate).toHaveBeenCalledWith(LegalDocumentLanguage.ENGLISH);
     });
 });

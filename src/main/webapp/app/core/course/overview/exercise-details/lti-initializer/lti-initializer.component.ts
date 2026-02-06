@@ -1,5 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { LtiInitializerModalComponent } from 'app/core/course/overview/exercise-details/lti-initializer/lti-initializer-modal.component';
 import { UserService } from 'app/core/user/shared/user.service';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -8,17 +7,19 @@ import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-lti-initializer',
-    template: '',
+    template: '<jhi-lti-initializer-modal [(visible)]="showLtiModal" [loginName]="ltiLoginName()" [password]="ltiPassword()" />',
+    imports: [LtiInitializerModalComponent],
 })
 export class LtiInitializerComponent implements OnInit {
-    private modalService = inject(NgbModal);
     private userService = inject(UserService);
     private alertService = inject(AlertService);
     private router = inject(Router);
     private activatedRoute = inject(ActivatedRoute);
     private accountService = inject(AccountService);
 
-    modalRef: NgbModalRef | undefined;
+    showLtiModal = signal(false);
+    ltiLoginName = signal('');
+    ltiPassword = signal('');
 
     ngOnInit() {
         this.activatedRoute.queryParams.subscribe((queryParams) => {
@@ -34,9 +35,9 @@ export class LtiInitializerComponent implements OnInit {
                         });
                         return;
                     }
-                    this.modalRef = this.modalService.open(LtiInitializerModalComponent, { size: 'lg', backdrop: 'static', keyboard: false });
-                    this.modalRef.componentInstance.loginName = this.accountService.userIdentity()?.login;
-                    this.modalRef.componentInstance.password = password;
+                    this.ltiLoginName.set(this.accountService.userIdentity()?.login ?? '');
+                    this.ltiPassword.set(password);
+                    this.showLtiModal.set(true);
                 });
             }
         });

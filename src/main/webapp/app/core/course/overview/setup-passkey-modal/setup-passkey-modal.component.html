@@ -1,17 +1,14 @@
-<form name="setupPasskeyModal" (ngSubmit)="setupPasskey()">
-    <div class="modal-header">
-        <h4 class="modal-title">
+<p-dialog [(visible)]="visible" [modal]="true" [closable]="false" [dismissableMask]="false" [draggable]="false" [appendTo]="'body'" [style]="{ width: '50dvw' }">
+    <ng-template #header>
+        <h4>
             <fa-icon [icon]="faShieldHalved" />
             <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.title"></span>
         </h4>
-        <button type="button" class="btn-close" (click)="closeModal()"></button>
-    </div>
-    <div class="modal-body">
-        <p jhiTranslate="artemisApp.userSettings.passkeySettingsPage.infoText"></p>
-        <p jhiTranslate="artemisApp.userSettings.setupPasskeyModal.description.howItWorks"></p>
-        <p jhiTranslate="artemisApp.userSettings.setupPasskeyModal.description.recommendation"></p>
-    </div>
-    <div class="modal-footer">
+    </ng-template>
+    <p jhiTranslate="artemisApp.userSettings.passkeySettingsPage.infoText"></p>
+    <p jhiTranslate="artemisApp.userSettings.setupPasskeyModal.description.howItWorks"></p>
+    <p jhiTranslate="artemisApp.userSettings.setupPasskeyModal.description.recommendation"></p>
+    <ng-template #footer>
         <button type="button" class="btn btn-outline-secondary" (click)="remindMeIn30Days()">
             <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.remindMeIn30Days"></span>
         </button>
@@ -29,5 +26,5 @@
                 <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.setupPasskey"></span>
             </button>
         </div>
-    </div>
-</form>
+    </ng-template>
+</p-dialog>

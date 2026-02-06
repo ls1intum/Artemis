@@ -13,8 +13,6 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
 import { provideHttpClient } from '@angular/common/http';
 
@@ -27,14 +25,7 @@ describe('PasswordResetInitComponent', () => {
     beforeEach(async () => {
         TestBed.configureTestingModule({
             imports: [PasswordResetInitComponent],
-            providers: [
-                FormBuilder,
-                ProfileService,
-                MockProvider(AlertService),
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: NgbModal, useClass: MockNgbModalService },
-                provideHttpClient(),
-            ],
+            providers: [FormBuilder, ProfileService, MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
         });
         await TestBed.compileComponents();
 
@@ -79,7 +70,7 @@ describe('PasswordResetInitComponent', () => {
         comp.requestReset();
 
         expect(service.requestPasswordReset).toHaveBeenCalledWith('user@domain.com');
-        expect(comp.externalResetModalRef).toBeUndefined();
+        expect(comp.showExternalResetModal()).toBe(false);
     }));
 
     it('opens external reset modal upon external user error response', () => {
@@ -102,7 +93,7 @@ describe('PasswordResetInitComponent', () => {
         comp.requestReset();
 
         expect(service.requestPasswordReset).toHaveBeenCalledWith('user@domain.com');
-        expect(comp.externalResetModalRef).toBeDefined(); // External reference
+        expect(comp.showExternalResetModal()).toBe(true);
     });
 
     it('shows error alert when emailUsernameValue is empty', inject([AlertService], (alertService: AlertService) => {

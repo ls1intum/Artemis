@@ -13,7 +13,6 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { MockProvider } from 'ng-mocks';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
 import { StandardizedCompetencyManagementComponent } from 'app/core/admin/standardized-competencies/standardized-competency-management.component';
 import { AdminStandardizedCompetencyService } from 'app/core/admin/standardized-competencies/admin-standardized-competency.service';
@@ -47,7 +46,6 @@ describe('StandardizedCompetencyManagementComponent', () => {
     beforeEach(async () => {
         TestBed.configureTestingModule({
             providers: [
-                MockProvider(NgbModal),
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
@@ -107,16 +105,16 @@ describe('StandardizedCompetencyManagementComponent', () => {
     });
 
     it('should open cancel modal', () => {
-        const modalRef = {
-            result: Promise.resolve(),
-            componentInstance: {},
-        } as NgbModalRef;
-        const modalService = TestBed.inject(NgbModal);
-        const openSpy = vi.spyOn(modalService, 'open').mockReturnValue(modalRef);
+        const callback = vi.fn();
+        component['openCancelModal']('title', 'standardizedCompetency', callback);
 
-        component['openCancelModal']('title', 'standardizedCompetency', () => {});
+        expect(component['confirmDialogVisible']()).toBe(true);
+        expect(component['confirmDialogTitle']()).toBe('artemisApp.standardizedCompetency.manage.cancelModal.title');
 
-        expect(openSpy).toHaveBeenCalledOnce();
+        // Simulate confirming the dialog
+        component['onConfirmDialogConfirm']();
+        expect(component['confirmDialogVisible']()).toBe(false);
+        expect(callback).toHaveBeenCalledOnce();
     });
 
     it('should open new competency', () => {

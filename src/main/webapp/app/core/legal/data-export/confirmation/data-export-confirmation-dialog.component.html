@@ -1,11 +1,20 @@
-<form name="dataExportConfirmationForm" (ngSubmit)="confirmDataExportRequest()" #dataExportConfirmationForm="ngForm">
-    <div class="modal-header">
+<p-dialog
+    [(visible)]="visible"
+    [modal]="true"
+    [closable]="true"
+    [closeOnEscape]="true"
+    [dismissableMask]="false"
+    [draggable]="false"
+    [appendTo]="'body'"
+    [style]="{ width: '50dvw' }"
+    header=""
+>
+    <ng-template #header>
         <h4 class="modal-title">
             <span jhiTranslate="artemisApp.dataExport.confirmationHeader"></span>
         </h4>
-        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
-    </div>
-    <div class="modal-body">
+    </ng-template>
+    <form name="dataExportConfirmationForm" (ngSubmit)="confirmDataExportRequest()" #dataExportConfirmationForm="ngForm">
         <p [jhiTranslate]="'artemisApp.dataExport.confirmationQuestion'">Are you sure you want to request?</p>
         @if (adminDialog()) {
             <div>
@@ -38,17 +47,18 @@
             (ngModelChange)="enteredLogin.set($event)"
             name="confirmEntityName"
         />
-    </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()" [disabled]="submitDisabled()">
+    </form>
+    <ng-template #footer>
+        <button type="button" class="btn btn-secondary" (click)="clear()" [disabled]="submitDisabled()">
             <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
         </button>
         <button
             id="request"
-            type="submit"
+            type="button"
             class="btn btn-primary"
             [style.cursor]="dataExportConfirmationForm.invalid || submitDisabled() ? 'not-allowed' : 'pointer'"
             [disabled]="dataExportConfirmationForm.invalid || submitDisabled()"
+            (click)="confirmDataExportRequest()"
         >
             @if (submitDisabled()) {
                 <span><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;</span>
@@ -56,5 +66,5 @@
             <fa-icon [icon]="faCheck" />&nbsp;
             <span [jhiTranslate]="'artemisApp.dataExport.request'"> Request</span>
         </button>
-    </div>
-</form>
+    </ng-template>
+</p-dialog>

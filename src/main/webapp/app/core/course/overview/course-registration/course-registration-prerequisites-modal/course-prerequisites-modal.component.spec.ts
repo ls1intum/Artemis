@@ -7,7 +7,6 @@ import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { CoursePrerequisitesModalComponent } from 'app/core/course/overview/course-registration/course-registration-prerequisites-modal/course-prerequisites-modal.component';
 import { AlertService } from 'app/shared/service/alert.service';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { HttpResponse } from '@angular/common/http';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
@@ -21,23 +20,10 @@ describe('CoursePrerequisitesModal', () => {
     let coursePrerequisitesModalComponent: CoursePrerequisitesModalComponent;
     let prerequisiteService: PrerequisiteService;
 
-    const activeModalStub = {
-        close: () => {},
-        dismiss: () => {},
-    };
-
     beforeEach(async () => {
         TestBed.configureTestingModule({
             imports: [CoursePrerequisitesModalComponent, MockPipe(ArtemisTranslatePipe), MockComponent(CompetencyCardComponent)],
-            providers: [
-                MockProvider(AlertService),
-                MockProvider(PrerequisiteService),
-                {
-                    provide: NgbActiveModal,
-                    useValue: activeModalStub,
-                },
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
+            providers: [MockProvider(AlertService), MockProvider(PrerequisiteService), { provide: TranslateService, useClass: MockTranslateService }],
         });
         await TestBed.compileComponents();
         coursePrerequisitesModalComponentFixture = TestBed.createComponent(CoursePrerequisitesModalComponent);
@@ -55,6 +41,7 @@ describe('CoursePrerequisitesModal', () => {
             .spyOn(prerequisiteService, 'getAllForCourse')
             .mockReturnValue(of(new HttpResponse({ body: [{ id: 1 }, { id: 2 }], status: 200 })));
 
+        coursePrerequisitesModalComponent.visible.set(true);
         coursePrerequisitesModalComponentFixture.detectChanges();
 
         const competencyCards = coursePrerequisitesModalComponentFixture.debugElement.queryAll(By.directive(CompetencyCardComponent));
@@ -63,9 +50,9 @@ describe('CoursePrerequisitesModal', () => {
         expect(coursePrerequisitesModalComponent.prerequisites).toHaveLength(2);
     });
 
-    it('should close modal when cleared', () => {
-        const dismissActiveModal = vi.spyOn(activeModalStub, 'dismiss');
+    it('should close dialog when cleared', () => {
+        coursePrerequisitesModalComponent.visible.set(true);
         coursePrerequisitesModalComponent.clear();
-        expect(dismissActiveModal).toHaveBeenCalledOnce();
+        expect(coursePrerequisitesModalComponent.visible()).toBe(false);
     });
 });
