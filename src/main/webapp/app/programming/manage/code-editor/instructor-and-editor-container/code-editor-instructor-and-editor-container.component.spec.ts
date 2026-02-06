@@ -821,7 +821,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
             }),
         );
         expect(comp.showDiff()).toBeTrue();
-        expect(successSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefinement.success');
+        expect(successSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.inlineRefinement.success');
     });
 
     it('should show error when inline refinement has no courseId', () => {
@@ -831,7 +831,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
 
         comp.onInlineRefinement({ instruction: 'Test', startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
 
-        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefinement.error');
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
     });
 
     it('should show error when inline refinement has empty problem statement', () => {
@@ -849,7 +849,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
 
         comp.onInlineRefinement({ instruction: 'Test', startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
 
-        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefinement.error');
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
     });
 
     it('should handle inline refinement with empty response', () => {
@@ -858,7 +858,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
 
         comp.onInlineRefinement({ instruction: 'Test', startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
 
-        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefinement.error');
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
     });
 
     // Full Refinement Tests

@@ -353,7 +353,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         );
 
         expect(comp.showDiff()).toBeTrue();
-        expect(mockAlertService.success).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefinement.success');
+        expect(mockAlertService.success).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.inlineRefinement.success');
     }));
 
     it('should handle inline refinement error when no courseId', () => {
@@ -414,7 +414,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         comp.onInlineRefinement(event);
 
-        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefinement.error');
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
         expect(comp.isGeneratingOrRefining()).toBeFalse();
     }));
 
@@ -436,7 +436,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         comp.onInlineRefinement(event);
 
-        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefinement.error');
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
     }));
 
     it('should handle refinement with completely empty response', fakeAsync(() => {
