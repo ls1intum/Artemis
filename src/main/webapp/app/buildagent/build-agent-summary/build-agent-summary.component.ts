@@ -8,12 +8,11 @@ import { Router, RouterModule } from '@angular/router';
 import { BuildAgent } from 'app/buildagent/shared/entities/build-agent.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { BuildAgentPauseAllModalComponent } from 'app/buildagent/build-agent-summary/build-agent-pause-all-modal/build-agent-pause-all-modal.component';
 import { BuildAgentClearDistributedDataComponent } from 'app/buildagent/build-agent-summary/build-agent-clear-distributed-data/build-agent-clear-distributed-data.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
@@ -30,7 +29,7 @@ import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title
     templateUrl: './build-agent-summary.component.html',
     styleUrl: './build-agent-summary.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, NgxDatatableModule, DataTableComponent, FontAwesomeModule, RouterModule, AdminTitleBarTitleDirective, AdminTitleBarActionsDirective],
+    imports: [TranslateDirective, FontAwesomeModule, RouterModule, AdminTitleBarTitleDirective, AdminTitleBarActionsDirective, ArtemisTranslatePipe],
 })
 export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     private readonly websocketService = inject(WebsocketService);
@@ -55,9 +54,12 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
 
     /**
      * Computed signal that calculates the total number of currently running builds
-     * across all agents.
+     * across all agents. Uses the actual runningBuildJobs list length for accuracy,
+     * falling back to numberOfCurrentBuildJobs for backwards compatibility.
      */
-    readonly currentBuilds = computed(() => this.buildAgents().reduce((totalBuilds, agent) => totalBuilds + (agent.numberOfCurrentBuildJobs || 0), 0));
+    readonly currentBuilds = computed(() =>
+        this.buildAgents().reduce((totalBuilds, agent) => totalBuilds + (agent.runningBuildJobs?.length ?? agent.numberOfCurrentBuildJobs ?? 0), 0),
+    );
 
     /** WebSocket topic for receiving real-time build agent updates */
     readonly buildAgentsWebsocketTopic = '/topic/admin/build-agents';
@@ -120,6 +122,16 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
      */
     cancelBuildJob(buildJobId: string): void {
         this.buildQueueService.cancelBuildJob(buildJobId).subscribe();
+    }
+
+    /**
+     * Navigates to the build job detail page for a specific job.
+     * @param jobId The unique identifier of the build job
+     */
+    navigateToJobDetail(jobId?: string): void {
+        if (jobId) {
+            this.router.navigate(['/admin/build-overview', jobId, 'job-details']);
+        }
     }
 
     /**
