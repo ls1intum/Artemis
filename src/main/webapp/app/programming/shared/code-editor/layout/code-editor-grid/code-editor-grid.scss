@@ -35,7 +35,7 @@
         &__content {
             display: flex;
             height: inherit;
-            min-width: 0;
+            min-width: 0; /* allow middle strip to shrink */
 
             .editor-sidebar-left {
                 flex: 0 1 auto;

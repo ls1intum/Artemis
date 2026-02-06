@@ -136,10 +136,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     @Input() templateParticipation?: Participation;
     @Input() forceRender: Observable<void>;
     readonly consistencyIssues = input<ConsistencyIssue[]>([]);
-    /** Whether any refinement is in progress (makes editor read-only) */
     readonly isGeneratingOrRefining = input<boolean>(false);
 
-    /** Editor mode: 'normal' or 'diff' for showing diff view */
     readonly mode = input<MonacoEditorMode>('normal');
 
     /** Original content for diff mode */
@@ -421,8 +419,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     /**
-     * Reverts all changes in the diff editor
-     * by restoring the snapshot taken when diff mode was entered.
+     * Reverts all changes in the diff editor by restoring the snapshot taken when diff mode was entered.
      */
     revertAll(): void {
         this.markdownEditorMonaco?.revertAll();
