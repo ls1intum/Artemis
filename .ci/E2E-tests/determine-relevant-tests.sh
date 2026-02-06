@@ -99,6 +99,10 @@ for test_path in $ALL_TEST_PATHS_FROM_MAPPING; do
     fi
 done
 
+# Auto-discover test paths at both levels (e2e/* and e2e/*/*) to ensure
+# subdirectories like e2e/exercise/quiz-exercise/ are treated as separate test paths.
+# This prevents marking the entire parent (e2e/exercise/) as "covered" when only
+# some children (e2e/exercise/modeling/) are in the relevant tests.
 while IFS= read -r path; do
     if [ -n "$path" ]; then
         if [ -d "$REPO_ROOT/src/test/playwright/$path" ]; then
@@ -107,7 +111,7 @@ while IFS= read -r path; do
             ALL_TEST_PATH_SET["$path"]=1
         fi
     fi
-done < <(cd "$REPO_ROOT/src/test/playwright" && find e2e -maxdepth 1 -mindepth 1 \( -type d -o -name '*.spec.ts' \) -print)
+done < <(cd "$REPO_ROOT/src/test/playwright" && find e2e -maxdepth 2 -mindepth 1 \( -type d -o -name '*.spec.ts' \) -print)
 
 ALL_TEST_PATHS=()
 for test_path in "${!ALL_TEST_PATH_SET[@]}"; do
