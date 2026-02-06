@@ -131,11 +131,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         const exercise = this.programmingExercise();
 
-        if (exercise?.problemStatement) {
-            this.currentProblemStatement.set(exercise.problemStatement);
-        }
-
-        // Use shared service to load template
+        this.currentProblemStatement.set(exercise?.problemStatement ?? '');
         this.problemStatementService.loadTemplate(exercise, this.templateProblemStatement, this.templateLoaded);
     }
 
@@ -173,6 +169,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             return;
         }
 
+        this.currentGenerationSubscription?.unsubscribe();
         this.currentGenerationSubscription = this.problemStatementService.generateProblemStatement(exercise, prompt, this.isGeneratingOrRefining).subscribe({
             next: (result) => {
                 if (result.success && result.content && exercise) {
@@ -200,14 +197,14 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                             { injector: this.injector },
                         );
                     }
+                } else {
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.generationFailed');
                 }
                 this.userPrompt.set('');
-                this.currentGenerationSubscription = undefined;
             },
             error: () => {
                 this.alertService.error('artemisApp.programmingExercise.problemStatement.generationFailed');
                 this.userPrompt.set('');
-                this.currentGenerationSubscription = undefined;
             },
         });
     }
@@ -226,6 +223,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             return;
         }
 
+        this.currentGenerationSubscription?.unsubscribe();
         this.currentGenerationSubscription = this.problemStatementService.refineGlobally(exercise, currentContent, prompt, this.isGeneratingOrRefining).subscribe({
             next: (result) => {
                 if (result.success && result.content) {
@@ -237,15 +235,14 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                         },
                         { injector: this.injector },
                     );
-
-                    this.userPrompt.set('');
+                } else {
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementFailed');
                 }
-                this.currentGenerationSubscription = undefined;
+                this.userPrompt.set('');
             },
             error: () => {
                 this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementFailed');
                 this.userPrompt.set('');
-                this.currentGenerationSubscription = undefined;
             },
         });
     }

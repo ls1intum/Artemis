@@ -465,6 +465,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private generateProblemStatement(prompt: string): void {
         this.showRefinementPrompt.set(false);
 
+        this.currentRefinementSubscription?.unsubscribe();
         this.currentRefinementSubscription = this.problemStatementService.generateProblemStatement(this.exercise, prompt, this.isGeneratingOrRefining).subscribe({
             next: (result) => {
                 if (result.success && result.content) {
@@ -483,11 +484,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 } else {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.generationFailed');
                 }
-                this.currentRefinementSubscription = undefined;
             },
             error: () => {
                 this.alertService.error('artemisApp.programmingExercise.problemStatement.generationFailed');
-                this.currentRefinementSubscription = undefined;
                 this.showRefinementPrompt.set(false);
             },
         });
@@ -501,6 +500,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
         this.showRefinementPrompt.set(false);
 
+        this.currentRefinementSubscription?.unsubscribe();
         this.currentRefinementSubscription = this.problemStatementService
             .refineGlobally(this.exercise, this.exercise.problemStatement, prompt, this.isGeneratingOrRefining)
             .subscribe({
@@ -513,11 +513,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     } else {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementFailed');
                     }
-                    this.currentRefinementSubscription = undefined;
                 },
                 error: () => {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementFailed');
-                    this.currentRefinementSubscription = undefined;
                     this.showRefinementPrompt.set(false);
                 },
             });
@@ -704,9 +702,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         return super.loadExercise(exerciseId).pipe(
             tap((exercise) => {
                 this.loadTemplate(exercise);
-                if (exercise.problemStatement) {
-                    this.currentProblemStatement.set(exercise.problemStatement);
-                }
+                this.currentProblemStatement.set(exercise.problemStatement ?? '');
             }),
         );
     }

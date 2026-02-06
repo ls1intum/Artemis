@@ -56,7 +56,7 @@ $refinement-textarea-min-height: 8rem;
 .refinement-prompt-popup {
     position: absolute;
     top: calc(100% + map-get($spacers, 2));
-    right: 0;
+    left: 0;
     z-index: $zindex-modal;
     width: $modal-md;
     max-width: $refinement-popup-max-vw;
