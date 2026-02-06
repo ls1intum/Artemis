@@ -5,6 +5,12 @@ import { ProblemStatementGenerationRequest } from 'app/openapi/model/problemStat
 import { ProblemStatementRefinementResponse } from 'app/openapi/model/problemStatementRefinementResponse';
 import { ProblemStatementGenerationResponse } from 'app/openapi/model/problemStatementGenerationResponse';
 
+/** Matches Windows-style line endings (`\r\n`), e.g. `"line1\r\nline2"`. */
+const WINDOWS_LINE_ENDING_PATTERN = /\r\n/g;
+
+/** Matches remaining standalone carriage returns (`\r`), e.g. `"line1\rline2"` (old Mac style). */
+const CARRIAGE_RETURN_PATTERN = /\r/g;
+
 /**
  * Event structure for inline refinement requests from the editor.
  */
@@ -22,7 +28,7 @@ export interface InlineRefinementEvent {
  */
 export function normalizeString(str: string | undefined): string {
     if (!str) return '';
-    return str.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+    return str.replace(WINDOWS_LINE_ENDING_PATTERN, '\n').replace(CARRIAGE_RETURN_PATTERN, '\n').trim();
 }
 
 /**
