@@ -34,12 +34,8 @@ describe('FormStatusBarComponent', () => {
         const targetElement = { style: {}, getBoundingClientRect: jest.fn().mockReturnValue({ top: 300 }), scrollIntoView: jest.fn() } as any as HTMLElement;
 
         const getElementSpy = jest.spyOn(document, 'getElementById').mockImplementation((id: string) => {
-            if (id === 'course-body-container') {
-                return containerElement;
-            }
-            if (id === title) {
-                return targetElement;
-            }
+            if (id === 'course-body-container') return containerElement;
+            if (id === title) return targetElement;
             return null;
         });
 
@@ -48,5 +44,20 @@ describe('FormStatusBarComponent', () => {
         expect(getElementSpy).toHaveBeenCalledWith(title);
         expect(getElementSpy).toHaveBeenCalledWith('course-body-container');
         expect(containerElement.scrollTo).toHaveBeenCalledOnce();
+    });
+
+    it('should fall back to scrollIntoView when scroll container is missing', () => {
+        const title = comp.formStatusSections()[0].title;
+        const targetElement = { style: {}, getBoundingClientRect: jest.fn().mockReturnValue({ top: 300 }), scrollIntoView: jest.fn() } as any as HTMLElement;
+
+        jest.spyOn(document, 'getElementById').mockImplementation((id: string) => {
+            if (id === title) return targetElement;
+            if (id === 'course-body-container') return null;
+            return null;
+        });
+
+        comp.scrollToHeadline(title);
+
+        expect(targetElement.scrollIntoView).toHaveBeenCalledOnce();
     });
 });
