@@ -16,11 +16,7 @@ public record TutorialGroupConfigurationDTO(Long id, @NotNull String tutorialPer
      * @param config the tutorial groups configuration entity
      * @return a DTO representing the given configuration, or {@code null} if the input is {@code null}
      */
-    public static TutorialGroupConfigurationDTO of(TutorialGroupsConfiguration config) {
-        if (config == null) {
-            return null;
-        }
-
+    public static TutorialGroupConfigurationDTO of(@NotNull TutorialGroupsConfiguration config) {
         var course = config.getCourse();
         if (course == null || course.getTimeZone() == null) {
             throw new IllegalStateException("Tutorial group configuration is associated with a course without a time zone");

@@ -8,6 +8,7 @@ import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/ser
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { provideHttpClient } from '@angular/common/http';
+import { tutorialGroupConfigurationDtoFromEntity } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
 describe('TutorialGroupsConfigurationService', () => {
     setupTestBed({ zoneless: true });
@@ -45,11 +46,11 @@ describe('TutorialGroupsConfigurationService', () => {
     });
 
     it('create', () => {
-        const returnedFromService = { ...elemDefault, id: 0 };
+        const returnedFromService = { ...tutorialGroupConfigurationDtoFromEntity(elemDefault), id: 0 };
         const expected = { ...returnedFromService };
         let result: any;
         service
-            .create(new TutorialGroupsConfiguration(), 1, [])
+            .create(tutorialGroupConfigurationDtoFromEntity(new TutorialGroupsConfiguration()), 1, [])
             .pipe(take(1))
             .subscribe((resp) => (result = resp));
 
@@ -59,12 +60,12 @@ describe('TutorialGroupsConfigurationService', () => {
     });
 
     it('update', () => {
-        const returnedFromService = { ...elemDefault, location: 'Test' };
+        const returnedFromService = { ...tutorialGroupConfigurationDtoFromEntity(elemDefault), location: 'Test' };
         const expected = { ...returnedFromService };
         let result: any;
 
         service
-            .update(1, 1, new TutorialGroupsConfiguration(), [])
+            .update(1, 1, tutorialGroupConfigurationDtoFromEntity(new TutorialGroupsConfiguration()), [])
             .pipe(take(1))
             .subscribe((resp) => (result = resp));
 
