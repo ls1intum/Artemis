@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.modeling.dto;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.List;
 
 import org.hibernate.Hibernate;
@@ -35,7 +36,8 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
     }
 
     public static ResultDTO of(Result result) {
-        return of(result, result.getFeedbacks());
+        var feedbacks = result.getFeedbacks();
+        return of(result, feedbacks != null ? feedbacks : Collections.emptyList());
     }
 
     /**
@@ -50,9 +52,13 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
         ParticipationDTO participationDTO = null;
         if (Hibernate.isInitialized(result.getSubmission()) && result.getSubmission() != null) {
             submissionDTO = SubmissionDTO.of(result.getSubmission(), false, null, null);
-            participationDTO = ParticipationDTO.of(result.getSubmission().getParticipation());
+            var participation = result.getSubmission().getParticipation();
+            if (participation != null && Hibernate.isInitialized(participation)) {
+                participationDTO = ParticipationDTO.of(participation);
+            }
         }
-        var feedbackDTOs = filteredFeedback.stream().map(FeedbackDTO::of).toList();
+        var safeFeedback = filteredFeedback != null ? filteredFeedback : Collections.<Feedback>emptyList();
+        var feedbackDTOs = safeFeedback.stream().map(FeedbackDTO::of).toList();
         return new ResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(), submissionDTO, participationDTO, feedbackDTOs,
                 result.getAssessmentType(), result.hasComplaint(), result.isExampleResult());
     }
