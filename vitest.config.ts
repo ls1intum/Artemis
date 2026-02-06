@@ -25,8 +25,6 @@ export default defineConfig({
     test: {
         globals: true,
         environment: 'jsdom',
-        // Pass memory flags to forked worker processes (they don't inherit the parent's V8 flags)
-        execArgv: ['--max-old-space-size=4096', '--max-semi-space-size=128'],
         setupFiles: ['src/test/javascript/spec/vitest-test-setup.ts'],
         include: [
             'src/main/webapp/app/fileupload/**/*.spec.ts', // include fileupload tests
