@@ -729,10 +729,16 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         return undefined;
     }
 
+    /*
+     * Check if the result's assessment type is Athena
+     */
     get isAutomaticResult(): boolean {
         return this.result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
     }
 
+    /*
+     * Check if the latest submission has an Athena result
+     */
     get hasAthenaResultForLatestSubmission(): boolean {
         const latestResult = getLatestSubmissionResult(this.submission);
         return latestResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
