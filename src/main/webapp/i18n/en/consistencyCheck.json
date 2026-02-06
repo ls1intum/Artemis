@@ -17,7 +17,8 @@
                 "programmingExerciseImportFailed": "Import of programming exercise failed, as the source exercise is inconsistent. Please see the consistency check on the source exercise for more details."
             },
             "noInconsistencies": "No inconsistencies found",
-            "inconsistenciesFound": "Following inconsistencies have been found"
+            "inconsistenciesFound": "Following inconsistencies have been found",
+            "inconsistenciesFoundAlert": "Inconsistencies detected in the exercise configuration. Please check the consistency settings."
         }
     }
 }
