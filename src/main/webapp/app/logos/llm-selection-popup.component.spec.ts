@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LLMSelectionModalComponent } from './llm-selection-popup.component';
+import { LLMSelectionChoice, LLMSelectionModalComponent } from './llm-selection-popup.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { Router } from '@angular/router';
@@ -11,10 +11,10 @@ describe('LLMSelectionModalComponent', () => {
     let fixture: ComponentFixture<LLMSelectionModalComponent>;
     let modalService: LLMSelectionModalService;
     let router: Router;
-    let openModalSubject: Subject<void>;
+    let openModalSubject: Subject<LLMSelectionChoice | undefined>;
 
     beforeEach(async () => {
-        openModalSubject = new Subject<void>();
+        openModalSubject = new Subject<LLMSelectionChoice | undefined>();
 
         const modalServiceMock = {
             openModal$: openModalSubject.asObservable(),
@@ -280,6 +280,36 @@ describe('LLMSelectionModalComponent', () => {
     describe('Theme constant', () => {
         it('should expose Theme enum', () => {
             expect(component['Theme']).toBe(Theme);
+        });
+    });
+
+    describe('currentSelection', () => {
+        it('should set currentSelection when modal is opened with a selection', () => {
+            fixture.detectChanges();
+            openModalSubject.next('cloud');
+
+            expect(component.currentSelection).toBe('cloud');
+        });
+
+        it('should set currentSelection to local when modal is opened with local', () => {
+            fixture.detectChanges();
+            openModalSubject.next('local');
+
+            expect(component.currentSelection).toBe('local');
+        });
+
+        it('should set currentSelection to no_ai when modal is opened with no_ai', () => {
+            fixture.detectChanges();
+            openModalSubject.next('no_ai');
+
+            expect(component.currentSelection).toBe('no_ai');
+        });
+
+        it('should set currentSelection to undefined when modal is opened without selection', () => {
+            fixture.detectChanges();
+            openModalSubject.next(undefined);
+
+            expect(component.currentSelection).toBeUndefined();
         });
     });
 });

@@ -24,12 +24,14 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     @Output() choice = new EventEmitter<LLMSelectionChoice>();
 
     isVisible = false;
+    currentSelection?: LLMSelectionChoice;
     private modalSubscription?: Subscription;
 
     isOnPremiseEnabled: boolean;
 
     ngOnInit(): void {
-        this.modalSubscription = this.modalService.openModal$.subscribe(() => {
+        this.modalSubscription = this.modalService.openModal$.subscribe((currentSelection) => {
+            this.currentSelection = currentSelection;
             this.open();
             this.cdr.detectChanges(); // Manually trigger change detection
         });

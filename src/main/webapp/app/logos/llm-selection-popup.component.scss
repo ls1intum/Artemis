@@ -248,6 +248,10 @@
     background: var(--info);
 }
 
+.badge-current {
+    background: var(--success);
+}
+
 .description {
     font-size: 14px;
     color: var(--ai-modal-description-color);

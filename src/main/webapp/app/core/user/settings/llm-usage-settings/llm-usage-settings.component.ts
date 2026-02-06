@@ -6,6 +6,7 @@ import dayjs from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { LLMSelectionChoice } from 'app/logos/llm-selection-popup.component';
 
 @Component({
     selector: 'jhi-llm-usage-settings',
@@ -25,7 +26,8 @@ export class LlmUsageSettingsComponent implements OnInit {
     }
 
     async openSelectionModal(): Promise<void> {
-        const choice = await this.llmModalService.open();
+        const currentChoice = this.mapDecisionToChoice(this.currentLLMSelectionDecision());
+        const choice = await this.llmModalService.open(currentChoice);
 
         if (choice) {
             // Map the Choice to the Enum
@@ -58,6 +60,19 @@ export class LlmUsageSettingsComponent implements OnInit {
         this.irisChatService.updateLLMUsageConsent(accepted);
         this.accountService.setUserLLMSelectionDecision(accepted);
         this.updateLLMUsageDecision();
+    }
+
+    private mapDecisionToChoice(decision: LLMSelectionDecision | undefined): LLMSelectionChoice | undefined {
+        switch (decision) {
+            case LLMSelectionDecision.CLOUD_AI:
+                return 'cloud';
+            case LLMSelectionDecision.LOCAL_AI:
+                return 'local';
+            case LLMSelectionDecision.NO_AI:
+                return 'no_ai';
+            default:
+                return undefined;
+        }
     }
 
     protected readonly LLMSelectionDecision = LLMSelectionDecision;

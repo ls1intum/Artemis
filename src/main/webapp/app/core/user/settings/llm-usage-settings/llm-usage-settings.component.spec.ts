@@ -103,7 +103,7 @@ describe('LlmUsageSettingsComponent', () => {
 
             await component.openSelectionModal();
 
-            expect(llmModalService.open).toHaveBeenCalledOnce();
+            expect(llmModalService.open).toHaveBeenCalledWith('cloud');
             expect(updateSpy).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
         });
 
@@ -113,7 +113,7 @@ describe('LlmUsageSettingsComponent', () => {
 
             await component.openSelectionModal();
 
-            expect(llmModalService.open).toHaveBeenCalledOnce();
+            expect(llmModalService.open).toHaveBeenCalledWith('cloud');
             expect(updateSpy).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
         });
 
@@ -123,7 +123,7 @@ describe('LlmUsageSettingsComponent', () => {
 
             await component.openSelectionModal();
 
-            expect(llmModalService.open).toHaveBeenCalledOnce();
+            expect(llmModalService.open).toHaveBeenCalledWith('cloud');
             expect(updateSpy).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
         });
 
@@ -133,7 +133,7 @@ describe('LlmUsageSettingsComponent', () => {
 
             await component.openSelectionModal();
 
-            expect(llmModalService.open).toHaveBeenCalledOnce();
+            expect(llmModalService.open).toHaveBeenCalledWith('cloud');
             expect(updateSpy).not.toHaveBeenCalled();
         });
 
@@ -143,7 +143,7 @@ describe('LlmUsageSettingsComponent', () => {
 
             await component.openSelectionModal();
 
-            expect(llmModalService.open).toHaveBeenCalledOnce();
+            expect(llmModalService.open).toHaveBeenCalledWith('cloud');
             expect(updateSpy).not.toHaveBeenCalled();
         });
 
@@ -153,8 +153,47 @@ describe('LlmUsageSettingsComponent', () => {
 
             await component.openSelectionModal();
 
-            expect(llmModalService.open).toHaveBeenCalledOnce();
+            expect(llmModalService.open).toHaveBeenCalledWith('cloud');
             expect(updateSpy).not.toHaveBeenCalled();
+        });
+
+        it('should pass current selection to modal when user has LOCAL_AI selected', async () => {
+            (accountService.userIdentity as unknown as jest.Mock).mockReturnValue({
+                ...mockUser,
+                selectedLLMUsage: LLMSelectionDecision.LOCAL_AI,
+            } as User);
+            component.ngOnInit();
+            (llmModalService.open as jest.Mock).mockResolvedValue('none');
+
+            await component.openSelectionModal();
+
+            expect(llmModalService.open).toHaveBeenCalledWith('local');
+        });
+
+        it('should pass current selection to modal when user has NO_AI selected', async () => {
+            (accountService.userIdentity as unknown as jest.Mock).mockReturnValue({
+                ...mockUser,
+                selectedLLMUsage: LLMSelectionDecision.NO_AI,
+            } as User);
+            component.ngOnInit();
+            (llmModalService.open as jest.Mock).mockResolvedValue('none');
+
+            await component.openSelectionModal();
+
+            expect(llmModalService.open).toHaveBeenCalledWith('no_ai');
+        });
+
+        it('should pass undefined to modal when user has no selection', async () => {
+            (accountService.userIdentity as unknown as jest.Mock).mockReturnValue({
+                ...mockUser,
+                selectedLLMUsage: undefined,
+            } as User);
+            component.ngOnInit();
+            (llmModalService.open as jest.Mock).mockResolvedValue('none');
+
+            await component.openSelectionModal();
+
+            expect(llmModalService.open).toHaveBeenCalledWith(undefined);
         });
     });
 

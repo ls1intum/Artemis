@@ -6,14 +6,14 @@ import { LLMSelectionChoice } from './llm-selection-popup.component';
     providedIn: 'root',
 })
 export class LLMSelectionModalService {
-    private openModalSubject = new Subject<void>();
+    private openModalSubject = new Subject<LLMSelectionChoice | undefined>();
     private choiceSubject = new Subject<LLMSelectionChoice>();
 
-    openModal$: Observable<void> = this.openModalSubject.asObservable();
+    openModal$: Observable<LLMSelectionChoice | undefined> = this.openModalSubject.asObservable();
     choice$: Observable<LLMSelectionChoice> = this.choiceSubject.asObservable();
 
-    open(): Promise<LLMSelectionChoice> {
-        this.openModalSubject.next();
+    open(currentSelection?: LLMSelectionChoice): Promise<LLMSelectionChoice> {
+        this.openModalSubject.next(currentSelection);
         return firstValueFrom(this.choice$);
     }
 
