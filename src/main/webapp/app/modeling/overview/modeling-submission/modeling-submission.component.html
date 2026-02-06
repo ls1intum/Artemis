@@ -40,7 +40,7 @@
                     <jhi-button
                         class="submission-button"
                         id="submit-modeling-submission"
-                        [disabled]="(!isActive && !isLate) || !submission || (!!result && !hasAthenaResultForLatestSubmission) || (isLate && !!submission.submitted)"
+                        [disabled]="(!isActive && !isLate) || !submission || !!result || (isLate && !!submission.submitted)"
                         [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
                         (onClick)="submit()"
                         [isLoading]="isSaving"
