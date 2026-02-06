@@ -1,84 +1,10 @@
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+
 .btn-outline-primary:not(.list-group-item).dropdown-toggle.show {
     color: var(--default-btn-font);
 }
 
-/* Refinement Prompt Popup Styles */
-.refinement-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.3);
-    z-index: 1040;
-}
-
-.refinement-prompt-popup {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    z-index: 1050;
-    width: 500px;
-    max-width: 90vw;
-    margin-top: 0.5rem;
-    background: var(--bs-body-bg);
-    border: 1px solid var(--primary);
-    border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-    overflow: hidden;
-
-    .refinement-prompt-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.75rem 1rem;
-        background: var(--primary);
-        color: white;
-        font-weight: 500;
-        font-size: 0.95rem;
-
-        .btn-close {
-            filter: brightness(0) invert(1);
-            opacity: 0.8;
-
-            &:hover {
-                opacity: 1;
-            }
-        }
-    }
-
-    .refinement-prompt-body {
-        padding: 1rem;
-    }
-
-    .refinement-textarea {
-        min-height: 120px;
-        resize: vertical;
-        font-size: 0.9rem;
-        background: var(--bs-body-bg);
-        border: 1px solid var(--bs-border-color);
-        color: var(--bs-body-color);
-
-        &:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 0.2rem rgba(var(--primary-rgb), 0.25);
-        }
-
-        &::placeholder {
-            color: var(--bs-secondary-color);
-        }
-    }
-
-    .refinement-prompt-footer {
-        display: flex;
-        justify-content: flex-end;
-        padding: 0.75rem 1rem;
-        background: transparent;
-        border-top: 1px solid var(--bs-border-color);
-    }
-}
-
-/* Consistency check dropdown styles */
 .dropdown-item-nohover {
     &:hover,
     &:focus {
@@ -91,4 +17,60 @@
 .consistency-issue-item__meta,
 .consistency-issue-item__actions {
     gap: 0.25rem;
+}
+
+.ai-dropdown-menu {
+    min-width: 17.5rem;
+}
+
+.consistency-issue-nav-btn {
+    width: 27rem;
+    max-width: min(27rem, 40vw);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 1 !important;
+    color: var(--bs-body-color) !important;
+}
+
+/* Refinement Prompt Modal Styles */
+.refinement-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: $modal-backdrop-bg;
+    opacity: $modal-backdrop-opacity;
+    z-index: $zindex-modal-backdrop;
+}
+
+.refinement-prompt-popup {
+    position: absolute;
+    top: calc(100% + map-get($spacers, 2));
+    right: 0;
+    z-index: $zindex-modal;
+    width: $modal-md;
+    max-width: 90vw;
+    background: var(--bs-body-bg);
+    border: $border-width solid var(--bs-primary);
+    border-radius: $modal-content-border-radius;
+    box-shadow: var(--bs-box-shadow-lg);
+    overflow: hidden;
+
+    .btn-close {
+        filter: brightness(0) invert(1);
+        opacity: $btn-close-opacity;
+
+        &:hover {
+            opacity: $btn-close-hover-opacity;
+        }
+    }
+
+    .refinement-textarea {
+        min-height: 8rem;
+        resize: vertical;
+        font-size: $font-size-sm;
+    }
 }

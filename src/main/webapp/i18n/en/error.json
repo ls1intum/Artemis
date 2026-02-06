@@ -37,6 +37,7 @@
         "externalSubmissionForQuizExercise": "External submissions are not supported for Quiz exercises.",
         "noSubmissions": "No existing user was specified, or no submission exists.",
         "feedbackCreditsNull": "Error! If feedback is present, all elements must contain points.",
+        "faqRewriteFailed": "Could not rewrite FAQ. Please try again.",
         "invalidGradeStepFormat": "One or more grade steps are not following the correct format. Click on the \"?\" for more information.",
         "examExerciseNotIncludedInScore": "An exam exercise must be included in the score!",
         "invalidGradeStepAdjacency": "The grade steps don't map to a valid grading key. Click on the \"?\" for more information.",
@@ -205,8 +206,13 @@
             "courseIdMissing": "The courseId is required.",
             "forbidChangeCourseId": "Exercise course id does not match the stored course id"
         },
+        "ProblemStatementGeneration": {
+            "generatedProblemStatementTooLong": "The generated problem statement is too long. Please try again with a different prompt.",
+            "generationFailed": "Failed to generate problem statement. Please try again."
+        },
         "ProblemStatementRefinement": {
             "problemStatementEmpty": "The problem statement cannot be empty.",
+            "userPromptEmpty": "The user prompt cannot be empty.",
             "noRefinementInstructions": "No refinement instructions were provided. Please add canvas-style comments to specify how the problem statement should be refined.",
             "chatClientNotConfigured": "AI refinement is currently unavailable. Please contact your administrator.",
             "chatClientNotConfigured_detail": "AI chat client is not configured.",

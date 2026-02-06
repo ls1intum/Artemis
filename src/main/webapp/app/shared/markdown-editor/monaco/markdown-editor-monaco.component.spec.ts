@@ -410,11 +410,13 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(renderedHtml).toContain('<blockquote>');
     });
 
-    it('should emit selection change output', () => {
+    it('should emit closeEditor on close button click', () => {
         fixture.detectChanges();
+        const emitSpy = jest.spyOn(comp.closeEditor, 'emit');
 
-        // Verify the onSelectionChange output is defined
-        expect(comp.onSelectionChange).toBeDefined();
+        comp.onCloseButtonClick();
+
+        expect(emitSpy).toHaveBeenCalled();
     });
 
     it('should dispose selection change listener on destroy', () => {
@@ -427,15 +429,6 @@ describe('MarkdownEditorMonacoComponent', () => {
         comp.ngOnDestroy();
 
         expect(mockDisposable.dispose).toHaveBeenCalled();
-    });
-
-    it('should emit closeEditor on close button click', () => {
-        fixture.detectChanges();
-        const emitSpy = jest.spyOn(comp.closeEditor, 'emit');
-
-        comp.onCloseButtonClick();
-
-        expect(emitSpy).toHaveBeenCalled();
     });
 
     it('should return selection from getSelection', () => {

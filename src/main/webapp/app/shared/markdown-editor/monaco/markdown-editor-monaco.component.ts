@@ -273,9 +273,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     showCloseButton = input<boolean>(false);
     /** Whether the editor is read-only */
-    readOnly = input<boolean>(false);
+    isReadOnly = input<boolean>(false);
 
-    /** Editor mode: 'normal' or 'diff' */
     mode = input<MonacoEditorMode>('normal');
 
     renderSideBySide = input<boolean>(true);
@@ -834,7 +833,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     /**
-     * Reverts all changes in the diff editor (both inline edits and the refinement itself)
+     * Reverts all changes in the diff editor
      * by restoring the snapshot taken when diff mode was entered.
      */
     revertAll(): void {

@@ -36,6 +36,6 @@ export interface ProblemStatementTargetedRefinementRequest {
     /**
      * Instruction describing what should change
      */
-    instruction: string;
+    instruction?: string;
 }
 

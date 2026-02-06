@@ -70,7 +70,7 @@ public class HyperionProblemStatementGenerationService {
                 log.warn("Generated problem statement for course [{}] exceeds maximum length: {} characters", course.getId(), generatedProblemStatement.length());
                 throw new InternalServerErrorAlertException(
                         "Generated problem statement is too long (" + generatedProblemStatement.length() + " characters). Maximum allowed: " + MAX_PROBLEM_STATEMENT_LENGTH,
-                        "ProblemStatement", "problemStatementTooLong");
+                        "ProblemStatement", "ProblemStatementGeneration.generatedProblemStatementTooLong");
             }
 
             return new ProblemStatementGenerationResponseDTO(generatedProblemStatement);
@@ -81,7 +81,7 @@ public class HyperionProblemStatementGenerationService {
         }
         catch (Exception e) {
             log.error("Error generating problem statement for course [{}]: {}", course.getId(), e.getMessage(), e);
-            throw new InternalServerErrorAlertException("Failed to generate problem statement: " + e.getMessage(), "ProblemStatement", "problemStatementGenerationFailed");
+            throw new InternalServerErrorAlertException("Failed to generate problem statement", "ProblemStatement", "ProblemStatementGeneration.generationFailed");
         }
     }
 }

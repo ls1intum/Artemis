@@ -1,39 +1,43 @@
-<div class="inline-refinement-container" [style.top.px]="top()" [style.left.px]="left()">
+<div class="inline-refinement-container d-flex align-items-center" [style.top.px]="top()" [style.left.px]="left()">
     @if (!isExpanded()) {
         <!-- Collapsed: Trigger button with text label -->
         <button
             type="button"
-            class="refinement-trigger-btn"
+            class="btn btn-primary btn-sm rounded-pill d-flex align-items-center gap-1 shadow-sm fw-medium"
             (click)="expand()"
             [attr.aria-label]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.triggerButton' | artemisTranslate"
         >
-            <fa-icon [icon]="facArtemisIntelligence" />
-            <span class="trigger-label">{{ 'artemisApp.programmingExercise.problemStatement.inlineRefinement.triggerButton' | artemisTranslate }}</span>
+            <fa-icon [icon]="facArtemisIntelligence" class="fs-x-small" />
+            <span class="text-nowrap">{{ 'artemisApp.programmingExercise.problemStatement.inlineRefinement.triggerButton' | artemisTranslate }}</span>
         </button>
     } @else {
         <!-- Expanded: Input field with submit -->
-        <div class="refinement-input-container">
+        <div class="d-flex align-items-center gap-1 bg-body border rounded-pill shadow py-1 px-2">
             <input
                 #instructionInput
                 type="text"
-                class="refinement-input"
+                class="refinement-input fs-small py-1 px-2 w-100"
                 [placeholder]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.placeholder' | artemisTranslate"
                 [(ngModel)]="instruction"
                 (keydown)="onKeydown($event)"
                 [disabled]="isLoading()"
                 maxlength="500"
             />
-            <span class="char-counter">{{ instruction.length }}/500</span>
+            <span class="text-secondary text-nowrap px-1 fs-x-small">{{ instruction.length }}/500</span>
             <button
                 type="button"
-                class="refinement-submit-btn"
+                class="refinement-submit-btn btn btn-primary btn-sm rounded-circle d-flex align-items-center justify-content-center p-0"
                 (click)="submit()"
                 [disabled]="!instruction || isLoading()"
                 [attr.title]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.submitTooltip' | artemisTranslate"
             >
                 <fa-icon [icon]="faPaperPlane" />
             </button>
-            <button type="button" class="refinement-close-btn" (click)="handleClose()">
+            <button
+                type="button"
+                class="refinement-close-btn btn btn-sm text-secondary rounded-circle d-flex align-items-center justify-content-center p-0"
+                (click)="handleClose()"
+            >
                 <fa-icon [icon]="faTimes" />
             </button>
         </div>

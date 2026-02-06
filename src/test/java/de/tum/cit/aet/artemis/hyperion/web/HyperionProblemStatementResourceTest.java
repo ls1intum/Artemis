@@ -243,7 +243,8 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         String body = "{\"userPrompt\":\"Prompt\"}";
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isInternalServerError()).andExpect(jsonPath("$.title").value("Failed to generate problem statement: AI service unavailable"))
-                .andExpect(jsonPath("$.message").value("error.problemStatementGenerationFailed")).andExpect(jsonPath("$.errorKey").value("problemStatementGenerationFailed"));
+                .andExpect(jsonPath("$.message").value("error.ProblemStatementGeneration.generationFailed"))
+                .andExpect(jsonPath("$.errorKey").value("ProblemStatementGeneration.generationFailed"));
     }
 
     @Test
@@ -255,18 +256,6 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         courseRepository.findById(courseId).orElseThrow();
         String body = "{\"problemStatementText\":\"Original problem statement\",\"userPrompt\":\"Make it better\"}";
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/global", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.refinedProblemStatement").isString());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
-    void shouldRefineProblemStatementTargetedForInstructor() throws Exception {
-        long courseId = persistedCourseId;
-        mockChatSuccess("Refined problem statement generated successfully.");
-        userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        courseRepository.findById(courseId).orElseThrow();
-        String body = "{\"problemStatementText\":\"Original problem statement\",\"instruction\":\"Make it better\",\"startLine\":1,\"endLine\":2}";
-        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.refinedProblemStatement").isString());
     }
 

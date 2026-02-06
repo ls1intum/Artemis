@@ -337,6 +337,26 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ProblemStatementGenerationResponse'}
+  /api/hyperion/courses/{courseId}/faq/rewrite:
+    post:
+      tags: [hyperion-faq]
+      operationId: rewriteFaq
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RewriteFaqRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RewriteFaqResponse'}
   /api/tutorialgroup/tutorial-groups/{tutorialGroupId}/title:
     get:
       tags: [tutorial-group]
@@ -523,7 +543,7 @@ components:
           maximum: 10000, minimum: 1}
         instruction: {type: string, description: Instruction describing what should
             change, maxLength: 500, minLength: 0}
-      required: [endLine, instruction, problemStatementText, startLine]
+      required: [endLine, problemStatementText, startLine]
     CodeGenerationRequest:
       type: object
       properties:
@@ -738,6 +758,19 @@ components:
         startLine: {type: integer, format: int32, description: Start line number (1-based)}
         endLine: {type: integer, format: int32, description: End line number (1-based)}
       required: [endLine, filePath, startLine, type]
+    RewriteFaqResponse:
+      type: object
+      description: Response containing rewritten FAQ
+      properties:
+        rewrittenText: {type: string}
+        inconsistencies:
+          type: array
+          items: {type: string}
+        suggestions:
+          type: array
+          items: {type: string}
+        improvement: {type: string}
+      required: [improvement, inconsistencies, rewrittenText, suggestions]
     TutorialGroupExport:
       type: object
       properties:
@@ -755,14 +788,12 @@ components:
         students:
           type: array
           items: {$ref: '#/components/schemas/StudentExport'}
-    Timing:
+    RewriteFaqRequest:
       type: object
-      description: Response containing consistency check timing
+      description: Request to rewrite a FAQ
       properties:
-        startTime: {type: string, description: Starting time, example: !!timestamp '2025-07-27T07:17:05.500Z'}
-        endTime: {type: string, description: Ending time, example: !!timestamp '2025-07-27T07:17:05.500Z'}
-        durationS: {type: number, format: double, description: Duration of consistency
-            check, example: 27.765}
+        faqText: {type: string, minLength: 1}
+      required: [faqText]
     ConversationUser:
       type: object
       properties:

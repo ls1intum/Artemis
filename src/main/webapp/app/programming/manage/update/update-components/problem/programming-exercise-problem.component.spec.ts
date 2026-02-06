@@ -177,47 +177,27 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.userPrompt.set('Improve clarity');
         comp.refineProblemStatement();
 
+        expect(mockHyperionApiService.refineProblemStatementGlobally).toHaveBeenCalledWith(
+            42,
+            expect.objectContaining({ problemStatementText: 'Original problem statement', userPrompt: 'Improve clarity' }),
+        );
         expect(comp.showDiff()).toBeTrue();
-    }));
-
-    it('should handle refinement error', fakeAsync(() => {
-        const programmingExercise = new ProgrammingExercise(undefined, undefined);
-        programmingExercise.course = { id: 42 } as any;
-        programmingExercise.problemStatement = 'Original';
-        fixture.componentRef.setInput('programmingExercise', programmingExercise);
-
-        mockHyperionApiService.refineProblemStatementGlobally.mockReturnValue(throwError(() => new Error('API error')));
-
-        comp.userPrompt.set('Improve');
-        comp.refineProblemStatement();
-
-        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
+        expect(mockAlertService.success).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementSuccess');
         expect(comp.isGeneratingOrRefining()).toBeFalse();
     }));
 
-    it('should accept refinement and update problem statement', () => {
-        const programmingExercise = new ProgrammingExercise(undefined, undefined);
-        programmingExercise.course = { id: 42 } as any;
-        programmingExercise.problemStatement = 'Original';
-        fixture.componentRef.setInput('programmingExercise', programmingExercise);
-
-        comp.showDiff.set(true);
-
-        comp.closeDiffView();
-
-        expect(comp.showDiff()).toBeFalse();
-    });
-
     it('should revert refinement and close diff', () => {
         comp.showDiff.set(true);
-        // Mock editableInstructions
-        (comp as any).editableInstructions = () => ({
+        // Mock editableInstructions as a callable (signal/viewChild) returning the mock
+        const mockEditableInstructions = {
             revertAll: jest.fn(),
             getCurrentContent: jest.fn().mockReturnValue('Reverted content'),
-        });
+        };
+        (comp as any).editableInstructions = () => mockEditableInstructions;
 
         comp.revertAllChanges();
 
+        expect(mockEditableInstructions.revertAll).toHaveBeenCalled();
         expect(comp.showDiff()).toBeFalse();
     });
 
@@ -300,13 +280,18 @@ describe('ProgrammingExerciseProblemComponent', () => {
     it('should accept refinement and apply changes', () => {
         const exercise = new ProgrammingExercise(undefined, undefined);
         exercise.course = { id: 42 } as any;
+        exercise.problemStatement = 'Original';
         fixture.componentRef.setInput('programmingExercise', exercise);
 
-        comp.showDiff.set(true);
+        // Mock editableInstructions to return refined content
+        const mockEditable = { getCurrentContent: jest.fn().mockReturnValue('Refined content'), revertAll: jest.fn() };
+        (comp as any).editableInstructions = () => mockEditable;
 
+        comp.showDiff.set(true);
         comp.closeDiffView();
 
         expect(comp.showDiff()).toBeFalse();
+        expect(exercise.problemStatement).toBe('Refined content');
     });
 
     it('should handle generate with existing non-empty problem statement', () => {
@@ -322,16 +307,6 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         // shouldShowGenerateButton should be false for existing content that differs from template
         expect(comp.shouldShowGenerateButton()).toBeFalse();
-    });
-
-    it('should reset generation state on cancel', () => {
-        // Set up state
-        comp.isGeneratingOrRefining.set(true);
-
-        comp.cancelGeneration();
-
-        // Verify state is reset
-        expect(comp.isGeneratingOrRefining()).toBeFalse();
     });
 
     it('should handle inline refinement successfully', fakeAsync(() => {
@@ -370,7 +345,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         );
 
         expect(comp.showDiff()).toBeTrue();
-        expect(mockAlertService.success).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.success');
+        expect(mockAlertService.success).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.inlineRefinement.success');
     }));
 
     it('should handle inline refinement error when no courseId', () => {
@@ -431,7 +406,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         comp.onInlineRefinement(event);
 
-        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
         expect(comp.isGeneratingOrRefining()).toBeFalse();
     }));
 
@@ -453,7 +428,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         comp.onInlineRefinement(event);
 
-        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
     }));
 
     it('should handle refinement with completely empty response', fakeAsync(() => {
@@ -469,7 +444,22 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.userPrompt.set('Improve clarity');
         comp.refineProblemStatement();
 
-        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementError');
+    }));
+
+    it('should handle refinement error', fakeAsync(() => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.course = { id: 42 } as any;
+        programmingExercise.problemStatement = 'Original';
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+
+        mockHyperionApiService.refineProblemStatementGlobally.mockReturnValue(throwError(() => new Error('API error')));
+
+        comp.userPrompt.set('Improve clarity');
+        comp.refineProblemStatement();
+
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementError');
+        expect(comp.isGeneratingOrRefining()).toBeFalse();
     }));
 
     it('should not refine when userPrompt is empty', () => {
@@ -493,14 +483,6 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.refineProblemStatement();
 
         expect(mockHyperionApiService.refineProblemStatementGlobally).not.toHaveBeenCalled();
-    });
-
-    it('should close diff view properly', () => {
-        comp.showDiff.set(true);
-
-        comp.closeDiffView();
-
-        expect(comp.showDiff()).toBeFalse();
     });
 
     it('should use exerciseGroup course id when course is not set', fakeAsync(() => {

@@ -62,6 +62,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         listener: (selection: EditorRange | undefined) => void;
         disposable?: Disposable;
     }[] = [];
+
     private diffSnapshotModel?: monaco.editor.ITextModel;
     private useLiveSyncedDiff = false;
     private diffListenersAttached = false;

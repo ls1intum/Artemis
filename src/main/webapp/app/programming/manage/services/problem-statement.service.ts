@@ -79,7 +79,7 @@ export class ProblemStatementService {
         const courseId = getCourseId(exercise);
         if (!courseId || !prompt?.trim() || !currentContent?.trim()) {
             if (!currentContent?.trim()) {
-                this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
+                this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
             }
             return of({ success: false });
         }
@@ -90,8 +90,8 @@ export class ProblemStatementService {
             .pipe(
                 this.handleApiResponse(
                     loadingSignal,
-                    'artemisApp.programmingExercise.inlineRefine.success',
-                    'artemisApp.programmingExercise.inlineRefine.error',
+                    'artemisApp.programmingExercise.problemStatement.refinementSuccess',
+                    'artemisApp.programmingExercise.problemStatement.refinementError',
                     isValidRefinementResponse,
                     (r) => r?.refinedProblemStatement,
                 ),
@@ -107,7 +107,7 @@ export class ProblemStatementService {
     ): Observable<RefinementResult> {
         const courseId = getCourseId(exercise);
         if (!courseId || !currentContent?.trim()) {
-            this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
+            this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
             return of({ success: false });
         }
         loadingSignal.set(true);
@@ -117,8 +117,8 @@ export class ProblemStatementService {
             .pipe(
                 this.handleApiResponse(
                     loadingSignal,
-                    'artemisApp.programmingExercise.inlineRefine.success',
-                    'artemisApp.programmingExercise.inlineRefine.error',
+                    'artemisApp.programmingExercise.problemStatement.inlineRefinement.success',
+                    'artemisApp.programmingExercise.problemStatement.inlineRefinement.error',
                     isValidRefinementResponse,
                     (r) => r?.refinedProblemStatement,
                 ),

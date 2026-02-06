@@ -18,11 +18,9 @@ import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRefinementResponseDTO
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementTargetedRefinementRequestDTO;
 
 /**
- * Service for refining existing problem statements using Spring AI.
- * Supports two refinement modes:
+ * Service for refining existing problem statements using Spring AI. Supports two refinement modes:
  * 1. Global refinement: Apply user prompt to the entire problem statement
- * 2. Targeted refinement (Canvas-style): Apply selection-based instructions to
- * specific text ranges
+ * 2. Targeted refinement (Canvas-style): Apply selection-based instructions to specific text ranges
  */
 @Service
 @Lazy
@@ -43,6 +41,21 @@ public class HyperionProblemStatementRefinementService {
     private static final int MAX_SELECTED_TEXT_DISPLAY_LENGTH = 100;
 
     /**
+     * Ellipsis suffix appended when truncating text for display.
+     */
+    private static final String ELLIPSIS = "...";
+
+    /**
+     * Default column value when no column is specified (first column, 1-indexed).
+     */
+    private static final int DEFAULT_COLUMN_ONE_INDEXED = 1;
+
+    /**
+     * Offset to convert a 1-indexed column to a 0-indexed Java string position.
+     */
+    private static final int ONE_INDEXED_TO_ZERO_INDEXED_OFFSET = 1;
+
+    /**
      * Default course title when not specified.
      */
     private static final String DEFAULT_COURSE_TITLE = "Programming Course";
@@ -60,8 +73,7 @@ public class HyperionProblemStatementRefinementService {
     /**
      * Creates a new HyperionProblemStatementRefinementService.
      *
-     * @param chatClient      the AI chat client for refining problem statements,
-     *                            may be null if AI is not configured
+     * @param chatClient      the AI chat client for refining problem statements, may be null if AI is not configured
      * @param templateService the prompt template service for rendering AI prompts
      */
     public HyperionProblemStatementRefinementService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService) {
@@ -76,10 +88,8 @@ public class HyperionProblemStatementRefinementService {
      * @param originalProblemStatementText the original problem statement text
      * @param userPrompt                   the user's refinement instructions
      * @return the refinement response
-     * @throws BadRequestAlertException          if the input is invalid (empty
-     *                                               problem statement)
-     * @throws InternalServerErrorAlertException if the AI chat client is not
-     *                                               configured or refinement fails
+     * @throws BadRequestAlertException          if the input is invalid (empty problem statement)
+     * @throws InternalServerErrorAlertException if the AI chat client is not configured or refinement fails
      */
     public ProblemStatementRefinementResponseDTO refineProblemStatement(Course course, String originalProblemStatementText, String userPrompt) {
         log.debug("Refining problem statement for course [{}]", course.getId());
@@ -97,7 +107,10 @@ public class HyperionProblemStatementRefinementService {
                     getCourseDescriptionOrDefault(course));
 
             String prompt = templateService.render("/prompts/hyperion/refine_problem_statement.st", variables.asMap());
-            String refinedProblemStatementText = chatClient.prompt().user(prompt).call().content();
+            String refinedProblemStatementText = null;
+            if (chatClient != null) {
+                refinedProblemStatementText = chatClient.prompt().user(prompt).call().content();
+            }
 
             if (refinedProblemStatementText == null) {
                 throw new InternalServerErrorAlertException("Refined problem statement is null", "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementNull");
@@ -111,19 +124,14 @@ public class HyperionProblemStatementRefinementService {
     }
 
     /**
-     * Refine a problem statement using targeted selection-based instructions
-     * (Canvas-style).
-     * The instruction specifies a text selection (line/column range) and what
-     * change to apply.
+     * Refine a problem statement using targeted selection-based instructions (Canvas-style).
+     * The instruction specifies a text selection (line/column range) and what change to apply.
      *
      * @param course  the course context
-     * @param request the targeted refinement request containing text and
-     *                    instruction
+     * @param request the targeted refinement request containing text and instruction
      * @return the refinement response
-     * @throws BadRequestAlertException          if the input is invalid (empty
-     *                                               problem statement)
-     * @throws InternalServerErrorAlertException if the AI chat client is not
-     *                                               configured or refinement fails
+     * @throws BadRequestAlertException          if the input is invalid (empty problem statement)
+     * @throws InternalServerErrorAlertException if the AI chat client is not configured or refinement fails
      */
     public ProblemStatementRefinementResponseDTO refineProblemStatementTargeted(Course course, ProblemStatementTargetedRefinementRequestDTO request) {
         log.debug("Refining problem statement with targeted instruction for course [{}]", course.getId());
@@ -151,7 +159,10 @@ public class HyperionProblemStatementRefinementService {
 
             // Use the targeted refinement template for selection-based instructions
             String prompt = templateService.render("/prompts/hyperion/refine_problem_statement_targeted.st", variables.asMap());
-            String refinedProblemStatementText = chatClient.prompt().user(prompt).call().content();
+            String refinedProblemStatementText = null;
+            if (chatClient != null) {
+                refinedProblemStatementText = chatClient.prompt().user(prompt).call().content();
+            }
 
             if (refinedProblemStatementText == null) {
                 throw new InternalServerErrorAlertException("AI returned null when refining the problem statement", "ProblemStatement",
@@ -189,8 +200,7 @@ public class HyperionProblemStatementRefinementService {
     }
 
     /**
-     * Extracts the selected text from the original content based on line and column
-     * positions.
+     * Extracts the selected text from the original content based on line and column positions.
      */
     private String extractSelectedText(ProblemStatementTargetedRefinementRequestDTO request, String[] lines) {
         int startLineIdx = request.startLine() - 1;
@@ -219,8 +229,8 @@ public class HyperionProblemStatementRefinementService {
      * Extracts selected text from a single line.
      */
     private String extractSingleLineSelection(String line, Integer startColObj, Integer endColObj) {
-        int startCol = Math.max(0, (startColObj != null ? startColObj : 1) - 1);
-        int endCol = Math.min(line.length(), endColObj != null ? endColObj : 1);
+        int startCol = resolveStartColumn(startColObj);
+        int endCol = resolveEndColumn(endColObj, line.length());
 
         if (startCol < endCol && startCol < line.length()) {
             String text = line.substring(startCol, endCol);
@@ -233,8 +243,8 @@ public class HyperionProblemStatementRefinementService {
      * Extracts selected text spanning multiple lines.
      */
     private String extractMultiLineSelection(String firstLine, String lastLine, Integer startColObj, Integer endColObj) {
-        int startCol = Math.max(0, (startColObj != null ? startColObj : 1) - 1);
-        int endCol = Math.min(lastLine.length(), endColObj != null ? endColObj : 1);
+        int startCol = resolveStartColumn(startColObj);
+        int endCol = resolveEndColumn(endColObj, lastLine.length());
 
         String startPart = startCol < firstLine.length() ? firstLine.substring(startCol) : "";
         String endPart = endCol <= lastLine.length() ? lastLine.substring(0, endCol) : lastLine;
@@ -243,11 +253,25 @@ public class HyperionProblemStatementRefinementService {
     }
 
     /**
+     * Converts a 1-indexed nullable column to a 0-indexed start column.
+     */
+    private int resolveStartColumn(Integer colObj) {
+        return Math.max(0, (colObj != null ? colObj : DEFAULT_COLUMN_ONE_INDEXED) - ONE_INDEXED_TO_ZERO_INDEXED_OFFSET);
+    }
+
+    /**
+     * Converts a 1-indexed nullable column to a clamped end column.
+     */
+    private int resolveEndColumn(Integer colObj, int lineLength) {
+        return Math.min(lineLength, colObj != null ? colObj : DEFAULT_COLUMN_ONE_INDEXED);
+    }
+
+    /**
      * Truncates text for display in prompts if it exceeds the maximum length.
      */
     private String truncateForDisplay(String text) {
         if (text.length() > MAX_SELECTED_TEXT_DISPLAY_LENGTH) {
-            return text.substring(0, MAX_SELECTED_TEXT_DISPLAY_LENGTH - 3) + "...";
+            return text.substring(0, MAX_SELECTED_TEXT_DISPLAY_LENGTH - ELLIPSIS.length()) + ELLIPSIS;
         }
         return text;
     }
@@ -279,8 +303,7 @@ public class HyperionProblemStatementRefinementService {
                     "ProblemStatement", "ProblemStatementRefinement.refinedProblemStatementTooLong");
         }
 
-        // Refinement didn't change content (compare trimmed values to detect
-        // semantically unchanged content)
+        // Refinement didn't change content (compare trimmed values to detect semantically unchanged content)
         String originalTrimmed = originalProblemStatementText == null ? null : originalProblemStatementText.trim();
         String refinedTrimmed = refinedProblemStatementText == null ? null : refinedProblemStatementText.trim();
         if (refinedTrimmed != null && refinedTrimmed.equals(originalTrimmed)) {
@@ -293,12 +316,10 @@ public class HyperionProblemStatementRefinementService {
 
     /**
      * Handles refinement errors by logging and throwing appropriate exception.
-     * Re-throws InternalServerErrorAlertException unchanged to preserve specific
-     * error keys.
+     * Re-throws InternalServerErrorAlertException unchanged to preserve specific error keys.
      */
     private ProblemStatementRefinementResponseDTO handleRefinementError(Course course, String originalProblemStatementText, Exception e) {
-        // Re-throw InternalServerErrorAlertException unchanged to preserve specific
-        // error keys
+        // Re-throw InternalServerErrorAlertException unchanged to preserve specific error keys
         if (e instanceof InternalServerErrorAlertException alertException) {
             throw alertException;
         }
@@ -314,8 +335,7 @@ public class HyperionProblemStatementRefinementService {
     }
 
     /**
-     * Validates that the problem statement and chat client are ready for
-     * refinement.
+     * Validates that the problem statement and chat client are ready for refinement.
      */
     private void validateRefinementPrerequisites(String problemStatementText) {
         if (problemStatementText == null || problemStatementText.isBlank()) {

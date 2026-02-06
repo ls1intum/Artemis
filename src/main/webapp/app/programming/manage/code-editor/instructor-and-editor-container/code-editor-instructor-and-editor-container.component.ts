@@ -13,6 +13,7 @@ import {
     faArrowLeft,
     faArrowRight,
     faBan,
+    faCheckDouble,
     faCircleExclamation,
     faCircleInfo,
     faCircleNotch,
@@ -43,14 +44,12 @@ import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websock
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { Observable, Subscription, catchError, of, take, tap } from 'rxjs';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
-
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
 import { getRepoPath } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/buttons/button/button.component';
@@ -302,6 +301,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     override ngOnDestroy(): void {
         super.ngOnDestroy();
         this.currentRefinementSubscription?.unsubscribe();
+        this.jobSubscription?.unsubscribe();
+        if (this.jobTimeoutHandle) {
+            clearTimeout(this.jobTimeoutHandle);
+            this.jobTimeoutHandle = undefined;
+        }
     }
 
     /**
@@ -323,8 +327,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param {ProgrammingExercise} exercise - The exercise to check.
      */
     checkConsistencies(exercise: ProgrammingExercise) {
-        // Clear previous consistency issues
+        // Clear previous consistency issues and reset toolbar state
         this.consistencyIssues.set([]);
+        this.selectedIssue = undefined;
+        this.showConsistencyIssuesToolbar.set(false);
 
         if (!exercise.id) {
             this.alertService.error(this.translateService.instant('artemisApp.hyperion.consistencyCheck.checkFailedAlert'));
@@ -351,6 +357,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                             this.alertService.success(this.translateService.instant('artemisApp.hyperion.consistencyCheck.noInconsistencies'));
                         } else {
                             this.alertService.warning(this.translateService.instant('artemisApp.hyperion.consistencyCheck.inconsistenciesFoundAlert'));
+                            this.selectedIssue = this.consistencyIssues()[0];
+                            this.showConsistencyIssuesToolbar.set(true);
                         }
                     },
                     error: () => {
@@ -408,7 +416,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     onInlineRefinement(event: InlineRefinementEvent): void {
         if (!this.exercise?.problemStatement?.trim()) {
-            this.alertService.error('artemisApp.programmingExercise.inlineComment.applyError');
+            this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.emptyStatementError');
             return;
         }
 
@@ -442,7 +450,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     submitRefinement(): void {
         const prompt = this.refinementPrompt().trim();
-        if (!prompt) return;
+        if (!prompt || !this.exercise) return;
+
+        this.currentRefinementSubscription?.unsubscribe();
+        this.currentRefinementSubscription = undefined;
 
         if (this.shouldShowGenerateButton()) {
             this.generateProblemStatement(prompt);
@@ -460,7 +471,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     const draftContent = result.content;
 
                     // Update the editor directly
-                    this.editableInstructions.setText(draftContent);
+                    this.editableInstructions?.setText(draftContent);
 
                     // Update model and trigger change
                     if (this.exercise) {
@@ -468,16 +479,23 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         this.onInstructionChanged(draftContent);
                         this.currentProblemStatement.set(draftContent);
                     }
+                    this.refinementPrompt.set('');
+                } else {
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.generationFailed');
                 }
-                this.refinementPrompt.set('');
                 this.currentRefinementSubscription = undefined;
+            },
+            error: () => {
+                this.alertService.error('artemisApp.programmingExercise.problemStatement.generationFailed');
+                this.currentRefinementSubscription = undefined;
+                this.showRefinementPrompt.set(false);
             },
         });
     }
 
     private refineProblemStatement(prompt: string): void {
         if (!this.exercise?.problemStatement?.trim()) {
-            this.alertService.error('artemisApp.programmingExercise.inlineRefine.error');
+            this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
             return;
         }
 
@@ -490,10 +508,17 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     if (result.success && result.content) {
                         this.showDiff.set(true);
                         const refinedContent = result.content;
-                        afterNextRender(() => this.editableInstructions.applyRefinedContent(refinedContent), { injector: this.injector });
+                        afterNextRender(() => this.editableInstructions?.applyRefinedContent(refinedContent), { injector: this.injector });
+                        this.refinementPrompt.set('');
+                    } else {
+                        this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementFailed');
                     }
-                    this.refinementPrompt.set('');
                     this.currentRefinementSubscription = undefined;
+                },
+                error: () => {
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementFailed');
+                    this.currentRefinementSubscription = undefined;
+                    this.showRefinementPrompt.set(false);
                 },
             });
     }
@@ -520,50 +545,109 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
     }
 
+    readonly totalLocationsCount = computed(() => this.sortedIssues().reduce((acc, issue) => acc + (issue.relatedLocations?.length ?? 0), 0));
+    readonly showConsistencyIssuesToolbar = signal(false);
+
+    get currentGlobalIndex(): number {
+        const issues = this.sortedIssues();
+        let count = 0;
+        for (const issue of issues) {
+            if (issue === this.selectedIssue) {
+                return count + this.locationIndex + 1; // 1-based
+            }
+            count += issue.relatedLocations?.length ?? 0;
+        }
+        return 0;
+    }
+
+    toggleConsistencyIssuesToolbar() {
+        this.showConsistencyIssuesToolbar.update((v) => !v);
+        const issues = this.sortedIssues();
+
+        // If newly opened
+        if (this.showConsistencyIssuesToolbar()) {
+            // Check if selection is invalid (stale issue, issue not in list anymore, or index out of bounds)
+            const isIssueValid = this.selectedIssue && issues.includes(this.selectedIssue);
+            const isIndexValid =
+                this.selectedIssue && this.selectedIssue.relatedLocations && this.locationIndex < this.selectedIssue.relatedLocations.length && this.locationIndex >= 0;
+
+            if ((!isIssueValid || !isIndexValid) && issues.length > 0) {
+                this.selectedIssue = issues[0];
+                this.locationIndex = 0;
+                // Jump to it immediately
+                this.jumpToLocation(this.selectedIssue, 0);
+            }
+        }
+    }
+
     /**
-     * Navigates between issue locations in the dropdown and updates the editor accordingly.
-     *
-     * If navigating within the same issue, the location index is advanced (with wrap-around).
-     * If switching to a new issue, the first or last location is selected based on `deltaIndex`.
-     *
-     * The method prepares the jump target (file + line), switches repositories if needed,
-     * and triggers file loading. If the file is already open, the jump executes immediately;
-     * otherwise it runs after the editor’s file-load event.
-     *
-     * @param {ConsistencyIssue} issue   The issue being navigated.
-     * @param {1 | -1} deltaIndex        Direction of navigation (forward or backward).
-     * @param {Event} event              The originating UI event.
+     * Navigates through consistency issues globally.
+     * @param {number} step - Direction to navigate (1 for next, -1 for previous).
      */
-    onIssueNavigate(issue: ConsistencyIssue, deltaIndex: 1 | -1, event: Event) {
-        if (issue === this.selectedIssue) {
-            // Stay in bounds of the array
-            this.locationIndex = (this.locationIndex + this.selectedIssue.relatedLocations.length + deltaIndex) % this.selectedIssue.relatedLocations.length;
-        } else {
-            this.selectedIssue = issue;
-            this.locationIndex = deltaIndex === 1 ? 0 : issue.relatedLocations.length - 1;
+    navigateGlobal(step: number): void {
+        const issues = this.sortedIssues();
+        if (!issues.length) return;
+
+        // Flatten all locations
+        const allLocations: { issue: ConsistencyIssue; locIndex: number }[] = [];
+        issues.forEach((issue) => {
+            (issue.relatedLocations || []).forEach((_, idx) => {
+                allLocations.push({ issue, locIndex: idx });
+            });
+        });
+
+        if (allLocations.length === 0) return;
+
+        // Find current index
+        let currentIndex = -1;
+        if (this.selectedIssue) {
+            currentIndex = allLocations.findIndex((item) => item.issue === this.selectedIssue && item.locIndex === this.locationIndex);
         }
 
+        // Calculate new index
+        let newIndex = currentIndex + step;
+        if (newIndex >= allLocations.length) {
+            newIndex = 0; // Wrap to start
+        } else if (newIndex < 0) {
+            newIndex = allLocations.length - 1; // Wrap to end
+        }
+
+        const target = allLocations[newIndex];
+        this.selectedIssue = target.issue;
+        this.locationIndex = target.locIndex;
+
+        this.jumpToLocation(target.issue, target.locIndex);
+    }
+
+    /**
+     * Helper to perform the actual editor jump.
+     */
+    private jumpToLocation(issue: ConsistencyIssue, index: number) {
+        if (!issue.relatedLocations || !issue.relatedLocations[index]) {
+            return;
+        }
+        const location = issue.relatedLocations[index];
+
         // We can always jump to the problem statement
-        if (issue.relatedLocations[this.locationIndex].type === 'PROBLEM_STATEMENT') {
+        if (location.type === 'PROBLEM_STATEMENT') {
             this.codeEditorContainer.selectedFile = this.codeEditorContainer.problemStatementIdentifier;
-            this.editableInstructions.jumpToLine(issue.relatedLocations[this.locationIndex].endLine);
+            this.editableInstructions.jumpToLine(location.endLine);
             return;
         }
 
         // Set parameters for when fileLoad is called
-        this.lineJumpOnFileLoad = issue.relatedLocations[this.locationIndex].endLine;
-        this.fileToJumpOn = getRepoPath(issue.relatedLocations[this.locationIndex]);
+        this.lineJumpOnFileLoad = location.endLine;
+        this.fileToJumpOn = getRepoPath(location);
 
         // Jump to the right repo
-        // This signals onEditorLoaded if successful
         try {
-            if (issue.relatedLocations[this.locationIndex].type === 'TEMPLATE_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TEMPLATE') {
+            if (location.type === 'TEMPLATE_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TEMPLATE') {
                 this.selectTemplateParticipation();
                 return;
-            } else if (issue.relatedLocations[this.locationIndex].type === 'SOLUTION_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'SOLUTION') {
+            } else if (location.type === 'SOLUTION_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'SOLUTION') {
                 this.selectSolutionParticipation();
                 return;
-            } else if (issue.relatedLocations[this.locationIndex].type === 'TESTS_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TESTS') {
+            } else if (location.type === 'TESTS_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TESTS') {
                 this.selectTestRepository();
                 return;
             }
@@ -574,8 +658,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
 
-        // We were already in the right repo, no jump, so the editor did not reload
-        // So call the function manually
+        // Trigger manual load if already in correct repo
         this.onEditorLoaded();
     }
 
@@ -616,6 +699,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.addedLineCount.set(event.lineChange.addedLineCount);
         this.removedLineCount.set(event.lineChange.removedLineCount);
     }
+
     override loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
         return super.loadExercise(exerciseId).pipe(
             tap((exercise) => {

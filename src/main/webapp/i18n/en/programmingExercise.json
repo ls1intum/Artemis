@@ -18,9 +18,6 @@
             "problemStatementGenerationRequest": {
                 "userPrompt": "User Prompt"
             },
-            "problemStatementTargetedRefinementRequest": {
-                "instruction": "Refinement Instruction"
-            },
             "created": "Created new Programming Exercise with title {{ param }}",
             "updated": "Updated Programming Exercise with title {{ param }}",
             "deleted": "Deleted Programming Exercise with title {{ param }}",
@@ -257,7 +254,6 @@
                 "generationError": "Failed to generate problem statement. Please try again.",
                 "refinementSuccess": "Problem statement has been successfully refined.",
                 "refinementError": "Failed to refine problem statement. Please try again.",
-                "refinementFailed": "Problem statement could not be refined. The original problem statement has been kept.",
                 "reviewChanges": "Review Changes",
                 "reviewChangesDescription": "Green lines will be added, red lines will be removed.",
                 "changesAppliedLive": "Changes are applied immediately. Use the inline revert buttons to undo specific changes.",
@@ -266,17 +262,16 @@
                 "doneReviewing": "Done Reviewing",
                 "changesApplied": "Changes have been applied to the problem statement.",
                 "aiRefining": "AI is updating the problem statement...",
-                "inlineRefinement": {
-                    "triggerButton": "Refine with AI",
-                    "placeholder": "Describe how to improve this section...",
-                    "submitTooltip": "Apply refinement"
-                },
                 "generate": "Generate",
-                "refine": "Refine"
-            },
-            "inlineRefine": {
-                "success": "Section refined successfully.",
-                "error": "Failed to refine section. Please try again."
+                "refine": "Refine",
+                "inlineRefinement": {
+                    "placeholder": "Describe what should change...",
+                    "triggerButton": "Refine Selection",
+                    "submitTooltip": "Submit refinement instruction",
+                    "success": "Selected section has been successfully refined.",
+                    "error": "Failed to refine the selected section. Please try again.",
+                    "emptyStatementError": "Cannot refine: the problem statement is empty."
+                }
             },
             "codeGeneration": {
                 "creationAssistance": "Creation Assistance",
@@ -800,6 +795,7 @@
                 }
             },
             "artemisIntelligence": {
+                "title": "Artemis Intelligence",
                 "consistencyCheckAlert": {
                     "title": "Consistency Check Result",
                     "improvement": "Suggestion for improvement",

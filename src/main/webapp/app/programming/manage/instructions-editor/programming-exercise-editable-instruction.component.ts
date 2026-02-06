@@ -53,8 +53,8 @@ import { ActivatedRoute } from '@angular/router';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { InlineRefinementButtonComponent } from 'app/shared/monaco-editor/inline-refinement-button/inline-refinement-button.component';
 import { editor } from 'monaco-editor';
+import { InlineRefinementButtonComponent } from 'app/shared/monaco-editor/inline-refinement-button/inline-refinement-button.component';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -138,10 +138,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     @Input() templateParticipation?: Participation;
     @Input() forceRender: Observable<void>;
     readonly consistencyIssues = input<ConsistencyIssue[]>([]);
-    /** Whether any refinement is in progress (makes editor read-only) */
+
     readonly isGeneratingOrRefining = input<boolean>(false);
 
-    /** Editor mode: 'normal' or 'diff' for showing diff view */
     readonly mode = input<MonacoEditorMode>('normal');
 
     /** Original content for diff mode */
@@ -483,7 +482,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     /**
-     * Reverts all changes in the diff editor (both inline edits and the refinement itself)
+     * Reverts all changes in the diff editor
      * by restoring the snapshot taken when diff mode was entered.
      */
     revertAll(): void {
