@@ -13,6 +13,7 @@ Your task is to create a detailed implementation plan.
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
+If there are no issues listed above, skip the following steps.
 Treat the issues above as hard constraints. Be critical and explicit:
 1. Identify which requirements, files, and repository artifacts each issue touches.
 2. Explain the likely root cause or mismatch implied by the issue.

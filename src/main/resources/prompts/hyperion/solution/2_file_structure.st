@@ -13,6 +13,7 @@ Based on the following solution plan and programming language, determine the nec
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
+If there are no issues listed above, skip the following steps.
 Treat the issues above as hard constraints. Be critical and explicit:
 1. Identify which files, packages, and repository artifacts each issue touches.
 2. Explain the mismatch between the required structure and the current or planned structure.

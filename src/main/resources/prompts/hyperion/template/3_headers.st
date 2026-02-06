@@ -16,6 +16,7 @@ Your task is to generate the template boilerplate code for each file based on th
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
+If there are no issues listed above, skip the following steps.
 Treat the issues above as hard constraints. Be critical and explicit:
 1. Identify which classes, methods, and files each issue touches.
 2. Explain the mismatch between required APIs and the current headers.

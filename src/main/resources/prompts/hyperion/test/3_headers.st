@@ -16,6 +16,7 @@ Your task is to generate the boilerplate code for each test file based on the te
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
+If there are no issues listed above, skip the following steps.
 Treat the issues above as hard constraints. Be critical and explicit:
 1. Identify which test classes, methods, and files each issue touches.
 2. Explain the mismatch between required test APIs and the current headers.

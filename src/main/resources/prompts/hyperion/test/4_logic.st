@@ -16,6 +16,7 @@ Your task is to implement the core logic for each test method based on the testi
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
+If there are no issues listed above, skip the following steps.
 Treat the issues above as hard constraints. Be critical and explicit:
 1. Identify which methods, files, and repository artifacts each issue touches.
 2. Explain the likely root cause in the current code, headers, or plan.

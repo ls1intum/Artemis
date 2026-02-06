@@ -16,6 +16,7 @@ Your task is to complete the template code based on the template plan and existi
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
+If there are no issues listed above, skip the following steps.
 Treat the issues above as hard constraints. Be critical and explicit:
 1. Identify which methods, files, and repository artifacts each issue touches.
 2. Explain the likely root cause in the current code, headers, or plan.
