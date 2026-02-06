@@ -613,13 +613,6 @@ def test_convert_base_exercise_to_zip(exercise_path: str, course_id: int) -> Non
         if temp_zip.endswith('.zip') and os.path.exists(temp_zip):
             os.remove(temp_zip)
 
-#TODO
-def test_import_exercise_base_request() -> None:
-    pass
-
-#TODO
-def test_consistency_check() -> None:
-    pass
 # ==============================
 
 if __name__ == "__main__":

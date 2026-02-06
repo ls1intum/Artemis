@@ -79,7 +79,7 @@ pip install -r requirements.txt
 2. **Always test the scripts on a local setup before running them on a production or test server! ⚠️**
 
 # Usage
-The script will automatically perform all the necessary steps (running from hyperion-benchmark-workflow):
+The script will automatically perform all the necessary steps (running from consistency-check-benchmark):
 
 ```shell
 python3 run_pecv_bench.py
@@ -93,7 +93,7 @@ python3 run_pecv_bench.py
 6. Execute consistency check on each exercise
 7. Run reporting scripts to generate quantifiable metrics for analysis and save them in markdown file
 
-Analysis results are stored inside *hyperion-benchmark-workflow/pecv-bench/results/artemis-benchmark/* folder
+Analysis results are stored inside *consistency-check-benchmark/pecv-bench/results/artemis-benchmark/* folder
 * report.md
 * summary.md/json/tex
 * variants_report_plots
