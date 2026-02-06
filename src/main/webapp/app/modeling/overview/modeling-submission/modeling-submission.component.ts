@@ -367,8 +367,12 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.updateModelAndExplanation();
 
         this.subscribeToWebsockets();
-        if ((getLatestSubmissionResult(this.submission) && this.isAfterAssessmentDueDate) || this.isFeedbackView) {
-            this.result = getLatestSubmissionResult(this.submission);
+        const latestResult = getLatestSubmissionResult(this.submission);
+        if ((latestResult && this.isAfterAssessmentDueDate) || this.isFeedbackView) {
+            // Athena results are preliminary feedback and should not block editing or trigger the read-only assessment view
+            if (latestResult?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA || this.isFeedbackView) {
+                this.result = latestResult;
+            }
             if (this.isFeedbackView && this.submissionId) {
                 this.result = this.sortedSubmissionHistory.find((submission) => submission.id === this.submissionId)?.latestResult;
             }
