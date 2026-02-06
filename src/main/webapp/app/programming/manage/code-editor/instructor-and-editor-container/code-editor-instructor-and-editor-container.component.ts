@@ -475,7 +475,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     if (result.success && result.content) {
                         this.showDiff.set(true);
                         const refinedContent = result.content;
-                        afterNextRender(() => this.editableInstructions.applyRefinedContent(refinedContent), { injector: this.injector });
+                        afterNextRender(() => this.editableInstructions?.applyRefinedContent(refinedContent), { injector: this.injector });
                     }
                     this.refinementPrompt.set('');
                     this.currentRefinementSubscription = undefined;

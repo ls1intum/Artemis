@@ -866,9 +866,11 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
     it('should not submit when no courseId for full refinement', () => {
         comp.exercise = createMockExercise({ problemStatement: 'Test' });
         comp.exercise.course = undefined;
+        (comp as any).currentProblemStatement.set('Non-empty problem statement');
         comp.refinementPrompt.set('Improve');
         comp.submitRefinement();
         expect(hyperionApiService.refineProblemStatementGlobally).not.toHaveBeenCalled();
+        expect(hyperionApiService.generateProblemStatement).not.toHaveBeenCalled();
     });
 
     it('should handle full refinement API error', () => {
