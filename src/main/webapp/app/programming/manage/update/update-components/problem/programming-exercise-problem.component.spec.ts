@@ -187,12 +187,12 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
     it('should revert refinement and close diff', () => {
         comp.showDiff.set(true);
-        // Mock editableInstructions as an object with revertAll and getCurrentContent methods
+        // Mock editableInstructions as a callable (signal/viewChild) returning the mock
         const mockEditableInstructions = {
             revertAll: jest.fn(),
             getCurrentContent: jest.fn().mockReturnValue('Reverted content'),
         };
-        (comp as any).editableInstructions = mockEditableInstructions;
+        (comp as any).editableInstructions = () => mockEditableInstructions;
 
         comp.revertAllChanges();
 
@@ -284,7 +284,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         // Mock editableInstructions to return refined content
         const mockEditable = { getCurrentContent: jest.fn().mockReturnValue('Refined content'), revertAll: jest.fn() };
-        (comp as any).editableInstructions = () => mockEditableInstructions;
+        (comp as any).editableInstructions = () => mockEditable;
 
         comp.showDiff.set(true);
         comp.closeDiffView();
