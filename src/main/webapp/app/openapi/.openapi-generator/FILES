@@ -15,7 +15,6 @@ model/codeGenerationRequest.ts
 model/consistencyCheckResponse.ts
 model/consistencyIssue.ts
 model/conversationUser.ts
-model/costs.ts
 model/examSeat.ts
 model/problemStatementGenerationRequest.ts
 model/problemStatementGenerationResponse.ts
@@ -28,8 +27,6 @@ model/rewriteFaqResponse.ts
 model/student.ts
 model/studentExport.ts
 model/teachingAssistant.ts
-model/timing.ts
-model/tokens.ts
 model/tutorialGroup.ts
 model/tutorialGroupDetailGroup.ts
 model/tutorialGroupDetailSession.ts
