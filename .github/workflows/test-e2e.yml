@@ -32,7 +32,6 @@ jobs:
       run_all_tests: ${{ steps.determine.outputs.RUN_ALL_TESTS }}
       relevant_tests: ${{ steps.determine.outputs.RELEVANT_TESTS }}
       remaining_tests: ${{ steps.determine.outputs.REMAINING_TESTS }}
-      ignore_tests: ${{ steps.determine.outputs.IGNORE_TESTS }}
       relevant_count: ${{ steps.determine.outputs.RELEVANT_COUNT }}
       remaining_count: ${{ steps.determine.outputs.REMAINING_COUNT }}
     steps:
@@ -188,7 +187,7 @@ jobs:
           test-notice: "Running Phase 2 with remaining tests: ${{ needs.determine-tests.outputs.remaining_tests }}"
 
       - name: Run E2E Playwright tests (Phase 2 - Remaining Tests)
-        run: .ci/E2E-tests/execute.sh mysql-localci playwright "${{ needs.determine-tests.outputs.remaining_tests }}" "${{ needs.determine-tests.outputs.ignore_tests }}"
+        run: .ci/E2E-tests/execute.sh mysql-localci playwright "${{ needs.determine-tests.outputs.remaining_tests }}"
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
 

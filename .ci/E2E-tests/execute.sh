@@ -3,7 +3,6 @@
 CONFIGURATION=$1
 TEST_FRAMEWORK=$2
 TEST_PATHS=$3  # Optional: space-separated list of test paths to run (passed through as-is, e.g., "e2e/exam/ e2e/atlas/")
-IGNORE_PATHS=$4  # Optional: space-separated list of test paths to ignore (passed through as-is)
 DB="mysql"
 
 echo "CONFIGURATION:"
@@ -38,14 +37,6 @@ if [ -n "$TEST_PATHS" ]; then
 else
     export PLAYWRIGHT_TEST_PATHS=""
     echo "Running all tests"
-fi
-
-# Export ignore paths for docker compose to pick up
-if [ -n "$IGNORE_PATHS" ]; then
-  export PLAYWRIGHT_IGNORE_PATHS="$IGNORE_PATHS"
-  echo "Ignoring tests: $IGNORE_PATHS"
-else
-  export PLAYWRIGHT_IGNORE_PATHS=""
 fi
 
 cd docker || { echo "ERROR: Failed to change to docker directory" >&2; exit 1; }
