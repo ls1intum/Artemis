@@ -18,9 +18,6 @@
             "problemStatementGenerationRequest": {
                 "userPrompt": "Eingabeaufforderung"
             },
-            "problemStatementTargetedRefinementRequest": {
-                "instruction": "Verfeinerungsanweisung"
-            },
             "created": "Programmieraufgabe erstellt mit Titel {{ param }}",
             "updated": "Programmieraufgabe aktualisiert mit Titel {{ param }}",
             "deleted": "Programmieraufgabe gelöscht mit Titel {{ param }}",

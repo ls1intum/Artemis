@@ -301,6 +301,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     override ngOnDestroy(): void {
         super.ngOnDestroy();
         this.currentRefinementSubscription?.unsubscribe();
+        this.jobSubscription?.unsubscribe();
+        if (this.jobTimeoutHandle) {
+            clearTimeout(this.jobTimeoutHandle);
+            this.jobTimeoutHandle = undefined;
+        }
     }
 
     /**
@@ -445,7 +450,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     submitRefinement(): void {
         const prompt = this.refinementPrompt().trim();
-        if (!prompt) return;
+        if (!prompt || !this.exercise) return;
+
+        this.currentRefinementSubscription?.unsubscribe();
+        this.currentRefinementSubscription = undefined;
 
         if (this.shouldShowGenerateButton()) {
             this.generateProblemStatement(prompt);
@@ -471,13 +479,14 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         this.onInstructionChanged(draftContent);
                         this.currentProblemStatement.set(draftContent);
                     }
+                    this.refinementPrompt.set('');
+                } else {
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.generationFailed');
                 }
-                this.refinementPrompt.set('');
                 this.currentRefinementSubscription = undefined;
             },
             error: () => {
                 this.alertService.error('artemisApp.programmingExercise.problemStatement.generationFailed');
-                this.refinementPrompt.set('');
                 this.currentRefinementSubscription = undefined;
                 this.showRefinementPrompt.set(false);
             },
@@ -500,13 +509,14 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         this.showDiff.set(true);
                         const refinedContent = result.content;
                         afterNextRender(() => this.editableInstructions?.applyRefinedContent(refinedContent), { injector: this.injector });
+                        this.refinementPrompt.set('');
+                    } else {
+                        this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementFailed');
                     }
-                    this.refinementPrompt.set('');
                     this.currentRefinementSubscription = undefined;
                 },
                 error: () => {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementFailed');
-                    this.refinementPrompt.set('');
                     this.currentRefinementSubscription = undefined;
                     this.showRefinementPrompt.set(false);
                 },
