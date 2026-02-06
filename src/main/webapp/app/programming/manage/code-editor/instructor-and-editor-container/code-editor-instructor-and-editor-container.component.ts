@@ -689,6 +689,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.addedLineCount.set(event.lineChange.addedLineCount);
         this.removedLineCount.set(event.lineChange.removedLineCount);
     }
+
     override loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
         return super.loadExercise(exerciseId).pipe(
             tap((exercise) => {

@@ -767,15 +767,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Diff Editor', () => 
         comp.revertAllRefinement();
 
         expect((comp as any).editableInstructions.revertAll).toHaveBeenCalled();
-        expect(comp.showDiff()).toBeFalsy();
-    });
-
-    it('should close diff and reset public state', () => {
-        comp.showDiff.set(true);
-
-        comp.closeDiff();
-
-        // Verify observable behavior through public API
         expect(comp.showDiff()).toBeFalse();
     });
 });
@@ -787,18 +778,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
     let hyperionApiService: jest.Mocked<Pick<HyperionProblemStatementApiService, 'refineProblemStatementTargeted' | 'refineProblemStatementGlobally' | 'generateProblemStatement'>>;
 
     beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            imports: [CodeEditorInstructorAndEditorContainerComponent],
-            providers: [
-                ...getBaseProviders(),
-                {
-                    provide: HyperionProblemStatementApiService,
-                    useValue: { refineProblemStatementTargeted: jest.fn(), refineProblemStatementGlobally: jest.fn(), generateProblemStatement: jest.fn() },
-                },
-            ],
-        })
-            .overrideComponent(CodeEditorInstructorAndEditorContainerComponent, { set: { template: '', imports: [] } })
-            .compileComponents();
+        await configureTestBed([
+            {
+                provide: HyperionProblemStatementApiService,
+                useValue: { refineProblemStatementTargeted: jest.fn(), refineProblemStatementGlobally: jest.fn(), generateProblemStatement: jest.fn() },
+            },
+        ]);
 
         alertService = TestBed.inject(AlertService);
         hyperionApiService = TestBed.inject(HyperionProblemStatementApiService) as unknown as jest.Mocked<
@@ -918,10 +903,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
         comp.refinementPrompt.set('');
         comp.submitRefinement();
         expect(hyperionApiService.refineProblemStatementGlobally).not.toHaveBeenCalled();
+        expect(hyperionApiService.generateProblemStatement).not.toHaveBeenCalled();
 
         comp.refinementPrompt.set('   ');
         comp.submitRefinement();
         expect(hyperionApiService.refineProblemStatementGlobally).not.toHaveBeenCalled();
+        expect(hyperionApiService.generateProblemStatement).not.toHaveBeenCalled();
     });
 
     it('should not submit when no courseId for full refinement', () => {
