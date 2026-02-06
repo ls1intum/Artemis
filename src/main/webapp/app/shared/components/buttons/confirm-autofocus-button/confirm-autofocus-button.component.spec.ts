@@ -133,7 +133,6 @@ describe('ConfirmAutofocusButtonComponent', () => {
 
         it('should set translateText to false when not specified', () => {
             vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
-            fixture.componentRef.setInput('translateText', undefined);
             fixture.detectChanges();
 
             comp.onOpenConfirmationModal();
