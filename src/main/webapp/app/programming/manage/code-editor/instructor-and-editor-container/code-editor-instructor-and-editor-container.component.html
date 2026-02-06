@@ -160,6 +160,7 @@
                                 type="button"
                                 ngbDropdownToggle
                                 [disabled]="
+                                    isAiApplying() ||
                                     isGeneratingCode() ||
                                     isCheckingConsistency() ||
                                     loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO ||
@@ -167,6 +168,7 @@
                                 "
                             >
                                 @if (
+                                    isAiApplying() ||
                                     isGeneratingCode() ||
                                     isCheckingConsistency() ||
                                     loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO ||
