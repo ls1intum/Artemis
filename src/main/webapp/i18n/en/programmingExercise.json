@@ -790,6 +790,7 @@
                 }
             },
             "artemisIntelligence": {
+                "title": "Artemis Intelligence",
                 "consistencyCheckAlert": {
                     "title": "Consistency Check Result",
                     "improvement": "Suggestion for improvement",

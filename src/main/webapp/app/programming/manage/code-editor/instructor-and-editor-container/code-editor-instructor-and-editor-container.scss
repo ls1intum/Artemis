@@ -5,7 +5,36 @@
     color: var(--default-btn-font);
 }
 
-/* Refinement Prompt Popup Styles */
+.dropdown-item-nohover {
+    &:hover,
+    &:focus {
+        background-color: transparent !important;
+        color: inherit !important;
+    }
+}
+
+.consistency-issue-item,
+.consistency-issue-item__meta,
+.consistency-issue-item__actions {
+    gap: 0.25rem;
+}
+
+.ai-dropdown-menu {
+    min-width: 17.5rem;
+}
+
+.consistency-issue-nav-btn {
+    width: 27rem;
+    max-width: min(27rem, 40vw);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 1 !important;
+    color: var(--bs-body-color) !important;
+}
+
+/* Refinement Prompt Modal Styles */
 .refinement-backdrop {
     position: fixed;
     top: 0;
@@ -19,24 +48,23 @@
 
 .refinement-prompt-popup {
     position: absolute;
-    top: 100%;
-    left: 0;
+    top: calc(100% + map-get($spacers, 2));
+    right: 0;
     z-index: $zindex-modal;
     width: $modal-md;
     max-width: 90vw;
-    margin-top: map-get($spacers, 2);
     background: var(--bs-body-bg);
-    border: 1px solid var(--primary);
+    border: $border-width solid var(--bs-primary);
     border-radius: $modal-content-border-radius;
     box-shadow: var(--bs-box-shadow-lg);
     overflow: hidden;
 
     .btn-close {
         filter: brightness(0) invert(1);
-        opacity: 0.8;
+        opacity: $btn-close-opacity;
 
         &:hover {
-            opacity: 1;
+            opacity: $btn-close-hover-opacity;
         }
     }
 
@@ -45,19 +73,4 @@
         resize: vertical;
         font-size: $font-size-sm;
     }
-}
-
-/* Consistency check dropdown styles */
-.dropdown-item-nohover {
-    &:hover,
-    &:focus {
-        background-color: transparent !important;
-        color: inherit !important;
-    }
-}
-
-.consistency-issue-item,
-.consistency-issue-item__meta,
-.consistency-issue-item__actions {
-    gap: 0.25rem;
 }
