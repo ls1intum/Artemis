@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.service.session;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.context.MessageSource;
@@ -66,7 +67,8 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
             IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService, IrisCourseChatSessionRepository irisCourseChatSessionRepository,
             PyrisPipelineService pyrisPipelineService, ObjectMapper objectMapper, CourseRepository courseRepository, MessageSource messageSource,
             IrisCitationService irisCitationService) {
-        super(irisSessionRepository, null, null, objectMapper, irisMessageService, irisMessageRepository, irisChatWebsocketService, llmTokenUsageService, irisCitationService);
+        super(irisSessionRepository, null, null, objectMapper, irisMessageService, irisMessageRepository, irisChatWebsocketService, llmTokenUsageService,
+                Optional.of(irisCitationService));
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;

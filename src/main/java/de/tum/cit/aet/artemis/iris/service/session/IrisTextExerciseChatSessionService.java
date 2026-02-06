@@ -143,7 +143,7 @@ public class IrisTextExerciseChatSessionService
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
             var citationInfo = irisCitationService.resolveCitationInfo(statusUpdate.result());
             IrisMessage savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle, citationInfo.isEmpty() ? null : citationInfo);
+            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle, citationInfo);
         }
         else {
             irisChatWebsocketService.sendMessage(session, null, statusUpdate.stages(), sessionTitle, null);

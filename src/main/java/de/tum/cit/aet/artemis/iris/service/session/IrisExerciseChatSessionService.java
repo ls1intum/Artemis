@@ -93,7 +93,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             SubmissionRepository submissionRepository, ExerciseRepository exerciseRepository, UserRepository userRepository, MessageSource messageSource,
             IrisCitationService irisCitationService) {
         super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
-                irisChatWebsocketService, llmTokenUsageService, irisCitationService);
+                irisChatWebsocketService, llmTokenUsageService, Optional.of(irisCitationService));
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;

@@ -58,7 +58,8 @@ public class IrisLectureChatSessionService extends AbstractIrisChatSessionServic
             IrisSettingsService irisSettingsService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
             Optional<LectureRepositoryApi> lectureRepositoryApi, PyrisPipelineService pyrisPipelineService, IrisChatWebsocketService irisChatWebsocketService,
             AuthorizationCheckService authCheckService, ObjectMapper objectMapper, IrisCitationService irisCitationService) {
-        super(irisSessionRepository, null, null, objectMapper, irisMessageService, irisMessageRepository, irisChatWebsocketService, llmTokenUsageService, irisCitationService);
+        super(irisSessionRepository, null, null, objectMapper, irisMessageService, irisMessageRepository, irisChatWebsocketService, llmTokenUsageService,
+                Optional.of(irisCitationService));
         this.irisSettingsService = irisSettingsService;
         this.irisSessionRepository = irisSessionRepository;
         this.irisRateLimitService = rateLimitService;

@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.iris.service.session;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -54,26 +53,14 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
 
     private final Optional<IrisCitationService> irisCitationService;
 
+    /**
+     * Constructor with citation service support.
+     * Use this for chat sessions that can have citations (Course, Lecture, Exercise chats).
+     */
     public AbstractIrisChatSessionService(IrisSessionRepository irisSessionRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
-            IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService,
-            IrisCitationService irisCitationService) {
-        this(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
-                irisChatWebsocketService, llmTokenUsageService, Optional.of(Objects.requireNonNull(irisCitationService)));
-    }
-
-    public AbstractIrisChatSessionService(IrisSessionRepository irisSessionRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
-            IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService) {
-        this(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
-                irisChatWebsocketService, llmTokenUsageService, Optional.empty());
-    }
-
-    private AbstractIrisChatSessionService(IrisSessionRepository irisSessionRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
             IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService,
             Optional<IrisCitationService> irisCitationService) {
-        this.irisCitationService = Objects.requireNonNull(irisCitationService);
         this.irisSessionRepository = irisSessionRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -82,6 +69,25 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         this.irisMessageRepository = irisMessageRepository;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.llmTokenUsageService = llmTokenUsageService;
+        this.irisCitationService = irisCitationService;
+    }
+
+    /**
+     * Constructor without citation service support.
+     * Use this for sessions that don't support citations (e.g., Tutor Suggestions).
+     */
+    public AbstractIrisChatSessionService(IrisSessionRepository irisSessionRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
+            IrisMessageRepository irisMessageRepository, IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService) {
+        this.irisSessionRepository = irisSessionRepository;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.objectMapper = objectMapper;
+        this.irisMessageService = irisMessageService;
+        this.irisMessageRepository = irisMessageRepository;
+        this.irisChatWebsocketService = irisChatWebsocketService;
+        this.llmTokenUsageService = llmTokenUsageService;
+        this.irisCitationService = Optional.empty();
     }
 
     /**
@@ -156,12 +162,12 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         if (statusUpdate.result() != null) {
             var message = new IrisMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
-            var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(statusUpdate.result())).orElse(List.of());
+            var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(statusUpdate.result())).orElse(null);
             message.setAccessedMemories(statusUpdate.accessedMemories());
             message.setCreatedMemories(statusUpdate.createdMemories());
             savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
             updatedJob.getAndUpdate(j -> j.withAssistantMessageId(savedMessage.getId()));
-            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle, citationInfo.isEmpty() ? null : citationInfo);
+            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle, citationInfo);
         }
         else {
             savedMessage = null;
