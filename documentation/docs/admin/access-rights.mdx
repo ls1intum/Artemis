@@ -115,23 +115,26 @@ The following visibility rules apply to **all exercise types**:
 
 ### General Functionality
 
-| Feature                             | Instructor | Editor | Teaching Assistant | Student |
-|-------------------------------------|------------|--------|--------------------|---------|
-| Exercise View                       | ✔          | ✔      | ✔                  | ✔       |
-| Start + Submit Exercise             | ✔          | ✔      | ✔                  | ✔       |
-| Exercise Detail View                | ✔          | ✔      | ✔                  |         |
-| Scores                              | ✔          | ✔      | ✔                  |         |
-| Participation                       | ✔          | ✔      | ✔                  |         |
-| Submissions                         | ✔          | ✔      |                    |         |
-| Create new Exercise                 | ✔          | ✔      |                    |         |
-| Import Exercise                     | ✔          | ✔      |                    |         |
-| Edit                                | ✔          | ✔      |                    |         |
-| Create / Update Example Submissions | ✔          | ✔      |                    |         |
-| View / Assess Example Submissions   | ✔          | ✔      | ✔                  |         |
-| Check Plagiarism                    | ✔          | ✔      |                    |         |
-| Export Submissions                  | ✔          |        |                    |         |
-| Add External Submission             | ✔          |        |                    |         |
-| Delete                              | ✔          |        |                    |         |
+The following permissions apply to all exercise types. Exercise-type-specific sections below list only additional features or where permissions differ.
+
+| Feature                             | Instructor          | Editor              | Teaching Assistant  | Student                    |
+|-------------------------------------|---------------------|---------------------|---------------------|----------------------------|
+| View Exercise (course)              | ✔ (if in course)    | ✔ (if in course)    | ✔ (if in course)    | ✔ (if enrolled + released) |
+| View Exercise (exam)                | ✔ (if in course)    | ✔ (if in course)    |                     |                            |
+| Exercise Detail View                | ✔                   | ✔                   | ✔                   |                            |
+| Create Exercise                     | ✔                   | ✔                   |                     |                            |
+| Edit Exercise                       | ✔                   | ✔                   |                     |                            |
+| Delete Exercise                     | ✔                   |                     |                     |                            |
+| Import Exercise                     | ✔ (both courses)    | ✔ (both courses)    |                     |                            |
+| Search Exercises                    | ✔                   | ✔                   |                     |                            |
+| Scores                              | ✔                   | ✔                   | ✔                   |                            |
+| Participation                       | ✔                   | ✔                   | ✔                   |                            |
+| Start + Submit Exercise             | ✔                   | ✔                   | ✔                   | ✔                          |
+| Create / Update Example Submissions | ✔                   | ✔                   |                     |                            |
+| View / Assess Example Submissions   | ✔                   | ✔                   | ✔                   |                            |
+| Check Plagiarism                    | ✔                   | ✔                   |                     |                            |
+| Export All Submissions              | ✔                   |                     |                     |                            |
+| Add External Submission             | ✔                   |                     |                     |                            |
 
 <Callout variant={CalloutVariant.info}>
     **Import Exercise** requires at least Editor role in **both** the source and target course.
@@ -145,55 +148,70 @@ The following visibility rules apply to **all exercise types**:
     Both require the user to be associated with the specific course - platform-wide roles alone are not sufficient.
 </Callout>
 
-### Programming Exercises
-
-| Feature                         | Instructor       | Editor           | Teaching Assistant | Student                    |
-|---------------------------------|------------------|------------------|--------------------|----------------------------|
-| View Exercise (course)          | ✔ (if in course) | ✔ (if in course) | ✔ (if in course)   | ✔ (if enrolled + released) |
-| View Exercise (exam)            | ✔ (if in course) | ✔ (if in course) |                    |                            |
-| Create Exercise                 | ✔                | ✔                |                    |                            |
-| Edit Exercise                   | ✔                | ✔                |                    |                            |
-| Delete Exercise                 | ✔                |                  |                    |                            |
-| Import Exercise                 | ✔ (both courses) | ✔ (both courses) |                    |                            |
-| Clone Repository                | ✔                | ✔                | ✔                  |                            |
-| Download Repo                   | ✔                | ✔                | ✔                  |                            |
-| Export Instructor Repository    | ✔                | ✔                | ✔                  |                            |
-| Export Student Repository       | ✔ (all)          | ✔ (all)          | ✔ (all)            | ✔ (own only)               |
-| Export Solution (if published)  | ✔                | ✔                | ✔                  | ✔                          |
-| Edit in Editor                  | ✔                | ✔                |                    |                            |
-| Manage Hints                    | ✔                | ✔                |                    |                            |
-| Update Structure Test Oracle    | ✔                | ✔                |                    |                            |
-| View Template/Solution Repos    | ✔                | ✔                |                    |                            |
-| Trigger Template/Solution Build | ✔                | ✔                |                    |                            |
-| View/Edit Test Cases            | ✔                | ✔                |                    |                            |
-| View Test Cases                 | ✔                | ✔                | ✔                  |                            |
-| View Grading Statistics         | ✔                | ✔                |                    |                            |
-| Manage SCA Categories           | ✔                | ✔                |                    |                            |
-| Import SCA Configuration        | ✔ (both courses) | ✔ (both courses) |                    |                            |
-| Manage Submission Policies      | ✔                |                  |                    |                            |
-| View Submission Policy          | ✔                | ✔                | ✔                  | ✔                          |
-| Re-evaluate All Results         | ✔                |                  |                    |                            |
-| Trigger All Builds              | ✔                |                  |                    |                            |
-| Unlock All Repositories         | ✔                |                  |                    |                            |
-| Lock All Repositories           | ✔                |                  |                    |                            |
-| Add External Submission         | ✔                |                  |                    |                            |
-| Download All Repos              | ✔                |                  |                    |                            |
-| Cleanup                         | ✔                |                  |                    |                            |
-| Check Plagiarism                | ✔                | ✔                |                    |                            |
-| Build Plan Access               | R + W            | R + W            | R                  |                            |
-| Participate in Exercise         | ✔                | ✔                | ✔                  | ✔ (if released)            |
-| Trigger Own Build               | ✔                | ✔                | ✔                  | ✔                          |
-| View Own Results                | ✔                | ✔                | ✔                  | ✔                          |
-| Assess Submissions              | ✔                | ✔                | ✔                  |                            |
-| View All Submissions            | ✔                | ✔                |                    |                            |
-| Get Exercise Tasks              | ✔                | ✔                | ✔                  |                            |
-
-<Callout variant={CalloutVariant.info}>
-    **Import Exercise** and **Import SCA Configuration** require at least Editor role in **both** the source and target course.
-</Callout>
-
 <Callout variant={CalloutVariant.warning}>
     **Exam exercises** require Editor role for viewing details, while **course exercises** only require Teaching Assistant role.
+</Callout>
+
+### Shared Submission and Assessment Features
+
+The following features are shared across **File Upload, Modeling, and Text** exercises. Programming and Quiz exercises have different submission and assessment models — see their dedicated sections.
+
+| Feature                         | Instructor          | Editor              | Teaching Assistant  | Student               |
+|---------------------------------|---------------------|---------------------|---------------------|-----------------------|
+| Re-evaluate Exercise            | ✔                   | ✔                   |                     |                       |
+| View Course Exercises           | ✔ (if in course)    | ✔ (if in course)    | ✔ (if in course)    |                       |
+| Submit Exercise                 | ✔ (before due date) | ✔ (before due date) | ✔ (before due date) | ✔ (before due date)   |
+| View Own Submission             | ✔                   | ✔                   | ✔                   | ✔ (own only)          |
+| View Submission Editor Data     | ✔                   | ✔                   | ✔                   | ✔ (own only)          |
+| Get Submission (for assessment) | ✔                   | ✔                   | ✔                   |                       |
+| Get Unassessed Submission       | ✔                   | ✔                   | ✔                   |                       |
+| List All Submissions            | ✔                   | ✔                   | ✔                   |                       |
+| Save Assessment                 | ✔                   | ✔                   | ✔                   |                       |
+| Cancel Assessment               | ✔                   | ✔                   | ✔                   |                       |
+| Update After Complaint          | ✔                   | ✔                   | ✔                   |                       |
+| View Assessment Result          | ✔                   | ✔                   | ✔                   | ✔ (own, after graded) |
+| Delete Assessment               | ✔                   |                     |                     |                       |
+| Export Submissions (limited)    | ✔                   | ✔                   | ✔                   |                       |
+
+### Programming Exercises
+
+In addition to the [General Functionality](#general-functionality) above, Programming Exercises have these specific features:
+
+| Feature                         | Instructor       | Editor           | Teaching Assistant | Student         |
+|---------------------------------|------------------|------------------|--------------------|-----------------|
+| Clone Repository                | ✔                | ✔                | ✔                  |                 |
+| Download Repo                   | ✔                | ✔                | ✔                  |                 |
+| Export Instructor Repository    | ✔                | ✔                | ✔                  |                 |
+| Export Student Repository       | ✔ (all)          | ✔ (all)          | ✔ (all)            | ✔ (own only)    |
+| Export Solution (if published)  | ✔                | ✔                | ✔                  | ✔               |
+| Edit in Editor                  | ✔                | ✔                |                    |                 |
+| Manage Hints                    | ✔                | ✔                |                    |                 |
+| Update Structure Test Oracle    | ✔                | ✔                |                    |                 |
+| View Template/Solution Repos    | ✔                | ✔                |                    |                 |
+| Trigger Template/Solution Build | ✔                | ✔                |                    |                 |
+| View/Edit Test Cases            | ✔                | ✔                |                    |                 |
+| View Test Cases                 | ✔                | ✔                | ✔                  |                 |
+| View Grading Statistics         | ✔                | ✔                |                    |                 |
+| Manage SCA Categories           | ✔                | ✔                |                    |                 |
+| Import SCA Configuration        | ✔ (both courses) | ✔ (both courses) |                    |                 |
+| Manage Submission Policies      | ✔                |                  |                    |                 |
+| View Submission Policy          | ✔                | ✔                | ✔                  | ✔               |
+| Re-evaluate All Results         | ✔                |                  |                    |                 |
+| Trigger All Builds              | ✔                |                  |                    |                 |
+| Unlock All Repositories         | ✔                |                  |                    |                 |
+| Lock All Repositories           | ✔                |                  |                    |                 |
+| Download All Repos              | ✔                |                  |                    |                 |
+| Cleanup                         | ✔                |                  |                    |                 |
+| Build Plan Access               | R + W            | R + W            | R                  |                 |
+| Participate in Exercise         | ✔                | ✔                | ✔                  | ✔ (if released) |
+| Trigger Own Build               | ✔                | ✔                | ✔                  | ✔               |
+| View Own Results                | ✔                | ✔                | ✔                  | ✔               |
+| Assess Submissions              | ✔                | ✔                | ✔                  |                 |
+| View All Submissions            | ✔                | ✔                |                    |                 |
+| Get Exercise Tasks              | ✔                | ✔                | ✔                  |                 |
+
+<Callout variant={CalloutVariant.info}>
+    **Import SCA Configuration** requires at least Editor role in **both** the source and target course.
 </Callout>
 
 #### Repository Access
@@ -235,40 +253,35 @@ The following visibility rules apply to **all exercise types**:
 
 ### Quiz Exercises
 
-| Feature                     | Instructor          | Editor              | Teaching Assistant  | Student                    |
-|-----------------------------|---------------------|---------------------|---------------------|----------------------------|
-| View Quiz (course)          | ✔ (if in course)    | ✔ (if in course)    | ✔ (if in course)    | ✔ (if enrolled + released) |
-| View Quiz (exam)            | ✔ (if in course)    | ✔ (if in course)    |                     |                            |
-| Create Quiz (course)        | ✔                   | ✔                   |                     |                            |
-| Create Quiz (exam)          | ✔                   | ✔                   |                     |                            |
-| Update Quiz                 | ✔                   | ✔                   |                     |                            |
-| Delete Quiz                 | ✔                   |                     |                     |                            |
-| Search Quizzes              | ✔                   | ✔                   |                     |                            |
-| Set Visible                 | ✔                   | ✔                   |                     |                            |
-| Start Now                   | ✔                   | ✔                   |                     |                            |
-| End Now                     | ✔                   |                     |                     |                            |
-| Preview                     | ✔                   | ✔                   | ✔                   |                            |
-| Sample Solution             | ✔                   | ✔                   | ✔                   | ✔ (after quiz ends)        |
-| View Statistics             | ✔                   | ✔                   | ✔                   |                            |
-| Recalculate Statistics      | ✔                   | ✔                   | ✔                   |                            |
-| Evaluate Quiz               | ✔                   |                     |                     |                            |
-| Re-evaluate Quiz            | ✔                   |                     |                     |                            |
-| Submit (Live Mode)          | ✔                   | ✔                   | ✔                   | ✔                          |
-| Submit (Practice Mode)      | ✔ (after quiz ends) | ✔ (after quiz ends) | ✔ (after quiz ends) | ✔ (after quiz ends)        |
-| Submit (Exam Mode)          | ✔                   | ✔                   | ✔                   | ✔                          |
-| Start Participation         | ✔ (if released)     | ✔ (if released)     | ✔ (if released)     | ✔ (if released)            |
-| Join Batch                  | ✔ (if started)      | ✔ (if started)      | ✔ (if started)      | ✔ (if started)             |
-| Create Batch                | ✔                   | ✔                   | ✔                   |                            |
-| Start Batch (own)           | ✔                   | ✔                   | ✔                   |                            |
-| Start Batch (others')       | ✔                   |                     |                     |                            |
-| Training Questions          | ✔                   | ✔                   | ✔                   | ✔                          |
-| Submit Training Answer      | ✔                   | ✔                   | ✔                   | ✔                          |
-| View Training Leaderboard   | ✔                   | ✔                   | ✔                   | ✔                          |
-| Update Leaderboard Settings | ✔                   | ✔                   | ✔                   | ✔                          |
+In addition to the [General Functionality](#general-functionality) above, Quiz Exercises have these specific features:
 
 <Callout variant={CalloutVariant.info}>
-    **Exam quiz exercises** require Editor role for viewing details, while **course quiz exercises** only require Teaching Assistant role.
+    Quiz exercises use a different submission and assessment model from other exercise types. The [Shared Submission and Assessment Features](#shared-submission-and-assessment-features) do not apply to quizzes.
 </Callout>
+
+| Feature                     | Instructor          | Editor              | Teaching Assistant  | Student             |
+|-----------------------------|---------------------|---------------------|---------------------|---------------------|
+| Set Visible                 | ✔                   | ✔                   |                     |                     |
+| Start Now                   | ✔                   | ✔                   |                     |                     |
+| End Now                     | ✔                   |                     |                     |                     |
+| Preview                     | ✔                   | ✔                   | ✔                   |                     |
+| Sample Solution             | ✔                   | ✔                   | ✔                   | ✔ (after quiz ends) |
+| View Statistics             | ✔                   | ✔                   | ✔                   |                     |
+| Recalculate Statistics      | ✔                   | ✔                   | ✔                   |                     |
+| Evaluate Quiz               | ✔                   |                     |                     |                     |
+| Re-evaluate Quiz            | ✔                   |                     |                     |                     |
+| Submit (Live Mode)          | ✔                   | ✔                   | ✔                   | ✔                   |
+| Submit (Practice Mode)      | ✔ (after quiz ends) | ✔ (after quiz ends) | ✔ (after quiz ends) | ✔ (after quiz ends) |
+| Submit (Exam Mode)          | ✔                   | ✔                   | ✔                   | ✔                   |
+| Start Participation         | ✔ (if released)     | ✔ (if released)     | ✔ (if released)     | ✔ (if released)     |
+| Join Batch                  | ✔ (if started)      | ✔ (if started)      | ✔ (if started)      | ✔ (if started)      |
+| Create Batch                | ✔                   | ✔                   | ✔                   |                     |
+| Start Batch (own)           | ✔                   | ✔                   | ✔                   |                     |
+| Start Batch (others')       | ✔                   |                     |                     |                     |
+| Training Questions          | ✔                   | ✔                   | ✔                   | ✔                   |
+| Submit Training Answer      | ✔                   | ✔                   | ✔                   | ✔                   |
+| View Training Leaderboard   | ✔                   | ✔                   | ✔                   | ✔                   |
+| Update Leaderboard Settings | ✔                   | ✔                   | ✔                   | ✔                   |
 
 <Callout variant={CalloutVariant.warning}>
     **End Now** requires Instructor role (higher than Start Now which only requires Editor).
@@ -300,64 +313,21 @@ Quiz exercises support three modes: **SYNCHRONIZED**, **BATCHED**, and **INDIVID
 
 ### File Upload Exercises
 
-| Feature                         | Instructor          | Editor              | Teaching Assistant  | Student                    |
-|---------------------------------|---------------------|---------------------|---------------------|----------------------------|
-| View Exercise (course)          | ✔ (if in course)    | ✔ (if in course)    | ✔ (if in course)    | ✔ (if enrolled + released) |
-| View Exercise (exam)            | ✔ (if in course)    | ✔ (if in course)    |                     |                            |
-| Create Exercise                 | ✔                   | ✔                   |                     |                            |
-| Edit Exercise                   | ✔                   | ✔                   |                     |                            |
-| Delete Exercise                 | ✔                   |                     |                     |                            |
-| Import Exercise                 | ✔ (both courses)    | ✔ (both courses)    |                     |                            |
-| Search Exercises                | ✔                   | ✔                   |                     |                            |
-| Re-evaluate Exercise            | ✔                   | ✔                   |                     |                            |
-| View Course Exercises           | ✔ (if in course)    | ✔ (if in course)    | ✔ (if in course)    |                            |
-| Submit File                     | ✔ (before due date) | ✔ (before due date) | ✔ (before due date) | ✔ (before due date)        |
-| View Own Submission             | ✔                   | ✔                   | ✔                   | ✔ (own only)               |
-| View Editor Data                | ✔                   | ✔                   | ✔                   | ✔ (own only)               |
-| Get Submission (for assessment) | ✔                   | ✔                   | ✔                   |                            |
-| Get Unassessed Submission       | ✔                   | ✔                   | ✔                   |                            |
-| List All Submissions            | ✔                   | ✔                   | ✔                   |                            |
-| Save Assessment                 | ✔                   | ✔                   | ✔                   |                            |
-| Cancel Assessment               | ✔                   | ✔                   | ✔                   |                            |
-| Update After Complaint          | ✔                   | ✔                   | ✔                   |                            |
-| View Assessment Result          | ✔                   | ✔                   | ✔                   | ✔ (own, after graded)      |
-| Delete Assessment               | ✔                   |                     |                     |                            |
-| Export Submissions (limited)    | ✔                   | ✔                   | ✔                   |                            |
-| Export All Submissions          | ✔                   |                     |                     |                            |
+File Upload Exercises follow the [General Functionality](#general-functionality) and [Shared Submission and Assessment Features](#shared-submission-and-assessment-features) above with no additional exercise-type-specific features.
 
 ### Modeling Exercises
 
-| Feature                         | Instructor          | Editor              | Teaching Assistant  | Student                    |
-|---------------------------------|---------------------|---------------------|---------------------|----------------------------|
-| View Exercise (course)          | ✔ (if in course)    | ✔ (if in course)    | ✔ (if in course)    | ✔ (if enrolled + released) |
-| View Exercise (exam)            | ✔ (if in course)    | ✔ (if in course)    |                     |                            |
-| Create Exercise                 | ✔                   | ✔                   |                     |                            |
-| Edit Exercise                   | ✔                   | ✔                   |                     |                            |
-| Delete Exercise                 | ✔                   |                     |                     |                            |
-| Import Exercise                 | ✔ (both courses)    | ✔ (both courses)    |                     |                            |
-| Search Exercises                | ✔                   | ✔                   |                     |                            |
-| Re-evaluate Exercise            | ✔                   | ✔                   |                     |                            |
-| View Course Exercises           | ✔ (if in course)    | ✔ (if in course)    | ✔ (if in course)    |                            |
-| Submit Model                    | ✔ (before due date) | ✔ (before due date) | ✔ (before due date) | ✔ (before due date)        |
-| View Own Submission             | ✔                   | ✔                   | ✔                   | ✔ (own only)               |
-| View Latest Submission (editor) | ✔                   | ✔                   | ✔                   | ✔ (own only)               |
-| Get Submission (for assessment) | ✔                   | ✔                   | ✔                   |                            |
-| Get Unassessed Submission       | ✔                   | ✔                   | ✔                   |                            |
-| List All Submissions            | ✔                   | ✔                   | ✔                   |                            |
-| Save Assessment                 | ✔                   | ✔                   | ✔                   |                            |
-| Save Example Assessment         | ✔                   | ✔                   | ✔                   |                            |
-| Cancel Assessment               | ✔                   | ✔                   | ✔                   |                            |
-| Update After Complaint          | ✔                   | ✔                   | ✔                   |                            |
-| View Assessment Result          | ✔                   | ✔                   | ✔                   | ✔ (own, after graded)      |
-| Delete Assessment               | ✔                   |                     |                     |                            |
-| Export Submissions (limited)    | ✔                   | ✔                   | ✔                   |                            |
-| Export All Submissions          | ✔                   |                     |                     |                            |
-| Create Apollon Diagram          | ✔                   | ✔                   | ✔                   |                            |
-| Edit Apollon Diagram            | ✔                   | ✔                   | ✔                   |                            |
-| View Apollon Diagrams           | ✔                   | ✔                   | ✔                   |                            |
-| Delete Apollon Diagram          | ✔                   | ✔                   |                     |                            |
-| View Diagram Title              | ✔                   | ✔                   | ✔                   | ✔                          |
-| Convert Model to PDF            | ✔                   | ✔                   | ✔                   | ✔                          |
+In addition to the [General Functionality](#general-functionality) and [Shared Submission and Assessment Features](#shared-submission-and-assessment-features) above, Modeling Exercises have these specific features:
+
+| Feature                 | Instructor | Editor | Teaching Assistant | Student |
+|-------------------------|------------|--------|--------------------|---------|
+| Save Example Assessment | ✔          | ✔      | ✔                  |         |
+| Create Apollon Diagram  | ✔          | ✔      | ✔                  |         |
+| Edit Apollon Diagram    | ✔          | ✔      | ✔                  |         |
+| View Apollon Diagrams   | ✔          | ✔      | ✔                  |         |
+| Delete Apollon Diagram  | ✔          | ✔      |                    |         |
+| View Diagram Title      | ✔          | ✔      | ✔                  | ✔       |
+| Convert Model to PDF    | ✔          | ✔      | ✔                  | ✔       |
 
 <Callout variant={CalloutVariant.info}>
     Double-blind assessment is supported: TAs cannot see student/team information during assessment.
@@ -375,38 +345,17 @@ Apollon diagram templates are reusable diagram structures that instructors can c
 
 ### Text Exercises
 
-| Feature                         | Instructor          | Editor              | Teaching Assistant  | Student                    |
-|---------------------------------|---------------------|---------------------|---------------------|----------------------------|
-| View Exercise (course)          | ✔ (if in course)    | ✔ (if in course)    | ✔ (if in course)    | ✔ (if enrolled + released) |
-| View Exercise (exam)            | ✔ (if in course)    | ✔ (if in course)    |                     |                            |
-| Create Exercise                 | ✔                   | ✔                   |                     |                            |
-| Edit Exercise                   | ✔                   | ✔                   |                     |                            |
-| Delete Exercise                 | ✔                   |                     |                     |                            |
-| Import Exercise                 | ✔ (both courses)    | ✔ (both courses)    |                     |                            |
-| Search Exercises                | ✔                   | ✔                   |                     |                            |
-| Re-evaluate Exercise            | ✔                   | ✔                   |                     |                            |
-| View Course Exercises           | ✔ (if in course)    | ✔ (if in course)    | ✔ (if in course)    |                            |
-| Submit Text                     | ✔ (before due date) | ✔ (before due date) | ✔ (before due date) | ✔ (before due date)        |
-| View Own Submission             | ✔                   | ✔                   | ✔                   | ✔ (own only)               |
-| View Text Editor Data           | ✔                   | ✔                   | ✔                   | ✔ (own only)               |
-| Get Submission (for assessment) | ✔                   | ✔                   | ✔                   |                            |
-| Get Unassessed Submission       | ✔                   | ✔                   | ✔                   |                            |
-| List All Submissions            | ✔                   | ✔                   | ✔                   |                            |
-| Save Assessment                 | ✔                   | ✔                   | ✔                   |                            |
-| Submit Assessment               | ✔                   | ✔                   | ✔                   |                            |
-| Save Example Assessment         | ✔                   | ✔                   |                     |                            |
-| Delete Example Assessment       | ✔                   | ✔                   | ✔                   |                            |
-| Cancel Assessment               | ✔                   | ✔                   | ✔                   |                            |
-| Update After Complaint          | ✔                   | ✔                   | ✔                   |                            |
-| View Assessment Result          | ✔                   | ✔                   | ✔                   | ✔ (own, after graded)      |
-| Delete Assessment               | ✔                   |                     |                     |                            |
-| Export Submissions (limited)    | ✔                   | ✔                   | ✔                   |                            |
-| Export All Submissions          | ✔                   |                     |                     |                            |
-| View Plagiarism Result          | ✔                   | ✔                   |                     |                            |
-| Check Plagiarism                | ✔                   | ✔                   |                     |                            |
-| Add Assessment Event            | ✔                   | ✔                   | ✔                   |                            |
-| View Tutors Involved Analytics  | ✔                   |                     |                     |                            |
-| View Assessment Events (Admin)  | Admin only          |                     |                     |                            |
+In addition to the [General Functionality](#general-functionality) and [Shared Submission and Assessment Features](#shared-submission-and-assessment-features) above, Text Exercises have these specific features:
+
+| Feature                        | Instructor | Editor | Teaching Assistant | Student |
+|--------------------------------|------------|--------|--------------------|---------|
+| Submit Assessment              | ✔          | ✔      | ✔                  |         |
+| Save Example Assessment        | ✔          | ✔      |                    |         |
+| Delete Example Assessment      | ✔          | ✔      | ✔                  |         |
+| View Plagiarism Result         | ✔          | ✔      |                    |         |
+| Add Assessment Event           | ✔          | ✔      | ✔                  |         |
+| View Tutors Involved Analytics | ✔          |        |                    |         |
+| View Assessment Events (Admin) | Admin only |        |                    |         |
 
 <Callout variant={CalloutVariant.info}>
     Double-blind assessment is supported: TAs cannot see student/team information during assessment.
