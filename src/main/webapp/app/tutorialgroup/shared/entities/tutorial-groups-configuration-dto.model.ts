@@ -8,6 +8,7 @@ export class TutorialGroupConfigurationDTO {
     public useTutorialGroupChannels?: boolean;
     public usePublicTutorialGroupChannels?: boolean;
 }
+
 export function tutorialGroupConfigurationDtoFromEntity(tutorialGroupsConfiguration: TutorialGroupsConfiguration): TutorialGroupConfigurationDTO {
     return {
         id: tutorialGroupsConfiguration.id,

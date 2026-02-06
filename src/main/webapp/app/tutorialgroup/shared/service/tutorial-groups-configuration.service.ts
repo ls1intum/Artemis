@@ -54,8 +54,8 @@ export class TutorialGroupsConfigurationService {
 
     private convertTutorialGroupsConfigurationResponseDatesFromServer(res: HttpResponse<TutorialGroupConfigurationDTO>): HttpResponse<TutorialGroupConfigurationDTO> {
         if (res.body) {
-            res.body.tutorialPeriodStartInclusive = convertDateFromServer(res.body!.tutorialPeriodStartInclusive);
-            res.body!.tutorialPeriodEndInclusive = convertDateFromServer(res.body!.tutorialPeriodEndInclusive);
+            res.body.tutorialPeriodStartInclusive = convertDateFromServer(res.body.tutorialPeriodStartInclusive);
+            res.body.tutorialPeriodEndInclusive = convertDateFromServer(res.body.tutorialPeriodEndInclusive);
         }
 
         return res;
@@ -65,8 +65,6 @@ export class TutorialGroupsConfigurationService {
         return Object.assign({}, tutorialGroupsConfigurationDto, {
             tutorialPeriodStartInclusive: toISO8601DateString(period[0]),
             tutorialPeriodEndInclusive: toISO8601DateString(period[1]),
-            useTutorialGroupChannels: tutorialGroupsConfigurationDto.useTutorialGroupChannels,
-            usePublicTutorialGroupChannels: tutorialGroupsConfigurationDto.usePublicTutorialGroupChannels,
         });
     }
 }

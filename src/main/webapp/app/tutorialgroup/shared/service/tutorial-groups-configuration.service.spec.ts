@@ -60,7 +60,7 @@ describe('TutorialGroupsConfigurationService', () => {
     });
 
     it('update', () => {
-        const returnedFromService = { ...tutorialGroupConfigurationDtoFromEntity(elemDefault), location: 'Test' };
+        const returnedFromService = { ...tutorialGroupConfigurationDtoFromEntity(elemDefault) };
         const expected = { ...returnedFromService };
         let result: any;
 
