@@ -305,12 +305,27 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @Output()
     onLeaveVisualTab = new EventEmitter<void>();
 
+    /** Emits when user selects lines in the editor (includes selectedText, position, and column info for inline refinement) */
+    readonly onSelectionChange = output<
+        | {
+              startLine: number;
+              endLine: number;
+              startColumn: number;
+              endColumn: number;
+              selectedText: string;
+              screenPosition: { top: number; left: number };
+          }
+        | undefined
+    >();
+
     defaultPreviewHtml: SafeHtml | undefined;
     inPreviewMode = false;
     inVisualMode = false;
     inEditMode = true;
     uniqueMarkdownEditorId: string;
     resizeObserver?: ResizeObserver;
+    /** Disposable for the selection change listener */
+    private selectionChangeDisposable?: { dispose: () => void };
     targetWrapperHeight?: number;
     minWrapperHeight?: number;
     constrainDragPositionFn?: (pointerPosition: Point) => Point;
@@ -475,6 +490,49 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.monacoEditor.applyOptionPreset(DEFAULT_MARKDOWN_EDITOR_OPTIONS);
         }
         this.renderConsistencyIssues();
+
+        // Set up selection change listener for inline comments/refinement
+        this.selectionChangeDisposable = this.monacoEditor.onSelectionChange((selection) => {
+            if (selection) {
+                // Get selected text for inline refinement
+                const model = this.monacoEditor.getModel();
+                const selectedText = model ? model.getValueInRange(selection) : '';
+
+                // Only emit if there's actual text selected (not just cursor movement)
+                if (selectedText.trim().length === 0) {
+                    this.onSelectionChange.emit(undefined);
+                    return;
+                }
+
+                // Calculate screen position for floating button
+                let screenPosition = { top: 0, left: 0 };
+                const endPosition = { lineNumber: selection.endLineNumber, column: selection.endColumn };
+                const coords = this.monacoEditor.getScrolledVisiblePosition(endPosition);
+                const editorDom = this.monacoEditor.getDomNode();
+
+                if (!coords || !editorDom) {
+                    this.onSelectionChange.emit(undefined);
+                    return;
+                }
+
+                const editorRect = editorDom.getBoundingClientRect();
+                screenPosition = {
+                    top: editorRect.top + coords.top + coords.height + 5,
+                    left: editorRect.left + coords.left,
+                };
+
+                this.onSelectionChange.emit({
+                    startLine: selection.startLineNumber,
+                    endLine: selection.endLineNumber,
+                    startColumn: selection.startColumn,
+                    endColumn: selection.endColumn,
+                    selectedText,
+                    screenPosition,
+                });
+            } else {
+                this.onSelectionChange.emit(undefined);
+            }
+        });
     }
 
     /**
@@ -494,6 +552,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     ngOnDestroy(): void {
         this.resizeObserver?.disconnect();
+        this.selectionChangeDisposable?.dispose();
     }
 
     onTextChanged(event: { text: string; fileName: string }): void {
@@ -738,6 +797,21 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     onCloseButtonClick(): void {
         this.closeEditor.emit();
+    }
+
+    /**
+     * Gets the current selection in the editor.
+     * @returns The current selection or undefined.
+     */
+    getSelection(): { startLine: number; endLine: number } | undefined {
+        const sel = this.monacoEditor.getSelection();
+        if (!sel) {
+            return undefined;
+        }
+        return {
+            startLine: sel.startLineNumber,
+            endLine: sel.endLineNumber,
+        };
     }
 
     /**

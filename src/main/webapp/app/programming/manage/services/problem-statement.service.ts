@@ -5,8 +5,10 @@ import { FileService } from 'app/shared/service/file.service';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import {
+    InlineRefinementEvent,
     buildGenerationRequest,
     buildGlobalRefinementRequest,
+    buildTargetedRefinementRequest,
     getCourseId,
     isValidGenerationResponse,
     isValidRefinementResponse,
@@ -88,6 +90,32 @@ export class ProblemStatementService {
                     loadingSignal,
                     'artemisApp.programmingExercise.problemStatement.refinementSuccess',
                     'artemisApp.programmingExercise.problemStatement.refinementError',
+                    isValidRefinementResponse,
+                    (r) => r?.refinedProblemStatement,
+                ),
+            );
+    }
+
+    /** Refines a problem statement with targeted selection-based instructions. */
+    refineTargeted(
+        exercise: ProgrammingExercise | undefined,
+        currentContent: string,
+        event: InlineRefinementEvent,
+        loadingSignal: WritableSignal<boolean>,
+    ): Observable<RefinementResult> {
+        const courseId = getCourseId(exercise);
+        if (!courseId || !currentContent?.trim()) {
+            this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
+            return of({ success: false });
+        }
+        loadingSignal.set(true);
+        return this.hyperionApiService
+            .refineProblemStatementTargeted(courseId, buildTargetedRefinementRequest(currentContent, event))
+            .pipe(
+                this.handleApiResponse(
+                    loadingSignal,
+                    'artemisApp.programmingExercise.problemStatement.inlineRefinement.success',
+                    'artemisApp.programmingExercise.problemStatement.inlineRefinement.error',
                     isValidRefinementResponse,
                     (r) => r?.refinedProblemStatement,
                 ),

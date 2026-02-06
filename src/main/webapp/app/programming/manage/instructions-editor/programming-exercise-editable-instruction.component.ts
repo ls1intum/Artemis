@@ -54,6 +54,7 @@ import { Annotation } from 'app/programming/shared/code-editor/monaco/code-edito
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { editor } from 'monaco-editor';
+import { InlineRefinementButtonComponent } from 'app/shared/monaco-editor/inline-refinement-button/inline-refinement-button.component';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -69,6 +70,7 @@ import { editor } from 'monaco-editor';
         ProgrammingExerciseInstructionAnalysisComponent,
         ArtemisTranslatePipe,
         ProgrammingExerciseInstructionComponent,
+        InlineRefinementButtonComponent,
     ],
 })
 export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnChanges, OnDestroy, OnInit {
@@ -136,10 +138,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     @Input() templateParticipation?: Participation;
     @Input() forceRender: Observable<void>;
     readonly consistencyIssues = input<ConsistencyIssue[]>([]);
-    /** Whether any refinement is in progress (makes editor read-only) */
+
     readonly isGeneratingOrRefining = input<boolean>(false);
 
-    /** Editor mode: 'normal' or 'diff' for showing diff view */
     readonly mode = input<MonacoEditorMode>('normal');
 
     /** Original content for diff mode */
@@ -164,6 +165,17 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
     @Output() instructionChange = new EventEmitter<string>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
+
+    inlineRefinementPosition = signal<{ top: number; left: number } | undefined>(undefined);
+    selectedTextForRefinement = signal('');
+    selectionPositionInfo = signal<{ startLine: number; endLine: number; startColumn: number; endColumn: number } | undefined>(undefined);
+    readonly onInlineRefinement = output<{
+        instruction: string;
+        startLine: number;
+        endLine: number;
+        startColumn: number;
+        endColumn: number;
+    }>();
 
     /** Emits diff line change information when in diff mode */
     readonly diffLineChange = output<{ ready: boolean; lineChange: LineChange }>();
@@ -410,6 +422,55 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
         return annotations;
     };
+
+    /**
+     * Handles selection changes from the markdown editor.
+     * Shows floating refinement button when text is selected.
+     */
+    onEditorSelectionChange(
+        selection:
+            | {
+                  startLine: number;
+                  endLine: number;
+                  startColumn: number;
+                  endColumn: number;
+                  selectedText: string;
+                  screenPosition: { top: number; left: number };
+              }
+            | undefined,
+    ): void {
+        // Show/hide inline refinement button based on selection
+        if (selection && selection.selectedText && selection.selectedText.trim().length > 0 && this.hyperionEnabled && !this.isAiApplying()) {
+            this.inlineRefinementPosition.set(selection.screenPosition);
+            this.selectedTextForRefinement.set(selection.selectedText);
+            this.selectionPositionInfo.set({
+                startLine: selection.startLine,
+                endLine: selection.endLine,
+                startColumn: selection.startColumn,
+                endColumn: selection.endColumn,
+            });
+        } else {
+            this.hideInlineRefinementButton();
+        }
+    }
+
+    /**
+     * Hides the floating inline refinement button.
+     */
+    hideInlineRefinementButton(): void {
+        this.inlineRefinementPosition.set(undefined);
+        this.selectedTextForRefinement.set('');
+        this.selectionPositionInfo.set(undefined);
+    }
+
+    /**
+     * Handles inline refinement submission.
+     * Emits the event for parent to process the refinement.
+     */
+    onInlineRefine(event: { instruction: string; startLine: number; endLine: number; startColumn: number; endColumn: number }): void {
+        this.onInlineRefinement.emit(event);
+        this.hideInlineRefinementButton();
+    }
 
     /**
      * Applies the refined content to the editor in diff mode.

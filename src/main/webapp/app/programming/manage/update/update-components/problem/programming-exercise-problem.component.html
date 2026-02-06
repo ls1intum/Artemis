@@ -37,8 +37,6 @@
                 <span class="d-none d-sm-inline" jhiTranslate="entity.action.cancel"></span>
             </button>
         </div>
-
-        <!-- Pending Inline Comments Bar -->
     }
     @if (isEditFieldDisplayedRecord()?.problemStatement) {
         <div class="form-group" id="field_problemStatement" name="problemStatement">
@@ -121,6 +119,7 @@
                     (hasUnsavedChanges)="programmingExerciseCreationConfig().hasUnsavedChanges = $event"
                     (instructionChange)="onProblemStatementChange($event)"
                     (exerciseChange)="programmingExerciseChange.emit($event)"
+                    (onInlineRefinement)="onInlineRefinement($event)"
                     [renderSideBySide]="allowSplitView()"
                     (diffLineChange)="onDiffLineChange($event)"
                     [forceRender]="programmingExerciseCreationConfig().rerenderSubject"

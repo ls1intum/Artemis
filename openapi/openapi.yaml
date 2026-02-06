@@ -265,6 +265,26 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ProblemStatementRewriteResponse'}
+  /api/hyperion/courses/{courseId}/problem-statements/refine/targeted:
+    post:
+      tags: [hyperion-problem-statement]
+      operationId: refineProblemStatementTargeted
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ProblemStatementTargetedRefinementRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProblemStatementRefinementResponse'}
   /api/hyperion/courses/{courseId}/problem-statements/refine/global:
     post:
       tags: [hyperion-problem-statement]
@@ -289,6 +309,21 @@ paths:
     post:
       tags: [hyperion-problem-statement]
       operationId: generateProblemStatement
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ProblemStatementGenerationRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
               schema: {$ref: '#/components/schemas/ProblemStatementGenerationResponse'}
   /api/hyperion/courses/{courseId}/faq/rewrite:
     post:
@@ -302,7 +337,6 @@ paths:
       requestBody:
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/ProblemStatementGenerationRequest'}
             schema: {$ref: '#/components/schemas/RewriteFaqRequest'}
         required: true
       responses:
@@ -310,7 +344,6 @@ paths:
           description: OK
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/ProblemStatementGenerationResponse'}
               schema: {$ref: '#/components/schemas/RewriteFaqResponse'}
   /api/tutorialgroup/tutorial-groups/{tutorialGroupId}/title:
     get:
@@ -479,6 +512,26 @@ components:
         draftProblemStatement: {type: string, description: Draft problem statement
             text}
         error: {type: string, description: Error message if generation failed}
+    ProblemStatementTargetedRefinementRequest:
+      type: object
+      description: Request to refine a problem statement using targeted selection-based
+        instructions
+      properties:
+        problemStatementText: {type: string, description: 'Original problem statement
+            text to be refined (max 50,000 chars)', maxLength: 50000, minLength: 0}
+        startLine: {type: integer, format: int32, description: Start line number (1-indexed),
+          maximum: 10000, minimum: 1}
+        endLine: {type: integer, format: int32, description: 'End line number (1-indexed,
+            inclusive)', maximum: 10000, minimum: 1}
+        startColumn: {type: integer, format: int32, description: 'Start column within
+            start line (1-indexed, optional for character-level targeting)', maximum: 10000,
+          minimum: 1}
+        endColumn: {type: integer, format: int32, description: 'End column within
+            end line (1-indexed, inclusive, optional for character-level targeting)',
+          maximum: 10000, minimum: 1}
+        instruction: {type: string, description: Instruction describing what should
+            change, maxLength: 500, minLength: 0}
+      required: [endLine, problemStatementText, startLine]
     CodeGenerationRequest:
       type: object
       properties:
@@ -668,7 +721,6 @@ components:
         tokens: {$ref: '#/components/schemas/Tokens', description: Token usage statistics}
         costs: {$ref: '#/components/schemas/Costs', description: Costs statistics}
       required: [issues, timestamp]
-      required: [issues]
     TeachingAssistant:
       type: object
       properties:
@@ -706,6 +758,7 @@ components:
           type: array
           items: {type: string}
         improvement: {type: string}
+      required: [improvement, inconsistencies, rewrittenText, suggestions]
     TutorialGroupExport:
       type: object
       properties:
@@ -735,7 +788,7 @@ components:
       type: object
       description: Request to rewrite a FAQ
       properties:
-        faqText: {type: string}
+        faqText: {type: string, minLength: 1}
       required: [faqText]
     ConversationUser:
       type: object

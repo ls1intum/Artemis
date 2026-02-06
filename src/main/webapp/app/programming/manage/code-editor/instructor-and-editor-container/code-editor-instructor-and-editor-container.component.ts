@@ -56,7 +56,7 @@ import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/s
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
-import { isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
+import { InlineRefinementEvent, isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
 
 const SEVERITY_ORDER = {
     HIGH: 0,
@@ -403,6 +403,30 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     closeDiff(): void {
         this.showDiff.set(false);
+    }
+
+    /**
+     * Handles inline refinement request from editor selection.
+     * Calls the Hyperion API with the selected text and instruction, then shows diff.
+     */
+    onInlineRefinement(event: InlineRefinementEvent): void {
+        if (!this.exercise?.problemStatement?.trim()) {
+            this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.emptyStatementError');
+            return;
+        }
+
+        this.currentRefinementSubscription = this.problemStatementService
+            .refineTargeted(this.exercise, this.exercise.problemStatement, event, this.isGeneratingOrRefining)
+            .subscribe({
+                next: (result) => {
+                    if (result.success && result.content) {
+                        this.showDiff.set(true);
+                        const refinedContent = result.content;
+                        afterNextRender(() => this.editableInstructions.applyRefinedContent(refinedContent), { injector: this.injector });
+                    }
+                    this.currentRefinementSubscription = undefined;
+                },
+            });
     }
 
     /**

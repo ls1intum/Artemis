@@ -58,6 +58,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     /*
      * Diff/editor switching state.
      */
+    private selectionChangeListeners: {
+        listener: (selection: EditorRange | undefined) => void;
+        disposable?: Disposable;
+    }[] = [];
 
     private diffSnapshotModel?: monaco.editor.ITextModel;
     private useLiveSyncedDiff = false;
@@ -265,6 +269,12 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.focusEditorTextListener?.dispose();
         this.diffUpdateListener?.dispose();
 
+        // Dispose selection change listeners
+        for (const listenerEntry of this.selectionChangeListeners) {
+            listenerEntry.disposable?.dispose();
+        }
+        this.selectionChangeListeners = [];
+
         // Dispose snapshot model if present
         this.disposeDiffSnapshotModel();
 
@@ -389,6 +399,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.textEditorAdapter = new MonacoTextEditorAdapter(editor);
         this.attachEditableEditorListeners(editor);
         this.reRegisterActions();
+        this.reRegisterSelectionListeners();
     }
 
     private getEditableEditor(): monaco.editor.IStandaloneCodeEditor {
@@ -795,6 +806,62 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 }
             }
         }
+    }
+
+    private reRegisterSelectionListeners(): void {
+        for (const listenerEntry of this.selectionChangeListeners) {
+            listenerEntry.disposable?.dispose();
+            listenerEntry.disposable = this.registerSelectionListenerOnEditor(this.getActiveEditor(), listenerEntry.listener);
+        }
+    }
+
+    private registerSelectionListenerOnEditor(editor: monaco.editor.IStandaloneCodeEditor, listener: (selection: EditorRange | undefined) => void): Disposable {
+        return this.ngZone.runOutsideAngular(() => {
+            return editor.onDidChangeCursorSelection((e) => {
+                const selection = e.selection;
+                if (selection.isEmpty()) {
+                    this.ngZone.run(() => listener(undefined));
+                } else {
+                    this.ngZone.run(() =>
+                        listener({
+                            startLineNumber: selection.startLineNumber,
+                            endLineNumber: selection.endLineNumber,
+                            startColumn: selection.startColumn,
+                            endColumn: selection.endColumn,
+                        }),
+                    );
+                }
+            });
+        });
+    }
+
+    onSelectionChange(listener: (selection: EditorRange | undefined) => void): Disposable {
+        const disposable = this.registerSelectionListenerOnEditor(this.getActiveEditor(), listener);
+        const listenerEntry = { listener, disposable };
+        this.selectionChangeListeners.push(listenerEntry);
+
+        return {
+            dispose: () => {
+                listenerEntry.disposable?.dispose();
+                const index = this.selectionChangeListeners.indexOf(listenerEntry);
+                if (index !== -1) {
+                    this.selectionChangeListeners.splice(index, 1);
+                }
+            },
+        };
+    }
+
+    getSelection(): EditorRange | undefined {
+        const selection = this.getActiveEditor().getSelection();
+        if (!selection || selection.isEmpty()) {
+            return undefined;
+        }
+        return {
+            startLineNumber: selection.startLineNumber,
+            endLineNumber: selection.endLineNumber,
+            startColumn: selection.startColumn,
+            endColumn: selection.endColumn,
+        };
     }
 
     setWordWrap(value: boolean): void {
