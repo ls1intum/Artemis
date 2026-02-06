@@ -8,6 +8,8 @@ import angular from '@analogjs/vite-plugin-angular';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import path from 'node:path';
 
+const isCI = process.env.CI === 'true';
+
 export default defineConfig({
     // Only show errors, suppress sourcemap warnings from node_modules packages
     logLevel: 'error',
@@ -23,6 +25,13 @@ export default defineConfig({
     test: {
         globals: true,
         environment: 'jsdom',
+        pool: 'forks',
+        poolOptions: {
+            forks: {
+                // Pass memory flags to forked worker processes (they don't inherit the parent's V8 flags)
+                execArgv: ['--max-old-space-size=4096', '--max-semi-space-size=128'],
+            },
+        },
         setupFiles: ['src/test/javascript/spec/vitest-test-setup.ts'],
         include: [
             'src/main/webapp/app/fileupload/**/*.spec.ts', // include fileupload tests
@@ -48,7 +57,7 @@ export default defineConfig({
         },
         coverage: {
             provider: 'istanbul',
-            reporter: ['text', 'lcov', 'html', 'json-summary'],
+            reporter: isCI ? ['text', 'lcov', 'json-summary'] : ['text', 'lcov', 'html', 'json-summary'],
             reportsDirectory: 'build/test-results/vitest/coverage',
             include: [
                 'src/main/webapp/app/assessment/**/*.ts', // include assessment for code coverage
