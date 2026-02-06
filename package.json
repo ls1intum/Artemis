@@ -257,7 +257,7 @@
         "setupCourse": "node supporting_scripts/course-scripts/setup-course/setup-course.mjs",
         "vitest": "vitest",
         "vitest:run": "vitest run",
-        "vitest:ci": "vitest run --coverage --maxWorkers=4",
+        "vitest:ci": "node --max-old-space-size=8192 ./node_modules/vitest/vitest.mjs run --coverage --maxWorkers=4",
         "vitest:coverage": "vitest run --coverage",
         "vitest:diff": "vitest run --changed origin/develop --passWithNoTests",
         "vitest:ui": "vitest --ui",
