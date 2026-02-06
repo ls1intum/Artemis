@@ -125,16 +125,6 @@ console.error = (...args: unknown[]) => {
     originalConsoleError.apply(console, args);
 };
 
-// Also suppress via process.stderr for jsdom messages that bypass console
-const originalStderrWrite = process.stderr.write.bind(process.stderr);
-process.stderr.write = (chunk: string | Uint8Array, ...args: unknown[]): boolean => {
-    const str = typeof chunk === 'string' ? chunk : chunk.toString();
-    if (str.includes('Not implemented')) {
-        return true;
-    }
-    return originalStderrWrite(chunk, ...(args as [BufferEncoding?, ((err?: Error) => void)?]));
-};
-
 // Patch CSSStyleDeclaration to handle CSS custom properties gracefully
 const originalSetProperty = CSSStyleDeclaration.prototype.setProperty;
 CSSStyleDeclaration.prototype.setProperty = function (property: string, value: string | null, priority?: string) {
