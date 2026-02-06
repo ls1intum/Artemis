@@ -33,7 +33,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.8.0"
+version = "8.8.1"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -474,7 +474,7 @@ dependencies {
     testImplementation "org.springframework.security:spring-security-test"
     testImplementation "org.springframework.boot:spring-boot-test"
     testImplementation "org.springframework:spring-test"
-    testImplementation "org.assertj:assertj-core:3.27.6"
+    testImplementation "org.assertj:assertj-core:3.27.7"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     // needed to add mockito as agent and avoid its warning
     mockitoAgent ("org.mockito:mockito-core:${mockito_version}") {

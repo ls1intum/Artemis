@@ -43,9 +43,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.tutorsuggestion.PyrisT
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting.PyrisRewritingPipelineExecutionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.transcriptionIngestion.PyrisWebhookTranscriptionDeletionExecutionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.transcriptionIngestion.PyrisWebhookTranscriptionIngestionExecutionDTO;
 
 @Component
 @Conditional(IrisEnabled.class)
@@ -92,8 +89,10 @@ public class IrisRequestMockProvider {
     }
 
     public void enableMockingOfRequests() {
-        mockServer = MockRestServiceServer.createServer(restTemplate);
-        shortTimeoutMockServer = MockRestServiceServer.createServer(shortTimeoutRestTemplate);
+        // Use unordered mode so tests don't fail due to request ordering
+        // (e.g., when cleanup sends DELETE before processing sends INGEST)
+        mockServer = MockRestServiceServer.bindTo(restTemplate).ignoreExpectOrder(true).build();
+        shortTimeoutMockServer = MockRestServiceServer.bindTo(shortTimeoutRestTemplate).ignoreExpectOrder(true).build();
         closeable = MockitoAnnotations.openMocks(this);
     }
 
@@ -159,24 +158,12 @@ public class IrisRequestMockProvider {
         mockPostRequest("/competency-extraction/run", PyrisCompetencyExtractionPipelineExecutionDTO.class, responseConsumer);
     }
 
-    public void mockRewritingPipelineResponse(Consumer<PyrisRewritingPipelineExecutionDTO> responseConsumer) {
-        mockPostRequest("/rewriting/run", PyrisRewritingPipelineExecutionDTO.class, responseConsumer);
-    }
-
     public void mockIngestionWebhookRunResponse(Consumer<PyrisWebhookLectureIngestionExecutionDTO> responseConsumer) {
         mockWebhookPost("/lectures/ingest", PyrisWebhookLectureIngestionExecutionDTO.class, responseConsumer);
     }
 
     public void mockIngestionWebhookRunResponse(Consumer<PyrisWebhookLectureIngestionExecutionDTO> responseConsumer, ExpectedCount count) {
         mockWebhookPost("/lectures/ingest", PyrisWebhookLectureIngestionExecutionDTO.class, responseConsumer, count);
-    }
-
-    public void mockTranscriptionIngestionWebhookRunResponse(Consumer<PyrisWebhookTranscriptionIngestionExecutionDTO> responseConsumer) {
-        mockWebhookPost("/transcriptions/ingest", PyrisWebhookTranscriptionIngestionExecutionDTO.class, responseConsumer);
-    }
-
-    public void mockTranscriptionDeletionWebhookRunResponse(Consumer<PyrisWebhookTranscriptionDeletionExecutionDTO> responseConsumer) {
-        mockWebhookPost("/transcriptions/delete", PyrisWebhookTranscriptionDeletionExecutionDTO.class, responseConsumer);
     }
 
     public void mockFaqIngestionWebhookRunResponse(Consumer<PyrisWebhookFaqIngestionExecutionDTO> responseConsumer) {
