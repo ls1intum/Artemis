@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.modeling.service;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -12,6 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
@@ -19,11 +23,14 @@ import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
@@ -61,6 +68,105 @@ public class ModelingSubmissionService extends SubmissionService {
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.submissionVersionService = submissionVersionService;
         this.exerciseDateService = exerciseDateService;
+    }
+
+    /**
+     * Record holding the result of retrieving submission assessment data.
+     *
+     * @param submission    the submission
+     * @param participation the student participation
+     * @param exercise      the exercise
+     * @param result        the result
+     */
+    public record SubmissionAssessmentData(Submission submission, StudentParticipation participation, Exercise exercise, Result result) {
+    }
+
+    /**
+     * Retrieves the submission, participation, exercise, and latest completed result for a given submission ID.
+     * This method handles the pattern of fetching assessment data from a modeling submission.
+     *
+     * @param submissionId the id of the submission
+     * @return the assessment data containing submission, participation, exercise, and result
+     * @throws EntityNotFoundException if the submission or result is not found
+     */
+    public SubmissionAssessmentData getSubmissionAssessmentData(Long submissionId) {
+        Submission submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNoteAndTeamStudents(submissionId);
+        if (submission == null) {
+            throw new EntityNotFoundException("Submission", submissionId);
+        }
+        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
+        Exercise exercise = participation.getExercise();
+
+        Result result = submission.getLatestCompletedResult();
+        if (result == null) {
+            throw new EntityNotFoundException("Result with submission", submissionId);
+        }
+
+        return new SubmissionAssessmentData(submission, participation, exercise, result);
+    }
+
+    /**
+     * Retrieves and prepares the latest modeling submission for a student participation.
+     * This method handles filtering of results based on assessment status, due dates, and user permissions.
+     *
+     * @param studentParticipation the student participation to get the latest submission for
+     * @param modelingExercise     the modeling exercise
+     * @param isAtLeastTutor       whether the current user has at least tutor permissions
+     * @return the prepared modeling submission with appropriately filtered results
+     */
+    public ModelingSubmission getLatestSubmissionForParticipation(StudentParticipation studentParticipation, ModelingExercise modelingExercise, boolean isAtLeastTutor) {
+        Optional<Submission> optionalLatestSubmission = studentParticipation.findLatestSubmission();
+        ModelingSubmission modelingSubmission;
+
+        if (optionalLatestSubmission.isEmpty()) {
+            // this should never happen as the submission is initialized along with the participation when the exercise is started
+            modelingSubmission = new ModelingSubmission();
+            modelingSubmission.setParticipation(studentParticipation);
+        }
+        else {
+            modelingSubmission = (ModelingSubmission) optionalLatestSubmission.get();
+        }
+
+        // do not send the result to the client if the assessment is not finished
+        Result latestResult = getLatestResultByCompletionDate(modelingSubmission);
+        if (latestResult != null && latestResult.getAssessmentType() != AssessmentType.AUTOMATIC_ATHENA
+                && (latestResult.getCompletionDate() == null || latestResult.getAssessor() == null)) {
+            modelingSubmission.setResults(List.of());
+        }
+
+        if (!ExerciseDateService.isAfterAssessmentDueDate(modelingExercise)) {
+            // We want to have the preliminary feedback before the assessment due date too
+            List<Result> athenaResults = modelingSubmission.getResults().stream().filter(result -> result != null && result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA)
+                    .toList();
+            modelingSubmission.setResults(athenaResults);
+        }
+
+        Result resultToFilter = getLatestResultByCompletionDate(modelingSubmission);
+        if (resultToFilter != null && !isAtLeastTutor) {
+            resultToFilter.filterSensitiveInformation();
+        }
+
+        // make sure sensitive information are not sent to the client
+        modelingExercise.filterSensitiveInformation();
+        if (modelingExercise.isExamExercise()) {
+            modelingExercise.getExerciseGroup().setExam(null);
+        }
+
+        return modelingSubmission;
+    }
+
+    /**
+     * Gets the result with the latest completion date from a submission.
+     *
+     * @param submission the submission to get the latest result from
+     * @return the result with the latest completion date, or null if no results exist
+     */
+    private Result getLatestResultByCompletionDate(ModelingSubmission submission) {
+        if (submission.getResults() == null || submission.getResults().isEmpty()) {
+            return null;
+        }
+        return submission.getResults().stream().filter(result -> result != null && result.getCompletionDate() != null).max(Comparator.comparing(Result::getCompletionDate))
+                .orElse(submission.getLatestResult());
     }
 
     /**

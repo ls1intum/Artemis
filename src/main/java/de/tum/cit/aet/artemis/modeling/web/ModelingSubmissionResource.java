@@ -377,45 +377,9 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     public ResponseEntity<ModelingSubmission> getLatestModelingSubmission(@PathVariable long participationId) {
         log.debug("REST request to get latest modeling submission for participation: {}", participationId);
         var validationResult = validateParticipation(participationId);
-        var studentParticipation = validationResult.studentParticipation;
-        var exercise = validationResult.modelingExercise;
 
-        Optional<Submission> optionalLatestSubmission = studentParticipation.findLatestSubmission();
-        ModelingSubmission modelingSubmission;
-        if (optionalLatestSubmission.isEmpty()) {
-            // this should never happen as the submission is initialized along with the participation when the exercise is started
-            modelingSubmission = new ModelingSubmission();
-            modelingSubmission.setParticipation(studentParticipation);
-        }
-        else {
-            // only try to get and set the model if the modelingSubmission existed before
-            modelingSubmission = (ModelingSubmission) optionalLatestSubmission.get();
-        }
-
-        // do not send the result to the client if the assessment is not finished
-        Result latestResult = getLatestResultByCompletionDate(modelingSubmission);
-        if (latestResult != null && latestResult.getAssessmentType() != AssessmentType.AUTOMATIC_ATHENA
-                && (latestResult.getCompletionDate() == null || latestResult.getAssessor() == null)) {
-            modelingSubmission.setResults(List.of());
-        }
-
-        if (!ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
-            // We want to have the preliminary feedback before the assessment due date too
-            List<Result> athenaResults = modelingSubmission.getResults().stream().filter(result -> result != null && result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA)
-                    .toList();
-            modelingSubmission.setResults(athenaResults);
-        }
-
-        Result resultToFilter = getLatestResultByCompletionDate(modelingSubmission);
-        if (resultToFilter != null && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-            resultToFilter.filterSensitiveInformation();
-        }
-
-        // make sure sensitive information are not sent to the client
-        exercise.filterSensitiveInformation();
-        if (exercise.isExamExercise()) {
-            exercise.getExerciseGroup().setExam(null);
-        }
+        ModelingSubmission modelingSubmission = modelingSubmissionService.getLatestSubmissionForParticipation(validationResult.studentParticipation(),
+                validationResult.modelingExercise(), validationResult.isAtLeastTutor());
 
         return ResponseEntity.ok(modelingSubmission);
     }
@@ -469,19 +433,5 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }).toList();
 
         return ResponseEntity.ok().body(submissionsWithResults);
-    }
-
-    /**
-     * Gets the result with the latest completion date from a submission.
-     *
-     * @param submission the submission to get the latest result from
-     * @return the result with the latest completion date, or null if no results exist
-     */
-    private Result getLatestResultByCompletionDate(ModelingSubmission submission) {
-        if (submission.getResults() == null || submission.getResults().isEmpty()) {
-            return null;
-        }
-        return submission.getResults().stream().filter(result -> result != null && result.getCompletionDate() != null).max(Comparator.comparing(Result::getCompletionDate))
-                .orElse(submission.getLatestResult());
     }
 }

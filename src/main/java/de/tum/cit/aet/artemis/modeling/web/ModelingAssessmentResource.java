@@ -28,13 +28,11 @@ import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
 import de.tum.cit.aet.artemis.assessment.web.AssessmentResource;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -46,6 +44,7 @@ import de.tum.cit.aet.artemis.modeling.dto.ModelingAssessmentDTO;
 import de.tum.cit.aet.artemis.modeling.dto.ResultDTO;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
+import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
 
 /**
  * REST controller for managing ModelingAssessment.
@@ -66,13 +65,17 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
+    private final ModelingSubmissionService modelingSubmissionService;
+
     public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ModelingExerciseRepository modelingExerciseRepository,
             AssessmentService assessmentService, ModelingSubmissionRepository modelingSubmissionRepository, ExampleSubmissionRepository exampleSubmissionRepository,
-            ExerciseRepository exerciseRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository) {
+            ExerciseRepository exerciseRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
+            ModelingSubmissionService modelingSubmissionService) {
         super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.authCheckService = authCheckService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.modelingSubmissionService = modelingSubmissionService;
     }
 
     /**
@@ -86,39 +89,29 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @EnforceAtLeastStudent
     public ResponseEntity<ResultDTO> getModelingAssessmentBySubmissionId(@PathVariable Long submissionId) {
         log.debug("REST request to get modeling assessment for submission with id {}", submissionId);
-        Submission submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNoteAndTeamStudents(submissionId);
-        if (submission == null) {
-            throw new EntityNotFoundException("Submission", submissionId);
-        }
-        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
-        Exercise exercise = participation.getExercise();
-
-        Result result = submission.getLatestCompletedResult();
-        if (result == null) {
-            throw new EntityNotFoundException("Result with submission", submissionId);
-        }
+        ModelingSubmissionService.SubmissionAssessmentData data = modelingSubmissionService.getSubmissionAssessmentData(submissionId);
 
         // For Athena results, use special authorization logic (more permissive, no date restrictions)
-        if (result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA) {
-            if (!authCheckService.isAtLeastStudentForExercise(exercise)
-                    || (!authCheckService.isOwnerOfParticipation(participation) && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise))) {
+        if (data.result().getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA) {
+            if (!authCheckService.isAtLeastStudentForExercise(data.exercise())
+                    || (!authCheckService.isOwnerOfParticipation(data.participation()) && !authCheckService.isAtLeastTeachingAssistantForExercise(data.exercise()))) {
                 throw new AccessForbiddenException();
             }
         }
         else {
             // For regular results, apply standard access control (includes due date checks)
-            if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result)) {
+            if (!authCheckService.isUserAllowedToGetResult(data.exercise(), data.participation(), data.result())) {
                 throw new AccessForbiddenException();
             }
         }
 
         // remove sensitive information for students
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-            exercise.filterSensitiveInformation();
-            result.filterSensitiveInformation();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(data.exercise())) {
+            data.exercise().filterSensitiveInformation();
+            data.result().filterSensitiveInformation();
         }
 
-        return ResponseEntity.ok(ResultDTO.of(result));
+        return ResponseEntity.ok(ResultDTO.of(data.result()));
     }
 
     /**
@@ -191,7 +184,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
         var participation = result.getSubmission().getParticipation();
         // remove circular dependencies if the results of the participation are there
-
         if (participation instanceof StudentParticipation studentParticipation && !authCheckService.isAtLeastInstructorForExercise(modelingExercise, user)) {
             studentParticipation.setParticipant(null);
         }
