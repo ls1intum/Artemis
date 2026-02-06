@@ -208,7 +208,6 @@
         },
         "PlagiarismPost": {
             "idNull": "The plagiarism post must have an id.",
-            "courseInformationSharingDisabled": "Posting is disabled for this course.",
             "plagiarismCaseMissing": "The post must be associated with a plagiarism case."
         },
         "noCourse": "An exam must belong to a course.",
