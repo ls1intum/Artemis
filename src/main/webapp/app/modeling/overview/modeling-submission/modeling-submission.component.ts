@@ -367,7 +367,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.updateModelAndExplanation();
 
         this.subscribeToWebsockets();
-        if ((getLatestSubmissionResult(this.submission) && this.isAfterAssessmentDueDate) || this.isFeedbackView) {
+        if ((getLatestSubmissionResult(this.submission) && this.isAfterAssessmentDueDate && !this.isActive) || this.isFeedbackView) {
             this.result = getLatestSubmissionResult(this.submission);
             if (this.isFeedbackView && this.submissionId) {
                 this.result = this.sortedSubmissionHistory.find((submission) => submission.id === this.submissionId)?.latestResult;
