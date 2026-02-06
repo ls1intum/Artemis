@@ -37,6 +37,7 @@ import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 
 /**
  * Creates a typed mock ProgrammingExercise for testing.
@@ -759,14 +760,15 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Diff Editor', () => 
     it('should revert refinement', () => {
         comp.showDiff.set(true);
         // Mock the internal editableInstructions to have revertAll and getCurrentContent methods
-        (comp as any).editableInstructions = {
+        const mockEditable = {
             revertAll: jest.fn(),
             getCurrentContent: jest.fn().mockReturnValue('Reverted content'),
         };
+        comp.editableInstructions = mockEditable as unknown as ProgrammingExerciseEditableInstructionComponent;
 
         comp.revertAllRefinement();
 
-        expect((comp as any).editableInstructions.revertAll).toHaveBeenCalled();
+        expect(mockEditable.revertAll).toHaveBeenCalled();
         expect(comp.showDiff()).toBeFalse();
     });
 });
@@ -823,9 +825,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
         const mockResponse: ProblemStatementRefinementResponse = { refinedProblemStatement: 'Refined content' };
         (hyperionApiService.refineProblemStatementGlobally as jest.Mock).mockReturnValue(of(mockResponse));
 
-        (comp as any).templateLoaded.set(true);
-        (comp as any).templateProblemStatement.set('Template');
-        (comp as any).currentProblemStatement.set('Original problem statement');
+        comp.templateLoaded.set(true);
+        comp.templateProblemStatement.set('Template');
+        comp['currentProblemStatement'].set('Original problem statement');
 
         comp.refinementPrompt.set('Improve clarity');
         comp.submitRefinement();
@@ -853,7 +855,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
     it('should not submit when no courseId for full refinement', () => {
         comp.exercise = createMockExercise({ problemStatement: 'Test' });
         comp.exercise.course = undefined;
-        (comp as any).currentProblemStatement.set('Non-empty problem statement');
+        comp['currentProblemStatement'].set('Non-empty problem statement');
         comp.refinementPrompt.set('Improve');
         comp.submitRefinement();
         expect(hyperionApiService.refineProblemStatementGlobally).not.toHaveBeenCalled();
@@ -864,9 +866,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
         const errorSpy = jest.spyOn(alertService, 'error');
         (hyperionApiService.refineProblemStatementGlobally as jest.Mock).mockReturnValue(throwError(() => new Error('API error')));
 
-        (comp as any).templateLoaded.set(true);
-        (comp as any).templateProblemStatement.set('Template');
-        (comp as any).currentProblemStatement.set('Original problem statement');
+        comp.templateLoaded.set(true);
+        comp.templateProblemStatement.set('Template');
+        comp['currentProblemStatement'].set('Original problem statement');
 
         comp.refinementPrompt.set('Improve');
         comp.submitRefinement();

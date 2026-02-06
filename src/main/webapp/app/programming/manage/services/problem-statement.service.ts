@@ -66,7 +66,7 @@ export class ProblemStatementService {
                     'artemisApp.programmingExercise.problemStatement.generationSuccess',
                     'artemisApp.programmingExercise.problemStatement.generationError',
                     isValidGenerationResponse,
-                    (r) => r?.draftProblemStatement,
+                    (response) => response?.draftProblemStatement,
                 ),
             );
     }
@@ -89,7 +89,7 @@ export class ProblemStatementService {
                     'artemisApp.programmingExercise.problemStatement.refinementSuccess',
                     'artemisApp.programmingExercise.problemStatement.refinementError',
                     isValidRefinementResponse,
-                    (r) => r?.refinedProblemStatement,
+                    (response) => response?.refinedProblemStatement,
                 ),
             );
     }
