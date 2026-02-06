@@ -307,7 +307,138 @@ describe('ProgrammingExerciseProblemComponent', () => {
         expect(comp.shouldShowGenerateButton()).toBeFalse();
     });
 
-    it('should handle refinement with completely empty response', () => {
+    it('should reset generation state on cancel', () => {
+        // Set up state
+        comp.isGeneratingOrRefining.set(true);
+
+        comp.cancelGeneration();
+
+        // Verify state is reset
+        expect(comp.isGeneratingOrRefining()).toBeFalse();
+    });
+
+    it('should handle inline refinement successfully', fakeAsync(() => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.course = { id: 42 } as any;
+        programmingExercise.problemStatement = 'Original problem statement with content';
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+
+        const mockResponse: ProblemStatementRefinementResponse = {
+            refinedProblemStatement: 'Refined problem statement',
+        };
+
+        mockHyperionApiService.refineProblemStatementTargeted.mockReturnValue(of(mockResponse));
+
+        const event = {
+            instruction: 'Improve this section',
+            startLine: 1,
+            endLine: 2,
+            startColumn: 1,
+            endColumn: 10,
+        };
+
+        comp.onInlineRefinement(event);
+
+        expect(mockHyperionApiService.refineProblemStatementTargeted).toHaveBeenCalledWith(
+            42,
+            expect.objectContaining({
+                problemStatementText: 'Original problem statement with content',
+                instruction: 'Improve this section',
+                startLine: 1,
+                endLine: 2,
+                startColumn: 1,
+                endColumn: 10,
+            }),
+        );
+
+        expect(comp.showDiff()).toBeTrue();
+        expect(mockAlertService.success).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefinement.success');
+    }));
+
+    it('should handle inline refinement error when no courseId', () => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.problemStatement = 'Some content';
+        // No course set
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+
+        const event = {
+            instruction: 'Improve this',
+            startLine: 1,
+            endLine: 2,
+            startColumn: 1,
+            endColumn: 10,
+        };
+
+        comp.onInlineRefinement(event);
+
+        // Service returns silently with success: false when courseId is missing
+        expect(mockHyperionApiService.refineProblemStatementTargeted).not.toHaveBeenCalled();
+    });
+
+    it('should handle inline refinement error when problem statement is empty', () => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.course = { id: 42 } as any;
+        programmingExercise.problemStatement = '   '; // Only whitespace
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+
+        const event = {
+            instruction: 'Improve this',
+            startLine: 1,
+            endLine: 2,
+            startColumn: 1,
+            endColumn: 10,
+        };
+
+        comp.onInlineRefinement(event);
+
+        // Component validates empty content before calling service
+        expect(mockHyperionApiService.refineProblemStatementTargeted).not.toHaveBeenCalled();
+    });
+
+    it('should handle inline refinement API error', fakeAsync(() => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.course = { id: 42 } as any;
+        programmingExercise.problemStatement = 'Original content';
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+
+        mockHyperionApiService.refineProblemStatementTargeted.mockReturnValue(throwError(() => new Error('API error')));
+
+        const event = {
+            instruction: 'Improve this',
+            startLine: 1,
+            endLine: 2,
+            startColumn: 1,
+            endColumn: 10,
+        };
+
+        comp.onInlineRefinement(event);
+
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefinement.error');
+        expect(comp.isGeneratingOrRefining()).toBeFalse();
+    }));
+
+    it('should handle inline refinement with empty response', fakeAsync(() => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.course = { id: 42 } as any;
+        programmingExercise.problemStatement = 'Original content';
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+
+        mockHyperionApiService.refineProblemStatementTargeted.mockReturnValue(of({ refinedProblemStatement: '' }));
+
+        const event = {
+            instruction: 'Improve this',
+            startLine: 1,
+            endLine: 2,
+            startColumn: 1,
+            endColumn: 10,
+        };
+
+        comp.onInlineRefinement(event);
+
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefinement.error');
+    }));
+
+    it('should handle refinement with completely empty response', fakeAsync(() => {
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.course = { id: 42 } as any;
         programmingExercise.problemStatement = 'Original';

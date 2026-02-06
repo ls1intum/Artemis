@@ -19,7 +19,7 @@ import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { Subscription } from 'rxjs';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
-import { MAX_USER_PROMPT_LENGTH, PROMPT_LENGTH_WARNING_THRESHOLD, isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
+import { InlineRefinementEvent, isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -285,6 +285,35 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             exercise.competencyLinks = competencyLinks;
             this.programmingExerciseChange.emit(exercise);
         }
+    }
+
+    /**
+     * Handles inline refinement request from editor selection.
+     * Calls the Hyperion API with the selected text and instruction, then applies changes directly.
+     */
+    onInlineRefinement(event: InlineRefinementEvent): void {
+        const exercise = this.programmingExercise();
+        const currentContent = this.editableInstructions()?.getCurrentContent() ?? exercise?.problemStatement;
+
+        if (!currentContent?.trim()) {
+            return;
+        }
+
+        this.currentGenerationSubscription = this.problemStatementService.refineTargeted(exercise, currentContent, event, this.isGeneratingOrRefining).subscribe({
+            next: (result) => {
+                if (result.success && result.content) {
+                    this.showDiff.set(true);
+                    const refinedContent = result.content;
+                    afterNextRender(
+                        () => {
+                            this.editableInstructions()?.applyRefinedContent(refinedContent);
+                        },
+                        { injector: this.injector },
+                    );
+                }
+                this.currentGenerationSubscription = undefined;
+            },
+        });
     }
 
     onDiffLineChange(event: { ready: boolean; lineChange: LineChange }): void {

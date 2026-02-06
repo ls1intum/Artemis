@@ -24,6 +24,7 @@
             [showLocationWarning]="unsavedChangesValue"
             (markdownChange)="updateProblemStatement($event)"
             (diffLineChange)="diffLineChange.emit($event)"
+            (onSelectionChange)="onEditorSelectionChange($event)"
         >
             <!-- Custom preview using ProgrammingExerciseInstructionComponent for proper rendering
                  of programming-specific syntax (task markers, PlantUML, test case status, etc.).
@@ -42,6 +43,22 @@
                 }
             </div>
         </jhi-markdown-editor-monaco>
+
+        <!-- Floating inline refinement button - hidden during active refinement -->
+        @if (inlineRefinementPosition() && hyperionEnabled && !isAiApplying() && selectionPositionInfo()) {
+            <jhi-inline-refinement-button
+                [top]="inlineRefinementPosition()!.top"
+                [left]="inlineRefinementPosition()!.left"
+                [selectedText]="selectedTextForRefinement()"
+                [startLine]="selectionPositionInfo()!.startLine"
+                [endLine]="selectionPositionInfo()!.endLine"
+                [startColumn]="selectionPositionInfo()!.startColumn"
+                [endColumn]="selectionPositionInfo()!.endColumn"
+                [isLoading]="isAiApplying()"
+                (refine)="onInlineRefine($event)"
+                (closeRefinement)="hideInlineRefinementButton()"
+            />
+        }
     }
     @if (editMode()) {
         <button

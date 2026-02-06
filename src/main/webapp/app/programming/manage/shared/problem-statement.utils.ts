@@ -1,5 +1,6 @@
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProblemStatementGlobalRefinementRequest } from 'app/openapi/model/problemStatementGlobalRefinementRequest';
+import { ProblemStatementTargetedRefinementRequest } from 'app/openapi/model/problemStatementTargetedRefinementRequest';
 import { ProblemStatementGenerationRequest } from 'app/openapi/model/problemStatementGenerationRequest';
 import { ProblemStatementRefinementResponse } from 'app/openapi/model/problemStatementRefinementResponse';
 import { ProblemStatementGenerationResponse } from 'app/openapi/model/problemStatementGenerationResponse';
@@ -15,6 +16,17 @@ export const PROMPT_LENGTH_WARNING_THRESHOLD = 0.9;
 
 /** Matches `\r\n` (Windows) and standalone `\r` (old Mac) line endings in a single pass. */
 const CARRIAGE_RETURN_PATTERN = /\r\n?/g;
+
+/**
+ * Event structure for inline refinement requests from the editor.
+ */
+export interface InlineRefinementEvent {
+    instruction: string;
+    startLine: number;
+    endLine: number;
+    startColumn: number;
+    endColumn: number;
+}
 
 /**
  * Normalizes a string by trimming whitespace and normalizing line endings.
@@ -74,6 +86,20 @@ export function buildGlobalRefinementRequest(problemStatementText: string, userP
     return {
         problemStatementText: problemStatementText,
         userPrompt: userPrompt.trim(),
+    };
+}
+
+/**
+ * Builds a targeted refinement request payload from an inline refinement event.
+ */
+export function buildTargetedRefinementRequest(problemStatementText: string, event: InlineRefinementEvent): ProblemStatementTargetedRefinementRequest {
+    return {
+        problemStatementText: problemStatementText ?? '',
+        startLine: event.startLine,
+        endLine: event.endLine,
+        startColumn: event.startColumn,
+        endColumn: event.endColumn,
+        instruction: event.instruction,
     };
 }
 

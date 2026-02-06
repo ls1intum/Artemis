@@ -263,7 +263,14 @@
                 "aiRefining": "AI is updating the problem statement...",
                 "generate": "Generate",
                 "refine": "Refine",
-                "diffLineStatTooltip": "Lines added and removed by the AI refinement."
+                "inlineRefinement": {
+                    "placeholder": "Describe what should change...",
+                    "triggerButton": "Refine Selection",
+                    "submitTooltip": "Submit refinement instruction",
+                    "success": "Selected section has been successfully refined.",
+                    "error": "Failed to refine the selected section. Please try again.",
+                    "emptyStatementError": "Cannot refine: the problem statement is empty."
+                }
             },
             "codeGeneration": {
                 "creationAssistance": "Creation Assistance",

@@ -1,0 +1,35 @@
+.inline-refinement-container {
+    position: fixed;
+    z-index: 1070; // Bootstrap $zindex-popover level
+}
+
+.refinement-input {
+    min-width: 20rem;
+    max-width: 32rem;
+    border: none;
+    background: transparent;
+    color: var(--bs-body-color);
+    outline: none;
+
+    &::placeholder {
+        color: var(--bs-secondary);
+    }
+
+    &:disabled {
+        opacity: 0.6;
+    }
+}
+
+.refinement-submit-btn {
+    width: 1.75rem;
+    height: 1.75rem;
+}
+
+.refinement-close-btn {
+    width: 1.5rem;
+    height: 1.5rem;
+
+    &:hover {
+        color: var(--bs-body-color);
+    }
+}

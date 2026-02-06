@@ -263,7 +263,14 @@
                 "aiRefining": "KI aktualisiert die Aufgabenstellung...",
                 "generate": "Generieren",
                 "refine": "Verfeinern",
-                "diffLineStatTooltip": "Zeilen, die durch die KI-Verfeinerung hinzugefügt und entfernt wurden."
+                "inlineRefinement": {
+                    "placeholder": "Beschreibe, was geändert werden soll...",
+                    "triggerButton": "Auswahl verfeinern",
+                    "submitTooltip": "Verfeinerungsanweisung absenden",
+                    "success": "Ausgewählter Abschnitt wurde erfolgreich verfeinert.",
+                    "error": "Fehler beim Verfeinern des ausgewählten Abschnitts. Bitte versuche es erneut.",
+                    "emptyStatementError": "Verfeinerung nicht möglich: Die Aufgabenstellung ist leer."
+                }
             },
             "codeGeneration": {
                 "creationAssistance": "Erstellungsassistenz",

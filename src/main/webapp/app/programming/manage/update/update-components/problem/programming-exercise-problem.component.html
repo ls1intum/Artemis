@@ -43,47 +43,6 @@
             </button>
         </div>
     }
-    @if (isGeneratingOrRefining()) {
-        <p-message severity="info" styleClass="w-100 mb-3" [closable]="false">
-            <fa-icon [icon]="faSpinner" animation="spin" class="me-2" />
-            <span jhiTranslate="artemisApp.programmingExercise.problemStatement.aiRefining"></span>
-        </p-message>
-    }
-    @if (showDiff()) {
-        <p-message severity="info" styleClass="w-100 mb-3" [closable]="false">
-            <div class="d-flex flex-wrap align-items-center gap-2">
-                <strong class="small" jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChanges"></strong>
-                <span class="text-muted small" jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChangesDescription"></span>
-                <button
-                    pButton
-                    type="button"
-                    severity="primary"
-                    size="small"
-                    [pTooltip]="'artemisApp.programmingExercise.diffReport.splitView.tooltip' | artemisTranslate"
-                    tooltipPosition="bottom"
-                    (click)="allowSplitView.set(!allowSplitView())"
-                >
-                    <fa-icon [icon]="faTableColumns" class="me-1" />
-                    <span [jhiTranslate]="'artemisApp.programmingExercise.diffReport.splitView.' + (allowSplitView() ? 'disable' : 'enable')"></span>
-                </button>
-                <button pButton type="button" severity="secondary" size="small" [disabled]="isAiApplying()" (click)="revertAllChanges()">
-                    <fa-icon [icon]="faBan" class="me-1" />
-                    <span jhiTranslate="artemisApp.programmingExercise.problemStatement.revertAll"></span>
-                </button>
-                <jhi-git-diff-line-stat
-                    class="fw-bold mx-1"
-                    [addedLineCount]="addedLineCount()"
-                    [removedLineCount]="removedLineCount()"
-                    [pTooltip]="'artemisApp.programmingExercise.problemStatement.diffLineStatTooltip' | artemisTranslate"
-                    tooltipPosition="bottom"
-                />
-                <button pButton type="button" severity="success" size="small" [disabled]="isAiApplying()" (click)="closeDiffView()">
-                    <fa-icon [icon]="faSave" class="me-1" />
-                    <span jhiTranslate="artemisApp.programmingExercise.problemStatement.doneReviewing"></span>
-                </button>
-            </div>
-        </p-message>
-    }
     @if (isEditFieldDisplayedRecord()?.problemStatement) {
         <div class="form-group" id="field_problemStatement" name="problemStatement">
             <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
@@ -123,7 +82,9 @@
                     [editMode]="!!programmingExercise()?.id"
                     [isGeneratingOrRefining]="isGeneratingOrRefining()"
                     (hasUnsavedChanges)="programmingExerciseCreationConfig().hasUnsavedChanges = $event"
-                    [mode]="showDiff() ? 'diff' : 'normal'"
+                    (instructionChange)="onProblemStatementChange($event)"
+                    (exerciseChange)="programmingExerciseChange.emit($event)"
+                    (onInlineRefinement)="onInlineRefinement($event)"
                     [renderSideBySide]="allowSplitView()"
                     (diffLineChange)="onDiffLineChange($event)"
                     [forceRender]="programmingExerciseCreationConfig().rerenderSubject"

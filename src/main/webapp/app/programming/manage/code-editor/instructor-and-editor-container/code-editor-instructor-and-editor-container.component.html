@@ -408,11 +408,30 @@
                         </div>
                     </p-message>
                 }
-                @if (isGeneratingOrRefining()) {
-                    <p-message severity="info" styleClass="w-100 mb-2" [closable]="false">
-                        <fa-icon [icon]="faSpinner" animation="spin" class="me-2" />
-                        <span jhiTranslate="artemisApp.programmingExercise.problemStatement.aiRefining"></span>
-                    </p-message>
+                @if (exercise.templateParticipation && selectedParticipation) {
+                    <jhi-programming-exercise-editable-instructions
+                        [(exercise)]="exercise"
+                        [(participation)]="selectedParticipation"
+                        [templateParticipation]="exercise.templateParticipation"
+                        [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
+                        [externalHeight]="true"
+                        [enableResize]="false"
+                        [showPreview]="false"
+                        [consistencyIssues]="consistencyIssues()"
+                        [isGeneratingOrRefining]="isGeneratingOrRefining()"
+                        [mode]="showDiff() ? 'diff' : 'normal'"
+                        [renderSideBySide]="allowSplitView()"
+                        (diffLineChange)="onDiffLineChange($event)"
+                        class="flex-grow-1 overflow-auto"
+                        (instructionChange)="onInstructionChanged($event)"
+                        (onInlineRefinement)="onInlineRefinement($event)"
+                    />
+                } @else {
+                    <!-- Loading state while waiting for templateParticipation -->
+                    <div class="d-flex justify-content-center align-items-center h-100">
+                        <fa-icon [icon]="faCircleNotch" animation="spin" class="me-2" />
+                        <span jhiTranslate="artemisApp.editor.fetchingParticipation"></span>
+                    </div>
                 }
                 <jhi-programming-exercise-editable-instructions
                     [exercise]="exercise"
