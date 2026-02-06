@@ -4,27 +4,22 @@ import * as Y from 'yjs';
 import { Awareness, encodeAwarenessUpdate } from 'y-protocols/awareness';
 import { ProblemStatementSyncService } from 'app/programming/manage/services/problem-statement-sync.service';
 import { AccountService } from 'app/core/auth/account.service';
-import {
-    ProgrammingExerciseEditorSyncEvent,
-    ProgrammingExerciseEditorSyncEventType,
-    ProgrammingExerciseEditorSyncService,
-    ProgrammingExerciseEditorSyncTarget,
-} from 'app/programming/manage/services/programming-exercise-editor-sync.service';
+import { ExerciseEditorSyncEvent, ExerciseEditorSyncEventType, ExerciseEditorSyncService, ExerciseEditorSyncTarget } from 'app/exercise/services/exercise-editor-sync.service';
 import * as yjsUtils from 'app/programming/manage/services/yjs-utils';
 
 describe('ProblemStatementSyncService', () => {
     let service: ProblemStatementSyncService;
-    let syncService: jest.Mocked<ProgrammingExerciseEditorSyncService>;
-    let incomingMessages$: Subject<ProgrammingExerciseEditorSyncEvent>;
+    let syncService: jest.Mocked<ExerciseEditorSyncService>;
+    let incomingMessages$: Subject<ExerciseEditorSyncEvent>;
 
     beforeEach(() => {
-        incomingMessages$ = new Subject<ProgrammingExerciseEditorSyncEvent>();
+        incomingMessages$ = new Subject<ExerciseEditorSyncEvent>();
 
         TestBed.configureTestingModule({
             providers: [
                 ProblemStatementSyncService,
                 {
-                    provide: ProgrammingExerciseEditorSyncService,
+                    provide: ExerciseEditorSyncService,
                     useValue: {
                         subscribeToUpdates: jest.fn().mockReturnValue(incomingMessages$.asObservable()),
                         sendSynchronizationUpdate: jest.fn(),
@@ -41,7 +36,7 @@ describe('ProblemStatementSyncService', () => {
         });
 
         service = TestBed.inject(ProblemStatementSyncService);
-        syncService = TestBed.inject(ProgrammingExerciseEditorSyncService) as jest.Mocked<ProgrammingExerciseEditorSyncService>;
+        syncService = TestBed.inject(ExerciseEditorSyncService) as jest.Mocked<ExerciseEditorSyncService>;
     });
 
     afterEach(() => {
@@ -56,8 +51,8 @@ describe('ProblemStatementSyncService', () => {
         expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
             42,
             expect.objectContaining({
-                eventType: ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
-                target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+                eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
+                target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
                 requestId: expect.any(String),
             }),
         );
@@ -70,8 +65,8 @@ describe('ProblemStatementSyncService', () => {
         expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
             42,
             expect.objectContaining({
-                target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-                eventType: ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
+                target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+                eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
                 yjsUpdate: expect.any(String),
             }),
         );
@@ -84,8 +79,8 @@ describe('ProblemStatementSyncService', () => {
         doc.getText('problem-statement').insert(0, 'Hello Artemis');
         const update = yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(doc));
         incomingMessages$.next({
-            eventType: ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
-            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
+            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             yjsUpdate: update,
             timestamp: 1,
         });
@@ -100,8 +95,8 @@ describe('ProblemStatementSyncService', () => {
         syncService.sendSynchronizationUpdate.mockClear();
 
         incomingMessages$.next({
-            eventType: ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
-            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
+            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             requestId: 'req-123',
             timestamp: 1,
         });
@@ -109,8 +104,8 @@ describe('ProblemStatementSyncService', () => {
         expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
             7,
             expect.objectContaining({
-                eventType: ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE,
-                target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+                eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE,
+                target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
                 responseTo: 'req-123',
                 yjsUpdate: expect.any(String),
                 leaderTimestamp: expect.any(Number),
@@ -127,7 +122,7 @@ describe('ProblemStatementSyncService', () => {
     it('uses the earliest leader response during initial sync', fakeAsync(() => {
         const state = service.init(11, '');
         const requestCall = (syncService.sendSynchronizationUpdate as jest.Mock).mock.calls.find(
-            ([, message]) => message.eventType === ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
+            ([, message]) => message.eventType === ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
         );
         const requestId = requestCall?.[1].requestId as string;
         expect(requestId).toBeDefined();
@@ -141,16 +136,16 @@ describe('ProblemStatementSyncService', () => {
         const earlierUpdate = yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(earlierDoc));
 
         incomingMessages$.next({
-            eventType: ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE,
-            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE,
+            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             responseTo: requestId,
             yjsUpdate: laterUpdate,
             leaderTimestamp: 200,
             timestamp: 1,
         });
         incomingMessages$.next({
-            eventType: ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE,
-            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE,
+            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             responseTo: requestId,
             yjsUpdate: earlierUpdate,
             leaderTimestamp: 100,
@@ -171,8 +166,8 @@ describe('ProblemStatementSyncService', () => {
         expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
             13,
             expect.objectContaining({
-                target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-                eventType: ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
+                target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+                eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
                 yjsUpdate: expect.any(String),
             }),
         );
@@ -190,8 +185,8 @@ describe('ProblemStatementSyncService', () => {
         const encoded = yjsUtils.encodeUint8ArrayToBase64(update);
 
         incomingMessages$.next({
-            eventType: ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_AWARENESS_UPDATE,
-            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_AWARENESS_UPDATE,
+            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             awarenessUpdate: encoded,
             timestamp: 1,
         });

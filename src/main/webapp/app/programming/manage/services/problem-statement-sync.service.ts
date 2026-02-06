@@ -4,15 +4,15 @@ import * as Y from 'yjs';
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
 import { AccountService } from 'app/core/auth/account.service';
 import {
+    ExerciseEditorSyncEvent,
+    ExerciseEditorSyncEventType,
+    ExerciseEditorSyncService,
+    ExerciseEditorSyncTarget,
     ProblemStatementAwarenessUpdateEvent,
     ProblemStatementSyncFullContentRequestEvent,
     ProblemStatementSyncFullContentResponseEvent,
     ProblemStatementSyncUpdateEvent,
-    ProgrammingExerciseEditorSyncEvent,
-    ProgrammingExerciseEditorSyncEventType,
-    ProgrammingExerciseEditorSyncService,
-    ProgrammingExerciseEditorSyncTarget,
-} from 'app/programming/manage/services/programming-exercise-editor-sync.service';
+} from 'app/exercise/services/exercise-editor-sync.service';
 import {
     AwarenessUpdatePayload,
     decodeBase64ToUint8Array,
@@ -38,7 +38,7 @@ enum ProblemStatementSyncOrigin {
 
 @Injectable({ providedIn: 'root' })
 export class ProblemStatementSyncService {
-    private syncService = inject(ProgrammingExerciseEditorSyncService);
+    private syncService = inject(ExerciseEditorSyncService);
     private accountService = inject(AccountService);
 
     private exerciseId?: number;
@@ -108,8 +108,8 @@ export class ProblemStatementSyncService {
         const requestId = this.generateRequestId();
         this.pendingInitialSync = { requestId, responses: [], bufferedUpdates: [] };
         const requestEvent: ProblemStatementSyncFullContentRequestEvent = {
-            eventType: ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
-            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
+            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             requestId,
         };
         this.syncService.sendSynchronizationUpdate(this.exerciseId, requestEvent);
@@ -131,8 +131,8 @@ export class ProblemStatementSyncService {
         }
         const update = Y.encodeStateAsUpdate(this.yDoc);
         const responseEvent: ProblemStatementSyncFullContentResponseEvent = {
-            eventType: ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE,
-            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE,
+            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             responseTo,
             yjsUpdate: encodeUint8ArrayToBase64(update),
             leaderTimestamp: this.localLeaderTimestamp,
@@ -145,21 +145,21 @@ export class ProblemStatementSyncService {
      *
      * @param message The synchronization message to process.
      */
-    private handleRemoteMessage(message: ProgrammingExerciseEditorSyncEvent) {
-        if (message.target !== ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT) {
+    private handleRemoteMessage(message: ExerciseEditorSyncEvent) {
+        if (message.target !== ExerciseEditorSyncTarget.PROBLEM_STATEMENT) {
             return;
         }
         switch (message.eventType) {
-            case ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST:
+            case ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST:
                 this.respondWithFullContent(message.requestId);
                 break;
-            case ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE:
+            case ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE:
                 this.handleSyncResponse(message);
                 break;
-            case ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE:
+            case ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE:
                 this.handleSyncUpdate(message);
                 break;
-            case ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_AWARENESS_UPDATE:
+            case ExerciseEditorSyncEventType.PROBLEM_STATEMENT_AWARENESS_UPDATE:
                 this.handleAwarenessUpdate(message);
                 break;
             default:
@@ -184,8 +184,8 @@ export class ProblemStatementSyncService {
                 return;
             }
             const updateEvent: ProblemStatementSyncUpdateEvent = {
-                eventType: ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
-                target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+                eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
+                target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
                 yjsUpdate: encodeUint8ArrayToBase64(update),
             };
             this.syncService.sendSynchronizationUpdate(this.exerciseId, updateEvent);
@@ -196,8 +196,8 @@ export class ProblemStatementSyncService {
             }
             const update = encodeAwarenessUpdate(awareness, [...added, ...updated, ...removed]);
             const awarenessEvent: ProblemStatementAwarenessUpdateEvent = {
-                eventType: ProgrammingExerciseEditorSyncEventType.PROBLEM_STATEMENT_AWARENESS_UPDATE,
-                target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+                eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_AWARENESS_UPDATE,
+                target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
                 awarenessUpdate: encodeUint8ArrayToBase64(update),
             };
             this.syncService.sendSynchronizationUpdate(this.exerciseId, awarenessEvent);
@@ -296,9 +296,9 @@ export class ProblemStatementSyncService {
      * @param awareness The awareness instance to initialize.
      */
     private initializeLocalAwareness(awareness: Awareness) {
-        const clientInstanceId = this.syncService.clientInstanceId;
+        const sessionId = this.syncService.sessionId;
         const color = getColorForClientId(awareness.clientID);
-        const fallbackName = clientInstanceId ? `Editor ${clientInstanceId.slice(0, 6)}` : 'Editor';
+        const fallbackName = sessionId ? `Editor ${sessionId.slice(0, 6)}` : 'Editor';
         awareness.setLocalStateField('user', { name: fallbackName, color });
         this.accountService.identity().then((user) => {
             if (!user) {
