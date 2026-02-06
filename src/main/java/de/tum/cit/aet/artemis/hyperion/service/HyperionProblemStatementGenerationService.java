@@ -81,8 +81,7 @@ public class HyperionProblemStatementGenerationService {
         }
         catch (Exception e) {
             log.error("Error generating problem statement for course [{}]: {}", course.getId(), e.getMessage(), e);
-            throw new InternalServerErrorAlertException("Failed to generate problem statement: " + e.getMessage(), "ProblemStatement",
-                    "ProblemStatementGeneration.generationFailed");
+            throw new InternalServerErrorAlertException("Failed to generate problem statement: " + e.getMessage(), "ProblemStatement", "ProblemStatementGeneration.generationFailed");
         }
     }
 }
