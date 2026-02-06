@@ -114,13 +114,14 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/quiz/',              // quiz module uses Vitest
         '<rootDir>/src/main/webapp/app/text/',              // text module uses Vitest
         '<rootDir>/src/main/webapp/app/tutorialgroup/',     // tutorialgroup module uses Vitest
+        '<rootDir>/src/main/webapp/app/shared/components/buttons/', // buttons module uses Vitest
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
     coverageThreshold: {
         global: {
             statements: 88.7,
-            branches: 73.5,
+            branches: 73.0,
             functions: 80.35,
             lines: 89.3,
         },
@@ -156,6 +157,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/quiz/',          // quiz module
         '<rootDir>/src/main/webapp/app/text/',          // text module
         '<rootDir>/src/main/webapp/app/tutorialgroup/', // tutorialgroup module
+        '<rootDir>/src/main/webapp/app/shared/components/buttons/', // shared/buttons components
     ],
     testTimeout: 3000,
     testMatch: [

@@ -391,7 +391,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
             const startExerciseButton = debugElement.query(By.css('button.start-exercise'));
             expect(startExerciseButton).not.toBeNull();
-            expect(startExerciseButton.componentInstance.overwriteDisabled).toBe(true);
+            expect(startExerciseButton.componentInstance.overwriteDisabled()).toBe(true);
         },
     );
 
@@ -510,8 +510,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
             if (shouldShowButton) {
                 expect(button).not.toBeNull();
-                expect(button.componentInstance.buttonLabel).toBe('artemisApp.exerciseActions.' + expectedLabel);
-                expect(button.componentInstance.outlined).toBe(shouldBeOutlined);
+                expect(button.componentInstance.buttonLabel()).toBe('artemisApp.exerciseActions.' + expectedLabel);
+                expect(button.componentInstance.outlined()).toBe(shouldBeOutlined);
             } else {
                 expect(button).toBeNull();
             }

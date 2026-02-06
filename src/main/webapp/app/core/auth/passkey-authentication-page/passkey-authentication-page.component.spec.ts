@@ -191,7 +191,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
         expect(buttonDebugElement).toBeTruthy();
 
         const buttonComponent = buttonDebugElement.componentInstance as ButtonComponent;
-        expect(buttonComponent.title).toBe('global.menu.admin.setupPasskey');
+        expect(buttonComponent.title()).toBe('global.menu.admin.setupPasskey');
     });
 
     it('should display sign in button when user has passkey registered', async () => {
@@ -203,7 +203,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
         expect(buttonDebugElement).toBeTruthy();
 
         const buttonComponent = buttonDebugElement.componentInstance as ButtonComponent;
-        expect(buttonComponent.title).toBe('global.menu.account.loginWithPasskey');
+        expect(buttonComponent.title()).toBe('global.menu.account.loginWithPasskey');
     });
 
     it('should display page heading', async () => {
@@ -282,7 +282,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
         const button = buttonElement.querySelector('button');
 
         const buttonComponent = buttonDebugElement.componentInstance as ButtonComponent;
-        expect(buttonComponent.title).toBe('global.menu.admin.setupPasskey');
+        expect(buttonComponent.title()).toBe('global.menu.admin.setupPasskey');
         expect(button.type).toBe('button'); // would be 'submit' if shouldSubmit was true
     });
 
@@ -296,7 +296,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
         const button = buttonElement.querySelector('button');
 
         const buttonComponent = buttonDebugElement.componentInstance as ButtonComponent;
-        expect(buttonComponent.title).toBe('global.menu.account.loginWithPasskey');
+        expect(buttonComponent.title()).toBe('global.menu.account.loginWithPasskey');
         expect(button.type).toBe('button'); // would be 'submit' if shouldSubmit was true
     });
 });
