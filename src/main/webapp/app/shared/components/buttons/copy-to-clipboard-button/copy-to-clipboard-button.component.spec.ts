@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 
-describe('JhiCopyIconButtonComponent', () => {
+describe('CopyToClipboardButtonComponent', () => {
     setupTestBed({ zoneless: true });
     let component: CopyToClipboardButtonComponent;
     let fixture: ComponentFixture<CopyToClipboardButtonComponent>;

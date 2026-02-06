@@ -419,6 +419,7 @@ export class CodeButtonComponent implements OnInit {
                 if (key.expiryDate) {
                     return dayjs(key.expiryDate).isBefore(now);
                 }
+                return false;
             });
             this.areAnySshKeysExpired.set(areSSHkeysExpired);
         }

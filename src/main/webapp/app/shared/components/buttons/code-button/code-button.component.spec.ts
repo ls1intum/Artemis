@@ -26,7 +26,7 @@ import { SshUserSettingsService } from 'app/core/user/settings/ssh-settings/ssh-
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { PROFILE_THEIA } from '../../../../app.constants';
+import { PROFILE_THEIA } from 'app/app.constants';
 import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
 
 describe('CodeButtonComponent', () => {
