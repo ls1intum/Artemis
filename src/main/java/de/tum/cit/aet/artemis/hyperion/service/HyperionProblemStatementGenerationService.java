@@ -49,11 +49,9 @@ public class HyperionProblemStatementGenerationService {
      * Generate a problem statement for an exercise
      *
      * @param course     the course context for the problem statement
-     * @param userPrompt the user's requirements and instructions for the problem
-     *                       statement
+     * @param userPrompt the user's requirements and instructions for the problem statement
      * @return the generated problem statement response
-     * @throws InternalServerErrorAlertException if generation fails or response is
-     *                                               too long
+     * @throws InternalServerErrorAlertException if generation fails or response is too long
      */
     public ProblemStatementGenerationResponseDTO generateProblemStatement(Course course, String userPrompt) {
         log.debug("Generating problem statement for course [{}]", course.getId());
