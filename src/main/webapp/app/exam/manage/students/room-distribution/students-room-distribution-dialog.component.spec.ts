@@ -39,7 +39,14 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     const rooms: RoomForDistributionDTO[] = [
         { id: 1, roomNumber: '1', name: 'one', building: 'AA' },
         { id: 2, roomNumber: '2', alternativeRoomNumber: '002', name: 'two', building: 'AA' },
-        { id: 3, roomNumber: '3', alternativeRoomNumber: '003', name: 'three', alternativeName: 'threeee', building: 'AA' },
+        {
+            id: 3,
+            roomNumber: '3',
+            alternativeRoomNumber: '003',
+            name: 'three',
+            alternativeName: 'threeee',
+            building: 'AA',
+        },
     ] as RoomForDistributionDTO[];
 
     beforeEach(async () => {
@@ -267,5 +274,50 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         expect(component.selectedRooms()).toHaveLength(2);
         expect(component.selectedRooms()).toContain(rooms[0]);
         expect(component.selectedRooms()).toContain(rooms[1]);
+    });
+
+    it('should call updateAliases, close dialog and emit onSave when clicking the update aliases button', () => {
+        const updateSpy = jest.spyOn(service, 'updateAliases').mockReturnValue(of(undefined));
+        const closeSpy = jest.spyOn(component, 'closeDialog');
+        const emitSpy = jest.spyOn(component.onSave, 'emit');
+
+        component.pickSelectedRoom({ item: rooms[0] });
+        component.pickSelectedRoom({ item: rooms[1] });
+
+        component['setRoomAlias']({ target: { value: 'Main Hall' } } as unknown as Event, rooms[0].id);
+
+        fixture.detectChanges();
+
+        const button = fixture.debugElement.nativeElement.querySelector('#update-aliases-button');
+        button.click();
+        fixture.detectChanges();
+
+        expect(button).not.toBeNull();
+
+        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(course.id, exam.id, { [rooms[0].id]: 'Main Hall' });
+        expect(closeSpy).toHaveBeenCalledOnce();
+        expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should send empty alias map if no aliases are set', () => {
+        const updateSpy = jest.spyOn(service, 'updateAliases').mockReturnValue(of(undefined));
+
+        component.pickSelectedRoom({ item: rooms[0] });
+        fixture.detectChanges();
+
+        component['updateRoomAliases']();
+
+        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(course.id, exam.id, {});
+    });
+
+    it('should trim alias and remove it if empty', () => {
+        const updateSpy = jest.spyOn(service, 'updateAliases').mockReturnValue(of(undefined));
+
+        component.pickSelectedRoom({ item: rooms[0] });
+
+        component['setRoomAlias']({ target: { value: '   ' } } as unknown as Event, rooms[0].id);
+        component['updateRoomAliases']();
+
+        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(course.id, exam.id, {});
     });
 });

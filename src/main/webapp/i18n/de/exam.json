@@ -47,6 +47,8 @@
                     "alias": "Alias",
                     "enoughSeatsForStudents": "Du kannst alle {{ totalStudents }} Studierenden unterbringen.",
                     "notEnoughSeatsForStudents": "Du kannst nur {{ usableCapacity }} der {{ totalStudents }} Studierenden unterbringen ({{ percentage }}%).",
+                    "updateAliases": "Aktualisiere Aliase",
+                    "updateAliasesButtonTooltip": "Aktualisiert die Aliase, ohne dabei eine Neuverteilung durchzuführen",
                     "distribute": "Verteilen",
                     "noRoomSelected": "Es ist kein Raum ausgewählt"
                 },

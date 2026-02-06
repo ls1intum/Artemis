@@ -101,6 +101,11 @@
             <fa-icon [icon]="faBan" />
             <span jhiTranslate="entity.action.cancel" class="m-1"></span>
         </button>
+        <button class="btn btn-primary" id="update-aliases-button" (click)="updateRoomAliases()">
+            <fa-icon [icon]="faTag" />
+            <span jhiTranslate="artemisApp.exam.examUsers.rooms.updateAliases"></span>
+        </button>
+        <jhi-help-icon class="ps-1" text="artemisApp.exam.examUsers.rooms.updateAliasesButtonTooltip" />
         <button class="btn btn-primary" id="finish-button" (click)="attemptDistributeAndCloseDialog()" [disabled]="!(hasSelectedRooms() && canSeatAllStudents())">
             <fa-icon [icon]="faThLarge" />
             <span jhiTranslate="artemisApp.exam.examUsers.rooms.distribute" class="m-1"></span>

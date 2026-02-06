@@ -482,4 +482,26 @@ public class ExamRoomDistributionService {
         return examRoomRepository.findAllByExamIdWithAliases(examId).stream().filter(room -> room.alias() != null)
                 .collect(Collectors.toMap(ExamRoomWithAliasDTO::roomNumber, ExamRoomWithAliasDTO::alias));
     }
+
+    /**
+     * Updates the alias mappings from all rooms that are connected to the given exam. If an alias for a room of this exam
+     * is not explicitly given, a possibly pre-existing alias is removed.
+     *
+     * @param examId      the id of the exam
+     * @param roomAliases a {roomNumber => alias} mapping
+     */
+    public void updateAliases(long examId, Map<Long, String> roomAliases) {
+        Set<ExamRoomExamAssignment> roomAssignments = examRoomExamAssignmentRepository.findAllByExamId(examId);
+        Set<Long> roomIdsUsedInExam = examRoomRepository.findAllByExamId(examId).stream().map(ExamRoom::getId).collect(Collectors.toSet());
+        if (!roomIdsUsedInExam.containsAll(roomAliases.keySet())) {
+            throw new BadRequestAlertException("trying to update the alias for an unconnected room", ENTITY_NAME, "updateAliasUnconnectedRoom");
+        }
+
+        for (ExamRoomExamAssignment roomAssignment : roomAssignments) {
+            Long roomId = roomAssignment.getExamRoom().getId();
+            roomAssignment.setRoomAlias(roomAliases.get(roomId));
+        }
+
+        examRoomExamAssignmentRepository.saveAll(roomAssignments);
+    }
 }

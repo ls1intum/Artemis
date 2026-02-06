@@ -156,6 +156,7 @@
         "noRoomIDs": "Du hast keine Räume ausgewählt",
         "invalidRoomIDs": "Mindestens einer der Räume, die du ausgewählt hast, existiert nicht oder ist veraltet",
         "aliasNameTooLong": "Ein Alias kann maximal 255 Zeichen haben",
+        "updateAliasUnconnectedRoom": "Ein Alias kann nur einem verknüpften Raum zugewiesen werden. Bitte führe zuerst eine Verteilung auf die ausgewählten Räume durch.",
         "noStudentDistributed": "Keinem der Klausurteilnehmer wurde ein Raum und Sitz zugewiesen",
         "wrongCourse": "Die Reaktion gehört nicht zum ausgewählten Kurs.",
         "reactionNotFound": "Die Reaktion konnte nicht gefunden werden.",

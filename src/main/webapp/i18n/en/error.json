@@ -155,6 +155,7 @@
         "noRoomIDs": "You didn't select any rooms",
         "invalidRoomIDs": "At least one of your selected rooms doesn't exist or is outdated",
         "aliasNameTooLong": "An alias can be at most 255 characters",
+        "updateAliasUnconnectedRoom": "Can't update the alias for an unconnected room. Please distribute to the selected rooms first.",
         "noStudentDistributed": "None of the exam participants have been assigned a room and seat",
         "reserveFactorOutOfRange": "The reserve factor needs to be within the range from 0 to 1",
         "wrongCourse": "The reaction does not belong to the selected course.",

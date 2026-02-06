@@ -47,6 +47,8 @@
                     "alias": "Alias",
                     "enoughSeatsForStudents": "You can seat all {{ totalStudents }} students.",
                     "notEnoughSeatsForStudents": "You can only seat {{ usableCapacity }} of the {{ totalStudents }} students ({{ percentage }}%).",
+                    "updateAliases": "Update aliases",
+                    "updateAliasesButtonTooltip": "Updates the room aliases without performing a re-distribution",
                     "distribute": "Distribute",
                     "noRoomSelected": "No room is selected"
                 },

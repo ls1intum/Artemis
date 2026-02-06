@@ -154,6 +154,12 @@ export class StudentsRoomDistributionService {
         );
     }
 
+    /**
+     * Sends a GET request to obtain all registered aliases for all rooms of the given exam in the given course
+     *
+     * @param courseId the id of the course
+     * @param examId the id of the exam
+     */
     getAliases(courseId: number, examId: number): Observable<Record<string, string>> {
         const requestUrl = `${this.BASE_URL}/courses/${courseId}/exams/${examId}/room-aliases`;
 
@@ -161,5 +167,19 @@ export class StudentsRoomDistributionService {
             map((aliases) => aliases),
             catchError((error) => throwError(() => error)),
         );
+    }
+
+    /**
+     * Sends a POST request to update the registered aliases for all rooms of the given exam in the given course.
+     * Rooms for which no alias is specified are reset to having no alias.
+     *
+     * @param courseId the id of the course
+     * @param examId the id of the exam
+     * @param examRoomAliases mapping of exam room id to an alias
+     */
+    updateAliases(courseId: number, examId: number, examRoomAliases: Record<number, string>): Observable<void> {
+        const requestUrl = `${this.BASE_URL}/courses/${courseId}/exams/${examId}/set-room-aliases`;
+
+        return this.http.post<void>(requestUrl, examRoomAliases);
     }
 }

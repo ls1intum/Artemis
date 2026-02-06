@@ -284,4 +284,28 @@ public class ExamRoomDistributionResource {
         Map<String, String> roomAliases = examRoomDistributionService.getAliases(examId);
         return ResponseEntity.ok(roomAliases);
     }
+
+    /**
+     * POST courses/{courseId}/exams/{examId}/set-room-aliases : Updates the exam room aliases of all rooms associated
+     * with the given exam.
+     *
+     * @param courseId        the id of the course
+     * @param examId          the id of the exam
+     * @param examRoomAliases mapping of room id to alias, if specified
+     * @return A {roomNumber => alias} mapping
+     */
+    @PostMapping("courses/{courseId}/exams/{examId}/set-room-aliases")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Void> updateRoomAliases(@PathVariable long courseId, @PathVariable long examId, @RequestBody Map<Long, String> examRoomAliases) {
+        log.debug("REST request to update room aliases for exam: {}", examId);
+
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+
+        if (examRoomAliases == null) {
+            examRoomAliases = Map.of();
+        }
+
+        examRoomDistributionService.updateAliases(examId, examRoomAliases);
+        return ResponseEntity.ok().build();
+    }
 }

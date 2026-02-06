@@ -19,7 +19,7 @@ import { FormsModule } from '@angular/forms';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, debounceTime, distinctUntilChanged, map } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { faBan, faThLarge } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faTag, faThLarge } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -44,6 +44,7 @@ export class StudentsRoomDistributionDialogComponent implements OnInit {
     // Icons
     protected readonly faBan = faBan;
     protected readonly faThLarge = faThLarge;
+    protected readonly faTag = faTag;
 
     private readonly studentsRoomDistributionService: StudentsRoomDistributionService = inject(StudentsRoomDistributionService);
     courseId: InputSignal<number> = input.required();
@@ -259,5 +260,14 @@ export class StudentsRoomDistributionDialogComponent implements OnInit {
         const alias = input.value.trim();
 
         this.selectedRooms.update((rooms) => rooms.map((room) => (room.id === roomId ? { ...room, alias: alias || undefined } : room)));
+    }
+
+    protected updateRoomAliases() {
+        this.studentsRoomDistributionService.updateAliases(this.courseId(), this.exam().id!, this.roomAliases()).subscribe({
+            next: () => {
+                this.closeDialog();
+                this.onSave.emit();
+            },
+        });
     }
 }
