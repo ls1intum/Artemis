@@ -38,7 +38,7 @@ export function isTemplateOrEmpty(problemStatement: string | undefined, template
     }
 
     if (!templateLoaded) {
-        return true;
+        return false;
     }
 
     const normalizedProblemStatement = normalizeString(problemStatement);

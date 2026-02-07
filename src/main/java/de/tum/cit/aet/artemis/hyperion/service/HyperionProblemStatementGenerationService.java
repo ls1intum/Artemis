@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,9 @@ public class HyperionProblemStatementGenerationService {
      */
     private static final int MAX_PROBLEM_STATEMENT_LENGTH = 50_000;
 
+    /** Pattern matching control characters except newline (\n), carriage return (\r), and tab (\t). */
+    private static final Pattern CONTROL_CHAR_PATTERN = Pattern.compile("[\\p{Cc}&&[^\\n\\r\\t]]");
+
     private final ChatClient chatClient;
 
     private final HyperionPromptTemplateService templateService;
@@ -46,6 +50,17 @@ public class HyperionProblemStatementGenerationService {
     }
 
     /**
+     * Sanitizes user input by stripping control characters (except newlines, carriage returns, and tabs)
+     * to reduce prompt injection risk.
+     */
+    private static String sanitizeUserInput(String input) {
+        if (input == null) {
+            return "";
+        }
+        return CONTROL_CHAR_PATTERN.matcher(input).replaceAll("").trim();
+    }
+
+    /**
      * Generate a problem statement for an exercise
      *
      * @param course     the course context for the problem statement
@@ -58,9 +73,12 @@ public class HyperionProblemStatementGenerationService {
 
         try {
 
-            Map<String, String> templateVariables = Map.of("userPrompt", userPrompt != null ? userPrompt : "Generate a programming exercise problem statement", "courseTitle",
-                    course.getTitle() != null ? course.getTitle() : "Programming Course", "courseDescription",
-                    course.getDescription() != null ? course.getDescription() : "A programming course");
+            String sanitizedPrompt = sanitizeUserInput(userPrompt != null ? userPrompt : "Generate a programming exercise problem statement");
+            if (sanitizedPrompt.isBlank()) {
+                throw new InternalServerErrorAlertException("User prompt is empty after sanitization", "ProblemStatement", "ProblemStatementGeneration.generationFailed");
+            }
+            Map<String, String> templateVariables = Map.of("userPrompt", sanitizedPrompt, "courseTitle", course.getTitle() != null ? course.getTitle() : "Programming Course",
+                    "courseDescription", course.getDescription() != null ? course.getDescription() : "A programming course");
 
             String prompt = templateService.render("/prompts/hyperion/generate_draft_problem_statement.st", templateVariables);
             String generatedProblemStatement = chatClient.prompt().user(prompt).call().content();

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -74,15 +75,11 @@ public class HyperionProblemStatementRefinementService {
         log.debug("Refining problem statement for course [{}]", course.getId());
 
         validateRefinementPrerequisites(originalProblemStatementText);
-        validateUserPrompt(userPrompt);
 
         try {
-            // Validate input length
-            if (originalProblemStatementText.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
-                throw new InternalServerErrorAlertException("Original problem statement is too long", "ProblemStatement", "ProblemStatementRefinement.problemStatementTooLong");
-            }
-
-            GlobalRefinementPromptVariables variables = new GlobalRefinementPromptVariables(originalProblemStatementText.trim(), userPrompt, getCourseTitleOrDefault(course),
+            String sanitizedPrompt = sanitizeUserInput(userPrompt);
+            validateUserPrompt(sanitizedPrompt);
+            GlobalRefinementPromptVariables variables = new GlobalRefinementPromptVariables(originalProblemStatementText.trim(), sanitizedPrompt, getCourseTitleOrDefault(course),
                     getCourseDescriptionOrDefault(course));
 
             String prompt = templateService.render("/prompts/hyperion/refine_problem_statement.st", variables.asMap());
@@ -98,7 +95,7 @@ public class HyperionProblemStatementRefinementService {
             return validateAndReturnResponse(originalProblemStatementText, refinedProblemStatementText);
         }
         catch (Exception e) {
-            return handleRefinementError(course, originalProblemStatementText, e);
+            throw handleRefinementError(course, originalProblemStatementText, e);
         }
     }
 
@@ -124,23 +121,23 @@ public class HyperionProblemStatementRefinementService {
     }
 
     /**
-     * Handles refinement errors by logging and throwing appropriate exception.
-     * Re-throws InternalServerErrorAlertException unchanged to preserve specific error keys.
+     * Handles refinement errors by logging and returning an appropriate exception to throw.
+     * Re-throws InternalServerErrorAlertException and BadRequestAlertException unchanged to preserve specific error keys.
+     *
+     * @return a RuntimeException that the caller must throw
      */
-    private ProblemStatementRefinementResponseDTO handleRefinementError(Course course, String originalProblemStatementText, Exception e) {
-        // Re-throw InternalServerErrorAlertException unchanged to preserve specific error keys
+    private RuntimeException handleRefinementError(Course course, String originalProblemStatementText, Exception e) {
         if (e instanceof InternalServerErrorAlertException alertException) {
-            throw alertException;
+            return alertException;
         }
         if (e instanceof BadRequestAlertException badRequestException) {
-            throw badRequestException;
+            return badRequestException;
         }
 
         log.error("Error refining problem statement for course [{}]. Original statement length: {}. Error: {}", course.getId(),
                 originalProblemStatementText != null ? originalProblemStatementText.length() : 0, e.getMessage(), e);
 
-        String errorMessage = "Failed to refine problem statement: " + e.getMessage();
-        throw new InternalServerErrorAlertException(errorMessage, "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementFailed");
+        return new InternalServerErrorAlertException("Failed to refine problem statement", "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementFailed");
     }
 
     /**
@@ -176,6 +173,20 @@ public class HyperionProblemStatementRefinementService {
      */
     private String getCourseDescriptionOrDefault(Course course) {
         return course.getDescription() != null ? course.getDescription() : DEFAULT_COURSE_DESCRIPTION;
+    }
+
+    /** Pattern matching control characters except newline (\n), carriage return (\r), and tab (\t). */
+    private static final Pattern CONTROL_CHAR_PATTERN = Pattern.compile("[\\p{Cc}&&[^\\n\\r\\t]]");
+
+    /**
+     * Sanitizes user input by stripping control characters (except newlines, carriage returns, and tabs)
+     * to reduce prompt injection risk.
+     */
+    private static String sanitizeUserInput(String input) {
+        if (input == null) {
+            return "";
+        }
+        return CONTROL_CHAR_PATTERN.matcher(input).replaceAll("").trim();
     }
 
     private interface RefinementPromptVariables {

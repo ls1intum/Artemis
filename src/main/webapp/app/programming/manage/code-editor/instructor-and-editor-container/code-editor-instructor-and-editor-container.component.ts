@@ -399,15 +399,27 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Syncs the reverted content back to the model.
      */
     revertAllRefinement(): void {
-        this.editableInstructions.revertAll();
-        this.showDiff.set(false);
+        this.editableInstructions?.revertAll();
+        this.closeDiff();
     }
 
     /**
      * Closes the diff view after syncing the current editor content to the model.
      */
     closeDiff(): void {
+        const currentContent = this.editableInstructions?.getCurrentContent();
+        if (this.exercise && currentContent != null) {
+            this.exercise.problemStatement = currentContent;
+            this.onInstructionChanged(currentContent);
+        }
         this.showDiff.set(false);
+    }
+
+    /**
+     * Handles input events from the refinement prompt textarea with proper typing.
+     */
+    onRefinementPromptInput(event: Event): void {
+        this.refinementPrompt.set((event.target as HTMLTextAreaElement).value);
     }
 
     /**
@@ -429,7 +441,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (!prompt || !this.exercise) return;
 
         this.currentRefinementSubscription?.unsubscribe();
-        this.currentRefinementSubscription = undefined;
 
         if (this.shouldShowGenerateButton()) {
             this.generateProblemStatement(prompt);
@@ -463,6 +474,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             },
             error: () => {
                 this.alertService.error('artemisApp.programmingExercise.problemStatement.generationFailed');
+                this.refinementPrompt.set('');
                 this.showRefinementPrompt.set(false);
             },
         });
@@ -488,10 +500,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         this.refinementPrompt.set('');
                     } else {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementFailed');
+                        this.refinementPrompt.set('');
                     }
                 },
                 error: () => {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementFailed');
+                    this.refinementPrompt.set('');
                     this.showRefinementPrompt.set(false);
                 },
             });
