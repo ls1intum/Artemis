@@ -56,7 +56,7 @@ public class WeaviateClientConfiguration {
      * @throws WeaviateConfigurationException if required configuration properties are missing
      * @throws WeaviateConnectionException    if the connection to Weaviate fails
      */
-    @Bean
+    @Bean(destroyMethod = "close")
     public WeaviateClient weaviateClient() {
         validateConfiguration();
 
