@@ -39,9 +39,9 @@ public class HyperionProblemStatementGenerationService {
     private final HyperionPromptTemplateService templateService;
 
     /**
+     * Creates a new HyperionProblemStatementGenerationService.
      *
-     *
-     * @param chatClient      the AI chat client (optional)
+     * @param chatClient      the AI chat client
      * @param templateService prompt template service
      */
     public HyperionProblemStatementGenerationService(ChatClient chatClient, HyperionPromptTemplateService templateService) {
@@ -57,7 +57,9 @@ public class HyperionProblemStatementGenerationService {
         if (input == null) {
             return "";
         }
-        return CONTROL_CHAR_PATTERN.matcher(input).replaceAll("").trim();
+        String sanitized = CONTROL_CHAR_PATTERN.matcher(input).replaceAll("");
+        sanitized = sanitized.replace("</user_input>", "");
+        return sanitized.trim();
     }
 
     /**
@@ -77,8 +79,9 @@ public class HyperionProblemStatementGenerationService {
             if (sanitizedPrompt.isBlank()) {
                 throw new InternalServerErrorAlertException("User prompt is empty after sanitization", "ProblemStatement", "ProblemStatementGeneration.generationFailed");
             }
-            Map<String, String> templateVariables = Map.of("userPrompt", sanitizedPrompt, "courseTitle", course.getTitle() != null ? course.getTitle() : "Programming Course",
-                    "courseDescription", course.getDescription() != null ? course.getDescription() : "A programming course");
+            String sanitizedTitle = course.getTitle() != null ? sanitizeUserInput(course.getTitle()) : "Programming Course";
+            String sanitizedDescription = course.getDescription() != null ? sanitizeUserInput(course.getDescription()) : "A programming course";
+            Map<String, String> templateVariables = Map.of("userPrompt", sanitizedPrompt, "courseTitle", sanitizedTitle, "courseDescription", sanitizedDescription);
 
             String prompt = templateService.render("/prompts/hyperion/generate_draft_problem_statement.st", templateVariables);
             String generatedProblemStatement = chatClient.prompt().user(prompt).call().content();

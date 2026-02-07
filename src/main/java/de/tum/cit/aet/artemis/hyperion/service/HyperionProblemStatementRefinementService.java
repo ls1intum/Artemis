@@ -76,43 +76,40 @@ public class HyperionProblemStatementRefinementService {
 
         validateRefinementPrerequisites(originalProblemStatementText);
 
+        String sanitizedPrompt = sanitizeUserInput(userPrompt);
+        validateUserPrompt(sanitizedPrompt);
+        GlobalRefinementPromptVariables variables = new GlobalRefinementPromptVariables(originalProblemStatementText.trim(), sanitizedPrompt,
+                sanitizeUserInput(getCourseTitleOrDefault(course)), sanitizeUserInput(getCourseDescriptionOrDefault(course)));
+
+        String prompt = templateService.render("/prompts/hyperion/refine_problem_statement.st", variables.asMap());
+
+        String refinedProblemStatementText;
         try {
-            String sanitizedPrompt = sanitizeUserInput(userPrompt);
-            validateUserPrompt(sanitizedPrompt);
-            GlobalRefinementPromptVariables variables = new GlobalRefinementPromptVariables(originalProblemStatementText.trim(), sanitizedPrompt, getCourseTitleOrDefault(course),
-                    getCourseDescriptionOrDefault(course));
-
-            String prompt = templateService.render("/prompts/hyperion/refine_problem_statement.st", variables.asMap());
-            String refinedProblemStatementText = null;
-            if (chatClient != null) {
-                refinedProblemStatementText = chatClient.prompt().user(prompt).call().content();
-            }
-
-            if (refinedProblemStatementText == null) {
-                throw new InternalServerErrorAlertException("Refined problem statement is null", "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementNull");
-            }
-
-            return validateAndReturnResponse(originalProblemStatementText, refinedProblemStatementText);
+            refinedProblemStatementText = chatClient.prompt().user(prompt).call().content();
         }
         catch (Exception e) {
             throw handleRefinementError(course, originalProblemStatementText, e);
         }
+
+        if (refinedProblemStatementText == null) {
+            throw new InternalServerErrorAlertException("Refined problem statement is null", "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementNull");
+        }
+
+        return validateAndReturnResponse(originalProblemStatementText, refinedProblemStatementText);
     }
 
     /**
      * Validates the refined response and returns the appropriate DTO.
      */
     private ProblemStatementRefinementResponseDTO validateAndReturnResponse(String originalProblemStatementText, String refinedProblemStatementText) {
-        if (refinedProblemStatementText != null && refinedProblemStatementText.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
+        if (refinedProblemStatementText.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
             throw new InternalServerErrorAlertException(
                     "Refined problem statement is too long (" + refinedProblemStatementText.length() + " characters). Maximum allowed: " + MAX_PROBLEM_STATEMENT_LENGTH,
                     "ProblemStatement", "ProblemStatementRefinement.refinedProblemStatementTooLong");
         }
 
         // Refinement didn't change content (compare trimmed values to detect semantically unchanged content)
-        String originalTrimmed = originalProblemStatementText == null ? null : originalProblemStatementText.trim();
-        String refinedTrimmed = refinedProblemStatementText == null ? null : refinedProblemStatementText.trim();
-        if (refinedTrimmed != null && refinedTrimmed.equals(originalTrimmed)) {
+        if (refinedProblemStatementText.trim().equals(originalProblemStatementText.trim())) {
             throw new InternalServerErrorAlertException("Problem statement is the same after refinement", "ProblemStatement",
                     "ProblemStatementRefinement.refinedProblemStatementUnchanged");
         }
@@ -186,7 +183,9 @@ public class HyperionProblemStatementRefinementService {
         if (input == null) {
             return "";
         }
-        return CONTROL_CHAR_PATTERN.matcher(input).replaceAll("").trim();
+        String sanitized = CONTROL_CHAR_PATTERN.matcher(input).replaceAll("");
+        sanitized = sanitized.replace("</user_input>", "");
+        return sanitized.trim();
     }
 
     private interface RefinementPromptVariables {

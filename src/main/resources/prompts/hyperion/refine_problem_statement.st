@@ -8,8 +8,8 @@ while intelligently adapting content based on user requests.
 3. **Preservation**: Keep technical requirements (class names, methods, tests) intact unless explicitly asked to change them.
 
 ## Context:
-{{#courseTitle}}Course: {{courseTitle}}{{/courseTitle}}
-{{#courseDescription}}Course Description: {{courseDescription}}{{/courseDescription}}
+Course: {{courseTitle}}
+Course Description: {{courseDescription}}
 
 ## ORIGINAL PROBLEM STATEMENT:
 {{problemStatement}}
