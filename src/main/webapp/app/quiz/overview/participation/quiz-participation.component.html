@@ -302,8 +302,8 @@
                 @if (!quizBatch) {
                     @if (quizExercise.quizMode === QuizMode.BATCHED && (quizExercise.remainingNumberOfAttempts ?? 1) > 0) {
                         <div jhiTranslate="artemisApp.quizExercise.quizInstructions.enterPassword"></div>
-                        <div class="join-batch-row input-group">
-                            <input id="join-patch-password" class="form-control" [(ngModel)]="password" (keyup.enter)="joinBatch()" />
+                        <div class="join-batch-row">
+                            <input id="join-patch-password" [(ngModel)]="password" (keyup.enter)="joinBatch()" />
                             <jhi-button id="join-batch" [title]="'artemisApp.quizExercise.join'" [btnType]="ButtonType.SUCCESS" (onClick)="joinBatch()" />
                         </div>
                     }
