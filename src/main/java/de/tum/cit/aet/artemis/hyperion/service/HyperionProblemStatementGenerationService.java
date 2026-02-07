@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationResponseDTO;
@@ -30,6 +31,11 @@ public class HyperionProblemStatementGenerationService {
      * This prevents excessively long responses that could cause performance issues.
      */
     private static final int MAX_PROBLEM_STATEMENT_LENGTH = 50_000;
+
+    /**
+     * Maximum allowed length for user prompts (1,000 characters).
+     */
+    private static final int MAX_USER_PROMPT_LENGTH = 1_000;
 
     /** Pattern matching control characters except newline (\n), carriage return (\r), and tab (\t). */
     private static final Pattern CONTROL_CHAR_PATTERN = Pattern.compile("[\\p{Cc}&&[^\\n\\r\\t]]");
@@ -76,9 +82,7 @@ public class HyperionProblemStatementGenerationService {
         try {
 
             String sanitizedPrompt = sanitizeUserInput(userPrompt != null ? userPrompt : "Generate a programming exercise problem statement");
-            if (sanitizedPrompt.isBlank()) {
-                throw new InternalServerErrorAlertException("User prompt is empty after sanitization", "ProblemStatement", "ProblemStatementGeneration.generationFailed");
-            }
+            validateUserPrompt(sanitizedPrompt);
             String sanitizedTitle = sanitizeUserInput(course.getTitle());
             if (sanitizedTitle.isBlank()) {
                 sanitizedTitle = "Programming Course";
@@ -102,13 +106,26 @@ public class HyperionProblemStatementGenerationService {
 
             return new ProblemStatementGenerationResponseDTO(generatedProblemStatement);
         }
-        catch (InternalServerErrorAlertException e) {
+        catch (InternalServerErrorAlertException | BadRequestAlertException e) {
             // Re-throw our own exceptions
             throw e;
         }
         catch (Exception e) {
             log.error("Error generating problem statement for course [{}]: {}", course.getId(), e.getMessage(), e);
             throw new InternalServerErrorAlertException("Failed to generate problem statement", "ProblemStatement", "ProblemStatementGeneration.generationFailed");
+        }
+    }
+
+    /**
+     * Validates that the user prompt is not empty and does not exceed the maximum allowed length.
+     */
+    private void validateUserPrompt(String userPrompt) {
+        if (userPrompt == null || userPrompt.isBlank()) {
+            throw new BadRequestAlertException("User prompt cannot be empty", "ProblemStatement", "ProblemStatementGeneration.userPromptEmpty");
+        }
+        if (userPrompt.length() > MAX_USER_PROMPT_LENGTH) {
+            throw new BadRequestAlertException("User prompt exceeds maximum length of " + MAX_USER_PROMPT_LENGTH + " characters", "ProblemStatement",
+                    "ProblemStatementGeneration.userPromptTooLong");
         }
     }
 }

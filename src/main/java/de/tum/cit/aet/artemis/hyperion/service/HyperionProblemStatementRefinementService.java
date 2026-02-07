@@ -36,6 +36,11 @@ public class HyperionProblemStatementRefinementService {
     private static final int MAX_PROBLEM_STATEMENT_LENGTH = 50_000;
 
     /**
+     * Maximum allowed length for user prompts (1,000 characters).
+     */
+    private static final int MAX_USER_PROMPT_LENGTH = 1_000;
+
+    /**
      * Default course title when not specified.
      */
     private static final String DEFAULT_COURSE_TITLE = "Programming Course";
@@ -163,11 +168,15 @@ public class HyperionProblemStatementRefinementService {
     }
 
     /**
-     * Validates that the user prompt is not empty.
+     * Validates that the user prompt is not empty and does not exceed the maximum allowed length.
      */
     private void validateUserPrompt(String userPrompt) {
         if (userPrompt == null || userPrompt.isBlank()) {
             throw new BadRequestAlertException("User prompt cannot be empty", "ProblemStatement", "ProblemStatementRefinement.userPromptEmpty");
+        }
+        if (userPrompt.length() > MAX_USER_PROMPT_LENGTH) {
+            throw new BadRequestAlertException("User prompt exceeds maximum length of " + MAX_USER_PROMPT_LENGTH + " characters", "ProblemStatement",
+                    "ProblemStatementRefinement.userPromptTooLong");
         }
     }
 
