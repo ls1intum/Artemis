@@ -46,24 +46,24 @@ class DeferredEagerBeanInitializerTest {
     }
 
     @Test
-    void testInitializesHazelcastConnectionWhenConfigured() {
+    void testInitializesHazelcastClusterManagerWhenConfigured() {
         // Setup
         when(mockEnv.getProperty("artemis.continuous-integration.data-store", HAZELCAST)).thenReturn(HAZELCAST);
         when(mockBeanFactory.getBeanDefinitionNames()).thenReturn(new String[0]);
 
-        HazelcastConnection mockHazelcast = mock(HazelcastConnection.class);
-        when(mockContext.getBean(HazelcastConnection.class)).thenReturn(mockHazelcast);
+        HazelcastClusterManager mockHazelcast = mock(HazelcastClusterManager.class);
+        when(mockContext.getBean(HazelcastClusterManager.class)).thenReturn(mockHazelcast);
 
         // Execute
         initializer.initializeDeferredEagerBeans();
 
         // Verify
-        verify(mockContext).getBean(HazelcastConnection.class);
+        verify(mockContext).getBean(HazelcastClusterManager.class);
         verify(mockContext).publishEvent(any(DeferredEagerBeanInitializationCompletedEvent.class));
     }
 
     @Test
-    void testSkipsHazelcastConnectionWhenNotConfigured() {
+    void testSkipsHazelcastClusterManagerWhenNotConfigured() {
         // Setup - use a different data store
         when(mockEnv.getProperty("artemis.continuous-integration.data-store", HAZELCAST)).thenReturn("other-datastore");
         when(mockBeanFactory.getBeanDefinitionNames()).thenReturn(new String[0]);
@@ -71,8 +71,8 @@ class DeferredEagerBeanInitializerTest {
         // Execute
         initializer.initializeDeferredEagerBeans();
 
-        // Verify HazelcastConnection was not requested
-        verify(mockContext, never()).getBean(HazelcastConnection.class);
+        // Verify HazelcastClusterManager was not requested
+        verify(mockContext, never()).getBean(HazelcastClusterManager.class);
         verify(mockContext).publishEvent(any(DeferredEagerBeanInitializationCompletedEvent.class));
     }
 
@@ -204,14 +204,14 @@ class DeferredEagerBeanInitializerTest {
         when(mockEnv.getProperty("artemis.continuous-integration.data-store", HAZELCAST)).thenReturn("HAZELCAST");
         when(mockBeanFactory.getBeanDefinitionNames()).thenReturn(new String[0]);
 
-        HazelcastConnection mockHazelcast = mock(HazelcastConnection.class);
-        when(mockContext.getBean(HazelcastConnection.class)).thenReturn(mockHazelcast);
+        HazelcastClusterManager mockHazelcast = mock(HazelcastClusterManager.class);
+        when(mockContext.getBean(HazelcastClusterManager.class)).thenReturn(mockHazelcast);
 
         // Execute
         initializer.initializeDeferredEagerBeans();
 
-        // Verify HazelcastConnection was initialized
-        verify(mockContext).getBean(HazelcastConnection.class);
+        // Verify HazelcastClusterManager was initialized
+        verify(mockContext).getBean(HazelcastClusterManager.class);
     }
 
     @Test
@@ -220,14 +220,14 @@ class DeferredEagerBeanInitializerTest {
         when(mockEnv.getProperty("artemis.continuous-integration.data-store", HAZELCAST)).thenReturn("HaZeLcAsT");
         when(mockBeanFactory.getBeanDefinitionNames()).thenReturn(new String[0]);
 
-        HazelcastConnection mockHazelcast = mock(HazelcastConnection.class);
-        when(mockContext.getBean(HazelcastConnection.class)).thenReturn(mockHazelcast);
+        HazelcastClusterManager mockHazelcast = mock(HazelcastClusterManager.class);
+        when(mockContext.getBean(HazelcastClusterManager.class)).thenReturn(mockHazelcast);
 
         // Execute
         initializer.initializeDeferredEagerBeans();
 
-        // Verify HazelcastConnection was initialized
-        verify(mockContext).getBean(HazelcastConnection.class);
+        // Verify HazelcastClusterManager was initialized
+        verify(mockContext).getBean(HazelcastClusterManager.class);
     }
 
     @Test
