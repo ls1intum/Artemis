@@ -234,7 +234,6 @@
                 "useCurrentValue": "Use current value",
                 "yourValue": "Your value",
                 "incomingValue": "Incoming value",
-                "resolvedValue": "Resolved value",
                 "keepLocal": "Keep my changes",
                 "applySelections": "Apply selections",
                 "fields": {

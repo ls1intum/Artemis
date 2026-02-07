@@ -17,22 +17,8 @@ export class MonacoDiffEditorComponent implements OnDestroy {
     private _editor: monaco.editor.IStandaloneDiffEditor;
     monacoDiffEditorContainerElement: HTMLElement;
 
-    /**
-     * Toggles side-by-side diff view for the Monaco editor.
-     */
     allowSplitView = input<boolean>(true);
-    /**
-     * Forces both editors into read-only mode when enabled.
-     */
-    readOnly = input<boolean>(false);
-    /**
-     * Emits when the diff is ready for display, including line change counts.
-     */
     onReadyForDisplayChange = output<{ ready: boolean; lineChange: LineChange }>();
-    /**
-     * Emits whenever the modified editor content changes.
-     */
-    modifiedContentChange = output<string>();
 
     /*
      * Subscriptions and listeners that need to be disposed of when this component is destroyed.
@@ -58,17 +44,11 @@ export class MonacoDiffEditorComponent implements OnDestroy {
         this.renderer.addClass(this.monacoDiffEditorContainerElement, 'diff-editor-container');
         this.setupDiffListener();
         this.setupContentHeightListeners();
-        this.setupModifiedContentListener();
 
         effect(() => {
             this._editor.updateOptions({
                 renderSideBySide: this.allowSplitView(),
             });
-        });
-        effect(() => {
-            const readOnly = this.readOnly();
-            this._editor.getOriginalEditor().updateOptions({ readOnly });
-            this._editor.getModifiedEditor().updateOptions({ readOnly });
         });
     }
 
@@ -119,17 +99,6 @@ export class MonacoDiffEditorComponent implements OnDestroy {
 
             this.listeners.push(contentSizeListener, hiddenAreaListener);
         });
-    }
-
-    /**
-     * Emits the modified editor content whenever it changes.
-     */
-    setupModifiedContentListener(): void {
-        const modifiedEditor = this._editor.getModifiedEditor();
-        const modifiedListener = modifiedEditor.onDidChangeModelContent(() => {
-            this.modifiedContentChange.emit(modifiedEditor.getValue());
-        });
-        this.listeners.push(modifiedListener);
     }
 
     /**

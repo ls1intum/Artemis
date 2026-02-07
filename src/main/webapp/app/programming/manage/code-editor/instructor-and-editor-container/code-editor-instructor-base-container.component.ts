@@ -22,8 +22,6 @@ import { isExamExercise } from 'app/shared/util/utils';
 import { Subject } from 'rxjs';
 import { debounceTime, shareReplay } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { ExerciseMetadataSyncService } from 'app/exercise/services/exercise-metadata-sync.service';
-import { cloneDeep } from 'lodash-es';
 /**
  * Enumeration specifying the loading state
  */
@@ -48,7 +46,6 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     private location = inject(Location);
     private participationService = inject(ParticipationService);
     private route = inject(ActivatedRoute);
-    private metadataSyncService = inject(ExerciseMetadataSyncService);
     /** Raw markdown changes from the center editor for debounce logic */
     private problemStatementChanges$ = new Subject<string>();
     protected alertService = inject(AlertService);
@@ -66,7 +63,6 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
 
     // Contains all participations (template, solution, assignment)
     exercise: ProgrammingExercise;
-    backupExercise: ProgrammingExercise;
     course: Course;
     // Can only be undefined when the test repository is selected.
     selectedParticipation?: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation;
@@ -113,23 +109,12 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                 .pipe(
                     catchError(() => throwError(() => new Error('exerciseNotFound'))),
                     tap((exercise) => {
-                        if (this.exercise?.id && this.exercise.id !== exercise.id) {
-                            this.metadataSyncService.destroy();
-                        }
                         this.exercise = exercise;
-                        this.backupExercise = cloneDeep(exercise);
                         this.course = exercise.course! ?? exercise.exerciseGroup!.exam!.course!;
                         // Emit initial markdown to drive the preview after loading the exercise
                         if (exercise.problemStatement != undefined) {
                             this.problemStatementChanges$.next(exercise.problemStatement);
                         }
-                        this.metadataSyncService.initialize({
-                            exerciseId: exercise.id!,
-                            exerciseType: ExerciseType.PROGRAMMING,
-                            getCurrentExercise: () => this.exercise,
-                            getBaselineExercise: () => this.backupExercise,
-                            setBaselineExercise: (updated) => (this.backupExercise = updated),
-                        });
                     }),
                     // Set selected participation
                     tap(() => {
@@ -192,7 +177,6 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
-        this.metadataSyncService.destroy();
     }
 
     /**

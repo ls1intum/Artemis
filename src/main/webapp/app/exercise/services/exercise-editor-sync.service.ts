@@ -82,6 +82,7 @@ export interface ExerciseNewVersionAlertEvent {
     author: UserPublicInfoDTO;
     changedFields?: string[];
     sessionId?: string;
+    timestamp?: number;
 }
 
 /**

@@ -59,25 +59,9 @@
         margin-bottom: 0.35rem;
     }
 
-    .conflict-diff {
-        margin-top: 0.75rem;
-        border: 1px solid var(--border-color);
-        border-radius: 0.5rem;
-        padding: 0.75rem;
-        background: var(--bs-body-bg);
-    }
-
-    .resolved-actions {
-        display: flex;
-        gap: 0.5rem;
-        margin-top: 0.5rem;
-        flex-wrap: wrap;
-    }
-
     .conflict-build-config,
     .conflict-categories,
-    .conflict-competencies,
-    .conflict-quiz {
+    .conflict-competencies {
         margin-top: 0.75rem;
         border: 1px solid var(--border-color);
         border-radius: 0.5rem;
@@ -111,19 +95,8 @@
     .category-list,
     .competency-list {
         display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .category-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-        padding: 0.2rem 0.6rem;
-        border-radius: 999px;
-        background: var(--bs-secondary-bg);
-        font-size: 0.85rem;
-        width: fit-content;
+        flex-wrap: wrap;
+        gap: 0.35rem 0.5rem;
     }
 
     .competency-item {
@@ -138,65 +111,5 @@
 
     .competency-title {
         font-weight: 600;
-    }
-
-    .quiz-card {
-        border: 1px solid var(--border-color);
-        border-radius: 0.5rem;
-        padding: 0.75rem;
-        background: var(--bs-body-bg);
-    }
-
-    .quiz-card + .quiz-card {
-        margin-top: 0.75rem;
-    }
-
-    .quiz-card-header {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        gap: 0.5rem;
-        margin-bottom: 0.5rem;
-    }
-
-    .quiz-card-title {
-        font-weight: 600;
-    }
-
-    .quiz-card-type {
-        font-size: 0.85rem;
-        color: var(--bs-secondary-color);
-    }
-
-    .quiz-card-grid {
-        display: grid;
-        grid-template-columns: minmax(180px, 1fr) 1fr 1fr;
-        gap: 0.4rem 0.75rem;
-    }
-
-    .quiz-card-labels {
-        font-size: 0.8rem;
-        color: var(--bs-secondary-color);
-        grid-column: span 1;
-    }
-
-    .quiz-field-label {
-        font-weight: 600;
-        font-size: 0.85rem;
-    }
-
-    .quiz-field-value {
-        font-size: 0.85rem;
-        word-break: break-word;
-    }
-
-    .quiz-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.15rem;
-    }
-
-    .quiz-list-item {
-        font-size: 0.85rem;
     }
 }

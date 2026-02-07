@@ -10,7 +10,7 @@ import { FileUploadExerciseService } from '../services/file-upload-exercise.serv
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { Exercise, ExerciseMode, ExerciseType, IncludedInOverallScore, getCourseId, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseMode, IncludedInOverallScore, getCourseId, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
@@ -40,7 +40,6 @@ import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
-import { ExerciseMetadataSyncService } from 'app/exercise/services/exercise-metadata-sync.service';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -80,7 +79,6 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
     private readonly exerciseGroupService = inject(ExerciseGroupService);
     private readonly calendarService = inject(CalendarService);
     private readonly destroyRef = inject(DestroyRef);
-    private readonly metadataSyncService = inject(ExerciseMetadataSyncService);
 
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -167,28 +165,6 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
                 this.loadExistingCategories(courseId);
             }
         });
-
-        effect(() => {
-            const exercise = this.fileUploadExercise();
-            const segments = this.routeUrl();
-            if (!exercise?.id || !segments) {
-                return;
-            }
-            const isImport = segments.some((segment) => segment.path === 'import');
-            if (isImport) {
-                this.metadataSyncService.destroy();
-                return;
-            }
-            this.metadataSyncService.initialize({
-                exerciseId: exercise.id,
-                exerciseType: exercise.type ?? ExerciseType.FILE_UPLOAD,
-                getCurrentExercise: () => this.fileUploadExercise(),
-                getBaselineExercise: () => this.backupExercise(),
-                setBaselineExercise: (updated) => this.backupExercise.set(updated),
-            });
-        });
-
-        this.destroyRef.onDestroy(() => this.metadataSyncService.destroy());
     }
 
     /**

@@ -323,10 +323,6 @@ export class ExerciseMetadataSyncService {
             if (!handler) {
                 continue;
             }
-            if (decision.resolvedValue !== undefined) {
-                handler.applyValue(currentExercise, decision.resolvedValue);
-                continue;
-            }
             if (!decision.useIncoming) {
                 continue;
             }

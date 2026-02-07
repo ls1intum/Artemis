@@ -398,30 +398,4 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         assertThat(payload.changedFields()).contains("channelName");
     }
 
-    /**
-     * Ensures metadata alerts are broadcast for non-programming exercises.
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testMetadataSynchronizationBroadcastForNonProgrammingExercise() {
-        TextExercise exercise = createTextExercise();
-        exerciseVersionService.createExerciseVersion(exercise);
-        reset(websocketMessagingService);
-
-        exercise.setExampleSolution("Updated solution");
-        textExerciseRepository.saveAndFlush(exercise);
-
-        exerciseVersionService.createExerciseVersion(exercise);
-
-        // Metadata synchronization should be broadcast for non-programming exercises
-        var captor = ArgumentCaptor.forClass(ExerciseNewVersionAlertDTO.class);
-        verify(websocketMessagingService, times(1)).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
-        var payload = captor.getValue();
-        assertThat(payload.exerciseVersionId()).isNotNull();
-        assertThat(payload.eventType()).isEqualTo(ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT);
-        assertThat(payload.target()).isEqualTo(ExerciseEditorSyncTarget.EXERCISE_METADATA);
-        assertThat(payload.author()).isNotNull();
-        assertThat(payload.changedFields()).contains("textData.exampleSolution");
-    }
-
 }

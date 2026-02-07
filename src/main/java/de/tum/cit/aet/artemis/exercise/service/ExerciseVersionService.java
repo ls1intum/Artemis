@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -25,11 +26,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.domain.synchronization.ExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
-import de.tum.cit.aet.artemis.exercise.dto.versioning.FileUploadExerciseSnapshotDTO;
-import de.tum.cit.aet.artemis.exercise.dto.versioning.ModelingExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
-import de.tum.cit.aet.artemis.exercise.dto.versioning.QuizExerciseSnapshotDTO;
-import de.tum.cit.aet.artemis.exercise.dto.versioning.TextExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadApi;
 import de.tum.cit.aet.artemis.modeling.api.ModelingRepositoryApi;
@@ -261,39 +258,34 @@ public class ExerciseVersionService {
      */
     private Set<String> collectChangedFields(ExerciseSnapshotDTO newSnapshot, ExerciseSnapshotDTO previousSnapshot) {
         Set<String> changedFields = new HashSet<>();
-        addIfChanged(changedFields, "title", newSnapshot.title(), previousSnapshot.title());
-        addIfChanged(changedFields, "shortName", newSnapshot.shortName(), previousSnapshot.shortName());
-        addIfChanged(changedFields, "channelName", newSnapshot.channelName(), previousSnapshot.channelName());
-        addIfChanged(changedFields, "competencyLinks", newSnapshot.competencyLinks(), previousSnapshot.competencyLinks());
-        addIfChanged(changedFields, "maxPoints", newSnapshot.maxPoints(), previousSnapshot.maxPoints());
-        addIfChanged(changedFields, "bonusPoints", newSnapshot.bonusPoints(), previousSnapshot.bonusPoints());
-        addIfChanged(changedFields, "assessmentType", newSnapshot.assessmentType(), previousSnapshot.assessmentType());
-        addIfChanged(changedFields, "releaseDate", newSnapshot.releaseDate(), previousSnapshot.releaseDate());
-        addIfChanged(changedFields, "startDate", newSnapshot.startDate(), previousSnapshot.startDate());
-        addIfChanged(changedFields, "dueDate", newSnapshot.dueDate(), previousSnapshot.dueDate());
-        addIfChanged(changedFields, "assessmentDueDate", newSnapshot.assessmentDueDate(), previousSnapshot.assessmentDueDate());
-        addIfChanged(changedFields, "exampleSolutionPublicationDate", newSnapshot.exampleSolutionPublicationDate(), previousSnapshot.exampleSolutionPublicationDate());
-        addIfChanged(changedFields, "difficulty", newSnapshot.difficulty(), previousSnapshot.difficulty());
-        addIfChanged(changedFields, "mode", newSnapshot.mode(), previousSnapshot.mode());
-        addIfChanged(changedFields, "allowComplaintsForAutomaticAssessments", newSnapshot.allowComplaintsForAutomaticAssessments(),
-                previousSnapshot.allowComplaintsForAutomaticAssessments());
-        addIfChanged(changedFields, "allowFeedbackRequests", newSnapshot.allowFeedbackRequests(), previousSnapshot.allowFeedbackRequests());
-        addIfChanged(changedFields, "includedInOverallScore", newSnapshot.includedInOverallScore(), previousSnapshot.includedInOverallScore());
-        addIfChanged(changedFields, "problemStatement", newSnapshot.problemStatement(), previousSnapshot.problemStatement());
-        addIfChanged(changedFields, "gradingInstructions", newSnapshot.gradingInstructions(), previousSnapshot.gradingInstructions());
-        addIfChanged(changedFields, "categories", newSnapshot.categories(), previousSnapshot.categories());
-        addIfChanged(changedFields, "teamAssignmentConfig", newSnapshot.teamAssignmentConfig(), previousSnapshot.teamAssignmentConfig());
-        addIfChanged(changedFields, "presentationScoreEnabled", newSnapshot.presentationScoreEnabled(), previousSnapshot.presentationScoreEnabled());
-        addIfChanged(changedFields, "secondCorrectionEnabled", newSnapshot.secondCorrectionEnabled(), previousSnapshot.secondCorrectionEnabled());
-        addIfChanged(changedFields, "feedbackSuggestionModule", newSnapshot.feedbackSuggestionModule(), previousSnapshot.feedbackSuggestionModule());
-        addIfChanged(changedFields, "gradingCriteria", newSnapshot.gradingCriteria(), previousSnapshot.gradingCriteria());
-        addIfChanged(changedFields, "plagiarismDetectionConfig", newSnapshot.plagiarismDetectionConfig(), previousSnapshot.plagiarismDetectionConfig());
+        addIfChanged(changedFields, "title", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::title);
+        addIfChanged(changedFields, "shortName", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::shortName);
+        addIfChanged(changedFields, "channelName", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::channelName);
+        addIfChanged(changedFields, "competencyLinks", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::competencyLinks);
+        addIfChanged(changedFields, "maxPoints", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::maxPoints);
+        addIfChanged(changedFields, "bonusPoints", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::bonusPoints);
+        addIfChanged(changedFields, "assessmentType", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::assessmentType);
+        addIfChanged(changedFields, "releaseDate", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::releaseDate);
+        addIfChanged(changedFields, "startDate", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::startDate);
+        addIfChanged(changedFields, "dueDate", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::dueDate);
+        addIfChanged(changedFields, "assessmentDueDate", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::assessmentDueDate);
+        addIfChanged(changedFields, "exampleSolutionPublicationDate", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::exampleSolutionPublicationDate);
+        addIfChanged(changedFields, "difficulty", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::difficulty);
+        addIfChanged(changedFields, "mode", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::mode);
+        addIfChanged(changedFields, "allowComplaintsForAutomaticAssessments", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::allowComplaintsForAutomaticAssessments);
+        addIfChanged(changedFields, "allowFeedbackRequests", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::allowFeedbackRequests);
+        addIfChanged(changedFields, "includedInOverallScore", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::includedInOverallScore);
+        addIfChanged(changedFields, "problemStatement", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::problemStatement);
+        addIfChanged(changedFields, "gradingInstructions", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::gradingInstructions);
+        addIfChanged(changedFields, "categories", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::categories);
+        addIfChanged(changedFields, "teamAssignmentConfig", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::teamAssignmentConfig);
+        addIfChanged(changedFields, "presentationScoreEnabled", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::presentationScoreEnabled);
+        addIfChanged(changedFields, "secondCorrectionEnabled", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::secondCorrectionEnabled);
+        addIfChanged(changedFields, "feedbackSuggestionModule", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::feedbackSuggestionModule);
+        addIfChanged(changedFields, "gradingCriteria", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::gradingCriteria);
+        addIfChanged(changedFields, "plagiarismDetectionConfig", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::plagiarismDetectionConfig);
 
         collectProgrammingChanges(changedFields, newSnapshot.programmingData(), previousSnapshot.programmingData());
-        collectTextChanges(changedFields, newSnapshot.textData(), previousSnapshot.textData());
-        collectModelingChanges(changedFields, newSnapshot.modelingData(), previousSnapshot.modelingData());
-        collectQuizChanges(changedFields, newSnapshot.quizData(), previousSnapshot.quizData());
-        collectFileUploadChanges(changedFields, newSnapshot.fileUploadData(), previousSnapshot.fileUploadData());
 
         return changedFields;
     }
@@ -315,97 +307,15 @@ public class ExerciseVersionService {
         }
         // Note: repository URLs, auxiliary repositories, submission policy, programming language, project type, package name,
         // static code analysis enablement, and project keys are not editable on the exercise edit page.
-        // Sequential test runs are configured elsewhere and are excluded from conflict detection.
-        addIfChanged(changedFields, "programmingData.allowOnlineEditor", newData.allowOnlineEditor(), previousData.allowOnlineEditor());
-        addIfChanged(changedFields, "programmingData.allowOfflineIde", newData.allowOfflineIde(), previousData.allowOfflineIde());
-        addIfChanged(changedFields, "programmingData.allowOnlineIde", newData.allowOnlineIde(), previousData.allowOnlineIde());
-        addIfChanged(changedFields, "programmingData.maxStaticCodeAnalysisPenalty", newData.maxStaticCodeAnalysisPenalty(), previousData.maxStaticCodeAnalysisPenalty());
-        addIfChanged(changedFields, "programmingData.showTestNamesToStudents", newData.showTestNamesToStudents(), previousData.showTestNamesToStudents());
-        addIfChanged(changedFields, "programmingData.buildAndTestStudentSubmissionsAfterDueDate", newData.buildAndTestStudentSubmissionsAfterDueDate(),
-                previousData.buildAndTestStudentSubmissionsAfterDueDate());
-        addIfChanged(changedFields, "programmingData.releaseTestsWithExampleSolution", newData.releaseTestsWithExampleSolution(), previousData.releaseTestsWithExampleSolution());
-        if (buildConfigChangedIgnoringSequentialTestRuns(newData.buildConfig(), previousData.buildConfig())) {
-            changedFields.add("programmingData.buildConfig");
-        }
-    }
-
-    /**
-     * Collects changed fields for text exercise snapshot data.
-     *
-     * @param changedFields the set to update with changed fields
-     * @param newData       the new text snapshot data
-     * @param previousData  the previous text snapshot data
-     */
-    private void collectTextChanges(Set<String> changedFields, TextExerciseSnapshotDTO newData, TextExerciseSnapshotDTO previousData) {
-        if (newData == null && previousData == null) {
-            return;
-        }
-        if (newData == null || previousData == null) {
-            changedFields.add("textData");
-            return;
-        }
-        addIfChanged(changedFields, "textData.exampleSolution", newData.exampleSolution(), previousData.exampleSolution());
-    }
-
-    /**
-     * Collects changed fields for modeling exercise snapshot data.
-     *
-     * @param changedFields the set to update with changed fields
-     * @param newData       the new modeling snapshot data
-     * @param previousData  the previous modeling snapshot data
-     */
-    private void collectModelingChanges(Set<String> changedFields, ModelingExerciseSnapshotDTO newData, ModelingExerciseSnapshotDTO previousData) {
-        if (newData == null && previousData == null) {
-            return;
-        }
-        if (newData == null || previousData == null) {
-            changedFields.add("modelingData");
-            return;
-        }
-        addIfChanged(changedFields, "modelingData.diagramType", newData.diagramType(), previousData.diagramType());
-        addIfChanged(changedFields, "modelingData.exampleSolutionModel", newData.exampleSolutionModel(), previousData.exampleSolutionModel());
-        addIfChanged(changedFields, "modelingData.exampleSolutionExplanation", newData.exampleSolutionExplanation(), previousData.exampleSolutionExplanation());
-    }
-
-    /**
-     * Collects changed fields for quiz exercise snapshot data.
-     *
-     * @param changedFields the set to update with changed fields
-     * @param newData       the new quiz snapshot data
-     * @param previousData  the previous quiz snapshot data
-     */
-    private void collectQuizChanges(Set<String> changedFields, QuizExerciseSnapshotDTO newData, QuizExerciseSnapshotDTO previousData) {
-        if (newData == null && previousData == null) {
-            return;
-        }
-        if (newData == null || previousData == null) {
-            changedFields.add("quizData");
-            return;
-        }
-        addIfChanged(changedFields, "quizData.randomizeQuestionOrder", newData.randomizeQuestionOrder(), previousData.randomizeQuestionOrder());
-        addIfChanged(changedFields, "quizData.allowedNumberOfAttempts", newData.allowedNumberOfAttempts(), previousData.allowedNumberOfAttempts());
-        addIfChanged(changedFields, "quizData.quizMode", newData.quizMode(), previousData.quizMode());
-        addIfChanged(changedFields, "quizData.duration", newData.duration(), previousData.duration());
-        addIfChanged(changedFields, "quizData.quizQuestions", newData.quizQuestions(), previousData.quizQuestions());
-    }
-
-    /**
-     * Collects changed fields for file upload exercise snapshot data.
-     *
-     * @param changedFields the set to update with changed fields
-     * @param newData       the new file upload snapshot data
-     * @param previousData  the previous file upload snapshot data
-     */
-    private void collectFileUploadChanges(Set<String> changedFields, FileUploadExerciseSnapshotDTO newData, FileUploadExerciseSnapshotDTO previousData) {
-        if (newData == null && previousData == null) {
-            return;
-        }
-        if (newData == null || previousData == null) {
-            changedFields.add("fileUploadData");
-            return;
-        }
-        addIfChanged(changedFields, "fileUploadData.exampleSolution", newData.exampleSolution(), previousData.exampleSolution());
-        addIfChanged(changedFields, "fileUploadData.filePattern", newData.filePattern(), previousData.filePattern());
+        addIfChanged(changedFields, "programmingData.allowOnlineEditor", newData, previousData, ProgrammingExerciseSnapshotDTO::allowOnlineEditor);
+        addIfChanged(changedFields, "programmingData.allowOfflineIde", newData, previousData, ProgrammingExerciseSnapshotDTO::allowOfflineIde);
+        addIfChanged(changedFields, "programmingData.allowOnlineIde", newData, previousData, ProgrammingExerciseSnapshotDTO::allowOnlineIde);
+        addIfChanged(changedFields, "programmingData.maxStaticCodeAnalysisPenalty", newData, previousData, ProgrammingExerciseSnapshotDTO::maxStaticCodeAnalysisPenalty);
+        addIfChanged(changedFields, "programmingData.showTestNamesToStudents", newData, previousData, ProgrammingExerciseSnapshotDTO::showTestNamesToStudents);
+        addIfChanged(changedFields, "programmingData.buildAndTestStudentSubmissionsAfterDueDate", newData, previousData,
+                ProgrammingExerciseSnapshotDTO::buildAndTestStudentSubmissionsAfterDueDate);
+        addIfChanged(changedFields, "programmingData.releaseTestsWithExampleSolution", newData, previousData, ProgrammingExerciseSnapshotDTO::releaseTestsWithExampleSolution);
+        addIfChanged(changedFields, "programmingData.buildConfig", newData, previousData, ProgrammingExerciseSnapshotDTO::buildConfig);
     }
 
     /**
@@ -416,36 +326,10 @@ public class ExerciseVersionService {
      * @param newValue      the new value
      * @param previousValue the previous value
      */
-    private void addIfChanged(Set<String> changedFields, String field, Object newValue, Object previousValue) {
-        if (!Objects.equals(newValue, previousValue)) {
+    private <T, V> void addIfChanged(Set<String> changedFields, String field, T newSnapshot, T previousSnapshot, Function<T, V> fieldAccessor) {
+        if (!Objects.equals(fieldAccessor.apply(newSnapshot), fieldAccessor.apply(previousSnapshot))) {
             changedFields.add(field);
         }
-    }
-
-    /**
-     * Compares build configuration fields while ignoring sequential test runs.
-     *
-     * @param newConfig      the new build config snapshot
-     * @param previousConfig the previous build config snapshot
-     * @return true if any relevant build config attribute changed
-     */
-    private boolean buildConfigChangedIgnoringSequentialTestRuns(ProgrammingExerciseSnapshotDTO.ProgrammingExerciseBuildConfigSnapshotDTO newConfig,
-            ProgrammingExerciseSnapshotDTO.ProgrammingExerciseBuildConfigSnapshotDTO previousConfig) {
-        if (newConfig == null && previousConfig == null) {
-            return false;
-        }
-        if (newConfig == null || previousConfig == null) {
-            return true;
-        }
-        return !Objects.equals(newConfig.branch(), previousConfig.branch()) || !Objects.equals(newConfig.buildPlanConfiguration(), previousConfig.buildPlanConfiguration())
-                || !Objects.equals(newConfig.buildScript(), previousConfig.buildScript())
-                || !Objects.equals(newConfig.checkoutSolutionRepository(), previousConfig.checkoutSolutionRepository())
-                || !Objects.equals(newConfig.testCheckoutPath(), previousConfig.testCheckoutPath())
-                || !Objects.equals(newConfig.assignmentCheckoutPath(), previousConfig.assignmentCheckoutPath())
-                || !Objects.equals(newConfig.solutionCheckoutPath(), previousConfig.solutionCheckoutPath())
-                || !Objects.equals(newConfig.timeoutSeconds(), previousConfig.timeoutSeconds()) || !Objects.equals(newConfig.dockerFlags(), previousConfig.dockerFlags())
-                || !Objects.equals(newConfig.theiaImage(), previousConfig.theiaImage()) || !Objects.equals(newConfig.allowBranching(), previousConfig.allowBranching())
-                || !Objects.equals(newConfig.branchRegex(), previousConfig.branchRegex());
     }
 
     /**

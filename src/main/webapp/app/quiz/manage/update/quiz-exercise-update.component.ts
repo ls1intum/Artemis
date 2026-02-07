@@ -1,16 +1,4 @@
-import {
-    ChangeDetectionStrategy,
-    ChangeDetectorRef,
-    Component,
-    HostListener,
-    OnChanges,
-    OnDestroy,
-    OnInit,
-    SimpleChanges,
-    ViewEncapsulation,
-    inject,
-    viewChild,
-} from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnChanges, OnInit, SimpleChanges, ViewEncapsulation, inject, viewChild } from '@angular/core';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
@@ -27,7 +15,7 @@ import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
-import { Exercise, ExerciseType, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -59,7 +47,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
-import { ExerciseMetadataSyncService } from 'app/exercise/services/exercise-metadata-sync.service';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -88,7 +75,7 @@ import { ExerciseMetadataSyncService } from 'app/exercise/services/exercise-meta
         ArtemisTranslatePipe,
     ],
 })
-export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, ComponentCanDeactivate, OnDestroy {
+export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, ComponentCanDeactivate {
     private route = inject(ActivatedRoute);
     private courseService = inject(CourseManagementService);
     private quizExerciseService = inject(QuizExerciseService);
@@ -101,7 +88,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private modalService = inject(NgbModal);
     private calendarService = inject(CalendarService);
-    private metadataSyncService = inject(ExerciseMetadataSyncService);
 
     readonly quizQuestionListEditComponent = viewChild.required<QuizQuestionListEditComponent>('quizQuestionsEdit');
 
@@ -298,21 +284,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         // Assign savedEntity to identify local changes
         this.savedEntity = this.quizExercise.id && !this.isImport ? cloneDeep(this.quizExercise) : new QuizExercise(undefined, undefined);
 
-        this.setupMetadataSync();
         this.cacheValidation();
-    }
-
-    private setupMetadataSync(): void {
-        if (!this.quizExercise?.id || this.isImport) {
-            return;
-        }
-        this.metadataSyncService.initialize({
-            exerciseId: this.quizExercise.id,
-            exerciseType: this.quizExercise.type ?? ExerciseType.QUIZ,
-            getCurrentExercise: () => this.quizExercise,
-            getBaselineExercise: () => this.savedEntity,
-            setBaselineExercise: (exercise) => (this.savedEntity = exercise),
-        });
     }
 
     /**
@@ -648,10 +620,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         if (this.duration.seconds !== undefined) {
             this.duration.seconds = duration.seconds();
         }
-    }
-
-    ngOnDestroy(): void {
-        this.metadataSyncService.destroy();
     }
 
     /**
