@@ -469,11 +469,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     }
                     this.refinementPrompt.set('');
                 } else {
-                    this.alertService.error('artemisApp.programmingExercise.problemStatement.generationFailed');
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
                 }
             },
             error: () => {
-                this.alertService.error('artemisApp.programmingExercise.problemStatement.generationFailed');
+                this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
                 this.refinementPrompt.set('');
                 this.showRefinementPrompt.set(false);
             },
@@ -499,12 +499,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         afterNextRender(() => this.editableInstructions?.applyRefinedContent(refinedContent), { injector: this.injector });
                         this.refinementPrompt.set('');
                     } else {
-                        this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementFailed');
+                        this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
                         this.refinementPrompt.set('');
                     }
                 },
                 error: () => {
-                    this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementFailed');
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
                     this.refinementPrompt.set('');
                     this.showRefinementPrompt.set(false);
                 },

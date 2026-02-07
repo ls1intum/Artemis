@@ -144,7 +144,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.userPrompt.set('Test prompt');
         comp.generateProblemStatement();
 
-        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.generationFailed');
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.generationError');
         expect(comp.isGeneratingOrRefining()).toBeFalse();
     }));
 
@@ -158,7 +158,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.userPrompt.set('Test prompt');
         comp.generateProblemStatement();
 
-        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.generationFailed');
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.generationError');
     }));
 
     it('should refine problem statement successfully', fakeAsync(() => {
@@ -321,7 +321,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.userPrompt.set('Improve clarity');
         comp.refineProblemStatement();
 
-        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementFailed');
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementError');
     }));
 
     it('should handle refinement error', fakeAsync(() => {
@@ -335,7 +335,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.userPrompt.set('Improve clarity');
         comp.refineProblemStatement();
 
-        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementFailed');
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementError');
         expect(comp.isGeneratingOrRefining()).toBeFalse();
     }));
 
