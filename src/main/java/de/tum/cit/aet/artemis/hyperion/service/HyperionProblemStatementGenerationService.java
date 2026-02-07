@@ -96,8 +96,12 @@ public class HyperionProblemStatementGenerationService {
             String prompt = templateService.render("/prompts/hyperion/generate_draft_problem_statement.st", templateVariables);
             String generatedProblemStatement = chatClient.prompt().user(prompt).call().content();
 
+            if (generatedProblemStatement == null) {
+                throw new InternalServerErrorAlertException("Generated problem statement is null", "ProblemStatement", "ProblemStatementGeneration.generationFailed");
+            }
+
             // Validate response length
-            if (generatedProblemStatement != null && generatedProblemStatement.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
+            if (generatedProblemStatement.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
                 log.warn("Generated problem statement for course [{}] exceeds maximum length: {} characters", course.getId(), generatedProblemStatement.length());
                 throw new InternalServerErrorAlertException(
                         "Generated problem statement is too long (" + generatedProblemStatement.length() + " characters). Maximum allowed: " + MAX_PROBLEM_STATEMENT_LENGTH,

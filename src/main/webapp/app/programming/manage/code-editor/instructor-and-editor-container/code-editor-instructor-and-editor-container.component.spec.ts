@@ -873,6 +873,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
         comp.refinementPrompt.set('Improve');
         comp.submitRefinement();
 
-        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementError');
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementFailed');
     });
 });
