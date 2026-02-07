@@ -19,6 +19,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import de.tum.cit.aet.artemis.core.config.weaviate.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.core.exception.ConflictingPasskeyConfigurationException;
 import de.tum.cit.aet.artemis.core.exception.InvalidAdminConfigurationException;
 import de.tum.cit.aet.artemis.core.exception.WeaviateConfigurationException;
@@ -74,8 +75,10 @@ public class ConfigurationValidator {
             @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures,
             @Value("${artemis.user-management.internal-admin.username:#{null}}") String internalAdminUsername,
             @Value("${artemis.user-management.internal-admin.password:#{null}}") String internalAdminPassword, @Value("${artemis.weaviate.enabled:false}") boolean weaviateEnabled,
-            @Value("${artemis.weaviate.http-host:#{null}}") String weaviateHost, @Value("${artemis.weaviate.http-port:8001}") int weaviatePort,
-            @Value("${artemis.weaviate.grpc-port:50051}") int weaviateGrpcPort, @Value("${artemis.weaviate.scheme:#{null}}") String weaviateScheme) {
+            @Value("${artemis.weaviate.http-host:#{null}}") String weaviateHost,
+            @Value("${artemis.weaviate.http-port:" + WeaviateConfigurationProperties.DEFAULT_HTTP_PORT + "}") int weaviatePort,
+            @Value("${artemis.weaviate.grpc-port:" + WeaviateConfigurationProperties.DEFAULT_GRPC_PORT + "}") int weaviateGrpcPort,
+            @Value("${artemis.weaviate.scheme:#{null}}") String weaviateScheme) {
         this.environment = environment;
         this.artemisConfigHelper = new ArtemisConfigHelper();
         this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
