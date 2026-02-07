@@ -630,8 +630,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
         const location = issue.relatedLocations[index];
-
-        const location = issue.relatedLocations[this.locationIndex];
         const targetType = (() => {
             switch (location.type) {
                 case 'TEMPLATE_REPOSITORY':
