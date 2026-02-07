@@ -128,8 +128,8 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
         this.applyFilter();
     }
 
-    fetchExerciseDeletionSummary(exerciseId: number): Observable<EntitySummary> {
-        return this.exerciseService.getDeletionSummary(exerciseId);
+    fetchExerciseDeletionSummary(exercise: FileUploadExercise): Observable<EntitySummary> {
+        return this.exerciseService.getDeletionSummary(exercise);
     }
 
     /**

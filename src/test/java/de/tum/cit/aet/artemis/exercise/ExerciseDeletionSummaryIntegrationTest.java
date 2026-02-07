@@ -157,7 +157,7 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
 
         assertThat(summary.numberOfStudentParticipations()).isEqualTo(2);
         assertThat(summary.numberOfBuilds()).isEqualTo(2);
-        assertThat(summary.numberOfAssessments()).isNull();
+        assertThat(summary.numberOfAssessments()).isEqualTo(0);
         assertThat(summary.numberOfCommunicationPosts()).isEqualTo(2);
         assertThat(summary.numberOfAnswerPosts()).isEqualTo(1);
     }
@@ -186,7 +186,7 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
         var summary = request.get("/api/exercise/exercises/" + textExercise.getId() + "/deletion-summary", HttpStatus.OK, ExerciseDeletionSummaryDTO.class);
 
         assertThat(summary.numberOfStudentParticipations()).isEqualTo(2);
-        assertThat(summary.numberOfBuilds()).isNull();
+        assertThat(summary.numberOfBuilds()).isEqualTo(0);
         assertThat(summary.numberOfAssessments()).isEqualTo(1);
         assertThat(summary.numberOfCommunicationPosts()).isEqualTo(0);
         assertThat(summary.numberOfAnswerPosts()).isEqualTo(0);
@@ -215,7 +215,7 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
 
         assertThat(summary.numberOfStudentParticipations()).isEqualTo(2);
         assertThat(summary.numberOfAssessments()).isEqualTo(1);
-        assertThat(summary.numberOfBuilds()).isNull();
+        assertThat(summary.numberOfBuilds()).isEqualTo(0);
     }
 
     @Test
@@ -243,7 +243,7 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
 
         assertThat(summary.numberOfStudentParticipations()).isEqualTo(2);
         assertThat(summary.numberOfAssessments()).isEqualTo(1);
-        assertThat(summary.numberOfBuilds()).isNull();
+        assertThat(summary.numberOfBuilds()).isEqualTo(0);
     }
 
     @Test
@@ -260,8 +260,8 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
 
         summary = request.get("/api/exercise/exercises/" + quizExercise2.getId() + "/deletion-summary", HttpStatus.OK, ExerciseDeletionSummaryDTO.class);
         assertThat(summary.numberOfStudentParticipations()).isEqualTo(1);
-        assertThat(summary.numberOfAssessments()).isNull();
-        assertThat(summary.numberOfBuilds()).isNull();
+        assertThat(summary.numberOfAssessments()).isEqualTo(0);
+        assertThat(summary.numberOfBuilds()).isEqualTo(0);
     }
 
     @Test

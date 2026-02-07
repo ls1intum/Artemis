@@ -175,8 +175,8 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
         });
     }
 
-    fetchExerciseDeletionSummary(exerciseId: number): Observable<EntitySummary> {
-        return this.exerciseService.getDeletionSummary(exerciseId);
+    fetchExerciseDeletionSummary(): Observable<EntitySummary> {
+        return this.exerciseService.getDeletionSummary(this.exercise);
     }
 
     /**

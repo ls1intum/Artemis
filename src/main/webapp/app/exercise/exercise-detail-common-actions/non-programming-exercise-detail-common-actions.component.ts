@@ -153,7 +153,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
         }
     }
 
-    fetchExerciseDeletionSummary(exerciseId: number): Observable<EntitySummary> {
-        return this.exerciseService.getDeletionSummary(exerciseId);
+    fetchExerciseDeletionSummary(): Observable<EntitySummary> {
+        return this.exerciseService.getDeletionSummary(this.exercise());
     }
 }

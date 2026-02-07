@@ -74,17 +74,17 @@
             </jhi-feature-overlay>
         }
         <!-- Delete exercise -->
-        @if (course && exercise.isAtLeastInstructor) {
+        @if (course() && exercise.isAtLeastInstructor) {
             <button
                 jhiDeleteButton
                 [entityTitle]="exercise.title || ''"
                 deleteQuestion="artemisApp.exercise.delete.question"
                 deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                 entitySummaryTitle="artemisApp.exercise.delete.summary.title"
-                [fetchEntitySummary]="fetchExerciseDeletionSummary(exercise.id!)"
+                [fetchEntitySummary]="fetchExerciseDeletionSummary()"
                 [translateValues]="{
-                    courseTitle: course.title,
-                    courseType: course.testCourse ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate) : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
+                    courseTitle: course().title,
+                    courseType: course().testCourse ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate) : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
                 }"
                 (delete)="deleteExercise()"
                 [dialogError]="dialogError$"

@@ -124,10 +124,10 @@ export class ModelingExerciseComponent extends ExerciseComponent {
 
     /**
      * Fetches the deletion summary for a modeling exercise.
-     * @param exerciseId the id of the exercise
+     * @param exercise the exercise
      */
-    fetchExerciseDeletionSummary(exerciseId: number): Observable<EntitySummary> {
-        return this.exerciseService.getDeletionSummary(exerciseId);
+    fetchExerciseDeletionSummary(exercise: ModelingExercise): Observable<EntitySummary> {
+        return this.exerciseService.getDeletionSummary(exercise);
     }
 
     /**

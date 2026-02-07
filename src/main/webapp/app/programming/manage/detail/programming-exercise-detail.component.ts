@@ -799,7 +799,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     fetchExerciseDeletionSummary(): Observable<EntitySummary> {
-        return this.exerciseService.getDeletionSummary(this.programmingExercise.id!);
+        return this.exerciseService.getDeletionSummary(this.programmingExercise);
     }
 
     /**

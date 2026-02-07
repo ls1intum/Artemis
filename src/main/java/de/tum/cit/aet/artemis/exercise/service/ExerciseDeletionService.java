@@ -127,10 +127,10 @@ public class ExerciseDeletionService {
         final long numberOfStudentParticipations = studentParticipationRepository.countByExerciseId(exerciseId);
 
         final boolean hasBuilds = exercise instanceof ProgrammingExercise;
-        final Long numberOfBuilds = hasBuilds ? buildJobRepository.countBuildJobsByExerciseIds(Set.of(exerciseId)) : null;
+        final long numberOfBuilds = hasBuilds ? buildJobRepository.countBuildJobsByExerciseIds(Set.of(exerciseId)) : 0;
 
         final boolean hasAssessments = !(exercise instanceof QuizExercise);
-        final Long numberOfAssessments = hasAssessments ? resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId) : null;
+        final long numberOfAssessments = hasAssessments ? resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId) : 0;
 
         long numberOfCommunicationPosts = 0;
         long numberOfAnswerPosts = 0;

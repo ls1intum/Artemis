@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -201,28 +201,46 @@ export class ExerciseService {
     /**
      * Retrieves the deletion summary for an exercise.
      *
-     * @param exerciseId the id of the exercise
+     * @param exercise the exercise
      * @returns an observable of the deletion summary as EntitySummary
      */
-    getDeletionSummary(exerciseId: number): Observable<EntitySummary> {
-        return this.http.get<ExerciseDeletionSummaryDTO>(`${this.resourceUrl}/${exerciseId}/deletion-summary`, { observe: 'response' }).pipe(
+    getDeletionSummary(exercise: Exercise): Observable<EntitySummary> {
+        if (exercise.id === undefined || exercise.type === undefined) {
+            return of({} as EntitySummary);
+        }
+
+        return this.http.get<ExerciseDeletionSummaryDTO>(`${this.resourceUrl}/${exercise.id!}/deletion-summary`, { observe: 'response' }).pipe(
             map((response) => {
                 const summary = response.body;
-                return summary ? this.createExerciseEntitySummary(summary) : {};
+                return summary ? this.createExerciseEntitySummary(summary, exercise.type!) : {};
             }),
         );
     }
 
-    private createExerciseEntitySummary(dto: ExerciseDeletionSummaryDTO): EntitySummary {
-        return Object.fromEntries(
-            Object.entries({
-                'artemisApp.exercise.delete.summary.numberOfStudentParticipations': dto.numberOfStudentParticipations,
-                'artemisApp.exercise.delete.summary.numberOfBuilds': dto.numberOfBuilds,
-                'artemisApp.exercise.delete.summary.numberOfAssessments': dto.numberOfAssessments,
-                'artemisApp.exercise.delete.summary.numberOfCommunicationPosts': dto.numberOfCommunicationPosts,
-                'artemisApp.exercise.delete.summary.numberOfAnswerPosts': dto.numberOfAnswerPosts,
-            }).filter(([, value]) => value !== undefined),
-        ) as EntitySummary;
+    private createExerciseEntitySummary(dto: ExerciseDeletionSummaryDTO, exerciseType: ExerciseType): EntitySummary {
+        const numberOfStudentParticipations = 'artemisApp.exercise.delete.summary.numberOfStudentParticipations';
+        const numberOfBuilds = 'artemisApp.exercise.delete.summary.numberOfBuilds';
+        const numberOfAssessments = 'artemisApp.exercise.delete.summary.numberOfAssessments';
+        const numberOfCommunicationPosts = 'artemisApp.exercise.delete.summary.numberOfCommunicationPosts';
+        const numberOfAnswerPosts = 'artemisApp.exercise.delete.summary.numberOfAnswerPosts';
+
+        const summary: EntitySummary = {
+            [numberOfStudentParticipations]: dto.numberOfStudentParticipations,
+            [numberOfBuilds]: dto.numberOfBuilds,
+            [numberOfAssessments]: dto.numberOfAssessments,
+            [numberOfCommunicationPosts]: dto.numberOfCommunicationPosts,
+            [numberOfAnswerPosts]: dto.numberOfAnswerPosts,
+        };
+
+        if (exerciseType !== ExerciseType.PROGRAMMING) {
+            delete summary[numberOfBuilds];
+        }
+
+        if (exerciseType === ExerciseType.QUIZ) {
+            delete summary[numberOfAssessments];
+        }
+
+        return summary;
     }
 
     /**

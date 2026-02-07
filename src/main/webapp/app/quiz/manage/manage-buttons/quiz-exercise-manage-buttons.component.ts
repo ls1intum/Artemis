@@ -138,7 +138,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
         });
     }
 
-    fetchExerciseDeletionSummary(exerciseId: number): Observable<EntitySummary> {
-        return this.exerciseService.getDeletionSummary(exerciseId);
+    fetchExerciseDeletionSummary(): Observable<EntitySummary> {
+        return this.exerciseService.getDeletionSummary(this.quizExercise());
     }
 }
