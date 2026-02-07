@@ -16,22 +16,7 @@ import {
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import {
-    AfterViewInit,
-    ChangeDetectionStrategy,
-    Component,
-    DestroyRef,
-    ElementRef,
-    HostListener,
-    computed,
-    effect,
-    inject,
-    input,
-    output,
-    signal,
-    untracked,
-    viewChild,
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
@@ -159,58 +144,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private previousSessionId: number | undefined;
     private previousMessageCount = 0;
     private previousMessageIds = new Set<number>();
-
-    // Citation collision detection using HostListener
-    @HostListener('mouseover', ['$event'])
-    onCitationMouseOver(event: MouseEvent): void {
-        const messagesElement = this.messagesElement()?.nativeElement as HTMLElement | undefined;
-        if (!messagesElement) {
-            return;
-        }
-        const target = event.target as HTMLElement | null;
-        const citation = target?.closest('.iris-citation--has-summary, .iris-citation-group--has-summary') as HTMLElement | null;
-        if (!citation || !messagesElement.contains(citation)) {
-            return;
-        }
-        const summary = citation.querySelector('.iris-citation__summary') as HTMLElement | null;
-        if (!summary) {
-            return;
-        }
-        // Use bubble-left as boundary, not the messages container
-        const bubble = citation.closest('.bubble-left') as HTMLElement | null;
-        const boundary = bubble ?? messagesElement;
-        citation.style.setProperty('--iris-citation-shift', '0px');
-        const boundaryRect = boundary.getBoundingClientRect();
-        const summaryRect = summary.getBoundingClientRect();
-        const padding = 8;
-        let shift = 0;
-        if (summaryRect.left < boundaryRect.left + padding) {
-            shift = boundaryRect.left + padding - summaryRect.left;
-        } else if (summaryRect.right > boundaryRect.right - padding) {
-            shift = boundaryRect.right - summaryRect.right;
-        }
-        if (shift !== 0) {
-            citation.style.setProperty('--iris-citation-shift', `${shift}px`);
-        }
-    }
-
-    @HostListener('mouseout', ['$event'])
-    onCitationMouseOut(event: MouseEvent): void {
-        const messagesElement = this.messagesElement()?.nativeElement as HTMLElement | undefined;
-        if (!messagesElement) {
-            return;
-        }
-        const target = event.target as HTMLElement | null;
-        const citation = target?.closest('.iris-citation--has-summary, .iris-citation-group--has-summary') as HTMLElement | null;
-        if (!citation) {
-            return;
-        }
-        const relatedTarget = event.relatedTarget as HTMLElement | null;
-        if (relatedTarget && citation.contains(relatedTarget)) {
-            return;
-        }
-        citation.style.setProperty('--iris-citation-shift', '0px');
-    }
 
     public ButtonType = ButtonType;
 

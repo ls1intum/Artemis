@@ -8,7 +8,7 @@ import { faChevronLeft, faChevronRight, faCircleExclamation, faCircleQuestion, f
 
 /**
  * Component that processes text containing citation markers and renders them as interactive citation bubbles.
- * Takes raw text with [cite:...] markers as input and outputs rendered HTML with citation bubbles.
+ * Takes raw text with [cite:entityID:page:start_time:end_time:keyword:summary] markers as input and outputs rendered HTML with citation bubbles.
  */
 @Component({
     selector: 'jhi-iris-citation-text',
@@ -214,5 +214,58 @@ export class IrisCitationTextComponent {
         if (counterDisplay) {
             counterDisplay.textContent = `${newIndex + 1} / ${summaryItems.length}`;
         }
+    }
+
+    /**
+     * Handles citation tooltip collision detection on mouse over.
+     * Adjusts tooltip position if it would overflow the boundary.
+     */
+    @HostListener('mouseover', ['$event'])
+    onCitationMouseOver(event: MouseEvent): void {
+        const target = event.target as HTMLElement | null;
+        const citation = target?.closest('.iris-citation--has-summary, .iris-citation-group--has-summary') as HTMLElement | null;
+
+        if (!citation) return;
+
+        const summary = citation.querySelector('.iris-citation__summary') as HTMLElement | null;
+        if (!summary) return;
+
+        // Boundary bestimmen: .bubble-left oder Host-Element
+        const bubble = citation.closest('.bubble-left') as HTMLElement | null;
+        const boundary = bubble ?? (citation.closest('jhi-iris-citation-text') as HTMLElement);
+
+        if (!boundary) return;
+
+        // Kollision berechnen
+        citation.style.setProperty('--iris-citation-shift', '0px');
+        const boundaryRect = boundary.getBoundingClientRect();
+        const summaryRect = summary.getBoundingClientRect();
+
+        let shift = 0;
+        if (summaryRect.left < boundaryRect.left + 10) {
+            shift = boundaryRect.left - summaryRect.left + 10;
+        } else if (summaryRect.right > boundaryRect.right) {
+            shift = boundaryRect.right - summaryRect.right;
+        }
+
+        if (shift !== 0) {
+            citation.style.setProperty('--iris-citation-shift', `${shift}px`);
+        }
+    }
+
+    /**
+     * Resets citation tooltip position on mouse out.
+     */
+    @HostListener('mouseout', ['$event'])
+    onCitationMouseOut(event: MouseEvent): void {
+        const target = event.target as HTMLElement | null;
+        const citation = target?.closest('.iris-citation--has-summary, .iris-citation-group--has-summary') as HTMLElement | null;
+
+        if (!citation) return;
+
+        const relatedTarget = event.relatedTarget as HTMLElement | null;
+        if (relatedTarget && citation.contains(relatedTarget)) return;
+
+        citation.style.setProperty('--iris-citation-shift', '0px');
     }
 }

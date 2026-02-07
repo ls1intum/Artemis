@@ -7,22 +7,24 @@ import { CITATION_REGEX, CitationRenderOptions, IrisCitationParsed } from './iri
 type CitationToken = { type: 'text'; value: string } | { type: 'citation'; value: string };
 
 /**
- * Replaces citation blocks with rendered HTML, grouping adjacent citations.
- * @param text The source text that may contain citations.
- * @param citationInfo Metadata for enriching citation rendering.
- * @param options Render callbacks for single citations and groups.
- * @returns The text with citations replaced by HTML.
+ * Builds a map of citation metadata indexed by entity ID.
+ * @param citationInfo Array of citation metadata.
+ * @returns Map of entity ID to citation metadata.
  */
-export function replaceCitationBlocks(text: string, citationInfo: IrisCitationMetaDTO[], options: CitationRenderOptions): string {
-    if (!text || !text.includes('[cite:')) {
-        return text;
-    }
-
+function buildCitationMap(citationInfo: IrisCitationMetaDTO[]): Map<number, IrisCitationMetaDTO> {
     const citationMap = new Map<number, IrisCitationMetaDTO>();
     citationInfo.forEach((citation) => {
         citationMap.set(citation.entityId, citation);
     });
+    return citationMap;
+}
 
+/**
+ * Tokenizes text into citation and non-citation chunks.
+ * @param text The source text to tokenize.
+ * @returns Array of tokens (text or citation).
+ */
+function tokenizeText(text: string): CitationToken[] {
     const tokens: CitationToken[] = [];
     let lastIndex = 0;
     for (const match of text.matchAll(CITATION_REGEX)) {
@@ -36,7 +38,17 @@ export function replaceCitationBlocks(text: string, citationInfo: IrisCitationMe
     if (lastIndex < text.length) {
         tokens.push({ type: 'text', value: text.slice(lastIndex) });
     }
+    return tokens;
+}
 
+/**
+ * Renders tokens into HTML, grouping adjacent citations.
+ * @param tokens Array of citation and text tokens.
+ * @param citationMap Map of citation metadata.
+ * @param options Render callbacks for single citations and groups.
+ * @returns Array of rendered HTML strings.
+ */
+function renderTokens(tokens: CitationToken[], citationMap: Map<number, IrisCitationMetaDTO>, options: CitationRenderOptions): string[] {
     const rendered: string[] = [];
     let i = 0;
     while (i < tokens.length) {
@@ -106,6 +118,25 @@ export function replaceCitationBlocks(text: string, citationInfo: IrisCitationMe
         }
         i = j;
     }
+
+    return rendered;
+}
+
+/**
+ * Replaces citation blocks with rendered HTML, grouping adjacent citations.
+ * @param text The source text that may contain citations.
+ * @param citationInfo Metadata for enriching citation rendering.
+ * @param options Render callbacks for single citations and groups.
+ * @returns The text with citations replaced by HTML.
+ */
+export function replaceCitationBlocks(text: string, citationInfo: IrisCitationMetaDTO[], options: CitationRenderOptions): string {
+    if (!text || !text.includes('[cite:')) {
+        return text;
+    }
+
+    const citationMap = buildCitationMap(citationInfo);
+    const tokens = tokenizeText(text);
+    const rendered = renderTokens(tokens, citationMap, options);
 
     return rendered.join('');
 }
