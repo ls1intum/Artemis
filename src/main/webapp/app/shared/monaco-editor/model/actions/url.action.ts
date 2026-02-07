@@ -55,10 +55,9 @@ export class UrlAction extends TextEditorAction {
     private shrinkSelectionToUrlPart(editor: TextEditor): void {
         const selection = editor.getSelection();
         if (selection) {
-            const start = selection.getStartPosition();
             const end = selection.getEndPosition();
             // Exclude everything up to "("
-            const newStart = start.withColumn(end.getColumn() - 9);
+            const newStart = end.withColumn(end.getColumn() - 9);
             // Exclude trailing ")"
             const newEnd = end.withColumn(end.getColumn() - 1);
             editor.setSelection(new TextEditorRange(newStart, newEnd));
