@@ -16,7 +16,22 @@ import {
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import {
+    AfterViewInit,
+    ChangeDetectionStrategy,
+    Component,
+    DestroyRef,
+    ElementRef,
+    HostListener,
+    computed,
+    effect,
+    inject,
+    input,
+    output,
+    signal,
+    untracked,
+    viewChild,
+} from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
@@ -29,13 +44,14 @@ import { IrisMessageContentType, IrisTextMessageContent } from 'app/iris/shared/
 import { AccountService } from 'app/core/auth/account.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import * as _ from 'lodash-es';
+import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
+import { IrisCitationTextComponent } from 'app/iris/overview/citation-text/iris-citation-text.component';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AsPipe } from 'app/shared/pipes/as.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
 import { NgClass } from '@angular/common';
 import { facSidebar } from 'app/shared/icons/icons';
@@ -60,10 +76,10 @@ import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-stat
         ButtonComponent,
         ArtemisTranslatePipe,
         AsPipe,
-        HtmlForMarkdownPipe,
         ChatHistoryItemComponent,
         NgClass,
         SearchFilterComponent,
+        IrisCitationTextComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -118,6 +134,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly numNewMessages = toSignal(this.chatService.currentNumNewMessages(), { initialValue: 0 });
     readonly rateLimitInfo = toSignal(this.statusService.currentRatelimitInfo(), { requireSync: true });
     readonly active = toSignal(this.statusService.getActiveStatus(), { initialValue: true });
+    readonly citationInfo = toSignal(this.chatService.currentCitationInfo(), { initialValue: [] as IrisCitationMetaDTO[] });
 
     // Messages with processing
     private readonly rawMessages = toSignal(this.chatService.currentMessages(), { initialValue: [] as IrisMessage[] });
@@ -142,6 +159,59 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private previousSessionId: number | undefined;
     private previousMessageCount = 0;
     private previousMessageIds = new Set<number>();
+
+    // Citation collision detection using HostListener
+    @HostListener('mouseover', ['$event'])
+    onCitationMouseOver(event: MouseEvent): void {
+        const messagesElement = this.messagesElement()?.nativeElement as HTMLElement | undefined;
+        if (!messagesElement) {
+            return;
+        }
+        const target = event.target as HTMLElement | null;
+        const citation = target?.closest('.iris-citation--has-summary, .iris-citation-group--has-summary') as HTMLElement | null;
+        if (!citation || !messagesElement.contains(citation)) {
+            return;
+        }
+        const summary = citation.querySelector('.iris-citation__summary') as HTMLElement | null;
+        if (!summary) {
+            return;
+        }
+        // Use bubble-left as boundary, not the messages container
+        const bubble = citation.closest('.bubble-left') as HTMLElement | null;
+        const boundary = bubble ?? messagesElement;
+        citation.style.setProperty('--iris-citation-shift', '0px');
+        const boundaryRect = boundary.getBoundingClientRect();
+        const summaryRect = summary.getBoundingClientRect();
+        const padding = 8;
+        let shift = 0;
+        if (summaryRect.left < boundaryRect.left + padding) {
+            shift = boundaryRect.left + padding - summaryRect.left;
+        } else if (summaryRect.right > boundaryRect.right - padding) {
+            shift = boundaryRect.right - summaryRect.right;
+        }
+        if (shift !== 0) {
+            citation.style.setProperty('--iris-citation-shift', `${shift}px`);
+        }
+    }
+
+    @HostListener('mouseout', ['$event'])
+    onCitationMouseOut(event: MouseEvent): void {
+        const messagesElement = this.messagesElement()?.nativeElement as HTMLElement | undefined;
+        if (!messagesElement) {
+            return;
+        }
+        const target = event.target as HTMLElement | null;
+        const citation = target?.closest('.iris-citation--has-summary, .iris-citation-group--has-summary') as HTMLElement | null;
+        if (!citation) {
+            return;
+        }
+        const relatedTarget = event.relatedTarget as HTMLElement | null;
+        if (relatedTarget && citation.contains(relatedTarget)) {
+            return;
+        }
+        citation.style.setProperty('--iris-citation-shift', '0px');
+    }
+
     public ButtonType = ButtonType;
 
     showDeclineButton = input<boolean>(true);
@@ -257,6 +327,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         processed.forEach((message) => {
             if (message.content?.[0] && 'textContent' in message.content[0]) {
                 const cnt = message.content[0] as IrisTextMessageContent;
+                // Only normalize newlines - component handles rest
                 cnt.textContent = cnt.textContent.replace(/\n\n/g, '\n\u00A0\n');
                 cnt.textContent = cnt.textContent.replace(/\n/g, '\n\n');
             }
@@ -268,6 +339,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         // Enable animations after initial messages have loaded
         // Delay ensures initial message batch doesn't trigger animations
         setTimeout(() => (this.shouldAnimate = true), 500);
+
+        // Clean up citation event listeners on destroy
     }
 
     checkIfUserAcceptedLLMUsage(): void {

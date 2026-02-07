@@ -4,28 +4,28 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
 import { ActivatedRoute, Params } from '@angular/router';
 import { IrisChatbotWidgetComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component';
-import { EMPTY, filter, of, switchMap } from 'rxjs';
-import { faAngleDoubleDown, faCircle } from '@fortawesome/free-solid-svg-icons';
+import { EMPTY, filter, map, of, switchMap } from 'rxjs';
+import { faAngleDoubleDown, faChevronDown, faCircle } from '@fortawesome/free-solid-svg-icons';
 import { IrisLogoLookDirection, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { isTextContent } from 'app/iris/shared/entities/iris-content-type.model';
-import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
+import { removeCitationBlocks } from 'app/iris/overview/citation-text/iris-citation-text.util';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
-import { IrisCitationParsed, formatCitationLabel, replaceCitationBlocks, resolveCitationTypeClass } from 'app/iris/overview/shared/iris-citation.util';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-exercise-chatbot-button',
     templateUrl: './exercise-chatbot-button.component.html',
     styleUrls: ['./exercise-chatbot-button.component.scss'],
-    imports: [NgClass, TranslateDirective, FaIconComponent, IrisLogoComponent],
+    imports: [NgClass, TranslateDirective, FaIconComponent, IrisLogoComponent, HtmlForMarkdownPipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisExerciseChatbotButtonComponent {
     protected readonly faCircle = faCircle;
+    protected readonly faChevronDown = faChevronDown;
     protected readonly faAngleDoubleDown = faAngleDoubleDown;
 
     private readonly dialog = inject(MatDialog);
@@ -46,12 +46,11 @@ export class IrisExerciseChatbotButtonComponent {
     // UI state as signals for OnPush change detection
     readonly chatOpen = signal(false);
     readonly isOverflowing = signal(false);
-    readonly newIrisMessage = signal<ChatBubbleMessage | undefined>(undefined);
+    readonly newIrisMessage = signal<string | undefined>(undefined);
 
     // Convert numNewMessages observable to signal
     private readonly numNewMessages = toSignal(this.chatService.numNewMessages, { initialValue: 0 });
     readonly hasNewMessages = computed(() => this.numNewMessages() > 0);
-    private readonly citationInfo = toSignal(this.chatService.currentCitationInfo(), { initialValue: [] as IrisCitationMetaDTO[] });
 
     // Convert newIrisMessage observable to signal for tracking incoming messages
     private readonly latestIrisMessageContent = toSignal(
@@ -59,10 +58,11 @@ export class IrisExerciseChatbotButtonComponent {
             filter((msg) => !!msg),
             switchMap((msg) => {
                 if (msg!.content && msg!.content.length > 0 && isTextContent(msg!.content[0])) {
-                    return of({ text: msg!.content[0].textContent });
+                    return of(msg!.content[0].textContent);
                 }
                 return EMPTY;
             }),
+            map((textContent) => removeCitationBlocks(textContent)),
         ),
         { initialValue: undefined },
     );
@@ -126,8 +126,8 @@ export class IrisExerciseChatbotButtonComponent {
             const isChatClosed = untracked(() => !this.chatOpen());
 
             // Only show if: message exists, chat is closed, AND it's a new message we haven't shown
-            if (message?.text && isChatClosed && message.text !== this.lastShownBubbleMessage) {
-                this.lastShownBubbleMessage = message.text;
+            if (message && isChatClosed && message !== this.lastShownBubbleMessage) {
+                this.lastShownBubbleMessage = message;
                 this.newIrisMessage.set(message);
                 setTimeout(() => this.checkOverflow(), 0);
 
@@ -203,61 +203,4 @@ export class IrisExerciseChatbotButtonComponent {
         this.chatOpen.set(false);
         this.newIrisMessage.set(undefined);
     }
-
-    /**
-     * Renders the chat bubble message as HTML with citation previews.
-     * @param message The bubble message to render.
-     * @returns The rendered HTML string for display.
-     */
-    renderChatBubbleMessage(message?: ChatBubbleMessage): string {
-        if (!message?.text) {
-            return '';
-        }
-        const withCitations = this.replaceCitationsPreview(message.text, this.citationInfo());
-        return htmlForMarkdown(withCitations);
-    }
-
-    /**
-     * Replaces citation blocks in text with preview citation markup.
-     * @param text The raw message text.
-     * @param citationInfo Metadata used to enrich citation rendering.
-     * @returns The text with citation previews inserted.
-     */
-    private replaceCitationsPreview(text: string, citationInfo: IrisCitationMetaDTO[]): string {
-        return replaceCitationBlocks(text, citationInfo, {
-            renderSingle: (parsed) => this.renderCitationPreviewHtml(parsed),
-            renderGroup: (parsed) => this.renderCitationGroupPreviewHtml(parsed),
-            preserveGroupOnSingleParsed: true,
-        });
-    }
-
-    /**
-     * Builds preview markup for a single citation.
-     * @param parsed The parsed citation token.
-     * @returns The rendered preview HTML.
-     */
-    private renderCitationPreviewHtml(parsed: IrisCitationParsed): string {
-        const label = formatCitationLabel(parsed);
-        const typeClass = resolveCitationTypeClass(parsed);
-        const classes = ['iris-citation', typeClass].filter(Boolean).join(' ');
-        return `<span class="${classes}"><span class="iris-citation__icon"></span><span class="iris-citation__text">${label}</span></span>`;
-    }
-
-    /**
-     * Builds preview markup for a group of citations.
-     * @param parsed The parsed citation tokens in the group.
-     * @returns The rendered preview HTML.
-     */
-    private renderCitationGroupPreviewHtml(parsed: IrisCitationParsed[]): string {
-        const first = parsed[0];
-        const label = formatCitationLabel(first);
-        const typeClass = resolveCitationTypeClass(first);
-        const classes = ['iris-citation-group', typeClass].filter(Boolean).join(' ');
-        const count = parsed.length - 1;
-        return `<span class="${classes}"><span class="iris-citation ${typeClass}"><span class="iris-citation__icon"></span><span class="iris-citation__text">${label}</span></span><span class="iris-citation__count">+${count}</span></span>`;
-    }
 }
-
-type ChatBubbleMessage = {
-    text: string;
-};

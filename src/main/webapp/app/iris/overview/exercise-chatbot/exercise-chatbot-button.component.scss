@@ -1,5 +1,3 @@
-@use '../shared/iris-citation-bubbles' as citations;
-
 .chatbot-button {
     position: absolute;
     bottom: 20px;
@@ -104,10 +102,4 @@
     width: 10px;
     height: 10px;
     color: var(--red);
-}
-
-:host {
-    .message-bubble {
-        @include citations.iris-citation-bubble-colors;
-    }
 }

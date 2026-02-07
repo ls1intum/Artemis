@@ -1,36 +1,10 @@
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
-
-/**
- * Matches citation blocks in the form "[cite:...]".
- */
-export const CITATION_REGEX = /\[cite:[^\]]+\]/g;
-
-/**
- * Parsed representation of a single citation block of the form "[cite:type:entityId:page:start:end:keyword:summary]".
- */
-export type IrisCitationParsed = {
-    type: 'L' | 'F';
-    entityId: number;
-    page: string;
-    start: string;
-    end: string;
-    keyword: string;
-    summary: string;
-};
+import { CITATION_REGEX, CitationRenderOptions, IrisCitationParsed } from './iris-citation-text.model';
 
 /**
  * Token used while splitting text into citation and non-citation chunks.
  */
 type CitationToken = { type: 'text'; value: string } | { type: 'citation'; value: string };
-
-/**
- * Render hooks for converting parsed citations to HTML.
- */
-export type CitationRenderOptions = {
-    renderSingle: (parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO) => string;
-    renderGroup: (parsed: IrisCitationParsed[], metas: Array<IrisCitationMetaDTO | undefined>) => string;
-    preserveGroupOnSingleParsed?: boolean;
-};
 
 /**
  * Replaces citation blocks with rendered HTML, grouping adjacent citations.
@@ -106,7 +80,8 @@ export function replaceCitationBlocks(text: string, citationInfo: IrisCitationMe
             } else {
                 const metas: Array<IrisCitationMetaDTO | undefined> = [];
                 parsedGroup.forEach((entry) => {
-                    metas.push(entry.type === 'L' ? citationMap.get(entry.entityId) : undefined);
+                    const entityIdNum = Number(entry.entityId);
+                    metas.push(entry.type === 'L' && Number.isFinite(entityIdNum) ? citationMap.get(entityIdNum) : undefined);
                 });
                 rendered.push(options.renderGroup(parsedGroup, metas));
             }
@@ -122,7 +97,8 @@ export function replaceCitationBlocks(text: string, citationInfo: IrisCitationMe
         if (!parsed) {
             rendered.push(token.value);
         } else {
-            const meta = parsed.type === 'L' ? citationMap.get(parsed.entityId) : undefined;
+            const entityIdNum = Number(parsed.entityId);
+            const meta = parsed.type === 'L' && Number.isFinite(entityIdNum) ? citationMap.get(entityIdNum) : undefined;
             rendered.push(options.renderSingle(parsed, meta));
         }
         if (pendingWhitespace) {
@@ -142,7 +118,7 @@ export function replaceCitationBlocks(text: string, citationInfo: IrisCitationMe
 export function parseCitation(raw: string): IrisCitationParsed | undefined {
     const content = raw.slice(6, -1); // strip "[cite:" and trailing "]"
     const parts = content.split(':');
-    if (parts.length < 2) {
+    if (parts.length < 7) {
         return undefined;
     }
 
@@ -151,8 +127,8 @@ export function parseCitation(raw: string): IrisCitationParsed | undefined {
         return undefined;
     }
 
-    const entityId = Number(parts[1]);
-    if (!Number.isFinite(entityId)) {
+    const entityId = parts[1];
+    if (!entityId) {
         return undefined;
     }
 
@@ -211,4 +187,15 @@ export function formatCitationLabel(parsed: IrisCitationParsed): string {
  */
 export function escapeHtml(text: string): string {
     return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+/**
+ * Removes citation blocks from text.
+ * Format: [cite:LF:entityID:page:start:end:keyword:summary]
+ * @param text The text to process.
+ * @returns The text with citations removed.
+ */
+export function removeCitationBlocks(text: string): string {
+    if (!text) return text;
+    return text.replace(CITATION_REGEX, '').trim();
 }

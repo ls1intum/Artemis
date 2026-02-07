@@ -1,12 +1,12 @@
 @if (!chatOpen()) {
     <div
         #chatBubble
-        class="message-bubble iris-citation-bubble"
+        class="message-bubble"
         (click)="handleButtonClick()"
         [ngClass]="{ 'content-overflow': isOverflowing(), 'bubble-visible': newIrisMessage(), 'bubble-hidden': !newIrisMessage() }"
     >
         @if (newIrisMessage()) {
-            <span [innerHTML]="renderChatBubbleMessage(newIrisMessage())"></span>
+            <span [innerHTML]="newIrisMessage() | htmlForMarkdown"></span>
             @if (isOverflowing()) {
                 <div class="read-more">
                     <span jhiTranslate="artemisApp.iris.chatBubble.seeFull"></span>

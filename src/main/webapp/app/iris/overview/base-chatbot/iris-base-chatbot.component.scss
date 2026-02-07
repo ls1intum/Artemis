@@ -1,5 +1,3 @@
-@use '../shared/iris-citation-bubbles' as citations;
-
 :host {
     display: flex;
     flex-direction: column;
@@ -273,7 +271,6 @@
     .bubble-right {
         --r: 13px; /* the radius */
         --t: 10px; /* the size of the tail */
-        @include citations.iris-citation-bubble-colors;
 
         max-width: 100%;
         margin-bottom: 10px;
@@ -334,8 +331,6 @@
             pre code {
                 line-height: 1;
             }
-
-            @include citations.iris-citation-bubbles;
         }
     }
 }
