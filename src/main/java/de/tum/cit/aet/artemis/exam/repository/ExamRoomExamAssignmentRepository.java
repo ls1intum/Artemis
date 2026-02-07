@@ -4,7 +4,6 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +24,5 @@ public interface ExamRoomExamAssignmentRepository extends ArtemisJpaRepository<E
     @Transactional // ok because of delete
     void deleteAllByExamId(long examId);
 
-    @EntityGraph(type = EntityGraph.EntityGraphType.LOAD, attributePaths = { "examRoom" })
     Set<ExamRoomExamAssignment> findAllByExamId(long examId);
 }
