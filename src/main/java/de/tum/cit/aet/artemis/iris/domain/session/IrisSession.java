@@ -74,7 +74,7 @@ public abstract class IrisSession extends DomainObject {
      * This information is derived at runtime and not persisted.
      */
     @Transient
-    private List<IrisCitationMetaDTO> citationInfo = new ArrayList<>();
+    private List<IrisCitationMetaDTO> citationInfo;
 
     public IrisMessage newMessage() {
         var message = new IrisMessage();
@@ -120,7 +120,7 @@ public abstract class IrisSession extends DomainObject {
     }
 
     public void setCitationInfo(List<IrisCitationMetaDTO> citationInfo) {
-        this.citationInfo = citationInfo != null ? citationInfo : List.of();
+        this.citationInfo = citationInfo;
     }
 
     public abstract boolean shouldSelectLLMUsage();

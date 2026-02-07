@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -73,18 +74,14 @@ public class IrisCitationService {
     }
 
     private Set<Long> extractEntityIds(String text) {
-        var entityIds = new LinkedHashSet<Long>();
-        var matcher = CITATION_PATTERN.matcher(text);
-        while (matcher.find()) {
-            var entityIdString = matcher.group("entityId");
+        return CITATION_PATTERN.matcher(text).results().map(match -> match.group("entityId")).map(id -> {
             try {
-                entityIds.add(Long.parseLong(entityIdString));
+                return Long.parseLong(id);
             }
             catch (NumberFormatException ex) {
-                // Skip invalid entityId
+                return null;
             }
-        }
-        return entityIds;
+        }).filter(Objects::nonNull).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     private Optional<IrisCitationMetaDTO> resolveLectureUnit(long entityId) {
