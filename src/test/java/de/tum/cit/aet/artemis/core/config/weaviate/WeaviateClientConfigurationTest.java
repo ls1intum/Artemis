@@ -48,7 +48,7 @@ class WeaviateClientConfigurationTest {
     }
 
     @Test
-    void testWeaviateClientConnectionFailure() {
+    void testWeaviateClientConfigurationFailure() {
         WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "invalid-host", 8001, 50051, "http");
 
         WeaviateClientConfiguration config = new WeaviateClientConfiguration(properties);
@@ -57,7 +57,7 @@ class WeaviateClientConfigurationTest {
         try (MockedStatic<WeaviateClient> mockedClient = mockStatic(WeaviateClient.class)) {
             mockedClient.when(() -> WeaviateClient.connectToLocal(org.mockito.ArgumentMatchers.any())).thenThrow(new RuntimeException("Connection failed"));
 
-            assertThatThrownBy(() -> config.weaviateClient()).isInstanceOf(WeaviateConnectionException.class).hasMessageContaining("Failed to connect to Weaviate")
+            assertThatThrownBy(() -> config.weaviateClient()).isInstanceOf(WeaviateConnectionException.class).hasMessageContaining("Failed to configure Weaviate client")
                     .hasRootCauseMessage("Connection failed");
         }
     }
