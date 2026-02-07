@@ -3,16 +3,9 @@
     @if (step() === 0) {
         <div class="full-backdrop"></div>
         <div class="centered-modal-wrapper">
-            <div class="iris-onboarding-modal">
-                <button type="button" class="close-button" (click)="close()" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-
-                <div class="modal-content-wrapper">
-                    <div class="iris-avatar">
-                        <jhi-iris-logo [size]="IrisLogoSize.MEDIUM" />
-                    </div>
-
+            <div class="iris-onboarding-modal-welcome">
+                <!-- Left Side: Text Content -->
+                <div class="welcome-text-section">
                     <div class="text-content">
                         <h2 class="title" jhiTranslate="artemisApp.iris.onboarding.title"></h2>
                         <p class="description" jhiTranslate="artemisApp.iris.onboarding.description"></p>
@@ -20,28 +13,159 @@
 
                     <div class="actions">
                         <jhi-button [btnType]="ButtonType.PRIMARY" [title]="'artemisApp.iris.onboarding.getStarted'" (onClick)="onStartTour()" />
-                        <button type="button" class="skip-link" (click)="onSkipTour()">
-                            <span jhiTranslate="artemisApp.iris.onboarding.skipTour"></span>
-                        </button>
+                        <p class="note" jhiTranslate="artemisApp.iris.onboarding.note"></p>
+                    </div>
+                </div>
+
+                <!-- Right Side: Iris Chat Illustration -->
+                <div class="welcome-illustration-section">
+                    <button type="button" class="close-button" (click)="close()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+
+                    <div class="chat-preview">
+                        <div class="chat-widget-preview">
+                            <div class="chat-header-preview">
+                                <!-- Toolbar icons placeholder -->
+                                <div class="toolbar-icons">
+                                    <div class="icon-btn"></div>
+                                    <div class="icon-btn"></div>
+                                    <div class="icon-btn"></div>
+                                </div>
+                            </div>
+                            <div class="chat-body-preview">
+                                <p class="chat-greeting">How can I help you today?</p>
+                                <div class="chat-input-preview">
+                                    <span class="input-placeholder">Write a message...</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="iris-logo-badge">
+                            <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     }
 
-    <!-- Step 1: Sidebar Spotlight -->
+    <!-- Step 1: Sidebar Spotlight (Exercises) -->
     @if (step() === 1) {
-        <!-- Backdrop with cutout for sidebar -->
-        <div class="backdrop-with-cutout">
-            <div class="backdrop-section backdrop-right" [style.left.px]="sidebarSpotlight.width"></div>
+        <!-- Backdrop with cutout for Exercises tab -->
+        <div class="spotlight-backdrop">
+            <div class="spotlight-section spotlight-top" [style.height.px]="exerciseTabSpotlight().top"></div>
+            <div
+                class="spotlight-section spotlight-left"
+                [style.top.px]="exerciseTabSpotlight().top"
+                [style.height.px]="exerciseTabSpotlight().height"
+                [style.width.px]="exerciseTabSpotlight().left"
+            ></div>
+            <div
+                class="spotlight-section spotlight-right"
+                [style.top.px]="exerciseTabSpotlight().top"
+                [style.height.px]="exerciseTabSpotlight().height"
+                [style.left.px]="exerciseTabSpotlight().left + exerciseTabSpotlight().width"
+            ></div>
+            <div class="spotlight-section spotlight-bottom" [style.top.px]="exerciseTabSpotlight().top + exerciseTabSpotlight().height"></div>
         </div>
 
+        <!-- Coach mark positioned on Exercises tab -->
+        <div class="coach-mark" [style.top.px]="exerciseTabCoachMarkPosition().top" [style.left.px]="exerciseTabCoachMarkPosition().left"></div>
+
         <!-- Tooltip positioned next to sidebar -->
-        <div class="onboarding-tooltip" [style.top.px]="152" [style.left.px]="sidebarSpotlight.width + 12">
-            <p class="tooltip-label" jhiTranslate="artemisApp.iris.onboarding.sidebar.label"></p>
-            <p class="tooltip-description" jhiTranslate="artemisApp.iris.onboarding.sidebar.description"></p>
-            <div class="tooltip-actions">
+        <div class="onboarding-tooltip sidebar-tooltip" [style.top.px]="exerciseTooltipPosition().top" [style.left.px]="exerciseTooltipPosition().left">
+            <p class="tooltip-description" jhiTranslate="artemisApp.iris.onboarding.step1.description"></p>
+            <jhi-stepper [currentStep]="1" [totalSteps]="3" />
+        </div>
+    }
+
+    <!-- Step 2: Iris Icon Tooltip (Exercise Page) -->
+    @if (step() === 2) {
+        <div class="spotlight-click-guard"></div>
+        <div
+            class="spotlight-blocker rounded-cutout"
+            [style.top.px]="irisIconSpotlight().top"
+            [style.left.px]="irisIconSpotlight().left"
+            [style.width.px]="irisIconSpotlight().width"
+            [style.height.px]="irisIconSpotlight().height"
+        ></div>
+
+        <!-- Tooltip positioned above/beside Iris icon -->
+        <div class="onboarding-tooltip tooltip-bottom-right-arrow" [style.top.px]="tooltipPosition().top" [style.right.px]="140">
+            <div class="tooltip-header">
+                <p class="tooltip-header-text" jhiTranslate="artemisApp.iris.onboarding.step2.header"></p>
+                <button type="button" class="close-button-small" (click)="close()" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <p class="tooltip-description" jhiTranslate="artemisApp.iris.onboarding.step2.description"></p>
+            <div class="tooltip-footer">
+                <jhi-stepper [currentStep]="2" [totalSteps]="3" />
                 <jhi-button [btnType]="ButtonType.PRIMARY" [title]="'artemisApp.iris.onboarding.next'" (onClick)="next()" />
+            </div>
+        </div>
+    }
+
+    <!-- Step 3: Sidebar Spotlight (Dashboard) -->
+    @if (step() === 3) {
+        <!-- Backdrop with cutout for Dashboard tab -->
+        <div class="spotlight-backdrop">
+            <div class="spotlight-section spotlight-top" [style.height.px]="dashboardTabSpotlight().top"></div>
+            <div
+                class="spotlight-section spotlight-left"
+                [style.top.px]="dashboardTabSpotlight().top"
+                [style.height.px]="dashboardTabSpotlight().height"
+                [style.width.px]="dashboardTabSpotlight().left"
+            ></div>
+            <div
+                class="spotlight-section spotlight-right"
+                [style.top.px]="dashboardTabSpotlight().top"
+                [style.height.px]="dashboardTabSpotlight().height"
+                [style.left.px]="dashboardTabSpotlight().left + dashboardTabSpotlight().width"
+            ></div>
+            <div class="spotlight-section spotlight-bottom" [style.top.px]="dashboardTabSpotlight().top + dashboardTabSpotlight().height"></div>
+        </div>
+
+        <!-- Coach mark positioned on Dashboard tab -->
+        <div class="coach-mark" [style.top.px]="dashboardTabCoachMarkPosition().top" [style.left.px]="dashboardTabCoachMarkPosition().left"></div>
+
+        <!-- Tooltip positioned next to Dashboard in sidebar -->
+        <div class="onboarding-tooltip sidebar-tooltip" [style.top.px]="dashboardTooltipPosition().top" [style.left.px]="dashboardTooltipPosition().left">
+            <p class="tooltip-description" jhiTranslate="artemisApp.iris.onboarding.step3.description"></p>
+            <jhi-stepper [currentStep]="3" [totalSteps]="3" />
+        </div>
+    }
+
+    <!-- Step 4: Try a First Question Modal -->
+    @if (step() === 4) {
+        <div class="full-backdrop final-modal-backdrop"></div>
+        <div class="centered-modal-wrapper">
+            <div class="prompt-selection-modal final-modal-enter">
+                <button type="button" class="close-button" (click)="close()" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+
+                <div class="modal-header-section">
+                    <h2 class="title" jhiTranslate="artemisApp.iris.onboarding.step5.title"></h2>
+                    <p class="description" jhiTranslate="artemisApp.iris.onboarding.step5.description"></p>
+                </div>
+
+                <div class="prompt-options">
+                    <button type="button" class="prompt-chip" (click)="selectPrompt('explainConcept')">
+                        <fa-icon [icon]="faBook" />
+                        <span jhiTranslate="artemisApp.iris.onboarding.step5.prompts.explainConcept"></span>
+                    </button>
+                    <button type="button" class="prompt-chip" (click)="selectPrompt('quizTopic')">
+                        <fa-icon [icon]="faQuestionCircle" />
+                        <span jhiTranslate="artemisApp.iris.onboarding.step5.prompts.quizTopic"></span>
+                    </button>
+                    <button type="button" class="prompt-chip" (click)="selectPrompt('studyTips')">
+                        <fa-icon [icon]="faLightbulb" />
+                        <span jhiTranslate="artemisApp.iris.onboarding.step5.prompts.studyTips"></span>
+                    </button>
+                </div>
+
+                <p class="replay-hint" jhiTranslate="artemisApp.iris.onboarding.step5.replayHint"></p>
             </div>
         </div>
     }

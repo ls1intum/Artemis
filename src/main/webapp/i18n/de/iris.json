@@ -1,6 +1,33 @@
 {
     "artemisApp": {
         "iris": {
+            "onboarding": {
+                "title": "Lerne Iris kennen",
+                "description": "Iris ist ein in Artemis integrierter KI-Programmier-Tutor. Sie kennt den Kontext der aktuellen Übung und deinen neuesten Code, sodass du direkt Fragen stellen kannst.",
+                "note": "Bitte beachte: Iris unterstützt nur kursbezogene Fragen und beteiligt sich nicht an themenfremden Gesprächen.",
+                "getStarted": "Zur Tour",
+                "next": "Weiter",
+                "step1": {
+                    "description": "Klicke auf Übungen, um fortzufahren."
+                },
+                "step2": {
+                    "header": "In Programmierübungen",
+                    "description": "Iris kann Konzepte erklären, Fehler finden und Hinweise geben – ohne vollständige Lösungen zu verraten."
+                },
+                "step3": {
+                    "description": "Kehre zum Dashboard zurück, um die Tour abzuschließen."
+                },
+                "step5": {
+                    "title": "Probiere eine erste Frage",
+                    "description": "Wähle unten einen vorgeschlagenen Prompt aus, um zu beginnen.",
+                    "prompts": {
+                        "explainConcept": "Erkläre ein Konzept",
+                        "quizTopic": "Frage mich zu einem Thema ab",
+                        "studyTips": "Gib mir Lerntipps"
+                    },
+                    "replayHint": "Klicke auf das (i) Symbol, um diese Tour erneut anzuzeigen"
+                }
+            },
             "settings": {
                 "success": "Iris Einträge erfolgreich gespeichert",
                 "saved": "Alles gespeichert",

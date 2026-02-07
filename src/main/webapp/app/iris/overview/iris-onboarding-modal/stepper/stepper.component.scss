@@ -1,0 +1,21 @@
+.stepper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.step-indicator {
+    height: 8px;
+    border-radius: 16px;
+    background: #dee2e6;
+    transition: all 0.3s ease;
+
+    &.active {
+        width: 20px;
+        background: var(--bs-primary, #3e8acc);
+    }
+
+    &.inactive {
+        width: 8px;
+    }
+}

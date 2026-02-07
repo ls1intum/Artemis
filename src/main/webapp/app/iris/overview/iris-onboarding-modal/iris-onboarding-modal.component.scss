@@ -6,9 +6,10 @@
     width: 100vw;
     height: 100vh;
     z-index: 1050;
+    pointer-events: none; // Allow clicks to pass through the container
 }
 
-// Full backdrop for step 0
+// Full backdrop for step 0 and step 4
 .full-backdrop {
     position: absolute;
     top: 0;
@@ -16,9 +17,10 @@
     width: 100%;
     height: 100%;
     background: rgba(34, 34, 34, 0.6);
+    pointer-events: auto; // Block clicks on the backdrop
 }
 
-// Centered modal wrapper for step 0
+// Centered modal wrapper for step 0 and step 4
 .centered-modal-wrapper {
     position: absolute;
     top: 0;
@@ -28,26 +30,129 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    pointer-events: none; // Allow clicks through wrapper
 }
 
-.iris-onboarding-modal {
+// Welcome modal with two-column layout (Step 0)
+.iris-onboarding-modal-welcome {
     position: relative;
-    background: var(--iris-secondary-background-color, var(--bs-modal-bg, var(--bs-card-bg, var(--bs-body-bg))));
+    background: var(--bs-secondary-bg, #f8f9fa);
+    border-radius: 0.5rem;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    width: 700px;
+    max-width: 90vw;
+    height: 450px;
+    display: flex;
+    overflow: hidden;
+    pointer-events: auto; // Enable clicks on the modal
+}
+
+// Left side - Text content
+.welcome-text-section {
+    background: var(--bs-modal-bg);
+    width: 380px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2.5rem;
+    border-radius: 0.5rem 0 0 0.5rem;
+}
+
+// Right side - Illustration
+.welcome-illustration-section {
+    flex: 1;
+    background: var(--iris-chat-history-background);
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.chat-preview {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.chat-widget-preview {
+    background: var(--bs-modal-bg, white);
+    border: 0.75px solid var(--bs-border-color);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    width: 90%;
+    margin-left: auto; // pushes it to the right inside .chat-preview
+}
+
+.chat-header-preview {
+    background: var(--bs-modal-bg, white);
+    border-bottom: 1px solid var(--bs-border-color);
+    padding: 0.25rem;
+    display: flex;
+    justify-content: flex-end;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.toolbar-icons {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.icon-btn {
+    width: 24px;
+    height: 20px;
+    background: var(--iris-client-chat-background);
+    border-radius: 4px;
+}
+
+.chat-body-preview {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 240px;
+    justify-content: center;
+}
+
+.chat-greeting {
+    font-size: 1rem;
+    color: var(--bs-body-color);
+    margin: 0;
+    text-align: center;
+}
+
+.chat-input-preview {
+    width: 100%;
+    background: var(--bs-modal-bg, white);
     border: 1px solid var(--bs-border-color);
     border-radius: 0.5rem;
-    padding: 1.5rem;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-    max-width: 26.875rem;
-    width: 90%;
+    padding: 1rem;
+    margin-top: 0.25rem;
 }
 
-.close-button {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
+.input-placeholder {
+    color: var(--bs-secondary-color);
+    cursor: default;
+    font-size: 0.8rem;
+}
+
+.iris-logo-badge {
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+// Shared close-button base
+%close-button-base {
     background: none;
     border: none;
-    font-size: 1.5rem;
     line-height: 1;
     color: var(--bs-secondary-color);
     cursor: pointer;
@@ -61,26 +166,14 @@
     }
 }
 
-.modal-content-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-    text-align: center;
-}
+.close-button {
+    @extend %close-button-base;
 
-.iris-avatar {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 5rem;
-    height: 5rem;
-
-    :host ::ng-deep .iris-logo {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-    }
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    font-size: 1.4rem;
+    z-index: 10;
 }
 
 .text-content {
@@ -91,7 +184,7 @@
 }
 
 .title {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     font-weight: 700;
     color: var(--bs-body-color);
     margin: 0;
@@ -101,6 +194,13 @@
 .description {
     font-size: 1rem;
     line-height: 1.6;
+    color: var(--bs-body-color);
+    margin: 0;
+}
+
+.note {
+    font-size: 0.75rem;
+    line-height: 1.6;
     color: var(--bs-secondary-color);
     margin: 0;
 }
@@ -108,67 +208,75 @@
 .actions {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 0.25rem;
+    align-items: flex-start;
+    gap: 0.75rem;
     width: 100%;
-    margin-top: 0.5rem;
 
     :host ::ng-deep jhi-button {
-        width: 100%;
-        border-radius: 8px;
-
         button {
-            width: 100%;
-            justify-content: center;
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
         }
     }
 }
 
-.skip-link {
-    background: none;
-    border: none;
-    color: var(--bs-secondary-color);
-    font-size: 0.875rem;
-    cursor: pointer;
-    padding: 0.5rem 1rem;
-    transition: color 0.2s ease;
-
-    &:hover {
-        color: var(--bs-body-color);
-        text-decoration: underline;
-    }
-}
-
 // Spotlight overlay styles
-.spotlight-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 1050;
-    pointer-events: none;
-}
-
-.backdrop-with-cutout {
+.spotlight-backdrop {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
+    pointer-events: none;
+    z-index: 1050;
 }
 
-.backdrop-section {
+.spotlight-section {
     position: absolute;
     background: rgba(34, 34, 34, 0.6);
-    pointer-events: auto;
+    pointer-events: auto; // Block clicks outside the spotlight cutout
 }
 
-.backdrop-right {
+.spotlight-blocker {
+    position: absolute;
+    background: transparent;
+    pointer-events: auto; // Block clicks on spotlight target while step is visible
+    cursor: default;
+    z-index: 1050;
+    border-radius: 0.5rem;
+}
+
+.spotlight-click-guard {
+    position: absolute;
+    inset: 0;
+    pointer-events: auto; // Block clicks on non-highlighted areas
+    background: transparent;
+    z-index: 1049;
+}
+
+.spotlight-blocker.rounded-cutout {
+    box-shadow: 0 0 0 200vmax rgba(34, 34, 34, 0.6);
+}
+
+.spotlight-top {
     top: 0;
+    left: 0;
+    right: 0;
+}
+
+.spotlight-left {
+    left: 0;
+}
+
+.spotlight-right {
+    right: 0;
+}
+
+.spotlight-bottom {
+    left: 0;
     right: 0;
     bottom: 0;
-    width: calc(100% - 220px);
 }
 
 // Onboarding tooltip styles
@@ -179,21 +287,93 @@
     border-radius: 0.5rem;
     padding: 1rem;
     box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1);
-    width: 250px;
-    pointer-events: auto;
+    width: 280px;
+    pointer-events: auto; // Enable clicks on tooltips
     z-index: 1051;
 
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+
+    &.sidebar-tooltip {
+        transition:
+            left 0.3s ease,
+            opacity 0.3s ease;
+
+        // Left-pointing arrow with border connecting the tooltip to the sidebar element
+        &::before,
+        &::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+        }
+
+        &::before {
+            left: -9px;
+            border-top: 9px solid transparent;
+            border-bottom: 9px solid transparent;
+            border-right: 9px solid var(--bs-border-color);
+        }
+
+        &::after {
+            left: -8px;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-right: 8px solid var(--bs-modal-bg, var(--bs-card-bg, white));
+        }
+    }
+
+    &.tooltip-bottom-right-arrow {
+        &::before,
+        &::after {
+            content: '';
+            position: absolute;
+            bottom: 16px;
+            width: 0;
+            height: 0;
+        }
+
+        &::before {
+            right: -9px;
+            border-top: 9px solid transparent;
+            border-bottom: 9px solid transparent;
+            border-left: 9px solid var(--bs-border-color);
+        }
+
+        &::after {
+            right: -8px;
+            bottom: 17px;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 8px solid var(--bs-modal-bg, var(--bs-card-bg, white));
+        }
+    }
 }
 
-.tooltip-label {
+.tooltip-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.tooltip-header-text {
     font-size: 0.875rem;
     font-weight: 500;
-    color: var(--bs-secondary-color);
+    color: var(--bs-body-color);
     margin: 0;
     line-height: 1.4;
+    flex: 1;
+}
+
+.close-button-small {
+    @extend %close-button-base;
+
+    font-size: 1.25rem;
+    flex-shrink: 0;
 }
 
 .tooltip-description {
@@ -204,14 +384,167 @@
     line-height: 1.6;
 }
 
-.tooltip-actions {
+.tooltip-footer {
     display: flex;
-    justify-content: flex-end;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
     margin-top: 0.5rem;
+}
 
-    :host ::ng-deep jhi-button button {
-        border-radius: 0.5rem;
-        font-size: 0.75rem;
-        padding: 0.5rem 0.75rem;
+:host ::ng-deep .tooltip-footer jhi-button button {
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    padding: 0.3rem 0.75rem;
+}
+
+// Coach mark for Steps 1 and 3
+.coach-mark {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: var(--bs-primary, #3e8acc);
+    border-radius: 50%;
+    z-index: 1052;
+    pointer-events: none; // Don't block clicks on the coach mark
+    animation: pulse-coach-mark 1.5s ease-in-out infinite;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: -4px;
+        left: -4px;
+        right: -4px;
+        bottom: -4px;
+        border: 2px solid var(--bs-primary, #3e8acc);
+        border-radius: 50%;
+        opacity: 0;
+        animation: pulse-ring 1.5s ease-in-out infinite;
     }
+}
+
+@keyframes pulse-coach-mark {
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.2);
+        opacity: 0.8;
+    }
+}
+
+@keyframes pulse-ring {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.8;
+    }
+
+    50% {
+        transform: scale(1.3);
+        opacity: 0.3;
+    }
+
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+// Step 4: Prompt Selection Modal
+.prompt-selection-modal {
+    position: relative;
+    background: var(--bs-modal-bg, white);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+    max-width: 400px;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: center;
+    pointer-events: auto; // Enable clicks on the modal
+}
+
+.final-modal-backdrop {
+    animation: final-modal-backdrop-fade-in 240ms ease-out;
+}
+
+.final-modal-enter {
+    animation: final-modal-enter 320ms cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+@keyframes final-modal-backdrop-fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes final-modal-enter {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-header-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    text-align: center;
+    width: 100%;
+}
+
+.prompt-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.prompt-chip {
+    background: var(--iris-chat-history-background);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+    color: var(--bs-body-color);
+    width: 100%;
+
+    &:hover {
+        background: var(--bs-light, #e9ecef);
+        border-color: var(--bs-border-color);
+        transform: translateY(-1px);
+    }
+
+    fa-icon {
+        font-size: 1rem;
+        color: var(--bs-body-color);
+    }
+}
+
+.replay-hint {
+    font-size: 0.75rem;
+    color: var(--bs-secondary-color);
+    text-align: center;
+    margin: 0;
+    line-height: 1.6;
 }
