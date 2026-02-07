@@ -4,9 +4,11 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import org.eclipse.jgit.diff.DiffAlgorithm;
 import org.eclipse.jgit.diff.DiffEntry;
@@ -34,6 +36,7 @@ import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
@@ -127,7 +130,7 @@ public class ExerciseReviewService {
      * @param exerciseId the exercise id
      * @return list of comment threads with comments
      */
-    public List<CommentThread> findThreadsWithCommentsByExerciseId(long exerciseId) {
+    public Set<CommentThread> findThreadsWithCommentsByExerciseId(long exerciseId) {
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, exerciseId);
         return commentThreadRepository.findWithCommentsByExerciseId(exerciseId);
     }
@@ -150,24 +153,27 @@ public class ExerciseReviewService {
      *
      * @param exerciseId the exercise id
      * @param dto        the thread creation payload
-     * @return the persisted thread
+     * @return the created thread and its initial comment
      * @throws BadRequestAlertException if validation fails
      * @throws EntityNotFoundException  if the exercise does not exist
      */
-    public CommentThread createThread(long exerciseId, CreateCommentThreadDTO dto) {
+    public ThreadCreationResult createThread(long exerciseId, CreateCommentThreadDTO dto) {
         if (dto == null) {
             throw new BadRequestAlertException("Request body must be set", THREAD_ENTITY_NAME, "bodyMissing");
         }
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, exerciseId);
         validateThreadPayload(dto);
 
+        Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
         ExerciseVersion initialVersion = resolveInitialVersion(dto.targetType(), exerciseId);
         String initialCommitSha = resolveLatestCommitSha(dto.targetType(), dto.auxiliaryRepositoryId(), exerciseId);
         CommentThread thread = dto.toEntity(initialVersion, initialCommitSha);
-        Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
-
         thread.setExercise(exercise);
-        return commentThreadRepository.save(thread);
+        Comment comment = buildUserComment(thread, dto.initialComment());
+
+        thread.getComments().add(comment);
+        thread = commentThreadRepository.save(thread);
+        return new ThreadCreationResult(thread, comment);
     }
 
     /**
@@ -186,15 +192,7 @@ public class ExerciseReviewService {
         CommentThread thread = findThreadByIdElseThrow(threadId);
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, thread.getExercise().getId());
 
-        User author = userRepository.getUserWithGroupsAndAuthorities();
-        Comment comment = new Comment();
-        comment.setType(CommentType.USER);
-        comment.setContent(dto);
-        comment.setAuthor(author);
-        comment.setInitialVersion(resolveLatestVersion(thread));
-        comment.setInitialCommitSha(resolveLatestCommitSha(thread.getTargetType(), thread.getAuxiliaryRepositoryId(), thread.getExercise().getId()));
-        comment.setThread(thread);
-
+        Comment comment = buildUserComment(thread, dto);
         return commentRepository.save(comment);
     }
 
@@ -385,6 +383,14 @@ public class ExerciseReviewService {
         if (dto.targetType() == CommentThreadLocationType.PROBLEM_STATEMENT && dto.initialFilePath() != null) {
             throw new BadRequestAlertException("Initial file path is not allowed for problem statement threads", THREAD_ENTITY_NAME, "initialFilePathNotAllowed");
         }
+        if (dto.targetType() != CommentThreadLocationType.PROBLEM_STATEMENT) {
+            try {
+                FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(dto.initialFilePath());
+            }
+            catch (IllegalArgumentException ex) {
+                throw new BadRequestAlertException("Initial file path is invalid", THREAD_ENTITY_NAME, "initialFilePathInvalid");
+            }
+        }
         if (dto.targetType() != CommentThreadLocationType.AUXILIARY_REPO && dto.auxiliaryRepositoryId() != null) {
             throw new BadRequestAlertException("Auxiliary repository id is only allowed for auxiliary repository threads", THREAD_ENTITY_NAME, "auxiliaryRepositoryNotAllowed");
         }
@@ -415,8 +421,9 @@ public class ExerciseReviewService {
             return;
         }
 
-        boolean updated = false;
+        Set<CommentThread> modifiedThreads = new HashSet<>();
         for (CommentThread thread : threads) {
+            boolean modified = false;
             if (thread.getLineNumber() == null) {
                 continue;
             }
@@ -428,11 +435,14 @@ public class ExerciseReviewService {
                 LineMappingResult result = mapLineInText(previousSnapshot.problemStatement(), currentSnapshot.problemStatement(), thread.getLineNumber());
                 if (result.outdated()) {
                     thread.setOutdated(true);
-                    updated = true;
+                    modified = true;
                 }
                 if (result.newLine() != null && !Objects.equals(thread.getLineNumber(), result.newLine())) {
                     thread.setLineNumber(result.newLine());
-                    updated = true;
+                    modified = true;
+                }
+                if (modified) {
+                    modifiedThreads.add(thread);
                 }
                 continue;
             }
@@ -451,20 +461,23 @@ public class ExerciseReviewService {
                 LineMappingResult result = mapLine(info.repositoryUri(), thread.getFilePath(), info.oldCommit(), info.newCommit(), thread.getLineNumber());
                 if (result.outdated()) {
                     thread.setOutdated(true);
-                    updated = true;
+                    modified = true;
                 }
                 if (result.newLine() != null && !Objects.equals(thread.getLineNumber(), result.newLine())) {
                     thread.setLineNumber(result.newLine());
-                    updated = true;
+                    modified = true;
                 }
             }
             catch (Exception ex) {
                 log.warn("Could not map line for thread {}: {}", thread.getId(), ex.getMessage());
             }
+            if (modified) {
+                modifiedThreads.add(thread);
+            }
         }
 
-        if (updated) {
-            commentThreadRepository.saveAll(threads);
+        if (!modifiedThreads.isEmpty()) {
+            commentThreadRepository.saveAll(modifiedThreads);
         }
     }
 
@@ -757,5 +770,26 @@ public class ExerciseReviewService {
      * @param newCommit     the new commit hash
      */
     private record RepoDiffInfo(LocalVCRepositoryUri repositoryUri, String oldCommit, String newCommit) {
+    }
+
+    /**
+     * Container for a newly created thread and its initial comment.
+     *
+     * @param thread  the created thread
+     * @param comment the created initial comment
+     */
+    public record ThreadCreationResult(CommentThread thread, Comment comment) {
+    }
+
+    private Comment buildUserComment(CommentThread thread, UserCommentContentDTO dto) {
+        User author = userRepository.getUserWithGroupsAndAuthorities();
+        Comment comment = new Comment();
+        comment.setType(CommentType.USER);
+        comment.setContent(dto);
+        comment.setAuthor(author);
+        comment.setInitialVersion(resolveLatestVersion(thread));
+        comment.setInitialCommitSha(resolveLatestCommitSha(thread.getTargetType(), thread.getAuxiliaryRepositoryId(), thread.getExercise().getId()));
+        comment.setThread(thread);
+        return comment;
     }
 }

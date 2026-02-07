@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Entity
-@Table(name = "comment_thread_group")
+@Table(name = "review_comment_thread_group")
 public class CommentThreadGroup extends DomainObject {
 
     @ManyToOne(optional = false)

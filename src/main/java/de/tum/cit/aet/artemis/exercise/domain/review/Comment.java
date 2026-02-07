@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentContentDTO;
 
 @Entity
-@Table(name = "comment")
+@Table(name = "review_comment")
 public class Comment extends AbstractAuditingEntity {
 
     @ManyToOne(optional = false)

@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 
 @Entity
-@Table(name = "comment_thread")
+@Table(name = "review_comment_thread")
 public class CommentThread extends DomainObject {
 
     @ManyToOne
@@ -45,7 +45,7 @@ public class CommentThread extends DomainObject {
     @Column(name = "initial_commit_sha", length = 64, updatable = false)
     private String initialCommitSha;
 
-    @Column(name = "file_path")
+    @Column(name = "file_path", length = 1024)
     private String filePath;
 
     @Column(name = "initial_file_path", length = 1024, updatable = false)
@@ -65,7 +65,7 @@ public class CommentThread extends DomainObject {
     @Column(name = "resolved", nullable = false)
     private boolean resolved;
 
-    @OneToMany(mappedBy = "thread", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(mappedBy = "thread", fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.REMOVE }, orphanRemoval = true)
     private Set<Comment> comments = new HashSet<>();
 
     public CommentThreadGroup getGroup() {

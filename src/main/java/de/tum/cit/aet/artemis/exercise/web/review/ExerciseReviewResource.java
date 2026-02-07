@@ -56,16 +56,16 @@ public class ExerciseReviewResource {
      *
      * @param exerciseId             the exercise id
      * @param createCommentThreadDTO the thread data
-     * @return the created thread
+     * @return the created thread with its initial comment
      */
     @PostMapping("exercises/{exerciseId}/review-threads")
     @EnforceAtLeastInstructorInExercise
     public ResponseEntity<CommentThreadDTO> createThread(@PathVariable long exerciseId, @Valid @NotNull @RequestBody CreateCommentThreadDTO createCommentThreadDTO)
             throws URISyntaxException {
         log.debug("REST request to create exercise review thread for exercise {}", exerciseId);
-        UserCommentContentDTO initialCommentDTO = createCommentThreadDTO.initialComment();
-        CommentThread savedThread = exerciseReviewService.createThread(exerciseId, createCommentThreadDTO);
-        Comment savedComment = exerciseReviewService.createUserComment(savedThread.getId(), initialCommentDTO);
+        ExerciseReviewService.ThreadCreationResult result = exerciseReviewService.createThread(exerciseId, createCommentThreadDTO);
+        CommentThread savedThread = result.thread();
+        Comment savedComment = result.comment();
         return ResponseEntity.created(new URI("/api/exercise/exercises/" + exerciseId + "/review-threads/" + savedThread.getId()))
                 .body(new CommentThreadDTO(savedThread, List.of(new CommentDTO(savedComment))));
     }
@@ -113,7 +113,7 @@ public class ExerciseReviewResource {
     public ResponseEntity<Void> deleteThreadGroup(@PathVariable long exerciseId, @PathVariable long groupId) {
         log.debug("REST request to delete exercise review thread group {} for exercise {}", groupId, exerciseId);
         exerciseReviewService.deleteGroup(groupId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -145,7 +145,7 @@ public class ExerciseReviewResource {
     public ResponseEntity<Void> deleteComment(@PathVariable long exerciseId, @PathVariable long commentId) {
         log.debug("REST request to delete comment {} for exercise {}", commentId, exerciseId);
         exerciseReviewService.deleteComment(commentId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     /**
