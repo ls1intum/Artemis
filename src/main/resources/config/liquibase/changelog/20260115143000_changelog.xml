@@ -8,7 +8,7 @@
         <preConditions onFail="MARK_RAN">
             <and>
                 <not>
-                    <tableExists tableName="comment_thread"/>
+                    <tableExists tableName="review_comment_thread"/>
                 </not>
                 <or>
                     <dbms type="mysql"/>
@@ -16,7 +16,7 @@
                 </or>
             </and>
         </preConditions>
-        <createTable tableName="comment_thread_group">
+        <createTable tableName="review_comment_thread_group">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -25,18 +25,18 @@
             </column>
         </createTable>
 
-        <addForeignKeyConstraint baseTableName="comment_thread_group"
+        <addForeignKeyConstraint baseTableName="review_comment_thread_group"
                                  baseColumnNames="exercise_id"
                                  constraintName="fk_comment_thread_group_exercise"
                                  referencedTableName="exercise"
                                  referencedColumnNames="id"
                                  onDelete="CASCADE"/>
 
-        <createIndex tableName="comment_thread_group" indexName="idx_comment_thread_group_exercise">
+        <createIndex tableName="review_comment_thread_group" indexName="idx_review_comment_thread_group_exercise">
             <column name="exercise_id"/>
         </createIndex>
 
-        <createTable tableName="comment_thread">
+        <createTable tableName="review_comment_thread">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -64,36 +64,36 @@
             </column>
         </createTable>
 
-        <addForeignKeyConstraint baseTableName="comment_thread"
+        <addForeignKeyConstraint baseTableName="review_comment_thread"
                                  baseColumnNames="exercise_id"
                                  constraintName="fk_comment_thread_exercise"
                                  referencedTableName="exercise"
                                  referencedColumnNames="id"
                                  onDelete="CASCADE"/>
 
-        <addForeignKeyConstraint baseTableName="comment_thread"
+        <addForeignKeyConstraint baseTableName="review_comment_thread"
                                  baseColumnNames="initial_version_id"
                                  constraintName="fk_comment_thread_initial_version"
                                  referencedTableName="exercise_version"
                                  referencedColumnNames="id"
                                  onDelete="SET NULL"/>
 
-        <addForeignKeyConstraint baseTableName="comment_thread"
+        <addForeignKeyConstraint baseTableName="review_comment_thread"
                                  baseColumnNames="group_id"
                                  constraintName="fk_comment_thread_group"
-                                 referencedTableName="comment_thread_group"
+                                 referencedTableName="review_comment_thread_group"
                                  referencedColumnNames="id"
                                  onDelete="SET NULL"/>
 
-        <createIndex tableName="comment_thread" indexName="idx_comment_thread_exercise">
+        <createIndex tableName="review_comment_thread" indexName="idx_review_comment_thread_exercise">
             <column name="exercise_id"/>
         </createIndex>
 
-        <createIndex tableName="comment_thread" indexName="idx_comment_thread_group">
+        <createIndex tableName="review_comment_thread" indexName="idx_review_comment_thread_group">
             <column name="group_id"/>
         </createIndex>
 
-        <createIndex tableName="comment_thread" indexName="idx_comment_thread_target">
+        <createIndex tableName="review_comment_thread" indexName="idx_review_comment_thread_target">
             <column name="target_type"/>
         </createIndex>
     </changeSet>
@@ -103,12 +103,12 @@
         <preConditions onFail="MARK_RAN">
             <and>
                 <not>
-                    <tableExists tableName="comment_thread"/>
+                    <tableExists tableName="review_comment_thread"/>
                 </not>
                 <dbms type="postgresql"/>
             </and>
         </preConditions>
-        <createTable tableName="comment_thread_group">
+        <createTable tableName="review_comment_thread_group">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -117,18 +117,18 @@
             </column>
         </createTable>
 
-        <addForeignKeyConstraint baseTableName="comment_thread_group"
+        <addForeignKeyConstraint baseTableName="review_comment_thread_group"
                                  baseColumnNames="exercise_id"
                                  constraintName="fk_comment_thread_group_exercise"
                                  referencedTableName="exercise"
                                  referencedColumnNames="id"
                                  onDelete="CASCADE"/>
 
-        <createIndex tableName="comment_thread_group" indexName="idx_comment_thread_group_exercise">
+        <createIndex tableName="review_comment_thread_group" indexName="idx_review_comment_thread_group_exercise">
             <column name="exercise_id"/>
         </createIndex>
 
-        <createTable tableName="comment_thread">
+        <createTable tableName="review_comment_thread">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -156,36 +156,36 @@
             </column>
         </createTable>
 
-        <addForeignKeyConstraint baseTableName="comment_thread"
+        <addForeignKeyConstraint baseTableName="review_comment_thread"
                                  baseColumnNames="exercise_id"
                                  constraintName="fk_comment_thread_exercise"
                                  referencedTableName="exercise"
                                  referencedColumnNames="id"
                                  onDelete="CASCADE"/>
 
-        <addForeignKeyConstraint baseTableName="comment_thread"
+        <addForeignKeyConstraint baseTableName="review_comment_thread"
                                  baseColumnNames="initial_version_id"
                                  constraintName="fk_comment_thread_initial_version"
                                  referencedTableName="exercise_version"
                                  referencedColumnNames="id"
                                  onDelete="SET NULL"/>
 
-        <addForeignKeyConstraint baseTableName="comment_thread"
+        <addForeignKeyConstraint baseTableName="review_comment_thread"
                                  baseColumnNames="group_id"
                                  constraintName="fk_comment_thread_group"
-                                 referencedTableName="comment_thread_group"
+                                 referencedTableName="review_comment_thread_group"
                                  referencedColumnNames="id"
                                  onDelete="SET NULL"/>
 
-        <createIndex tableName="comment_thread" indexName="idx_comment_thread_exercise">
+        <createIndex tableName="review_comment_thread" indexName="idx_review_comment_thread_exercise">
             <column name="exercise_id"/>
         </createIndex>
 
-        <createIndex tableName="comment_thread" indexName="idx_comment_thread_group">
+        <createIndex tableName="review_comment_thread" indexName="idx_review_comment_thread_group">
             <column name="group_id"/>
         </createIndex>
 
-        <createIndex tableName="comment_thread" indexName="idx_comment_thread_target">
+        <createIndex tableName="review_comment_thread" indexName="idx_review_comment_thread_target">
             <column name="target_type"/>
         </createIndex>
     </changeSet>
@@ -195,7 +195,7 @@
         <preConditions onFail="MARK_RAN">
             <and>
                 <not>
-                    <tableExists tableName="comment"/>
+                    <tableExists tableName="review_comment"/>
                 </not>
                 <or>
                     <dbms type="mysql"/>
@@ -203,7 +203,7 @@
                 </or>
             </and>
         </preConditions>
-        <createTable tableName="comment">
+        <createTable tableName="review_comment">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -229,21 +229,21 @@
             <column name="last_modified_by" type="varchar(50)"/>
         </createTable>
 
-        <addForeignKeyConstraint baseTableName="comment"
+        <addForeignKeyConstraint baseTableName="review_comment"
                                  baseColumnNames="thread_id"
                                  constraintName="fk_comment_thread"
-                                 referencedTableName="comment_thread"
+                                 referencedTableName="review_comment_thread"
                                  referencedColumnNames="id"
                                  onDelete="CASCADE"/>
 
-        <addForeignKeyConstraint baseTableName="comment"
+        <addForeignKeyConstraint baseTableName="review_comment"
                                  baseColumnNames="author_id"
                                  constraintName="fk_comment_author"
                                  referencedTableName="jhi_user"
                                  referencedColumnNames="id"
                                  onDelete="SET NULL"/>
 
-        <addForeignKeyConstraint baseTableName="comment"
+        <addForeignKeyConstraint baseTableName="review_comment"
                                  baseColumnNames="initial_version_id"
                                  constraintName="fk_comment_initial_version"
                                  referencedTableName="exercise_version"
@@ -251,11 +251,11 @@
                                  onDelete="SET NULL"/>
 
 
-        <createIndex tableName="comment" indexName="idx_comment_thread">
+        <createIndex tableName="review_comment" indexName="idx_review_comment_thread">
             <column name="thread_id"/>
         </createIndex>
 
-        <createIndex tableName="comment" indexName="idx_comment_author">
+        <createIndex tableName="review_comment" indexName="idx_review_comment_author">
             <column name="author_id"/>
         </createIndex>
 
@@ -266,12 +266,12 @@
         <preConditions onFail="MARK_RAN">
             <and>
                 <not>
-                    <tableExists tableName="comment"/>
+                    <tableExists tableName="review_comment"/>
                 </not>
                 <dbms type="postgresql"/>
             </and>
         </preConditions>
-        <createTable tableName="comment">
+        <createTable tableName="review_comment">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -297,21 +297,21 @@
             <column name="last_modified_by" type="varchar(50)"/>
         </createTable>
 
-        <addForeignKeyConstraint baseTableName="comment"
+        <addForeignKeyConstraint baseTableName="review_comment"
                                  baseColumnNames="thread_id"
                                  constraintName="fk_comment_thread"
-                                 referencedTableName="comment_thread"
+                                 referencedTableName="review_comment_thread"
                                  referencedColumnNames="id"
                                  onDelete="CASCADE"/>
 
-        <addForeignKeyConstraint baseTableName="comment"
+        <addForeignKeyConstraint baseTableName="review_comment"
                                  baseColumnNames="author_id"
                                  constraintName="fk_comment_author"
                                  referencedTableName="jhi_user"
                                  referencedColumnNames="id"
                                  onDelete="SET NULL"/>
 
-        <addForeignKeyConstraint baseTableName="comment"
+        <addForeignKeyConstraint baseTableName="review_comment"
                                  baseColumnNames="initial_version_id"
                                  constraintName="fk_comment_initial_version"
                                  referencedTableName="exercise_version"
@@ -319,11 +319,11 @@
                                  onDelete="SET NULL"/>
 
 
-        <createIndex tableName="comment" indexName="idx_comment_thread">
+        <createIndex tableName="review_comment" indexName="idx_review_comment_thread">
             <column name="thread_id"/>
         </createIndex>
 
-        <createIndex tableName="comment" indexName="idx_comment_author">
+        <createIndex tableName="review_comment" indexName="idx_review_comment_author">
             <column name="author_id"/>
         </createIndex>
 

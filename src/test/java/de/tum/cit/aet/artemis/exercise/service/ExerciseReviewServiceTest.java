@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -124,10 +125,10 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         comment.setThread(thread);
         commentRepository.save(comment);
 
-        List<CommentThread> threads = exerciseReviewService.findThreadsWithCommentsByExerciseId(programmingExercise.getId());
+        Set<CommentThread> threads = exerciseReviewService.findThreadsWithCommentsByExerciseId(programmingExercise.getId());
 
         assertThat(threads).hasSize(1);
-        CommentThread loaded = threads.getFirst();
+        CommentThread loaded = threads.iterator().next();
         assertThat(loaded.getComments()).hasSize(1);
     }
 
@@ -155,7 +156,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCreateThreadWhenValid() {
         CreateCommentThreadDTO dto = buildThreadDto();
-        CommentThread saved = exerciseReviewService.createThread(programmingExercise.getId(), dto);
+        CommentThread saved = exerciseReviewService.createThread(programmingExercise.getId(), dto).thread();
 
         assertThat(saved.getExercise()).isNotNull();
         assertThat(saved.getExercise().getId()).isEqualTo(programmingExercise.getId());
@@ -165,7 +166,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCreateUserCommentWithAuthorAndInitialVersion() {
         ExerciseVersion initialVersion = createExerciseVersion();
-        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto());
+        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
 
         UserCommentContentDTO comment = buildUserCommentContent("Initial");
         Comment saved = exerciseReviewService.createUserComment(thread.getId(), comment);
@@ -179,7 +180,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldUseLatestVersionForReplyComments() {
         ExerciseVersion initialVersion = createExerciseVersion();
-        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto());
+        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         exerciseReviewService.createUserComment(thread.getId(), buildUserCommentContent("Initial"));
 
         programmingExercise.setProblemStatement("New Line\nLine 1\nLine 2\nLine 3");
@@ -195,10 +196,12 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldDeleteThreadWhenLastCommentRemoved() {
-        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto());
+        ExerciseReviewService.ThreadCreationResult creation = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto());
+        CommentThread thread = creation.thread();
         Comment comment = exerciseReviewService.createUserComment(thread.getId(), buildUserCommentContent("Only"));
 
         exerciseReviewService.deleteComment(comment.getId());
+        exerciseReviewService.deleteComment(creation.comment().getId());
 
         assertThat(commentThreadRepository.findById(thread.getId())).isEmpty();
     }
@@ -206,32 +209,32 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldKeepThreadWhenOtherCommentsExist() {
-        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto());
+        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         Comment first = exerciseReviewService.createUserComment(thread.getId(), buildUserCommentContent("First"));
         exerciseReviewService.createUserComment(thread.getId(), buildUserCommentContent("Second"));
 
         exerciseReviewService.deleteComment(first.getId());
 
         assertThat(commentThreadRepository.findById(thread.getId())).isPresent();
-        assertThat(commentRepository.countByThreadId(thread.getId())).isEqualTo(1);
+        assertThat(commentRepository.countByThreadId(thread.getId())).isEqualTo(2);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCountCommentsByThreadId() {
-        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto());
+        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         exerciseReviewService.createUserComment(thread.getId(), buildUserCommentContent("First"));
         exerciseReviewService.createUserComment(thread.getId(), buildUserCommentContent("Second"));
 
         long count = commentRepository.countByThreadId(thread.getId());
 
-        assertThat(count).isEqualTo(2);
+        assertThat(count).isEqualTo(3);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldUpdateThreadResolvedState() {
-        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto());
+        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
 
         CommentThread updated = exerciseReviewService.updateThreadResolvedState(thread.getId(), new UpdateThreadResolvedStateDTO(true));
 
@@ -243,8 +246,8 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCreateThreadGroupWithTwoThreads() {
-        CommentThread first = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto());
-        CommentThread second = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto());
+        CommentThread first = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
+        CommentThread second = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
 
         var group = exerciseReviewService.createGroup(programmingExercise.getId(), new CreateCommentThreadGroupDTO(List.of(first.getId(), second.getId())));
 
@@ -257,8 +260,8 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldDeleteThreadGroupAndKeepThreads() {
-        CommentThread first = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto());
-        CommentThread second = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto());
+        CommentThread first = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
+        CommentThread second = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
 
         var group = exerciseReviewService.createGroup(programmingExercise.getId(), new CreateCommentThreadGroupDTO(List.of(first.getId(), second.getId())));
         exerciseReviewService.deleteGroup(group.getId());
@@ -271,7 +274,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRejectThreadGroupWithTooFewThreads() {
-        CommentThread first = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto());
+        CommentThread first = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
 
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> exerciseReviewService.createGroup(programmingExercise.getId(), new CreateCommentThreadGroupDTO(List.of(first.getId()))));
@@ -285,6 +288,14 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectThreadCreationWithInvalidInitialFilePath() {
+        CreateCommentThreadDTO dto = new CreateCommentThreadDTO(CommentThreadLocationType.TEMPLATE_REPO, null, "src/../invalid/path.java", 1, new UserCommentContentDTO("Initial"));
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exerciseReviewService.createThread(programmingExercise.getId(), dto));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRejectThreadGroupCreationWithNullBody() {
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exerciseReviewService.createGroup(programmingExercise.getId(), null));
     }
@@ -292,38 +303,38 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRejectThreadResolvedUpdateWithNullBody() {
-        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto());
+        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exerciseReviewService.updateThreadResolvedState(thread.getId(), null));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldLoadThreadWithCommentsById() {
-        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto());
+        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         exerciseReviewService.createUserComment(thread.getId(), buildUserCommentContent("First"));
 
         Optional<CommentThread> loaded = commentThreadRepository.findWithCommentsById(thread.getId());
 
         assertThat(loaded).isPresent();
-        assertThat(loaded.get().getComments()).hasSize(1);
+        assertThat(loaded.get().getComments()).hasSize(2);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldLoadThreadsWithCommentsByExerciseId() {
-        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto());
+        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         exerciseReviewService.createUserComment(thread.getId(), buildUserCommentContent("First"));
 
-        List<CommentThread> threads = commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId());
+        Set<CommentThread> threads = commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId());
 
         assertThat(threads).hasSize(1);
-        assertThat(threads.getFirst().getComments()).hasSize(1);
+        assertThat(threads.iterator().next().getComments()).hasSize(2);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldLoadCommentWithThreadAndExercise() {
-        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto());
+        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         Comment comment = exerciseReviewService.createUserComment(thread.getId(), buildUserCommentContent("Initial"));
 
         Comment loaded = commentRepository.findWithThreadById(comment.getId()).orElseThrow();
@@ -337,7 +348,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldUpdateCommentContentAndTimestamp() {
-        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto());
+        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         Comment comment = exerciseReviewService.createUserComment(thread.getId(), buildUserCommentContent("Initial"));
         Instant previousModified = comment.getLastModifiedDate();
 
@@ -351,14 +362,14 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRejectCommentWithoutContent() {
-        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto());
+        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exerciseReviewService.createUserComment(thread.getId(), null));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRejectUpdateWithMissingContent() {
-        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto());
+        CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         Comment comment = exerciseReviewService.createUserComment(thread.getId(), buildUserCommentContent("Initial"));
 
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exerciseReviewService.updateUserCommentContent(comment.getId(), null));
