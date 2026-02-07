@@ -2,16 +2,30 @@
     "artemisApp": {
         "iris": {
             "onboarding": {
-                "title": "Hello, I'm Iris!",
-                "description": "I'm your AI coding partner. I already know your assignment details and your current code, so you can just dive straight into asking questions.",
-                "getStarted": "Let's get started",
-                "skipTour": "Skip tour",
+                "title": "Meet Iris",
+                "description": "Iris is an AI coding tutor built into Artemis. It has the current exercise and latest code context, so you can ask questions right away.",
+                "note": "Please note: Iris only supports course-related questions and does not engage in off-topic conversations.",
+                "getStarted": "Take the tour",
                 "next": "Next",
-                "back": "Back",
-                "finish": "Finish",
-                "sidebar": {
-                    "label": "Your Learning Hub",
-                    "description": "Everything you need for the course lives here. Let's find your current assignment."
+                "step1": {
+                    "description": "Click Exercises to continue."
+                },
+                "step2": {
+                    "header": "Inside programming exercises",
+                    "description": "Iris can explain concepts, help locate errors, and offer hints, without giving away full answers."
+                },
+                "step3": {
+                    "description": "Return to Dashboard to complete the tour."
+                },
+                "step5": {
+                    "title": "Try a first question",
+                    "description": "Choose a suggested prompt below to begin.",
+                    "prompts": {
+                        "explainConcept": "Explain a concept",
+                        "quizTopic": "Quiz me on a topic",
+                        "studyTips": "Give me study tips"
+                    },
+                    "replayHint": "Click the (i) icon to see this tour again"
                 }
             },
             "settings": {
