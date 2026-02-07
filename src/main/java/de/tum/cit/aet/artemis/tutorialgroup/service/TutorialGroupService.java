@@ -291,7 +291,6 @@ public class TutorialGroupService {
         Set<TutorialGroupRegistration> newRegistrations = studentsToRegister.stream().map(student -> new TutorialGroupRegistration(student, tutorialGroup, registrationType))
                 .collect(Collectors.toSet());
         tutorialGroupRegistrationRepository.saveAll(newRegistrations);
-        log.info("all registered");
 
         if (sendNotification && responsibleUser != null) {
             for (User student : studentsToRegister) {
@@ -345,7 +344,6 @@ public class TutorialGroupService {
             students.add(student);
         }
         registerMultipleStudentsToTutorialGroup(students, tutorialGroup, registrationType, responsibleUser, true);
-        log.info("students registered");
     }
 
     /**

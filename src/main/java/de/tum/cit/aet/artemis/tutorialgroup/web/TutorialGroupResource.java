@@ -522,7 +522,7 @@ public class TutorialGroupResource {
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/register-via-login")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> registerMultipleStudentsViaLogin(@PathVariable long courseId, @PathVariable long tutorialGroupId, @RequestBody List<String> logins) {
-        log.info("REST request to register {} to tutorial group {}", logins, tutorialGroupId);
+        log.debug("REST request to register {} to tutorial group {}", logins, tutorialGroupId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
 
         var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
