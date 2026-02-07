@@ -79,8 +79,14 @@ public class HyperionProblemStatementGenerationService {
             if (sanitizedPrompt.isBlank()) {
                 throw new InternalServerErrorAlertException("User prompt is empty after sanitization", "ProblemStatement", "ProblemStatementGeneration.generationFailed");
             }
-            String sanitizedTitle = course.getTitle() != null ? sanitizeUserInput(course.getTitle()) : "Programming Course";
-            String sanitizedDescription = course.getDescription() != null ? sanitizeUserInput(course.getDescription()) : "A programming course";
+            String sanitizedTitle = sanitizeUserInput(course.getTitle());
+            if (sanitizedTitle.isBlank()) {
+                sanitizedTitle = "Programming Course";
+            }
+            String sanitizedDescription = sanitizeUserInput(course.getDescription());
+            if (sanitizedDescription.isBlank()) {
+                sanitizedDescription = "A programming course";
+            }
             Map<String, String> templateVariables = Map.of("userPrompt", sanitizedPrompt, "courseTitle", sanitizedTitle, "courseDescription", sanitizedDescription);
 
             String prompt = templateService.render("/prompts/hyperion/generate_draft_problem_statement.st", templateVariables);

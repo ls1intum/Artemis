@@ -78,8 +78,17 @@ public class HyperionProblemStatementRefinementService {
 
         String sanitizedPrompt = sanitizeUserInput(userPrompt);
         validateUserPrompt(sanitizedPrompt);
-        GlobalRefinementPromptVariables variables = new GlobalRefinementPromptVariables(originalProblemStatementText.trim(), sanitizedPrompt,
-                sanitizeUserInput(getCourseTitleOrDefault(course)), sanitizeUserInput(getCourseDescriptionOrDefault(course)));
+
+        String sanitizedTitle = sanitizeUserInput(getCourseTitleOrDefault(course));
+        if (sanitizedTitle.isBlank()) {
+            sanitizedTitle = DEFAULT_COURSE_TITLE;
+        }
+        String sanitizedDescription = sanitizeUserInput(getCourseDescriptionOrDefault(course));
+        if (sanitizedDescription.isBlank()) {
+            sanitizedDescription = DEFAULT_COURSE_DESCRIPTION;
+        }
+
+        GlobalRefinementPromptVariables variables = new GlobalRefinementPromptVariables(originalProblemStatementText.trim(), sanitizedPrompt, sanitizedTitle, sanitizedDescription);
 
         String prompt = templateService.render("/prompts/hyperion/refine_problem_statement.st", variables.asMap());
 
@@ -143,6 +152,10 @@ public class HyperionProblemStatementRefinementService {
     private void validateRefinementPrerequisites(String problemStatementText) {
         if (problemStatementText == null || problemStatementText.isBlank()) {
             throw new BadRequestAlertException("Cannot refine empty problem statement", "ProblemStatement", "ProblemStatementRefinement.problemStatementEmpty");
+        }
+        if (problemStatementText.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
+            throw new BadRequestAlertException("Problem statement exceeds maximum length of " + MAX_PROBLEM_STATEMENT_LENGTH + " characters", "ProblemStatement",
+                    "ProblemStatementRefinement.problemStatementTooLong");
         }
         if (chatClient == null) {
             throw new InternalServerErrorAlertException("AI chat client is not configured", "Hyperion", "ProblemStatementRefinement.chatClientNotConfigured");
