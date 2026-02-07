@@ -169,15 +169,23 @@ export function resolveCitationTypeClass(parsed: IrisCitationParsed): string {
 }
 
 /**
+ * Gets the citation label text using the keyword or a type-based fallback.
+ * @param parsed The parsed citation entry.
+ * @returns The unescaped label text.
+ */
+export function getCitationLabelText(parsed: IrisCitationParsed): string {
+    const keyword = parsed.keyword?.trim();
+    const fallback = parsed.type === 'F' ? 'FAQ' : 'Source';
+    return keyword || fallback;
+}
+
+/**
  * Formats a citation label using the keyword or a type-based fallback.
  * @param parsed The parsed citation entry.
  * @returns The escaped label for display.
  */
 export function formatCitationLabel(parsed: IrisCitationParsed): string {
-    const keyword = parsed.keyword?.trim();
-    const fallback = parsed.type === 'F' ? 'FAQ' : 'Source';
-    const label = keyword || fallback;
-    return escapeHtml(label);
+    return escapeHtml(getCitationLabelText(parsed));
 }
 
 /**

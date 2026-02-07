@@ -3,206 +3,196 @@
     --iris-citation-agg-bg: var(--iris-chat-citation-aggregation);
     --iris-citation-agg-text: var(--iris-rate-background);
     --iris-citation-meta-color: var(--iris-chat-history-label-color);
-    --iris-citation-nav-color: var(--iris-chat-history-label-color);
     --iris-citation-nav-hover-bg: var(--iris-chat-header-button-background);
     --iris-citation-icon-bg: var(--secondary);
     --iris-citation-summary-icon-bg: var(--iris-chat-history-label-color);
     --iris-citation-source-color: var(--iris-chat-history-label-color);
 }
 
-:host ::ng-deep .iris-citation-group {
-    display: inline-flex;
-    align-items: center;
-    position: relative;
-    padding-right: 10px;
-
-    --iris-citation-shift: 0px;
-}
-
-:host ::ng-deep .iris-citation {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 2px 6px;
-    border-radius: 999px;
-    background-color: var(--iris-citation-bg);
-    font-size: 0.85em;
-    line-height: 1.2;
-    vertical-align: middle;
-    margin: 0 2px;
-    max-width: 100%;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    position: relative;
-    z-index: 1;
-
-    --iris-citation-shift: 0px;
-}
-
-:host ::ng-deep .iris-citation__count {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2px 6px;
-    border-radius: 999px;
-    font-size: 0.85em;
-    line-height: 1.2;
-    background-color: var(--iris-citation-agg-bg);
-    color: var(--iris-citation-agg-text);
-    pointer-events: none;
-    margin-left: -7px;
-}
-
-:host ::ng-deep .iris-citation__summary {
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    width: 280px;
-    max-width: 70vw;
-    padding: 10px 10px 14px;
-    border-radius: 8px;
-    background-color: var(--iris-citation-bg);
-    line-height: 1.4;
-    white-space: normal;
-    text-align: center;
-    z-index: 2;
-    transform: translate(-50%, calc(-100% - 18px)) translateX(var(--iris-citation-shift));
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transition:
-        opacity 120ms ease,
-        visibility 120ms ease;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-}
-
-:host ::ng-deep .iris-citation-group .iris-citation__summary {
-    font-size: 0.85em;
-}
-
-:host ::ng-deep .iris-citation--has-summary,
-:host ::ng-deep .iris-citation-group--has-summary {
-    overflow: visible;
-}
-
-:host ::ng-deep .iris-citation--has-summary:hover,
-:host ::ng-deep .iris-citation--has-summary:focus-within,
-:host ::ng-deep .iris-citation-group--has-summary:hover,
-:host ::ng-deep .iris-citation-group--has-summary:focus-within {
-    z-index: 20;
-}
-
-:host ::ng-deep .iris-citation--has-summary:hover .iris-citation__summary,
-:host ::ng-deep .iris-citation--has-summary:focus-within .iris-citation__summary,
-:host ::ng-deep .iris-citation-group--has-summary:hover .iris-citation__summary,
-:host ::ng-deep .iris-citation-group--has-summary:focus-within .iris-citation__summary {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
-}
-
-:host ::ng-deep .iris-citation__summary-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    min-height: 1.2em;
-}
-
-:host ::ng-deep .iris-citation__summary-item {
-    display: none;
-}
-
-:host ::ng-deep .iris-citation__summary-item.is-active {
-    display: block;
-}
-
-:host ::ng-deep .iris-citation__summary-title {
-    display: block;
-    font-size: 1rem;
-    font-weight: 600;
-}
-
-:host ::ng-deep .iris-citation__summary-lecture {
-    display: block;
-    font-size: 0.75rem;
-    line-height: 1.2;
-    color: var(--iris-citation-meta-color);
-}
-
-:host ::ng-deep .iris-citation__summary-text {
-    display: block;
-    font-size: 0.85rem;
-}
-
-:host ::ng-deep .iris-citation__nav {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding-top: 6px;
-    font-size: 0.9em;
-}
-
-:host ::ng-deep .iris-citation__nav-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 6px;
-    border: none;
-    background: transparent;
-    padding: 0 6px;
-    cursor: pointer;
-    user-select: none;
-    color: var(--iris-citation-nav-color);
-    font: inherit;
-    pointer-events: auto;
-}
-
-:host ::ng-deep .iris-citation__nav-button:hover {
-    background-color: var(--iris-citation-nav-hover-bg);
-}
-
-:host ::ng-deep .iris-citation__nav-button:focus-visible {
-    outline: 2px solid var(--iris-citation-nav-hover-bg);
-    outline-offset: 1px;
-}
-
-:host ::ng-deep .iris-citation__icon {
-    width: 14px;
-    height: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 auto;
-
-    svg {
-        width: 100%;
-        height: 100%;
-        color: var(--iris-citation-icon-bg);
+:host ::ng-deep {
+    .iris-citation-group {
+        display: inline-flex;
+        align-items: center;
+        position: relative;
+        padding-right: 10px;
     }
-}
 
-:host ::ng-deep .iris-citation__summary-icon {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background-color: var(--iris-citation-summary-icon-bg);
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-}
+    .iris-citation,
+    .iris-citation__count {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 6px;
+        border-radius: 999px;
+        font-size: 0.85em;
+        line-height: 1.2;
+    }
 
-:host ::ng-deep .iris-citation--source .iris-citation__icon svg {
-    color: var(--iris-citation-source-color);
-}
+    .iris-citation {
+        gap: 4px;
+        background-color: var(--iris-citation-bg);
+        vertical-align: middle;
+        margin: 0 2px;
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        position: relative;
+        z-index: 1;
+    }
 
-:host ::ng-deep .iris-citation__nav-button svg {
-    width: 12px;
-    height: 12px;
-    color: currentColor;
+    .iris-citation__count {
+        justify-content: center;
+        background-color: var(--iris-citation-agg-bg);
+        color: var(--iris-citation-agg-text);
+        pointer-events: none;
+        margin-left: -7px;
+    }
+
+    .iris-citation__summary {
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        width: 280px;
+        max-width: 70vw;
+        padding: 10px 10px 14px;
+        border-radius: 8px;
+        background-color: var(--iris-citation-bg);
+        line-height: 1.4;
+        white-space: normal;
+        text-align: center;
+        z-index: 2;
+        transform: translate(-50%, calc(-100% - 18px)) translateX(var(--iris-citation-shift));
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition:
+            opacity 120ms ease,
+            visibility 120ms ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .iris-citation-group .iris-citation__summary {
+        font-size: 0.85em;
+    }
+
+    .iris-citation--has-summary,
+    .iris-citation-group--has-summary {
+        overflow: visible;
+
+        &:hover,
+        &:focus-within {
+            z-index: 20;
+
+            .iris-citation__summary {
+                opacity: 1;
+                visibility: visible;
+                pointer-events: auto;
+            }
+        }
+    }
+
+    .iris-citation__summary-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        min-height: 1.2em;
+    }
+
+    .iris-citation__summary-item {
+        display: none;
+
+        &.is-active {
+            display: block;
+        }
+    }
+
+    .iris-citation__summary-title {
+        display: block;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .iris-citation__summary-lecture {
+        display: block;
+        font-size: 0.75rem;
+        line-height: 1.2;
+        color: var(--iris-citation-meta-color);
+    }
+
+    .iris-citation__summary-text {
+        display: block;
+        font-size: 0.85rem;
+    }
+
+    .iris-citation__nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding-top: 6px;
+        font-size: 0.9em;
+    }
+
+    .iris-citation__nav-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        border: none;
+        background: transparent;
+        padding: 0 6px;
+        cursor: pointer;
+        user-select: none;
+        color: var(--iris-chat-history-label-color);
+        font: inherit;
+        pointer-events: auto;
+
+        &:hover {
+            background-color: var(--iris-citation-nav-hover-bg);
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--iris-citation-nav-hover-bg);
+            outline-offset: 1px;
+        }
+
+        svg {
+            width: 12px;
+            height: 12px;
+            color: currentColor;
+        }
+    }
+
+    .iris-citation__icon {
+        width: 14px;
+        height: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+
+        svg {
+            width: 100%;
+            height: 100%;
+            color: var(--iris-citation-icon-bg);
+        }
+    }
+
+    .iris-citation__summary-icon {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background-color: var(--iris-citation-summary-icon-bg);
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+    }
+
+    .iris-citation--source .iris-citation__icon svg {
+        color: var(--iris-citation-source-color);
+    }
 }

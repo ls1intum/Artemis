@@ -3,7 +3,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { IrisCitationParsed } from './iris-citation-text.model';
-import { formatCitationLabel, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
+import { escapeHtml, formatCitationLabel, getCitationLabelText, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
 import { faChevronLeft, faChevronRight, faCircleExclamation, faCircleQuestion, faFilePdf, faPlayCircle } from '@fortawesome/free-solid-svg-icons';
 
 /**
@@ -19,6 +19,13 @@ import { faChevronLeft, faChevronRight, faCircleExclamation, faCircleQuestion, f
 })
 export class IrisCitationTextComponent {
     private readonly domSanitizer = inject(DomSanitizer);
+
+    private readonly ICON_MAP = new Map([
+        ['iris-citation--slide', faFilePdf],
+        ['iris-citation--video', faPlayCircle],
+        ['iris-citation--faq', faCircleQuestion],
+        ['iris-citation--source', faCircleExclamation],
+    ]);
 
     // Inputs
     readonly text = input.required<string>();
@@ -55,7 +62,7 @@ export class IrisCitationTextComponent {
         const hasSummary = !!parsed.summary;
         const classes = ['iris-citation', typeClass, hasSummary ? 'iris-citation--has-summary' : ''].filter(Boolean).join(' ');
         const iconSvg = this.getIconSvg(typeClass);
-        const summaryFallbackTitle = this.getSummaryFallbackTitle(parsed);
+        const summaryFallbackTitle = getCitationLabelText(parsed);
 
         let html = `<span class="${classes}">`;
         html += `<span class="iris-citation__icon">${iconSvg}</span>`;
@@ -103,7 +110,7 @@ export class IrisCitationTextComponent {
                 if (cite.summary) {
                     const meta = metas[index];
                     const isActive = index === 0 ? 'is-active' : '';
-                    const summaryFallbackTitle = this.getSummaryFallbackTitle(cite);
+                    const summaryFallbackTitle = getCitationLabelText(cite);
                     html += `<span class="iris-citation__summary-item ${isActive}">`;
                     html += this.renderSummaryContent(cite.summary, meta, summaryFallbackTitle);
                     html += `</span>`;
@@ -139,47 +146,22 @@ export class IrisCitationTextComponent {
 
         let html = '';
         if (title) {
-            html += `<span class="iris-citation__summary-title">${this.escapeHtml(title)}</span>`;
+            html += `<span class="iris-citation__summary-title">${escapeHtml(title)}</span>`;
         }
         if (lectureTitle) {
-            html += `<span class="iris-citation__summary-lecture">in ${this.escapeHtml(lectureTitle)}</span>`;
+            html += `<span class="iris-citation__summary-lecture">in ${escapeHtml(lectureTitle)}</span>`;
         }
         if (summaryText) {
-            html += `<span class="iris-citation__summary-text">${this.escapeHtml(summaryText)}</span>`;
+            html += `<span class="iris-citation__summary-text">${escapeHtml(summaryText)}</span>`;
         }
         return html;
-    }
-
-    private getSummaryFallbackTitle(parsed: IrisCitationParsed): string {
-        const keyword = parsed.keyword?.trim();
-        if (keyword) {
-            return keyword;
-        }
-        return parsed.type === 'F' ? 'FAQ' : 'Source';
     }
 
     /**
      * Returns the appropriate Font Awesome icon SVG based on citation type.
      */
     private getIconSvg(typeClass: string): string {
-        let icon;
-        switch (typeClass) {
-            case 'iris-citation--slide':
-                icon = faFilePdf;
-                break;
-            case 'iris-citation--video':
-                icon = faPlayCircle;
-                break;
-            case 'iris-citation--faq':
-                icon = faCircleQuestion;
-                break;
-            case 'iris-citation--source':
-                icon = faCircleExclamation;
-                break;
-            default:
-                icon = faCircleExclamation;
-        }
-
+        const icon = this.ICON_MAP.get(typeClass) ?? faCircleExclamation;
         const [width, height, , , svgPath] = icon.icon;
         return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" fill="currentColor"><path d="${svgPath}"/></svg>`;
     }
@@ -191,13 +173,6 @@ export class IrisCitationTextComponent {
         const icon = direction === 'left' ? faChevronLeft : faChevronRight;
         const [width, height, , , svgPath] = icon.icon;
         return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" fill="currentColor"><path d="${svgPath}"/></svg>`;
-    }
-
-    /**
-     * Escapes HTML special characters.
-     */
-    private escapeHtml(text: string): string {
-        return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
     /**
