@@ -2,6 +2,7 @@ import { faLink } from '@fortawesome/free-solid-svg-icons';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 import { sanitizeStringForMarkdownEditor } from 'app/shared/util/markdown.util';
+import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
 
 interface UrlArguments {
     text: string;
@@ -38,9 +39,29 @@ export class UrlAction extends TextEditorAction {
     run(editor: TextEditor, args?: UrlArguments): void {
         if (!args?.text || !args?.url) {
             this.wrapSelectionOrInsertDefault(editor, (selectedText) => `[${sanitizeStringForMarkdownEditor(selectedText)}](https://)`, UrlAction.DEFAULT_INSERT_TEXT);
+            this.shrinkSelectionToUrlPart(editor);
         } else {
             this.replaceTextAtCurrentSelection(editor, `[${sanitizeStringForMarkdownEditor(args.text)}](${args.url})`);
         }
         editor.focus();
+    }
+
+    /**
+     * If there is currently selected text, it will be "[something](https://)".
+     * This shrinks the selection range to only include "https://",
+     * allowing users to immediately replace the placeholder text.
+     * @param editor The editor in which to update the text selection.
+     */
+    private shrinkSelectionToUrlPart(editor: TextEditor): void {
+        const selection = editor.getSelection();
+        if (selection) {
+            const start = selection.getStartPosition();
+            const end = selection.getEndPosition();
+            // Exclude everything up to "("
+            const newStart = start.withColumn(end.getColumn() - 9);
+            // Exclude trailing ")"
+            const newEnd = end.withColumn(end.getColumn() - 1);
+            editor.setSelection(new TextEditorRange(newStart, newEnd));
+        }
     }
 }
