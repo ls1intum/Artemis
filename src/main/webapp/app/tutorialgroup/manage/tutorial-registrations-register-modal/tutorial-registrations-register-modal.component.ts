@@ -4,16 +4,29 @@ import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialRegistrationsRegisterSearchBarComponent } from 'app/tutorialgroup/manage/tutorial-registrations-register-search-bar/tutorial-registrations-register-search-bar.component';
+import {
+    TutorialRegistrationsStudentsTableComponent,
+    TutorialRegistrationsStudentsTableRemoveActionColumnInfo,
+} from 'app/tutorialgroup/manage/tutorial-registrations-students-table/tutorial-registrations-students-table.component';
 
 @Component({
     selector: 'jhi-tutorial-registrations-register-modal',
-    imports: [Dialog, TutorialRegistrationsRegisterSearchBarComponent],
+    imports: [Dialog, TutorialRegistrationsRegisterSearchBarComponent, TutorialRegistrationsStudentsTableComponent],
     templateUrl: './tutorial-registrations-register-modal.component.html',
     styleUrl: './tutorial-registrations-register-modal.component.scss',
 })
 export class TutorialRegistrationsRegisterModalComponent {
     private translateService = inject(TranslateService);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
+
+    readonly studentsTableRemoveActionColumnInfo: TutorialRegistrationsStudentsTableRemoveActionColumnInfo = {
+        headerStringKey: 'entity.action.remove',
+        onRemove: (_, student) => {
+            this.selectedStudents.update((students) => {
+                return students.filter((otherStudent) => otherStudent.id !== student.id);
+            });
+        },
+    };
 
     courseId = input.required<number>();
     tutorialGroupId = input.required<number>();

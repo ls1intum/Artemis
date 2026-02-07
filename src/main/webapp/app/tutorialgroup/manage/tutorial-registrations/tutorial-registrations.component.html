@@ -26,45 +26,7 @@
             (click)="registerModal.open()"
         ></button>
     </div>
-    <table>
-        <thead>
-            <tr class="header-row">
-                <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.name"></th>
-                <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.login"></th>
-                <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.email"></th>
-                <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.registrationNumber"></th>
-                <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.deregister"></th>
-            </tr>
-        </thead>
-        <tbody>
-            @for (student of filteredRegisteredStudents(); track student.id) {
-                <tr class="body-row">
-                    <td>
-                        <div class="student-property">
-                            <jhi-profile-picture imageSizeInRem="3.5" [isBoxShadow]="true" [imageUrl]="addPublicFilePrefix(student.profilePictureUrl)" />
-                            {{ student.name }}
-                        </div>
-                    </td>
-                    <td>
-                        <div class="student-property">{{ student.login }}</div>
-                    </td>
-                    <td>
-                        <div class="student-property">{{ student.email }}</div>
-                    </td>
-                    <td>
-                        <div class="student-property">{{ student.registrationNumber }}</div>
-                    </td>
-                    <td>
-                        <div class="student-actions">
-                            <button class="danger" (click)="confirmDeregistration($event, student.login)">
-                                <span class="pi pi-times" style="font-size: 1.25rem" aria-hidden="true"></span>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <jhi-tutorial-registrations-students-table [students]="filteredRegisteredStudents()" [removeActionColumnInfo]="studentsTableRemoveActionColumnInfo" />
 </div>
 <p-confirmDialog />
 <jhi-tutorial-registrations-import-modal [courseId]="courseId()" [tutorialGroupId]="tutorialGroupId()" (onStudentsRegistered)="onStudentsRegistered.emit()" #importModal />

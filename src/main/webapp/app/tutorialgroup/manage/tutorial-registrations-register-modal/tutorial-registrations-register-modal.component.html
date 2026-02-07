@@ -1,8 +1,6 @@
 <p-dialog [header]="header()" [modal]="true" [visible]="isOpen()" (visibleChange)="isOpen.set($event)">
     <div class="frame">
         <jhi-tutorial-registrations-register-search-bar [courseId]="courseId()" [tutorialGroupId]="tutorialGroupId()" (onStudentSelected)="selectStudent($event)" />
-        @for (student of selectedStudents(); track student.id) {
-            <span>{{ student.login + (student.name ? ' | ' + student.name : '') }}</span>
-        }
+        <jhi-tutorial-registrations-students-table [students]="selectedStudents()" [removeActionColumnInfo]="studentsTableRemoveActionColumnInfo" />
     </div>
 </p-dialog>
