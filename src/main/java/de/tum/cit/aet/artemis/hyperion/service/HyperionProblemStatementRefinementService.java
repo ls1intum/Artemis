@@ -50,6 +50,9 @@ public class HyperionProblemStatementRefinementService {
      */
     private static final String DEFAULT_COURSE_DESCRIPTION = "A programming course";
 
+    /** Pattern matching control characters except newline (\n), carriage return (\r), and tab (\t). */
+    private static final Pattern CONTROL_CHAR_PATTERN = Pattern.compile("[\\p{Cc}&&[^\\n\\r\\t]]");
+
     @Nullable
     private final ChatClient chatClient;
 
@@ -145,8 +148,8 @@ public class HyperionProblemStatementRefinementService {
             return badRequestException;
         }
 
-        log.error("Error refining problem statement for course [{}]. Original statement length: {}. Error: {}", course.getId(),
-                originalProblemStatementText != null ? originalProblemStatementText.length() : 0, e.getMessage(), e);
+        log.error("Error refining problem statement for course [{}]. Original statement length: {}. Error: {}", course.getId(), originalProblemStatementText.length(),
+                e.getMessage(), e);
 
         return new InternalServerErrorAlertException("Failed to refine problem statement", "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementFailed");
     }
@@ -193,9 +196,6 @@ public class HyperionProblemStatementRefinementService {
     private String getCourseDescriptionOrDefault(Course course) {
         return course.getDescription() != null ? course.getDescription() : DEFAULT_COURSE_DESCRIPTION;
     }
-
-    /** Pattern matching control characters except newline (\n), carriage return (\r), and tab (\t). */
-    private static final Pattern CONTROL_CHAR_PATTERN = Pattern.compile("[\\p{Cc}&&[^\\n\\r\\t]]");
 
     /**
      * Sanitizes user input by stripping control characters (except newlines, carriage returns, and tabs)
