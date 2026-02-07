@@ -153,7 +153,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
                 CommentThreadDTO.class, HttpStatus.CREATED);
         CommentDTO initialComment = createdThread.comments().getFirst();
 
-        request.delete(reviewCommentPath(exercise.getId(), initialComment.id()), HttpStatus.OK);
+        request.delete(reviewCommentPath(exercise.getId(), initialComment.id()), HttpStatus.NO_CONTENT);
 
         assertThat(commentRepository.countByThreadId(createdThread.id())).isZero();
         assertThat(commentThreadRepository.findById(createdThread.id())).isEmpty();
@@ -336,7 +336,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
                 CommentThreadDTO.class, HttpStatus.CREATED);
         CommentDTO reply = request.postWithResponseBody(reviewCommentsPath(exercise.getId(), createdThread.id()), buildUserComment("Reply"), CommentDTO.class, HttpStatus.CREATED);
 
-        request.delete(reviewCommentPath(exercise.getId(), reply.id()), HttpStatus.OK);
+        request.delete(reviewCommentPath(exercise.getId(), reply.id()), HttpStatus.NO_CONTENT);
 
         assertThat(commentRepository.countByThreadId(createdThread.id())).isEqualTo(1);
         assertThat(commentThreadRepository.findById(createdThread.id())).isPresent();
@@ -388,7 +388,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         CreateCommentThreadGroupDTO groupRequest = new CreateCommentThreadGroupDTO(List.of(first.id(), second.id()));
         CommentThreadGroupDTO group = request.postWithResponseBody(reviewThreadGroupsPath(exercise.getId()), groupRequest, CommentThreadGroupDTO.class, HttpStatus.CREATED);
 
-        request.delete(reviewThreadGroupPath(exercise.getId(), group.id()), HttpStatus.OK);
+        request.delete(reviewThreadGroupPath(exercise.getId(), group.id()), HttpStatus.NO_CONTENT);
 
         var threads = request.getList(reviewThreadsPath(exercise.getId()), HttpStatus.OK, CommentThreadDTO.class);
         assertThat(threads).hasSize(2);
@@ -407,10 +407,10 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         CreateCommentThreadGroupDTO groupRequest = new CreateCommentThreadGroupDTO(List.of(first.id(), second.id()));
         CommentThreadGroupDTO group = request.postWithResponseBody(reviewThreadGroupsPath(exercise.getId()), groupRequest, CommentThreadGroupDTO.class, HttpStatus.CREATED);
 
-        request.delete(reviewCommentPath(exercise.getId(), first.comments().getFirst().id()), HttpStatus.OK);
+        request.delete(reviewCommentPath(exercise.getId(), first.comments().getFirst().id()), HttpStatus.NO_CONTENT);
         assertThat(commentThreadGroupRepository.findById(group.id())).isPresent();
 
-        request.delete(reviewCommentPath(exercise.getId(), second.comments().getFirst().id()), HttpStatus.OK);
+        request.delete(reviewCommentPath(exercise.getId(), second.comments().getFirst().id()), HttpStatus.NO_CONTENT);
         assertThat(commentThreadGroupRepository.findById(group.id())).isNotPresent();
     }
 
