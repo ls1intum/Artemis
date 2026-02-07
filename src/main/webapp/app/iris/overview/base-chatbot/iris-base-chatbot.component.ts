@@ -327,7 +327,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         processed.forEach((message) => {
             if (message.content?.[0] && 'textContent' in message.content[0]) {
                 const cnt = message.content[0] as IrisTextMessageContent;
-                // Only normalize newlines - component handles rest
                 cnt.textContent = cnt.textContent.replace(/\n\n/g, '\n\u00A0\n');
                 cnt.textContent = cnt.textContent.replace(/\n/g, '\n\n');
             }
@@ -339,8 +338,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         // Enable animations after initial messages have loaded
         // Delay ensures initial message batch doesn't trigger animations
         setTimeout(() => (this.shouldAnimate = true), 500);
-
-        // Clean up citation event listeners on destroy
     }
 
     checkIfUserAcceptedLLMUsage(): void {
