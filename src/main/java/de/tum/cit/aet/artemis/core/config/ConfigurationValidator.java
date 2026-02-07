@@ -74,7 +74,7 @@ public class ConfigurationValidator {
             @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures,
             @Value("${artemis.user-management.internal-admin.username:#{null}}") String internalAdminUsername,
             @Value("${artemis.user-management.internal-admin.password:#{null}}") String internalAdminPassword, @Value("${artemis.weaviate.enabled:false}") boolean weaviateEnabled,
-            @Value("${artemis.weaviate.http-host:#{null}}") String weaviateHost, @Value("${artemis.weaviate.http-port:8080}") int weaviatePort,
+            @Value("${artemis.weaviate.http-host:#{null}}") String weaviateHost, @Value("${artemis.weaviate.http-port:8001}") int weaviatePort,
             @Value("${artemis.weaviate.grpc-port:50051}") int weaviateGrpcPort, @Value("${artemis.weaviate.scheme:#{null}}") String weaviateScheme) {
         this.environment = environment;
         this.artemisConfigHelper = new ArtemisConfigHelper();
