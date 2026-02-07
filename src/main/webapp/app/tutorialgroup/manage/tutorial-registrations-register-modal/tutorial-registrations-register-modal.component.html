@@ -1,6 +1,27 @@
 <p-dialog [header]="header()" [modal]="true" [visible]="isOpen()" (visibleChange)="isOpen.set($event)">
     <div class="frame">
-        <jhi-tutorial-registrations-register-search-bar [courseId]="courseId()" [tutorialGroupId]="tutorialGroupId()" (onStudentSelected)="selectStudent($event)" />
-        <jhi-tutorial-registrations-students-table [students]="selectedStudents()" [removeActionColumnInfo]="studentsTableRemoveActionColumnInfo" />
+        <div class="top-elements">
+            <jhi-tutorial-registrations-register-search-bar [courseId]="courseId()" [tutorialGroupId]="tutorialGroupId()" (onStudentSelected)="selectStudent($event)" />
+            <jhi-tutorial-registrations-students-table [students]="selectedStudents()" [removeActionColumnInfo]="studentsTableRemoveActionColumnInfo" />
+        </div>
+        <div class="controls-footer">
+            <button
+                pButton
+                class="p-button-secondary p-button-sm"
+                jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.registerModal.cancelButtonLabel"
+                data-testid="choose-file-button"
+                (click)="close()"
+            ></button>
+            <button
+                pButton
+                class="p-button-primary p-button-sm"
+                jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.registerModal.registerAllButtonLabel"
+                data-testid="choose-file-button"
+                (click)="registerAll()"
+            ></button>
+        </div>
+        @if (isLoading()) {
+            <jhi-loading-indicator-overlay />
+        }
     </div>
 </p-dialog>

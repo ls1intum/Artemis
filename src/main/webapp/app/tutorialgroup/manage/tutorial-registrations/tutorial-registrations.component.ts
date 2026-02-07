@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
@@ -18,12 +18,7 @@ import {
     TutorialRegistrationsStudentsTableComponent,
     TutorialRegistrationsStudentsTableRemoveActionColumnInfo,
 } from 'app/tutorialgroup/manage/tutorial-registrations-students-table/tutorial-registrations-students-table.component';
-
-export interface DeregisterStudentEvent {
-    courseId: number;
-    tutorialGroupId: number;
-    studentLogin: string;
-}
+import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/shared/service/tutorial-group-registered-students.service';
 
 @Component({
     selector: 'jhi-tutorial-registrations',
@@ -46,6 +41,7 @@ export interface DeregisterStudentEvent {
 export class TutorialRegistrationsComponent {
     private confirmationService = inject(ConfirmationService);
     private translateService = inject(TranslateService);
+    private tutorialGroupRegisteredStudentService = inject(TutorialGroupRegisteredStudentsService);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
 
     readonly studentsTableRemoveActionColumnInfo: TutorialRegistrationsStudentsTableRemoveActionColumnInfo = {
@@ -57,10 +53,8 @@ export class TutorialRegistrationsComponent {
     tutorialGroupId = input.required<number>();
     registeredStudents = input.required<TutorialGroupRegisteredStudentDTO[]>();
     filteredRegisteredStudents = computed<TutorialGroupRegisteredStudentDTO[]>(() => this.computeFilteredRegisteredStudents());
-    onDeregisterStudent = output<DeregisterStudentEvent>();
     searchFieldPlaceholder = computed<string>(() => this.computeSearchFieldPlaceholder());
     searchString = signal('');
-    onStudentsRegistered = output<void>();
 
     exportRegisteredStudents() {
         const registeredStudents = this.registeredStudents();
@@ -92,11 +86,7 @@ export class TutorialRegistrationsComponent {
                 severity: 'danger',
             },
             accept: () => {
-                this.onDeregisterStudent.emit({
-                    courseId: this.courseId(),
-                    tutorialGroupId: this.tutorialGroupId(),
-                    studentLogin: student.login,
-                });
+                this.tutorialGroupRegisteredStudentService.deregisterStudent(this.courseId(), this.tutorialGroupId(), student.login);
             },
         });
     }

@@ -8,15 +8,15 @@
         gap: 0.5rem;
         align-items: end;
 
-        .spacer {
-            flex: 1;
-        }
-
         h1 {
             font-size: 1.75rem;
             font-weight: 400;
             line-height: 1;
             margin: 0;
+        }
+
+        .spacer {
+            flex: 1;
         }
     }
 

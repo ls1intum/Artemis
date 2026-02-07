@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { DialogModule } from 'primeng/dialog';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
@@ -14,6 +14,7 @@ import {
 } from 'app/tutorialgroup/manage/tutorial-registrations-import-modal-table/tutorial-registrations-import-modal-table.component';
 import { TutorialGroupRegisterStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
+import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/shared/service/tutorial-group-registered-students.service';
 
 export enum ImportFlowStep {
     EXPLANATION = 'EXPLANATION',
@@ -38,6 +39,7 @@ export class TutorialRegistrationsImportModalComponent {
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
     private tutorialGroupsService = inject(TutorialGroupsService);
+    private tutorialGroupRegisteredStudentsService = inject(TutorialGroupRegisteredStudentsService);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
     private parsedStudents = signal<TutorialGroupRegisterStudentDTO[]>([]);
     private importResults = signal<ImportResult[]>([]);
@@ -51,7 +53,6 @@ export class TutorialRegistrationsImportModalComponent {
     tableRows = computed<TutorialRegistrationsImportModalTableRow[]>(() => this.computeTableRows());
     allStudentsExist = computed<boolean>(() => this.importResults().every((student) => student.exists));
     noStudentsExist = computed<boolean>(() => this.importResults().every((student) => !student.exists));
-    onStudentsRegistered = output<void>();
 
     open() {
         this.parsedStudents.set([]);
@@ -94,7 +95,7 @@ export class TutorialRegistrationsImportModalComponent {
 
     importParsedStudents() {
         this.isLoading.set(true);
-        this.tutorialGroupsService.registerMultipleStudents(this.courseId(), this.tutorialGroupId(), this.parsedStudents()).subscribe({
+        this.tutorialGroupsService.registerMultipleStudentsViaLoginOrRegistrationNumber(this.courseId(), this.tutorialGroupId(), this.parsedStudents()).subscribe({
             next: (response: HttpResponse<Array<TutorialGroupRegisterStudentDTO>>) => {
                 const nonExistingStudents = response.body || [];
                 const studentResults: ImportResult[] = this.parsedStudents().map((parsedStudent) => {
@@ -115,7 +116,7 @@ export class TutorialRegistrationsImportModalComponent {
                 this.flowStep.set(ImportFlowStep.RESULTS);
                 const someStudentsRegistered = studentResults.some((student) => student.exists);
                 if (someStudentsRegistered) {
-                    this.onStudentsRegistered.emit();
+                    this.tutorialGroupRegisteredStudentsService.fetchRegisteredStudents(this.courseId(), this.tutorialGroupId());
                 }
                 this.isLoading.set(false);
             },

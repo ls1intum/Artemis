@@ -258,7 +258,7 @@
                 "continueToManagement": "Weiter zur Übungsgruppen-Verwaltung"
             },
             "tutorialGroupRegistrations": {
-                "title": "Registrierungen",
+                "title": "Tutorialregistrierungen",
                 "searchFieldPlaceholder": "Suche nach Name oder Login",
                 "importButtonLabel": "Importieren",
                 "exportButtonLabel": "Exportieren",
@@ -297,7 +297,10 @@
                     }
                 },
                 "registerModal": {
-                    "header": "Studenten Registrieren"
+                    "header": "Studenten Registrieren",
+                    "registerAllButtonLabel": "Alle Registrieren",
+                    "cancelButtonLabel": "Abbrechen",
+                    "registerErrorAlert": "Beim Registrieren ist etwas schiefgegangen. Bitte versuche es erneut."
                 },
                 "registerSearchBar": {
                     "fetchSuggestionsError": "Ein Fehler ist aufgetreten während des Ladens der Suchergebnisse. Bitte versuche es erneut.",

@@ -4,4 +4,17 @@
     width: 60rem;
     height: 30rem;
     gap: 1rem;
+
+    .top-elements {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        flex: 1;
+        min-height: 0;
+    }
+
+    .controls-footer {
+        display: flex;
+        justify-content: space-between;
+    }
 }

@@ -503,19 +503,34 @@ public class TutorialGroupResource {
      * @return the list of students who could not be registered for the tutorial group, because they could NOT be found in the Artemis database as students of the tutorial group
      *         course
      */
-    @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/register-multiple")
+    @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/register-multiple") // TODO: rename to .../register-via-login-or-registration-number
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<TutorialGroupRegisterStudentDTO>> registerMultipleStudentsToTutorialGroup(@PathVariable long courseId, @PathVariable long tutorialGroupId,
-            @RequestBody List<TutorialGroupRegisterStudentDTO> studentDTOs) {
-        log.error("REST request to register {} to tutorial group {}", studentDTOs, tutorialGroupId);
+    public ResponseEntity<List<TutorialGroupRegisterStudentDTO>> registerMultipleStudentsViaLoginOrRegistrationNumber(@PathVariable long courseId,
+            @PathVariable long tutorialGroupId, @RequestBody List<TutorialGroupRegisterStudentDTO> studentDTOs) {
+        log.debug("REST request to register {} to tutorial group {}", studentDTOs, tutorialGroupId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
+
         var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), responsibleUser);
         checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId));
-        List<TutorialGroupRegisterStudentDTO> notFoundStudentDtos = tutorialGroupService.registerMultipleStudents(tutorialGroupFromDatabase, studentDTOs,
-                TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION, responsibleUser);
-        log.error(notFoundStudentDtos.toString());
+
+        List<TutorialGroupRegisterStudentDTO> notFoundStudentDtos = tutorialGroupService.registerMultipleStudentsViaLoginOrRegistrationNumber(tutorialGroupFromDatabase,
+                studentDTOs, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION, responsibleUser);
         return ResponseEntity.ok().body(notFoundStudentDtos);
+    }
+
+    @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/register-via-login")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Void> registerMultipleStudentsViaLogin(@PathVariable long courseId, @PathVariable long tutorialGroupId, @RequestBody List<String> logins) {
+        log.info("REST request to register {} to tutorial group {}", logins, tutorialGroupId);
+        var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
+
+        var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), responsibleUser);
+        checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId));
+
+        tutorialGroupService.registerMultipleStudentsViaLogin(tutorialGroupFromDatabase, logins, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION, responsibleUser);
+        return ResponseEntity.noContent().build();
     }
 
     /**

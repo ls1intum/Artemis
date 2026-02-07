@@ -1,42 +1,48 @@
-<table class="table-frame">
-    <thead>
-        @let actionColumn = removeActionColumnInfo();
-        <tr class="header-row">
-            <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.name"></th>
-            <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.login"></th>
-            <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.email"></th>
-            <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.registrationNumber"></th>
-            @if (actionColumn) {
-                <th [jhiTranslate]="actionColumn.headerStringKey"></th>
-            }
-        </tr>
-    </thead>
-    <tbody>
-        @for (student of students(); track student.id) {
-            <tr class="body-row">
-                <td>
-                    <div class="student-property">
-                        <jhi-profile-picture imageSizeInRem="3.5" [isBoxShadow]="true" [imageUrl]="addPublicFilePrefix(student.profilePictureUrl)" />
-                        {{ student.name }}
-                    </div>
-                </td>
-                <td>
-                    <div class="student-property">{{ student.login }}</div>
-                </td>
-                <td>
-                    <div class="student-property">{{ student.email }}</div>
-                </td>
-                <td>
-                    <div class="student-property">{{ student.registrationNumber }}</div>
-                </td>
+<div class="table-frame">
+    @let actionColumn = removeActionColumnInfo();
+    <table class="table-header">
+        <thead>
+            <tr class="header-row">
+                <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.name"></th>
+                <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.login"></th>
+                <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.email"></th>
+                <th jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.registrationNumber"></th>
                 @if (actionColumn) {
-                    <td>
-                        <button class="remove-button" (click)="actionColumn.onRemove($event, student)">
-                            <span class="pi pi-times" style="font-size: 1.25rem" aria-hidden="true"></span>
-                        </button>
-                    </td>
+                    <th [jhiTranslate]="actionColumn.headerStringKey"></th>
                 }
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+    </table>
+    <div class="scroll-container">
+        <table class="table-body">
+            <tbody>
+                @for (student of students(); track student.id) {
+                    <tr class="body-row">
+                        <td>
+                            <div class="student-property">
+                                <jhi-profile-picture imageSizeInRem="3.5" [isBoxShadow]="true" [imageUrl]="addPublicFilePrefix(student.profilePictureUrl)" />
+                                {{ student.name }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="student-property">{{ student.login }}</div>
+                        </td>
+                        <td>
+                            <div class="student-property">{{ student.email }}</div>
+                        </td>
+                        <td>
+                            <div class="student-property">{{ student.registrationNumber }}</div>
+                        </td>
+                        @if (actionColumn) {
+                            <td>
+                                <button class="remove-button" (click)="actionColumn.onRemove($event, student)">
+                                    <span class="pi pi-times" style="font-size: 1.25rem" aria-hidden="true"></span>
+                                </button>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

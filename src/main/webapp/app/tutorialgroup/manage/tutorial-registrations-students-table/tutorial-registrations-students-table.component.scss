@@ -1,60 +1,84 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
 .table-frame {
-    width: 100%;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
 
-    .header-row {
-        display: flex;
-        border-bottom: 1px solid var(--border-color);
+    .table-header {
+        width: 100%;
 
-        th {
-            flex: 1;
+        .header-row {
             display: flex;
-            align-items: center;
-            padding-top: 0;
-            padding-bottom: 0.75rem;
-            white-space: normal;
-            overflow-wrap: break-word;
-        }
+            border-bottom: 1px solid var(--border-color);
 
-        th:last-child {
-            flex: none;
-            width: 5rem;
-            justify-content: end;
+            th {
+                flex: 1;
+                display: flex;
+                align-items: center;
+                padding-top: 0;
+                padding-bottom: 0.75rem;
+                white-space: normal;
+                overflow-wrap: break-word;
+            }
+
+            th:last-child {
+                flex: none;
+                width: 5rem;
+                justify-content: end;
+            }
         }
     }
 
-    .body-row {
-        display: flex;
+    .scroll-container {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
 
-        td {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            padding-top: 0.75rem;
-            white-space: normal;
-            overflow-wrap: break-word;
-        }
+        .table-body {
+            width: 100%;
 
-        td:last-child {
-            flex: none;
-            width: 5rem;
-            justify-content: end;
-        }
+            .body-row {
+                display: flex;
 
-        .student-property {
-            display: flex;
-            gap: 0.5rem;
-            justify-content: start;
-            align-items: center;
-        }
+                td {
+                    flex: 1;
+                    display: flex;
+                    align-items: center;
+                    padding-top: 0.75rem;
+                    white-space: normal;
+                    overflow-wrap: break-word;
+                }
 
-        .remove-button {
-            background: none;
-            border: none;
-            padding: 0;
-            color: var(--danger);
+                td:last-child {
+                    flex: none;
+                    width: 5rem;
+                    justify-content: end;
+                }
 
-            &:hover {
-                opacity: 0.8;
+                .student-property {
+                    display: flex;
+                    gap: 0.5rem;
+                    justify-content: start;
+                    align-items: center;
+                }
+
+                .remove-button {
+                    background: none;
+                    border: none;
+                    padding: 0;
+                    color: var(--danger);
+
+                    &:hover {
+                        opacity: 0.8;
+                    }
+                }
             }
         }
     }

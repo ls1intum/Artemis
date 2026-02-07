@@ -22,6 +22,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import jakarta.ws.rs.BadRequestException;
+
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.jspecify.annotations.NonNull;
@@ -289,6 +291,7 @@ public class TutorialGroupService {
         Set<TutorialGroupRegistration> newRegistrations = studentsToRegister.stream().map(student -> new TutorialGroupRegistration(student, tutorialGroup, registrationType))
                 .collect(Collectors.toSet());
         tutorialGroupRegistrationRepository.saveAll(newRegistrations);
+        log.info("all registered");
 
         if (sendNotification && responsibleUser != null) {
             for (User student : studentsToRegister) {
@@ -323,8 +326,8 @@ public class TutorialGroupService {
      * @param responsibleUser  The user who is responsible for the registration.
      * @return The students that could not be found and thus not registered.
      */
-    public List<TutorialGroupRegisterStudentDTO> registerMultipleStudents(TutorialGroup tutorialGroup, List<TutorialGroupRegisterStudentDTO> studentDTOs,
-            TutorialGroupRegistrationType registrationType, User responsibleUser) {
+    public List<TutorialGroupRegisterStudentDTO> registerMultipleStudentsViaLoginOrRegistrationNumber(TutorialGroup tutorialGroup,
+            List<TutorialGroupRegisterStudentDTO> studentDTOs, TutorialGroupRegistrationType registrationType, User responsibleUser) {
         Set<User> foundStudents = new HashSet<>();
         List<TutorialGroupRegisterStudentDTO> notFoundStudentDTOs = new LinkedList<>();
         for (var studentDto : studentDTOs) {
@@ -332,6 +335,17 @@ public class TutorialGroupService {
         }
         registerMultipleStudentsToTutorialGroup(foundStudents, tutorialGroup, registrationType, responsibleUser, true);
         return notFoundStudentDTOs;
+    }
+
+    public void registerMultipleStudentsViaLogin(TutorialGroup tutorialGroup, List<String> logins, TutorialGroupRegistrationType registrationType, User responsibleUser) {
+        Set<User> students = new HashSet<>();
+        for (var login : logins) {
+            var student = findStudent(login, tutorialGroup.getCourse().getStudentGroupName()).orElseThrow(() -> new BadRequestException("Some students do not exist!"));
+            ;
+            students.add(student);
+        }
+        registerMultipleStudentsToTutorialGroup(students, tutorialGroup, registrationType, responsibleUser, true);
+        log.info("students registered");
     }
 
     /**
@@ -723,6 +737,11 @@ public class TutorialGroupService {
     private Optional<User> findStudent(TutorialGroupRegisterStudentDTO studentDTO, String studentCourseGroupName) {
         var userOptional = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(studentDTO.registrationNumber())
                 .or(() -> userRepository.findUserWithGroupsAndAuthoritiesByLogin(studentDTO.login()));
+        return userOptional.isPresent() && userOptional.get().getGroups().contains(studentCourseGroupName) ? userOptional : Optional.empty();
+    }
+
+    private Optional<User> findStudent(String login, String studentCourseGroupName) {
+        var userOptional = userRepository.findUserWithGroupsAndAuthoritiesByLogin(login);
         return userOptional.isPresent() && userOptional.get().getGroups().contains(studentCourseGroupName) ? userOptional : Optional.empty();
     }
 

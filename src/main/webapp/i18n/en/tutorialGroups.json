@@ -258,7 +258,7 @@
                 "continueToManagement": "Continue to Tutorial Group Management"
             },
             "tutorialGroupRegistrations": {
-                "title": "Registrations",
+                "title": "Tutorial Registrations",
                 "searchFieldPlaceholder": "Search by Name or Login",
                 "importButtonLabel": "Import",
                 "exportButtonLabel": "Export",
@@ -297,7 +297,10 @@
                     }
                 },
                 "registerModal": {
-                    "header": "Register Students"
+                    "header": "Register Students",
+                    "registerAllButtonLabel": "Register All",
+                    "cancelButtonLabel": "Cancel",
+                    "registerErrorAlert": "Something went wrong while registering the students. Please try again."
                 },
                 "registerSearchBar": {
                     "fetchSuggestionsError": "An error occured while loading search results. Please try again.",

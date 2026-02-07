@@ -138,7 +138,7 @@ export class UsersImportDialogComponent implements OnDestroy {
         const courseId = this.courseId();
 
         if (tutorialGroup) {
-            this.tutorialGroupService.registerMultipleStudents(courseId!, tutorialGroup.id!, this.usersToImport).subscribe({
+            this.tutorialGroupService.registerMultipleStudentsViaLoginOrRegistrationNumber(courseId!, tutorialGroup.id!, this.usersToImport).subscribe({
                 next: (res: HttpResponse<Array<Student>>) => {
                     const convertedStudents = this.convertGeneratedDtoToNonGenerated(res.body || []);
                     this.onSaveSuccess(convertedStudents);

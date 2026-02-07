@@ -1,5 +1,4 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
-import { Dialog } from 'primeng/dialog';
 import { FormsModule } from '@angular/forms';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
@@ -18,7 +17,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-tutorial-registrations-register-search-bar',
-    imports: [Dialog, FormsModule, IconFieldModule, InputIconModule, InputTextModule, OverlayModule, ScrollingModule, TranslateDirective],
+    imports: [FormsModule, IconFieldModule, InputIconModule, InputTextModule, OverlayModule, ScrollingModule, TranslateDirective],
     templateUrl: './tutorial-registrations-register-search-bar.component.html',
     styleUrl: './tutorial-registrations-register-search-bar.component.scss',
 })

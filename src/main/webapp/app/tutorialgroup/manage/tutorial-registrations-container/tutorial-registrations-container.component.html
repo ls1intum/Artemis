@@ -3,13 +3,7 @@
     @let tutorialGroupIdToPass = tutorialGroupId();
     @let registeredStudentsToPass = registeredStudents();
     @if (courseIdToPass && tutorialGroupIdToPass) {
-        <jhi-tutorial-registrations
-            [courseId]="courseIdToPass"
-            [tutorialGroupId]="tutorialGroupIdToPass"
-            [registeredStudents]="registeredStudentsToPass"
-            (onDeregisterStudent)="deregisterStudent($event)"
-            (onStudentsRegistered)="fetchRegisteredStudents()"
-        />
+        <jhi-tutorial-registrations [courseId]="courseIdToPass" [tutorialGroupId]="tutorialGroupIdToPass" [registeredStudents]="registeredStudentsToPass" />
     }
     @if (isLoading()) {
         <jhi-loading-indicator-overlay />

@@ -29,5 +29,5 @@
     <jhi-tutorial-registrations-students-table [students]="filteredRegisteredStudents()" [removeActionColumnInfo]="studentsTableRemoveActionColumnInfo" />
 </div>
 <p-confirmDialog />
-<jhi-tutorial-registrations-import-modal [courseId]="courseId()" [tutorialGroupId]="tutorialGroupId()" (onStudentsRegistered)="onStudentsRegistered.emit()" #importModal />
+<jhi-tutorial-registrations-import-modal [courseId]="courseId()" [tutorialGroupId]="tutorialGroupId()" #importModal />
 <jhi-tutorial-registrations-register-modal [courseId]="courseId()" [tutorialGroupId]="tutorialGroupId()" #registerModal />

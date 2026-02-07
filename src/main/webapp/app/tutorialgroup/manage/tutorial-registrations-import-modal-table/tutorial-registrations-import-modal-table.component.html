@@ -10,7 +10,7 @@
     <div class="scroll-container">
         <table class="import-table">
             <tbody>
-                @for (row of rows(); track row.login ?? '' + row.registrationNumber ?? '') {
+                @for (row of rows(); track row.login ?? row.registrationNumber!) {
                     <tr>
                         <td [class.danger]="row.login && row.markFilledCells">{{ row.login }}</td>
                         <td [class.danger]="row.registrationNumber && row.markFilledCells">{{ row.registrationNumber }}</td>
