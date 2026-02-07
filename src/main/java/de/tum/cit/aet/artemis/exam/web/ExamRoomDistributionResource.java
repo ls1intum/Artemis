@@ -292,6 +292,8 @@ public class ExamRoomDistributionResource {
      * @param courseId        the id of the course
      * @param examId          the id of the exam
      * @param examRoomAliases mapping of room id to alias, if specified
+     *
+     * @return 200 (OK) on success
      */
     @PostMapping("courses/{courseId}/exams/{examId}/set-room-aliases")
     @EnforceAtLeastInstructorInCourse
