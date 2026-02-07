@@ -1,7 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { AccountService } from 'app/core/auth/account.service';
-import { expectedProfileInfo } from 'app/core/layouts/profiles/shared/profile.service.spec';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
@@ -21,13 +20,17 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ExerciseActionButtonComponent } from 'app/shared/components/buttons/exercise-action-button/exercise-action-button.component';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { PROFILE_THEIA } from 'app/app.constants';
 import { ProgrammingExerciseTheiaConfig } from 'app/programming/shared/entities/programming-exercise-theia.config';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { SshUserSettingsService } from 'app/core/user/settings/ssh-settings/ssh-user-settings.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { PROFILE_THEIA } from 'app/app.constants';
+import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
 
 describe('CodeButtonComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: CodeButtonComponent;
     let fixture: ComponentFixture<CodeButtonComponent>;
     let profileService: ProfileService;
@@ -36,26 +39,24 @@ describe('CodeButtonComponent', () => {
     let localStorageMock: LocalStorageService;
     let programmingExerciseService: ProgrammingExerciseService;
 
-    let getVcsAccessTokenSpy: jest.SpyInstance;
-    let createVcsAccessTokenSpy: jest.SpyInstance;
-    let getCachedSshKeysSpy: jest.SpyInstance;
+    let getVcsAccessTokenSpy: MockInstance;
+    let createVcsAccessTokenSpy: MockInstance;
+    let getCachedSshKeysSpy: MockInstance;
     const vcsToken: string = 'vcpat-xlhBs26D4F2CGlkCM59KVU8aaV9bYdX5Mg4IK6T8W3aT';
 
-    const user = { login: 'user1', internal: true, vcsAccessToken: 'token' };
     const route = { snapshot: { url: of('courses') } } as any as ActivatedRoute;
 
     let localStorageState: RepositoryAuthenticationMethod = RepositoryAuthenticationMethod.SSH;
     let router: MockRouter;
-
     const info = expectedProfileInfo;
 
     let participation: ProgrammingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
 
-    beforeEach(() => {
+    beforeEach(async () => {
         router = new MockRouter();
         router.setUrl('a');
 
-        TestBed.configureTestingModule({
+        await TestBed.configureTestingModule({
             imports: [ExerciseActionButtonComponent],
             providers: [
                 MockProvider(AlertService),
@@ -80,23 +81,22 @@ describe('CodeButtonComponent', () => {
 
                 localStorageMock = fixture.debugElement.injector.get(LocalStorageService);
 
-                getVcsAccessTokenSpy = jest.spyOn(accountService, 'getVcsAccessToken');
-                getCachedSshKeysSpy = jest.spyOn(sshUserSettingsService, 'getCachedSshKeys');
-                createVcsAccessTokenSpy = jest.spyOn(accountService, 'createVcsAccessToken');
+                getVcsAccessTokenSpy = vi.spyOn(accountService, 'getVcsAccessToken');
+                getCachedSshKeysSpy = vi.spyOn(sshUserSettingsService, 'getCachedSshKeys');
+                createVcsAccessTokenSpy = vi.spyOn(accountService, 'createVcsAccessToken');
 
                 participation = { id: 5 };
-                component.user = user;
 
-                getVcsAccessTokenSpy = jest.spyOn(accountService, 'getVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: vcsToken })));
-                getCachedSshKeysSpy = jest
+                getVcsAccessTokenSpy = vi.spyOn(accountService, 'getVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: vcsToken })));
+                getCachedSshKeysSpy = vi
                     .spyOn(sshUserSettingsService, 'getCachedSshKeys')
                     .mockImplementation(() => Promise.resolve([{ id: 99, publicKey: 'key' } as UserSshPublicKey]));
                 fixture.componentRef.setInput('repositoryUri', '');
-                jest.spyOn(localStorageMock, 'retrieve').mockImplementation(() => {
+                vi.spyOn(localStorageMock, 'retrieve').mockImplementation(() => {
                     return localStorageState;
                 });
-                jest.spyOn(localStorageMock, 'store').mockImplementation(() => {});
-                createVcsAccessTokenSpy = jest
+                vi.spyOn(localStorageMock, 'store').mockImplementation(() => {});
+                createVcsAccessTokenSpy = vi
                     .spyOn(accountService, 'createVcsAccessToken')
                     .mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400, statusText: 'Bad Request' })));
 
@@ -105,13 +105,13 @@ describe('CodeButtonComponent', () => {
                 fixture.componentRef.setInput('participations', []);
                 fixture.componentRef.setInput('smallButtons', true);
                 fixture.componentRef.setInput('routerLinkForRepositoryView', []);
-
                 stubServices();
+                fixture.detectChanges();
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
         localStorageState = RepositoryAuthenticationMethod.SSH;
     });
 
@@ -120,7 +120,7 @@ describe('CodeButtonComponent', () => {
 
         await component.ngOnInit();
         component.onClick();
-
+        fixture.detectChanges();
         expect(component.sshSettingsUrl).toBe(`${window.location.origin}/user-settings/ssh`);
         expect(component.sshTemplateUrl).toBe(info.sshCloneURLTemplate);
         expect(component.versionControlUrl).toBe(info.versionControlUrl);
@@ -130,9 +130,9 @@ describe('CodeButtonComponent', () => {
     it('should not load participation vcsAccessToken when it already exists in participation', async () => {
         participation.vcsAccessToken = 'vcpat-1234';
         fixture.componentRef.setInput('participations', [participation]);
-
         await component.ngOnInit();
         component.onClick();
+        fixture.detectChanges();
 
         expect(component.user.vcsAccessToken).toEqual(vcsToken);
         expect(getVcsAccessTokenSpy).not.toHaveBeenCalled();
@@ -141,12 +141,11 @@ describe('CodeButtonComponent', () => {
 
     it('should load participation vcsAccessToken if it exists on the server', async () => {
         fixture.componentRef.setInput('participations', [participation]);
-
         await component.ngOnInit();
         fixture.detectChanges();
         await fixture.whenStable();
         component.onClick();
-
+        fixture.detectChanges();
         expect(component.user.vcsAccessToken).toEqual(vcsToken);
         expect(getVcsAccessTokenSpy).toHaveBeenCalled();
         expect(createVcsAccessTokenSpy).not.toHaveBeenCalled();
@@ -157,15 +156,15 @@ describe('CodeButtonComponent', () => {
         localStorageState = RepositoryAuthenticationMethod.Password;
         await component.ngOnInit();
 
-        component.authenticationMechanisms = [RepositoryAuthenticationMethod.Token, RepositoryAuthenticationMethod.SSH];
+        component.authenticationMechanisms.set([RepositoryAuthenticationMethod.Token, RepositoryAuthenticationMethod.SSH]);
         component.onClick();
-
-        expect(component.selectedAuthenticationMechanism).toEqual(RepositoryAuthenticationMethod.Token);
+        fixture.detectChanges();
+        expect(component.selectedAuthenticationMechanism()).toEqual(RepositoryAuthenticationMethod.Token);
     });
 
     it('should create new vcsAccessToken when it does not exist', async () => {
-        createVcsAccessTokenSpy = jest.spyOn(accountService, 'createVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: vcsToken })));
-        getVcsAccessTokenSpy = jest.spyOn(accountService, 'getVcsAccessToken').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not found' })));
+        createVcsAccessTokenSpy = vi.spyOn(accountService, 'createVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: vcsToken })));
+        getVcsAccessTokenSpy = vi.spyOn(accountService, 'getVcsAccessToken').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not found' })));
 
         participation.id = 1;
         fixture.componentRef.setInput('participations', [participation]);
@@ -173,7 +172,7 @@ describe('CodeButtonComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
         component.onClick();
-
+        fixture.detectChanges();
         expect(component.user.vcsAccessToken).toEqual(vcsToken);
         expect(getVcsAccessTokenSpy).toHaveBeenCalled();
         expect(createVcsAccessTokenSpy).toHaveBeenCalled();
@@ -184,14 +183,12 @@ describe('CodeButtonComponent', () => {
         participation.team = {};
         fixture.componentRef.setInput('participations', [participation]);
         component.sshTemplateUrl = 'ssh://git@artemis.tum.de:7999/';
-        component.isTeamParticipation = true;
         fixture.changeDetectorRef.detectChanges();
         component.onClick();
-
+        fixture.detectChanges();
         expect(component.getHttpOrSshRepositoryUri()).toBe('ssh://git@artemis.tum.de:7999/git/ITCPLEASE1/itcplease1-exercise.git');
 
         participation.team = undefined;
-        component.isTeamParticipation = false;
         expect(component.getHttpOrSshRepositoryUri()).toBe('ssh://git@artemis.tum.de:7999/git/ITCPLEASE1/itcplease1-exercise.git');
     });
 
@@ -200,14 +197,12 @@ describe('CodeButtonComponent', () => {
         participation.team = {};
         fixture.componentRef.setInput('participations', [participation]);
         localStorageState = RepositoryAuthenticationMethod.Password;
-        component.isTeamParticipation = true;
         fixture.changeDetectorRef.detectChanges();
 
         let url = component.getHttpOrSshRepositoryUri();
         expect(url).toBe(`https://${component.user.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
         participation.team = undefined;
-        component.isTeamParticipation = false;
         url = component.getHttpOrSshRepositoryUri();
         expect(url).toBe(`https://${component.user.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
     });
@@ -222,7 +217,7 @@ describe('CodeButtonComponent', () => {
         await fixture.whenStable();
 
         component.onClick();
-
+        fixture.detectChanges();
         // Placeholder is shown
         let url = component.getHttpOrSshRepositoryUri();
         expect(url).toBe(`https://${component.user.login}:**********@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
@@ -233,7 +228,6 @@ describe('CodeButtonComponent', () => {
         // Team participation does not include user name
         fixture.componentRef.setInput('repositoryUri', `https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
         participation.team = {};
-        component.isTeamParticipation = true;
 
         // Placeholder is shown
         url = component.getHttpOrSshRepositoryUri();
@@ -246,9 +240,7 @@ describe('CodeButtonComponent', () => {
     it('should add the user login and token to the URL', async () => {
         participation.repositoryUri = `https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
         fixture.componentRef.setInput('participations', [participation]);
-
-        component.isTeamParticipation = false;
-        component.selectedAuthenticationMechanism = RepositoryAuthenticationMethod.Token;
+        component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Token);
         fixture.changeDetectorRef.detectChanges();
 
         const url = component.getHttpOrSshRepositoryUri();
@@ -260,8 +252,7 @@ describe('CodeButtonComponent', () => {
         fixture.componentRef.setInput('participations', [participation]);
         component.sshTemplateUrl = 'ssh://git@artemis.tum.de:7999/';
 
-        component.isTeamParticipation = false;
-        component.selectedAuthenticationMechanism = RepositoryAuthenticationMethod.SSH;
+        component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.SSH);
         fixture.changeDetectorRef.detectChanges();
 
         const url = component.getHttpOrSshRepositoryUri(false, false, true);
@@ -281,82 +272,77 @@ describe('CodeButtonComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(component.activeParticipation).toEqual(participation1);
+        expect(component.activeParticipation()).toEqual(participation1);
         expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git');
-        expect(component.cloneHeadline).toBe('artemisApp.exerciseActions.cloneRatedRepository');
+        expect(component.clonedHeadline()).toBe('artemisApp.exerciseActions.cloneRatedRepository');
 
         component.switchPracticeMode();
 
-        expect(component.activeParticipation).toEqual(participation2);
+        expect(component.activeParticipation()).toEqual(participation2);
         expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-practice.git');
-        expect(component.cloneHeadline).toBe('artemisApp.exerciseActions.clonePracticeRepository');
+        expect(component.clonedHeadline()).toBe('artemisApp.exerciseActions.clonePracticeRepository');
     });
 
     it('should handle no participation', () => {
         fixture.componentRef.setInput('repositoryUri', 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.solution.git');
         fixture.componentRef.setInput('participations', []);
-        component.activeParticipation = undefined;
         fixture.changeDetectorRef.detectChanges();
 
-        expect(component.isTeamParticipation).toBeFalsy();
-        expect(component.getHttpOrSshRepositoryUri()).toBe('https://user1@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.solution.git');
+        expect(component.isTeamParticipation()).toBe(false);
+        expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.solution.git');
     });
 
     it('should set wasCopied to true and back to false after 3 seconds on successful copy', () => {
         fixture.detectChanges();
-        jest.useFakeTimers();
+        vi.useFakeTimers();
         component.onCopyFinished(true);
-        expect(component.wasCopied).toBeTrue();
-        jest.advanceTimersByTime(3000);
-        expect(component.wasCopied).toBeFalse();
-        jest.useRealTimers();
+        expect(component.wasCopied()).toBe(true);
+        vi.advanceTimersByTime(3000);
+        expect(component.wasCopied()).toBe(false);
+        vi.useRealTimers();
     });
 
     it('should not change wasCopied if copy is unsuccessful', () => {
         fixture.detectChanges();
         component.onCopyFinished(false);
-        expect(component.wasCopied).toBeFalse();
+        fixture.detectChanges();
+        expect(component.wasCopied()).toBe(false);
     });
 
-    it('should fetch and store ssh preference', fakeAsync(() => {
+    it('should fetch and store ssh preference', () => {
         participation.repositoryUri = `https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
         fixture.componentRef.setInput('participations', [participation]);
 
-        component.activeParticipation = participation;
         component.sshEnabled = true;
         component.sshTemplateUrl = 'ssh://git@artemis.tum.de:7999/';
-        component.authenticationMechanisms = [RepositoryAuthenticationMethod.Password, RepositoryAuthenticationMethod.Token, RepositoryAuthenticationMethod.SSH];
+        component.authenticationMechanisms.set([RepositoryAuthenticationMethod.Password, RepositoryAuthenticationMethod.Token, RepositoryAuthenticationMethod.SSH]);
 
         fixture.changeDetectorRef.detectChanges();
 
-        expect(component.useSsh).toBeFalse();
+        expect(component.useSsh()).toBe(false);
 
         fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
         fixture.detectChanges();
-        tick();
 
         const useSSHButton = fixture.debugElement.query(By.css('#useSSHButton'));
         expect(useSSHButton).not.toBeNull();
         useSSHButton.nativeElement.click();
-        tick();
         expect(localStorageMock.store).toHaveBeenNthCalledWith(2, 'code-button-state', 'ssh');
-        expect(component.useSsh).toBeTrue();
+        expect(component.useSsh()).toBe(true);
 
         const useHTTPSButton = fixture.debugElement.query(By.css('#useHTTPSButton'));
         expect(useHTTPSButton).not.toBeNull();
         useHTTPSButton.nativeElement.click();
-        tick();
         expect(localStorageMock.store).toHaveBeenNthCalledWith(3, 'code-button-state', 'password');
-        expect(component.useSsh).toBeFalse();
+        expect(component.useSsh()).toBe(false);
 
         const useHTTPSWithTokenButton = fixture.debugElement.query(By.css('#useHTTPSWithTokenButton'));
         expect(useHTTPSWithTokenButton).not.toBeNull();
         useHTTPSWithTokenButton.nativeElement.click();
-        tick();
         expect(localStorageMock.store).toHaveBeenNthCalledWith(4, 'code-button-state', 'token');
-        expect(component.useSsh).toBeFalse();
-        expect(component.useToken).toBeTrue();
-    }));
+        expect(component.useSsh()).toBe(false);
+        expect(component.useToken()).toBe(true);
+    });
 
     it.each([
         [
@@ -394,7 +380,7 @@ describe('CodeButtonComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.activeParticipation?.id).toBe(expected);
+        expect(component.activeParticipation()?.id).toBe(expected);
     });
 
     it.each([
@@ -467,10 +453,10 @@ describe('CodeButtonComponent', () => {
             false,
         ],
     ])('%s', async (description, profileInfo, programmingExercise, theiaConfig, expectedVisibility) => {
-        const getProfileInfoStub = jest.spyOn(profileService, 'getProfileInfo');
+        const getProfileInfoStub = vi.spyOn(profileService, 'getProfileInfo');
         getProfileInfoStub.mockReturnValue(profileInfo as ProfileInfo);
 
-        const getTheiaConfigStub = jest.spyOn(programmingExerciseService, 'getTheiaConfig');
+        const getTheiaConfigStub = vi.spyOn(programmingExerciseService, 'getTheiaConfig');
         getTheiaConfigStub.mockReturnValue(of(theiaConfig as ProgrammingExerciseTheiaConfig));
 
         // Expand the programmingExercise by given properties
@@ -480,19 +466,20 @@ describe('CodeButtonComponent', () => {
 
         await component.ngOnInit();
 
-        expect(component.theiaEnabled).toBe(expectedVisibility);
+        expect(component.theiaEnabled()).toBe(expectedVisibility);
     });
 
     it('should include the correct data in the form submission when startOnlineIDE is called', async () => {
-        const windowOpenSpy = jest.spyOn(window, 'open').mockReturnValue({ name: '' } as any);
-        const documentAppendChildSpy = jest.spyOn(document.body, 'appendChild');
-        const documentRemoveChildSpy = jest.spyOn(document.body, 'removeChild');
-        const formSubmitSpy = jest.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(() => {});
+        const windowOpenSpy = vi.spyOn(window, 'open').mockReturnValue({ name: '' } as any);
+        const documentAppendChildSpy = vi.spyOn(document.body, 'appendChild');
+        const documentRemoveChildSpy = vi.spyOn(document.body, 'removeChild');
+        const formSubmitSpy = vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(() => {});
 
-        const getToolTokenSpy = jest.spyOn(accountService, 'getToolToken').mockReturnValue(of('token'));
+        const getToolTokenSpy = vi.spyOn(accountService, 'getToolToken').mockReturnValue(of('token'));
 
         fixture.componentRef.setInput('exercise', { buildConfig: { theiaImage: 'theia-image' } } as any);
-        component.activeParticipation = { repositoryUri: 'https://repo.uri', vcsAccessToken: 'token' } as any;
+        fixture.componentRef.setInput('participations', [{ repositoryUri: 'https://repo.uri', vcsAccessToken: 'token' } as any]);
+
         component.theiaPortalURL = 'https://theia.portal.url';
 
         fixture.detectChanges();
@@ -514,7 +501,7 @@ describe('CodeButtonComponent', () => {
         const inputs = form.getElementsByTagName('input');
         const data: { [key: string]: string } = {
             appDef: 'theia-image',
-            gitUri: 'https://user1:token@repo.uri',
+            gitUri: 'https://edx_userLogin:token@repo.uri',
             gitToken: 'token',
         };
 
@@ -531,18 +518,18 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should use token authentication when startOnlineIDE is called with SSH is selected', async () => {
-        const windowOpenSpy = jest.spyOn(window, 'open').mockReturnValue({ name: '' } as any);
-        const formSubmitSpy = jest.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(() => {});
-        const documentAppendChildSpy = jest.spyOn(document.body, 'appendChild');
+        const windowOpenSpy = vi.spyOn(window, 'open').mockReturnValue({ name: '' } as any);
+        const formSubmitSpy = vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(() => {});
+        const documentAppendChildSpy = vi.spyOn(document.body, 'appendChild');
 
-        const getToolTokenSpy = jest.spyOn(accountService, 'getToolToken').mockReturnValue(of('token'));
+        const getToolTokenSpy = vi.spyOn(accountService, 'getToolToken').mockReturnValue(of('token'));
 
         fixture.componentRef.setInput('exercise', { buildConfig: { theiaImage: 'theia-image' } } as any);
-        component.activeParticipation = { repositoryUri: 'https://repo.uri', vcsAccessToken: 'token' } as any;
+        fixture.componentRef.setInput('participations', [{ repositoryUri: 'https://repo.uri', vcsAccessToken: 'token' }]);
         component.theiaPortalURL = 'https://theia.portal.url';
 
         component.sshTemplateUrl = 'https://ssh.repo.url';
-        component.selectedAuthenticationMechanism = RepositoryAuthenticationMethod.SSH;
+        component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.SSH);
 
         fixture.changeDetectorRef.detectChanges();
 
@@ -559,7 +546,7 @@ describe('CodeButtonComponent', () => {
 
         const gitUriTest = Array.from(inputs).find((input) => input.name === 'gitUri');
         expect(gitUriTest).toBeDefined();
-        expect(gitUriTest!.value).toBe('https://user1:token@repo.uri');
+        expect(gitUriTest!.value).toBe('https://edx_userLogin:token@repo.uri');
 
         windowOpenSpy.mockRestore();
         documentAppendChildSpy.mockRestore();
@@ -567,7 +554,7 @@ describe('CodeButtonComponent', () => {
     });
 
     function stubServices() {
-        const identityStub = jest.spyOn(accountService, 'identity');
+        const identityStub = vi.spyOn(accountService, 'identity');
         identityStub.mockReturnValue(
             Promise.resolve({
                 login: 'edx_userLogin',
@@ -576,7 +563,7 @@ describe('CodeButtonComponent', () => {
             }),
         );
 
-        const getProfileInfoStub = jest.spyOn(profileService, 'getProfileInfo');
+        const getProfileInfoStub = vi.spyOn(profileService, 'getProfileInfo');
         getProfileInfoStub.mockReturnValue(info);
     }
 });
