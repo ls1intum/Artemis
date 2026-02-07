@@ -492,7 +492,7 @@ public class ExamRoomDistributionService {
      */
     public void updateAliases(long examId, Map<Long, String> roomAliases) {
         Set<ExamRoomExamAssignment> roomAssignments = examRoomExamAssignmentRepository.findAllByExamId(examId);
-        Set<Long> roomIdsUsedInExam = examRoomRepository.findAllByExamId(examId).stream().map(ExamRoom::getId).collect(Collectors.toSet());
+        Set<Long> roomIdsUsedInExam = roomAssignments.stream().map(assignment -> assignment.getExamRoom().getId()).collect(Collectors.toSet());
         if (!roomIdsUsedInExam.containsAll(roomAliases.keySet())) {
             throw new BadRequestAlertException("trying to update the alias for an unconnected room", ENTITY_NAME, "updateAliasUnconnectedRoom");
         }

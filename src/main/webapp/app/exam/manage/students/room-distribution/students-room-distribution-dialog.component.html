@@ -67,7 +67,13 @@
                                     }
                                 </td>
                                 <td>
-                                    <input type="text" [maxLength]="ALIAS_NAME_MAX_LENGTH" [defaultValue]="examRoom.alias ?? ''" (change)="setRoomAlias($event, examRoom.id)" />
+                                    <input
+                                        type="text"
+                                        id="alias-input"
+                                        [maxLength]="ALIAS_NAME_MAX_LENGTH"
+                                        [defaultValue]="examRoom.alias ?? ''"
+                                        (change)="setRoomAlias($event, examRoom.id)"
+                                    />
                                 </td>
                                 <td>
                                     <button type="button" jhiTranslate="entity.action.remove" class="btn btn-sm btn-danger" (click)="removeSelectedRoom(examRoom)"></button>
@@ -101,7 +107,7 @@
             <fa-icon [icon]="faBan" />
             <span jhiTranslate="entity.action.cancel" class="m-1"></span>
         </button>
-        <button class="btn btn-primary" id="update-aliases-button" (click)="updateRoomAliases()">
+        <button class="btn btn-primary" id="update-aliases-button" (click)="updateRoomAliases()" [disabled]="!hasSelectedRooms()">
             <fa-icon [icon]="faTag" />
             <span jhiTranslate="artemisApp.exam.examUsers.rooms.updateAliases"></span>
         </button>

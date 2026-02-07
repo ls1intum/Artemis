@@ -305,6 +305,10 @@ public class ExamRoomDistributionResource {
             examRoomAliases = Map.of();
         }
 
+        if (examRoomAliases.values().stream().anyMatch(alias -> alias != null && alias.length() > ALIAS_NAME_MAX_LENGTH)) {
+            throw new BadRequestAlertException("Alias name too long", ENTITY_NAME, "aliasNameTooLong");
+        }
+
         examRoomDistributionService.updateAliases(examId, examRoomAliases);
         return ResponseEntity.ok().build();
     }

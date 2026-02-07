@@ -292,8 +292,6 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         button.click();
         fixture.detectChanges();
 
-        expect(button).not.toBeNull();
-
         expect(updateSpy).toHaveBeenCalledExactlyOnceWith(course.id, exam.id, { [rooms[0].id]: 'Main Hall' });
         expect(closeSpy).toHaveBeenCalledOnce();
         expect(emitSpy).toHaveBeenCalledOnce();
