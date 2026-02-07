@@ -303,7 +303,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     private <T extends HasAnnotations<T>> ArchCondition<T> useJsonIncludeNonEmpty() {
-        return new ArchCondition<>("Use @JsonInclude(JsonInclude.Include.NON_EMPTY) or `@JsonInclude`(JsonInclude.Include.NON_NULL)") {
+        return new ArchCondition<>("Use @JsonInclude(JsonInclude.Include.NON_EMPTY)") {
 
             @Override
             public void check(T item, ConditionEvents events) {
