@@ -27,11 +27,9 @@ export class IrisCitationTextComponent {
         ['iris-citation--source', faCircleExclamation],
     ]);
 
-    // Inputs
     readonly text = input.required<string>();
     readonly citationInfo = input<IrisCitationMetaDTO[]>([]);
 
-    // Computed rendered content
     readonly renderedContent = computed<SafeHtml>(() => {
         const processed = this.processText(this.text(), this.citationInfo());
         return this.domSanitizer.bypassSecurityTrustHtml(processed);
@@ -41,10 +39,10 @@ export class IrisCitationTextComponent {
      * Processes text by applying markdown rendering first, then replacing citation markers with HTML.
      */
     private processText(text: string, citationInfo: IrisCitationMetaDTO[]): string {
-        // 1. First apply markdown rendering (this converts markdown syntax to HTML)
+        // Apply markdown rendering (this converts markdown syntax to HTML)
         const markdownHtml = htmlForMarkdown(text);
 
-        // 2. Then replace [cite:...] blocks in the HTML with citation bubbles
+        // Replace [cite:...] blocks in the HTML with citation bubbles
         const withCitations = replaceCitationBlocks(markdownHtml, citationInfo, {
             renderSingle: (parsed, meta) => this.renderCitationHtml(parsed, meta),
             renderGroup: (parsed, metas) => this.renderCitationGroupHtml(parsed, metas),
@@ -187,7 +185,6 @@ export class IrisCitationTextComponent {
 
         event.stopPropagation();
 
-        // Remove focus from button to prevent focus-within from keeping tooltip open
         (button as HTMLElement).blur();
 
         const citationGroup = button.closest('.iris-citation-group--has-summary');
@@ -199,15 +196,12 @@ export class IrisCitationTextComponent {
 
         if (navButtons.length !== 2 || summaryItems.length === 0) return;
 
-        // Find current active index
         const currentActiveIndex = summaryItems.findIndex((item) => item.classList.contains('is-active'));
         const currentIndex = currentActiveIndex >= 0 ? currentActiveIndex : 0;
 
-        // Determine direction based on which button was clicked
         const isPrevious = navButtons[0] === button;
         const newIndex = isPrevious ? (currentIndex - 1 + summaryItems.length) % summaryItems.length : (currentIndex + 1) % summaryItems.length;
 
-        // Update display
         summaryItems.forEach((item, index) => {
             item.classList.toggle('is-active', index === newIndex);
         });
@@ -230,13 +224,11 @@ export class IrisCitationTextComponent {
         const summary = citation.querySelector('.iris-citation__summary') as HTMLElement | null;
         if (!summary) return;
 
-        // Boundary bestimmen: .bubble-left oder Host-Element
         const bubble = citation.closest('.bubble-left') as HTMLElement | null;
         const boundary = bubble ?? (citation.closest('jhi-iris-citation-text') as HTMLElement);
 
         if (!boundary) return;
 
-        // Kollision berechnen
         citation.style.setProperty('--iris-citation-shift', '0px');
         const boundaryRect = boundary.getBoundingClientRect();
         const summaryRect = summary.getBoundingClientRect();
