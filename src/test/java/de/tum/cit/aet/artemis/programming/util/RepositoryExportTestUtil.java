@@ -27,6 +27,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -409,16 +410,23 @@ public final class RepositoryExportTestUtil {
     public static void waitForBareRepositoryReady(LocalRepository repo) {
         Awaitility.await().atMost(10, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
             try {
-                // Try to open the bare repository and resolve HEAD
-                // This verifies the repo is accessible and has a valid HEAD reference
-                try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
-                    var jgitRepo = git.getRepository();
+                // Open the bare repository using FileRepositoryBuilder with setBare() —
+                // this matches the server-side code path in linkRepositoryForExistingGit,
+                // ensuring we verify readability in the same way the server will access it.
+                var builder = new FileRepositoryBuilder();
+                builder.setBare();
+                builder.setGitDir(repo.remoteBareGitRepoFile);
+                builder.setMustExist(true);
+                builder.readEnvironment();
+                builder.findGitDir();
+
+                try (var jgitRepo = builder.build()) {
                     var headRef = jgitRepo.resolve("HEAD");
                     if (headRef == null) {
                         log.debug("Bare repository HEAD is null, waiting...");
                         return false;
                     }
-                    // Verify we can read the commit object and traverse the full tree
+                    // Verify we can read the commit object and traverse the full tree.
                     // This ensures all pack objects (trees + blobs) are flushed to disk,
                     // preventing IOException when the server reads file contents at this commit.
                     try (RevWalk revWalk = new RevWalk(jgitRepo)) {
