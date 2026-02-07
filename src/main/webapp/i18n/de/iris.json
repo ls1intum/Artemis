@@ -183,9 +183,6 @@
                     "lecture": "Diese Konversation bezieht sich auf eine Vorlesung."
                 }
             },
-            "citations": {
-                "lectureUnitLabel": "Vorlesungseinheit"
-            },
             "memories": {
                 "title": "Erinnerungen",
                 "loadingList": "Lade Erinnerungen...",

@@ -55,6 +55,7 @@ export class IrisCitationTextComponent {
         const hasSummary = !!parsed.summary;
         const classes = ['iris-citation', typeClass, hasSummary ? 'iris-citation--has-summary' : ''].filter(Boolean).join(' ');
         const iconSvg = this.getIconSvg(typeClass);
+        const summaryFallbackTitle = this.getSummaryFallbackTitle(parsed);
 
         let html = `<span class="${classes}">`;
         html += `<span class="iris-citation__icon">${iconSvg}</span>`;
@@ -64,15 +65,7 @@ export class IrisCitationTextComponent {
         if (hasSummary) {
             html += `<span class="iris-citation__summary">`;
             html += `<span class="iris-citation__summary-content">`;
-            html += `<span class="iris-citation__summary-keyword">${label}</span>`;
-            if (meta?.lectureTitle || meta?.lectureUnitTitle) {
-                html += `<span class="iris-citation__summary-meta">`;
-                if (meta.lectureTitle) html += `${this.escapeHtml(meta.lectureTitle)}`;
-                if (meta.lectureTitle && meta.lectureUnitTitle) html += ` • `;
-                if (meta.lectureUnitTitle) html += `${this.escapeHtml(meta.lectureUnitTitle)}`;
-                html += `</span>`;
-            }
-            html += `<span>${this.escapeHtml(parsed.summary)}</span>`;
+            html += this.renderSummaryContent(parsed.summary, meta, summaryFallbackTitle);
             html += `</span>`;
             html += `</span>`;
         }
@@ -108,19 +101,11 @@ export class IrisCitationTextComponent {
             // Render each citation as a navigable item
             parsed.forEach((cite, index) => {
                 if (cite.summary) {
-                    const citeLabel = formatCitationLabel(cite);
                     const meta = metas[index];
                     const isActive = index === 0 ? 'is-active' : '';
+                    const summaryFallbackTitle = this.getSummaryFallbackTitle(cite);
                     html += `<span class="iris-citation__summary-item ${isActive}">`;
-                    html += `<span class="iris-citation__summary-keyword">${citeLabel}</span>`;
-                    if (meta?.lectureTitle || meta?.lectureUnitTitle) {
-                        html += `<span class="iris-citation__summary-meta">`;
-                        if (meta.lectureTitle) html += `${this.escapeHtml(meta.lectureTitle)}`;
-                        if (meta.lectureTitle && meta.lectureUnitTitle) html += ` • `;
-                        if (meta.lectureUnitTitle) html += `${this.escapeHtml(meta.lectureUnitTitle)}`;
-                        html += `</span>`;
-                    }
-                    html += `<span>${this.escapeHtml(cite.summary)}</span>`;
+                    html += this.renderSummaryContent(cite.summary, meta, summaryFallbackTitle);
                     html += `</span>`;
                 }
             });
@@ -144,6 +129,33 @@ export class IrisCitationTextComponent {
 
         html += `</span>`;
         return html;
+    }
+
+    private renderSummaryContent(summary: string, meta?: IrisCitationMetaDTO, fallbackTitle?: string): string {
+        const lectureUnitTitle = meta?.lectureUnitTitle?.trim();
+        const lectureTitle = meta?.lectureTitle?.trim();
+        const summaryText = summary?.trim();
+        const title = lectureUnitTitle || fallbackTitle || '';
+
+        let html = '';
+        if (title) {
+            html += `<span class="iris-citation__summary-title">${this.escapeHtml(title)}</span>`;
+        }
+        if (lectureTitle) {
+            html += `<span class="iris-citation__summary-lecture">in ${this.escapeHtml(lectureTitle)}</span>`;
+        }
+        if (summaryText) {
+            html += `<span class="iris-citation__summary-text">${this.escapeHtml(summaryText)}</span>`;
+        }
+        return html;
+    }
+
+    private getSummaryFallbackTitle(parsed: IrisCitationParsed): string {
+        const keyword = parsed.keyword?.trim();
+        if (keyword) {
+            return keyword;
+        }
+        return parsed.type === 'F' ? 'FAQ' : 'Source';
     }
 
     /**

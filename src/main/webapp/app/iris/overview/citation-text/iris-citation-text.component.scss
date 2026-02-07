@@ -60,8 +60,7 @@
     left: 50%;
     width: 280px;
     max-width: 70vw;
-    padding: 8px 10px;
-    padding-top: 22px;
+    padding: 10px 10px 14px;
     border-radius: 8px;
     background-color: var(--iris-citation-bg);
     line-height: 1.4;
@@ -83,17 +82,6 @@
 
 :host ::ng-deep .iris-citation-group .iris-citation__summary {
     font-size: 0.85em;
-}
-
-:host ::ng-deep .iris-citation__summary-keyword {
-    font-size: 0.95rem;
-    font-weight: 500;
-}
-
-:host ::ng-deep .iris-citation__summary-meta {
-    font-size: 0.7rem;
-    line-height: 1.2;
-    color: var(--iris-citation-meta-color);
 }
 
 :host ::ng-deep .iris-citation--has-summary,
@@ -118,7 +106,10 @@
 }
 
 :host ::ng-deep .iris-citation__summary-content {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
     min-height: 1.2em;
 }
 
@@ -128,6 +119,24 @@
 
 :host ::ng-deep .iris-citation__summary-item.is-active {
     display: block;
+}
+
+:host ::ng-deep .iris-citation__summary-title {
+    display: block;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+:host ::ng-deep .iris-citation__summary-lecture {
+    display: block;
+    font-size: 0.75rem;
+    line-height: 1.2;
+    color: var(--iris-citation-meta-color);
+}
+
+:host ::ng-deep .iris-citation__summary-text {
+    display: block;
+    font-size: 0.85rem;
 }
 
 :host ::ng-deep .iris-citation__nav {

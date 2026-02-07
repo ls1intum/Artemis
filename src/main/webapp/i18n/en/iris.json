@@ -183,9 +183,6 @@
                     "lecture": "This chat is related to a lecture."
                 }
             },
-            "citations": {
-                "lectureUnitLabel": "Lecture unit"
-            },
             "memories": {
                 "title": "Memories",
                 "loadingList": "Loading memories...",
