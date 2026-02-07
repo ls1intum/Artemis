@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-public interface CommentRepository extends ArtemisJpaRepository<Comment, Long> {
+public interface CommentRepository extends ArtemisJpaRepository<Comment, Long>, CommentRepositoryCustom {
 
     /**
      * Find all comments for a thread.

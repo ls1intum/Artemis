@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -198,24 +197,17 @@ public class ExerciseReviewService {
     }
 
     /**
-     * Delete a comment by id.
+     * Delete a comment by id after authorization, with cascade cleanup.
+     * If the deleted comment was the last one in its thread, the thread is removed.
+     * If that thread was the last in its group, the group is removed as well.
      *
      * @param commentId the comment id
      * @throws EntityNotFoundException if the comment does not exist
      */
-    @Transactional // Ensure atomic delete of comment, thread, and group to avoid orphaned data on failure.
     public void deleteComment(long commentId) {
         Comment comment = commentRepository.findWithThreadById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment", commentId));
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, comment.getThread().getExercise().getId());
-        CommentThread thread = comment.getThread();
-        CommentThreadGroup group = thread.getGroup();
-        commentRepository.delete(comment);
-        if (commentRepository.countByThreadId(thread.getId()) == 0) {
-            commentThreadRepository.delete(thread);
-            if (group != null && commentThreadRepository.countByGroupId(group.getId()) == 0) {
-                commentThreadGroupRepository.delete(group);
-            }
-        }
+        commentRepository.deleteCommentWithCascade(commentId);
     }
 
     /**
