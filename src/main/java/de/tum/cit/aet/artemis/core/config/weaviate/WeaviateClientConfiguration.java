@@ -50,13 +50,19 @@ public class WeaviateClientConfiguration {
                         .connectToLocal(config -> config.host(weaviateProperties.httpHost()).port(weaviateProperties.httpPort()).grpcPort(weaviateProperties.grpcPort()));
             }
 
-            log.info("Connected to Weaviate at {}://{}:{}", weaviateProperties.scheme(), weaviateProperties.httpHost(), weaviateProperties.httpPort());
+            if (client.isReady()) {
+                log.info("Connected to Weaviate at {}://{}:{}", weaviateProperties.scheme(), weaviateProperties.httpHost(), weaviateProperties.httpPort());
+            }
+            else {
+                log.warn("Weaviate client created but server is not ready at {}://{}:{}", weaviateProperties.scheme(), weaviateProperties.httpHost(),
+                        weaviateProperties.httpPort());
+            }
             return client;
         }
         catch (Exception exception) {
-            log.error("Failed to connect to Weaviate at {}://{}:{} (gRPC port: {})", weaviateProperties.scheme(), weaviateProperties.httpHost(), weaviateProperties.httpPort(),
-                    weaviateProperties.grpcPort(), exception);
-            throw new WeaviateConnectionException("Failed to connect to Weaviate", exception, weaviateProperties.httpHost(), weaviateProperties.httpPort(),
+            log.error("Failed to configure Weaviate client for {}://{}:{} (gRPC port: {})", weaviateProperties.scheme(), weaviateProperties.httpHost(),
+                    weaviateProperties.httpPort(), weaviateProperties.grpcPort(), exception);
+            throw new WeaviateConnectionException("Failed to configure Weaviate client", exception, weaviateProperties.httpHost(), weaviateProperties.httpPort(),
                     weaviateProperties.grpcPort(), weaviateProperties.secure());
         }
     }
