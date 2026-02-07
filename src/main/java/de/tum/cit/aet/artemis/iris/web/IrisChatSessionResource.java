@@ -99,7 +99,7 @@ public class IrisChatSessionResource {
     public ResponseEntity<List<IrisChatSessionDTO>> getAllSessionsForCourse(@PathVariable Long courseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findById(courseId).orElseThrow();
-        if (user.hasAcceptedExternalLLMUsage()) {
+        if (user.hasOptedIntoLLMUsage()) {
             List<IrisChatSessionDTO> irisSessionDTOs = irisSessionService.getIrisSessionsByCourseAndUserId(course, user.getId());
             return ResponseEntity.ok(irisSessionDTOs);
         }
