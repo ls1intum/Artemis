@@ -10,7 +10,7 @@ This folder contains scripts to measure DTO usage at the API boundary.
 
     - `dto`: request body uses DTOs (and does not mix with Entities across request/response)
     - `entity`: request body uses Entities (and does not mix with DTOs across request/response)
-    - `mixed`: DTOs and Entities are mixed across request/response (e.g., request DTO + response Entity, or vice versa, or both in request body)
+    - `mixed`: DTOs and Entities are mixed across request/response (e.g., request DTO + response Entity, or vice versa)
     - `neutral`: request body transfers **neither** DTO nor Entity (return type is ignored for this classification)
 
 ### Coverage Metric

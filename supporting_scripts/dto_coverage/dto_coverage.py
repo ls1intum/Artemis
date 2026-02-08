@@ -1,18 +1,14 @@
 """
 dto_coverage.py — Heuristic DTO coverage scanner for Spring (Java) REST endpoints.
 
-- Classifies endpoints as DTO / Entity / Mixed / Neutral from return types + @RequestBody payloads.
-- IMPORTANT (your updated definition):
+- Classifies endpoints as DTO / Entity / Mixed / Neutral from return types + @RequestBody payloads:
   - "neutral" is request-body driven: if the @RequestBody contains neither DTO nor Entity, the endpoint is Neutral,
     regardless of what it returns (even if it returns an Entity).
-  - "mixed" means at least one side is DTO and the other side is Entity (or request body contains both).
+  - "mixed" means at least one side is DTO and the other side is Entity.
 
 - Per-module and overall coverage; outputs JSON/CSV/Markdown.
 - Defaults tuned for Artemis (base package example: de.tum.cit.aet.artemis).
 
-Changelog (2025-10-07):
-- Only consider @RequestBody params for request classification (fewer false positives).
-- If controller-path-hints is empty, scan all *.java instead of none.
 """
 
 from __future__ import annotations
