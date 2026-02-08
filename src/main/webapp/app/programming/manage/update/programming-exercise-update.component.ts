@@ -570,6 +570,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (!this.programmingExercise?.id || this.isImportFromExistingExercise || this.isImportFromFile || this.isImportFromSharing || !this.isEdit) {
             return;
         }
+        this.ensureExerciseCategoriesReference();
         this.metadataSyncService.initialize({
             exerciseId: this.programmingExercise.id,
             exerciseType: this.programmingExercise.type ?? ExerciseType.PROGRAMMING,
@@ -659,6 +660,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.exerciseCategories === undefined) {
             this.exerciseCategories = [];
         }
+    }
+
+    private ensureExerciseCategoriesReference() {
+        this.exerciseCategories = this.programmingExercise.categories ?? this.exerciseCategories ?? [];
+        this.programmingExercise.categories = this.exerciseCategories;
     }
 
     /**

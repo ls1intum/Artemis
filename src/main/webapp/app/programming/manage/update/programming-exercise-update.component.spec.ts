@@ -1385,6 +1385,28 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         expect(comp.exerciseCategories).toBe(categories);
     }));
 
+    it('keeps exerciseCategories and programmingExercise.categories in sync when initially empty', fakeAsync(() => {
+        const route = TestBed.inject(ActivatedRoute);
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.id = 42;
+        programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        programmingExercise.categories = undefined;
+
+        route.params = of({ courseId });
+        route.url = of([{ path: 'edit' } as UrlSegment]);
+        route.data = of({ programmingExercise });
+
+        jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(Utils, 'loadCourseExerciseCategories').mockReturnValue(of([]));
+        jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+
+        comp.ngOnInit();
+        tick();
+
+        expect(comp.exerciseCategories).toEqual([]);
+        expect(comp.programmingExercise.categories).toBe(comp.exerciseCategories);
+    }));
+
     it('should validate form sections', () => {
         const calculateFormValidSectionsSpy = jest.spyOn(comp, 'calculateFormStatusSections');
         comp.programmingExercise = new ProgrammingExercise(undefined, undefined);

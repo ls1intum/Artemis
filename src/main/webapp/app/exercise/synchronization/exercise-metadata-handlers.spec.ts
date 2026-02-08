@@ -1,6 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { createBaseHandlers, createExerciseMetadataHandlers } from 'app/exercise/synchronization/exercise-metadata-handlers';
 import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/exercise-metadata-snapshot.dto';
@@ -28,6 +29,7 @@ describe('ExerciseMetadataHandlers', () => {
         expect(keys).toContain('programmingData.showTestNamesToStudents');
         expect(keys).toContain('programmingData.allowOnlineEditor');
         expect(keys).toContain('programmingData.buildConfig');
+        expect(keys).toContain('programmingData.auxiliaryRepositories');
     });
 
     it('includes only base handlers for non-programming exercise types', () => {
@@ -78,6 +80,10 @@ describe('ExerciseMetadataHandlers', () => {
             feedbackSuggestionModule: 'module',
             competencyLinks: [{ competencyId: { competencyId: 99 }, weight: 0.5 }],
             programmingData: {
+                auxiliaryRepositories: [
+                    { id: 11, name: 'aux-1', checkoutDirectory: 'aux-1', description: 'first auxiliary repository' },
+                    { id: 12, name: 'aux-2', checkoutDirectory: 'aux-2', description: 'second auxiliary repository' },
+                ],
                 allowOnlineEditor: true,
                 allowOfflineIde: false,
                 allowOnlineIde: true,
@@ -128,6 +134,10 @@ describe('ExerciseMetadataHandlers', () => {
         expect(exercise.showTestNamesToStudents).toBeTrue();
         expect(dayjs.isDayjs(exercise.buildAndTestStudentSubmissionsAfterDueDate)).toBeTrue();
         expect(exercise.releaseTestsWithExampleSolution).toBeTrue();
+        expect(exercise.auxiliaryRepositories).toHaveLength(2);
+        expect(exercise.auxiliaryRepositories?.[0].name).toBe('aux-1');
+        expect(exercise.auxiliaryRepositories?.[0].checkoutDirectory).toBe('aux-1');
+        expect(exercise.auxiliaryRepositories?.[0].description).toBe('first auxiliary repository');
         expect(exercise.competencyLinks).toHaveLength(1);
         expect(exercise.competencyLinks?.[0].competency?.id).toBe(99);
         expect(exercise.competencyLinks?.[0].weight).toBe(0.5);
@@ -163,5 +173,72 @@ describe('ExerciseMetadataHandlers', () => {
         secondCorrectionHandler.applyValue(exercise, undefined as any);
 
         expect(exercise.secondCorrectionEnabled).toBeFalse();
+    });
+
+    it('updates categories in place to keep existing references synchronized', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.categories = [new ExerciseCategory('local', '#111111')];
+        const categoriesReference = exercise.categories;
+        const handlers = createExerciseMetadataHandlers(ExerciseType.PROGRAMMING);
+        const categoriesHandler = handlers.find((handler) => handler.key === 'categories')!;
+
+        categoriesHandler.applyValue(exercise, ['alpha', 'beta'] as any);
+
+        expect(exercise.categories).toBe(categoriesReference);
+        expect(exercise.categories?.map((category) => category.category)).toEqual(['alpha', 'beta']);
+
+        categoriesHandler.applyValue(exercise, [] as any);
+
+        expect(exercise.categories).toBe(categoriesReference);
+        expect(exercise.categories).toEqual([]);
+    });
+
+    it('parses JSON-encoded category strings when applying category updates', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.categories = [new ExerciseCategory('local', '#111111')];
+        const handlers = createExerciseMetadataHandlers(ExerciseType.PROGRAMMING);
+        const categoriesHandler = handlers.find((handler) => handler.key === 'categories')!;
+
+        categoriesHandler.applyValue(exercise, ['{"category":"alpha","color":"#123456"}', '{"category":"beta","color":"#abcdef"}'] as any);
+
+        expect(exercise.categories?.map((category) => category.category)).toEqual(['alpha', 'beta']);
+        expect(exercise.categories?.map((category) => category.color)).toEqual(['#123456', '#abcdef']);
+    });
+
+    it('updates auxiliary repositories by assigning a fresh array', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.auxiliaryRepositories = [
+            {
+                id: 1,
+                name: 'local',
+                checkoutDirectory: 'local',
+                description: 'local description',
+                repositoryUri: 'git@server:local.git',
+            } as any,
+        ];
+        const auxiliaryRepositoriesReference = exercise.auxiliaryRepositories;
+        const handlers = createExerciseMetadataHandlers(ExerciseType.PROGRAMMING);
+        const auxiliaryRepositoriesHandler = handlers.find((handler) => handler.key === 'programmingData.auxiliaryRepositories')!;
+
+        auxiliaryRepositoriesHandler.applyValue(exercise, [
+            {
+                id: 10,
+                name: 'aux-a',
+                checkoutDirectory: 'dir-a',
+                description: 'desc-a',
+                repositoryUri: 'git@server:aux-a.git',
+            },
+        ] as any);
+
+        expect(exercise.auxiliaryRepositories).not.toBe(auxiliaryRepositoriesReference);
+        expect(exercise.auxiliaryRepositories).toHaveLength(1);
+        expect(exercise.auxiliaryRepositories?.[0].name).toBe('aux-a');
+        expect(exercise.auxiliaryRepositories?.[0].checkoutDirectory).toBe('dir-a');
+        expect(exercise.auxiliaryRepositories?.[0].description).toBe('desc-a');
+
+        auxiliaryRepositoriesHandler.applyValue(exercise, undefined as any);
+
+        expect(exercise.auxiliaryRepositories).not.toBe(auxiliaryRepositoriesReference);
+        expect(exercise.auxiliaryRepositories).toEqual([]);
     });
 });

@@ -405,4 +405,28 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         assertThat(payload.changedFields()).contains("channelName");
     }
 
+    /**
+     * Ensures auxiliary repository metadata changes are reported via metadata alerts.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testMetadataSynchronizationBroadcastWhenAuxiliaryRepositoryMetadataChanges() {
+        ProgrammingExercise exercise = createProgrammingExercise();
+        exerciseVersionService.createExerciseVersion(exercise);
+        reset(websocketMessagingService);
+
+        exercise = programmingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
+        programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(exercise);
+        exercise = programmingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
+        programmingExerciseRepository.saveAndFlush(exercise);
+
+        exercise = programmingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
+        exerciseVersionService.createExerciseVersion(exercise);
+
+        var captor = ArgumentCaptor.forClass(ExerciseNewVersionAlertDTO.class);
+        verify(websocketMessagingService, times(1)).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
+        var payload = captor.getValue();
+        assertThat(payload.changedFields()).contains("programmingData.auxiliaryRepositories");
+    }
+
 }

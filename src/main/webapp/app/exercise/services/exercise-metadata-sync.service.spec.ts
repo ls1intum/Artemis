@@ -8,6 +8,7 @@ import { Competency, CompetencyExerciseLink } from 'app/atlas/shared/entities/co
 
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import {
     ExerciseEditorSyncEvent,
     ExerciseEditorSyncEventType,
@@ -182,6 +183,44 @@ describe('ExerciseMetadataSyncService', () => {
         expect(baselineExercise.title).toBe('incoming-title');
         expect(modalService.open).not.toHaveBeenCalled();
         expect(setBaselineExercise).toHaveBeenCalled();
+    });
+
+    it('applies auxiliary repository metadata changes to current and baseline without modal', async () => {
+        const existingRepository = new AuxiliaryRepository();
+        existingRepository.id = 1;
+        existingRepository.name = 'local';
+        existingRepository.checkoutDirectory = 'local-dir';
+        existingRepository.description = 'local-desc';
+        existingRepository.repositoryUri = 'git@server:local.git';
+        currentExercise.auxiliaryRepositories = [existingRepository];
+        baselineExercise.auxiliaryRepositories = [existingRepository];
+
+        service.initialize(context);
+        emitAlert(createAlert(113, ['programmingData.auxiliaryRepositories']));
+
+        flushSnapshot(1, 113, {
+            id: 1,
+            programmingData: {
+                auxiliaryRepositories: [
+                    {
+                        id: 2,
+                        name: 'incoming',
+                        checkoutDirectory: 'incoming-dir',
+                        description: 'incoming-desc',
+                        repositoryUri: 'git@server:incoming.git',
+                    },
+                ],
+            },
+        });
+        await flushPromises();
+
+        expect(currentExercise.auxiliaryRepositories).toHaveLength(1);
+        expect(currentExercise.auxiliaryRepositories?.[0].name).toBe('incoming');
+        expect(currentExercise.auxiliaryRepositories?.[0].checkoutDirectory).toBe('incoming-dir');
+        expect(currentExercise.auxiliaryRepositories?.[0].description).toBe('incoming-desc');
+        expect(baselineExercise.auxiliaryRepositories).toHaveLength(1);
+        expect(baselineExercise.auxiliaryRepositories?.[0].name).toBe('incoming');
+        expect(modalService.open).not.toHaveBeenCalled();
     });
 
     it('updates only baseline when changed fields have no registered handlers', async () => {

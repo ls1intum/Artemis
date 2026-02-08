@@ -3,13 +3,14 @@ import dayjs from 'dayjs/esm';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
 import { DifficultyLevel, Exercise, ExerciseMode, ExerciseType, IncludedInOverallScore, PlagiarismDetectionConfig } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { ExerciseSnapshotDTO, TeamAssignmentConfigSnapshot } from 'app/exercise/synchronization/exercise-metadata-snapshot.dto';
-import { toCompetencyLinks, toExerciseCategories, toTeamAssignmentConfig } from 'app/exercise/synchronization/exercise-metadata-snapshot-shared.mapper';
-import { toBuildConfig } from 'app/exercise/synchronization/exercise-metadata-snapshot-programming.mapper';
+import { toCompetencyLinks, toTeamAssignmentConfig } from 'app/exercise/synchronization/exercise-metadata-snapshot-shared.mapper';
+import { toAuxiliaryRepositories, toBuildConfig } from 'app/exercise/synchronization/exercise-metadata-snapshot-programming.mapper';
 
 /**
  * Defines how a specific exercise field is read, compared, and applied.
@@ -24,6 +25,66 @@ export interface ExerciseMetadataFieldHandler<T extends Exercise, V = unknown> {
 }
 
 type ExerciseResolver = () => Exercise;
+
+const normalizeCategories = (value: unknown): ExerciseCategory[] | undefined => {
+    if (!Array.isArray(value)) {
+        return undefined;
+    }
+
+    const categories = value
+        .map((entry) => {
+            if (typeof entry === 'string') {
+                const trimmed = entry.trim();
+                if (!trimmed) {
+                    return undefined;
+                }
+                try {
+                    const parsed = JSON.parse(trimmed);
+                    if (parsed && typeof parsed === 'object' && 'category' in parsed) {
+                        const category = (parsed as ExerciseCategory).category?.trim();
+                        if (!category) {
+                            return undefined;
+                        }
+                        return new ExerciseCategory(category, (parsed as ExerciseCategory).color);
+                    }
+                } catch {
+                    // category is not JSON-encoded, treat it as plain text
+                }
+                return new ExerciseCategory(trimmed, undefined);
+            }
+            if (entry instanceof ExerciseCategory) {
+                const category = entry.category?.trim();
+                return category ? new ExerciseCategory(category, entry.color) : undefined;
+            }
+            if (entry && typeof entry === 'object' && 'category' in entry) {
+                const category = (entry as ExerciseCategory).category?.trim();
+                return category ? new ExerciseCategory(category, (entry as ExerciseCategory).color) : undefined;
+            }
+            return undefined;
+        })
+        .filter((entry): entry is ExerciseCategory => entry !== undefined);
+
+    return categories.length > 0 ? categories : undefined;
+};
+
+const applyCategories = (exercise: Exercise, value: unknown): void => {
+    const incomingCategories = normalizeCategories(value);
+    const existingCategories = exercise.categories;
+
+    if (existingCategories) {
+        existingCategories.length = 0;
+        if (incomingCategories) {
+            existingCategories.push(...incomingCategories);
+        }
+        return;
+    }
+
+    exercise.categories = incomingCategories;
+};
+
+const applyAuxiliaryRepositories = (exercise: ProgrammingExercise, value: unknown): void => {
+    exercise.auxiliaryRepositories = toAuxiliaryRepositories(value as any[] | undefined) ?? [];
+};
 
 /**
  * Creates a basic handler for scalar exercise fields stored directly on the snapshot.
@@ -183,7 +244,7 @@ export const createBaseHandlers = (resolveExercise?: ExerciseResolver): Exercise
             'categories',
             'artemisApp.exercise.categories',
             (exercise) => exercise.categories,
-            (exercise, value) => (exercise.categories = toExerciseCategories(value as string[] | undefined)),
+            (exercise, value) => applyCategories(exercise, value),
         ),
         baseHandler(
             'teamAssignmentConfig',
@@ -253,6 +314,14 @@ const createProgrammingHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] =
             getIncomingValue: (snapshot) => snapshot.programmingData?.allowOnlineIde,
             applyValue: (exercise, value) => ((exercise as ProgrammingExercise).allowOnlineIde = value as boolean | undefined),
         } satisfies ExerciseMetadataFieldHandler<Exercise, boolean | undefined>,
+        {
+            key: 'programmingData.auxiliaryRepositories',
+            labelKey: 'artemisApp.programmingExercise.auxiliaryRepositories',
+            getCurrentValue: (exercise) => (exercise as ProgrammingExercise).auxiliaryRepositories,
+            getBaselineValue: (exercise) => (exercise as ProgrammingExercise).auxiliaryRepositories,
+            getIncomingValue: (snapshot) => toAuxiliaryRepositories(snapshot.programmingData?.auxiliaryRepositories),
+            applyValue: (exercise, value) => applyAuxiliaryRepositories(exercise as ProgrammingExercise, value),
+        } satisfies ExerciseMetadataFieldHandler<Exercise, unknown>,
         {
             key: 'programmingData.maxStaticCodeAnalysisPenalty',
             labelKey: 'artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.title',

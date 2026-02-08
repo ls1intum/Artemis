@@ -21,16 +21,22 @@ describe('ExerciseMetadataSnapshotProgrammingMapper', () => {
 
     it('maps auxiliary repositories', () => {
         const snapshot: AuxiliaryRepositorySnapshotDTO[] = [
-            { id: 7, repositoryUri: 'git@server:repo-a.git' },
-            { id: 8, repositoryUri: 'git@server:repo-b.git' },
+            { id: 7, name: 'repo-a', checkoutDirectory: 'dir-a', description: 'desc-a', repositoryUri: 'git@server:repo-a.git' },
+            { id: 8, name: 'repo-b', checkoutDirectory: 'dir-b', description: 'desc-b', repositoryUri: 'git@server:repo-b.git' },
         ];
 
         const mapped = toAuxiliaryRepositories(snapshot);
 
         expect(mapped).toHaveLength(2);
         expect(mapped?.[0].id).toBe(7);
+        expect(mapped?.[0].name).toBe('repo-a');
+        expect(mapped?.[0].checkoutDirectory).toBe('dir-a');
+        expect(mapped?.[0].description).toBe('desc-a');
         expect(mapped?.[0].repositoryUri).toBe('git@server:repo-a.git');
         expect(mapped?.[1].id).toBe(8);
+        expect(mapped?.[1].name).toBe('repo-b');
+        expect(mapped?.[1].checkoutDirectory).toBe('dir-b');
+        expect(mapped?.[1].description).toBe('desc-b');
         expect(mapped?.[1].repositoryUri).toBe('git@server:repo-b.git');
     });
 

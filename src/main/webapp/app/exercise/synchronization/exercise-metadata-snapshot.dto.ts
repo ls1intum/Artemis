@@ -73,7 +73,11 @@ export interface ProgrammingExerciseSnapshotDTO {
 
 export interface AuxiliaryRepositorySnapshotDTO {
     id?: number;
+    name?: string;
+    checkoutDirectory?: string;
+    description?: string;
     repositoryUri?: string;
+    commitId?: string;
 }
 
 export interface ParticipationSnapshotDTO {

@@ -234,6 +234,8 @@ public class ExerciseVersionService {
             }
         }
 
+        Set<String> changedFields = collectChangedFields(newSnapshot, previousSnapshot);
+
         if (target != null) {
             // For repository commits, send a new commit alert so clients can notify users
             // to refresh
@@ -241,11 +243,8 @@ public class ExerciseVersionService {
             // messages.
             exerciseEditorSyncService.broadcastNewCommitAlert(exerciseId, target, auxiliaryRepositoryId);
         }
-        else {
-            Set<String> changedFields = collectChangedFields(newSnapshot, previousSnapshot);
-            if (!changedFields.isEmpty()) {
-                exerciseEditorSyncService.broadcastNewExerciseVersionAlert(exerciseId, newExerciseVersionId, author, changedFields);
-            }
+        if (!changedFields.isEmpty()) {
+            exerciseEditorSyncService.broadcastNewExerciseVersionAlert(exerciseId, newExerciseVersionId, author, changedFields);
         }
     }
 
@@ -305,17 +304,31 @@ public class ExerciseVersionService {
             changedFields.add("programmingData");
             return;
         }
-        // Note: repository URLs, auxiliary repositories, submission policy, programming language, project type, package name,
+        // Note: repository URLs, submission policy, programming language, project type, package name,
         // static code analysis enablement, and project keys are not editable on the exercise edit page.
         addIfChanged(changedFields, "programmingData.allowOnlineEditor", newData, previousData, ProgrammingExerciseSnapshotDTO::allowOnlineEditor);
         addIfChanged(changedFields, "programmingData.allowOfflineIde", newData, previousData, ProgrammingExerciseSnapshotDTO::allowOfflineIde);
         addIfChanged(changedFields, "programmingData.allowOnlineIde", newData, previousData, ProgrammingExerciseSnapshotDTO::allowOnlineIde);
         addIfChanged(changedFields, "programmingData.maxStaticCodeAnalysisPenalty", newData, previousData, ProgrammingExerciseSnapshotDTO::maxStaticCodeAnalysisPenalty);
         addIfChanged(changedFields, "programmingData.showTestNamesToStudents", newData, previousData, ProgrammingExerciseSnapshotDTO::showTestNamesToStudents);
+        addIfChanged(changedFields, "programmingData.auxiliaryRepositories", newData, previousData, this::extractAuxiliaryRepositoryMetadata);
         addIfChanged(changedFields, "programmingData.buildAndTestStudentSubmissionsAfterDueDate", newData, previousData,
                 ProgrammingExerciseSnapshotDTO::buildAndTestStudentSubmissionsAfterDueDate);
         addIfChanged(changedFields, "programmingData.releaseTestsWithExampleSolution", newData, previousData, ProgrammingExerciseSnapshotDTO::releaseTestsWithExampleSolution);
         addIfChanged(changedFields, "programmingData.buildConfig", newData, previousData, ProgrammingExerciseSnapshotDTO::buildConfig);
+    }
+
+    private List<AuxiliaryRepositoryMetadata> extractAuxiliaryRepositoryMetadata(ProgrammingExerciseSnapshotDTO snapshot) {
+        var auxiliaryRepositories = snapshot.auxiliaryRepositories();
+        if (auxiliaryRepositories == null) {
+            return null;
+        }
+        return auxiliaryRepositories.stream()
+                .map((repository) -> new AuxiliaryRepositoryMetadata(repository.id(), repository.name(), repository.checkoutDirectory(), repository.description()))
+                .sorted((left, right) -> Long.compare(left.id(), right.id())).toList();
+    }
+
+    private record AuxiliaryRepositoryMetadata(long id, String name, String checkoutDirectory, String description) {
     }
 
     /**

@@ -36,6 +36,16 @@ describe('ExerciseMetadataSnapshotSharedMapper', () => {
         expect(categories?.[1].category).toBe('beta');
     });
 
+    it('maps JSON-encoded exercise categories and keeps their color', () => {
+        const categories = toExerciseCategories(['{"category":"alpha","color":"#123456"}', '{"category":"beta","color":"#abcdef"}']);
+
+        expect(categories?.length).toBe(2);
+        expect(categories?.[0].category).toBe('alpha');
+        expect(categories?.[0].color).toBe('#123456');
+        expect(categories?.[1].category).toBe('beta');
+        expect(categories?.[1].color).toBe('#abcdef');
+    });
+
     it('returns undefined when competency links snapshot is missing', () => {
         const exercise = new ProgrammingExercise(undefined, undefined);
 

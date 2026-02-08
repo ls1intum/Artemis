@@ -18,6 +18,9 @@ export const toAuxiliaryRepositories = (repositories?: AuxiliaryRepositorySnapsh
     return repositories.map((repository) => {
         const aux = new AuxiliaryRepository();
         aux.id = repository.id;
+        aux.name = repository.name;
+        aux.checkoutDirectory = repository.checkoutDirectory;
+        aux.description = repository.description;
         aux.repositoryUri = repository.repositoryUri;
         return aux;
     });

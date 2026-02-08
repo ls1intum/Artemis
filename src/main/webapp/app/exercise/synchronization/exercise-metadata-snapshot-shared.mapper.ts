@@ -19,7 +19,31 @@ export const toExerciseCategories = (categories?: string[]): ExerciseCategory[] 
     if (!categories || categories.length === 0) {
         return undefined;
     }
-    return categories.map((category) => new ExerciseCategory(category, undefined));
+
+    const parsedCategories = categories
+        .map((category) => {
+            const trimmed = category.trim();
+            if (trimmed.length === 0) {
+                return undefined;
+            }
+            try {
+                const parsed = JSON.parse(trimmed);
+                if (parsed && typeof parsed === 'object' && 'category' in parsed) {
+                    const parsedCategory = (parsed as ExerciseCategory).category?.trim();
+                    if (!parsedCategory) {
+                        return undefined;
+                    }
+                    const parsedColor = (parsed as ExerciseCategory).color;
+                    return new ExerciseCategory(parsedCategory, parsedColor);
+                }
+            } catch {
+                // category is not JSON-encoded, treat it as plain text
+            }
+            return new ExerciseCategory(trimmed, undefined);
+        })
+        .filter((category): category is ExerciseCategory => category !== undefined);
+
+    return parsedCategories.length > 0 ? parsedCategories : undefined;
 };
 
 /**
