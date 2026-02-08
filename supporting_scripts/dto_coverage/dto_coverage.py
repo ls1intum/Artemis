@@ -1,8 +1,12 @@
-#!/usr/bin/env python3
 """
 dto_coverage.py — Heuristic DTO coverage scanner for Spring (Java) REST endpoints.
 
-- Classifies endpoints as DTO / Entity / Neutral from return types + @RequestBody payloads.
+- Classifies endpoints as DTO / Entity / Mixed / Neutral from return types + @RequestBody payloads.
+- IMPORTANT (your updated definition):
+  - "neutral" is request-body driven: if the @RequestBody contains neither DTO nor Entity, the endpoint is Neutral,
+    regardless of what it returns (even if it returns an Entity).
+  - "mixed" means at least one side is DTO and the other side is Entity (or request body contains both).
+
 - Per-module and overall coverage; outputs JSON/CSV/Markdown.
 - Defaults tuned for Artemis (base package example: de.tum.cit.aet.artemis).
 
@@ -12,7 +16,7 @@ Changelog (2025-10-07):
 """
 
 from __future__ import annotations
-import argparse, json, os, re, sys, csv
+import argparse, json, re, sys, csv
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 
@@ -21,33 +25,29 @@ RE_IMPORT  = re.compile(r'^\s*import\s+([a-zA-Z0-9_.*]+)\s*;', re.MULTILINE)
 
 MAPPING_ANNOS = ['GetMapping','PostMapping','PutMapping','PatchMapping','DeleteMapping','RequestMapping']
 RE_METHOD_ANNOT = re.compile(r'@(' + '|'.join(MAPPING_ANNOS) + r')\b[^)]*\)', re.MULTILINE)
-RE_METHOD_SIG = re.compile(r'(public|protected|private)\s+([a-zA-Z0-9_<>, ?\[\].]+)\s+([a-zA-Z0-9_]+)\s*\((.*?)\)\s*\{', re.DOTALL)
+
 RE_METHOD_HEAD = re.compile(
     r'(public|protected|private)\s+'
     r'(?P<ret>[a-zA-Z0-9_<>, ?\[\].]+)\s+'
     r'(?P<name>[a-zA-Z0-9_]+)\s*\(',
     re.DOTALL
 )
-RE_ANNOT_BLOCK_AND_METHOD = re.compile(
-    r'(?P<annos>(?:\s*@\w+(?:\([^)]*\))?\s*)+)\s*'
-    r'(?P<sig>(public|protected|private)\s+'
-    r'(?P<ret>[a-zA-Z0-9_<>, ?\[\].]+)\s+'
-    r'(?P<name>[a-zA-Z0-9_]+)\s*'
-    r'\((?P<params>.*?)\)\s*\{)',
-    re.DOTALL
-)
+
 RE_PARAM = re.compile(
     r'(?P<annos>(@\w+(?:\([^)]*\))?\s*)*)'
     r'(?P<type>[a-zA-Z0-9_<>,\.\[\]]+)'
     r'(?:\s+\.{3})?'
     r'\s+(?P<name>[a-zA-Z0-9_]+)'
 )
+
 RE_GENERIC_INNER = re.compile(r'<([^<>]+)>')
+
 JAVA_FRAMEWORK = set("""void boolean byte short int long float double char
 String Object ResponseEntity Optional List Set Map Collection Page Slice Stream Mono Flux""".split())
 
+
 def split_generic_parts(t: str) -> List[str]:
-    parts, cleaned = [], t.replace('[]','')
+    parts, cleaned = [], t.replace('[]', '')
     queue = [cleaned]
     while queue:
         cur = queue.pop(0)
@@ -63,21 +63,25 @@ def split_generic_parts(t: str) -> List[str]:
     for p in parts:
         for tok in re.split(r'[, ?<>]', p):
             tok = tok.strip()
-            if tok: flat.append(tok)
+            if tok:
+                flat.append(tok)
     return flat
 
-def collect_import_map(text: str) -> Dict[str,str]:
-    mapping = {}
+
+def collect_import_map(text: str) -> Dict[str, str]:
+    mapping: Dict[str, str] = {}
     for imp in RE_IMPORT.findall(text):
-        if imp.endswith('.*'): continue
+        if imp.endswith('.*'):
+            continue
         mapping[imp.split('.')[-1]] = imp
     return mapping
 
+
 def resolve_full_names(simple: List[str], imports: Dict[str, str], current_pkg: Optional[str]) -> List[str]:
-    out = []
+    out: List[str] = []
     java_lang = {
-            "String","Object","Integer","Long","Short","Byte","Boolean",
-            "Character","Double","Float","Void","Class","Enum","Record"
+        "String","Object","Integer","Long","Short","Byte","Boolean",
+        "Character","Double","Float","Void","Class","Enum","Record"
     }
     for name in simple:
         if name in JAVA_FRAMEWORK or name in java_lang:
@@ -102,12 +106,74 @@ def resolve_full_names(simple: List[str], imports: Dict[str, str], current_pkg: 
 
     return out
 
+
 def classify_type(fq: str, dto_hints: List[str], entity_hints: List[str]) -> Optional[str]:
-    if not fq or fq in JAVA_FRAMEWORK: return None
+    if not fq or fq in JAVA_FRAMEWORK:
+        return None
     low = fq.lower()
-    if any(h in low for h in dto_hints) or low.endswith('dto'): return 'dto'
-    if any(h in low for h in entity_hints): return 'entity'
+    if any(h in low for h in dto_hints) or low.endswith('dto'):
+        return 'dto'
+    if any(h in low for h in entity_hints):
+        return 'entity'
     return None
+
+
+def classify_endpoint(ret_types_fq: List[str],
+                      body_param_types_fq: List[str],
+                      dto_hints: List[str],
+                      entity_hints: List[str]) -> str:
+    """
+    Request-body driven classification:
+
+    - neutral:
+        request body contains no DTO and no Entity (return type irrelevant)
+    - dto:
+        request body has DTO only, and return type does not introduce an Entity
+    - entity:
+        request body has Entity only, and return type does not introduce a DTO
+    - mixed:
+        both DTO and Entity appear across request/response OR within request body
+        (e.g., request DTO + return Entity, or request Entity + return DTO, or both in body)
+    """
+
+    # --- analyze request body (only @RequestBody types are provided here) ---
+    body_saw_dto = False
+    body_saw_entity = False
+
+    for fq in body_param_types_fq:
+        cat = classify_type(fq, dto_hints, entity_hints)
+        if cat == 'dto':
+            body_saw_dto = True
+        elif cat == 'entity':
+            body_saw_entity = True
+
+    # Neutral if request body contains neither DTO nor Entity — regardless of return types
+    if not body_saw_dto and not body_saw_entity:
+        return 'neutral'
+
+    # --- analyze return types ---
+    ret_saw_dto = False
+    ret_saw_entity = False
+
+    for fq in ret_types_fq:
+        cat = classify_type(fq, dto_hints, entity_hints)
+        if cat == 'dto':
+            ret_saw_dto = True
+        elif cat == 'entity':
+            ret_saw_entity = True
+
+    # Mixed if DTO+Entity appear across boundary in any direction (or both in body)
+    if (body_saw_dto and body_saw_entity) or (body_saw_dto and ret_saw_entity) or (body_saw_entity and ret_saw_dto):
+        return 'mixed'
+
+    # Otherwise, classification is driven by request body kind
+    if body_saw_entity:
+        return 'entity'
+    if body_saw_dto:
+        return 'dto'
+
+    return 'neutral'
+
 
 def iter_endpoints(text: str) -> List[Tuple[str, str, str, str]]:
     """
@@ -133,17 +199,16 @@ def iter_endpoints(text: str) -> List[Tuple[str, str, str, str]]:
 
         ret_type = mh.group('ret').strip()
 
-        # Find params by balanced parentheses starting at '(' right after the method head match
-        # mh.end()-1 should be the '('
+        # Extract params by balanced parentheses starting at '(' right after the method head
         open_paren_idx = mh.end() - 1
         if open_paren_idx < 0 or text[open_paren_idx] != '(':
-            # Safety fallback
             continue
+
         try:
             params, close_paren_idx = extract_balanced(text, open_paren_idx)
         except ValueError:
             continue
-        # method_sig: just keep a short signature text for debugging
+
         sig_start = mh.start()
         sig_end = min(close_paren_idx + 1, len(text))
         method_sig = text[sig_start:sig_end]
@@ -152,25 +217,29 @@ def iter_endpoints(text: str) -> List[Tuple[str, str, str, str]]:
 
     return eps
 
-def extract_param_types(params_str: str) -> List[Tuple[str,str]]:
-    out: List[Tuple[str,str]] = []
+
+def extract_param_types(params_str: str) -> List[Tuple[str, str]]:
+    out: List[Tuple[str, str]] = []
     for pm in RE_PARAM.finditer(params_str):
         annos = (pm.group('annos') or '').strip()
-        typ   = pm.group('type').strip()
+        typ = pm.group('type').strip()
         out.append((annos, typ))
     return out
+
 
 def is_controller_path(path: str, hints: List[str]) -> bool:
     if not hints:  # empty hints => scan everything
         return True
-    p = path.replace('\\','/')
+    p = path.replace('\\', '/')
     return any(h in p for h in hints)
+
 
 def find_module_name(java_path: Path, root: Path, strategy: str, base_package: Optional[str]) -> str:
     s = java_path.as_posix()
-    if strategy in ('auto','folder'):
+    if strategy in ('auto', 'folder'):
         m = re.search(r'/(.+?)/src/main/java/', s)
-        if m: return m.group(1)
+        if m:
+            return m.group(1)
     if strategy == 'package' and base_package:
         try:
             text = java_path.read_text(encoding='utf-8', errors='ignore')
@@ -178,34 +247,18 @@ def find_module_name(java_path: Path, root: Path, strategy: str, base_package: O
             if pm:
                 pkg = pm.group(1)
                 if pkg.startswith(base_package + '.'):
-                    rest = pkg[len(base_package)+1:]
-                    return rest.split('.',1)[0]
+                    rest = pkg[len(base_package) + 1:]
+                    return rest.split('.', 1)[0]
         except Exception:
             pass
     rel = java_path.relative_to(root).parts
     return rel[0] if rel else 'unknown'
 
-def classify_endpoint(ret_types_fq: List[str],
-                      body_param_types_fq: List[str],
-                      dto_hints: List[str],
-                      entity_hints: List[str]) -> str:
-    saw_dto = False
-    saw_entity = False
-    for fq in ret_types_fq:
-        cat = classify_type(fq, dto_hints, entity_hints)
-        if cat == 'dto': saw_dto = True
-        elif cat == 'entity': saw_entity = True
-    for fq in body_param_types_fq:
-        cat = classify_type(fq, dto_hints, entity_hints)
-        if cat == 'dto': saw_dto = True
-        elif cat == 'entity': saw_entity = True
-    if saw_entity: return 'entity'
-    if saw_dto:    return 'dto'
-    return 'neutral'
 
 def get_current_package(text: str) -> Optional[str]:
     pm = RE_PACKAGE.search(text)
     return pm.group(1) if pm else None
+
 
 def extract_balanced(s: str, open_idx: int, open_ch: str = '(', close_ch: str = ')') -> Tuple[str, int]:
     """
@@ -238,7 +291,7 @@ def extract_balanced(s: str, open_idx: int, open_ch: str = '(', close_ch: str = 
         if in_block_comment:
             if ch == '*' and nxt == '/':
                 in_block_comment = False
-                out.append(ch);
+                out.append(ch)
                 out.append(nxt)
                 i += 2
                 continue
@@ -249,13 +302,13 @@ def extract_balanced(s: str, open_idx: int, open_ch: str = '(', close_ch: str = 
         # start comments (only if not in string)
         if not in_str and ch == '/' and nxt == '/':
             in_line_comment = True
-            out.append(ch);
+            out.append(ch)
             out.append(nxt)
             i += 2
             continue
         if not in_str and ch == '/' and nxt == '*':
             in_block_comment = True
-            out.append(ch);
+            out.append(ch)
             out.append(nxt)
             i += 2
             continue
@@ -292,14 +345,18 @@ def extract_balanced(s: str, open_idx: int, open_ch: str = '(', close_ch: str = 
 
     raise ValueError("Unbalanced parentheses while extracting params")
 
+
 def main():
     ap = argparse.ArgumentParser(description="Heuristic DTO coverage scanner for Spring REST endpoints.")
     ap.add_argument('--root', required=True, help='Path to project root')
     ap.add_argument('--out', default='dto_coverage_out', help='Output directory')
     ap.add_argument('--base-package', help='Base package (e.g., de.tum.cit.aet.artemis)')
-    ap.add_argument('--module-strategy', default='auto', choices=['auto','folder','package'])
-    ap.add_argument('--controller-path-hints', default='web/rest,web/api,controller,src/main/java',
-                    help='Comma-separated substrings to identify REST controllers; empty scans all *.java')
+    ap.add_argument('--module-strategy', default='auto', choices=['auto', 'folder', 'package'])
+    ap.add_argument(
+        '--controller-path-hints',
+        default='web/rest,web/api,controller,src/main/java',
+        help='Comma-separated substrings to identify REST controllers; empty scans all *.java'
+    )
     ap.add_argument('--dto-package-hints', default='service.dto,dto', help='Comma-separated substrings for DTO packages')
     ap.add_argument('--entity-package-hints', default='domain,entity', help='Comma-separated substrings for Entity packages')
     args = ap.parse_args()
@@ -308,13 +365,14 @@ def main():
     out_dir = Path(args.out).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    controller_hints = [h.strip().replace('\\','/').replace('//','/') for h in args.controller_path_hints.split(',') if h.strip()]
-    dto_hints    = [h.strip().lower() for h in args.dto_package_hints.split(',') if h.strip()]
+    controller_hints = [h.strip().replace('\\', '/').replace('//', '/')
+                        for h in args.controller_path_hints.split(',') if h.strip()]
+    dto_hints = [h.strip().lower() for h in args.dto_package_hints.split(',') if h.strip()]
     entity_hints = [h.strip().lower() for h in args.entity_package_hints.split(',') if h.strip()]
 
     java_files: List[Path] = [p for p in root.rglob('*.java') if is_controller_path(p.as_posix(), controller_hints)]
-    results = []
-    per_module: Dict[str, Dict[str,int]] = {}
+    results: List[Dict[str, str]] = []
+    per_module: Dict[str, Dict[str, int]] = {}
 
     for jfile in java_files:
         try:
@@ -338,13 +396,14 @@ def main():
                 if '@RequestBody' not in annos:
                     continue  # only body payloads contribute to classification
                 p_full_all = resolve_full_names(split_generic_parts(ptype), imports, current_pkg)
-                rep = next((t for t in reversed(p_full_all) if t not in JAVA_FRAMEWORK), p_full_all[-1] if p_full_all else '')
+                rep = next((t for t in reversed(p_full_all) if t not in JAVA_FRAMEWORK),
+                           p_full_all[-1] if p_full_all else '')
                 if rep:
                     body_params_types.append(rep)
 
             classification = classify_endpoint(ret_full, body_params_types, dto_hints, entity_hints)
 
-            http_method = mapping_anno.lower().replace('mapping','').upper()
+            http_method = mapping_anno.lower().replace('mapping', '').upper()
             if http_method == 'REQUEST':
                 http_method = 'REQUEST'
 
@@ -353,28 +412,30 @@ def main():
                 'module': module,
                 'http_method': http_method,
                 'return_type_raw': ret_type,
-                'classification': classification,
                 'request_body_types': ";".join(body_params_types),
+                'classification': classification,
             })
 
-            per_module.setdefault(module, {'dto':0,'entity':0,'neutral':0,'unknown':0})
-            per_module[module][classification] = per_module[module].get(classification,0) + 1
+            per_module.setdefault(module, {'dto': 0, 'mixed': 0, 'entity': 0, 'neutral': 0, 'unknown': 0})
+            per_module[module][classification] = per_module[module].get(classification, 0) + 1
 
-    totals = {'dto':0,'entity':0,'neutral':0,'unknown':0}
-    for mod, counts in per_module.items():
+    totals = {'dto': 0, 'mixed': 0, 'entity': 0, 'neutral': 0, 'unknown': 0}
+    for _mod, counts in per_module.items():
         for k in totals.keys():
-            totals[k] += counts.get(k,0)
+            totals[k] += counts.get(k, 0)
 
     total_endpoints = sum(totals.values())
-    dto_cov = (totals['dto'] + totals['neutral']) / total_endpoints * 100 if total_endpoints else 0.0
+    coverage = (totals['dto'] + totals['mixed'] + totals['neutral']) / total_endpoints * 100 if total_endpoints else 0.0
 
     summary = {
         'root': str(root),
         'total_endpoints': total_endpoints,
         'totals': totals,
-        'dto_coverage_percent': round(dto_cov, 2),
+        'coverage_percent': round(coverage, 2),
         'dto_only_percent': round((totals['dto'] / total_endpoints * 100) if total_endpoints else 0.0, 2),
+        'mixed_share_percent': round((totals['mixed'] / total_endpoints * 100) if total_endpoints else 0.0, 2),
         'entity_share_percent': round((totals['entity'] / total_endpoints * 100) if total_endpoints else 0.0, 2),
+        'neutral_share_percent': round((totals['neutral'] / total_endpoints * 100) if total_endpoints else 0.0, 2),
         'unknown_share_percent': round((totals['unknown'] / total_endpoints * 100) if total_endpoints else 0.0, 2),
         'per_module': per_module,
         'config': {
@@ -396,31 +457,38 @@ def main():
     with csv_path.open('w', newline='', encoding='utf-8') as f:
         w = csv.DictWriter(
             f,
-            fieldnames=['file','module','http_method','return_type_raw','request_body_types','classification']
+            fieldnames=['file', 'module', 'http_method', 'return_type_raw', 'request_body_types', 'classification']
         )
         w.writeheader()
         for row in results:
             w.writerow(row)
 
-    lines = []
+    lines: List[str] = []
     lines.append("# DTO Coverage Report\n")
     lines.append(f"- Project root: `{root}`")
     lines.append(f"- Total endpoints: **{total_endpoints}**")
-    lines.append(f"- DTO coverage (no Entities at API boundary): **{summary['dto_coverage_percent']}%**")
+    lines.append(f"- Coverage (DTO or Mixed or Neutral): **{summary['coverage_percent']}%**")
     lines.append(f"- DTO-only endpoints: **{summary['dto_only_percent']}%**")
+    lines.append(f"- Mixed share: **{summary['mixed_share_percent']}%**")
     lines.append(f"- Entity share: **{summary['entity_share_percent']}%**")
+    lines.append(f"- Neutral share: **{summary['neutral_share_percent']}%**")
     lines.append(f"- Unknown share: **{summary['unknown_share_percent']}%**\n")
+
     lines.append("## Per Module\n")
-    lines.append("| Module | Endpoints | DTO | Entity | Neutral | Unknown | DTO Coverage* |")
-    lines.append("|---|---:|---:|---:|---:|---:|---:|")
+    lines.append("| Module | Endpoints | DTO | Mixed | Entity | Neutral | Unknown | Coverage* |")
+    lines.append("|---|---:|---:|---:|---:|---:|---:|---:|")
     for mod, counts in sorted(per_module.items()):
         tot = sum(counts.values())
-        cov = (counts.get('dto',0) + counts.get('neutral',0)) / tot * 100 if tot else 0.0
-        lines.append(f"| {mod} | {tot} | {counts.get('dto',0)} | {counts.get('entity',0)} | {counts.get('neutral',0)} | {counts.get('unknown',0)} | {cov:.2f}% |")
-    lines.append("\n_*DTO Coverage = (DTO + Neutral) / All_\n")
+        cov = (counts.get('dto', 0) + counts.get('mixed', 0) + counts.get('neutral', 0)) / tot * 100 if tot else 0.0
+        lines.append(
+            f"| {mod} | {tot} | {counts.get('dto', 0)} | {counts.get('mixed', 0)} | {counts.get('entity', 0)} | "
+            f"{counts.get('neutral', 0)} | {counts.get('unknown', 0)} | {cov:.2f}% |"
+        )
+    lines.append("\n_*Coverage = (DTO + Mixed + Neutral) / All_\n")
     md_path.write_text("\n".join(lines), encoding='utf-8')
 
     print(f"Wrote:\n- {json_path}\n- {csv_path}\n- {md_path}")
+
 
 if __name__ == '__main__':
     try:
