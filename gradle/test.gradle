@@ -6,6 +6,22 @@ tasks.withType(Test).configureEach {
 
     jvmArgs += "-javaagent:${configurations.mockitoAgent.asPath}"
 
+    // Pass Docker image versions from .env to integration tests as system properties
+    // (e.g. MYSQL_VERSION=9.6.0 becomes -Dmysql.version=9.6.0, usable in Spring YAML as ${mysql.version})
+    def envFile = file("${rootDir}/.env")
+    if (envFile.exists()) {
+        envFile.readLines().each { line ->
+            def trimmed = line.trim()
+            if (trimmed && !trimmed.startsWith('#') && trimmed.contains('=')) {
+                def parts = trimmed.split('=', 2)
+                def key = parts[0].trim()
+                def value = parts[1].trim()
+                // Convert ENV_VAR_NAME to env.var.name for use as system/Spring properties
+                systemProperty key.toLowerCase().replaceAll('_', '.'), value
+            }
+        }
+    }
+
     // a collection to track failedTests
     ext.failedTests = []
 

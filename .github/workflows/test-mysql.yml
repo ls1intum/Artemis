@@ -1,0 +1,131 @@
+name: Test (MySQL)
+
+on:
+  pull_request:
+    paths-ignore:
+    - 'README.md'
+    - 'CODE_OF_CONDUCT.md'
+    - 'CONTRIBUTING.md'
+    - 'LICENSE'
+    - 'SECURITY.md'
+    - 'documentation/**'
+    - '.github/**'
+    - '!.github/workflows/test-mysql.yml'
+    - '.husky/**'
+    - 'docker/**'
+    - '.coderabbit.yaml'
+    - '.editorconfig'
+    - '.gitattributes'
+    - 'artemis-server-cli'
+    - 'supporting_scripts/**'
+    - 'CITATION.cff'
+    - 'proxy.conf.mjs'
+  push:
+    branches:
+    - develop
+    - main
+    - release/*
+    tags: '[0-9]+.[0-9]+.[0-9]+'
+    paths-ignore:
+    - 'README.md'
+    - 'CODE_OF_CONDUCT.md'
+    - 'CONTRIBUTING.md'
+    - 'LICENSE'
+    - 'SECURITY.md'
+    - 'documentation/**'
+    - '.github/**'
+    - '!.github/workflows/test-mysql.yml'
+    - '.husky/**'
+    - 'docker/**'
+    - '.coderabbit.yaml'
+    - '.editorconfig'
+    - '.gitattributes'
+    - 'artemis-server-cli'
+    - 'supporting_scripts/**'
+    - 'CITATION.cff'
+    - 'proxy.conf.mjs'
+  release:
+    types:
+    - created
+
+# Limit the number of concurrent runs to one per PR
+concurrency:
+  group: test-mysql-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+# Keep in sync with test.yml
+env:
+  CI: true
+  node: 24
+  java: 25
+  RUN_ALL_TESTS: ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft == false) || github.event.repository.default_branch == github.ref_name }}
+
+jobs:
+
+  server-tests-mysql:
+    runs-on: aet-large-ubuntu
+    timeout-minutes: 80
+
+    steps:
+    - uses: actions/checkout@v6
+    - name: Setup Java
+      uses: actions/setup-java@v5
+      with:
+        distribution: 'temurin'
+        java-version: |
+          17
+          ${{ env.java }}
+        cache: 'gradle'
+    - name: Java Tests (module-affected)
+      if: ${{ !env.RUN_ALL_TESTS }}
+      run: |
+        set -o pipefail
+
+        DEFAULT_BRANCH="${{ github.event.repository.default_branch }}"
+        git fetch origin "$DEFAULT_BRANCH"
+
+        chmod +x ./supporting_scripts/get_changed_modules.sh
+        CHANGED_MODULES=$(./supporting_scripts/get_changed_modules.sh "origin/$DEFAULT_BRANCH")
+
+        if [ -n "${CHANGED_MODULES}" ]; then
+          IFS=,
+          TEST_MODULE_TAGS=$(echo "-DincludeModules=${CHANGED_MODULES[*]}")
+
+          echo "Executing tests for modules: $CHANGED_MODULES"
+          ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification "$TEST_MODULE_TAGS" -Dzonky.test.database.type=MYSQL | tee tests.log
+          exit 0
+        fi
+
+        echo "Executing all tests"
+        ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification -Dzonky.test.database.type=MYSQL | tee tests.log
+    - name: Java Tests (All)
+      if: ${{ env.RUN_ALL_TESTS }}
+      run: |
+        set -o pipefail
+        ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification -Dzonky.test.database.type=MYSQL | tee tests.log
+    - name: Upload JUnit Test Results
+      if: success() || failure()
+      uses: actions/upload-artifact@v6
+      with:
+        name: JUnit Test Results (MySQL)
+        path: build/test-results/test/*.xml
+    - name: Print failed tests
+      if: failure()
+      run: grep "Test >.* FAILED\$" tests.log || echo "No failed tests."
+    - name: Annotate Server Test Results
+      uses: ashley-taylor/junit-report-annotations-action@f9c1a5cbe28479439f82b80a5402a6d3aa1990ac
+      if: always() && github.event.pull_request.user.login != 'dependabot[bot]'
+      with:
+        access-token: ${{ secrets.GITHUB_TOKEN }}
+        path: build/test-results/test/*.xml
+        numFailures: 99
+    - name: Test Report
+      uses: dorny/test-reporter@v2
+      if: success() || failure()
+      with:
+        name: MySQL Tests
+        path: build/test-results/test/*.xml
+        reporter: java-junit
+    - name: Number of Server Starts
+      if: success() || failure()
+      run: bash supporting_scripts/extract_number_of_server_starts.sh

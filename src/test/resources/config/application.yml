@@ -231,15 +231,18 @@ zonky:
     test:
         database:
             prefetching:
-                concurrency: 1
+                concurrency: 3
             type: H2  # Alternatives: H2 / MYSQL / POSTGRES
             postgres:
                 docker:
-                    image: docker.io/library/postgres:18.1-alpine
+                    image: docker.io/library/postgres:${postgres.version}${postgres.image.variant}
                     tmpfs:
                         enabled: true
                 server:
                     properties:
+                        fsync: off
+                        synchronous_commit: off
+                        full_page_writes: off
                         max_connections: 100
                         shared_buffers: 2GB
                         effective_cache_size: 4GB
@@ -258,9 +261,16 @@ zonky:
                         max_parallel_maintenance_workers: 4
             mysql:
                 docker:
-                    image: docker.io/library/mysql:9.5.0
+                    image: docker.io/library/mysql:${mysql.version}
                     tmpfs:
                         enabled: true
+                server:
+                    properties:
+                        innodb_flush_log_at_trx_commit: 0
+                        innodb_doublewrite: 0
+                        sync_binlog: 0
+                        innodb_log_buffer_size: 64M
+                        max_connections: 100
 
 server:
     port: 8080

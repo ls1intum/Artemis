@@ -32,6 +32,19 @@ plugins {
     id "org.cyclonedx.bom" version "3.1.0"
 }
 
+// Load Docker image versions from .env (single source of truth for Docker, tests, and build dependencies)
+def envFile = file('.env')
+if (envFile.exists()) {
+    envFile.readLines().each { line ->
+        def trimmed = line.trim()
+        if (trimmed && !trimmed.startsWith('#') && trimmed.contains('=')) {
+            def parts = trimmed.split('=', 2)
+            // Convert UPPER_CASE to lower_case to match gradle.properties convention
+            ext.set(parts[0].trim().toLowerCase(), parts[1].trim())
+        }
+    }
+}
+
 group = "de.tum.cit.aet.artemis"
 version = "8.8.1"
 description = "Interactive Learning with Individual Feedback"
@@ -410,7 +423,7 @@ dependencies {
     implementation "org.bouncycastle:bcprov-jdk18on:1.83"
 
     // required for database connections
-    implementation "com.mysql:mysql-connector-j:${mysql_version}"
+    implementation "com.mysql:mysql-connector-j:${mysql_connector_version}"
     implementation "org.postgresql:postgresql:42.7.9"
 
     implementation "org.zalando:problem-spring-web:0.29.1"
@@ -516,7 +529,9 @@ apply from: "gradle/openapi.gradle"
 
 dependencyManagement {
     imports {
-        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:18.1.0"
+        // BOM uses 3-part versions (e.g. 18.1.0); POSTGRES_VERSION from .env may be 2-part (e.g. 18.1)
+        def bomVersion = postgres_version.count('.') < 2 ? "${postgres_version}.0" : postgres_version
+        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:${bomVersion}"
     }
 }
 

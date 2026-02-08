@@ -8,7 +8,9 @@ services:
       - "8001"
       - --scheme
       - http
-    image: cr.weaviate.io/semitechnologies/weaviate:1.34.10
+    # Version is defined in .env (WEAVIATE_SERVER_VERSION).
+    # Must be compatible with the Java client: https://docs.weaviate.io/weaviate/release-notes
+    image: cr.weaviate.io/semitechnologies/weaviate:${WEAVIATE_SERVER_VERSION}
     expose:
       - 8001
       - 50051

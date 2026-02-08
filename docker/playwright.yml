@@ -4,7 +4,7 @@
 
 services:
     artemis-playwright:
-        image: mcr.microsoft.com/playwright:v1.57.0
+        image: mcr.microsoft.com/playwright:${PLAYWRIGHT_VERSION}
         pull_policy: missing
         environment:
             CI: 'true'
