@@ -3,38 +3,33 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import dayjs from 'dayjs/esm';
+import { provideHttpClient } from '@angular/common/http';
 
-import { TutorialGroupFreePeriodService } from './tutorial-group-free-period.service';
-import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodRequestDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
+import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/shared/service/tutorial-group-free-period.service';
+import { TutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
 
 describe('TutorialGroupFreePeriodService', () => {
     setupTestBed({ zoneless: true });
 
     let service: TutorialGroupFreePeriodService;
     let httpMock: HttpTestingController;
-
-    const elemDefault: TutorialGroupFreePeriodDTO = {
-        id: 1,
-        reason: 'Example Reason',
-        start: '2021-01-01T00:00:00',
-        end: '2021-01-01T23:59:59',
-        tutorialGroupConfigurationId: 1,
-    };
-
-    const elemDefaultRequest: TutorialGroupFreePeriodRequestDTO = {
-        reason: 'Example Reason',
-        startDate: '2021-01-01T00:00:00',
-        endDate: '2021-01-01T23:59:59',
-    };
+    let elemDefault: TutorialGroupFreePeriodDTO;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
-
         service = TestBed.inject(TutorialGroupFreePeriodService);
         httpMock = TestBed.inject(HttpTestingController);
+
+        elemDefault = {
+            id: 1,
+            reason: 'Example Reason',
+            start: dayjs('2021-01-01T00:00:00Z'),
+            end: dayjs('2021-01-01T23:59:59Z'),
+            tutorialGroupsConfiguration: { id: 1 } as any,
+        };
     });
 
     afterEach(() => {
@@ -42,63 +37,76 @@ describe('TutorialGroupFreePeriodService', () => {
         vi.restoreAllMocks();
     });
 
-    it('should GET one free period', () => {
-        let result: HttpResponse<TutorialGroupFreePeriodDTO> | undefined;
+    it('getOneOfConfiguration', () => {
+        const returnedFromServer = {
+            ...elemDefault,
+            start: elemDefault.start?.toJSON(),
+            end: elemDefault.end?.toJSON(),
+        };
 
+        let result: any;
         service
             .getOneOfConfiguration(1, 1, 1)
             .pipe(take(1))
             .subscribe((resp) => (result = resp));
 
-        const req = httpMock.expectOne({
-            method: 'GET',
-            url: 'api/tutorialgroup/courses/1/tutorial-groups-configuration/1/tutorial-free-periods/1',
-        });
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromServer);
 
-        req.flush(elemDefault);
-
-        expect(result?.body).toEqual(elemDefault);
-        expect(result?.body?.start).toBe('2021-01-01T00:00:00');
-        expect(result?.body?.end).toBe('2021-01-01T23:59:59');
+        expect(result.body.id).toBe(elemDefault.id);
+        expect(result.body.reason).toBe(elemDefault.reason);
+        expect(dayjs.isDayjs(result.body.start)).toBe(true);
+        expect(dayjs.isDayjs(result.body.end)).toBe(true);
+        expect(result.body.start?.toISOString()).toBe(elemDefault.start?.toISOString());
+        expect(result.body.end?.toISOString()).toBe(elemDefault.end?.toISOString());
     });
 
-    it('should CREATE free period', () => {
-        let result: HttpResponse<TutorialGroupFreePeriodDTO> | undefined;
+    it('create', () => {
+        const returnedFromServer = {
+            ...elemDefault,
+            id: 0,
+            start: elemDefault.start?.toJSON(),
+            end: elemDefault.end?.toJSON(),
+        };
 
+        let result: any;
         service
-            .create(1, 1, elemDefaultRequest)
+            .create(1, 1, new TutorialGroupFreePeriodDTO())
             .pipe(take(1))
             .subscribe((resp) => (result = resp));
 
-        const req = httpMock.expectOne({
-            method: 'POST',
-            url: 'api/tutorialgroup/courses/1/tutorial-groups-configuration/1/tutorial-free-periods',
-        });
-        req.flush(elemDefault);
-        expect(result?.body).toEqual(elemDefault);
+        const req = httpMock.expectOne({ method: 'POST' });
+        req.flush(returnedFromServer);
+
+        expect(result.body.id).toBe(0);
+        expect(dayjs.isDayjs(result.body.start)).toBe(true);
+        expect(dayjs.isDayjs(result.body.end)).toBe(true);
     });
 
-    it('should UPDATE free period', () => {
-        const updated = { ...elemDefaultRequest, reason: 'Updated Reason' };
+    it('update', () => {
+        const returnedFromServer = {
+            ...elemDefault,
+            reason: 'Test',
+            start: elemDefault.start?.toJSON(),
+            end: elemDefault.end?.toJSON(),
+        };
 
-        let result: HttpResponse<TutorialGroupFreePeriodDTO> | undefined;
-
+        let result: any;
         service
-            .update(1, 1, 1, updated)
+            .update(1, 1, 1, new TutorialGroupFreePeriodDTO())
             .pipe(take(1))
             .subscribe((resp) => (result = resp));
 
-        const req = httpMock.expectOne({
-            method: 'PUT',
-            url: 'api/tutorialgroup/courses/1/tutorial-groups-configuration/1/tutorial-free-periods/1',
-        });
-        req.flush(updated);
-        expect(result?.body?.reason).toBe('Updated Reason');
+        const req = httpMock.expectOne({ method: 'PUT' });
+        req.flush(returnedFromServer);
+
+        expect(result.body.reason).toBe('Test');
+        expect(dayjs.isDayjs(result.body.start)).toBe(true);
+        expect(dayjs.isDayjs(result.body.end)).toBe(true);
     });
 
-    it('should DELETE free period', () => {
-        let result: HttpResponse<void> | undefined;
-
+    it('delete', () => {
+        let result: any;
         service
             .delete(1, 1, 1)
             .pipe(take(1))
@@ -106,6 +114,6 @@ describe('TutorialGroupFreePeriodService', () => {
 
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({});
-        expect(result!.body).toEqual({});
+        expect(result.body).toEqual({});
     });
 });

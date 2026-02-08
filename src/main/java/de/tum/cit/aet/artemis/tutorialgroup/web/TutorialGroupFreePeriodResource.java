@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.util.DateUtil.interpretInTimeZone;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.ZoneId;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
@@ -82,7 +81,7 @@ public class TutorialGroupFreePeriodResource {
         var freePeriod = tutorialGroupFreePeriodRepository.findByIdElseThrow(tutorialGroupFreePeriodId);
         checkEntityIdMatchesPathIds(freePeriod, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, freePeriod.getTutorialGroupsConfiguration().getCourse(), null);
-        return ResponseEntity.ok(TutorialGroupFreePeriodDTO.of(freePeriod, ZoneId.of(freePeriod.getTutorialGroupsConfiguration().getCourse().getTimeZone())));
+        return ResponseEntity.ok(TutorialGroupFreePeriodDTO.of(freePeriod));
     }
 
     /**
@@ -92,8 +91,8 @@ public class TutorialGroupFreePeriodResource {
      * @param courseId                      the id of the course to which the tutorial groups configuration belongs
      * @param tutorialGroupsConfigurationId the id of the tutorial groups configuration to which the tutorial group free period should be added
      * @param tutorialGroupFreePeriodId     the id of the tutorial group free period to update
-     * @param tutorialGroupFreePeriod       the updated tutorial group free period data
-     * @return ResponseEntity with status 200 (OK) and in the body the updated tutorial group free period dto
+     * @param tutorialGroupFreePeriod       tutorial group free period that should be created
+     * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group free period dto
      */
     @PutMapping("courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}")
     @EnforceAtLeastInstructor
@@ -113,25 +112,25 @@ public class TutorialGroupFreePeriodResource {
         if (configuration.getCourse().getTimeZone() == null) {
             throw new BadRequestException("The course has no time zone");
         }
-        var courseZone = configuration.getCourse().getTimeZone();
 
         TutorialGroupFreePeriod updatedFreePeriod = new TutorialGroupFreePeriod();
         updatedFreePeriod.setId(existingFreePeriod.getId());
         updatedFreePeriod.setTutorialGroupsConfiguration(configuration);
         updatedFreePeriod.setReason(tutorialGroupFreePeriod.reason());
-        updatedFreePeriod.setStart(interpretInTimeZone(tutorialGroupFreePeriod.startDate().toLocalDate(), tutorialGroupFreePeriod.startDate().toLocalTime(), courseZone));
-        updatedFreePeriod.setEnd(interpretInTimeZone(tutorialGroupFreePeriod.endDate().toLocalDate(), tutorialGroupFreePeriod.endDate().toLocalTime(), courseZone));
+        updatedFreePeriod.setStart(
+                interpretInTimeZone(tutorialGroupFreePeriod.startDate().toLocalDate(), tutorialGroupFreePeriod.startDate().toLocalTime(), configuration.getCourse().getTimeZone()));
+        updatedFreePeriod.setEnd(
+                interpretInTimeZone(tutorialGroupFreePeriod.endDate().toLocalDate(), tutorialGroupFreePeriod.endDate().toLocalTime(), configuration.getCourse().getTimeZone()));
         isValidTutorialGroupPeriod(updatedFreePeriod);
 
         // activate previously canceled sessions
         tutorialGroupFreePeriodService.updateOverlappingSessions(configuration.getCourse(), existingFreePeriod, updatedFreePeriod, false);
         // update free period
-        trimStringFields(updatedFreePeriod);
         updatedFreePeriod = tutorialGroupFreePeriodRepository.save(updatedFreePeriod);
         // cancel now overlapping sessions
         tutorialGroupFreePeriodService.cancelOverlappingSessions(configuration.getCourse(), updatedFreePeriod);
 
-        return ResponseEntity.ok(TutorialGroupFreePeriodDTO.of(updatedFreePeriod, ZoneId.of(courseZone)));
+        return ResponseEntity.ok(TutorialGroupFreePeriodDTO.of(updatedFreePeriod));
     }
 
     /**
@@ -156,15 +155,16 @@ public class TutorialGroupFreePeriodResource {
         if (tutorialGroupsConfiguration.getCourse().getTimeZone() == null) {
             throw new BadRequestException("The course has no time zone");
         }
-        var courseZone = tutorialGroupsConfiguration.getCourse().getTimeZone();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupsConfiguration.getCourse(), null);
 
         TutorialGroupFreePeriod newTutorialGroupFreePeriod = new TutorialGroupFreePeriod();
         newTutorialGroupFreePeriod.setTutorialGroupsConfiguration(tutorialGroupsConfiguration);
         newTutorialGroupFreePeriod.setReason(tutorialGroupFreePeriod.reason());
 
-        newTutorialGroupFreePeriod.setStart(interpretInTimeZone(tutorialGroupFreePeriod.startDate().toLocalDate(), tutorialGroupFreePeriod.startDate().toLocalTime(), courseZone));
-        newTutorialGroupFreePeriod.setEnd(interpretInTimeZone(tutorialGroupFreePeriod.endDate().toLocalDate(), tutorialGroupFreePeriod.endDate().toLocalTime(), courseZone));
+        newTutorialGroupFreePeriod.setStart(interpretInTimeZone(tutorialGroupFreePeriod.startDate().toLocalDate(), tutorialGroupFreePeriod.startDate().toLocalTime(),
+                tutorialGroupsConfiguration.getCourse().getTimeZone()));
+        newTutorialGroupFreePeriod.setEnd(interpretInTimeZone(tutorialGroupFreePeriod.endDate().toLocalDate(), tutorialGroupFreePeriod.endDate().toLocalTime(),
+                tutorialGroupsConfiguration.getCourse().getTimeZone()));
 
         checkEntityIdMatchesPathIds(newTutorialGroupFreePeriod, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         isValidTutorialGroupPeriod(newTutorialGroupFreePeriod);
@@ -174,8 +174,7 @@ public class TutorialGroupFreePeriodResource {
         tutorialGroupFreePeriodService.cancelOverlappingSessions(tutorialGroupsConfiguration.getCourse(), persistedTutorialGroupFreePeriod);
 
         return ResponseEntity.created(new URI("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups-configuration/" + tutorialGroupsConfigurationId
-                + "/tutorial-free-periods/" + persistedTutorialGroupFreePeriod.getId()))
-                .body(TutorialGroupFreePeriodDTO.of(persistedTutorialGroupFreePeriod, ZoneId.of(courseZone)));
+                + "/tutorial-free-periods/" + persistedTutorialGroupFreePeriod.getId())).body(TutorialGroupFreePeriodDTO.of(persistedTutorialGroupFreePeriod));
     }
 
     /**

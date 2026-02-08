@@ -4,20 +4,6 @@ import { TutorialGroupFreePeriodFormData } from 'app/tutorialgroup/manage/tutori
 import { TutorialGroupFreePeriodsManagementComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component';
 import { TutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
 
-/**
- * Generates an example {@link TutorialGroupFreePeriod} entity.
- *
- * This helper is primarily used in unit tests to create
- * predictable free period entities.
- *
- * Dates are initialized in UTC to simulate server responses.
- *
- * @param id the free period id
- * @param start the start timestamp (UTC)
- * @param end the end timestamp (UTC)
- * @param reason the optional explanation for the free period
- * @returns a fully initialized TutorialGroupFreePeriod entity
- */
 export const generateExampleTutorialGroupFreePeriod = ({
     id = 1,
     start = dayjs.utc('2021-01-01T00:00:00'),
@@ -26,48 +12,13 @@ export const generateExampleTutorialGroupFreePeriod = ({
 }: TutorialGroupFreePeriod) => {
     const examplePeriod = new TutorialGroupFreePeriod();
     examplePeriod.id = id;
-    // we get utc from the server --> will be converted to the time zone of configuration
+    // we get utc from the server --> will be converted to time zone of configuration
     examplePeriod.start = start;
     examplePeriod.end = end;
     examplePeriod.reason = reason;
     return examplePeriod;
 };
 
-/**
- * Generates an example {@link TutorialGroupFreePeriodDTO}.
- *
- * Used in frontend tests where only transport-level
- * DTO objects are required.
- *
- * All date values are ISO 8601 strings.
- *
- * @param overrides optional properties to override defaults
- * @returns a fully initialized TutorialGroupFreePeriodDTO
- */
-export const generateExampleTutorialGroupFreePeriodDTO = ({
-    id = 1,
-    start = '2021-01-01T00:00:00',
-    end = '2021-01-01T23:59:59',
-    reason = 'Example Reason',
-    tutorialGroupConfigurationId = 1,
-}: Partial<TutorialGroupFreePeriodDTO> = {}): TutorialGroupFreePeriodDTO => {
-    return {
-        id,
-        start,
-        end,
-        reason,
-        tutorialGroupConfigurationId,
-    };
-};
-
-/**
- * Converts a {@link TutorialGroupFreePeriod} entity into
- * form data used by the free period dialog.
- *
- * @param entity the free period entity
- * @param tz the time zone to apply
- * @returns form data suitable for the free period form
- */
 export const tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData = (entity: TutorialGroupFreePeriod, tz: string): TutorialGroupFreePeriodFormData => {
     if (TutorialGroupFreePeriodsManagementComponent.isFreeDay(entity)) {
         return {
@@ -96,18 +47,21 @@ export const tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData = (entity:
     }
 };
 
-/**
- * Converts a {@link TutorialGroupFreePeriodDTO} into a
- * {@link TutorialGroupFreePeriod} entity.
- *
- * @param dto the free period DTO
- * @returns the corresponding entity representation
- */
-export const tutorialGroupFreePeriodDTOToEntity = (dto: TutorialGroupFreePeriodDTO): TutorialGroupFreePeriod => {
+export const formDataToTutorialGroupFreePeriodDTO = (formData: TutorialGroupFreePeriodFormData): TutorialGroupFreePeriodDTO => {
+    const start = dayjs(formData.startDate);
+
+    if (formData.endDate) {
+        const end = dayjs(formData.endDate);
+        return {
+            start,
+            end,
+            reason: formData.reason,
+        };
+    }
+    const end = dayjs(formData.startDate).hour(23).minute(59);
     return {
-        id: dto.id,
-        start: dayjs(dto.start),
-        end: dayjs(dto.end),
-        reason: dto.reason,
-    } as TutorialGroupFreePeriod;
+        start,
+        end,
+        reason: formData.reason,
+    };
 };
