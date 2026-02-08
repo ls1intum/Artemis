@@ -25,5 +25,4 @@ export type IrisCitationParsed = {
 export type CitationRenderOptions = {
     renderSingle: (parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO) => string;
     renderGroup: (parsed: IrisCitationParsed[], metas: Array<IrisCitationMetaDTO | undefined>) => string;
-    preserveGroupOnSingleParsed?: boolean;
 };
