@@ -7,14 +7,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupConfigurationDTO(Long id, @NotNull String tutorialPeriodStartInclusive, @NotNull String tutorialPeriodEndInclusive, boolean useTutorialGroupChannels,
-        boolean usePublicTutorialGroupChannels) {
+public record TutorialGroupConfigurationDTO(Long id, @NotNull String tutorialPeriodStartInclusive, @NotNull String tutorialPeriodEndInclusive,
+        @NotNull Boolean useTutorialGroupChannels, @NotNull Boolean usePublicTutorialGroupChannels) {
 
     /**
      * Creates a {@link TutorialGroupConfigurationDTO} from a {@link TutorialGroupsConfiguration} entity.
      *
      * @param config the tutorial groups configuration entity
-     * @return a DTO representing the given configuration, or {@code null} if the input is {@code null}
+     * @return a DTO representing the given configuration
      */
     public static TutorialGroupConfigurationDTO of(@NotNull TutorialGroupsConfiguration config) {
         var course = config.getCourse();
@@ -30,7 +30,7 @@ public record TutorialGroupConfigurationDTO(Long id, @NotNull String tutorialPer
      * Creates a {@link TutorialGroupsConfiguration} entity from the given {@link TutorialGroupConfigurationDTO}.
      *
      * @param dto the tutorial group configuration DTO
-     * @return a new {@link TutorialGroupsConfiguration} populated with the values from the DTO, or {@code null} if the input is {@code null}
+     * @return a new {@link TutorialGroupsConfiguration} populated with the values from the DTO
      */
     public static TutorialGroupsConfiguration from(@NotNull TutorialGroupConfigurationDTO dto) {
         TutorialGroupsConfiguration configuration = new TutorialGroupsConfiguration();

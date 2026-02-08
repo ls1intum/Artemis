@@ -96,7 +96,7 @@ public class TutorialGroupsConfigurationResource {
             throw new BadRequestAlertException("A tutorial group configuration already exists for this course", ENTITY_NAME, "alreadyExists");
         }
         if (course.getTimeZone() == null) {
-            throw new BadRequestAlertException("The course has no time zone", ENTITY_NAME, "courseHasNoTimeZone");
+            throw new BadRequestAlertException("The course has no configured time zone.", ENTITY_NAME, "courseHasNoTimeZone");
         }
         TutorialGroupsConfiguration configuration = TutorialGroupConfigurationDTO.from(tutorialGroupConfigurationDto);
 
@@ -134,7 +134,7 @@ public class TutorialGroupsConfigurationResource {
         var configurationFromDatabase = this.tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(updatedTutorialGroupConfigurationDto.id());
         var course = configurationFromDatabase.getCourse();
         if (course.getTimeZone() == null) {
-            throw new BadRequestAlertException("The course has no time zone", ENTITY_NAME, "courseHasNoTimeZone");
+            throw new BadRequestAlertException("The course has no configured time zone.", ENTITY_NAME, "courseHasNoTimeZone");
         }
 
         TutorialGroupsConfiguration updatedTutorialGroupConfiguration = TutorialGroupConfigurationDTO.from(updatedTutorialGroupConfigurationDto);
@@ -176,14 +176,14 @@ public class TutorialGroupsConfigurationResource {
 
     private static void isValidTutorialGroupConfiguration(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
         if (tutorialGroupsConfiguration.getTutorialPeriodStartInclusive() == null || tutorialGroupsConfiguration.getTutorialPeriodEndInclusive() == null) {
-            throw new BadRequestAlertException("Tutorial period start and end must be set", ENTITY_NAME, "tutorialPeriodMissing");
+            throw new BadRequestAlertException("Tutorial period start date and end date must be set.", ENTITY_NAME, "tutorialPeriodMissing");
         }
         if (!isIso8601DateString(tutorialGroupsConfiguration.getTutorialPeriodStartInclusive())
                 || !isIso8601DateString(tutorialGroupsConfiguration.getTutorialPeriodEndInclusive())) {
-            throw new BadRequestAlertException("Tutorial period start and end must be valid ISO 8601 date strings", ENTITY_NAME, "tutorialPeriodInvalidFormat");
+            throw new BadRequestAlertException("Tutorial period start date and end date must be valid ISO 8601 date strings.", ENTITY_NAME, "tutorialPeriodInvalidFormat");
         }
         if (LocalDate.parse(tutorialGroupsConfiguration.getTutorialPeriodStartInclusive()).isAfter(LocalDate.parse(tutorialGroupsConfiguration.getTutorialPeriodEndInclusive()))) {
-            throw new BadRequestAlertException("Tutorial period start must be before tutorial period end", ENTITY_NAME, "tutorialPeriodInvalidOrder");
+            throw new BadRequestAlertException("Tutorial period start date must be before tutorial period end date.", ENTITY_NAME, "tutorialPeriodInvalidOrder");
         }
     }
 

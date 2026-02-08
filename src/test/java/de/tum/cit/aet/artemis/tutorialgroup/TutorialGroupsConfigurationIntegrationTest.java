@@ -110,7 +110,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         // when
         var configurationFromRequest = request.get(this.getTutorialGroupsConfigurationPath(courseId), HttpStatus.OK, TutorialGroupsConfiguration.class);
         // then
-        assertThat(configuration).isEqualTo(configurationFromRequest);
+        assertThat(configurationFromRequest).isEqualTo(configuration);
     }
 
     @Test

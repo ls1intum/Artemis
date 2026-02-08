@@ -226,9 +226,9 @@
             "courseHasNoTimeZone": "Der Kurs hat keine konfigurierte Zeitzone.",
             "idNull": "Eine Tutoriengruppen-Konfiguration kann nicht ohne ID aktualisiert werden.",
 
-            "tutorialPeriodMissing": "Start- und Enddatum des Tutorienzeitraums müssen gesetzt sein.",
-            "tutorialPeriodInvalidFormat": "Start- und Enddatum des Tutorienzeitraums müssen gültige ISO-8601-Datumsangaben sein.",
-            "tutorialPeriodInvalidOrder": "Der Start des Tutorienzeitraums muss vor dem Ende liegen.",
+            "tutorialPeriodMissing": "Das Startdatum und das Enddatum des Tutorienzeitraums müssen gesetzt sein.",
+            "tutorialPeriodInvalidFormat": "Das Startdatum und das Enddatum des Tutorienzeitraums müssen gültige ISO-8601-Datumsangaben sein.",
+            "tutorialPeriodInvalidOrder": "Der Startdatum des Tutorienzeitraums muss vor dem Enddatum liegen.",
 
             "courseIdMismatch": "Die Kurs-ID im Pfad stimmt nicht mit dem Kurs der Tutoriengruppen-Konfiguration überein.",
             "tutorialGroupConfigurationIdMismatch": "Die ID der Tutoriengruppen-Konfiguration im Pfad stimmt nicht mit der zu aktualisierenden Konfiguration überein."
