@@ -38,10 +38,11 @@ public class IrisCitationService {
     }
 
     /**
-     * Extracts citation placeholders from the given text and returns the metadata (lecture name und lecture unit name) for each lecture unit found.
+     * Extracts citation placeholders from the supplied text and resolves metadata (lecture name and lecture unit name) for each lecture unit found.
      *
-     * @param text the text to parse for citation placeholders
-     * @return ordered metadata for resolved lecture unit citations, or null if no citations were found
+     * @param text text to scan for citation placeholders; may be {@code null} or blank
+     * @return a {@link List} of {@link IrisCitationMetaDTO} for each resolved lecture unit, or {@code null} if none were found
+     * @see #resolveCitationInfoFromMessages(List)
      */
     public List<IrisCitationMetaDTO> resolveCitationInfo(String text) {
         if (text == null || text.isBlank()) {
@@ -56,10 +57,11 @@ public class IrisCitationService {
     }
 
     /**
-     * Collects all contents from the supplied messages and resolves lecture unit citations contained within.
+     * Collects non-null contents from the supplied {@link IrisMessage} list, joins them, and delegates to {@link #resolveCitationInfo(String)}.
      *
-     * @param messages the messages whose contents should be scanned for citations
-     * @return ordered metadata for resolved lecture unit citations, or null if no citations were found
+     * @param messages nullable list of {@link IrisMessage}; returns {@code null} when {@code null} or empty
+     * @return a {@link List} of {@link IrisCitationMetaDTO} for each resolved lecture unit, or {@code null} if no citations were found
+     * @see #resolveCitationInfo(String)
      */
     public List<IrisCitationMetaDTO> resolveCitationInfoFromMessages(List<IrisMessage> messages) {
         if (messages == null || messages.isEmpty()) {
