@@ -60,6 +60,8 @@ import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessS
 @ActiveProfiles({ PROFILE_BUILDAGENT, PROFILE_TEST_BUILDAGENT })
 @TestPropertySource(properties = { "artemis.continuous-integration.specify-concurrent-builds=true", "artemis.continuous-integration.concurrent-build-size=2",
         "artemis.continuous-integration.pause-grace-period-seconds=2", "artemis.continuous-integration.pause-after-consecutive-failed-jobs=5",
+        // Use Local data store for tests to ensure isConnectedToCluster() always returns true
+        "artemis.continuous-integration.data-store=Local",
         // Build agents should not have Spring AI enabled - override 'local' profile which enables hyperion
         "artemis.hyperion.enabled=false", "artemis.atlas.enabled=false" })
 public abstract class AbstractArtemisBuildAgentTest {

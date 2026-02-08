@@ -1,15 +1,13 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +21,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
@@ -40,7 +39,7 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
  */
 @Lazy
 @Service
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 public class IrisCourseChatSessionService extends AbstractIrisChatSessionService<IrisCourseChatSession> {
 
     private final IrisSettingsService irisSettingsService;
@@ -86,7 +85,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      */
     @Override
     public void checkHasAccessTo(User user, IrisCourseChatSession session) {
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        user.hasOptedIntoLLMUsageElseThrow();
         var course = courseRepository.findByIdElseThrow(session.getCourseId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         if (!Objects.equals(session.getUserId(), user.getId())) {
@@ -152,7 +151,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         var course = competencyJol.getCompetency().getCourse();
         var user = competencyJol.getUser();
 
-        if (!user.hasAcceptedExternalLLMUsage()) {
+        if (!user.hasOptedIntoLLMUsage()) {
             return;
         }
 
@@ -180,7 +179,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      * @return The current Iris session
      */
     public IrisCourseChatSession getCurrentSessionOrCreateIfNotExists(Course course, User user, boolean sendInitialMessageIfCreated) {
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        user.hasOptedIntoLLMUsageElseThrow();
         irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
         return getCurrentSessionOrCreateIfNotExistsInternal(course, user, sendInitialMessageIfCreated);
     }
@@ -210,7 +209,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      * @return The created Iris session
      */
     public IrisCourseChatSession createSession(Course course, User user, boolean sendInitialMessage) {
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        user.hasOptedIntoLLMUsageElseThrow();
         irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
         return createSessionInternal(course, user, sendInitialMessage);
     }

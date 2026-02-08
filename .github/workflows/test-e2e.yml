@@ -23,12 +23,134 @@ env:
   TARGET_URL: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
 jobs:
-  run-e2e:
-    name: Run E2E Tests
-    if: github.event.workflow_run.conclusion == 'success'
+  # Job to determine which tests are relevant based on changed files (only for PRs)
+  determine-tests:
+    name: Determine Relevant Tests
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      run_all_tests: ${{ steps.determine.outputs.RUN_ALL_TESTS }}
+      relevant_tests: ${{ steps.determine.outputs.RELEVANT_TESTS }}
+      remaining_tests: ${{ steps.determine.outputs.REMAINING_TESTS }}
+      ignore_tests: ${{ steps.determine.outputs.IGNORE_TESTS }}
+      relevant_count: ${{ steps.determine.outputs.RELEVANT_COUNT }}
+      remaining_count: ${{ steps.determine.outputs.REMAINING_COUNT }}
+    steps:
+      - name: Checkout repository for local actions
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ github.event.workflow_run.head_branch }}
+          fetch-depth: 0
+
+      - name: Fetch base branch
+        run: |
+          # Try to get base branch from PR info, fallback to develop
+          BASE_REF="develop"
+          if [ -n "${{ github.event.workflow_run.pull_requests[0].base.ref }}" ]; then
+            BASE_REF="${{ github.event.workflow_run.pull_requests[0].base.ref }}"
+          fi
+          echo "Fetching base branch: $BASE_REF"
+          git fetch origin "$BASE_REF":base_branch || git fetch origin develop:base_branch
+
+      - name: Determine relevant tests
+        id: determine
+        run: |
+          chmod +x .ci/E2E-tests/determine-relevant-tests.sh
+          .ci/E2E-tests/determine-relevant-tests.sh base_branch
+
+  # Phase 1: Run relevant tests for PR changes
+  run-e2e-relevant:
+    name: "Phase 1: Relevant E2E Tests"
+    needs: determine-tests
+    if: |
+      needs.determine-tests.result == 'success' &&
+      needs.determine-tests.outputs.run_all_tests != 'true' &&
+      needs.determine-tests.outputs.relevant_tests != ''
     runs-on: [self-hosted, e2e-test]
+    timeout-minutes: 120
     environment: playwright-e2e-tests
-    timeout-minutes: 90
+    env:
+      ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
+      ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
+      PLAYWRIGHT_CREATE_USERS: ${{ vars.PLAYWRIGHT_CREATE_USERS }}
+      PLAYWRIGHT_PASSWORD_TEMPLATE: ${{ vars.PLAYWRIGHT_PASSWORD_TEMPLATE }}
+      PLAYWRIGHT_USERNAME_TEMPLATE: ${{ vars.PLAYWRIGHT_USERNAME_TEMPLATE }}
+      SLOW_TEST_TIMEOUT_SECONDS: ${{ vars.SLOW_TEST_TIMEOUT_SECONDS }}
+      TEST_RETRIES: ${{ vars.TEST_RETRIES }}
+      TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
+      TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+    outputs:
+      phase1_status: ${{ job.status }}
+    steps:
+      # workflow_run events do not create check runs, so we set a status manually
+      - name: Create pending status
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "${{ env.STATUSES_REQUEST_URL }}" \
+            -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"Phase 1: Running relevant tests (${{ needs.determine-tests.outputs.relevant_count }} test paths)...","target_url":"${{ env.TARGET_URL }}"}'
+
+      - name: Checkout repository for local actions
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ github.event.workflow_run.head_branch }}
+          fetch-depth: 1
+
+      - name: E2E Setup
+        uses: ./.github/actions/e2e-setup
+        with:
+          workflow-run-id: ${{ github.event.workflow_run.id }}
+          workflow-head-branch: ${{ github.event.workflow_run.head_branch }}
+          workflow-head-sha: ${{ github.event.workflow_run.head_sha }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          artifact-name-suffix: phase1
+          test-notice: "Running Phase 1 with relevant tests: ${{ needs.determine-tests.outputs.relevant_tests }}"
+
+      - name: Run E2E Playwright tests (Phase 1 - Relevant Tests)
+        run: .ci/E2E-tests/execute.sh mysql-localci playwright "${{ needs.determine-tests.outputs.relevant_tests }}"
+        env:
+          FAST_TEST_TIMEOUT_SECONDS: 60
+
+      - name: E2E Teardown
+        if: success() || failure()
+        uses: ./.github/actions/e2e-teardown
+        with:
+          artifact-name-suffix: Phase 1
+          require-tests: warn
+
+      - name: E2E Test Report
+        if: success() || failure()
+        uses: ./.github/actions/e2e-test-report
+        with:
+          phase-name: "Phase 1"
+          artifact-name: "JUnit Test Results Phase 1"
+          download-path: "phase1-test-results"
+          check-name: "Phase 1: E2E Test Report"
+          commit-sha: ${{ github.event.workflow_run.head_sha }}
+          tests-run: ${{ needs.determine-tests.outputs.relevant_tests }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          repository-owner: ${{ github.repository_owner }}
+          run-id: ${{ github.run_id }}
+          head-branch: ${{ github.event.workflow_run.head_branch }}
+          is-pr: ${{ github.event.workflow_run.event == 'pull_request' }}
+
+  # Phase 2: Run remaining tests only if Phase 1 succeeds
+  run-e2e-remaining:
+    name: "Phase 2: Remaining E2E Tests"
+    needs: [determine-tests, run-e2e-relevant]
+    if: |
+      always() &&
+      needs.determine-tests.result == 'success' &&
+      needs.determine-tests.outputs.run_all_tests != 'true' &&
+      needs.determine-tests.outputs.remaining_tests != '' &&
+      (needs.run-e2e-relevant.result == 'success' || needs.run-e2e-relevant.result == 'skipped')
+    runs-on: [self-hosted, e2e-test]
+    timeout-minutes: 120
+    environment: playwright-e2e-tests
     env:
       ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
       ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
@@ -40,165 +162,284 @@ jobs:
       TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
       TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
     steps:
-      # Since this workflow is triggered by a workflow_run event, we are not able to see the workflow status in check-runs.
-      # So we need to set the status to pending manually by calling the GitHub API.
+      - name: Update status to Phase 2
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "${{ env.STATUSES_REQUEST_URL }}" \
+            -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"Phase 2: Running remaining tests (${{ needs.determine-tests.outputs.remaining_count }} test paths)...","target_url":"${{ env.TARGET_URL }}"}'
+
+      - name: Checkout repository for local actions
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ github.event.workflow_run.head_branch }}
+          fetch-depth: 1
+
+      - name: E2E Setup
+        uses: ./.github/actions/e2e-setup
+        with:
+          workflow-run-id: ${{ github.event.workflow_run.id }}
+          workflow-head-branch: ${{ github.event.workflow_run.head_branch }}
+          workflow-head-sha: ${{ github.event.workflow_run.head_sha }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          artifact-name-suffix: phase2
+          test-notice: "Running Phase 2 with remaining tests: ${{ needs.determine-tests.outputs.remaining_tests }}"
+
+      - name: Run E2E Playwright tests (Phase 2 - Remaining Tests)
+        run: .ci/E2E-tests/execute.sh mysql-localci playwright "${{ needs.determine-tests.outputs.remaining_tests }}" "${{ needs.determine-tests.outputs.ignore_tests }}"
+        env:
+          FAST_TEST_TIMEOUT_SECONDS: 60
+
+      - name: E2E Teardown
+        if: success() || failure()
+        uses: ./.github/actions/e2e-teardown
+        with:
+          artifact-name-suffix: Phase 2
+          require-tests: warn
+
+      - name: E2E Test Report
+        if: success() || failure()
+        uses: ./.github/actions/e2e-test-report
+        with:
+          phase-name: "Phase 2"
+          artifact-name: "JUnit Test Results Phase 2"
+          download-path: "phase2-test-results"
+          check-name: "Phase 2: E2E Test Report"
+          commit-sha: ${{ github.event.workflow_run.head_sha }}
+          tests-run: ${{ needs.determine-tests.outputs.remaining_tests }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          repository-owner: ${{ github.repository_owner }}
+          run-id: ${{ github.run_id }}
+          head-branch: ${{ github.event.workflow_run.head_branch }}
+          is-pr: ${{ github.event.workflow_run.event == 'pull_request' }}
+
+  # Run all tests for PR when run_all_tests is triggered, or when no specific tests detected
+  run-e2e-all-pr:
+    name: Run All E2E Tests (PR)
+    needs: determine-tests
+    if: |
+      needs.determine-tests.result == 'success' &&
+      (needs.determine-tests.outputs.run_all_tests == 'true' ||
+       (needs.determine-tests.outputs.relevant_tests == '' && needs.determine-tests.outputs.remaining_tests == ''))
+    runs-on: [self-hosted, e2e-test]
+    timeout-minutes: 120
+    environment: playwright-e2e-tests
+    env:
+      ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
+      ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
+      PLAYWRIGHT_CREATE_USERS: ${{ vars.PLAYWRIGHT_CREATE_USERS }}
+      PLAYWRIGHT_PASSWORD_TEMPLATE: ${{ vars.PLAYWRIGHT_PASSWORD_TEMPLATE }}
+      PLAYWRIGHT_USERNAME_TEMPLATE: ${{ vars.PLAYWRIGHT_USERNAME_TEMPLATE }}
+      SLOW_TEST_TIMEOUT_SECONDS: ${{ vars.SLOW_TEST_TIMEOUT_SECONDS }}
+      TEST_RETRIES: ${{ vars.TEST_RETRIES }}
+      TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
+      TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+    steps:
       - name: Create pending status
         run: |
           curl -X POST \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -H "Accept: application/vnd.github.v3+json" \
             "${{ env.STATUSES_REQUEST_URL }}" \
-            -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"E2E tests are running...","target_url":"${{ env.TARGET_URL }}"}'
+            -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"E2E tests are running (all tests - infrastructure changes detected)...","target_url":"${{ env.TARGET_URL }}"}'
 
-      # Save the triggering workflow information as an artifact for later reference
-      - name: Save triggering workflow info
-        run: |
-          echo "TRIGGERING_WORKFLOW_RUN_ID=${{ github.event.workflow_run.id }}" > workflow-context.txt
-          echo "TRIGGERING_WORKFLOW_HEAD_BRANCH=${{ github.event.workflow_run.head_branch }}" >> workflow-context.txt
-          echo "TRIGGERING_WORKFLOW_HEAD_SHA=${{ github.event.workflow_run.head_sha }}" >> workflow-context.txt
-          cat workflow-context.txt
-
-      - name: Upload workflow context
-        uses: actions/upload-artifact@v5
-        with:
-          name: workflow-context
-          path: workflow-context.txt
-
-      # Add a notice in this workflow run's timeline showing which Build workflow triggered it
-      # This helps developers navigate between related workflow runs
-      - name: Add link to triggering workflow
-        run: |
-          echo "::notice title=Triggered by workflow run::This E2E test was triggered by workflow run #${{ github.event.workflow_run.id }} - View it at https://github.com/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}"
-
-      - name: Git Checkout
+      - name: Checkout repository for local actions
         uses: actions/checkout@v6
         with:
+          repository: ${{ github.repository }}
           ref: ${{ github.event.workflow_run.head_branch }}
-      - name: Download Docker tag
-        uses: actions/download-artifact@v6
+          fetch-depth: 1
+
+      - name: E2E Setup
+        uses: ./.github/actions/e2e-setup
         with:
-          name: docker-tag
+          workflow-run-id: ${{ github.event.workflow_run.id }}
+          workflow-head-branch: ${{ github.event.workflow_run.head_branch }}
+          workflow-head-sha: ${{ github.event.workflow_run.head_sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
-      - name: Set Docker Tag Environment Variable
-        run: |
-          if [ -f "docker-tag.txt" ]; then
-            ARTEMIS_DOCKER_TAG=$(cat docker-tag.txt)
-            echo "ARTEMIS_DOCKER_TAG=${ARTEMIS_DOCKER_TAG}" >> $GITHUB_ENV
-            echo "Using Docker tag: ${ARTEMIS_DOCKER_TAG}"
-          else
-            echo "::error::No docker-tag.txt found in the previous build workflow! Artifact is needed to run E2E tests."
-            exit 1
-          fi
+          test-notice: "Running all tests (infrastructure/config changes detected)"
 
-      - name: Make scripts executable
-        run: |
-          chmod +x .ci/E2E-tests/cleanup.sh
-          chmod +x .ci/E2E-tests/execute.sh
-
-      - name: Run cleanup script (before E2E)
-        run: .ci/E2E-tests/cleanup.sh
-
-      # If the workflow is triggered by a pull request, we need to run the tests on single node Artemis instance.
       - name: Run E2E Playwright tests (MySQL, Local)
-        if: ${{ github.event.workflow_run.event == 'pull_request' }}
         run: .ci/E2E-tests/execute.sh mysql-localci playwright
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
 
-      # If the workflow is triggered other events (by a push to a branch e.g. develop, main, or release), we need to run the tests on multi-node Artemis instance.
+      - name: E2E Teardown
+        if: success() || failure()
+        uses: ./.github/actions/e2e-teardown
+        with:
+          require-tests: error
+
+      - name: Download all tests results
+        if: success() || failure()
+        uses: actions/download-artifact@v6
+        continue-on-error: true
+        with:
+          name: JUnit Test Results
+          path: all-test-results
+
+      - name: All Tests Report (PR)
+        uses: mikepenz/action-junit-report@v5.6.2
+        if: success() || failure()
+        with:
+          commit: ${{ github.event.workflow_run.head_sha }}
+          check_name: "All E2E Tests Report (PR)"
+          fail_on_failure: false
+          require_tests: false
+          annotate_only: false
+          detailed_summary: true
+          include_time_in_summary: true
+          report_paths: 'all-test-results/results.xml'
+
+  # Run all tests for non-PR events (push to develop, main, release branches)
+  run-e2e-all-non-pr:
+    name: Run All E2E Tests (Non-PR)
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'pull_request'
+    runs-on: [self-hosted, e2e-test]
+    timeout-minutes: 120
+    environment: playwright-e2e-tests
+    env:
+      ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
+      ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
+      PLAYWRIGHT_CREATE_USERS: ${{ vars.PLAYWRIGHT_CREATE_USERS }}
+      PLAYWRIGHT_PASSWORD_TEMPLATE: ${{ vars.PLAYWRIGHT_PASSWORD_TEMPLATE }}
+      PLAYWRIGHT_USERNAME_TEMPLATE: ${{ vars.PLAYWRIGHT_USERNAME_TEMPLATE }}
+      SLOW_TEST_TIMEOUT_SECONDS: ${{ vars.SLOW_TEST_TIMEOUT_SECONDS }}
+      TEST_RETRIES: ${{ vars.TEST_RETRIES }}
+      TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
+      TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+    steps:
+      - name: Create pending status
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "${{ env.STATUSES_REQUEST_URL }}" \
+            -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"E2E tests are running (all tests - multi-node)...","target_url":"${{ env.TARGET_URL }}"}'
+
+      - name: Checkout repository for local actions
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ github.event.workflow_run.head_branch }}
+          fetch-depth: 1
+
+      - name: E2E Setup
+        uses: ./.github/actions/e2e-setup
+        with:
+          workflow-run-id: ${{ github.event.workflow_run.id }}
+          workflow-head-branch: ${{ github.event.workflow_run.head_branch }}
+          workflow-head-sha: ${{ github.event.workflow_run.head_sha }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Run E2E Playwright tests (MySQL, Local, Multi-Node)
-        if: ${{ github.event.workflow_run.event != 'pull_request' }}
         run: .ci/E2E-tests/execute.sh multi-node playwright
         env:
           FAST_TEST_TIMEOUT_SECONDS: 75
 
-      - name: Upload JUnit Test Results
+      - name: E2E Teardown
         if: success() || failure()
-        uses: actions/upload-artifact@v5
+        uses: ./.github/actions/e2e-teardown
+        with:
+          require-tests: error
+
+      - name: Download all tests results
+        if: success() || failure()
+        uses: actions/download-artifact@v6
+        continue-on-error: true
         with:
           name: JUnit Test Results
-          if-no-files-found: error
-          path: src/test/playwright/test-reports/*.xml
+          path: all-test-results
 
-      - name: Upload Client Test Coverage Report
-        if: success() || failure()
-        uses: actions/upload-artifact@v5
-        with:
-          name: E2E Client Coverage Report
-          path: src/test/playwright/test-reports/client-coverage
-
-      - name: Run cleanup script (after E2E)
-        run: .ci/E2E-tests/cleanup.sh
-
-      - name: Test Report
+      - name: All Tests Report (Non-PR)
         uses: mikepenz/action-junit-report@v5.6.2
-        id: test-reporter
-        if: always()
-        env:
-          # Increase the memory limit for the action
-          # https://github.com/mikepenz/action-junit-report?tab=readme-ov-file#common-configurations
-          NODE_OPTIONS: "--max_old_space_size=4096"
+        if: success() || failure()
         with:
-          # Specifies which commit SHA to associate the test report with.
           commit: ${{ github.event.workflow_run.head_sha }}
-          check_name: "End-to-End (E2E) Test Report"
-          # Fails the job if any test failed.
-          fail_on_failure: true
-          # Fails the job if no tests are found.
-          require_tests: true
-          # Fails the job if no passed tests are found.
-          require_passed_tests: true
-          # Disable status check creation.
-          annotate_only: true
+          check_name: "All E2E Tests Report (Multi-Node)"
+          fail_on_failure: false
+          require_tests: false
+          annotate_only: false
           detailed_summary: true
           include_time_in_summary: true
-          # Groups test results by suite in the detailed summary.
-          group_suite: true
-          # Prevents updating previous test report comment; creates a new comment instead.
-          updateComment: false
-          report_paths: 'src/test/playwright/test-reports/results.xml'
+          report_paths: 'all-test-results/results.xml'
 
-      # Update the status of the workflow run with the results parsed in the previous step.
+  # Aggregate results and report overall status
+  report-results:
+    name: Report E2E Overall Status
+    needs: [determine-tests, run-e2e-relevant, run-e2e-remaining, run-e2e-all-pr, run-e2e-all-non-pr]
+    if: always() && github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Determine overall status
+        id: overall-status
+        run: |
+          RELEVANT_RESULT="${{ needs.run-e2e-relevant.result }}"
+          REMAINING_RESULT="${{ needs.run-e2e-remaining.result }}"
+          ALL_PR_RESULT="${{ needs.run-e2e-all-pr.result }}"
+          ALL_NON_PR_RESULT="${{ needs.run-e2e-all-non-pr.result }}"
+          
+          echo "Phase 1 (relevant): $RELEVANT_RESULT"
+          echo "Phase 2 (remaining): $REMAINING_RESULT"
+          echo "All tests (PR): $ALL_PR_RESULT"
+          echo "All tests (Non-PR): $ALL_NON_PR_RESULT"
+          
+          # Determine the overall status
+          if [ "$ALL_NON_PR_RESULT" = "success" ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "description=All E2E tests passed (multi-node)" >> $GITHUB_OUTPUT
+          elif [ "$ALL_NON_PR_RESULT" = "failure" ]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "description=E2E tests failed (multi-node)" >> $GITHUB_OUTPUT
+          elif [ "$ALL_PR_RESULT" = "success" ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "description=All E2E tests passed" >> $GITHUB_OUTPUT
+          elif [ "$ALL_PR_RESULT" = "failure" ]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "description=E2E tests failed" >> $GITHUB_OUTPUT
+          elif [ "$RELEVANT_RESULT" = "failure" ]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "description=Phase 1 (relevant tests) failed" >> $GITHUB_OUTPUT
+          elif [ "$REMAINING_RESULT" = "failure" ]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "description=Phase 2 (remaining tests) failed" >> $GITHUB_OUTPUT
+          elif [ "$RELEVANT_RESULT" = "success" ] && [ "$REMAINING_RESULT" = "success" ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "description=All E2E tests passed (both phases)" >> $GITHUB_OUTPUT
+          elif [ "$RELEVANT_RESULT" = "success" ] && [ "$REMAINING_RESULT" = "skipped" ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "description=Phase 1 passed, Phase 2 skipped (no remaining tests)" >> $GITHUB_OUTPUT
+          elif [ "$RELEVANT_RESULT" = "skipped" ] && [ "$REMAINING_RESULT" = "skipped" ] && [ "$ALL_PR_RESULT" = "skipped" ] && [ "$ALL_NON_PR_RESULT" = "skipped" ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "description=No tests needed to run" >> $GITHUB_OUTPUT
+          else
+            echo "status=error" >> $GITHUB_OUTPUT
+            echo "description=E2E tests encountered an error" >> $GITHUB_OUTPUT
+          fi
+
       - name: Update status with results
         if: always()
         continue-on-error: true
         run: |
-          # Determine workflow status
-          WORKFLOW_STATUS="${{ job.status }}"
-
-          # Get test results
-          TOTAL="${{ steps.test-reporter.outputs.total || 0 }}"
-          PASSED="${{ steps.test-reporter.outputs.passed || 0 }}"
-          FAILED="${{ steps.test-reporter.outputs.failed || 0 }}"
-          SKIPPED="${{ steps.test-reporter.outputs.skipped || 0 }}"
-
-          # Determine GitHub status state based on workflow status
-          if [ "$WORKFLOW_STATUS" = "success" ]; then
-            STATE="success"
-            DESCRIPTION="E2E tests finished: $PASSED passed, $SKIPPED skipped, $FAILED failed"
-          elif [ "$WORKFLOW_STATUS" = "failure" ]; then
-            STATE="failure"
-            DESCRIPTION="E2E tests finished: $FAILED failed, $SKIPPED skipped, $PASSED passed"
-          else
-            STATE="error"
-            DESCRIPTION="⚠️ E2E tests encountered an error"
-          fi
+          STATUS="${{ steps.overall-status.outputs.status }}"
+          DESCRIPTION="${{ steps.overall-status.outputs.description }}"
 
           DESCRIPTION_ESCAPED=$(echo "$DESCRIPTION" | sed 's/"/\\"/g')
-          JSON_PAYLOAD='{"state":"'$STATE'","context":"${{ env.STATUS_CONTEXT }}","description":"'$DESCRIPTION_ESCAPED'","target_url":"${{ env.TARGET_URL }}"}'
+          JSON_PAYLOAD='{"state":"'$STATUS'","context":"${{ env.STATUS_CONTEXT }}","description":"'$DESCRIPTION_ESCAPED'","target_url":"${{ env.TARGET_URL }}"}'
           echo "JSON payload: $JSON_PAYLOAD"
 
-          # Update status
           curl -X POST \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -H "Accept: application/vnd.github.v3+json" \
             "${{ env.STATUSES_REQUEST_URL }}" \
             -d "$JSON_PAYLOAD"
 
-      # Find the PR number
       - name: Find PR number
-        if: always()
+        if: always() && github.event.workflow_run.event == 'pull_request'
         id: find-pr
         continue-on-error: true
         run: |
@@ -209,7 +450,6 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             "https://api.github.com/repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:$BRANCH_NAME")
 
-          # Extract PR number
           PR_NUMBER=$(echo "$PR_RESPONSE" | grep -o '"number": [0-9]*,' | head -1 | sed 's/"number": //g' | sed 's/,//g' | tr -d ' \t\n\r')
 
           if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
@@ -219,7 +459,6 @@ jobs:
             echo "No PR found from branch: $BRANCH_NAME."
           fi
 
-      # Add comment to the PR with test result summary
       - name: Add test results comment to PR
         if: always() && steps.find-pr.outputs.pr_number != ''
         uses: actions/github-script@v8
@@ -227,11 +466,29 @@ jobs:
         with:
           script: |
             const prNumber = ${{ steps.find-pr.outputs.pr_number }};
-            const testSummary = `${{ steps.test-reporter.outputs.summary }} ${{ steps.test-reporter.outputs.detailed_summary }}`;
+            const status = `${{ steps.overall-status.outputs.status }}`;
+            const description = `${{ steps.overall-status.outputs.description }}`;
+
+            const runAllTests = `${{ needs.determine-tests.outputs.run_all_tests || 'unknown' }}`;
+            const relevantTests = `${{ needs.determine-tests.outputs.relevant_tests || '' }}`;
+            const remainingTests = `${{ needs.determine-tests.outputs.remaining_tests || '' }}`;
+
+            let phaseInfo = '';
+            if (runAllTests === 'true') {
+              phaseInfo = '**Test Strategy:** Running all tests (configuration or infrastructure changes detected)\n\n';
+            } else if (relevantTests || remainingTests) {
+              phaseInfo = `**Test Strategy:** Two-phase execution\n`;
+              phaseInfo += `- **Phase 1 (Relevant):** ${relevantTests || 'None'}\n`;
+              phaseInfo += `- **Phase 2 (Remaining):** ${remainingTests || 'None'}\n\n`;
+            } else {
+              phaseInfo = '**Test Strategy:** Running all tests\n\n';
+            }
+
+            const detailsNote = '**Detailed Results:** Check the individual phase reports in the [workflow run](${{ env.TARGET_URL }}) for test counts, timing, and results.\n\n';
 
             github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: prNumber,
-                body: `### End-to-End (E2E) Test Results Summary\n\n${testSummary}`
+                body: `### End-to-End (E2E) Test Results Summary\n\n${phaseInfo}**Status:** ${description}\n\n${detailsNote}`
               });
