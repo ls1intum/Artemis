@@ -130,5 +130,25 @@ test {
     maxHeapSize = "6g" // maximum heap size
 }
 
+// Convenience tasks: ./gradlew testMysql -x webapp / ./gradlew testPostgres -x webapp
+['Mysql': ['MYSQL', 'org.hibernate.dialect.MySQLDialect', 'MYSQL'],
+ 'Postgres': ['POSTGRES', 'org.hibernate.dialect.PostgreSQLDialect', 'POSTGRESQL']].each { name, config ->
+    tasks.register("test${name}", Test) {
+        description = "Run tests against ${name} (via Testcontainers)"
+        group = 'verification'
+        testClassesDirs = testing.suites.test.sources.output.classesDirs
+        classpath = testing.suites.test.sources.runtimeClasspath
+        useJUnitPlatform()
+        exclude "**/*IT*", "**/*IntTest*"
+        testLogging.showStandardStreams = true
+        reports.html.required = false
+        minHeapSize = "2g"
+        maxHeapSize = "6g"
+        systemProperty 'zonky.test.database.type', config[0]
+        systemProperty 'spring.jpa.database-platform', config[1]
+        systemProperty 'spring.jpa.database', config[2]
+    }
+}
+
 // Dynamic generation of jacoco test report generation-/coverage verification-tasks (per-module)
 apply from: "gradle/jacoco.gradle"
