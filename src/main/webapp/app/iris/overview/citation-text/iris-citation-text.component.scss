@@ -1,4 +1,5 @@
-:host {
+// Styles for dynamically generated citation elements
+jhi-iris-citation-text {
     --iris-citation-bg: var(--iris-rate-background);
     --iris-citation-summary-bg: var(--tutor-suggestion-background);
     --iris-citation-agg-bg: var(--iris-chat-citation-aggregation);
@@ -8,9 +9,7 @@
     --iris-citation-icon-bg: var(--secondary);
     --iris-citation-summary-icon-bg: var(--iris-chat-history-label-color);
     --iris-citation-source-color: var(--iris-chat-history-label-color);
-}
 
-:host ::ng-deep {
     .iris-citation-group {
         display: inline-flex;
         align-items: center;
