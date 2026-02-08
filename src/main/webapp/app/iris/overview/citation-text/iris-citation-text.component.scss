@@ -1,5 +1,6 @@
 :host {
     --iris-citation-bg: var(--iris-rate-background);
+    --iris-citation-summary-bg: var(--tutor-suggestion-background);
     --iris-citation-agg-bg: var(--iris-chat-citation-aggregation);
     --iris-citation-agg-text: var(--iris-rate-background);
     --iris-citation-meta-color: var(--iris-chat-history-label-color);
@@ -56,7 +57,7 @@
         max-width: 70vw;
         padding: 10px 10px 14px;
         border-radius: 8px;
-        background-color: var(--iris-citation-bg);
+        background-color: var(--iris-citation-summary-bg);
         line-height: 1.4;
         white-space: normal;
         text-align: center;
