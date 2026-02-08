@@ -340,8 +340,9 @@ public class BuildAgentDockerService {
             catch (Exception ex) {
                 if (DockerUtil.isDockerNotAvailable(ex)) {
                     log.warn("Docker is not available. Error while inspecting image {}: {}", imageName, ex.getMessage());
+                    throw new LocalCIException("Docker is not available. Cannot pull image " + imageName, ex);
                 }
-                throw new LocalCIException("Docker is not available. Cannot pull image " + imageName, ex);
+                throw new LocalCIException("Error while inspecting image " + imageName, ex);
             }
             finally {
                 lock.unlock();
