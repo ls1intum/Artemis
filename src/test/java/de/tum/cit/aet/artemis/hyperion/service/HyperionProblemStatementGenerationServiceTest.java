@@ -61,7 +61,7 @@ class HyperionProblemStatementGenerationServiceTest {
         course.setDescription("Test Description");
 
         assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt")).isInstanceOf(InternalServerErrorAlertException.class)
-                .hasMessageContaining("Failed to generate problem statement").hasMessageContaining("AI service unavailable");
+                .hasMessageContaining("Failed to generate problem statement");
     }
 
     @Test

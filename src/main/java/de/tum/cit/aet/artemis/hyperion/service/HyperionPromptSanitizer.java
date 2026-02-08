@@ -39,8 +39,7 @@ final class HyperionPromptSanitizer {
     }
 
     /**
-     * Sanitizes user input by stripping control characters (except newlines, carriage returns, and tabs)
-     * and the closing {@code </user_input>} delimiter to reduce prompt injection risk.
+     * Sanitizes user input by stripping control characters (except newlines, carriage returns, and tabs).
      *
      * @param input the raw input string, may be null
      * @return the sanitized and trimmed string, never null
@@ -50,7 +49,6 @@ final class HyperionPromptSanitizer {
             return "";
         }
         String sanitized = CONTROL_CHAR_PATTERN.matcher(input).replaceAll("");
-        sanitized = sanitized.replace("</user_input>", "");
         return sanitized.trim();
     }
 
