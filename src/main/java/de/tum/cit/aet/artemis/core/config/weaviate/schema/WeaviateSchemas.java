@@ -332,7 +332,7 @@ public final class WeaviateSchemas {
                     nonSearchable(ExercisesProperties.COURSE_NAME, TEXT, "The name of the course"), searchable(ExercisesProperties.TITLE, TEXT, "The title of the exercise"),
                     searchable(ExercisesProperties.SHORT_NAME, TEXT, "The short name of the exercise"),
                     searchable(ExercisesProperties.PROBLEM_STATEMENT, TEXT, "The problem statement of the exercise"),
-                    nonSearchable(ExercisesProperties.RELEASE_DATE, DATE, "The release date of the exercise"),
+                    filterable(ExercisesProperties.RELEASE_DATE, DATE, "The release date of the exercise"),
                     nonSearchable(ExercisesProperties.START_DATE, DATE, "The start date of the exercise"),
                     nonSearchable(ExercisesProperties.DUE_DATE, DATE, "The due date of the exercise"),
                     filterable(ExercisesProperties.EXERCISE_TYPE, TEXT, "The type of the exercise (programming, quiz, modeling, text, file-upload)"),
