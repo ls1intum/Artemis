@@ -231,7 +231,7 @@ zonky:
     test:
         database:
             prefetching:
-                concurrency: 3
+                concurrency: 1
             type: H2  # Alternatives: H2 / MYSQL / POSTGRES
             postgres:
                 docker:
@@ -269,8 +269,11 @@ zonky:
                         innodb_flush_log_at_trx_commit: 0
                         innodb_doublewrite: 0
                         sync_binlog: 0
+                        skip_log_bin: 1
                         innodb_log_buffer_size: 64M
-                        max_connections: 100
+                        innodb_buffer_pool_size: 512M
+                        innodb_io_capacity: 2000
+                        max_connections: 200
 
 server:
     port: 8080
