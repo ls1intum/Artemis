@@ -165,7 +165,7 @@ describe('Iris citation util', () => {
         expect(renderSingle).not.toHaveBeenCalled();
     });
 
-    it('falls back to raw citations when a group contains invalid entries', () => {
+    it('renders valid citations and leaves invalid citation-like strings as plain text (no group formed)', () => {
         const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 1, lectureTitle: 'Lecture 1', lectureUnitTitle: 'Unit 1' }];
         const renderSingle = vi.fn().mockReturnValue('<single />');
         const renderGroup = vi.fn().mockReturnValue('<group />');
