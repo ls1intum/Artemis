@@ -3,7 +3,6 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
-import dayjs from 'dayjs/esm';
 import { provideHttpClient } from '@angular/common/http';
 
 import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/shared/service/tutorial-group-free-period.service';
@@ -26,10 +25,11 @@ describe('TutorialGroupFreePeriodService', () => {
         elemDefault = {
             id: 1,
             reason: 'Example Reason',
-            start: dayjs('2021-01-01T00:00:00Z'),
-            end: dayjs('2021-01-01T23:59:59Z'),
+            // Date-only
+            startDate: new Date(2021, 0, 1, 0, 0, 0),
+            endDate: new Date(2021, 0, 1, 23, 59, 59),
             tutorialGroupsConfiguration: { id: 1 } as any,
-        };
+        } as any;
     });
 
     afterEach(() => {
@@ -38,10 +38,13 @@ describe('TutorialGroupFreePeriodService', () => {
     });
 
     it('getOneOfConfiguration', () => {
+        // server returns LocalDateTime strings without a timezone
         const returnedFromServer = {
-            ...elemDefault,
-            start: elemDefault.start?.toJSON(),
-            end: elemDefault.end?.toJSON(),
+            id: elemDefault.id,
+            reason: elemDefault.reason,
+            start: '2021-01-01T00:00:00',
+            end: '2021-01-01T23:59:59',
+            tutorialGroupsConfiguration: elemDefault.tutorialGroupsConfiguration,
         };
 
         let result: any;
@@ -55,23 +58,27 @@ describe('TutorialGroupFreePeriodService', () => {
 
         expect(result.body.id).toBe(elemDefault.id);
         expect(result.body.reason).toBe(elemDefault.reason);
-        expect(dayjs.isDayjs(result.body.start)).toBe(true);
-        expect(dayjs.isDayjs(result.body.end)).toBe(true);
-        expect(result.body.start?.toISOString()).toBe(elemDefault.start?.toISOString());
-        expect(result.body.end?.toISOString()).toBe(elemDefault.end?.toISOString());
+
+        // Assert Dates
+        expect(result.body.startDate instanceof Date).toBe(true);
+        expect(result.body.endDate instanceof Date).toBe(true);
+
+        expect(result.body.startDate.toISOString()).toBe(elemDefault.startDate!.toISOString());
+        expect(result.body.endDate.toISOString()).toBe(elemDefault.endDate!.toISOString());
     });
 
     it('create', () => {
         const returnedFromServer = {
-            ...elemDefault,
             id: 0,
-            start: elemDefault.start?.toJSON(),
-            end: elemDefault.end?.toJSON(),
+            reason: elemDefault.reason,
+            start: '2021-01-01T00:00:00',
+            end: '2021-01-01T23:59:59',
+            tutorialGroupsConfiguration: elemDefault.tutorialGroupsConfiguration,
         };
 
         let result: any;
         service
-            .create(1, 1, new TutorialGroupFreePeriodDTO())
+            .create(1, 1, new TutorialGroupFreePeriodDTO() as any)
             .pipe(take(1))
             .subscribe((resp) => (result = resp));
 
@@ -79,21 +86,22 @@ describe('TutorialGroupFreePeriodService', () => {
         req.flush(returnedFromServer);
 
         expect(result.body.id).toBe(0);
-        expect(dayjs.isDayjs(result.body.start)).toBe(true);
-        expect(dayjs.isDayjs(result.body.end)).toBe(true);
+        expect(result.body.startDate instanceof Date).toBe(true);
+        expect(result.body.endDate instanceof Date).toBe(true);
     });
 
     it('update', () => {
         const returnedFromServer = {
-            ...elemDefault,
+            id: elemDefault.id,
             reason: 'Test',
-            start: elemDefault.start?.toJSON(),
-            end: elemDefault.end?.toJSON(),
+            start: '2021-01-01T00:00:00',
+            end: '2021-01-01T23:59:59',
+            tutorialGroupsConfiguration: elemDefault.tutorialGroupsConfiguration,
         };
 
         let result: any;
         service
-            .update(1, 1, 1, new TutorialGroupFreePeriodDTO())
+            .update(1, 1, 1, new TutorialGroupFreePeriodDTO() as any)
             .pipe(take(1))
             .subscribe((resp) => (result = resp));
 
@@ -101,8 +109,8 @@ describe('TutorialGroupFreePeriodService', () => {
         req.flush(returnedFromServer);
 
         expect(result.body.reason).toBe('Test');
-        expect(dayjs.isDayjs(result.body.start)).toBe(true);
-        expect(dayjs.isDayjs(result.body.end)).toBe(true);
+        expect(result.body.startDate instanceof Date).toBe(true);
+        expect(result.body.endDate instanceof Date).toBe(true);
     });
 
     it('delete', () => {
