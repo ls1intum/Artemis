@@ -425,6 +425,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
 
+        this.currentRefinementSubscription?.unsubscribe();
         this.currentRefinementSubscription = this.problemStatementService
             .refineTargeted(this.exercise, this.exercise.problemStatement, event, this.isGeneratingOrRefining)
             .subscribe({
@@ -433,7 +434,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         this.showDiff.set(true);
                         const refinedContent = result.content;
                         afterNextRender(() => this.editableInstructions.applyRefinedContent(refinedContent), { injector: this.injector });
+                    } else {
+                        this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
                     }
+                    this.currentRefinementSubscription = undefined;
+                },
+                error: () => {
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
                     this.currentRefinementSubscription = undefined;
                 },
             });
