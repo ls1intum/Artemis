@@ -190,6 +190,17 @@ describe('IrisChatbotWidgetComponent', () => {
         expect(() => component.setPositionAndScale()).not.toThrow();
     });
 
+    it('should close all dialogs and signal reopen when reopenDialog is called', () => {
+        const chatService = TestBed.inject(IrisChatService);
+        const setShouldReopenChatSpy = vi.spyOn(chatService, 'setShouldReopenChat');
+        const closeAllSpy = vi.spyOn(dialog, 'closeAll');
+
+        component.reopenDialog();
+
+        expect(setShouldReopenChatSpy).toHaveBeenCalledWith(true);
+        expect(closeAllSpy).toHaveBeenCalled();
+    });
+
     it('should update widget size/position and fullSize from interactjs move listeners', () => {
         // DOM required by the handlers
         const overlay = document.createElement('div');
