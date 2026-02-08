@@ -730,6 +730,68 @@ describe('Course Management Update Component', () => {
         });
     });
 
+    describe('form date control syncing', () => {
+        beforeEach(() => {
+            comp.ngOnInit();
+        });
+
+        it('should sync endDate form control changes back to course model', () => {
+            const newEndDate = dayjs().add(10, 'day');
+            comp.courseForm.controls['endDate'].setValue(newEndDate);
+            expect(comp.course.endDate).toBe(newEndDate);
+        });
+
+        it('should sync startDate form control changes back to course model', () => {
+            const newStartDate = dayjs().subtract(10, 'day');
+            comp.courseForm.controls['startDate'].setValue(newStartDate);
+            expect(comp.course.startDate).toBe(newStartDate);
+        });
+
+        it('should sync enrollmentStartDate form control changes back to course model', () => {
+            const newDate = dayjs().subtract(5, 'day');
+            comp.courseForm.controls['enrollmentStartDate'].setValue(newDate);
+            expect(comp.course.enrollmentStartDate).toBe(newDate);
+        });
+
+        it('should sync enrollmentEndDate form control changes back to course model', () => {
+            const newDate = dayjs().add(3, 'day');
+            comp.courseForm.controls['enrollmentEndDate'].setValue(newDate);
+            expect(comp.course.enrollmentEndDate).toBe(newDate);
+        });
+
+        it('should sync unenrollmentEndDate form control changes back to course model', () => {
+            const newDate = dayjs().add(5, 'day');
+            comp.courseForm.controls['unenrollmentEndDate'].setValue(newDate);
+            expect(comp.course.unenrollmentEndDate).toBe(newDate);
+        });
+
+        it('should update validation when course end date changes via form control', () => {
+            comp.course.startDate = dayjs().subtract(5, 'day');
+            comp.course.endDate = dayjs().add(5, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(3, 'day');
+            comp.course.enrollmentEndDate = dayjs().add(3, 'day');
+            expect(comp.isValidEnrollmentPeriod).toBe(true);
+
+            // Changing end date to before enrollment end date should invalidate
+            const newEndDate = dayjs().add(1, 'day');
+            comp.courseForm.controls['endDate'].setValue(newEndDate);
+            expect(comp.isValidEnrollmentPeriod).toBe(false);
+        });
+
+        it('should keep validation valid when extending course end date past enrollment end date', () => {
+            comp.course.startDate = dayjs().subtract(5, 'day');
+            comp.course.endDate = dayjs().add(5, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(3, 'day');
+            comp.course.enrollmentEndDate = dayjs().add(3, 'day');
+            expect(comp.isValidEnrollmentPeriod).toBe(true);
+
+            // Extending end date should keep validation valid
+            const newEndDate = dayjs().add(10, 'day');
+            comp.courseForm.controls['endDate'].setValue(newEndDate);
+            expect(comp.isValidEnrollmentPeriod).toBe(true);
+        });
+    });
+
     describe('removeOrganizationFromCourse', () => {
         it('should remove organization from component', () => {
             const organization = new Organization();

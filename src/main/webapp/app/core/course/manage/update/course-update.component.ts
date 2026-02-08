@@ -1,5 +1,6 @@
 import { ActivatedRoute, Router } from '@angular/router';
-import { Component, ElementRef, OnInit, inject, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnInit, inject, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
@@ -89,6 +90,7 @@ export class CourseUpdateComponent implements OnInit {
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly router = inject(Router);
     private readonly accountService = inject(AccountService);
+    private readonly destroyRef = inject(DestroyRef);
 
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
@@ -269,6 +271,16 @@ export class CourseUpdateComponent implements OnInit {
             },
             { validators: CourseValidator },
         );
+
+        // Sync form date control values back to this.course so that validation getters
+        // (isValidDate, isValidEnrollmentPeriod, isValidUnenrollmentEndDate) reflect
+        // the current form state and the Save button is properly enabled/disabled.
+        const dateFields = ['startDate', 'endDate', 'enrollmentStartDate', 'enrollmentEndDate', 'unenrollmentEndDate'] as const;
+        for (const field of dateFields) {
+            this.courseForm.controls[field].valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
+                (this.course as Record<string, any>)[field] = value;
+            });
+        }
 
         this.isAdmin = this.accountService.isAdmin();
     }
