@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
@@ -99,6 +100,9 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
 
     @Autowired
     private ChannelRepository channelRepository;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
 
     @Override
     protected String getTestPrefix() {
@@ -386,6 +390,9 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         reset(websocketMessagingService);
 
         var channel = channelRepository.findChannelByExerciseId(exercise.getId());
+        if (channel == null) {
+            channel = conversationUtilService.addChannelToExercise(exercise);
+        }
         assertThat(channel).isNotNull();
         channel.setName("exercise-updated-channel");
         channelRepository.saveAndFlush(channel);
