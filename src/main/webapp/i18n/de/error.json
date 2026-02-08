@@ -208,6 +208,7 @@
         },
         "PlagiarismPost": {
             "idNull": "Der Beitrag muss eine ID besitzen.",
+            "courseInformationSharingDisabled": "Beiträge sind in diesem Kurs deaktiviert.",
             "plagiarismCaseMissing": "Der Beitrag muss einem Plagiatsfall zugeordnet sein."
         },
         "noCourse": "Eine Klausur muss zu einem Kurs gehören.",

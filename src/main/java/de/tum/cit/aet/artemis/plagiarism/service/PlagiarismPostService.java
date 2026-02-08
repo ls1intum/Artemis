@@ -4,8 +4,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 
-import jakarta.ws.rs.BadRequestException;
-
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -81,7 +79,7 @@ public class PlagiarismPostService extends PostingService {
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
         if (course.getCourseInformationSharingConfiguration() == CourseInformationSharingConfiguration.DISABLED) {
-            throw new BadRequestException("Posting is disabled for this course.");
+            throw new BadRequestAlertException("Posting is disabled for this course.", PLAGIARISM_POST_ENTITY_NAME, "courseInformationSharingDisabled");
         }
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
