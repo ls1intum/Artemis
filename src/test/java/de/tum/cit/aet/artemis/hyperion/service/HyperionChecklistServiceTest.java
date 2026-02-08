@@ -17,8 +17,8 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
+import de.tum.cit.aet.artemis.atlas.api.StandardizedCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
-import de.tum.cit.aet.artemis.atlas.service.competency.StandardizedCompetencyService;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisResponseDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -34,7 +34,7 @@ class HyperionChecklistServiceTest {
     private ObservationRegistry observationRegistry;
 
     @Mock
-    private StandardizedCompetencyService standardizedCompetencyService;
+    private StandardizedCompetencyApi standardizedCompetencyApi;
 
     private HyperionChecklistService hyperionChecklistService;
 
@@ -48,10 +48,10 @@ class HyperionChecklistServiceTest {
         when(observationRegistry.observationConfig()).thenReturn(new ObservationRegistry.ObservationConfig());
 
         // Mock StandardizedCompetencyService to return empty catalog
-        when(standardizedCompetencyService.getAllForTreeView()).thenReturn(List.of());
+        when(standardizedCompetencyApi.getAllForTreeView()).thenReturn(List.of());
 
         var templateService = new HyperionPromptTemplateService();
-        this.hyperionChecklistService = new HyperionChecklistService(chatClient, templateService, observationRegistry, standardizedCompetencyService);
+        this.hyperionChecklistService = new HyperionChecklistService(chatClient, templateService, observationRegistry, standardizedCompetencyApi);
     }
 
     @Test

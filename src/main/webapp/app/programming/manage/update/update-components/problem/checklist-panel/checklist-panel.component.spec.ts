@@ -34,8 +34,7 @@ describe('ChecklistPanelComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FontAwesomeModule, ChecklistPanelComponent], // Component is standout or imports modules? It is standalone: true
-            declarations: [MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+            imports: [FontAwesomeModule, ChecklistPanelComponent],
             providers: [MockProvider(HyperionProblemStatementApiService), MockProvider(AlertService), MockProvider(TranslateService)],
         })
             .overrideComponent(ChecklistPanelComponent, {

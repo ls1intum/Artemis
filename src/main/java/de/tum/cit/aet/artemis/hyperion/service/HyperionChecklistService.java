@@ -16,9 +16,9 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.atlas.api.StandardizedCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
 import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
-import de.tum.cit.aet.artemis.atlas.service.competency.StandardizedCompetencyService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.BloomRadarDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistActionRequestDTO;
@@ -64,14 +64,14 @@ public class HyperionChecklistService {
 
     private final ObservationRegistry observationRegistry;
 
-    private final StandardizedCompetencyService standardizedCompetencyService;
+    private final StandardizedCompetencyApi standardizedCompetencyApi;
 
     public HyperionChecklistService(ChatClient chatClient, HyperionPromptTemplateService templates, ObservationRegistry observationRegistry,
-            StandardizedCompetencyService standardizedCompetencyService) {
+            StandardizedCompetencyApi standardizedCompetencyApi) {
         this.chatClient = chatClient;
         this.templates = templates;
         this.observationRegistry = observationRegistry;
-        this.standardizedCompetencyService = standardizedCompetencyService;
+        this.standardizedCompetencyApi = standardizedCompetencyApi;
     }
 
     /**
@@ -225,7 +225,7 @@ public class HyperionChecklistService {
      */
     private String serializeCompetencyCatalog() {
         try {
-            List<KnowledgeArea> knowledgeAreas = standardizedCompetencyService.getAllForTreeView();
+            List<KnowledgeArea> knowledgeAreas = standardizedCompetencyApi.getAllForTreeView();
             List<Map<String, Object>> catalog = new ArrayList<>();
 
             for (KnowledgeArea ka : knowledgeAreas) {
