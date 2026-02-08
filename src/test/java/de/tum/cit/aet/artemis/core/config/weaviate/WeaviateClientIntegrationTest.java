@@ -19,16 +19,24 @@ import io.weaviate.client6.v1.api.WeaviateClient;
  * <p>
  * Requires Docker to be available; skipped otherwise.
  * <p>
- * The Weaviate server version is defined in {@code .env} ({@code WEAVIATE_SERVER_VERSION})
- * and must be compatible with the Java client version.
+ * The Weaviate server version is defined in {@code gradle.properties} ({@code weaviate_server_version})
+ * and passed into tests via {@code test.gradle}. It must be compatible with the Java client version.
  *
  * @see <a href="https://docs.weaviate.io/weaviate/release-notes">Weaviate client/server compatibility matrix</a>
  */
 @EnabledIf("isDockerAvailable")
 class WeaviateClientIntegrationTest {
 
-    // Injected by test.gradle from WEAVIATE_SERVER_VERSION in .env
-    private static final String WEAVIATE_IMAGE = "cr.weaviate.io/semitechnologies/weaviate:" + System.getProperty("weaviate.server.version");
+    // Injected by test.gradle from weaviate_server_version in gradle.properties
+    private static final String WEAVIATE_IMAGE;
+
+    static {
+        String version = System.getProperty("weaviate.server.version");
+        if (version == null || version.isBlank()) {
+            throw new IllegalStateException("weaviate.server.version system property not set; please provide it (e.g., via Gradle)");
+        }
+        WEAVIATE_IMAGE = "cr.weaviate.io/semitechnologies/weaviate:" + version;
+    }
 
     private static WeaviateContainer weaviate;
 
