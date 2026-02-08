@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupFreePeriodDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupFreePeriodRequestDTO;
 
 class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegrationTest {
@@ -89,9 +90,9 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         // given
         var freePeriod = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, FIRST_AUGUST_MONDAY_00_00, FIRST_AUGUST_MONDAY_23_59, "Holiday");
         // when
-        var freePeriodFromRequest = request.get(getTutorialGroupFreePeriodsPath(freePeriod.getId()), HttpStatus.OK, TutorialGroupFreePeriod.class);
+        var freePeriodFromRequest = request.get(getTutorialGroupFreePeriodsPath(freePeriod.getId()), HttpStatus.OK, TutorialGroupFreePeriodDTO.class);
         // then
-        assertThat(freePeriodFromRequest).isEqualTo(freePeriod);
+        assertThat(freePeriodFromRequest).isEqualTo(TutorialGroupFreePeriodDTO.of(freePeriod));
 
         // cleanup
         tutorialGroupFreePeriodRepository.deleteById(freePeriod.getId());
@@ -103,7 +104,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         // given
         var dto = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_00_00, FIRST_AUGUST_MONDAY_23_59, "Holiday");
         // when
-        var freePeriodId = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED).getId();
+        var freePeriodId = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriodDTO.class, HttpStatus.CREATED).id();
         // then
         var persistedFreePeriod = tutorialGroupFreePeriodRepository.findByIdElseThrow(freePeriodId);
         this.assertTutorialGroupFreePeriodCreatedCorrectlyFromDTO(persistedFreePeriod, dto);
@@ -123,7 +124,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
         var dto = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_00_00, FIRST_AUGUST_MONDAY_23_59, "Holiday");
         // when
-        var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
+        var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriodDTO.class, HttpStatus.CREATED);
         // then
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
         var firstMondayOfAugustSession = sessions.getFirst();
@@ -131,7 +132,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
         // cleanup
         tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());
-        tutorialGroupFreePeriodRepository.deleteById(createdPeriod.getId());
+        tutorialGroupFreePeriodRepository.deleteById(createdPeriod.id());
     }
 
     @Test
@@ -163,7 +164,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
         var dto = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_08_00, FIRST_AUGUST_MONDAY_10_00, "Holiday");
         // when
-        var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
+        var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriodDTO.class, HttpStatus.CREATED);
         // then
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
         var firstMondayOfAugustSession = sessions.getFirst();
@@ -171,7 +172,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
         // cleanup
         tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());
-        tutorialGroupFreePeriodRepository.deleteById(createdPeriod.getId());
+        tutorialGroupFreePeriodRepository.deleteById(createdPeriod.id());
     }
 
     @Test
@@ -183,7 +184,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
         var dto = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_12_00, FIRST_AUGUST_MONDAY_13_00, "Holiday");
         // when
-        var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
+        var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriodDTO.class, HttpStatus.CREATED);
         // then
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
         var firstMondayOfAugustSession = sessions.getFirst();
@@ -191,7 +192,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
         // cleanup
         tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());
-        tutorialGroupFreePeriodRepository.deleteById(createdPeriod.getId());
+        tutorialGroupFreePeriodRepository.deleteById(createdPeriod.id());
     }
 
     @Test
@@ -203,7 +204,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
         var dto = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_10_00, FIRST_AUGUST_MONDAY_13_00, "Holiday");
         // when
-        var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
+        var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriodDTO.class, HttpStatus.CREATED);
         // then
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
         var firstMondayOfAugustSession = sessions.getFirst();
@@ -211,7 +212,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
         // cleanup
         tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());
-        tutorialGroupFreePeriodRepository.deleteById(createdPeriod.getId());
+        tutorialGroupFreePeriodRepository.deleteById(createdPeriod.id());
     }
 
     @Test
@@ -223,7 +224,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
         var dto = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_13_00, FIRST_AUGUST_MONDAY_18_00, "Holiday");
         // when
-        var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
+        var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriodDTO.class, HttpStatus.CREATED);
         // then
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
         var firstMondayOfAugustSession = sessions.getFirst();
@@ -231,7 +232,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
         // cleanup
         tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());
-        tutorialGroupFreePeriodRepository.deleteById(createdPeriod.getId());
+        tutorialGroupFreePeriodRepository.deleteById(createdPeriod.id());
     }
 
     @Test
@@ -242,7 +243,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         var dto = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_00_00, FIRST_AUGUST_MONDAY_23_59, "Holiday");
 
         // when
-        var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
+        var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriodDTO.class, HttpStatus.CREATED);
 
         // then
         var sessions = this.getTutorialGroupSessionsAscending(exampleTutorialGroupId);
@@ -252,7 +253,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
         // cleanup
         tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());
-        tutorialGroupFreePeriodRepository.deleteById(createdPeriod.getId());
+        tutorialGroupFreePeriodRepository.deleteById(createdPeriod.id());
     }
 
     @Test
@@ -264,20 +265,20 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         TutorialGroupFreePeriodRequestDTO dto2 = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_11_00, FIRST_AUGUST_MONDAY_13_00, "Holiday");
 
         // when
-        TutorialGroupFreePeriod createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
-        TutorialGroupFreePeriod createdPeriod2 = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto2, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
+        TutorialGroupFreePeriodDTO createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriodDTO.class, HttpStatus.CREATED);
+        TutorialGroupFreePeriodDTO createdPeriod2 = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto2, TutorialGroupFreePeriodDTO.class, HttpStatus.CREATED);
 
         // then
         List<TutorialGroupSession> sessions = this.getTutorialGroupSessionsAscending(exampleTutorialGroupId);
         TutorialGroupSession firstMondayOfAugustSession = sessions.getFirst();
         assertIndividualSessionIsCancelledOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY_00_00, exampleTutorialGroupId, null);
-        assertThat(firstMondayOfAugustSession.getTutorialGroupFreePeriod().getId()).isEqualTo(createdPeriod.getId());
+        assertThat(firstMondayOfAugustSession.getTutorialGroupFreePeriod().getId()).isEqualTo(createdPeriod.id());
         assertTutorialGroupFreePeriodCreatedCorrectlyFromDTO(firstMondayOfAugustSession.getTutorialGroupFreePeriod(), dto);
 
         // cleanup
         tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());
-        tutorialGroupFreePeriodRepository.deleteById(createdPeriod.getId());
-        tutorialGroupFreePeriodRepository.deleteById(createdPeriod2.getId());
+        tutorialGroupFreePeriodRepository.deleteById(createdPeriod.id());
+        tutorialGroupFreePeriodRepository.deleteById(createdPeriod2.id());
     }
 
     @Test
@@ -290,23 +291,23 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         TutorialGroupFreePeriodRequestDTO dto2 = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_11_00.atZone(ZoneId.of(exampleTimeZone)).toLocalDateTime(),
                 FIRST_AUGUST_MONDAY_13_00.atZone(ZoneId.of(exampleTimeZone)).toLocalDateTime(), "Holiday");
 
-        TutorialGroupFreePeriod createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
-        TutorialGroupFreePeriod createdPeriod2 = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto2, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
+        TutorialGroupFreePeriodDTO createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriodDTO.class, HttpStatus.CREATED);
+        TutorialGroupFreePeriodDTO createdPeriod2 = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto2, TutorialGroupFreePeriodDTO.class, HttpStatus.CREATED);
 
         firstMondayOfAugustSession = tutorialGroupSessionRepository.findByIdElseThrow(firstMondayOfAugustSession.getId());
         assertIndividualSessionIsCancelledOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY_00_00, exampleTutorialGroupId, null);
 
         // when
-        request.delete(getTutorialGroupFreePeriodsPath(createdPeriod.getId()), HttpStatus.NO_CONTENT);
+        request.delete(getTutorialGroupFreePeriodsPath(createdPeriod.id()), HttpStatus.NO_CONTENT);
 
         // then
         firstMondayOfAugustSession = tutorialGroupSessionRepository.findByIdElseThrow(firstMondayOfAugustSession.getId());
         assertIndividualSessionIsCancelledOnDate(firstMondayOfAugustSession, FIRST_AUGUST_MONDAY_00_00, exampleTutorialGroupId, null);
-        assertThat(firstMondayOfAugustSession.getTutorialGroupFreePeriod().getId()).isEqualTo(createdPeriod2.getId());
+        assertThat(firstMondayOfAugustSession.getTutorialGroupFreePeriod().getId()).isEqualTo(createdPeriod2.id());
 
         // cleanup
         tutorialGroupSessionRepository.deleteById(firstMondayOfAugustSession.getId());
-        tutorialGroupFreePeriodRepository.deleteById(createdPeriod2.getId());
+        tutorialGroupFreePeriodRepository.deleteById(createdPeriod2.id());
     }
 
     @Test
@@ -337,7 +338,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         var secondMondayOfAugustSession = this.buildAndSaveExampleIndividualTutorialGroupSession(groupId, SECOND_AUGUST_MONDAY_00_00);
 
         var firstOfAugustFreeDayDTO = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_00_00, FIRST_AUGUST_MONDAY_23_59, "Holiday");
-        var periodId = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), firstOfAugustFreeDayDTO, TutorialGroupFreePeriod.class, HttpStatus.CREATED).getId();
+        var periodId = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), firstOfAugustFreeDayDTO, TutorialGroupFreePeriodDTO.class, HttpStatus.CREATED).id();
 
         firstMondayOfAugustSession = this.tutorialGroupSessionRepository.findByIdElseThrow(firstMondayOfAugustSession.getId());
         secondMondayOfAugustSession = this.tutorialGroupSessionRepository.findByIdElseThrow(secondMondayOfAugustSession.getId());
@@ -348,7 +349,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
         var secondOfAugustFreeDayDTO = createTutorialGroupFreePeriodDTO(SECOND_AUGUST_MONDAY_00_00, SECOND_AUGUST_MONDAY_23_59, "Another Holiday");
         // when
-        request.putWithResponseBody(getTutorialGroupFreePeriodsPath(periodId), secondOfAugustFreeDayDTO, TutorialGroupFreePeriod.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupFreePeriodsPath(periodId), secondOfAugustFreeDayDTO, TutorialGroupFreePeriodDTO.class, HttpStatus.OK);
 
         // then
         firstMondayOfAugustSession = tutorialGroupSessionRepository.findByIdElseThrow(firstMondayOfAugustSession.getId());
@@ -417,7 +418,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         var firstMondayOfAugustSession = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, FIRST_AUGUST_MONDAY_00_00);
 
         var firstOfAugustFreeDayDTO = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_00_00, FIRST_AUGUST_MONDAY_23_59, "Holiday");
-        var periodId = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), firstOfAugustFreeDayDTO, TutorialGroupFreePeriod.class, HttpStatus.CREATED).getId();
+        var periodId = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), firstOfAugustFreeDayDTO, TutorialGroupFreePeriodDTO.class, HttpStatus.CREATED).id();
 
         firstMondayOfAugustSession = this.tutorialGroupSessionRepository.findByIdElseThrow(firstMondayOfAugustSession.getId());
 
