@@ -40,7 +40,9 @@ RE_GENERIC_INNER = re.compile(r'<([^<>]+)>')
 
 JAVA_FRAMEWORK = set("""void boolean byte short int long float double char
 String Object ResponseEntity Optional List Set Map Collection Page Slice Stream Mono Flux""".split())
-
+JAVA_LANG = {
+        "String", "Object", "Integer", "Long", "Short", "Byte", "Boolean",
+        "Character", "Double", "Float", "Void", "Class", "Enum", "Record"}
 
 def split_generic_parts(t: str) -> List[str]:
     parts, cleaned = [], t.replace('[]', '')
@@ -75,12 +77,8 @@ def collect_import_map(text: str) -> Dict[str, str]:
 
 def resolve_full_names(simple: List[str], imports: Dict[str, str], current_pkg: Optional[str]) -> List[str]:
     out: List[str] = []
-    java_lang = {
-        "String","Object","Integer","Long","Short","Byte","Boolean",
-        "Character","Double","Float","Void","Class","Enum","Record"
-    }
     for name in simple:
-        if name in JAVA_FRAMEWORK or name in java_lang:
+        if name in JAVA_FRAMEWORK or name in JAVA_LANG:
             out.append(name)
             continue
 
@@ -165,10 +163,8 @@ def classify_endpoint(ret_types_fq: List[str],
     # Otherwise, classification is driven by request body kind
     if body_saw_entity:
         return 'entity'
-    if body_saw_dto:
-        return 'dto'
 
-    return 'neutral'
+    return 'dto'
 
 
 def iter_endpoints(text: str) -> List[Tuple[str, str, str, str]]:
@@ -262,7 +258,8 @@ def extract_balanced(s: str, open_idx: int, open_ch: str = '(', close_ch: str = 
     Returns (content_without_outer_parens, index_of_closing_paren).
     Skips strings and // /* */ comments to avoid false matches.
     """
-    assert s[open_idx] == open_ch
+    if s[open_idx] != open_ch:
+        raise ValueError(f"Expected '{open_ch}' at index {open_idx}, got '{s[open_idx]}'")
     i = open_idx + 1
     depth = 1
     out: List[str] = []
@@ -400,8 +397,6 @@ def main():
             classification = classify_endpoint(ret_full, body_params_types, dto_hints, entity_hints)
 
             http_method = mapping_anno.lower().replace('mapping', '').upper()
-            if http_method == 'REQUEST':
-                http_method = 'REQUEST'
 
             results.append({
                 'file': str(jfile.relative_to(root).as_posix()),
