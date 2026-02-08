@@ -102,6 +102,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
     private readonly alertService = inject(AlertService);
     private readonly confirmationService = inject(ConfirmationService);
+    protected llmModalService = inject(LLMSelectionModalService);
+    private readonly clipboard = inject(Clipboard);
 
     // Known "new chat" titles from all languages (server-side: messages*.properties, client-side: iris.json).
     // Must match the values in src/main/resources/i18n/messages*.properties (iris.chat.session.newChatTitle)
@@ -110,7 +112,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected statusService = inject(IrisStatusService);
     protected chatService = inject(IrisChatService);
     protected route = inject(ActivatedRoute);
-    protected llmModalService = inject(LLMSelectionModalService);
     private readonly destroyRef = inject(DestroyRef);
     private readonly onboardingService = inject(IrisOnboardingService);
 
@@ -229,7 +230,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly fullSize = input<boolean>();
     readonly showCloseButton = input<boolean>(false);
     readonly isChatGptWrapper = input<boolean>(false);
-    readonly layout = input<'client' | 'widget'>('client');
+    readonly hasAvailableExercises = input(true);
     readonly fullSizeToggle = output<void>();
     readonly closeClicked = output<void>();
 
@@ -241,14 +242,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     constructor() {
         // Initialize user acceptance state
-        this.checkIfUserAcceptedLLMUsage();
-
-        // Show AI selection modal if user hasn't accepted
-        if (!this.userAccepted()) {
-            setTimeout(() => this.showAISelectionModal(), 0);
-        } else {
-            this.focusInputAfterAcceptance();
-        }
+        this.userAccepted.set(this.accountService.userIdentity()?.selectedLLMUsage);
 
         // Handle route query params (irisQuestion)
         this.route.queryParams?.pipe(takeUntilDestroyed()).subscribe((params: any) => {
@@ -365,7 +359,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         setTimeout(() => (this.shouldAnimate = true), 500);
 
         // Show onboarding modal for first-time users
-        this.onboardingService.showOnboardingIfNeeded();
+        this.onboardingService.showOnboardingIfNeeded(this.hasAvailableExercises());
     }
 
     checkIfUserAcceptedLLMUsage(): void {

@@ -56,6 +56,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     progress: number = 0;
     isLoading = false;
     hasExercises = false;
+    hasAvailableExercises = true;
     hasCompetencies = false;
     exerciseLateness?: ExerciseLateness[];
     exercisePerformance?: ExercisePerformance[];
@@ -234,6 +235,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     private setCourse(course?: Course) {
         const shouldLoadMetrics = this.course?.id !== course?.id && course?.studentCourseAnalyticsDashboardEnabled;
         this.course = course;
+        this.hasAvailableExercises = course?.exercises ? course.exercises.length > 0 : true;
         if (this.course && shouldLoadMetrics) {
             this.loadMetrics();
         }

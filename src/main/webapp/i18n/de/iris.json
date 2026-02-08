@@ -17,7 +17,7 @@
                 "step3": {
                     "description": "Kehre zum Dashboard zurück, um die Tour abzuschließen."
                 },
-                "step5": {
+                "step4": {
                     "title": "Probiere eine erste Frage",
                     "description": "Wähle unten einen vorgeschlagenen Prompt aus, um zu beginnen.",
                     "prompts": {

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, WritableSignal, computed, inject, signal } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -9,6 +9,16 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBook, faLightbulb, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
+
+type SidebarTooltipConfig = {
+    spotlight: { top: number; left: number; width: number; height: number };
+    coachMarkPosition: { top: number; left: number };
+    tooltipPosition: { top: number; left: number };
+    descriptionTranslationKey: string;
+    currentStep: 1 | 3;
+};
+
+type PromptOptionKey = 'explainConcept' | 'quizTopic' | 'studyTips';
 
 @Component({
     selector: 'jhi-iris-onboarding-modal',
@@ -23,13 +33,16 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
 
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly ButtonType = ButtonType;
-    protected readonly faBook = faBook;
-    protected readonly faQuestionCircle = faQuestionCircle;
-    protected readonly faLightbulb = faLightbulb;
+    readonly promptOptions: ReadonlyArray<{ type: PromptOptionKey; icon: typeof faBook; translationKey: string }> = [
+        { type: 'explainConcept', icon: faBook, translationKey: 'artemisApp.iris.onboarding.step4.prompts.explainConcept' },
+        { type: 'quizTopic', icon: faQuestionCircle, translationKey: 'artemisApp.iris.onboarding.step4.prompts.quizTopic' },
+        { type: 'studyTips', icon: faLightbulb, translationKey: 'artemisApp.iris.onboarding.step4.prompts.studyTips' },
+    ];
 
     // Step management
     readonly step = signal(0);
     readonly totalSteps = 5;
+    readonly hasAvailableExercises = signal(true);
 
     // Router subscription
     private routeSubscription?: Subscription;
@@ -38,15 +51,41 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
     readonly exerciseTooltipPosition = signal({ top: 172, left: 232 });
     readonly exerciseTabCoachMarkPosition = signal({ top: 152, left: 210 });
     readonly exerciseTabSpotlight = signal({ top: 130, left: 0, width: 220, height: 44 });
+    readonly isStep1PositionReady = signal(false);
 
     // Position for Step 2 (Iris icon)
     readonly irisIconSpotlight = signal({ top: 594, left: 944, width: 48, height: 48 });
     readonly tooltipPosition = signal({ top: 680, left: 690 });
+    readonly isStep2PositionReady = signal(false);
 
     // Position for Step 3 tooltip (aligned with Dashboard tab)
     readonly dashboardTooltipPosition = signal({ top: 80, left: 232 });
     readonly dashboardTabCoachMarkPosition = signal({ top: 80, left: 210 });
     readonly dashboardTabSpotlight = signal({ top: 58, left: 0, width: 220, height: 44 });
+    readonly isStep3PositionReady = signal(false);
+    readonly sidebarTooltipConfig = computed<SidebarTooltipConfig | undefined>(() => {
+        if (this.step() === 1 && this.isStep1PositionReady()) {
+            return {
+                spotlight: this.exerciseTabSpotlight(),
+                coachMarkPosition: this.exerciseTabCoachMarkPosition(),
+                tooltipPosition: this.exerciseTooltipPosition(),
+                descriptionTranslationKey: 'artemisApp.iris.onboarding.step1.description',
+                currentStep: 1,
+            };
+        }
+
+        if (this.step() === 3 && this.isStep3PositionReady()) {
+            return {
+                spotlight: this.dashboardTabSpotlight(),
+                coachMarkPosition: this.dashboardTabCoachMarkPosition(),
+                tooltipPosition: this.dashboardTooltipPosition(),
+                descriptionTranslationKey: 'artemisApp.iris.onboarding.step3.description',
+                currentStep: 3,
+            };
+        }
+
+        return undefined;
+    });
 
     ngOnInit(): void {
         // Monitor route changes to auto-advance steps
@@ -67,7 +106,8 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
             this.step.update((s) => s + 1);
 
             if (this.step() === 3) {
-                setTimeout(() => this.calculateDashboardTabCoachMarkPosition(), 100);
+                this.isStep3PositionReady.set(false);
+                this.scheduleDashboardTabPositionCalculation();
             }
         } else {
             this.finish();
@@ -78,8 +118,15 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
      * Starts the tour from step 1 (skips welcome).
      */
     onStartTour(): void {
+        if (!this.hasAvailableExercises()) {
+            this.step.set(4);
+            return;
+        }
+
+        this.isStep1PositionReady.set(false);
+        this.isStep2PositionReady.set(false);
         this.step.set(1);
-        setTimeout(() => this.calculateExerciseTabCoachMarkPosition(), 100);
+        this.scheduleExerciseTabPositionCalculation();
     }
 
     /**
@@ -100,13 +147,13 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
      * Handles prompt selection from the final step modal.
      */
     selectPrompt(promptType: string): void {
-        const prompts: Record<string, string> = {
+        const prompts: Record<PromptOptionKey, string> = {
             explainConcept: 'Can you explain a concept from this exercise?',
             quizTopic: 'Can you quiz me on a topic from this exercise?',
             studyTips: 'Can you give me study tips for this exercise?',
         };
 
-        const selectedPrompt = prompts[promptType];
+        const selectedPrompt = prompts[promptType as PromptOptionKey];
         this.activeModal.close({ action: 'promptSelected', prompt: selectedPrompt });
     }
 
@@ -120,9 +167,9 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
             const isExercisePage = url.match(/\/courses\/\d+\/exercises\/\d+/) !== null;
             if (isExercisePage) {
                 // User navigated to exercise page, advance to Step 2
+                this.isStep2PositionReady.set(false);
                 this.next();
-                // Calculate Iris icon position after navigation
-                setTimeout(() => this.calculateIrisIconPosition(), 500);
+                this.scheduleIrisIconPositionCalculation();
             }
         }
         // Step 3: User should navigate back to dashboard
@@ -144,13 +191,10 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
     /**
      * Calculates the position of the Iris chat button for Step 2 spotlight and tooltip.
      */
-    private calculateIrisIconPosition(retries = 20): void {
+    private calculateIrisIconPosition(): boolean {
         const irisButton = document.querySelector('jhi-exercise-chatbot-button .chatbot-button');
         if (!irisButton) {
-            if (retries > 0) {
-                setTimeout(() => this.calculateIrisIconPosition(retries - 1), 300);
-            }
-            return;
+            return false;
         }
 
         const rect = irisButton.getBoundingClientRect();
@@ -185,6 +229,15 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
         };
 
         this.tooltipPosition.set(tooltipPos);
+        return true;
+    }
+
+    private scheduleIrisIconPositionCalculation(): void {
+        if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+            window.requestAnimationFrame(() => this.resolveStepPosition(2, this.isStep2PositionReady, () => this.calculateIrisIconPosition(), 20, 300));
+            return;
+        }
+        setTimeout(() => this.resolveStepPosition(2, this.isStep2PositionReady, () => this.calculateIrisIconPosition(), 20, 300), 0);
     }
 
     /**
@@ -195,10 +248,10 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
         spotlightSignal: typeof this.exerciseTabSpotlight,
         coachMarkSignal: typeof this.exerciseTabCoachMarkPosition,
         tooltipSignal: typeof this.exerciseTooltipPosition,
-    ): void {
+    ): boolean {
         const tab = document.querySelector(selector);
         if (!tab) {
-            return;
+            return false;
         }
 
         const rect = tab.getBoundingClientRect();
@@ -211,10 +264,11 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
         spotlightSignal.set(spotlight);
         coachMarkSignal.set({ top: spotlight.top + spotlight.height / 2 - 6, left: spotlight.left + spotlight.width - 16 });
         tooltipSignal.set({ top: spotlight.top - 20, left: spotlight.left + spotlight.width + 12 });
+        return true;
     }
 
-    private calculateExerciseTabCoachMarkPosition(): void {
-        this.calculateSidebarTabPositions(
+    private calculateExerciseTabCoachMarkPosition(): boolean {
+        return this.calculateSidebarTabPositions(
             "jhi-course-sidebar a.nav-link-sidebar[title='Exercises']",
             this.exerciseTabSpotlight,
             this.exerciseTabCoachMarkPosition,
@@ -222,12 +276,39 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
         );
     }
 
-    private calculateDashboardTabCoachMarkPosition(): void {
-        this.calculateSidebarTabPositions(
+    private calculateDashboardTabCoachMarkPosition(): boolean {
+        return this.calculateSidebarTabPositions(
             "jhi-course-sidebar a.nav-link-sidebar[title='Dashboard']",
             this.dashboardTabSpotlight,
             this.dashboardTabCoachMarkPosition,
             this.dashboardTooltipPosition,
         );
+    }
+
+    private scheduleExerciseTabPositionCalculation(retries = 20): void {
+        this.resolveStepPosition(1, this.isStep1PositionReady, () => this.calculateExerciseTabCoachMarkPosition(), retries, 100);
+    }
+
+    private scheduleDashboardTabPositionCalculation(retries = 20): void {
+        this.resolveStepPosition(3, this.isStep3PositionReady, () => this.calculateDashboardTabCoachMarkPosition(), retries, 100);
+    }
+
+    private resolveStepPosition(expectedStep: number, readinessSignal: WritableSignal<boolean>, calculatePosition: () => boolean, retries: number, retryDelayMs: number): void {
+        if (this.step() !== expectedStep) {
+            return;
+        }
+
+        if (calculatePosition()) {
+            readinessSignal.set(true);
+            return;
+        }
+
+        if (retries > 0) {
+            setTimeout(() => this.resolveStepPosition(expectedStep, readinessSignal, calculatePosition, retries - 1, retryDelayMs), retryDelayMs);
+            return;
+        }
+
+        // Avoid trapping onboarding on a hidden step when target elements are not available.
+        readinessSignal.set(true);
     }
 }

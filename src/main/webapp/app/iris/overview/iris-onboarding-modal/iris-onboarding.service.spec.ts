@@ -9,10 +9,30 @@ describe('IrisOnboardingService', () => {
 
     let service: IrisOnboardingService;
     let modalService: NgbModal;
+    let matchMediaMock: ReturnType<typeof vi.spyOn>;
 
     const STORAGE_KEY = 'iris-onboarding-completed';
 
+    const setDesktopViewport = (isDesktop: boolean) => {
+        matchMediaMock.mockImplementation((query: string) => {
+            const matches = query === '(min-width: 992px)' ? isDesktop : false;
+            return {
+                matches,
+                media: query,
+                onchange: null,
+                addListener: vi.fn(),
+                removeListener: vi.fn(),
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+                dispatchEvent: vi.fn(),
+            } as unknown as MediaQueryList;
+        });
+    };
+
     beforeEach(() => {
+        matchMediaMock = vi.spyOn(window, 'matchMedia');
+        setDesktopViewport(true);
+
         TestBed.configureTestingModule({
             providers: [IrisOnboardingService, { provide: NgbModal, useValue: { open: vi.fn() } }],
         });
@@ -54,6 +74,14 @@ describe('IrisOnboardingService', () => {
     });
 
     describe('openOnboardingModal', () => {
+        it('should not open the modal on non-desktop viewport', async () => {
+            setDesktopViewport(false);
+            const result = await service.openOnboardingModal();
+
+            expect(modalService.open).not.toHaveBeenCalled();
+            expect(result).toBeUndefined();
+        });
+
         it('should open the modal with correct options', async () => {
             const mockModalRef = { result: Promise.resolve('finish') } as NgbModalRef;
             vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
@@ -71,6 +99,19 @@ describe('IrisOnboardingService', () => {
                 }),
             );
             expect(result).toBe('finish');
+        });
+
+        it('should pass hasAvailableExercises to the modal component', async () => {
+            const setHasAvailableExercises = vi.fn();
+            const mockModalRef = {
+                result: Promise.resolve('finish'),
+                componentInstance: { hasAvailableExercises: { set: setHasAvailableExercises } },
+            } as NgbModalRef;
+            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+
+            await service.openOnboardingModal(false);
+
+            expect(setHasAvailableExercises).toHaveBeenCalledWith(false);
         });
 
         it('should return undefined when modal is dismissed', async () => {
@@ -116,6 +157,14 @@ describe('IrisOnboardingService', () => {
     });
 
     describe('showOnboardingIfNeeded', () => {
+        it('should return undefined and not open modal on non-desktop viewport', async () => {
+            setDesktopViewport(false);
+            const result = await service.showOnboardingIfNeeded();
+
+            expect(modalService.open).not.toHaveBeenCalled();
+            expect(result).toBeUndefined();
+        });
+
         it('should delegate to openOnboardingModal', async () => {
             const mockModalRef = { result: Promise.resolve('finish') } as NgbModalRef;
             vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);

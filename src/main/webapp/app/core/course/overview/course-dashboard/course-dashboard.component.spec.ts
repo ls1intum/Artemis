@@ -154,6 +154,17 @@ describe('CourseDashboardComponent', () => {
         component.ngOnInit();
         expect(metricsSpy).toHaveBeenCalledOnce();
     });
+
+    it('should set hasAvailableExercises to false when course has no exercises', () => {
+        (component as any).setCourse({ id: 123, exercises: [] });
+        expect(component.hasAvailableExercises).toBeFalse();
+    });
+
+    it('should set hasAvailableExercises to true when exercises are available', () => {
+        (component as any).setCourse({ id: 123, exercises: [{ id: 1 }] });
+        expect(component.hasAvailableExercises).toBeTrue();
+    });
+
     it('should correctly calculate overall performance', () => {
         const exerciseMetrics = {
             exerciseInformation: {
