@@ -275,10 +275,16 @@ export class CourseUpdateComponent implements OnInit {
         // Sync form date control values back to this.course so that validation getters
         // (isValidDate, isValidEnrollmentPeriod, isValidUnenrollmentEndDate) reflect
         // the current form state and the Save button is properly enabled/disabled.
-        const dateFields = ['startDate', 'endDate', 'enrollmentStartDate', 'enrollmentEndDate', 'unenrollmentEndDate'] as const;
+        const dateFields: (keyof Pick<Course, 'startDate' | 'endDate' | 'enrollmentStartDate' | 'enrollmentEndDate' | 'unenrollmentEndDate'>)[] = [
+            'startDate',
+            'endDate',
+            'enrollmentStartDate',
+            'enrollmentEndDate',
+            'unenrollmentEndDate',
+        ];
         for (const field of dateFields) {
             this.courseForm.controls[field].valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
-                (this.course as Record<string, any>)[field] = value;
+                this.course[field] = value;
             });
         }
 
@@ -443,6 +449,7 @@ export class CourseUpdateComponent implements OnInit {
             this.courseForm.controls['onlineCourse'].setValue(false);
             if (!this.course.enrollmentStartDate) {
                 this.course.enrollmentStartDate = this.course.startDate;
+                // Note: the valueChanges subscription in ngOnInit also syncs this back to this.course
                 this.courseForm.controls['enrollmentStartDate'].setValue(this.course.startDate);
             }
             if (!this.course.enrollmentEndDate) {
@@ -450,15 +457,18 @@ export class CourseUpdateComponent implements OnInit {
                 // therefore default enrollment end date should be before unenrollment end date to be valid
                 const defaultEnrollmentEndDate = this.course.endDate?.subtract(1, 'minute');
                 this.course.enrollmentEndDate = defaultEnrollmentEndDate;
+                // Note: the valueChanges subscription in ngOnInit also syncs this back to this.course
                 this.courseForm.controls['enrollmentEndDate'].setValue(defaultEnrollmentEndDate);
             }
         } else {
             if (this.course.enrollmentStartDate) {
                 this.course.enrollmentStartDate = undefined;
+                // Note: the valueChanges subscription in ngOnInit also syncs this back to this.course
                 this.courseForm.controls['enrollmentStartDate'].setValue(undefined);
             }
             if (this.course.enrollmentEndDate) {
                 this.course.enrollmentEndDate = undefined;
+                // Note: the valueChanges subscription in ngOnInit also syncs this back to this.course
                 this.courseForm.controls['enrollmentEndDate'].setValue(undefined);
             }
             if (this.course.unenrollmentEnabled) {
@@ -476,9 +486,11 @@ export class CourseUpdateComponent implements OnInit {
         this.courseForm.controls['unenrollmentEnabled'].setValue(this.course.unenrollmentEnabled);
         if (this.course.unenrollmentEnabled && !this.course.unenrollmentEndDate) {
             this.course.unenrollmentEndDate = this.course.endDate;
+            // Note: the valueChanges subscription in ngOnInit also syncs this back to this.course
             this.courseForm.controls['unenrollmentEndDate'].setValue(this.course.unenrollmentEndDate);
         } else if (!this.course.unenrollmentEnabled && this.course.unenrollmentEndDate) {
             this.course.unenrollmentEndDate = undefined;
+            // Note: the valueChanges subscription in ngOnInit also syncs this back to this.course
             this.courseForm.controls['unenrollmentEndDate'].setValue(undefined);
         }
     }
