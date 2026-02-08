@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * DTO for a quality issue found in the problem statement.
  *
  * @param category         Issue category: CLARITY, COHERENCE, or COMPLETENESS
- * @param severity         Issue severity: INFO, WARNING, or ERROR
+ * @param severity         Issue severity: LOW, MEDIUM, or HIGH
  * @param description      Description of what is wrong
  * @param location         Location in the problem statement (line numbers)
  * @param suggestedFix     Concrete suggestion to fix the issue

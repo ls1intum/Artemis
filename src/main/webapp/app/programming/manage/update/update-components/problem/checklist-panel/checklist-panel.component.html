@@ -10,104 +10,187 @@
     </div>
 
     <div class="card-body">
-        <!-- Action summary banner -->
-        @if (lastActionSummary()) {
-            <div class="alert alert-success alert-dismissible fade show py-2 mb-2" role="alert">
-                <fa-icon [icon]="faCheckCircle" class="me-1" />
-                <small>{{ lastActionSummary() }}</small>
-                <button type="button" class="btn-close btn-close-sm" (click)="lastActionSummary.set(undefined)"></button>
-            </div>
-        }
-
         @if (analysisResult(); as result) {
             <div class="analysis-results">
-                <!-- Competencies Section with Radar Overview -->
+                <!-- Quality Section (moved to top) -->
+                <div class="card mb-2">
+                    <div class="card-header p-2 d-flex align-items-center" (click)="sections.quality = !sections.quality" style="cursor: pointer">
+                        <fa-icon [icon]="sections.quality ? faChevronDown : faChevronRight" class="me-2 text-muted" />
+                        <h6 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.title">Quality Assessment</h6>
+                        @if (result.qualityIssues?.length) {
+                            <span class="badge bg-warning ms-2">{{ result.qualityIssues?.length }}</span>
+                        } @else {
+                            <span class="badge bg-success ms-2">
+                                <fa-icon [icon]="faCheckCircle" size="xs" />
+                            </span>
+                        }
+                    </div>
+                    @if (sections.quality) {
+                        <div class="card-body">
+                            <!-- Quality Radar Chart -->
+                            <div class="quality-radar-section d-flex align-items-start gap-4 mb-3">
+                                <div class="quality-radar-chart flex-shrink-0">
+                                    <svg viewBox="-120 -120 240 240" width="220" height="220" style="overflow: visible">
+                                        <!-- Background grid -->
+                                        <g class="radar-grid">
+                                            @for (level of [0.25, 0.5, 0.75, 1.0]; track level) {
+                                                <polygon [attr.points]="getQualityGridPoints(level)" fill="none" stroke="var(--bs-secondary)" stroke-width="0.5" opacity="0.3" />
+                                            }
+                                        </g>
+                                        <!-- Axes -->
+                                        <g class="radar-axes">
+                                            @for (point of qualityRadarPoints; track point.label) {
+                                                <line x1="0" y1="0" [attr.x2]="point.axisX" [attr.y2]="point.axisY" [attr.stroke]="point.color" stroke-width="1" opacity="0.5" />
+                                            }
+                                        </g>
+                                        <!-- Data polygon -->
+                                        <polygon [attr.points]="qualityPolygonPoints" fill="var(--bs-primary)" fill-opacity="0.15" stroke="var(--bs-primary)" stroke-width="2" />
+                                        <!-- Data points and labels -->
+                                        @for (point of qualityRadarPoints; track point.label) {
+                                            <circle [attr.cx]="point.dataX" [attr.cy]="point.dataY" r="4" [attr.fill]="point.color" stroke="white" stroke-width="1.5" />
+                                            <text
+                                                [attr.x]="point.labelX"
+                                                [attr.y]="point.labelY"
+                                                text-anchor="middle"
+                                                dominant-baseline="middle"
+                                                class="radar-label"
+                                                [attr.fill]="point.color"
+                                                font-size="11"
+                                                font-weight="600"
+                                            >
+                                                {{ point.label }}
+                                            </text>
+                                            <text
+                                                [attr.x]="point.labelX"
+                                                [attr.y]="point.labelY + 14"
+                                                text-anchor="middle"
+                                                dominant-baseline="middle"
+                                                fill="var(--bs-body-color)"
+                                                font-size="10"
+                                                opacity="0.7"
+                                            >
+                                                {{ point.value * 100 | number: '1.0-0' }}%
+                                            </text>
+                                        }
+                                    </svg>
+                                </div>
+                                <!-- Quality Legend -->
+                                <div class="quality-legend flex-grow-1 small">
+                                    @for (point of qualityRadarPoints; track point.label) {
+                                        <div class="d-flex align-items-center mb-2">
+                                            <span class="quality-dot me-2" [style.background-color]="point.color"></span>
+                                            <span class="fw-semibold me-2">{{ point.label }}</span>
+                                            <span class="text-muted">{{ point.value * 100 | number: '1.0-0' }}%</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                            @if (!result.qualityIssues || result.qualityIssues.length === 0) {
+                                <div class="text-success d-flex align-items-center gap-2 py-2">
+                                    <fa-icon [icon]="faCheckCircle" />
+                                    <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.empty">No quality issues found.</span>
+                                </div>
+                            }
+                            @if (result.qualityIssues && result.qualityIssues.length > 0) {
+                                <div class="d-flex justify-content-end mb-2">
+                                    <button class="btn btn-sm btn-outline-primary" [disabled]="isApplyingAction()" (click)="fixAllQualityIssues()">
+                                        @if (isActionLoading('fix-all')) {
+                                            <fa-icon [icon]="faSpinner" animation="spin" size="xs" class="me-1" />
+                                        } @else {
+                                            <fa-icon [icon]="faBolt" size="xs" class="me-1" />
+                                        }
+                                        <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.fixAll">Fix All Issues</span>
+                                    </button>
+                                </div>
+                                <div class="quality-issues-list">
+                                    @for (issue of result.qualityIssues; track issue; let i = $index) {
+                                        <div class="quality-issue-item">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                    <span class="badge category-badge" [ngClass]="getCategoryColorClass(issue.category)">{{ issue.category }}</span>
+                                                    <span class="badge" [ngClass]="getSeverityBadgeClass(issue.severity)">{{ issue.severity }}</span>
+                                                </div>
+                                                <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                                                    @if (issue.location?.startLine) {
+                                                        <small class="text-muted">Line {{ issue.location?.startLine }}</small>
+                                                    }
+                                                    <button
+                                                        class="btn btn-sm btn-outline-warning action-btn"
+                                                        [disabled]="isApplyingAction()"
+                                                        (click)="fixQualityIssue(issue, i)"
+                                                        [attr.title]="'artemisApp.programmingExercise.instructorChecklist.quality.fixIssue' | artemisTranslate"
+                                                    >
+                                                        @if (isActionLoading('fix-issue-' + i)) {
+                                                            <fa-icon [icon]="faSpinner" animation="spin" size="xs" />
+                                                        } @else {
+                                                            <fa-icon [icon]="faWrench" size="xs" />
+                                                        }
+                                                        <span class="ms-1" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.fix">Fix</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <p class="mb-1 mt-2 small">{{ issue.description }}</p>
+                                            @if (issue.suggestedFix) {
+                                                <div class="small text-muted">
+                                                    <strong jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.suggestedFix">Suggested fix:</strong>
+                                                    {{ issue.suggestedFix }}
+                                                </div>
+                                            }
+                                            @if (issue.impactOnLearners) {
+                                                <div class="small text-muted fst-italic mt-1">
+                                                    <fa-icon [icon]="faInfoCircle" class="me-1" />
+                                                    {{ issue.impactOnLearners }}
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <!-- Estimated Learning Goals Section -->
                 <div class="card mb-2">
                     <div class="card-header p-2 d-flex align-items-center" (click)="sections.competencies = !sections.competencies" style="cursor: pointer">
                         <fa-icon [icon]="sections.competencies ? faChevronDown : faChevronRight" class="me-2 text-muted" />
-                        <h6 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.title">Top 5 Competencies</h6>
+                        <h6 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.title">Estimated Learning Goals</h6>
                         @if (result.inferredCompetencies?.length) {
                             <span class="badge bg-primary ms-2">{{ result.inferredCompetencies?.length }}</span>
                         }
                     </div>
                     @if (sections.competencies) {
-                        <div class="card-body">
+                        <div class="card-body p-0">
                             @if (!result.inferredCompetencies || result.inferredCompetencies.length === 0) {
-                                <div class="text-muted" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.empty">No competencies inferred.</div>
+                                <div class="p-3 text-muted" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.empty">No competencies inferred.</div>
                             }
                             @if (result.inferredCompetencies && result.inferredCompetencies.length > 0) {
-                                <!-- Competency Radar Chart Overview -->
-                                <div class="competency-radar-chart d-flex justify-content-center mb-3" style="padding: 20px 80px">
-                                    <svg viewBox="-150 -150 300 300" width="300" height="300" style="overflow: visible">
-                                        <!-- Background grid lines -->
-                                        <g class="radar-grid">
-                                            @for (level of [0.25, 0.5, 0.75, 1.0]; track level) {
-                                                <polygon [attr.points]="getCompetencyGridPoints(level)" fill="none" stroke="#6c757d" stroke-width="1" opacity="0.4" />
-                                            }
-                                        </g>
-
-                                        <!-- Axis lines -->
-                                        <g class="radar-axes">
-                                            @for (point of competencyRadarPoints; track point.label) {
-                                                <line x1="0" y1="0" [attr.x2]="point.axisX" [attr.y2]="point.axisY" stroke="#0d6efd" stroke-width="1.5" opacity="0.7" />
-                                            }
-                                        </g>
-
-                                        <!-- Data polygon -->
-                                        <polygon [attr.points]="competencyPolygonPoints" fill="#0d6efd" fill-opacity="0.35" stroke="#0d6efd" stroke-width="2.5" />
-
-                                        <!-- Data points -->
-                                        <g class="radar-points">
-                                            @for (point of competencyRadarPoints; track point.label) {
-                                                <circle [attr.cx]="point.dataX" [attr.cy]="point.dataY" r="5" fill="#0d6efd" stroke="white" stroke-width="2" />
-                                            }
-                                        </g>
-
-                                        <!-- Labels -->
-                                        <g class="radar-labels">
-                                            @for (point of competencyRadarPoints; track point.label) {
-                                                <text
-                                                    [attr.x]="point.labelX"
-                                                    [attr.y]="point.labelY"
-                                                    [attr.text-anchor]="point.textAnchor"
-                                                    class="radar-label"
-                                                    fill="var(--bs-body-color, #212529)"
-                                                    font-size="12"
-                                                >
-                                                    <tspan font-weight="bold">{{ point.value * 100 | number: '1.0-0' }}%</tspan>
-                                                    <tspan [attr.x]="point.labelX" dy="15">{{ point.label }}</tspan>
-                                                </text>
-                                            }
-                                        </g>
-                                    </svg>
-                                </div>
-
-                                <!-- Detailed Competency List -->
-                                <ul class="list-group list-group-flush">
+                                <div class="competency-list">
                                     @for (comp of result.inferredCompetencies; track comp.rank) {
-                                        <li class="list-group-item competency-card">
+                                        <div class="competency-item">
                                             <div class="d-flex justify-content-between align-items-start">
                                                 <div class="flex-grow-1">
-                                                    <div class="d-flex align-items-center mb-1">
-                                                        <span class="badge bg-secondary me-2">{{ comp.knowledgeAreaShortTitle }}</span>
-                                                        <strong>{{ comp.competencyTitle }}</strong>
+                                                    <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                                                        <span class="badge bg-secondary">{{ comp.knowledgeAreaShortTitle }}</span>
+                                                        <strong class="small">{{ comp.competencyTitle }}</strong>
                                                         @if (comp.isLikelyPrimary) {
-                                                            <span
-                                                                class="badge bg-primary ms-2"
-                                                                jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.primary"
+                                                            <span class="badge bg-primary" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.primary"
                                                                 >Primary</span
                                                             >
                                                         }
                                                     </div>
-                                                    <div class="d-flex align-items-center gap-2 mb-1">
-                                                        <span class="badge bg-info">{{ comp.taxonomyLevel }}</span>
-                                                        <div class="confidence-bar" [style.width.%]="(comp.confidence || 0) * 100" [ngClass]="getConfidenceClass(comp.confidence)">
-                                                            {{ (comp.confidence || 0) * 100 | number: '1.0-0' }}%
-                                                        </div>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <span class="badge bg-info badge-sm">{{ comp.taxonomyLevel }}</span>
+                                                        <span class="relevance-badge" [ngClass]="getRelevanceBadgeClass(comp.confidence)">
+                                                            {{ getRelevanceLabel(comp.confidence) }}
+                                                        </span>
                                                     </div>
-                                                    <p class="mb-0 text-muted small">{{ comp.whyThisMatches }}</p>
+                                                    @if (comp.whyThisMatches) {
+                                                        <p class="mb-0 text-muted small mt-1">{{ comp.whyThisMatches }}</p>
+                                                    }
                                                 </div>
-                                                <div class="d-flex align-items-center gap-1">
+                                                <div class="d-flex align-items-center gap-1 flex-shrink-0">
                                                     <button
                                                         class="btn btn-sm btn-outline-success action-btn"
                                                         [disabled]="isApplyingAction()"
@@ -132,13 +215,13 @@
                                                             <fa-icon [icon]="faMinus" size="xs" />
                                                         }
                                                     </button>
-                                                    <button class="btn btn-sm btn-link" (click)="toggleCompetencyExpand(comp.rank || 0); $event.stopPropagation()">
-                                                        <fa-icon [icon]="isCompetencyExpanded(comp.rank || 0) ? faChevronDown : faChevronRight" />
+                                                    <button class="btn btn-sm btn-link p-0 ms-1" (click)="toggleCompetencyExpand(comp.rank || 0); $event.stopPropagation()">
+                                                        <fa-icon [icon]="isCompetencyExpanded(comp.rank || 0) ? faChevronDown : faChevronRight" size="xs" />
                                                     </button>
                                                 </div>
                                             </div>
                                             @if (isCompetencyExpanded(comp.rank || 0) && comp.evidence?.length) {
-                                                <div class="evidence-section mt-2 ps-3 border-start">
+                                                <div class="evidence-section mt-2">
                                                     <strong class="small" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.evidence">Evidence:</strong>
                                                     <ul class="small mb-0">
                                                         @for (item of comp.evidence; track item) {
@@ -147,9 +230,9 @@
                                                     </ul>
                                                 </div>
                                             }
-                                        </li>
+                                        </div>
                                     }
-                                </ul>
+                                </div>
                             }
                         </div>
                     }
@@ -214,83 +297,6 @@
                                     </button>
                                 }
                             </div>
-                        </div>
-                    }
-                </div>
-
-                <!-- Quality Issues Section -->
-                <div class="card mb-2">
-                    <div class="card-header p-2 d-flex align-items-center" (click)="sections.quality = !sections.quality" style="cursor: pointer">
-                        <fa-icon [icon]="sections.quality ? faChevronDown : faChevronRight" class="me-2 text-muted" />
-                        <h6 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.title">Quality Issues</h6>
-                        @if (result.qualityIssues?.length) {
-                            <span class="badge bg-warning ms-2">{{ result.qualityIssues?.length }}</span>
-                        }
-                    </div>
-                    @if (sections.quality) {
-                        <div class="card-body p-0">
-                            @if (!result.qualityIssues || result.qualityIssues.length === 0) {
-                                <div class="p-3 text-success">
-                                    <fa-icon [icon]="faCheckCircle" />
-                                    <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.empty"> No quality issues found.</span>
-                                </div>
-                            }
-                            @if (result.qualityIssues && result.qualityIssues.length > 0) {
-                                <!-- Fix All button -->
-                                <div class="px-3 pt-2 pb-1 d-flex justify-content-end">
-                                    <button class="btn btn-sm btn-outline-primary" [disabled]="isApplyingAction()" (click)="fixAllQualityIssues()">
-                                        @if (isActionLoading('fix-all')) {
-                                            <fa-icon [icon]="faSpinner" animation="spin" size="xs" class="me-1" />
-                                        } @else {
-                                            <fa-icon [icon]="faBolt" size="xs" class="me-1" />
-                                        }
-                                        <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.fixAll">Fix All Issues</span>
-                                    </button>
-                                </div>
-                                <ul class="list-group list-group-flush">
-                                    @for (issue of result.qualityIssues; track issue; let i = $index) {
-                                        <li class="list-group-item">
-                                            <div class="d-flex w-100 justify-content-between align-items-start">
-                                                <div>
-                                                    <span class="badge bg-secondary me-2">{{ issue.category }}</span>
-                                                    <span [ngClass]="getSeverityClass(issue.severity)">{{ issue.severity }}</span>
-                                                </div>
-                                                <div class="d-flex align-items-center gap-2">
-                                                    @if (issue.location?.startLine) {
-                                                        <small class="text-muted">Line {{ issue.location?.startLine }}</small>
-                                                    }
-                                                    <button
-                                                        class="btn btn-sm btn-outline-warning action-btn"
-                                                        [disabled]="isApplyingAction()"
-                                                        (click)="fixQualityIssue(issue, i)"
-                                                        [attr.title]="'artemisApp.programmingExercise.instructorChecklist.quality.fixIssue' | artemisTranslate"
-                                                    >
-                                                        @if (isActionLoading('fix-issue-' + i)) {
-                                                            <fa-icon [icon]="faSpinner" animation="spin" size="xs" />
-                                                        } @else {
-                                                            <fa-icon [icon]="faWrench" size="xs" />
-                                                        }
-                                                        <span class="ms-1" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.fix">Fix</span>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <p class="mb-1 mt-1">{{ issue.description }}</p>
-                                            @if (issue.suggestedFix) {
-                                                <div class="small">
-                                                    <strong jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.fix">Fix:</strong>
-                                                    {{ issue.suggestedFix }}
-                                                </div>
-                                            }
-                                            @if (issue.impactOnLearners) {
-                                                <div class="small text-muted fst-italic">
-                                                    <fa-icon [icon]="faInfoCircle" class="me-1" />
-                                                    {{ issue.impactOnLearners }}
-                                                </div>
-                                            }
-                                        </li>
-                                    }
-                                </ul>
-                            }
                         </div>
                     }
                 </div>

@@ -155,8 +155,18 @@ public class HyperionProblemStatementResource {
     @PostMapping("programming-exercises/{exerciseId}/checklist-actions")
     public ResponseEntity<ChecklistActionResponseDTO> applyChecklistAction(@PathVariable long exerciseId, @Valid @RequestBody ChecklistActionRequestDTO request) {
         log.debug("REST request to Hyperion checklist action [{}] for exercise [{}]", request.actionType(), exerciseId);
-        programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        var result = checklistService.applyChecklistAction(request);
-        return ResponseEntity.ok(result);
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        var actionResult = checklistService.applyChecklistAction(request);
+
+        if (actionResult.applied()) {
+            // Re-analyze the updated problem statement in the same request
+            var analysisRequest = new ChecklistAnalysisRequestDTO(actionResult.updatedProblemStatement(), exercise.getDifficulty() != null ? exercise.getDifficulty().name() : null,
+                    exercise.getProgrammingLanguage() != null ? exercise.getProgrammingLanguage().name() : null);
+            var analysis = checklistService.analyzeChecklist(exercise, analysisRequest);
+            var enrichedResult = new ChecklistActionResponseDTO(actionResult.updatedProblemStatement(), actionResult.applied(), actionResult.summary(), analysis);
+            return ResponseEntity.ok(enrichedResult);
+        }
+
+        return ResponseEntity.ok(actionResult);
     }
 }

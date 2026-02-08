@@ -788,7 +788,7 @@
                 "analyzing": "Analyzing...",
                 "defaultMessage": "Click \"Analyze Problem Statement\" to check for competencies, difficulty, and quality issues.",
                 "competencies": {
-                    "title": "Top 5 Competencies",
+                    "title": "Estimated Learning Goals",
                     "empty": "No competencies inferred.",
                     "primary": "Primary",
                     "evidence": "Evidence:",
@@ -805,9 +805,10 @@
                     "match": "Match:"
                 },
                 "quality": {
-                    "title": "Quality Issues",
+                    "title": "Quality Assessment",
                     "empty": "No quality issues found.",
-                    "fix": "Fix:",
+                    "fix": "Fix",
+                    "suggestedFix": "Suggested fix:",
                     "fixAll": "Fix All Issues",
                     "fixIssue": "Apply AI fix for this issue"
                 },

@@ -86,7 +86,7 @@ class HyperionChecklistServiceTest {
                     "issues": [
                         {
                             "category": "CLARITY",
-                            "severity": "WARNING",
+                            "severity": "MEDIUM",
                             "description": "Edge case behavior undefined",
                             "location": { "startLine": 5, "endLine": 7 },
                             "suggestedFix": "Specify behavior for empty input",

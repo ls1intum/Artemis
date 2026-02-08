@@ -1,4 +1,4 @@
-import { Component, inject, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -10,7 +10,6 @@ import {
     faChevronDown,
     faChevronRight,
     faEquals,
-    faExclamationTriangle,
     faInfoCircle,
     faMagic,
     faMinus,
@@ -49,7 +48,6 @@ export class ChecklistPanelComponent {
     isLoading = signal<boolean>(false);
     isApplyingAction = signal<boolean>(false);
     actionLoadingKey = signal<string | undefined>(undefined);
-    lastActionSummary = signal<string | undefined>(undefined);
 
     // Expanded state for competency evidence
     expandedCompetencies = signal<Set<number>>(new Set());
@@ -64,7 +62,6 @@ export class ChecklistPanelComponent {
 
     // Icons
     faCheckCircle = faCheckCircle;
-    faExclamationTriangle = faExclamationTriangle;
     faInfoCircle = faInfoCircle;
     faSpinner = faSpinner;
     faMagic = faMagic;
@@ -128,13 +125,52 @@ export class ChecklistPanelComponent {
 
     getSeverityClass(severity: string | undefined): string {
         switch (severity?.toUpperCase()) {
-            case 'ERROR':
+            case 'HIGH':
                 return 'text-danger';
-            case 'WARNING':
+            case 'MEDIUM':
                 return 'text-warning';
-            case 'INFO':
+            case 'LOW':
             default:
                 return 'text-info';
+        }
+    }
+
+    getSeverityBadgeClass(severity: string | undefined): string {
+        switch (severity?.toUpperCase()) {
+            case 'HIGH':
+                return 'bg-danger';
+            case 'MEDIUM':
+                return 'bg-warning text-dark';
+            case 'LOW':
+            default:
+                return 'bg-info';
+        }
+    }
+
+    getRelevanceLabel(confidence: number | undefined): string {
+        if (confidence === undefined) return 'Low';
+        if (confidence >= 0.7) return 'High';
+        if (confidence >= 0.4) return 'Medium';
+        return 'Low';
+    }
+
+    getRelevanceBadgeClass(confidence: number | undefined): string {
+        if (confidence === undefined) return 'relevance-low';
+        if (confidence >= 0.7) return 'relevance-high';
+        if (confidence >= 0.4) return 'relevance-medium';
+        return 'relevance-low';
+    }
+
+    getCategoryColorClass(category: string | undefined): string {
+        switch (category?.toUpperCase()) {
+            case 'CLARITY':
+                return 'category-clarity';
+            case 'COHERENCE':
+                return 'category-coherence';
+            case 'COMPLETENESS':
+                return 'category-completeness';
+            default:
+                return 'category-default';
         }
     }
 
@@ -164,105 +200,71 @@ export class ChecklistPanelComponent {
         }
     }
 
-    // Competency radar chart constants
-    private readonly COMPETENCY_RADAR_RADIUS = 100;
-    private readonly COMPETENCY_LABEL_OFFSET = 30;
+    // Quality radar chart for Clarity, Coherence, Completeness
+    private readonly QUALITY_RADAR_RADIUS = 80;
+    private readonly QUALITY_CATEGORIES = ['CLARITY', 'COHERENCE', 'COMPLETENESS'] as const;
+    private readonly QUALITY_COLORS: Record<string, string> = {
+        CLARITY: '#3b82f6',
+        COHERENCE: '#8b5cf6',
+        COMPLETENESS: '#10b981',
+    };
 
-    // Extract short label from competency title
-    private getShortLabel(title: string | undefined): string {
-        if (!title) return '';
-        // Remove common prefixes like "Analyze and implement", "Design and develop", etc.
-        const cleaned = title
-            .replace(/^(Analyze and implement|Design and develop|Implement and test|Create and manage|Apply|Understand|Analyze|Implement|Design|Develop|Manage|Use)\s+/i, '')
-            .replace(/\s+(in\s+\w+|using\s+\w+)$/i, ''); // Remove trailing "in Java", "using Python", etc.
+    qualityScores = computed(() => {
+        const issues = this.analysisResult()?.qualityIssues || [];
+        const scores: Record<string, number> = { CLARITY: 1.0, COHERENCE: 1.0, COMPLETENESS: 1.0 };
 
-        // Truncate if too long (max ~35 chars)
-        if (cleaned.length > 35) {
-            return cleaned.substring(0, 33) + '...';
+        for (const issue of issues) {
+            const cat = issue.category?.toUpperCase() || '';
+            if (cat in scores) {
+                const penalty = issue.severity?.toUpperCase() === 'HIGH' ? 0.3 : issue.severity?.toUpperCase() === 'MEDIUM' ? 0.2 : 0.1;
+                scores[cat] = Math.max(0, scores[cat] - penalty);
+            }
         }
-        return cleaned;
-    }
+        return scores;
+    });
 
-    // Calculate competency radar point coordinates
-    get competencyRadarPoints(): {
-        label: string;
-        fullLabel: string;
-        value: number;
-        axisX: number;
-        axisY: number;
-        dataX: number;
-        dataY: number;
-        labelX: number;
-        labelY: number;
-        textAnchor: string;
-    }[] {
-        const competencies = this.analysisResult()?.inferredCompetencies || [];
-        if (competencies.length === 0) return [];
+    get qualityRadarPoints(): { label: string; value: number; color: string; axisX: number; axisY: number; dataX: number; dataY: number; labelX: number; labelY: number }[] {
+        const scores = this.qualityScores();
+        const count = this.QUALITY_CATEGORIES.length;
+        const angleStep = (2 * Math.PI) / count;
+        const startAngle = -Math.PI / 2;
 
-        const angleStep = (2 * Math.PI) / competencies.length;
-        const startAngle = -Math.PI / 2; // Start from top
-
-        return competencies.map((comp, i) => {
+        return this.QUALITY_CATEGORIES.map((cat, i) => {
             const angle = startAngle + i * angleStep;
             const cos = Math.cos(angle);
             const sin = Math.sin(angle);
-
-            // Axis endpoint
-            const axisX = cos * this.COMPETENCY_RADAR_RADIUS;
-            const axisY = sin * this.COMPETENCY_RADAR_RADIUS;
-
-            // Data point (scaled by confidence)
-            const confidence = comp.confidence || 0;
-            const dataRadius = Math.max(confidence * this.COMPETENCY_RADAR_RADIUS, 8);
-            const dataX = cos * dataRadius;
-            const dataY = sin * dataRadius;
-
-            // Label position (outside the chart)
-            const labelRadius = this.COMPETENCY_RADAR_RADIUS + this.COMPETENCY_LABEL_OFFSET;
-            const labelX = cos * labelRadius;
-            const labelY = sin * labelRadius;
-
-            // Text anchor based on position
-            let textAnchor = 'middle';
-            if (cos < -0.1) textAnchor = 'end';
-            else if (cos > 0.1) textAnchor = 'start';
+            const value = scores[cat];
+            const dataRadius = value * this.QUALITY_RADAR_RADIUS;
 
             return {
-                label: this.getShortLabel(comp.competencyTitle),
-                fullLabel: comp.competencyTitle || '',
-                value: confidence,
-                axisX,
-                axisY,
-                dataX,
-                dataY,
-                labelX,
-                labelY,
-                textAnchor,
+                label: cat.charAt(0) + cat.slice(1).toLowerCase(),
+                value,
+                color: this.QUALITY_COLORS[cat],
+                axisX: cos * this.QUALITY_RADAR_RADIUS,
+                axisY: sin * this.QUALITY_RADAR_RADIUS,
+                dataX: cos * dataRadius,
+                dataY: sin * dataRadius,
+                labelX: cos * (this.QUALITY_RADAR_RADIUS + 25),
+                labelY: sin * (this.QUALITY_RADAR_RADIUS + 25),
             };
         });
     }
 
-    // Generate polygon points string for competency grid
-    getCompetencyGridPoints(scale: number): string {
-        const competencies = this.analysisResult()?.inferredCompetencies || [];
-        if (competencies.length === 0) return '';
-
-        const angleStep = (2 * Math.PI) / competencies.length;
+    getQualityGridPoints(scale: number): string {
+        const count = this.QUALITY_CATEGORIES.length;
+        const angleStep = (2 * Math.PI) / count;
         const startAngle = -Math.PI / 2;
 
-        const points = competencies.map((_, i) => {
+        return Array.from({ length: count }, (_, i) => {
             const angle = startAngle + i * angleStep;
-            const x = Math.cos(angle) * this.COMPETENCY_RADAR_RADIUS * scale;
-            const y = Math.sin(angle) * this.COMPETENCY_RADAR_RADIUS * scale;
+            const x = Math.cos(angle) * this.QUALITY_RADAR_RADIUS * scale;
+            const y = Math.sin(angle) * this.QUALITY_RADAR_RADIUS * scale;
             return `${x},${y}`;
-        });
-
-        return points.join(' ');
+        }).join(' ');
     }
 
-    // Generate polygon points string for competency data
-    get competencyPolygonPoints(): string {
-        return this.competencyRadarPoints.map((p) => `${p.dataX},${p.dataY}`).join(' ');
+    get qualityPolygonPoints(): string {
+        return this.qualityRadarPoints.map((p) => `${p.dataX},${p.dataY}`).join(' ');
     }
 
     // ===== AI Action Methods =====
@@ -273,14 +275,16 @@ export class ChecklistPanelComponent {
 
         this.isApplyingAction.set(true);
         this.actionLoadingKey.set(loadingKey);
-        this.lastActionSummary.set(undefined);
 
         this.hyperionApiService.applyChecklistAction(exerciseId, request).subscribe({
             next: (res) => {
                 if (res.applied) {
                     this.problemStatementChange.emit(res.updatedProblemStatement ?? '');
-                    this.lastActionSummary.set(res.summary);
                     this.alertService.success('artemisApp.programmingExercise.instructorChecklist.actions.success');
+                    // Use the embedded re-analysis from the same response
+                    if (res.updatedAnalysis) {
+                        this.analysisResult.set(res.updatedAnalysis);
+                    }
                 } else {
                     this.alertService.warning('artemisApp.programmingExercise.instructorChecklist.actions.noChanges');
                 }

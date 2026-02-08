@@ -100,6 +100,7 @@ describe('ChecklistPanelComponent', () => {
             updatedProblemStatement: 'Updated problem statement',
             applied: true,
             summary: 'Fixed quality issue',
+            updatedAnalysis: mockResponse,
         };
 
         it('should fix a single quality issue', () => {
@@ -117,15 +118,15 @@ describe('ChecklistPanelComponent', () => {
             );
             expect(emitSpy).toHaveBeenCalledWith('Updated problem statement');
             expect(component.isApplyingAction()).toBeFalse();
-            expect(component.lastActionSummary()).toBe('Fixed quality issue');
+            expect(component.analysisResult()).toEqual(mockResponse);
         });
 
         it('should fix all quality issues', () => {
             component.analysisResult.set({
                 ...mockResponse,
                 qualityIssues: [
-                    { description: 'Issue 1', category: 'CLARITY', severity: 'WARNING' },
-                    { description: 'Issue 2', category: 'COMPLETENESS', severity: 'ERROR' },
+                    { description: 'Issue 1', category: 'CLARITY', severity: 'MEDIUM' },
+                    { description: 'Issue 2', category: 'COMPLETENESS', severity: 'HIGH' },
                 ],
             });
             const actionSpy = jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse) as any);

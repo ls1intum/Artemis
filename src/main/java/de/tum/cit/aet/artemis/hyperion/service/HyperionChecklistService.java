@@ -151,7 +151,7 @@ public class HyperionChecklistService {
             String trimmed = result.trim();
             boolean changed = !trimmed.equals(request.problemStatementMarkdown().trim());
             String summary = buildActionSummary(request);
-            return new ChecklistActionResponseDTO(trimmed, changed, summary);
+            return new ChecklistActionResponseDTO(trimmed, changed, summary, null);
         }
         catch (Exception e) {
             log.warn("Failed to apply checklist action {}: {}", request.actionType(), e.getMessage(), e);

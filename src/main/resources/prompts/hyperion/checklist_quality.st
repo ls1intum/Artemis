@@ -7,7 +7,7 @@ Analyze the following programming exercise problem statement for quality issues 
 
 ## For Each Issue Provide
 1. **category**: CLARITY, COHERENCE, or COMPLETENESS
-2. **severity**: INFO (minor), WARNING (notable), or ERROR (critical)
+2. **severity**: LOW (minor), MEDIUM (notable), or HIGH (critical)
 3. **description**: What is wrong (1-2 sentences)
 4. **location**: Line range where the issue occurs (if identifiable)
 5. **suggestedFix**: Concrete suggestion to fix the issue
@@ -27,7 +27,7 @@ Return your response as a JSON array:
 [
   {
     "category": "CLARITY|COHERENCE|COMPLETENESS",
-    "severity": "INFO|WARNING|ERROR",
+    "severity": "LOW|MEDIUM|HIGH",
     "description": "string",
     "location": { "startLine": number, "endLine": number } | null,
     "suggestedFix": "string",
