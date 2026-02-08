@@ -36,13 +36,11 @@
             display: flex;
             height: inherit;
             min-width: 0; /* allow middle strip to shrink */
-            align-items: stretch;
 
             .editor-sidebar-left {
                 flex: 0 1 auto;
                 display: flex;
                 width: 310px;
-                height: 100%;
 
                 > *:first-child {
                     flex: 1 1 auto;
@@ -104,20 +102,6 @@
     // In non-assessment mode, constrain the bottom section to fit in the viewport
     &:not(.assessment-wrapper) .editor-bottom {
         max-height: calc(100vh - 550px);
-    }
-}
-
-.left-sidebar-tabs-active {
-    .editor-main__content .editor-sidebar-right {
-        display: none;
-    }
-
-    .editor-main__content .rg-sidebar-right {
-        display: none;
-    }
-
-    .editor-main__content .editor-sidebar-left.collapsed--horizontal {
-        width: 64px !important;
     }
 }
 

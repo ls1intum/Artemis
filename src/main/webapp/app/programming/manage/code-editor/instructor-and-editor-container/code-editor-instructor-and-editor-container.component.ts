@@ -714,6 +714,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 default:
             }
         } catch {
+            this.alertService.error('artemisApp.hyperion.consistencyCheck.navigationFailed');
             this.lineJumpOnFileLoad = undefined;
             this.fileToJumpOn = undefined;
             return;

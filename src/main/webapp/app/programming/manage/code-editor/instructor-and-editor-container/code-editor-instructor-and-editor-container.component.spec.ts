@@ -658,7 +658,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(comp.lineJumpOnFileLoad).toBeUndefined();
         });
 
-        it('clears jump state when repository selection fails', () => {
+        it('shows error and clears jump state when repository selection fails', () => {
             const issue = mockIssues[3]; // TESTS_REPOSITORY
             (comp as any).codeEditorContainer.selectedRepository = jest.fn().mockReturnValue('SOLUTION');
 
@@ -667,10 +667,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                 throw error;
             });
 
+            const alertErrorSpy = jest.spyOn(alertService, 'error');
             const onEditorLoadedSpy = jest.spyOn(comp, 'onEditorLoaded');
 
             (comp as any).jumpToLocation(issue, 0);
 
+            expect(alertErrorSpy).toHaveBeenCalled();
             expect(comp.lineJumpOnFileLoad).toBeUndefined();
             expect(comp.fileToJumpOn).toBeUndefined();
             expect(onEditorLoadedSpy).not.toHaveBeenCalled();
