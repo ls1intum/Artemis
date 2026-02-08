@@ -27,7 +27,7 @@ public record ProblemStatementTargetedRefinementRequestDTO(
 
         @Min(1) @Max(10000) @Schema(description = "End column within end line (1-indexed, inclusive, optional for character-level targeting)") Integer endColumn,
 
-        @Size(max = 500) @Schema(description = "Instruction describing what should change") String instruction) {
+        @NotBlank @Size(max = 500) @Schema(description = "Instruction describing what should change") String instruction) {
 
     /**
      * Validates that startLine <= endLine and startColumn <= endColumn when on the same line.

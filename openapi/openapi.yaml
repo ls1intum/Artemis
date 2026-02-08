@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Artemis Application Server API
   contact: {name: Stephan Krusche, email: krusche@tum.de}
-  version: 8.8.0
+  version: 8.8.1
 servers:
 - {url: 'http://localhost:8080', description: Generated server url}
 paths:
@@ -788,6 +788,14 @@ components:
         students:
           type: array
           items: {$ref: '#/components/schemas/StudentExport'}
+    Timing:
+      type: object
+      description: Response containing consistency check timing
+      properties:
+        startTime: {type: string, description: Starting time, example: !!timestamp '2025-07-27T07:17:05.500Z'}
+        endTime: {type: string, description: Ending time, example: !!timestamp '2025-07-27T07:17:05.500Z'}
+        durationS: {type: number, format: double, description: Duration of consistency
+            check, example: 27.765}
     RewriteFaqRequest:
       type: object
       description: Request to rewrite a FAQ
@@ -830,4 +838,4 @@ components:
             text to be refined (max 50,000 chars)', maxLength: 50000, minLength: 0}
         userPrompt: {type: string, description: User prompt for global refinement,
           maxLength: 1000, minLength: 0}
-      required: [problemStatementText]
+      required: [problemStatementText, userPrompt]

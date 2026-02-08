@@ -1,5 +1,5 @@
 import { Injectable, WritableSignal, inject } from '@angular/core';
-import { Observable, OperatorFunction, catchError, finalize, map, of, tap } from 'rxjs';
+import { Observable, OperatorFunction, catchError, finalize, map, of } from 'rxjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileService } from 'app/shared/service/file.service';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
@@ -138,10 +138,11 @@ export class ProblemStatementService {
                 finalize(() => loadingSignal.set(false)),
                 map((response) => {
                     const success = isValid(response);
-                    this.alertService[success ? 'success' : 'error'](success ? successKey : errorKey);
+                    if (success) {
+                        this.alertService.success(successKey);
+                    }
                     return { success, content: getContent(response) };
                 }),
-                tap({ error: () => this.alertService.error(errorKey) }),
                 catchError(() => of({ success: false })),
             );
     }

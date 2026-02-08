@@ -548,7 +548,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         expect(comp.shouldShowGenerateButton()).toBeFalse();
     }));
 
-    it('should show generate button when template loading fails', fakeAsync(() => {
+    it('should NOT show generate button when template loading fails and existing content is present', fakeAsync(() => {
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.problemStatement = 'Existing content';
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
@@ -557,6 +557,6 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp['templateLoaded'].set(false);
         comp['currentProblemStatement'].set('Existing content');
 
-        expect(comp.shouldShowGenerateButton()).toBeTrue();
+        expect(comp.shouldShowGenerateButton()).toBeFalse();
     }));
 });

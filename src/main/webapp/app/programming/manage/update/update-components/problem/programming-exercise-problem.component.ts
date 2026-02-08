@@ -198,12 +198,12 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                         );
                     }
                 } else {
-                    this.alertService.error('artemisApp.programmingExercise.problemStatement.generationFailed');
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
                 }
                 this.userPrompt.set('');
             },
             error: () => {
-                this.alertService.error('artemisApp.programmingExercise.problemStatement.generationFailed');
+                this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
                 this.userPrompt.set('');
             },
         });
@@ -236,12 +236,12 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                         { injector: this.injector },
                     );
                 } else {
-                    this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementFailed');
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
                 }
                 this.userPrompt.set('');
             },
             error: () => {
-                this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementFailed');
+                this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
                 this.userPrompt.set('');
             },
         });
@@ -315,6 +315,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             return;
         }
 
+        this.currentGenerationSubscription?.unsubscribe();
         this.currentGenerationSubscription = this.problemStatementService.refineTargeted(exercise, currentContent, event, this.isGeneratingOrRefining).subscribe({
             next: (result) => {
                 if (result.success && result.content) {
@@ -326,7 +327,13 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                         },
                         { injector: this.injector },
                     );
+                } else {
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
                 }
+                this.currentGenerationSubscription = undefined;
+            },
+            error: () => {
+                this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
                 this.currentGenerationSubscription = undefined;
             },
         });

@@ -1,5 +1,11 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.MAX_PROBLEM_STATEMENT_LENGTH;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.MAX_USER_PROMPT_LENGTH;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.getSanitizedCourseDescription;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.getSanitizedCourseTitle;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.sanitizeInput;
+
 import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
@@ -30,12 +36,6 @@ public class HyperionProblemStatementRefinementService {
     private static final Logger log = LoggerFactory.getLogger(HyperionProblemStatementRefinementService.class);
 
     /**
-     * Maximum allowed length for generated problem statements (50,000 characters).
-     * This prevents excessively long responses that could cause performance issues.
-     */
-    private static final int MAX_PROBLEM_STATEMENT_LENGTH = 50_000;
-
-    /**
      * Maximum length for displaying selected text in prompts.
      */
     private static final int MAX_SELECTED_TEXT_DISPLAY_LENGTH = 100;
@@ -54,16 +54,6 @@ public class HyperionProblemStatementRefinementService {
      * Offset to convert a 1-indexed column to a 0-indexed Java string position.
      */
     private static final int ONE_INDEXED_TO_ZERO_INDEXED_OFFSET = 1;
-
-    /**
-     * Default course title when not specified.
-     */
-    private static final String DEFAULT_COURSE_TITLE = "Programming Course";
-
-    /**
-     * Default course description when not specified.
-     */
-    private static final String DEFAULT_COURSE_DESCRIPTION = "A programming course";
 
     @Nullable
     private final ChatClient chatClient;
@@ -95,32 +85,30 @@ public class HyperionProblemStatementRefinementService {
         log.debug("Refining problem statement for course [{}]", course.getId());
 
         validateRefinementPrerequisites(originalProblemStatementText);
-        validateUserPrompt(userPrompt);
 
+        String sanitizedPrompt = sanitizeInput(userPrompt);
+        validateUserPrompt(sanitizedPrompt);
+
+        String sanitizedProblemStatement = sanitizeInput(originalProblemStatementText);
+
+        GlobalRefinementPromptVariables variables = new GlobalRefinementPromptVariables(sanitizedProblemStatement, sanitizedPrompt, getSanitizedCourseTitle(course),
+                getSanitizedCourseDescription(course));
+
+        String prompt = templateService.render("/prompts/hyperion/refine_problem_statement.st", variables.asMap());
+
+        String refinedProblemStatementText;
         try {
-            // Validate input length
-            if (originalProblemStatementText.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
-                throw new InternalServerErrorAlertException("Original problem statement is too long", "ProblemStatement", "ProblemStatementRefinement.problemStatementTooLong");
-            }
-
-            GlobalRefinementPromptVariables variables = new GlobalRefinementPromptVariables(originalProblemStatementText.trim(), userPrompt, getCourseTitleOrDefault(course),
-                    getCourseDescriptionOrDefault(course));
-
-            String prompt = templateService.render("/prompts/hyperion/refine_problem_statement.st", variables.asMap());
-            String refinedProblemStatementText = null;
-            if (chatClient != null) {
-                refinedProblemStatementText = chatClient.prompt().user(prompt).call().content();
-            }
-
-            if (refinedProblemStatementText == null) {
-                throw new InternalServerErrorAlertException("Refined problem statement is null", "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementNull");
-            }
-
-            return validateAndReturnResponse(originalProblemStatementText, refinedProblemStatementText);
+            refinedProblemStatementText = chatClient.prompt().user(prompt).call().content();
         }
         catch (Exception e) {
-            return handleRefinementError(course, originalProblemStatementText, e);
+            throw handleRefinementError(course, originalProblemStatementText, e);
         }
+
+        if (refinedProblemStatementText == null) {
+            throw new InternalServerErrorAlertException("Refined problem statement is null", "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementNull");
+        }
+
+        return validateAndReturnResponse(originalProblemStatementText, refinedProblemStatementText);
     }
 
     /**
@@ -139,41 +127,44 @@ public class HyperionProblemStatementRefinementService {
         String originalProblemStatementText = request.problemStatementText();
         validateRefinementPrerequisites(originalProblemStatementText);
 
+        String sanitizedInstruction = sanitizeInput(request.instruction());
+        validateUserPrompt(sanitizedInstruction);
+
+        // Build the instruction string using sanitized inputs
+        String sanitizedProblemStatement = sanitizeInput(originalProblemStatementText);
+        String[] lines = sanitizedProblemStatement.split("\n", -1);
+        String locationRef = buildLocationReference(request, lines);
+        String targetedInstruction = locationRef + ": " + sanitizedInstruction;
+
+        // Add line numbers to help the LLM identify exact lines to modify
+        String textWithLineNumbers = addLineNumbers(sanitizedProblemStatement);
+
+        // Validate total input length
+        int totalLength = textWithLineNumbers.length() + targetedInstruction.length();
+        if (totalLength > MAX_PROBLEM_STATEMENT_LENGTH) {
+            throw new BadRequestAlertException("Input is too long (including instructions)", "ProblemStatement", "ProblemStatementRefinement.problemStatementTooLong");
+        }
+
+        TargetedRefinementPromptVariables variables = new TargetedRefinementPromptVariables(textWithLineNumbers, targetedInstruction, getSanitizedCourseTitle(course),
+                getSanitizedCourseDescription(course));
+
+        // Use the targeted refinement template for selection-based instructions
+        String prompt = templateService.render("/prompts/hyperion/refine_problem_statement_targeted.st", variables.asMap());
+
+        String refinedProblemStatementText;
         try {
-            // Build the instruction string
-            String[] lines = originalProblemStatementText.split("\n", -1);
-            String locationRef = buildLocationReference(request, lines);
-            String targetedInstruction = locationRef + ": " + request.instruction();
-
-            // Add line numbers to help the LLM identify exact lines to modify
-            String textWithLineNumbers = addLineNumbers(originalProblemStatementText);
-
-            // Validate total input length
-            int totalLength = textWithLineNumbers.length() + targetedInstruction.length();
-            if (totalLength > MAX_PROBLEM_STATEMENT_LENGTH) {
-                throw new InternalServerErrorAlertException("Input is too long (including instructions)", "ProblemStatement", "ProblemStatementRefinement.problemStatementTooLong");
-            }
-
-            TargetedRefinementPromptVariables variables = new TargetedRefinementPromptVariables(textWithLineNumbers, targetedInstruction, getCourseTitleOrDefault(course),
-                    getCourseDescriptionOrDefault(course));
-
-            // Use the targeted refinement template for selection-based instructions
-            String prompt = templateService.render("/prompts/hyperion/refine_problem_statement_targeted.st", variables.asMap());
-            String refinedProblemStatementText = null;
-            if (chatClient != null) {
-                refinedProblemStatementText = chatClient.prompt().user(prompt).call().content();
-            }
-
-            if (refinedProblemStatementText == null) {
-                throw new InternalServerErrorAlertException("AI returned null when refining the problem statement", "ProblemStatement",
-                        "ProblemStatementRefinement.problemStatementRefinementNull");
-            }
-
-            return validateAndReturnResponse(originalProblemStatementText, refinedProblemStatementText);
+            refinedProblemStatementText = chatClient.prompt().user(prompt).call().content();
         }
         catch (Exception e) {
-            return handleRefinementError(course, originalProblemStatementText, e);
+            throw handleRefinementError(course, originalProblemStatementText, e);
         }
+
+        if (refinedProblemStatementText == null) {
+            throw new InternalServerErrorAlertException("AI returned null when refining the problem statement", "ProblemStatement",
+                    "ProblemStatementRefinement.problemStatementRefinementNull");
+        }
+
+        return validateAndReturnResponse(originalProblemStatementText, refinedProblemStatementText);
     }
 
     /**
@@ -297,16 +288,14 @@ public class HyperionProblemStatementRefinementService {
      * Validates the refined response and returns the appropriate DTO.
      */
     private ProblemStatementRefinementResponseDTO validateAndReturnResponse(String originalProblemStatementText, String refinedProblemStatementText) {
-        if (refinedProblemStatementText != null && refinedProblemStatementText.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
+        if (refinedProblemStatementText.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
             throw new InternalServerErrorAlertException(
                     "Refined problem statement is too long (" + refinedProblemStatementText.length() + " characters). Maximum allowed: " + MAX_PROBLEM_STATEMENT_LENGTH,
                     "ProblemStatement", "ProblemStatementRefinement.refinedProblemStatementTooLong");
         }
 
         // Refinement didn't change content (compare trimmed values to detect semantically unchanged content)
-        String originalTrimmed = originalProblemStatementText == null ? null : originalProblemStatementText.trim();
-        String refinedTrimmed = refinedProblemStatementText == null ? null : refinedProblemStatementText.trim();
-        if (refinedTrimmed != null && refinedTrimmed.equals(originalTrimmed)) {
+        if (refinedProblemStatementText.trim().equals(originalProblemStatementText.trim())) {
             throw new InternalServerErrorAlertException("Problem statement is the same after refinement", "ProblemStatement",
                     "ProblemStatementRefinement.refinedProblemStatementUnchanged");
         }
@@ -315,23 +304,23 @@ public class HyperionProblemStatementRefinementService {
     }
 
     /**
-     * Handles refinement errors by logging and throwing appropriate exception.
-     * Re-throws InternalServerErrorAlertException unchanged to preserve specific error keys.
+     * Handles refinement errors by logging and returning an appropriate exception to throw.
+     * Re-throws InternalServerErrorAlertException and BadRequestAlertException unchanged to preserve specific error keys.
+     *
+     * @return a RuntimeException that the caller must throw
      */
-    private ProblemStatementRefinementResponseDTO handleRefinementError(Course course, String originalProblemStatementText, Exception e) {
-        // Re-throw InternalServerErrorAlertException unchanged to preserve specific error keys
+    private RuntimeException handleRefinementError(Course course, String originalProblemStatementText, Exception e) {
         if (e instanceof InternalServerErrorAlertException alertException) {
-            throw alertException;
+            return alertException;
         }
         if (e instanceof BadRequestAlertException badRequestException) {
-            throw badRequestException;
+            return badRequestException;
         }
 
-        log.error("Error refining problem statement for course [{}]. Original statement length: {}. Error: {}", course.getId(),
-                originalProblemStatementText != null ? originalProblemStatementText.length() : 0, e.getMessage(), e);
+        log.error("Error refining problem statement for course [{}]. Original statement length: {}. Error: {}", course.getId(), originalProblemStatementText.length(),
+                e.getMessage(), e);
 
-        String errorMessage = "Failed to refine problem statement: " + e.getMessage();
-        throw new InternalServerErrorAlertException(errorMessage, "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementFailed");
+        return new InternalServerErrorAlertException("Failed to refine problem statement", "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementFailed");
     }
 
     /**
@@ -341,32 +330,26 @@ public class HyperionProblemStatementRefinementService {
         if (problemStatementText == null || problemStatementText.isBlank()) {
             throw new BadRequestAlertException("Cannot refine empty problem statement", "ProblemStatement", "ProblemStatementRefinement.problemStatementEmpty");
         }
+        if (problemStatementText.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
+            throw new BadRequestAlertException("Problem statement exceeds maximum length of " + MAX_PROBLEM_STATEMENT_LENGTH + " characters", "ProblemStatement",
+                    "ProblemStatementRefinement.problemStatementTooLong");
+        }
         if (chatClient == null) {
             throw new InternalServerErrorAlertException("AI chat client is not configured", "Hyperion", "ProblemStatementRefinement.chatClientNotConfigured");
         }
     }
 
     /**
-     * Validates that the user prompt is not empty.
+     * Validates that the user prompt is not empty and does not exceed the maximum allowed length.
      */
     private void validateUserPrompt(String userPrompt) {
         if (userPrompt == null || userPrompt.isBlank()) {
             throw new BadRequestAlertException("User prompt cannot be empty", "ProblemStatement", "ProblemStatementRefinement.userPromptEmpty");
         }
-    }
-
-    /**
-     * Returns the course title or a default value if not set.
-     */
-    private String getCourseTitleOrDefault(Course course) {
-        return course.getTitle() != null ? course.getTitle() : DEFAULT_COURSE_TITLE;
-    }
-
-    /**
-     * Returns the course description or a default value if not set.
-     */
-    private String getCourseDescriptionOrDefault(Course course) {
-        return course.getDescription() != null ? course.getDescription() : DEFAULT_COURSE_DESCRIPTION;
+        if (userPrompt.length() > MAX_USER_PROMPT_LENGTH) {
+            throw new BadRequestAlertException("User prompt exceeds maximum length of " + MAX_USER_PROMPT_LENGTH + " characters", "ProblemStatement",
+                    "ProblemStatementRefinement.userPromptTooLong");
+        }
     }
 
     private interface RefinementPromptVariables {
