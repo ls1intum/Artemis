@@ -152,41 +152,44 @@ public class HyperionProblemStatementRefinementService {
         String originalProblemStatementText = request.problemStatementText();
         validateRefinementPrerequisites(originalProblemStatementText);
 
+        String sanitizedInstruction = sanitizeInput(request.instruction());
+        validateUserPrompt(sanitizedInstruction);
+
+        // Build the instruction string using sanitized inputs
+        String sanitizedProblemStatement = sanitizeInput(originalProblemStatementText);
+        String[] lines = sanitizedProblemStatement.split("\n", -1);
+        String locationRef = buildLocationReference(request, lines);
+        String targetedInstruction = locationRef + ": " + sanitizedInstruction;
+
+        // Add line numbers to help the LLM identify exact lines to modify
+        String textWithLineNumbers = addLineNumbers(sanitizedProblemStatement);
+
+        // Validate total input length
+        int totalLength = textWithLineNumbers.length() + targetedInstruction.length();
+        if (totalLength > MAX_PROBLEM_STATEMENT_LENGTH) {
+            throw new BadRequestAlertException("Input is too long (including instructions)", "ProblemStatement", "ProblemStatementRefinement.problemStatementTooLong");
+        }
+
+        TargetedRefinementPromptVariables variables = new TargetedRefinementPromptVariables(textWithLineNumbers, targetedInstruction, getSanitizedCourseTitle(course),
+                getSanitizedCourseDescription(course));
+
+        // Use the targeted refinement template for selection-based instructions
+        String prompt = templateService.render("/prompts/hyperion/refine_problem_statement_targeted.st", variables.asMap());
+
+        String refinedProblemStatementText;
         try {
-            // Build the instruction string
-            String[] lines = originalProblemStatementText.split("\n", -1);
-            String locationRef = buildLocationReference(request, lines);
-            String targetedInstruction = locationRef + ": " + request.instruction();
-
-            // Add line numbers to help the LLM identify exact lines to modify
-            String textWithLineNumbers = addLineNumbers(originalProblemStatementText);
-
-            // Validate total input length
-            int totalLength = textWithLineNumbers.length() + targetedInstruction.length();
-            if (totalLength > MAX_PROBLEM_STATEMENT_LENGTH) {
-                throw new InternalServerErrorAlertException("Input is too long (including instructions)", "ProblemStatement", "ProblemStatementRefinement.problemStatementTooLong");
-            }
-
-            TargetedRefinementPromptVariables variables = new TargetedRefinementPromptVariables(textWithLineNumbers, targetedInstruction, getCourseTitleOrDefault(course),
-                    getCourseDescriptionOrDefault(course));
-
-            // Use the targeted refinement template for selection-based instructions
-            String prompt = templateService.render("/prompts/hyperion/refine_problem_statement_targeted.st", variables.asMap());
-            String refinedProblemStatementText = null;
-            if (chatClient != null) {
-                refinedProblemStatementText = chatClient.prompt().user(prompt).call().content();
-            }
-
-            if (refinedProblemStatementText == null) {
-                throw new InternalServerErrorAlertException("AI returned null when refining the problem statement", "ProblemStatement",
-                        "ProblemStatementRefinement.problemStatementRefinementNull");
-            }
-
-            return validateAndReturnResponse(originalProblemStatementText, refinedProblemStatementText);
+            refinedProblemStatementText = chatClient.prompt().user(prompt).call().content();
         }
         catch (Exception e) {
             return handleRefinementError(course, originalProblemStatementText, e);
         }
+
+        if (refinedProblemStatementText == null) {
+            throw new InternalServerErrorAlertException("AI returned null when refining the problem statement", "ProblemStatement",
+                    "ProblemStatementRefinement.problemStatementRefinementNull");
+        }
+
+        return validateAndReturnResponse(originalProblemStatementText, refinedProblemStatementText);
     }
 
     /**
