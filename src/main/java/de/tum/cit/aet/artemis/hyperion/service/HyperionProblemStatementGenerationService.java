@@ -1,8 +1,14 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
-import java.util.Map;
-import java.util.regex.Pattern;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.MAX_PROBLEM_STATEMENT_LENGTH;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.MAX_USER_PROMPT_LENGTH;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.getSanitizedCourseDescription;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.getSanitizedCourseTitle;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.sanitizeInput;
 
+import java.util.Map;
+
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -26,20 +32,7 @@ public class HyperionProblemStatementGenerationService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionProblemStatementGenerationService.class);
 
-    /**
-     * Maximum allowed length for generated problem statements (50,000 characters).
-     * This prevents excessively long responses that could cause performance issues.
-     */
-    private static final int MAX_PROBLEM_STATEMENT_LENGTH = 50_000;
-
-    /**
-     * Maximum allowed length for user prompts (1,000 characters).
-     */
-    private static final int MAX_USER_PROMPT_LENGTH = 1_000;
-
-    /** Pattern matching control characters except newline (\n), carriage return (\r), and tab (\t). */
-    private static final Pattern CONTROL_CHAR_PATTERN = Pattern.compile("[\\p{Cc}&&[^\\n\\r\\t]]");
-
+    @Nullable
     private final ChatClient chatClient;
 
     private final HyperionPromptTemplateService templateService;
@@ -47,25 +40,12 @@ public class HyperionProblemStatementGenerationService {
     /**
      * Creates a new HyperionProblemStatementGenerationService.
      *
-     * @param chatClient      the AI chat client
+     * @param chatClient      the AI chat client, may be null if AI is not configured
      * @param templateService prompt template service
      */
-    public HyperionProblemStatementGenerationService(ChatClient chatClient, HyperionPromptTemplateService templateService) {
+    public HyperionProblemStatementGenerationService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService) {
         this.chatClient = chatClient;
         this.templateService = templateService;
-    }
-
-    /**
-     * Sanitizes user input by stripping control characters (except newlines, carriage returns, and tabs)
-     * to reduce prompt injection risk.
-     */
-    private static String sanitizeUserInput(String input) {
-        if (input == null) {
-            return "";
-        }
-        String sanitized = CONTROL_CHAR_PATTERN.matcher(input).replaceAll("");
-        sanitized = sanitized.replace("</user_input>", "");
-        return sanitized.trim();
     }
 
     /**
@@ -79,45 +59,40 @@ public class HyperionProblemStatementGenerationService {
     public ProblemStatementGenerationResponseDTO generateProblemStatement(Course course, String userPrompt) {
         log.debug("Generating problem statement for course [{}]", course.getId());
 
-        try {
-
-            String sanitizedPrompt = sanitizeUserInput(userPrompt != null ? userPrompt : "Generate a programming exercise problem statement");
-            validateUserPrompt(sanitizedPrompt);
-            String sanitizedTitle = sanitizeUserInput(course.getTitle());
-            if (sanitizedTitle.isBlank()) {
-                sanitizedTitle = "Programming Course";
-            }
-            String sanitizedDescription = sanitizeUserInput(course.getDescription());
-            if (sanitizedDescription.isBlank()) {
-                sanitizedDescription = "A programming course";
-            }
-            Map<String, String> templateVariables = Map.of("userPrompt", sanitizedPrompt, "courseTitle", sanitizedTitle, "courseDescription", sanitizedDescription);
-
-            String prompt = templateService.render("/prompts/hyperion/generate_draft_problem_statement.st", templateVariables);
-            String generatedProblemStatement = chatClient.prompt().user(prompt).call().content();
-
-            if (generatedProblemStatement == null) {
-                throw new InternalServerErrorAlertException("Generated problem statement is null", "ProblemStatement", "ProblemStatementGeneration.generationFailed");
-            }
-
-            // Validate response length
-            if (generatedProblemStatement.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
-                log.warn("Generated problem statement for course [{}] exceeds maximum length: {} characters", course.getId(), generatedProblemStatement.length());
-                throw new InternalServerErrorAlertException(
-                        "Generated problem statement is too long (" + generatedProblemStatement.length() + " characters). Maximum allowed: " + MAX_PROBLEM_STATEMENT_LENGTH,
-                        "ProblemStatement", "ProblemStatementGeneration.generatedProblemStatementTooLong");
-            }
-
-            return new ProblemStatementGenerationResponseDTO(generatedProblemStatement);
+        if (chatClient == null) {
+            throw new InternalServerErrorAlertException("AI chat client is not configured", "Hyperion", "ProblemStatementGeneration.generationFailed");
         }
-        catch (InternalServerErrorAlertException | BadRequestAlertException e) {
-            // Re-throw our own exceptions
-            throw e;
+
+        String sanitizedPrompt = sanitizeInput(userPrompt != null ? userPrompt : "Generate a programming exercise problem statement");
+        validateUserPrompt(sanitizedPrompt);
+
+        Map<String, String> templateVariables = Map.of("userPrompt", sanitizedPrompt, "courseTitle", getSanitizedCourseTitle(course), "courseDescription",
+                getSanitizedCourseDescription(course));
+
+        String prompt = templateService.render("/prompts/hyperion/generate_draft_problem_statement.st", templateVariables);
+
+        String generatedProblemStatement;
+        try {
+            generatedProblemStatement = chatClient.prompt().user(prompt).call().content();
         }
         catch (Exception e) {
             log.error("Error generating problem statement for course [{}]: {}", course.getId(), e.getMessage(), e);
             throw new InternalServerErrorAlertException("Failed to generate problem statement", "ProblemStatement", "ProblemStatementGeneration.generationFailed");
         }
+
+        if (generatedProblemStatement == null) {
+            throw new InternalServerErrorAlertException("Generated problem statement is null", "ProblemStatement", "ProblemStatementGeneration.generationFailed");
+        }
+
+        // Validate response length
+        if (generatedProblemStatement.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
+            log.warn("Generated problem statement for course [{}] exceeds maximum length: {} characters", course.getId(), generatedProblemStatement.length());
+            throw new InternalServerErrorAlertException(
+                    "Generated problem statement is too long (" + generatedProblemStatement.length() + " characters). Maximum allowed: " + MAX_PROBLEM_STATEMENT_LENGTH,
+                    "ProblemStatement", "ProblemStatementGeneration.generatedProblemStatementTooLong");
+        }
+
+        return new ProblemStatementGenerationResponseDTO(generatedProblemStatement);
     }
 
     /**

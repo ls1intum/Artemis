@@ -1,7 +1,12 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.MAX_PROBLEM_STATEMENT_LENGTH;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.MAX_USER_PROMPT_LENGTH;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.getSanitizedCourseDescription;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.getSanitizedCourseTitle;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.sanitizeInput;
+
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -28,30 +33,6 @@ import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRefinementResponseDTO
 public class HyperionProblemStatementRefinementService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionProblemStatementRefinementService.class);
-
-    /**
-     * Maximum allowed length for generated problem statements (50,000 characters).
-     * This prevents excessively long responses that could cause performance issues.
-     */
-    private static final int MAX_PROBLEM_STATEMENT_LENGTH = 50_000;
-
-    /**
-     * Maximum allowed length for user prompts (1,000 characters).
-     */
-    private static final int MAX_USER_PROMPT_LENGTH = 1_000;
-
-    /**
-     * Default course title when not specified.
-     */
-    private static final String DEFAULT_COURSE_TITLE = "Programming Course";
-
-    /**
-     * Default course description when not specified.
-     */
-    private static final String DEFAULT_COURSE_DESCRIPTION = "A programming course";
-
-    /** Pattern matching control characters except newline (\n), carriage return (\r), and tab (\t). */
-    private static final Pattern CONTROL_CHAR_PATTERN = Pattern.compile("[\\p{Cc}&&[^\\n\\r\\t]]");
 
     @Nullable
     private final ChatClient chatClient;
@@ -84,19 +65,13 @@ public class HyperionProblemStatementRefinementService {
 
         validateRefinementPrerequisites(originalProblemStatementText);
 
-        String sanitizedPrompt = sanitizeUserInput(userPrompt);
+        String sanitizedPrompt = sanitizeInput(userPrompt);
         validateUserPrompt(sanitizedPrompt);
 
-        String sanitizedTitle = sanitizeUserInput(getCourseTitleOrDefault(course));
-        if (sanitizedTitle.isBlank()) {
-            sanitizedTitle = DEFAULT_COURSE_TITLE;
-        }
-        String sanitizedDescription = sanitizeUserInput(getCourseDescriptionOrDefault(course));
-        if (sanitizedDescription.isBlank()) {
-            sanitizedDescription = DEFAULT_COURSE_DESCRIPTION;
-        }
+        String sanitizedProblemStatement = sanitizeInput(originalProblemStatementText);
 
-        GlobalRefinementPromptVariables variables = new GlobalRefinementPromptVariables(originalProblemStatementText.trim(), sanitizedPrompt, sanitizedTitle, sanitizedDescription);
+        GlobalRefinementPromptVariables variables = new GlobalRefinementPromptVariables(sanitizedProblemStatement, sanitizedPrompt, getSanitizedCourseTitle(course),
+                getSanitizedCourseDescription(course));
 
         String prompt = templateService.render("/prompts/hyperion/refine_problem_statement.st", variables.asMap());
 
@@ -181,33 +156,6 @@ public class HyperionProblemStatementRefinementService {
             throw new BadRequestAlertException("User prompt exceeds maximum length of " + MAX_USER_PROMPT_LENGTH + " characters", "ProblemStatement",
                     "ProblemStatementRefinement.userPromptTooLong");
         }
-    }
-
-    /**
-     * Returns the course title or a default value if not set.
-     */
-    private String getCourseTitleOrDefault(Course course) {
-        return course.getTitle() != null ? course.getTitle() : DEFAULT_COURSE_TITLE;
-    }
-
-    /**
-     * Returns the course description or a default value if not set.
-     */
-    private String getCourseDescriptionOrDefault(Course course) {
-        return course.getDescription() != null ? course.getDescription() : DEFAULT_COURSE_DESCRIPTION;
-    }
-
-    /**
-     * Sanitizes user input by stripping control characters (except newlines, carriage returns, and tabs)
-     * to reduce prompt injection risk.
-     */
-    private static String sanitizeUserInput(String input) {
-        if (input == null) {
-            return "";
-        }
-        String sanitized = CONTROL_CHAR_PATTERN.matcher(input).replaceAll("");
-        sanitized = sanitized.replace("</user_input>", "");
-        return sanitized.trim();
     }
 
     private interface RefinementPromptVariables {
