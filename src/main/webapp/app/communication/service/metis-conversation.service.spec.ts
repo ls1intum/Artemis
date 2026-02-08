@@ -457,17 +457,19 @@ describe('MetisConversationService', () => {
 
             const nextSpy = jest.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
 
-            (metisConversationService as any).updateConversationAsRead(nonExistentConversation.id, dayjs(), 5);
+            (metisConversationService as any).updateLastReadDateAndNumberOfUnreadMessages(nonExistentConversation.id, dayjs(), 5);
 
             expect(nextSpy).not.toHaveBeenCalled();
         });
 
         it('should not update active conversation if conversationId does not match', () => {
+            groupChat.unreadMessagesCount = 0;
+            groupChat.hasUnreadMessage = false;
             (metisConversationService as any).activeConversation = groupChat;
             (metisConversationService as any).conversationsOfUser = [groupChat];
             const nonExistentConversation = { ...oneToOneChat, id: 999 };
 
-            (metisConversationService as any).updateConversationAsRead(nonExistentConversation.id, dayjs(), 5);
+            (metisConversationService as any).updateLastReadDateAndNumberOfUnreadMessages(nonExistentConversation.id, dayjs(), 5);
 
             expect((metisConversationService as any).activeConversation.unreadMessagesCount).toBe(0);
             expect((metisConversationService as any).activeConversation.hasUnreadMessage).toBeFalse();
