@@ -112,7 +112,8 @@ public abstract class AbstractArtemisBuildAgentTest {
         dockerClient = dockerClientMock;
 
         // Ensure build executor is initialized before each test to prevent flaky tests
-        // caused by previous tests calling closeBuildAgentServices() (e.g., during pause/resume)
+        // caused by previous tests calling closeBuildAgentServices() (e.g., during pause/resume).
+        // openBuildAgentServices() also sets dockerAvailable = true.
         buildAgentConfiguration.openBuildAgentServices();
     }
 

@@ -180,11 +180,10 @@ public class BuildAgentDockerService {
             }
             catch (Exception ex) {
                 if (DockerUtil.isDockerNotAvailable(ex)) {
-                    log.error("Cannot connect to Docker Host. Make sure Docker is running and configured properly! Error while listing containers for cleanup: {}",
-                            ex.getMessage());
+                    log.debug("Docker is not available. Skipping container cleanup: {}", ex.getMessage());
                     return;
                 }
-                log.error("Make sure Docker is running and configured properly! Error while listing containers for cleanup: {}", ex.getMessage(), ex);
+                log.error("Error while listing containers for cleanup: {}", ex.getMessage(), ex);
                 return;
             }
             finally {
@@ -205,7 +204,11 @@ public class BuildAgentDockerService {
                         .toList();
             }
             catch (Exception ex) {
-                log.error("Make sure Docker is running! Error while listing containers for cleanup: {}", ex.getMessage(), ex);
+                if (DockerUtil.isDockerNotAvailable(ex)) {
+                    log.debug("Docker is not available. Skipping container cleanup: {}", ex.getMessage());
+                    return;
+                }
+                log.error("Error while listing containers for cleanup: {}", ex.getMessage(), ex);
                 return;
             }
         }
@@ -258,6 +261,9 @@ public class BuildAgentDockerService {
      * @throws LocalCIException if the image pull is interrupted or fails due to other exceptions.
      */
     public void pullDockerImage(BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) {
+        if (!buildAgentConfiguration.isDockerAvailable()) {
+            throw new LocalCIException("Docker is not available");
+        }
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         final String imageName = buildJob.buildConfig().dockerImage();
         try (var inspectImageCommand = dockerClient.inspectImageCmd(imageName)) {
@@ -333,10 +339,9 @@ public class BuildAgentDockerService {
             }
             catch (Exception ex) {
                 if (DockerUtil.isDockerNotAvailable(ex)) {
-                    log.error("Cannot connect to Docker Host. Make sure Docker is running and configured properly! Error while inspecting image: {}", ex.getMessage());
+                    log.warn("Docker is not available. Error while inspecting image {}: {}", imageName, ex.getMessage());
                 }
-                throw new LocalCIException("Cannot connect to Docker Host. Make sure Docker is running and configured properly!", ex);
-                // Do not proceed if Docker is not running
+                throw new LocalCIException("Docker is not available. Cannot pull image " + imageName, ex);
             }
             finally {
                 lock.unlock();
@@ -396,6 +401,10 @@ public class BuildAgentDockerService {
     public void deleteOldDockerImages() {
         if (!imageCleanupEnabled) {
             log.info("Docker image cleanup is disabled");
+            return;
+        }
+
+        if (dockerClientNotAvailable("Cannot delete old Docker images.")) {
             return;
         }
 
@@ -533,6 +542,10 @@ public class BuildAgentDockerService {
                 return true;
             }
             log.error("Docker client is not available. {}", additionalLogInfo);
+            return true;
+        }
+        if (!buildAgentConfiguration.isDockerAvailable()) {
+            log.debug("Docker is not available. {}", additionalLogInfo);
             return true;
         }
         return false;

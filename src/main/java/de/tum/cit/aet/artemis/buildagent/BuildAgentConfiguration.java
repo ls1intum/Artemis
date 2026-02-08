@@ -50,6 +50,8 @@ public class BuildAgentConfiguration {
 
     private DockerClient dockerClient;
 
+    private volatile boolean dockerAvailable = false;
+
     private static final Logger log = LoggerFactory.getLogger(BuildAgentConfiguration.class);
 
     @Value("${artemis.continuous-integration.docker-connection-uri}")
@@ -77,6 +79,8 @@ public class BuildAgentConfiguration {
     public void onApplicationReady() {
         buildExecutor = createBuildExecutor();
         dockerClient = createDockerClient();
+        // Optimistically mark Docker as available; the first scheduled check will correct if needed
+        dockerAvailable = true;
     }
 
     public ThreadPoolExecutor getBuildExecutor() {
@@ -93,6 +97,14 @@ public class BuildAgentConfiguration {
 
     public int getPauseAfterConsecutiveFailedJobs() {
         return pauseAfterConsecutiveFailedJobs;
+    }
+
+    public boolean isDockerAvailable() {
+        return dockerAvailable;
+    }
+
+    public void setDockerAvailable(boolean dockerAvailable) {
+        this.dockerAvailable = dockerAvailable;
     }
 
     /**
@@ -246,6 +258,7 @@ public class BuildAgentConfiguration {
     }
 
     public void closeBuildAgentServices() {
+        dockerAvailable = false;
         shutdownBuildExecutor();
         closeDockerClient();
     }
@@ -253,5 +266,7 @@ public class BuildAgentConfiguration {
     public void openBuildAgentServices() {
         this.buildExecutor = createBuildExecutor();
         this.dockerClient = createDockerClient();
+        // Optimistically mark Docker as available; the next scheduled check will correct if needed
+        this.dockerAvailable = true;
     }
 }

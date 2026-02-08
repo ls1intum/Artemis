@@ -319,7 +319,12 @@ public class BuildJobContainerService {
                 throw nfe;
             }
             String errorMessage = "Could not retrieve archive from container " + containerId + " at path " + path + " after " + MAX_TAR_OPERATION_RETRIES + " attempts";
-            log.error(errorMessage, e);
+            if (DockerUtil.isDockerNotAvailable(e)) {
+                log.warn("Docker is not available. {}: {}", errorMessage, e.getMessage());
+            }
+            else {
+                log.error(errorMessage, e);
+            }
             if (buildJobId != null) {
                 buildLogsMap.appendBuildLogEntry(buildJobId,
                         "Failed to retrieve build results after multiple attempts. This is an infrastructure issue, not a problem with your code. Please try rerunning your build.");
@@ -659,7 +664,12 @@ public class BuildJobContainerService {
         }
 
         // All retries exhausted
-        log.error("{} failed after {} attempts", operationName, MAX_TAR_OPERATION_RETRIES, lastException);
+        if (DockerUtil.isDockerNotAvailable(lastException)) {
+            log.warn("Docker is not available. {} failed after {} attempts: {}", operationName, MAX_TAR_OPERATION_RETRIES, lastException.getMessage());
+        }
+        else {
+            log.error("{} failed after {} attempts", operationName, MAX_TAR_OPERATION_RETRIES, lastException);
+        }
         throw lastException;
     }
 
@@ -704,7 +714,12 @@ public class BuildJobContainerService {
         catch (IOException e) {
             String errorMessage = "Could not copy to container " + containerId + " from source path " + sourcePath.toAbsolutePath() + " after " + MAX_TAR_OPERATION_RETRIES
                     + " attempts";
-            log.error(errorMessage, e);
+            if (DockerUtil.isDockerNotAvailable(e)) {
+                log.warn("Docker is not available. {}: {}", errorMessage, e.getMessage());
+            }
+            else {
+                log.error(errorMessage, e);
+            }
             if (buildJobId != null) {
                 buildLogsMap.appendBuildLogEntry(buildJobId,
                         "Failed to copy files to build container after multiple attempts. This is an infrastructure issue, not a problem with your code. Please try rerunning your build.");
@@ -935,13 +950,17 @@ public class BuildJobContainerService {
      * @return the Container object if found, null otherwise
      */
     private Container getContainerForName(String containerName) {
+        if (!buildAgentConfiguration.isDockerAvailable()) {
+            log.debug("Docker is not available. Cannot get container for name {}", containerName);
+            return null;
+        }
         try (final var listContainerCommand = buildAgentConfiguration.getDockerClient().listContainersCmd().withShowAll(true)) {
             List<Container> containers = listContainerCommand.exec();
             return containers.stream().filter(container -> container.getNames()[0].equals("/" + containerName)).findFirst().orElse(null);
         }
         catch (Exception ex) {
             if (DockerUtil.isDockerNotAvailable(ex)) {
-                log.error("Docker is not available: {}", ex.getMessage());
+                log.debug("Docker is not available: {}", ex.getMessage());
             }
             else {
                 log.error("Failed to get container for name {}: {}", containerName, ex.getMessage());

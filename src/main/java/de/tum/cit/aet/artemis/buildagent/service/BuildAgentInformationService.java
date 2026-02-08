@@ -66,32 +66,31 @@ public class BuildAgentInformationService {
     }
 
     /**
-     * Periodically retrieves and updates the Docker version from the Docker daemon.
+     * Periodically checks Docker availability and retrieves the Docker version from the Docker daemon.
      * <p>
      * This method is scheduled to run:
      * <ul>
      * <li>10 seconds after application startup (to avoid blocking startup)</li>
-     * <li>Every 10 minutes thereafter (to detect Docker updates while running)</li>
+     * <li>Every 60 seconds thereafter (using fixedDelay to prevent overlap if Docker daemon is slow)</li>
      * </ul>
      * <p>
-     * When the Docker version changes, this method:
-     * <ol>
-     * <li>Logs the new version</li>
-     * <li>Updates the local {@link #dockerVersion} field</li>
-     * <li>Calls {@link #updateLocalBuildAgentInformation(boolean)} to propagate the change to the distributed Hazelcast map</li>
-     * </ol>
-     * <p>
-     * If the Docker client is unavailable or version retrieval fails, the method logs a warning and continues
-     * without updating the version (graceful degradation).
+     * On success, the method marks Docker as available via {@link BuildAgentConfiguration#setDockerAvailable(boolean)}
+     * and updates the version if it changed. On failure, Docker is marked as unavailable. State transitions
+     * (available → unavailable and vice versa) are logged at WARN/INFO level; repeated failures log at DEBUG.
      */
-    @Scheduled(initialDelayString = "10000", fixedRateString = "600000")
+    @Scheduled(initialDelayString = "10000", fixedDelayString = "60000")
     public void updateDockerVersion() {
         var dockerClient = buildAgentConfiguration.getDockerClient();
         if (dockerClient == null) {
             return;
         }
+        boolean wasAvailable = buildAgentConfiguration.isDockerAvailable();
         try {
             String newVersion = dockerClient.versionCmd().exec().getVersion();
+            if (!wasAvailable) {
+                log.info("Docker is now available (version: {})", newVersion);
+                buildAgentConfiguration.setDockerAvailable(true);
+            }
             if (!Objects.equals(newVersion, dockerVersion)) {
                 log.info("Docker version: {}", newVersion);
                 dockerVersion = newVersion;
@@ -100,7 +99,13 @@ public class BuildAgentInformationService {
             }
         }
         catch (Exception e) {
-            log.warn("Failed to retrieve Docker version: {}", e.getMessage());
+            if (wasAvailable) {
+                log.warn("Docker is no longer available: {}", e.getMessage());
+            }
+            else {
+                log.debug("Docker is not available: {}", e.getMessage());
+            }
+            buildAgentConfiguration.setDockerAvailable(false);
         }
     }
 

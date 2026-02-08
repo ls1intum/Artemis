@@ -2,6 +2,9 @@ package de.tum.cit.aet.artemis.buildagent.service;
 
 import java.net.ConnectException;
 import java.net.SocketException;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Set;
 
 public final class DockerUtil {
 
@@ -10,15 +13,27 @@ public final class DockerUtil {
     }
 
     public static boolean isDockerConnectionRefused(Throwable throwable) {
-        Throwable cause = throwable.getCause();
-        return cause instanceof ConnectException && cause.getMessage().contains("Connection refused");
+        return throwable instanceof ConnectException && throwable.getMessage() != null && throwable.getMessage().contains("Connection refused");
     }
 
+    /**
+     * Checks whether the given throwable (or any cause in its exception chain)
+     * indicates that Docker is not available, e.g. because the Docker socket
+     * does not exist or the connection was refused.
+     *
+     * @param throwable the exception to inspect
+     * @return {@code true} if Docker unavailability is detected anywhere in the cause chain
+     */
     public static boolean isDockerNotAvailable(Throwable throwable) {
-        if (throwable.getCause() == null) {
-            return false;
+        Set<Throwable> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+        Throwable current = throwable;
+        while (current != null && visited.add(current)) {
+            if (isDockerSocketNotAvailable(current) || isDockerConnectionRefused(current)) {
+                return true;
+            }
+            current = current.getCause();
         }
-        return isDockerSocketNotAvailable(throwable.getCause()) || isDockerConnectionRefused(throwable.getCause());
+        return false;
     }
 
 }
