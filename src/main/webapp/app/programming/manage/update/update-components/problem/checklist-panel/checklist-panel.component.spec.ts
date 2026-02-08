@@ -26,8 +26,8 @@ describe('ChecklistPanelComponent', () => {
     exercise.difficulty = DifficultyLevel.EASY; // Changed 'EASY' to DifficultyLevel.EASY for consistency with mockExercise
 
     const mockResponse: ChecklistAnalysisResponse = {
-        inferredLearningGoals: [{ skill: 'Loops', taxonomyLevel: 'APPLY', confidence: 0.9, explanation: 'Explanation' }],
-        suggestedDifficulty: { suggested: 'EASY', reasoning: 'Reason', matchesDeclared: true },
+        inferredCompetencies: [{ competencyTitle: 'Loops', taxonomyLevel: 'APPLY', confidence: 0.9, whyThisMatches: 'Explanation' }],
+        difficultyAssessment: { suggested: 'EASY', reasoning: 'Reason', matchesDeclared: true },
         qualityIssues: [],
     };
 

@@ -768,6 +768,7 @@
                 }
             },
             "artemisIntelligence": {
+                "title": "Artemis Intelligenz",
                 "consistencyCheckAlert": {
                     "title": "Resultat der Konsistenzprüfung",
                     "improvement": "Verbesserungsempfehlung",

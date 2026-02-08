@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Artemis Application Server API
   contact: {name: Stephan Krusche, email: krusche@tum.de}
-  version: 8.8.0
+  version: 8.8.1
 servers:
 - {url: 'http://localhost:8080', description: Generated server url}
 paths:
@@ -305,6 +305,26 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ProblemStatementGenerationResponse'}
+  /api/hyperion/courses/{courseId}/faq/rewrite:
+    post:
+      tags: [hyperion-faq]
+      operationId: rewriteFaq
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RewriteFaqRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RewriteFaqResponse'}
   /api/tutorialgroup/tutorial-groups/{tutorialGroupId}/title:
     get:
       tags: [tutorial-group]
@@ -448,6 +468,16 @@ components:
         reasoning: {type: string}
         matchesDeclared: {type: boolean}
         delta: {type: string}
+    Costs:
+      type: object
+      description: Response containing consistency check costs
+      properties:
+        promptEur: {type: number, format: double, description: Prompt costs in EUR,
+          example: 0.011224}
+        completionEur: {type: number, format: double, description: Completion costs
+            in EUR, example: 0.016513}
+        totalEur: {type: number, format: double, description: Total costs in EUR,
+          example: 0.027738}
     TutorialGroup:
       type: object
       properties:
@@ -577,6 +607,14 @@ components:
           items: {$ref: '#/components/schemas/TutorialGroupDetailSession'}
       required: [language, sessions, teachingAssistantLogin, teachingAssistantName,
         title]
+    Tokens:
+      type: object
+      description: Response containing consistency check tokens
+      properties:
+        prompt: {type: integer, format: int64, description: Prompt token length, example: 10204}
+        completion: {type: integer, format: int64, description: Completion token length,
+          example: 3753}
+        total: {type: integer, format: int64, description: Total token length, example: 13957}
     ProblemStatementGenerationRequest:
       type: object
       description: Request to generate a problem statement
@@ -676,11 +714,17 @@ components:
       type: object
       description: Response containing consistency check results
       properties:
+        timestamp: {type: string, format: date-time, description: Timestamp of the
+            response generation}
         issues:
           type: array
           description: List of consistency issues found
           items: {$ref: '#/components/schemas/ConsistencyIssue'}
-      required: [issues]
+        timing: {$ref: '#/components/schemas/Timing', description: Execution timing
+            details}
+        tokens: {$ref: '#/components/schemas/Tokens', description: Token usage statistics}
+        costs: {$ref: '#/components/schemas/Costs', description: Costs statistics}
+      required: [issues, timestamp]
     TeachingAssistant:
       type: object
       properties:
@@ -711,6 +755,19 @@ components:
         startLine: {type: integer, format: int32, description: Start line number (1-based)}
         endLine: {type: integer, format: int32, description: End line number (1-based)}
       required: [endLine, filePath, startLine, type]
+    RewriteFaqResponse:
+      type: object
+      description: Response containing rewritten FAQ
+      properties:
+        rewrittenText: {type: string}
+        inconsistencies:
+          type: array
+          items: {type: string}
+        suggestions:
+          type: array
+          items: {type: string}
+        improvement: {type: string}
+      required: [improvement, inconsistencies, rewrittenText, suggestions]
     TutorialGroupExport:
       type: object
       properties:
@@ -728,6 +785,20 @@ components:
         students:
           type: array
           items: {$ref: '#/components/schemas/StudentExport'}
+    Timing:
+      type: object
+      description: Response containing consistency check timing
+      properties:
+        startTime: {type: string, description: Starting time, example: !!timestamp '2025-07-27T07:17:05.500Z'}
+        endTime: {type: string, description: Ending time, example: !!timestamp '2025-07-27T07:17:05.500Z'}
+        durationS: {type: number, format: double, description: Duration of consistency
+            check, example: 27.765}
+    RewriteFaqRequest:
+      type: object
+      description: Request to rewrite a FAQ
+      properties:
+        faqText: {type: string, minLength: 1}
+      required: [faqText]
     ConversationUser:
       type: object
       properties:

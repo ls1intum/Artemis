@@ -139,7 +139,7 @@ describe('ExerciseImportFromFileComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         const uploadButton = fixture.debugElement.query(By.css('#upload-exercise-btn'));
-        expect(uploadButton.componentInstance.disabled).toBeTrue();
+        expect(uploadButton.componentInstance.disabled()).toBeTrue();
     });
 
     it('should enable upload button once file is selected', () => {
@@ -147,7 +147,7 @@ describe('ExerciseImportFromFileComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         const uploadButton = fixture.debugElement.query(By.css('#upload-exercise-btn'));
-        expect(uploadButton.componentInstance.disabled).toBeFalse();
+        expect(uploadButton.componentInstance.disabled()).toBeFalse();
     });
 
     async function assertErrorAlertIsRaisedWithoutOneValidJsonFile() {
