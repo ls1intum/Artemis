@@ -8,6 +8,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param startLine Starting line number (1-indexed)
  * @param endLine   Ending line number (1-indexed, inclusive)
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QualityIssueLocationDTO(Integer startLine, Integer endLine) {
 }

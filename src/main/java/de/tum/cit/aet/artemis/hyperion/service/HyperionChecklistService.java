@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -408,7 +407,7 @@ public class HyperionChecklistService {
                 return List.of();
             }
 
-            return entity.issues().stream().map(this::mapQualityIssueToDto).collect(Collectors.toList());
+            return entity.issues().stream().map(this::mapQualityIssueToDto).toList();
         }
         catch (Exception e) {
             child.error(e);
