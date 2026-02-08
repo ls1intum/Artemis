@@ -22,6 +22,13 @@ tasks.withType(Test).configureEach {
         }
     }
 
+    // Forward Gradle command-line -D properties to the test JVM for database type selection
+    // (e.g. -Dzonky.test.database.type=MYSQL selects MySQL testcontainers instead of H2)
+    def dbType = System.getProperty('zonky.test.database.type')
+    if (dbType) {
+        systemProperty 'zonky.test.database.type', dbType
+    }
+
     // a collection to track failedTests
     ext.failedTests = []
 
