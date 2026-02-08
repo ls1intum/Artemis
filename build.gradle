@@ -552,8 +552,6 @@ configurations.matching { it.name != 'mockitoAgent' }.configureEach {
             substitute module("org.testcontainers:postgresql") using module("org.testcontainers:testcontainers-postgresql:2.0.3")
             substitute module("org.testcontainers:jdbc") using module("org.testcontainers:testcontainers-jdbc:2.0.3")
             substitute module("org.testcontainers:database-commons") using module("org.testcontainers:testcontainers-database-commons:2.0.3")
-            substitute module("org.testcontainers:mariadb") using module("org.testcontainers:testcontainers-mariadb:2.0.3")
-            substitute module("org.testcontainers:mssqlserver") using module("org.testcontainers:testcontainers-mssqlserver:2.0.3")
             substitute module("org.testcontainers:weaviate") using module("org.testcontainers:testcontainers-weaviate:2.0.3")
             substitute module("org.testcontainers:testcontainers") using module("org.testcontainers:testcontainers:2.0.3")
         }
