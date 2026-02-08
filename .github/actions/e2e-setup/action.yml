@@ -1,0 +1,79 @@
+name: 'E2E Test Setup'
+description: 'Common setup steps for E2E test jobs'
+
+inputs:
+  workflow-run-id:
+    description: 'The triggering workflow run ID'
+    required: true
+  workflow-head-branch:
+    description: 'The branch being tested'
+    required: true
+  workflow-head-sha:
+    description: 'The commit SHA'
+    required: true
+  github-token:
+    description: 'Token for downloading artifacts'
+    required: true
+  artifact-name-suffix:
+    description: 'Optional suffix for workflow context artifact (e.g., "phase1")'
+    required: false
+    default: ''
+  test-notice:
+    description: 'Optional notice message about test selection'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Log triggering workflow info
+      shell: bash
+      run: |
+        echo "TRIGGERING_WORKFLOW_RUN_ID=${{ inputs.workflow-run-id }}"
+        echo "TRIGGERING_WORKFLOW_HEAD_BRANCH=${{ inputs.workflow-head-branch }}"
+        echo "TRIGGERING_WORKFLOW_HEAD_SHA=${{ inputs.workflow-head-sha }}"
+
+    - name: Add link to triggering workflow
+      shell: bash
+      run: |
+        echo "::notice title=Triggered by workflow run::This E2E test was triggered by workflow run #${{ inputs.workflow-run-id }} - View it at https://github.com/${{ github.repository }}/actions/runs/${{ inputs.workflow-run-id }}"
+        if [ -n "${{ inputs.test-notice }}" ]; then
+          echo "::notice title=Test Selection::${{ inputs.test-notice }}"
+        fi
+
+    - name: Download Docker tag
+      uses: actions/download-artifact@v6
+      with:
+        name: docker-tag
+        github-token: ${{ inputs.github-token }}
+        run-id: ${{ inputs.workflow-run-id }}
+
+    - name: Set Docker Tag Environment Variable
+      shell: bash
+      run: |
+        if [ -f "docker-tag.txt" ]; then
+          ARTEMIS_DOCKER_TAG=$(cat docker-tag.txt)
+          echo "ARTEMIS_DOCKER_TAG=${ARTEMIS_DOCKER_TAG}" >> $GITHUB_ENV
+          echo "Using Docker tag: ${ARTEMIS_DOCKER_TAG}"
+        else
+          echo "::error::No docker-tag.txt found in the previous build workflow! Artifact is needed to run E2E tests."
+          exit 1
+        fi
+
+    - name: Make scripts executable
+      shell: bash
+      run: |
+        chmod +x .ci/E2E-tests/cleanup.sh
+        chmod +x .ci/E2E-tests/execute.sh
+
+    - name: Run cleanup script (before E2E)
+      shell: bash
+      run: .ci/E2E-tests/cleanup.sh
+
+    - name: Clean old test results
+      shell: bash
+      run: |
+        echo "Cleaning up old test results from previous runs..."
+        rm -rf src/test/playwright/test-reports/*.xml || true
+        ls -la src/test/playwright/test-reports/ 2>/dev/null || echo "test-reports directory does not exist yet"
+        echo "Test results cleanup complete"

@@ -6,7 +6,6 @@ import jakarta.persistence.PostPersist;
 import jakarta.persistence.PostUpdate;
 import jakarta.persistence.PreRemove;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -19,6 +18,14 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 
 /**
  * Listener for updates on {@link Result} entities to update the {@link ParticipantScore}.
+ * <p>
+ * This class uses {@code @Lazy} on the constructor parameter because JPA entity listeners are
+ * instantiated by Hibernate during EntityManagerFactory construction, before the full Spring
+ * context is available. The lazy proxy breaks the circular dependency chain that would otherwise
+ * occur (EntityManagerFactory → ResultListener → Services → Repositories → EntityManagerFactory).
+ * <p>
+ * Note: This is an intentional exception to the architecture rule that forbids {@code @Lazy} on
+ * parameters. JPA entity listeners are a special case where this pattern is necessary.
  *
  * @see ParticipantScoreScheduleService
  */
@@ -27,13 +34,8 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 @Lazy
 public class ResultListener {
 
-    private InstanceMessageSendService instanceMessageSendService;
+    private final InstanceMessageSendService instanceMessageSendService;
 
-    public ResultListener() {
-        // Empty constructor for Spring
-    }
-
-    @Autowired // ok
     public ResultListener(@Lazy InstanceMessageSendService instanceMessageSendService) {
         this.instanceMessageSendService = instanceMessageSendService;
     }

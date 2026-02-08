@@ -242,238 +242,13 @@ It gets activated when a particular jar file is detected on the classpath. The s
 
 ## REST API & Controllers
 
-### Keep your `@RestController`'s clean and focused
-
-* RestControllers should be stateless.
-* RestControllers are by default singletons.
-* RestControllers should not execute business logic but rely on delegation to `@Service` classes.
-* RestControllers should deal with the HTTP layer of the application, handle access control, input data validation, output data cleanup (if necessary) and error handling.
-* RestControllers should be oriented around a use-case/business-capability.
-* RestControllers must always return DTOs that are as small as possible (please focus on data economy to improve performance and follow data privacy principles).
-
-Route naming conventions:
-
-* Always use kebab-case (e.g. ".../exampleAssessment" → ".../example-assessment").
-* The routes should follow the general structure list-entity > entityId > sub-entity ... (e.g. `exercises/{exerciseId}/participations`).
-* Use plural for a route's list-entities (e.g. "exercises/..."), use singular for a singleton (e.g. ".../assessment"), use verbs for naming remote methods on the server (e.g. ".../submit").
-* Specify the key entity at the end of the route (e.g. `text-editor/participations/{participationId}` should be changed to `participations/{participationId}/text-editor`).
-* Use consistent routes that start with `courses`, `exercises`, `participations`, `exams` or `lectures` to simplify access control. Do not start routes with other entity names.
-* When defining a new route, all subroutes should be addressable as well, e.g. your new route is `exercises/{exerciseId}/statistics`, then both `exercises/{exerciseId}` and `exercises` should be addressable.
-* If you want an alternative representation of the entity that e.g. sends extra data needed for assessment, then specify the reason for this alternative route at the end of the route, for example `participations/{participationId}/for-assessment`.
-
-Additional notes on the controller methods:
-
-* The REST Controllers route should end with a tailing "/" and not start with a "/" (e.g. "api/"), the individual endpoints routes should not start and not end with a "/" (e.g. `exercises/{exerciseId}`).
-* Use ...ElseThrow alternatives of all Repository and AuthorizationCheck calls whenever applicable, this increases readability (e.g. `findByIdElseThrow(...)` instead of `findById(...)` and then checking for `null`).
-* POST should return the newly created entity.
-* POST should be used to trigger remote methods (e.g. `.../{participationId}/submit` should be triggered with a POST).
-* Verify that API endpoints perform appropriate authorization and authentication consistent with the rest of the code base.
-    * Always use the Authorization enforcement logic described down below to only allow certain roles to access the method.
-    * Perform additional security checks using the `AuthorizationCheckService`.
-* Check for other common weaknesses, e.g., weak configuration, malicious user input, missing log events, etc.
-* Never trust user input and check if the passed data exists in the database.
-    * Verify the consistency of user input by e.g. checking ids in body and path to see if they match, comparing course in the `RequestBody` with the one referenced by id in the path.
-    * Check for user input consistency first, then check the authorization, if e.g. the ids of the course in body and path don't match, the user may be INSTRUCTOR in one course and just a USER in another, this may lead to unauthorized access.
-* REST Controller should only handle authentication, error handling, input validation and output creation, the actual logic behind an endpoint should happen in the respective `Service` or `Repository`.
-* Handle exceptions and errors with a standard response. Errors are very important in REST APIs. They inform clients that something went wrong, after all.
-* Always use different response status codes to notify the client about errors on the server, e.g.:
-    * Forbidden - the user is not authorized to access the controller.
-    * Bad Request - the request was wrong.
-    * Not Found - can't find the requested data, or it should be not accessible yet.
-
-### Use DTOs for Efficient Data Transfer
-
-#### Purpose of DTOs
-
-Data Transfer Objects (DTOs) are pivotal in the efficient transfer of data from the server to the client, specifically for the responses from RestControllers and messages via WebSocket. These objects are designed to streamline the data exchange process by ensuring data is immutable, relevant, and precisely tailored to the needs of the client application.
-
-#### Guidelines for Implementing DTOs
-
-1. **Immutable Java Records**: Implement DTOs as Java records to guarantee immutability. While Java records preclude inheritance, resulting in potential duplication, this is considered acceptable in the context of DTOs to ensure data integrity and simplicity.
-
-2. **Primitive data types and composition**: DTOs should strictly encapsulate primitive data types, their corresponding wrapper classes, enums, or compositions of other DTOs. This exclusion of entity objects from DTOs ensures that data remains decoupled from the database entities, facilitating a cleaner and more secure data transfer mechanism.
-
-3. **Minimum necessary data**: Adhere to the principle of including only the minimal data required by the client within DTOs. This practice reduces the overall data footprint, enhances performance, and mitigates the risk of inadvertently exposing unnecessary or sensitive data.
-
-4. **Single responsibility principle**: Each DTO should be dedicated to a specific task or subset of data. Avoid the temptation to reuse DTOs across different data payloads unless the data is identical. This approach maintains clarity and purpose within the data transfer objects.
-
-5. **Simplicity over complexity**: Refrain from embedding methods or business logic within DTOs. Their role is to serve as straightforward data carriers without additional functionalities that could complicate their structure or purpose.
-
-#### Implications of Not Using DTOs
-
-Neglecting the use of DTOs can lead to the transmission of excessive or irrelevant data to clients. This not only imposes unnecessary strain on network and system resources but also heightens the risk of exposing sensitive information leading to data privacy issues.
-
-Hence, entity objects must not be included in DTOs. This is a bad example for a DTO, since it contains the entity object `Post`:
-
-```java
-public record PostDTO(Post post, MetisCrudAction action) {}
-```
-
-This is a good example for a DTO because it only contains very little information in the form of boxed primitive types and the enum value `GradeType`:
-
-```java
-public record GradeDTO(String gradeName, Boolean isPassingGrade, GradeType gradeType) {}
-```
-
-### REST endpoint best practices for authorization
-
-To reject unauthorized requests as early as possible, Artemis employs two solutions:
-
-1. Implicit pre- and post-authorization annotations:
-    1.  `AllowedTools(ToolTokenType.__)`, which ensures that tool-based requests can only access specific endpoints following the Principle of Least Privilege.
-    2. `EnforceRoleInResource` (e.g. `EnforceAtLeastInstructorInCourse`) annotations are responsible for blocking users with *wrong or missing authorization roles* without querying the database.
-    3. If necessary, these annotations check for access rights to individual resources within the database via light-weight queries.
-    4. Currently, we offer the following annotations: `EnforceRoleInCourse` and `EnforceRoleInExercise`
-2. Explicit authorization checks (which operate in two steps):
-    1. `EnforceAtLeastRole` (e.g. `EnforceAtLeastInstructor`) annotations are responsible for blocking users with wrong or missing authorization roles without querying the database.
-    2. The `AuthorizationCheckService` is responsible for checking access rights to individual resources by querying the database. *Important*: these checks have to be performed explicitly.
-
-Because the first solution (Implicit pre- and post-authorization) increases maintainability and is faster in most cases, always annotate your REST endpoints with the corresponding `EnforceRoleInResource` annotation. Always use the annotation for the minimum role that has access.
-
-Artemis distinguishes between six different roles: ADMIN, INSTRUCTOR, EDITOR, TA (teaching assistant/tutor), USER and ANONYMOUS.
-Each of the roles has the all the access rights of the roles following it, e.g. ANONYMOUS has almost no rights, while ADMIN users can access every page.
-
-The table contains all annotations for the corresponding minimum role including the required path prefix for all their endpoints and the package they should reside in. Different annotations get used during migration.
-
-| **Minimum Role** | **Endpoint Annotation**                | **Path Prefix**          | **Package**          |
-|------------------|----------------------------------------|--------------------------|----------------------|
-| ADMIN            | @EnforceAdmin                          | `/api/{module}/admin/`   | `{module}.web.admin` |
-| INSTRUCTOR       | @EnforceAtLeastInstructor              | `/api/{module}/`         | `{module}.web`       |
-| EDITOR           | @EnforceAtLeastEditor                  | `/api/{module}/`         | `{module}.web`       |
-| TA               | @EnforceAtLeastTutor                   | `/api/{module}/`         | `{module}.web`       |
-| USER             | @EnforceAtLeastStudent                 | `/api/{module}/`         | `{module}.web`       |
-| ANONYMOUS        | @EnforceNothing                        | `/api/{module}/public/`  | `{module}.web.open`  |
-
-If, for some reason, you need to deviate from these rules, use `@ManualConfig`. Use this annotation only if absolutely necessary as it will exclude the endpoint from the automatic authorization tests.
-
-Use the `@Internal` annotation to mark methods or classes that should only be accessed from trusted internal networks.
-Access to these endpoints is restricted based on the configured [CIDR](https://de.wikipedia.org/wiki/Classless_Inter-Domain_Routing) blocks (e.g `127.0.0.0/8` or `fe80::/64`) in `InternalAccessConfiguration` (`artemis.security.internal.allowed-cidrs`).
-
-**Best Practices**
-
-* Annotate only endpoints that must not be exposed externally (e.g. for Edutelligence).
-* Requests are validated against the client IP using Spring's IpAddressMatcher.
-* Unauthorized requests from outside the allowed CIDRs will be rejected.
-
-#### Tool-Based Authorization Annotations
-
-To enforce minimal access for external tools, Artemis provides an additional annotation `@AllowedTools`.
-This annotation is used to restrict Tool Tokens to certain endpoints.
-A Tool Token is a normal jwt token with the claim `"tools": "TOOLTYPE"` specified.
-
-**How does it work?**
-
-* **Requests without a tool claim** (e.g., requests from users in a browser) can access all endpoints as long as they meet role-based authorization rules. So they are not restricted by the `@AllowedTools` annotation.
-* **Requests with a tool claim** (e.g., `{"tool": "SCORPIO"}` in the JWT) can only access endpoints annotated with `@AllowedTools(ToolTokenType.__)` (e.g. `@AllowedTools(ToolTokenType.SCORPIO)`).
-* If a tool tries to access an unannotated endpoint, it receives a 403 Forbidden response.
-
-**When to Use It?**
-
-Use `@AllowedTools` to restrict what tools can do, without limiting normal requests.
-For example, an endpoint that provides a Scorpio-specific (VSCode Extension) integration:
-
-```java
-@AllowedTools(ToolTokenType.SCORPIO)
-public ResponseEntity<CourseForDashboardDTO> getCourseForDashboard(@PathVariable long courseId) {
-    [...]
-    return ResponseEntity.ok(courseForDashboardDTO);
-}
-```
-
-**Best Practices**
-
-* Requests without a tool claim are unrestricted, meaning users and standard API clients will not be affected.
-* Tool-based requests must explicitly be allowed by annotating endpoints with `@AllowedTools(ToolTokenType.VSCODE)`.
-* Nevertheless, try to follow the **Principle of Least Privilege** and use tool tokens whenever possible.
-* If multiple tools should be allowed for one endpoint, list them:
-
-```java
-@AllowedTools({ToolTokenType.SCORPIO, ToolTokenType.ANDROID})
-```
-
-**How to Get Tool Tokens**
-
-1. Verify that the tool type is already defined in `ToolTokenType.java`
-2. Send a POST request to the endpoint `{{base_url}}/api/core/public/authenticate?tool=TOOLTYPE`
-
-
-#### Implicit pre- and post-authorization annotations
-
-The following example makes the call only accessible to ADMIN and INSTRUCTOR users and then checks the access rights to the course in the database:
-
-Do **not** write
-
-```java
-@EnforceAtLeastInstructor
-public ResponseEntity<Void> enableLearningPathsForCourse(@PathVariable long courseId) {
-    var course = courseRepository.findById(courseId);
-    authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-    [...]
-    return ResponseEntity.ok().build();
-}
-```
-
-Instead, use the following annotation:
-
-```java
-@EnforceAtLeastInstructorInCourse
-public ResponseEntity<Void> enableLearningPathsForCourse(@PathVariable long courseId) {
-    [...]
-    return ResponseEntity.ok().build();
-}
-```
-
-#### Explicit authorization checks
-
-<Callout variant={CalloutVariant.warning}>
-Be aware that this solution should be used only in those two cases:
-1. when you need to load user **AND** the resource anyway,
-2. when no matching `EnforceRoleInResource` annotation exists.
-</Callout>
-
-Always annotate your REST endpoints with the annotation for the minimum role that has access.
-
-The following example makes the call only accessible to ADMIN and INSTRUCTOR users:
-
-```java
-@EnforceAtLeastInstructor
-public ResponseEntity<Void> enableLearningPath(@PathVariable long courseId) {
-    var course = courseRepository.findById(courseId);
-    authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-    [...]
-    return ResponseEntity.ok().build();
-}
-```
-
-If a user passes the pre-authorization, the access to individual resources like courses and exercises still has to be checked. For example, a user can be a teaching assistant in one course, but only a student in another.
-However, do not fetch the user from the database yourself (unless you need to re-use the user object), but only hand a role to the `AuthorizationCheckService`:
-
-```java
-// If we pass 'null' instead of a user here, the service will fetch the user object
-// and check if the user has at least the given role and access to the resource
-authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-```
-
-To reduce duplication, do not add explicit checks for authorization or existence of an entity but always use the `AuthorizationCheckService`:
-
-```java
-@GetMapping("courses/{courseId}/programming-exercises")
-@EnforceAtLeastTutor
-public ResponseEntity<List<ProgrammingExercise>> getActiveProgrammingExercisesForCourse(@PathVariable Long courseId) {
-    Course course = courseRepository.findByIdElseThrow(courseId);
-    authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-
-    List<ProgrammingExercise> exercises = programmingExerciseService.findActiveExercisesByCourseId(courseId);
-    return ResponseEntity.ok().body(exercises);
-}
-```
-
-The course repository call takes care of throwing a `404 Not Found` exception if there exists no matching course. The `AuthorizationCheckService` throws a `403 Forbidden` exception if the user with the given role is unauthorized. Afterwards delegate to a service or repository method. The code becomes much shorter, cleaner and more maintainable.
-
-
-### JSON serialization and deserialization
-
-Always use ObjectMapper (Jackson) and do not use other libraries.
+For comprehensive REST API guidelines including controller best practices, route naming conventions, DTOs, and authorization, please see the [REST API Guidelines](/developer/guidelines/rest-api) page.
+
+Key points:
+* RestControllers should be stateless and delegate business logic to `@Service` classes
+* Always use DTOs for request and response bodies (never expose entities directly)
+* Use appropriate authorization annotations (`@EnforceAtLeastInstructor`, `@EnforceRoleInResource`, etc.)
+* Follow route naming conventions (kebab-case, proper structure)
 
 
 ## Service & Dependency Best Practices
@@ -485,6 +260,36 @@ In order to achieve low coupling and high cohesion, services should have as few 
 * Avoid cyclic and redirectional dependencies
 * Do not break the dependency cycle manually or by using `@Lazy`
 * Move simple service methods into the repository as `default` methods
+
+### Circular dependency resolution
+
+<Callout variant={CalloutVariant.Danger} title="Do NOT use @Lazy or ObjectProvider to resolve circular dependencies">
+
+Using `@Lazy` on constructor parameters or `ObjectProvider<T>` to work around circular dependencies is **strictly forbidden**. These patterns hide architectural problems and make the codebase harder to understand and maintain.
+
+**Forbidden patterns:**
+```java
+// BAD: Using @Lazy on parameter to break circular dependency
+public MyService(@Lazy OtherService otherService) { ... }
+
+// BAD: Using ObjectProvider to defer resolution
+public MyService(ObjectProvider<OtherService> otherServiceProvider) { ... }
+```
+
+**Why these patterns are problematic:**
+1. They hide the underlying architectural issue instead of fixing it
+2. They make dependency graphs harder to understand
+3. They can lead to runtime errors instead of startup-time errors
+4. They encourage poor design decisions
+
+**How to properly resolve circular dependencies:**
+1. **Refactor the architecture** - Extract shared logic into a new service that both services can depend on
+2. **Move logic to repositories** - Simple database operations can be `default` methods in repositories
+3. **Reconsider the design** - A circular dependency often indicates that responsibilities are not properly separated
+
+**Exception:** JPA entity listeners (classes using `@PostPersist`, `@PostUpdate`, `@PreRemove`) are instantiated by Hibernate during `EntityManagerFactory` construction, before the full Spring context is available. In this specific case, `@Lazy` on constructor parameters is the only viable solution. This exception is documented in the architecture tests.
+
+</Callout>
 
 An example for a simple method is finding a single entity by ID:
 
