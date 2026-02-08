@@ -5,7 +5,9 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 tasks.withType(Test).configureEach {
 
     jvmArgs += "-javaagent:${configurations.mockitoAgent.asPath}"
-    // Required by Weaviate client v6 (Gson reflection on Java 9+)
+    // Required by the Weaviate Java client v6, which uses Gson's reflection-based serialization on internal java.lang classes.
+    // See: https://github.com/weaviate/java-client?tab=readme-ov-file#gson-and-reflective-access-to-internal-jdk-classes
+    // This is harmless: it only opens java.lang to classpath code within the same JVM process and does not expand the attack surface for remote exploits.
     jvmArgs += "--add-opens=java.base/java.lang=ALL-UNNAMED"
 
     // Pass weaviate server version to integration tests
