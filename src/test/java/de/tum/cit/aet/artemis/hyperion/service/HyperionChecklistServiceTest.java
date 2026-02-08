@@ -177,7 +177,7 @@ class HyperionChecklistServiceTest {
         KnowledgeArea ka = new KnowledgeArea();
         ka.setTitle("Algorithms");
         ka.setShortTitle("AL");
-        when(standardizedCompetencyService.getAllForTreeView()).thenReturn(List.of(ka));
+        when(standardizedCompetencyApi.getAllForTreeView()).thenReturn(List.of(ka));
 
         String competenciesJson = """
                 {
