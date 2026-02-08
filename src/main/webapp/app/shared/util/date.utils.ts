@@ -95,3 +95,18 @@ export function isFirstDateAfterOrEqualSecond(firstDate?: Date, secondDate?: Dat
     }
     return firstDate.getTime() >= secondDate.getTime();
 }
+
+export function localDateTimeStringToDate(localDateTime?: string): Date | undefined {
+    if (!localDateTime) {
+        return undefined;
+    }
+    const [datePart, timePart] = localDateTime.split('T');
+    if (!datePart || !timePart) {
+        return undefined;
+    }
+
+    const [y, m, d] = datePart.split('-').map(Number);
+    const [hh, mm, ss] = timePart.split(':').map(Number);
+
+    return new Date(y, (m ?? 1) - 1, d, hh ?? 0, mm ?? 0, ss ?? 0);
+}

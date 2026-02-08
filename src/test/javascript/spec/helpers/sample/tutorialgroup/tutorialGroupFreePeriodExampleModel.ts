@@ -12,7 +12,7 @@ export const generateExampleTutorialGroupFreePeriod = ({
 }: TutorialGroupFreePeriod) => {
     const examplePeriod = new TutorialGroupFreePeriod();
     examplePeriod.id = id;
-    // we get utc from the server --> will be converted to time zone of configuration
+    // we get utc from the server --> will be converted to the time zone of configuration
     examplePeriod.start = start;
     examplePeriod.end = end;
     examplePeriod.reason = reason;
@@ -48,20 +48,19 @@ export const tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData = (entity:
 };
 
 export const formDataToTutorialGroupFreePeriodDTO = (formData: TutorialGroupFreePeriodFormData): TutorialGroupFreePeriodDTO => {
-    const start = dayjs(formData.startDate);
-
     if (formData.endDate) {
-        const end = dayjs(formData.endDate);
         return {
-            start,
-            end,
+            startDate: formData.startDate,
+            endDate: formData.endDate,
             reason: formData.reason,
         };
+    } else {
+        const res = {
+            startDate: formData.startDate,
+            endDate: formData.startDate,
+            reason: formData.reason,
+        };
+        res.endDate!.setHours(23, 59);
+        return res;
     }
-    const end = dayjs(formData.startDate).hour(23).minute(59);
-    return {
-        start,
-        end,
-        reason: formData.reason,
-    };
 };
