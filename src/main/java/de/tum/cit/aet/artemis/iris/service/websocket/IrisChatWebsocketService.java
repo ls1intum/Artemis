@@ -62,6 +62,7 @@ public class IrisChatWebsocketService {
      * @param citationInfo the citation metadata to send
      */
     public void sendMessage(IrisChatSession session, IrisMessage irisMessage, List<PyrisStageDTO> stages, String sessionTitle, List<IrisCitationMetaDTO> citationInfo) {
+        // TODO: create DTOs for IrisChatSession and IrisMessage
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var rateLimitInfo = rateLimitService.getRateLimitInformation(session, user);
         var topic = "" + session.getId(); // Todo: add more specific topic
