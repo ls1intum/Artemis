@@ -7,26 +7,35 @@
     height: 100vh;
     z-index: 1050;
     pointer-events: none; // Allow clicks to pass through the container
+    --onboarding-tooltip-enter-duration: 500ms;
+    --onboarding-tooltip-enter-ease: cubic-bezier(0.2, 0.9, 0.2, 1);
+    --onboarding-tooltip-enter-distance: 16px;
+    --onboarding-radius: 0.5rem;
+    --onboarding-modal-surface: var(--bs-modal-bg, var(--bs-card-bg));
+    --onboarding-border: 1px solid var(--bs-border-color);
+    --onboarding-backdrop: rgba(34, 34, 34, 0.75);
+    --onboarding-spotlight-backdrop: rgba(34, 34, 34, 0.6);
+}
+
+%absolute-fill {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
 }
 
 // Full backdrop for step 0 and step 4
 .full-backdrop {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(34, 34, 34, 0.6);
+    @extend %absolute-fill;
+
+    background: var(--onboarding-backdrop);
     pointer-events: auto; // Block clicks on the backdrop
 }
 
 // Centered modal wrapper for step 0 and step 4
 .centered-modal-wrapper {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    @extend %absolute-fill;
+
     display: flex;
     align-items: center;
     justify-content: center;
@@ -36,8 +45,7 @@
 // Welcome modal with two-column layout (Step 0)
 .iris-onboarding-modal-welcome {
     position: relative;
-    background: var(--bs-secondary-bg, #f8f9fa);
-    border-radius: 0.5rem;
+    border-radius: var(--onboarding-radius);
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
     width: 700px;
     max-width: 90vw;
@@ -56,7 +64,7 @@
     flex-direction: column;
     justify-content: center;
     gap: 2.5rem;
-    border-radius: 0.5rem 0 0 0.5rem;
+    border-radius: var(--onboarding-radius) 0 0 var(--onboarding-radius);
 }
 
 // Right side - Illustration
@@ -67,7 +75,7 @@
     display: flex;
     flex-direction: column;
     position: relative;
-    border-radius: 0 0.5rem 0.5rem 0;
+    border-radius: 0 var(--onboarding-radius) var(--onboarding-radius) 0;
 }
 
 .chat-preview {
@@ -79,9 +87,9 @@
 }
 
 .chat-widget-preview {
-    background: var(--bs-modal-bg, white);
+    background: var(--onboarding-modal-surface);
     border: 0.75px solid var(--bs-border-color);
-    border-radius: 0.5rem;
+    border-radius: var(--onboarding-radius);
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     width: 90%;
@@ -89,7 +97,7 @@
 }
 
 .chat-header-preview {
-    background: var(--bs-modal-bg, white);
+    background: var(--onboarding-modal-surface);
     border-bottom: 1px solid var(--bs-border-color);
     padding: 0.25rem;
     display: flex;
@@ -126,11 +134,19 @@
     text-align: center;
 }
 
+.chat-bubble-preview {
+    background: var(--iris-client-chat-background);
+    border-radius: var(--onboarding-radius);
+    padding: 1rem;
+    width: 200px;
+    align-self: flex-end;
+}
+
 .chat-input-preview {
     width: 100%;
-    background: var(--bs-modal-bg, white);
+    background: var(--onboarding-modal-surface);
     border: 1px solid var(--bs-border-color);
-    border-radius: 0.5rem;
+    border-radius: var(--onboarding-radius);
     padding: 1rem;
     margin-top: 0.25rem;
 }
@@ -142,7 +158,7 @@
 }
 
 .iris-logo-badge {
-    border-radius: 0.5rem;
+    border-radius: var(--onboarding-radius);
     padding: 0.5rem;
     display: flex;
     align-items: center;
@@ -211,30 +227,24 @@
     align-items: flex-start;
     gap: 0.75rem;
     width: 100%;
+}
 
-    :host ::ng-deep jhi-button {
-        button {
-            border-radius: 0.5rem;
-            padding: 0.5rem 0.75rem;
-            font-size: 0.75rem;
-        }
-    }
+:host ::ng-deep .actions jhi-button button {
+    border-radius: var(--onboarding-radius);
+    padding: 0.5rem 1rem;
 }
 
 // Spotlight overlay styles
 .spotlight-backdrop {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    @extend %absolute-fill;
+
     pointer-events: none;
     z-index: 1050;
 }
 
 .spotlight-section {
     position: absolute;
-    background: rgba(34, 34, 34, 0.6);
+    background: var(--onboarding-spotlight-backdrop);
     pointer-events: auto; // Block clicks outside the spotlight cutout
 }
 
@@ -244,7 +254,7 @@
     pointer-events: auto; // Block clicks on spotlight target while step is visible
     cursor: default;
     z-index: 1050;
-    border-radius: 0.5rem;
+    border-radius: var(--onboarding-radius);
 }
 
 .spotlight-click-guard {
@@ -256,7 +266,7 @@
 }
 
 .spotlight-blocker.rounded-cutout {
-    box-shadow: 0 0 0 200vmax rgba(34, 34, 34, 0.6);
+    box-shadow: 0 0 0 200vmax var(--onboarding-spotlight-backdrop);
 }
 
 .spotlight-top {
@@ -282,9 +292,9 @@
 // Onboarding tooltip styles
 .onboarding-tooltip {
     position: absolute;
-    background: var(--bs-modal-bg, var(--bs-card-bg, white));
-    border: 1px solid var(--bs-border-color);
-    border-radius: 0.5rem;
+    background: var(--onboarding-modal-surface);
+    border: var(--onboarding-border);
+    border-radius: var(--onboarding-radius);
     padding: 1rem;
     box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1);
     width: 280px;
@@ -294,6 +304,8 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    animation: onboarding-tooltip-enter var(--onboarding-tooltip-enter-duration) var(--onboarding-tooltip-enter-ease) both;
+    transform-origin: left center;
 
     &.sidebar-tooltip {
         transition:
@@ -322,11 +334,13 @@
             left: -8px;
             border-top: 8px solid transparent;
             border-bottom: 8px solid transparent;
-            border-right: 8px solid var(--bs-modal-bg, var(--bs-card-bg, white));
+            border-right: 8px solid var(--onboarding-modal-surface);
         }
     }
 
     &.tooltip-bottom-right-arrow {
+        transform-origin: right center;
+
         &::before,
         &::after {
             content: '';
@@ -348,8 +362,26 @@
             bottom: 17px;
             border-top: 8px solid transparent;
             border-bottom: 8px solid transparent;
-            border-left: 8px solid var(--bs-modal-bg, var(--bs-card-bg, white));
+            border-left: 8px solid var(--onboarding-modal-surface);
         }
+    }
+}
+
+@keyframes onboarding-tooltip-enter {
+    from {
+        opacity: 0;
+        transform: translateY(var(--onboarding-tooltip-enter-distance)) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .onboarding-tooltip {
+        animation: none;
     }
 }
 
@@ -456,12 +488,12 @@
 // Step 4: Prompt Selection Modal
 .prompt-selection-modal {
     position: relative;
-    background: var(--bs-modal-bg, white);
-    border: 1px solid var(--bs-border-color);
-    border-radius: 0.5rem;
+    background: var(--onboarding-modal-surface);
+    border: var(--onboarding-border);
+    border-radius: var(--onboarding-radius);
     padding: 1.5rem;
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-    max-width: 400px;
+    max-width: 450px;
     width: 90%;
     display: flex;
     flex-direction: column;
@@ -503,7 +535,7 @@
 .modal-header-section {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.5rem;
     text-align: center;
     width: 100%;
 }
@@ -517,9 +549,9 @@
 
 .prompt-chip {
     background: var(--iris-chat-history-background);
-    border: 1px solid var(--bs-border-color);
-    border-radius: 0.5rem;
-    padding: 0.5rem 1rem;
+    border: var(--onboarding-border);
+    border-radius: var(--onboarding-radius);
+    padding: 1rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -530,8 +562,8 @@
     width: 100%;
 
     &:hover {
-        background: var(--bs-light, #e9ecef);
-        border-color: var(--bs-border-color);
+        background: var(--iris-client-chat-background);
+        // border-color: var(--bs-border-color);
         transform: translateY(-1px);
     }
 

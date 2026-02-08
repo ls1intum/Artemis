@@ -92,6 +92,12 @@ describe('IrisOnboardingModalComponent', () => {
             component.onStartTour();
             expect(component.step()).toBe(1);
         });
+
+        it('should skip to step 4 when no exercises are available', () => {
+            component.hasAvailableExercises.set(false);
+            component.onStartTour();
+            expect(component.step()).toBe(4);
+        });
     });
 
     describe('finish', () => {
@@ -235,6 +241,7 @@ describe('IrisOnboardingModalComponent', () => {
 
         it('should render spotlight backdrop at step 1', async () => {
             component.step.set(1);
+            component.isStep1PositionReady.set(true);
             fixture.detectChanges();
             await fixture.whenStable();
 
@@ -244,8 +251,21 @@ describe('IrisOnboardingModalComponent', () => {
             expect(coachMark).toBeTruthy();
         });
 
+        it('should not render step 1 spotlight when position is not ready', async () => {
+            component.step.set(1);
+            component.isStep1PositionReady.set(false);
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const spotlight = fixture.nativeElement.querySelector('.spotlight-backdrop');
+            const coachMark = fixture.nativeElement.querySelector('.coach-mark');
+            expect(spotlight).toBeFalsy();
+            expect(coachMark).toBeFalsy();
+        });
+
         it('should render iris icon tooltip at step 2', async () => {
             component.step.set(2);
+            component.isStep2PositionReady.set(true);
             fixture.detectChanges();
             await fixture.whenStable();
 
@@ -255,8 +275,21 @@ describe('IrisOnboardingModalComponent', () => {
             expect(blocker).toBeTruthy();
         });
 
+        it('should not render iris icon tooltip at step 2 when spotlight position is not ready', async () => {
+            component.step.set(2);
+            component.isStep2PositionReady.set(false);
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const tooltip = fixture.nativeElement.querySelector('.tooltip-bottom-right-arrow');
+            const blocker = fixture.nativeElement.querySelector('.spotlight-blocker');
+            expect(tooltip).toBeFalsy();
+            expect(blocker).toBeFalsy();
+        });
+
         it('should render dashboard spotlight at step 3', async () => {
             component.step.set(3);
+            component.isStep3PositionReady.set(true);
             fixture.detectChanges();
             await fixture.whenStable();
 
@@ -264,6 +297,18 @@ describe('IrisOnboardingModalComponent', () => {
             expect(spotlight).toBeTruthy();
             const coachMark = fixture.nativeElement.querySelector('.coach-mark');
             expect(coachMark).toBeTruthy();
+        });
+
+        it('should not render step 3 spotlight when position is not ready', async () => {
+            component.step.set(3);
+            component.isStep3PositionReady.set(false);
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const spotlight = fixture.nativeElement.querySelector('.spotlight-backdrop');
+            const coachMark = fixture.nativeElement.querySelector('.coach-mark');
+            expect(spotlight).toBeFalsy();
+            expect(coachMark).toBeFalsy();
         });
 
         it('should render prompt selection modal at step 4', async () => {

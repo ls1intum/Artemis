@@ -11,6 +11,13 @@ export class IrisOnboardingService {
     private modalService = inject(NgbModal);
     private modalRef: NgbModalRef | undefined;
 
+    private isDesktopViewport(): boolean {
+        if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+            return false;
+        }
+        return window.matchMedia('(min-width: 992px)').matches;
+    }
+
     /**
      * Checks if the user has completed the Iris onboarding.
      * @returns true if onboarding was completed, false otherwise
@@ -38,13 +45,17 @@ export class IrisOnboardingService {
      * @returns Promise that resolves to 'start' if user clicks "Let's get started",
      *          'skip' if user clicks "Skip tour", or undefined if dismissed
      */
-    async showOnboardingIfNeeded(): Promise<'start' | 'skip' | undefined> {
+    async showOnboardingIfNeeded(hasAvailableExercises = true): Promise<'start' | 'skip' | undefined> {
+        if (!this.isDesktopViewport()) {
+            return undefined;
+        }
+
         // TODO: Re-enable this check after development is complete
         // if (this.hasCompletedOnboarding()) {
         //     return undefined;
         // }
 
-        return this.openOnboardingModal();
+        return this.openOnboardingModal(hasAvailableExercises);
     }
 
     /**
@@ -52,7 +63,11 @@ export class IrisOnboardingService {
      * @returns Promise that resolves to 'start' if user clicks "Let's get started",
      *          'skip' if user clicks "Skip tour", or undefined if dismissed
      */
-    async openOnboardingModal(): Promise<'start' | 'skip' | undefined> {
+    async openOnboardingModal(hasAvailableExercises = true): Promise<'start' | 'skip' | undefined> {
+        if (!this.isDesktopViewport()) {
+            return undefined;
+        }
+
         if (this.modalRef) {
             return undefined;
         }
@@ -64,6 +79,7 @@ export class IrisOnboardingService {
             windowClass: 'iris-onboarding-modal-window',
             modalDialogClass: 'iris-onboarding-dialog',
         });
+        this.modalRef.componentInstance?.hasAvailableExercises?.set(hasAvailableExercises);
 
         try {
             const result = await this.modalRef.result;
