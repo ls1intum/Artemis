@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -243,6 +244,9 @@ public class ConversationService {
      */
     public void markAsUnread(Long conversationId, Long userId, Long messageId) {
         Post post = postRepository.findByIdElseThrow(messageId);
+        if (!post.getConversation().getId().equals(conversationId)) {
+            throw new EntityNotFoundException("Message with id \"" + messageId + "\" does not exist in the conversation");
+        }
         ZonedDateTime messageDate = post.getCreationDate();
         ZonedDateTime lastRead = messageDate.minusNanos(1_000_000); // set last read to 1ms before the message date
         // Recalculate unread count from this message onwards

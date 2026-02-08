@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -38,9 +39,12 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationSer
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -201,7 +205,11 @@ public class ConversationResource extends ConversationManagementResource {
         checkCommunicationEnabledElseThrow(courseId);
 
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var conversationFromDatabase = this.conversationService.getConversationById(conversationId);
+
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
+        checkConversationMembership(conversationFromDatabase, requestingUser);
+        checkEntityIdMatchesPathIds(conversationFromDatabase, Optional.of(courseId), Optional.of(conversationId));
 
         conversationService.markAsUnread(conversationId, requestingUser.getId(), messageId);
         return ResponseEntity.ok().build();
@@ -323,6 +331,15 @@ public class ConversationResource extends ConversationManagementResource {
                         "conversationIdMismatch");
             }
         });
+    }
+
+    private void checkConversationMembership(Conversation conversation, @NonNull User user) {
+        if (conversationService.isMember(conversation.getId(), user.getId())) {
+            return;
+        }
+
+        // suppress error alert with skipAlert: true so that the client can display a custom error message
+        throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this conversation.", "conversation", "noAccess", true);
     }
 
     /**
