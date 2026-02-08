@@ -9,6 +9,8 @@ springBoot {
 
 bootRun {
     args = []
+    // Required by Weaviate client v6 (Gson reflection on Java 9+)
+    jvmArgs = ["--add-opens=java.base/java.lang=ALL-UNNAMED"]
 }
 
 tasks.register("webapp_test", NpmTask) {

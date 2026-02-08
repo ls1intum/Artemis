@@ -152,9 +152,9 @@ artemis:
             default-timeframe-hours: -1
 
     weaviate:
-      enabled: false
+        enabled: false
 
-  # Default security configuration for internal endpoints accessed by other Artemis components
+    # Default security configuration for internal endpoints accessed by other Artemis components
     # Currently set to allow all IPs. Adjust as necessary for your deployment.
     security:
         internal:

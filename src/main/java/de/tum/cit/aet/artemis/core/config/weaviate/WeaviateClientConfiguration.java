@@ -40,7 +40,9 @@ public class WeaviateClientConfiguration {
         try {
             WeaviateClient client;
             if (weaviateProperties.secure()) {
-                // Custom connection for HTTPS/secure connections
+                // Custom connection for HTTPS/secure connections.
+                // IMPORTANT: scheme() must be called first because it auto-sets both ports (443 for https, 80 for http).
+                // httpPort() and grpcPort() are called after to override with the configured values.
                 client = WeaviateClient.connectToCustom(config -> config.scheme(weaviateProperties.scheme()).httpHost(weaviateProperties.httpHost())
                         .httpPort(weaviateProperties.httpPort()).grpcHost(weaviateProperties.httpHost()).grpcPort(weaviateProperties.grpcPort()));
             }
@@ -50,12 +52,20 @@ public class WeaviateClientConfiguration {
                         .connectToLocal(config -> config.host(weaviateProperties.httpHost()).port(weaviateProperties.httpPort()).grpcPort(weaviateProperties.grpcPort()));
             }
 
-            if (client.isReady()) {
-                log.info("Connected to Weaviate at {}://{}:{}", weaviateProperties.scheme(), weaviateProperties.httpHost(), weaviateProperties.httpPort());
+            // The constructor already verified liveness; isReady() is an additional readiness check.
+            // Catch IOException separately so a transient readiness failure doesn't destroy a valid client.
+            try {
+                if (client.isReady()) {
+                    log.info("Connected to Weaviate at {}://{}:{}", weaviateProperties.scheme(), weaviateProperties.httpHost(), weaviateProperties.httpPort());
+                }
+                else {
+                    log.warn("Weaviate client created but server is not ready at {}://{}:{}", weaviateProperties.scheme(), weaviateProperties.httpHost(),
+                            weaviateProperties.httpPort());
+                }
             }
-            else {
-                log.warn("Weaviate client created but server is not ready at {}://{}:{}", weaviateProperties.scheme(), weaviateProperties.httpHost(),
-                        weaviateProperties.httpPort());
+            catch (Exception readinessException) {
+                log.warn("Could not verify Weaviate readiness at {}://{}:{}: {}", weaviateProperties.scheme(), weaviateProperties.httpHost(), weaviateProperties.httpPort(),
+                        readinessException.getMessage());
             }
             return client;
         }

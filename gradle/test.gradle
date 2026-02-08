@@ -5,6 +5,11 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 tasks.withType(Test).configureEach {
 
     jvmArgs += "-javaagent:${configurations.mockitoAgent.asPath}"
+    // Required by Weaviate client v6 (Gson reflection on Java 9+)
+    jvmArgs += "--add-opens=java.base/java.lang=ALL-UNNAMED"
+
+    // Pass weaviate server version to integration tests
+    systemProperty 'weaviate.server.version', findProperty('weaviate_server_version')
 
     // a collection to track failedTests
     ext.failedTests = []
