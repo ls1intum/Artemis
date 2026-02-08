@@ -209,13 +209,11 @@
         "ProblemStatementGeneration": {
             "generatedProblemStatementTooLong": "Die generierte Aufgabenbeschreibung ist zu lang. Bitte versuche es erneut mit einer anderen Eingabe.",
             "generationFailed": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut.",
-            "userPromptContainsInjection": "Deine Eingabe enthält unzulässige Anweisungsmuster. Bitte formuliere deine Anfrage um.",
             "userPromptEmpty": "Die Benutzereingabe darf nicht leer sein.",
             "userPromptTooLong": "Die Benutzereingabe ist zu lang. Bitte kürze deine Anweisungen und versuche es erneut."
         },
         "ProblemStatementRefinement": {
             "problemStatementEmpty": "Die Aufgabenbeschreibung darf nicht leer sein.",
-            "userPromptContainsInjection": "Deine Eingabe enthält unzulässige Anweisungsmuster. Bitte formuliere deine Anfrage um.",
             "userPromptEmpty": "Die Benutzereingabe darf nicht leer sein.",
             "userPromptTooLong": "Die Benutzereingabe ist zu lang. Bitte kürze deine Anweisungen und versuche es erneut.",
             "noRefinementInstructions": "Keine Verfeinerungsanweisungen vorhanden. Bitte füge Canvas-Kommentare hinzu, um anzugeben, wie die Aufgabenbeschreibung verfeinert werden soll.",

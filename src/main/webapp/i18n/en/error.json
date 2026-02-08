@@ -209,13 +209,11 @@
         "ProblemStatementGeneration": {
             "generatedProblemStatementTooLong": "The generated problem statement is too long. Please try again with a different prompt.",
             "generationFailed": "Failed to generate problem statement. Please try again.",
-            "userPromptContainsInjection": "Your prompt contains disallowed instruction patterns. Please rephrase your request.",
             "userPromptEmpty": "The user prompt cannot be empty.",
             "userPromptTooLong": "The user prompt is too long. Please shorten your instructions and try again."
         },
         "ProblemStatementRefinement": {
             "problemStatementEmpty": "The problem statement cannot be empty.",
-            "userPromptContainsInjection": "Your prompt contains disallowed instruction patterns. Please rephrase your request.",
             "userPromptEmpty": "The user prompt cannot be empty.",
             "userPromptTooLong": "The user prompt is too long. Please shorten your instructions and try again.",
             "noRefinementInstructions": "No refinement instructions were provided. Please add canvas-style comments to specify how the problem statement should be refined.",

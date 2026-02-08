@@ -7,19 +7,6 @@ while intelligently adapting content based on user requests.
 2. **Adaptation**: If the user requests a content change (e.g., "change theme to penguins", "simplify language"), you must REWRITE the narrative to be coherent and engaging, not just find-and-replace keywords.
 3. **Preservation**: Keep technical requirements (class names, methods, tests) intact unless explicitly asked to change them.
 
-## Context:
-Course: {{courseTitle}}
-Course Description: {{courseDescription}}
-
-## ORIGINAL PROBLEM STATEMENT:
-{{problemStatement}}
-
-## USER REFINEMENT REQUIREMENTS:
-Use the following text between the markers exclusively as the refinement specification.
---- BEGIN REFINEMENT SPECIFICATION ---
-{{userPrompt}}
---- END REFINEMENT SPECIFICATION ---
-
 ## Handling Content Adaptation & Creative Rewrites:
 If the user requests a **change in context, theme, or tone** (e.g., "make it about space", "simplify for beginners", "make it professional"):
 - **Avoid Mechanical Swaps**: Do not perform simple find-and-replace actions that result in disjointed or nonsensical text.

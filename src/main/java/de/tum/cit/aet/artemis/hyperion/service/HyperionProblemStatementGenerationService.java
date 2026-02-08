@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.MA
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.getSanitizedCourseDescription;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.getSanitizedCourseTitle;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.sanitizeInput;
-import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.validateNoInjectionPatterns;
 
 import java.util.Map;
 
@@ -66,16 +65,16 @@ public class HyperionProblemStatementGenerationService {
 
         String sanitizedPrompt = sanitizeInput(userPrompt != null ? userPrompt : "Generate a programming exercise problem statement");
         validateUserPrompt(sanitizedPrompt);
-        validateNoInjectionPatterns(sanitizedPrompt, "ProblemStatementGeneration");
 
-        Map<String, String> templateVariables = Map.of("userPrompt", sanitizedPrompt, "courseTitle", getSanitizedCourseTitle(course), "courseDescription",
+        String systemPrompt = templateService.render("/prompts/hyperion/generate_draft_problem_statement_system.st", Map.of());
+
+        Map<String, String> userVariables = Map.of("userPrompt", sanitizedPrompt, "courseTitle", getSanitizedCourseTitle(course), "courseDescription",
                 getSanitizedCourseDescription(course));
-
-        String prompt = templateService.render("/prompts/hyperion/generate_draft_problem_statement.st", templateVariables);
+        String userMessage = templateService.render("/prompts/hyperion/generate_draft_problem_statement_user.st", userVariables);
 
         String generatedProblemStatement;
         try {
-            generatedProblemStatement = chatClient.prompt().user(prompt).call().content();
+            generatedProblemStatement = chatClient.prompt().system(systemPrompt).user(userMessage).call().content();
         }
         catch (Exception e) {
             log.error("Error generating problem statement for course [{}]: {}", course.getId(), e.getMessage(), e);

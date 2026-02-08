@@ -4,9 +4,7 @@ import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.MA
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.MAX_USER_PROMPT_LENGTH;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.getSanitizedCourseDescription;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.getSanitizedCourseTitle;
-import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.isValidLlmOutput;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.sanitizeInput;
-import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.validateNoInjectionPatterns;
 
 import java.util.Map;
 
@@ -69,18 +67,18 @@ public class HyperionProblemStatementRefinementService {
 
         String sanitizedPrompt = sanitizeInput(userPrompt);
         validateUserPrompt(sanitizedPrompt);
-        validateNoInjectionPatterns(sanitizedPrompt, "ProblemStatementRefinement");
 
         String sanitizedProblemStatement = sanitizeInput(originalProblemStatementText);
 
+        String systemPrompt = templateService.render("/prompts/hyperion/refine_problem_statement_system.st", Map.of());
+
         GlobalRefinementPromptVariables variables = new GlobalRefinementPromptVariables(sanitizedProblemStatement, sanitizedPrompt, getSanitizedCourseTitle(course),
                 getSanitizedCourseDescription(course));
-
-        String prompt = templateService.render("/prompts/hyperion/refine_problem_statement.st", variables.asMap());
+        String userMessage = templateService.render("/prompts/hyperion/refine_problem_statement_user.st", variables.asMap());
 
         String refinedProblemStatementText;
         try {
-            refinedProblemStatementText = chatClient.prompt().user(prompt).call().content();
+            refinedProblemStatementText = chatClient.prompt().system(systemPrompt).user(userMessage).call().content();
         }
         catch (Exception e) {
             throw handleRefinementError(course, originalProblemStatementText, e);
@@ -88,11 +86,6 @@ public class HyperionProblemStatementRefinementService {
 
         if (refinedProblemStatementText == null) {
             throw new InternalServerErrorAlertException("Refined problem statement is null", "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementNull");
-        }
-
-        if (!isValidLlmOutput(refinedProblemStatementText)) {
-            log.warn("LLM output for course [{}] contains meta-commentary, stripping preamble", course.getId());
-            refinedProblemStatementText = stripMetaPreamble(refinedProblemStatementText);
         }
 
         return validateAndReturnResponse(originalProblemStatementText, refinedProblemStatementText);
@@ -164,30 +157,6 @@ public class HyperionProblemStatementRefinementService {
             throw new BadRequestAlertException("User prompt exceeds maximum length of " + MAX_USER_PROMPT_LENGTH + " characters", "ProblemStatement",
                     "ProblemStatementRefinement.userPromptTooLong");
         }
-    }
-
-    /**
-     * Strips leading meta-commentary lines (e.g. "Here is the refined problem statement:") from LLM output,
-     * returning content starting from the first Markdown heading or non-empty content line.
-     */
-    private static String stripMetaPreamble(String output) {
-        String[] lines = output.split("\n");
-        int start = 0;
-        for (int i = 0; i < lines.length; i++) {
-            String trimmed = lines[i].trim();
-            if (trimmed.startsWith("#") || (trimmed.startsWith("[") && trimmed.contains("[task]")) || trimmed.startsWith("@startuml")) {
-                start = i;
-                break;
-            }
-            if (!trimmed.isEmpty() && !isValidLlmOutput(trimmed)) {
-                continue;
-            }
-            if (!trimmed.isEmpty()) {
-                start = i;
-                break;
-            }
-        }
-        return String.join("\n", java.util.Arrays.copyOfRange(lines, start, lines.length)).trim();
     }
 
     private interface RefinementPromptVariables {
