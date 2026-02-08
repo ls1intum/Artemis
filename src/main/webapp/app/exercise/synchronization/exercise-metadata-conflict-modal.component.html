@@ -16,44 +16,44 @@
         }
     </p>
 
-    <div class="conflict-list">
+    <div class="conflict-list vstack gap-3">
         @for (conflict of conflicts(); track conflict.field) {
-            <div class="conflict-item">
-                <div class="conflict-header">
-                    <label class="form-check">
+            <div class="conflict-item border rounded-3 p-3 bg-body">
+                <div class="conflict-header d-flex align-items-center gap-2">
+                    <label class="form-check mb-0">
                         <input class="form-check-input" type="checkbox" [ngModel]="decisions()[conflict.field]" (ngModelChange)="updateDecision(conflict.field, $event)" />
                         <span class="form-check-label" jhiTranslate="artemisApp.exercise.metadataSync.useIncoming"></span>
-                        <span class="field-name" [jhiTranslate]="conflict.labelKey"></span>
+                        <span class="field-name fw-semibold ms-2" [jhiTranslate]="conflict.labelKey"></span>
                     </label>
                 </div>
 
                 @if (isBuildConfigField(conflict.field)) {
-                    <div class="conflict-build-config">
-                        <div class="diff-labels">
-                            <span jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></span>
-                            <span jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></span>
+                    <div class="conflict-build-config mt-3 border rounded-3 p-3 bg-body">
+                        <div class="diff-labels row g-3 small text-body-secondary mb-2">
+                            <span class="col-6" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></span>
+                            <span class="col-6" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></span>
                         </div>
                         <div class="build-config-grid">
                             @for (entry of getBuildConfigEntries(conflict.currentValue, conflict.incomingValue); track entry.labelKey) {
-                                <div class="build-config-label" [jhiTranslate]="entry.labelKey"></div>
-                                <div class="build-config-value">{{ formatValue(entry.current) }}</div>
-                                <div class="build-config-value">{{ formatValue(entry.incoming) }}</div>
+                                <div class="build-config-label fw-semibold small" [jhiTranslate]="entry.labelKey"></div>
+                                <div class="build-config-value small text-break">{{ formatValue(entry.current) }}</div>
+                                <div class="build-config-value small text-break">{{ formatValue(entry.incoming) }}</div>
                             }
                         </div>
                     </div>
                 } @else if (isCategoriesField(conflict.field)) {
-                    <div class="conflict-categories">
-                        <div class="diff-labels">
-                            <span jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></span>
-                            <span jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></span>
+                    <div class="conflict-categories mt-3 border rounded-3 p-3 bg-body">
+                        <div class="diff-labels row g-3 small text-body-secondary mb-2">
+                            <span class="col-6" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></span>
+                            <span class="col-6" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></span>
                         </div>
-                        <div class="category-grid">
-                            <div class="category-list">
+                        <div class="category-grid row g-3">
+                            <div class="category-list col-12 col-md-6 d-flex flex-wrap gap-2">
                                 @for (category of toCategoryEntries(conflict.currentValue); track category.category) {
                                     <jhi-custom-exercise-category-badge [category]="category" [fontSize]="'small'" />
                                 }
                             </div>
-                            <div class="category-list">
+                            <div class="category-list col-12 col-md-6 d-flex flex-wrap gap-2">
                                 @for (category of toCategoryEntries(conflict.incomingValue); track category.category) {
                                     <jhi-custom-exercise-category-badge [category]="category" [fontSize]="'small'" />
                                 }
@@ -61,24 +61,24 @@
                         </div>
                     </div>
                 } @else if (isCompetencyLinksField(conflict.field)) {
-                    <div class="conflict-competencies">
-                        <div class="diff-labels">
-                            <span jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></span>
-                            <span jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></span>
+                    <div class="conflict-competencies mt-3 border rounded-3 p-3 bg-body">
+                        <div class="diff-labels row g-3 small text-body-secondary mb-2">
+                            <span class="col-6" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></span>
+                            <span class="col-6" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></span>
                         </div>
-                        <div class="competency-grid">
-                            <div class="competency-list">
+                        <div class="competency-grid row g-3">
+                            <div class="competency-list col-12 col-md-6 d-flex flex-column gap-2">
                                 @for (entry of toCompetencyDisplay(conflict.currentValue); track entry.title) {
-                                    <div class="competency-item">
-                                        <span class="competency-title">{{ entry.title }}</span>
+                                    <div class="competency-item d-flex justify-content-between gap-2 px-2 py-1 rounded-3 bg-secondary-subtle small">
+                                        <span class="competency-title fw-semibold">{{ entry.title }}</span>
                                         <span class="competency-weight">{{ formatValue(entry.weight) }}</span>
                                     </div>
                                 }
                             </div>
-                            <div class="competency-list">
+                            <div class="competency-list col-12 col-md-6 d-flex flex-column gap-2">
                                 @for (entry of toCompetencyDisplay(conflict.incomingValue); track entry.title) {
-                                    <div class="competency-item">
-                                        <span class="competency-title">{{ entry.title }}</span>
+                                    <div class="competency-item d-flex justify-content-between gap-2 px-2 py-1 rounded-3 bg-secondary-subtle small">
+                                        <span class="competency-title fw-semibold">{{ entry.title }}</span>
                                         <span class="competency-weight">{{ formatValue(entry.weight) }}</span>
                                     </div>
                                 }
@@ -86,14 +86,18 @@
                         </div>
                     </div>
                 } @else {
-                    <div class="conflict-values">
-                        <div class="value-block">
-                            <div class="value-label" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
-                            <div class="value-text">{{ formatValue(conflict.currentValue) }}</div>
+                    <div class="conflict-values row g-3 mt-2">
+                        <div class="col-12 col-md-6">
+                            <div class="value-block border rounded-3 p-2 px-3 bg-body h-100">
+                                <div class="value-label small text-body-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.yourValue"></div>
+                                <div class="value-text text-break">{{ formatValue(conflict.currentValue) }}</div>
+                            </div>
                         </div>
-                        <div class="value-block">
-                            <div class="value-label" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
-                            <div class="value-text">{{ formatValue(conflict.incomingValue) }}</div>
+                        <div class="col-12 col-md-6">
+                            <div class="value-block border rounded-3 p-2 px-3 bg-body h-100">
+                                <div class="value-label small text-body-secondary mb-1" jhiTranslate="artemisApp.exercise.metadataSync.incomingValue"></div>
+                                <div class="value-text text-break">{{ formatValue(conflict.incomingValue) }}</div>
+                            </div>
                         </div>
                     </div>
                 }

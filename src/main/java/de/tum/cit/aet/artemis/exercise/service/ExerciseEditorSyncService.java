@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Set;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,7 +75,7 @@ public class ExerciseEditorSyncService {
      * @param auxiliaryRepositoryId (optional) the id of the auxiliary repository
      *                                  associated with this commit
      */
-    public void broadcastNewCommitAlert(long exerciseId, ExerciseEditorSyncTarget target, @Nullable Long auxiliaryRepositoryId) {
+    public void broadcastNewCommitAlert(@NonNull Long exerciseId, @NonNull ExerciseEditorSyncTarget target, @Nullable Long auxiliaryRepositoryId) {
         ExerciseNewCommitAlertDTO payload = new ExerciseNewCommitAlertDTO(ExerciseEditorSyncEventType.NEW_COMMIT_ALERT, target, auxiliaryRepositoryId, getClientSessionId(),
                 System.currentTimeMillis());
         websocketMessagingService.sendMessage(getSynchronizationTopic(exerciseId), payload).exceptionally(exception -> {
@@ -91,7 +92,7 @@ public class ExerciseEditorSyncService {
      * @param author            the author of the new version
      * @param changedFields     the changed metadata fields compared to the previous version
      */
-    public void broadcastNewExerciseVersionAlert(Long exerciseId, Long exerciseVersionId, User author, Set<String> changedFields) {
+    public void broadcastNewExerciseVersionAlert(@NonNull Long exerciseId, @NonNull Long exerciseVersionId, @NonNull User author, @NonNull Set<String> changedFields) {
         ExerciseNewVersionAlertDTO payload = new ExerciseNewVersionAlertDTO(ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT, ExerciseEditorSyncTarget.EXERCISE_METADATA,
                 exerciseVersionId, new UserPublicInfoDTO(author), changedFields, getClientSessionId());
         websocketMessagingService.sendMessage(getSynchronizationTopic(exerciseId), payload).exceptionally(exception -> {
