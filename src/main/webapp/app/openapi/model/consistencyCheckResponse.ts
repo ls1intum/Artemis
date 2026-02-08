@@ -7,7 +7,6 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-
 import { ConsistencyIssue } from './consistencyIssue';
 
 
