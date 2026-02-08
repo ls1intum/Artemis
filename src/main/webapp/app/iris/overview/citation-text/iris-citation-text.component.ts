@@ -8,7 +8,7 @@ import { faChevronLeft, faChevronRight, faCircleExclamation, faCircleQuestion, f
 
 /**
  * Component that processes text containing citation markers and renders them as interactive citation bubbles.
- * Takes raw text with [cite:entityID:page:start_time:end_time:keyword:summary] markers as input and outputs rendered HTML including citation bubbles.
+ * Takes raw text with [cite:entityID:page:start_time:end_time:keyword:summary] markers as input and outputs rendered HTML with citation bubbles.
  */
 @Component({
     selector: 'jhi-iris-citation-text',
