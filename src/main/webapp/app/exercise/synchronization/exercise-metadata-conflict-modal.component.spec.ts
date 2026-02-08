@@ -175,6 +175,20 @@ describe('ExerciseMetadataConflictModalComponent', () => {
         expect(component.toCategoryEntries(undefined)).toEqual([]);
     });
 
+    it('normalizes JSON-serialized category entries for incoming conflict values', () => {
+        const byJsonArrayEntries = component.toCategoryEntries([
+            '{"category":"alpha","color":"#123456"}',
+            '{"category":"beta","color":"#abcdef"}',
+            '{"category":"   ","color":"#000000"}',
+        ]);
+        expect(byJsonArrayEntries.map((category) => category.category)).toEqual(['alpha', 'beta']);
+        expect(byJsonArrayEntries.map((category) => category.color)).toEqual(['#123456', '#abcdef']);
+
+        const byJsonArrayString = component.toCategoryEntries('[{"category":"gamma","color":"#111111"},{"category":"delta","color":"#222222"}]');
+        expect(byJsonArrayString.map((category) => category.category)).toEqual(['gamma', 'delta']);
+        expect(byJsonArrayString.map((category) => category.color)).toEqual(['#111111', '#222222']);
+    });
+
     it('maps competency links to display format and filters missing titles', () => {
         const competencyA = new Competency();
         competencyA.title = 'Comp A';

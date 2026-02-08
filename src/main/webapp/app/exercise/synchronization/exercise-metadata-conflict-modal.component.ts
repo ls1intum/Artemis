@@ -236,6 +236,10 @@ export class ExerciseMetadataConflictModalComponent {
             return entries;
         }
         if (typeof value === 'string') {
+            const parsed = this.tryParseJson(value);
+            if (parsed !== undefined) {
+                return this.toCategoryEntries(parsed);
+            }
             const parts = value.split(',');
             for (const part of parts) {
                 const trimmed = part.trim();
@@ -257,14 +261,33 @@ export class ExerciseMetadataConflictModalComponent {
             return value;
         }
         if (typeof value === 'string') {
-            return new ExerciseCategory(value, undefined);
+            const trimmed = value.trim();
+            if (!trimmed) {
+                return undefined;
+            }
+            const parsed = this.tryParseJson(trimmed);
+            if (parsed !== undefined) {
+                return this.normalizeCategory(parsed);
+            }
+            return new ExerciseCategory(trimmed, undefined);
         }
         if (typeof value === 'object' && 'category' in value) {
-            const category = (value as { category?: string }).category;
+            const category = (value as { category?: string }).category?.trim();
+            if (!category) {
+                return undefined;
+            }
             const color = (value as { color?: string }).color;
             return new ExerciseCategory(category, color);
         }
         return undefined;
+    }
+
+    private tryParseJson(value: string): unknown | undefined {
+        try {
+            return JSON.parse(value);
+        } catch {
+            return undefined;
+        }
     }
 
     /**
