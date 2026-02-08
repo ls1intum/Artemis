@@ -43,6 +43,7 @@ import { User } from 'app/core/user/user.model';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { DialogService } from 'primeng/dynamicdialog';
+import { IrisOnboardingService } from 'app/iris/overview/iris-onboarding-modal/iris-onboarding.service';
 
 describe('IrisBaseChatbotComponent', () => {
     setupTestBed({ zoneless: true });
@@ -63,6 +64,9 @@ describe('IrisBaseChatbotComponent', () => {
     } as any;
     const mockLLMModalService = {
         open: vi.fn().mockResolvedValue(LLM_MODAL_DISMISSED),
+    } as any;
+    const mockOnboardingService = {
+        showOnboardingIfNeeded: vi.fn().mockResolvedValue(undefined),
     } as any;
     const mockUserService = {
         updateLLMSelectionDecision: vi.fn().mockReturnValue(of(new HttpResponse<void>())),
@@ -91,6 +95,7 @@ describe('IrisBaseChatbotComponent', () => {
                 { provide: IrisStatusService, useValue: statusMock },
                 { provide: LLMSelectionModalService, useValue: mockLLMModalService },
                 MockProvider(DialogService),
+                { provide: IrisOnboardingService, useValue: mockOnboardingService },
                 MockProvider(ActivatedRoute),
                 MockProvider(IrisChatHttpService),
                 MockProvider(IrisWebsocketService),
@@ -980,37 +985,39 @@ describe('IrisBaseChatbotComponent', () => {
         });
     });
 
-    describe('LLM Selection Modal', () => {
-        let mockLLMModalService: any;
+    describe('Onboarding', () => {
+        let onboardingService: IrisOnboardingService;
 
         beforeEach(() => {
-            mockLLMModalService = TestBed.inject(LLMSelectionModalService);
+            onboardingService = TestBed.inject(IrisOnboardingService);
         });
 
-        it('should show LLM selection modal when userAccepted is undefined', async () => {
-            accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
+        it('should call showOnboardingIfNeeded on ngAfterViewInit', () => {
+            mockOnboardingService.showOnboardingIfNeeded.mockClear();
+            const spy = vi.spyOn(onboardingService, 'showOnboardingIfNeeded').mockResolvedValue(undefined);
 
-            const openSpy = vi.spyOn(mockLLMModalService, 'open').mockResolvedValue(LLM_MODAL_DISMISSED);
+            component.ngAfterViewInit();
+
+            expect(spy).toHaveBeenCalledOnce();
+        });
+
+        it('should set userAccepted to undefined when user has no LLM selection', async () => {
+            accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
             fixture.detectChanges();
-            // Flush the pending setTimeout from the constructor that triggers showAISelectionModal
-            await new Promise((resolve) => setTimeout(resolve, 0));
-            await fixture.whenStable();
 
             expect(component.userAccepted()).toBeUndefined();
-            expect(openSpy).toHaveBeenCalled();
         });
 
-        it('should not show LLM selection modal when userAccepted is already set', async () => {
+        it('should not show onboarding modal when userAccepted is already set', async () => {
             const mockUser = { selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User;
             accountService.userIdentity.set(mockUser);
             vi.spyOn(accountService, 'userIdentity').mockReturnValue(mockUser as any);
 
-            mockLLMModalService.open.mockClear();
-            const openSpy = vi.spyOn(mockLLMModalService, 'open');
+            mockOnboardingService.showOnboardingIfNeeded.mockClear();
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1023,33 +1030,24 @@ describe('IrisBaseChatbotComponent', () => {
             await fixture.whenStable();
 
             expect(component.userAccepted()).toBe(LLMSelectionDecision.CLOUD_AI);
-            expect(openSpy).not.toHaveBeenCalled();
         });
 
-        it('should set userAccepted to CLOUD_AI when user selects cloud in modal', async () => {
-            accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
-            vi.spyOn(mockLLMModalService, 'open').mockResolvedValue(LLMSelectionDecision.CLOUD_AI);
+        it('should set userAccepted to CLOUD_AI when acceptPermission is called with CLOUD_AI', () => {
             vi.spyOn(chatService, 'updateLLMUsageConsent').mockImplementation(() => {});
 
-            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
-            component = fixture.componentInstance;
-            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
-            fixture.detectChanges();
-
-            // Flush the pending setTimeout from the constructor and then call directly
-            await new Promise((resolve) => setTimeout(resolve, 0));
-            await component.showAISelectionModal();
+            component.acceptPermission(LLMSelectionDecision.CLOUD_AI);
 
             expect(component.userAccepted()).toBe(LLMSelectionDecision.CLOUD_AI);
+            expect(chatService.updateLLMUsageConsent).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
         });
 
-        it('should set userAccepted to LOCAL_AI when user selects local in modal', async () => {
-            vi.spyOn(mockLLMModalService, 'open').mockResolvedValue(LLMSelectionDecision.LOCAL_AI);
+        it('should set userAccepted to LOCAL_AI when acceptPermission is called with LOCAL_AI', () => {
             vi.spyOn(chatService, 'updateLLMUsageConsent').mockImplementation(() => {});
 
-            await component.showAISelectionModal();
+            component.acceptPermission(LLMSelectionDecision.LOCAL_AI);
 
             expect(component.userAccepted()).toBe(LLMSelectionDecision.LOCAL_AI);
+            expect(chatService.updateLLMUsageConsent).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
         });
 
         it('should close chat when user selects no_ai in modal', async () => {
