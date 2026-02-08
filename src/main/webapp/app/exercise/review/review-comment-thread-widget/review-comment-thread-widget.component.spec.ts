@@ -148,7 +148,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         const empty = {} as any;
 
         expect(comp.getCommentAuthorName(withName)).toBe('Alice');
-        expect(comp.getCommentAuthorName(empty)).toBe('');
+        expect(comp.getCommentAuthorName(empty)).toBe('[Artemis User]');
     });
 
     it('should set edit text when starting editing', () => {
