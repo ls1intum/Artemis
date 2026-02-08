@@ -200,11 +200,9 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                 } else {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
                 }
-                this.userPrompt.set('');
             },
             error: () => {
                 this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
-                this.userPrompt.set('');
             },
         });
     }
@@ -238,11 +236,9 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                 } else {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
                 }
-                this.userPrompt.set('');
             },
             error: () => {
                 this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
-                this.userPrompt.set('');
             },
         });
     }

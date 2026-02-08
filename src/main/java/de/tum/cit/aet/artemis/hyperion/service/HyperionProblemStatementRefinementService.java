@@ -91,14 +91,15 @@ public class HyperionProblemStatementRefinementService {
 
         String sanitizedProblemStatement = sanitizeInput(originalProblemStatementText);
 
+        String systemPrompt = templateService.render("/prompts/hyperion/refine_problem_statement_system.st", Map.of());
+
         GlobalRefinementPromptVariables variables = new GlobalRefinementPromptVariables(sanitizedProblemStatement, sanitizedPrompt, getSanitizedCourseTitle(course),
                 getSanitizedCourseDescription(course));
-
-        String prompt = templateService.render("/prompts/hyperion/refine_problem_statement.st", variables.asMap());
+        String userMessage = templateService.render("/prompts/hyperion/refine_problem_statement_user.st", variables.asMap());
 
         String refinedProblemStatementText;
         try {
-            refinedProblemStatementText = chatClient.prompt().user(prompt).call().content();
+            refinedProblemStatementText = chatClient.prompt().system(systemPrompt).user(userMessage).call().content();
         }
         catch (Exception e) {
             throw handleRefinementError(course, originalProblemStatementText, e);

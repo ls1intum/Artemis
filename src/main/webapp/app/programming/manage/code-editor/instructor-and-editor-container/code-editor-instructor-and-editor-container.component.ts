@@ -483,6 +483,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private generateProblemStatement(prompt: string): void {
         this.showRefinementPrompt.set(false);
 
+        this.currentRefinementSubscription?.unsubscribe();
         this.currentRefinementSubscription = this.problemStatementService.generateProblemStatement(this.exercise, prompt, this.isGeneratingOrRefining).subscribe({
             next: (result) => {
                 if (result.success && result.content) {
@@ -500,13 +501,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     this.refinementPrompt.set('');
                 } else {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
-                    this.refinementPrompt.set('');
                 }
             },
             error: () => {
                 this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
-                this.refinementPrompt.set('');
-                this.showRefinementPrompt.set(false);
             },
         });
     }
@@ -519,6 +517,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
         this.showRefinementPrompt.set(false);
 
+        this.currentRefinementSubscription?.unsubscribe();
         this.currentRefinementSubscription = this.problemStatementService
             .refineGlobally(this.exercise, this.exercise.problemStatement, prompt, this.isGeneratingOrRefining)
             .subscribe({
@@ -530,13 +529,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         this.refinementPrompt.set('');
                     } else {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
-                        this.refinementPrompt.set('');
                     }
                 },
                 error: () => {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
-                    this.refinementPrompt.set('');
-                    this.showRefinementPrompt.set(false);
                 },
             });
     }
