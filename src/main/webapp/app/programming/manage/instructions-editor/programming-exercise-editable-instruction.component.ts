@@ -155,6 +155,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     readonly onReplyReviewComment = output<{ threadId: number; text: string }>();
     readonly onUpdateReviewComment = output<{ commentId: number; text: string }>();
     readonly onToggleResolveReviewThread = output<{ threadId: number; resolved: boolean }>();
+    readonly onProblemStatementSaved = output<void>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
 
     set participation(participation: Participation) {
@@ -239,6 +240,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             )
             .subscribe(() => {
                 this.savingInstructions = false;
+                this.onProblemStatementSaved.emit();
             });
     }
 
@@ -344,6 +346,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     jumpToLine(lineNumber: number) {
         this.markdownEditorMonaco?.monacoEditor.revealLine(lineNumber, editor.ScrollType.Immediate);
+    }
+
+    clearReviewCommentDrafts(): void {
+        this.markdownEditorMonaco?.clearReviewCommentDrafts();
     }
 
     private mapAnalysisToWarnings = (analysis: ProblemStatementAnalysis) => {

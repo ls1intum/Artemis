@@ -151,20 +151,6 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(comp.getCommentAuthorName(empty)).toBe('');
     });
 
-    it('should return thread meta for version or commit', () => {
-        fixture.componentRef.setInput('thread', {
-            targetType: CommentThreadLocationType.PROBLEM_STATEMENT,
-            initialVersionId: 9,
-        } as any);
-        expect(comp.getThreadMeta()).toEqual({ key: 'artemisApp.review.threadVersion', params: { versionId: 9 } });
-
-        fixture.componentRef.setInput('thread', {
-            targetType: CommentThreadLocationType.TEMPLATE_REPO,
-            initialCommitSha: 'abc',
-        } as any);
-        expect(comp.getThreadMeta()).toEqual({ key: 'artemisApp.review.threadCommit', params: { commitSha: 'abc' } });
-    });
-
     it('should set edit text when starting editing', () => {
         const comment = {
             id: 1,

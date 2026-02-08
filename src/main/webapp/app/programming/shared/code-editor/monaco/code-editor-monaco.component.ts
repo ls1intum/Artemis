@@ -178,6 +178,8 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         effect(() => {
             this.commitState();
             this.reviewCommentManager?.updateDraftInputs();
+            const threads = this.reviewCommentThreads();
+            this.reviewCommentManager?.updateThreadInputs(threads);
         });
     }
 
@@ -508,6 +510,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
                 onUpdate: (payload) => this.onUpdateReviewComment.emit(payload),
                 onToggleResolved: (payload) => this.onToggleResolveReviewThread.emit(payload),
                 requestRender: () => this.renderReviewCommentWidgets(),
+                showLocationWarning: () => this.commitState() === CommitState.UNCOMMITTED_CHANGES,
             });
         }
         return this.reviewCommentManager;

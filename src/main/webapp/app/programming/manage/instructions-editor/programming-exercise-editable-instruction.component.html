@@ -18,6 +18,7 @@
             [consistencyIssues]="consistencyIssues()"
             [enableExerciseReviewComments]="enableExerciseReviewComments()"
             [reviewCommentThreads]="reviewCommentThreads()"
+            [showLocationWarning]="unsavedChangesValue"
             (markdownChange)="updateProblemStatement($event)"
             (onSubmitReviewComment)="onSubmitReviewComment.emit($event)"
             (onDeleteReviewComment)="onDeleteReviewComment.emit($event)"

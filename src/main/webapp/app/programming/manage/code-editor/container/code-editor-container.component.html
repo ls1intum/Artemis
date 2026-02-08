@@ -1,4 +1,4 @@
-<jhi-code-editor-grid #grid [isTutorAssessment]="isTutorAssessment()" [class.left-sidebar-tabs-active]="enableLeftSidebarTabs()">
+<jhi-code-editor-grid #grid [isTutorAssessment]="isTutorAssessment()">
     <div editorNavbar class="d-flex flex-wrap align-items-center">
         <span>
             <h4 class="editor-title"><ng-content select="[editorTitle]" /></h4>
@@ -28,71 +28,25 @@
             }
         </div>
     </div>
-    <ng-container editorSidebarLeft>
-        @if (!enableLeftSidebarTabs()) {
-            <jhi-code-editor-file-browser
-                [disableActions]="!editable()"
-                [displayOnly]="forRepositoryView()"
-                [showEditorInstructions]="showEditorInstructions()"
-                [isProblemStatementVisible]="isProblemStatementVisible()"
-                [unsavedFiles]="unsavedFiles | keys"
-                [errorFiles]="errorFiles"
-                [editorState]="editorState"
-                [isTutorAssessment]="isTutorAssessment()"
-                [highlightFileChanges]="highlightFileChanges()"
-                [fileBadges]="fileBadges"
-                [allowHiddenFiles]="allowHiddenFiles()"
-                [(selectedFile)]="selectedFile"
-                [(commitState)]="commitState"
-                (onFileChange)="onFileChange($event)"
-                (onError)="onError($event)"
-                (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.FileBrowser)"
-            />
-        } @else {
-            <jhi-code-editor-sidebar-tabs
-                [isCollapsed]="grid?.fileBrowserIsCollapsed ?? false"
-                (toggleCollapsed)="toggleFileBrowserCollapsed()"
-                (commentsVisibilityChange)="reviewCommentsVisible.set($event)"
-            >
-                <ng-container sidebarFiles>
-                    <jhi-code-editor-file-browser
-                        [disableActions]="!editable()"
-                        [displayOnly]="forRepositoryView()"
-                        [showEditorInstructions]="showEditorInstructions()"
-                        [isProblemStatementVisible]="isProblemStatementVisible()"
-                        [unsavedFiles]="unsavedFiles | keys"
-                        [errorFiles]="errorFiles"
-                        [editorState]="editorState"
-                        [isTutorAssessment]="isTutorAssessment()"
-                        [highlightFileChanges]="highlightFileChanges()"
-                        [fileBadges]="fileBadges"
-                        [allowHiddenFiles]="allowHiddenFiles()"
-                        [(selectedFile)]="selectedFile"
-                        [(commitState)]="commitState"
-                        (onFileChange)="onFileChange($event)"
-                        (onError)="onError($event)"
-                        (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.FileBrowser)"
-                    />
-                </ng-container>
-                <ng-container sidebarProblemStatement>
-                    <ng-content select="[editorSidebar]" />
-                </ng-container>
-                <ng-container sidebarComments>
-                    @for (thread of reviewCommentThreads(); track thread.id) {
-                        <jhi-review-comment-thread-widget
-                            [thread]="thread"
-                            [showLocation]="true"
-                            (onDelete)="onDeleteReviewComment.emit($event)"
-                            (onReply)="onReplyReviewComment.emit({ threadId: thread.id, text: $event })"
-                            (onUpdate)="onUpdateReviewComment.emit($event)"
-                            (onToggleResolved)="onToggleResolveReviewThread.emit({ threadId: thread.id, resolved: $event })"
-                            (onNavigateToThread)="onNavigateReviewThread.emit($event)"
-                        />
-                    }
-                </ng-container>
-            </jhi-code-editor-sidebar-tabs>
-        }
-    </ng-container>
+    <jhi-code-editor-file-browser
+        editorSidebarLeft
+        [disableActions]="!editable()"
+        [displayOnly]="forRepositoryView()"
+        [showEditorInstructions]="showEditorInstructions()"
+        [isProblemStatementVisible]="isProblemStatementVisible()"
+        [unsavedFiles]="unsavedFiles | keys"
+        [errorFiles]="errorFiles"
+        [editorState]="editorState"
+        [isTutorAssessment]="isTutorAssessment()"
+        [highlightFileChanges]="highlightFileChanges()"
+        [fileBadges]="fileBadges"
+        [allowHiddenFiles]="allowHiddenFiles()"
+        [(selectedFile)]="selectedFile"
+        [(commitState)]="commitState"
+        (onFileChange)="onFileChange($event)"
+        (onError)="onError($event)"
+        (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.FileBrowser)"
+    />
     <ng-container editorCenter>
         <!-- Problem Statement Editor - always in DOM, hidden when not selected -->
         <jhi-code-editor-instructions
@@ -124,7 +78,6 @@
             [consistencyIssues]="consistencyIssues()"
             [enableExerciseReviewComments]="enableExerciseReviewComments()"
             [reviewCommentThreads]="reviewCommentsVisible() ? reviewCommentThreads() : []"
-            [selectedAuxiliaryRepositoryId]="selectedAuxiliaryRepositoryId()"
             (onFileContentChange)="onFileContentChange($event)"
             (onUpdateFeedback)="onUpdateFeedback.emit($event)"
             (onAcceptSuggestion)="onAcceptSuggestion.emit($event)"
@@ -141,7 +94,7 @@
         />
     </ng-container>
     <ng-container editorSidebarRight>
-        @if (!enableLeftSidebarTabs() && showEditorInstructions()) {
+        @if (showEditorInstructions()) {
             <jhi-code-editor-instructions
                 (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)"
                 (onError)="onError($event)"

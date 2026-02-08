@@ -18,13 +18,12 @@
             "editCancel": "Cancel",
             "editSubmit": "Update",
             "threadTitle": "Comment thread",
+            "threadLocationWarning": "Comments may be not in the correct location. Submit changes to update the comment.",
             "resolveThread": "Resolve",
             "unresolveThread": "Unresolve",
             "resolveFailed": "Could not update the thread status.",
             "threadResolved": "Resolved",
             "threadOutdated": "Outdated",
-            "threadVersion": "created in version {{versionId}}",
-            "threadCommit": "created in commit {{commitSha}}",
             "submitBeforeComment": "Submit the exercise before starting a thread."
         }
     }

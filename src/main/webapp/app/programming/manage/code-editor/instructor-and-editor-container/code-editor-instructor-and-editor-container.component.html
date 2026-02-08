@@ -27,8 +27,8 @@
             [consistencyIssues]="consistencyIssues()"
             [enableExerciseReviewComments]="true"
             [reviewCommentThreads]="reviewCommentThreads()"
-            [selectedAuxiliaryRepositoryId]="selectedRepositoryId"
-            [enableLeftSidebarTabs]="true"
+            (onFileLoad)="onFileLoad($event)"
+            (onEditorLoaded)="onEditorLoaded()"
             (onCommit)="onCommit()"
             (onSubmitReviewComment)="onSubmitReviewComment($event)"
             (onDeleteReviewComment)="onDeleteReviewComment($event)"
@@ -36,8 +36,6 @@
             (onUpdateReviewComment)="onUpdateReviewComment($event)"
             (onToggleResolveReviewThread)="onToggleResolveReviewThread($event)"
             (onNavigateReviewThread)="onNavigateReviewThread($event)"
-            (onFileLoad)="onFileLoad($event)"
-            (onEditorLoaded)="onEditorLoaded()"
         >
             <div editorTitle>
                 <span>{{ exercise?.title }}</span>
@@ -304,6 +302,7 @@
                 (onReplyReviewComment)="onReplyReviewComment($event)"
                 (onUpdateReviewComment)="onUpdateReviewComment($event)"
                 (onToggleResolveReviewThread)="onToggleResolveReviewThread($event)"
+                (onProblemStatementSaved)="onProblemStatementSaved()"
             />
             <jhi-programming-exercise-instructions
                 editorSidebar

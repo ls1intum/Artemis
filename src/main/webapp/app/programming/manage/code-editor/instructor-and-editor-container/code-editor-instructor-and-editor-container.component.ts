@@ -149,6 +149,16 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
         this.codeEditorContainer?.monacoEditor?.clearReviewCommentDrafts();
+        this.editableInstructions?.clearReviewCommentDrafts();
+        this.loadReviewCommentThreads(exerciseId);
+    }
+
+    onProblemStatementSaved(): void {
+        const exerciseId = this.exercise?.id;
+        if (!exerciseId) {
+            return;
+        }
+        this.editableInstructions?.clearReviewCommentDrafts();
         this.loadReviewCommentThreads(exerciseId);
     }
 

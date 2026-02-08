@@ -266,6 +266,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly consistencyIssues = input<ConsistencyIssue[]>([]);
     readonly enableExerciseReviewComments = input<boolean>(false);
     readonly reviewCommentThreads = input<CommentThread[]>([]);
+    readonly showLocationWarning = input<boolean>(false);
 
     isButtonLoading = input<boolean>(false);
     isFormGroupValid = input<boolean>(false);
@@ -376,8 +377,15 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         effect(() => {
             this.enableExerciseReviewComments();
             this.reviewCommentThreads();
+            this.showLocationWarning();
             this.renderEditorWidgets();
             this.updateReviewCommentButton();
+        });
+
+        effect(() => {
+            this.showLocationWarning();
+            const threads = this.reviewCommentThreads();
+            this.reviewCommentManager?.updateThreadInputs(threads);
         });
     }
 
@@ -753,6 +761,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.getReviewCommentManager()?.updateHoverButton();
     }
 
+    clearReviewCommentDrafts(): void {
+        this.reviewCommentManager?.clearDrafts();
+    }
+
     private getReviewCommentManager(): ReviewCommentWidgetManager | undefined {
         if (!this.monacoEditor) {
             return undefined;
@@ -772,6 +784,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 onUpdate: (payload) => this.onUpdateReviewComment.emit(payload),
                 onToggleResolved: (payload) => this.onToggleResolveReviewThread.emit(payload),
                 requestRender: () => this.renderEditorWidgets(),
+                showLocationWarning: () => this.showLocationWarning(),
             });
         }
         return this.reviewCommentManager;

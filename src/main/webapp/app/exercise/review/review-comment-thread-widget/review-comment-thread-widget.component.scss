@@ -89,7 +89,7 @@
     font-family: inherit;
 }
 
-.monaco-review-comment-textarea--compact {
+.monaco-review-comment-textarea.monaco-review-comment-textarea--compact {
     min-height: 2rem;
     resize: vertical;
 }
@@ -118,17 +118,6 @@
     margin: 0;
 }
 
-.monaco-review-comment-thread-heading {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    min-width: 0;
-}
-
-.monaco-review-comment-thread-header--collapsed {
-    margin: 0;
-}
-
 .monaco-review-comment-thread-divider {
     border-bottom: 1px solid var(--border-color);
     margin-top: 0.15rem;
@@ -136,9 +125,9 @@
 }
 
 .monaco-review-comment-thread-title {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 0.35rem;
     min-width: 0;
 }
@@ -150,7 +139,7 @@
 .monaco-review-comment-thread-tag {
     display: inline-flex;
     align-items: center;
-    font-size: 0.6rem;
+    font-size: 0.7rem;
     font-weight: 600;
     padding: 0.1rem 0.35rem;
     line-height: 1.2;
@@ -169,56 +158,10 @@
     color: var(--artemis-alert-neutral-color);
 }
 
-.monaco-review-comment-thread-tags {
-    display: flex;
-    gap: 0.2rem;
-    margin-top: 0.15rem;
-    margin-bottom: 0.15rem;
-}
-
-.monaco-review-comment-thread-meta--truncate {
-    display: inline-block;
-    flex: 1 1 auto;
-    min-width: 0;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    vertical-align: bottom;
-}
-
-.monaco-review-comment-thread-location {
+.monaco-review-comment-thread-warning {
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
-    border: 0;
-    background: transparent;
-    color: var(--secondary-text-color);
-    font-size: 0.8rem;
-    padding: 0;
-    cursor: pointer;
-    max-width: 100%;
-    overflow: hidden;
-}
-
-.monaco-review-comment-thread-location-text {
-    font-size: 0.8rem;
-    max-width: 180px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.monaco-review-comment-thread-location-repo {
-    flex: 0 0 auto;
-    font-size: 0.8rem;
-    font-weight: 600;
-    line-height: 1.2;
-    color: var(--bs-white) !important;
-}
-
-.monaco-review-comment-thread-location-icon {
-    font-size: 0.8rem;
+    color: var(--bs-warning);
 }
 
 .monaco-review-comment-thread-toggle {

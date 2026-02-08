@@ -4,8 +4,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faArrowUpRightFromSquare, faPen, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { faArrowUpRightFromSquare, faPen, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { Comment } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
 import { Subject } from 'rxjs';
@@ -24,19 +24,19 @@ import { takeUntil } from 'rxjs/operators';
 export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly thread = input.required<CommentThread>();
     readonly initialCollapsed = input<boolean>(false);
-    readonly showLocation = input<boolean>(false);
+    readonly showLocationWarning = input<boolean>(false);
 
     readonly onDelete = output<number>();
     readonly onReply = output<string>();
     readonly onUpdate = output<{ commentId: number; text: string }>();
     readonly onToggleResolved = output<boolean>();
     readonly onToggleCollapse = output<boolean>();
-    readonly onNavigateToThread = output<CommentThread>();
 
     replyText = '';
     protected readonly faTrash = faTrash;
     protected readonly faPen = faPen;
     protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
+    protected readonly faTriangleExclamation = faTriangleExclamation;
     showThreadBody = true;
     editingCommentId?: number;
     editText = '';
@@ -118,13 +118,9 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         this.onToggleCollapse.emit(!this.showThreadBody);
     }
 
-    navigateToThread(): void {
-        this.onNavigateToThread.emit(this.thread());
-    }
-
     ngOnInit(): void {
         this.showThreadBody = !this.initialCollapsed();
-        this.translateService.onLangChange.pipe(takeUntil(this.destroyed$)).subscribe(() => this.changeDetectorRef.markForCheck());
+        this.translateService.onLangChange.pipe(takeUntil(this.destroyed$)).subscribe(() => this.changeDetectorRef.detectChanges());
     }
 
     ngOnDestroy(): void {
@@ -192,7 +188,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         if (comment.authorName) {
             return comment.authorName;
         }
-        return '';
+        return '[Artemis User]';
     }
 
     /**
@@ -203,43 +199,5 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
      */
     isEditing(comment: Comment): boolean {
         return this.editingCommentId === comment.id;
-    }
-
-    /**
-     * Returns localized metadata for the thread header based on the target type.
-     *
-     * @returns The translation key and params for the header, or undefined if none apply.
-     */
-    getThreadMeta(): { key: string; params: { versionId?: number; commitSha?: string } } | undefined {
-        const thread = this.thread();
-        if (thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT && thread.initialVersionId) {
-            return { key: 'artemisApp.review.threadVersion', params: { versionId: thread.initialVersionId } };
-        }
-        if (thread.targetType !== CommentThreadLocationType.PROBLEM_STATEMENT && thread.initialCommitSha) {
-            return { key: 'artemisApp.review.threadCommit', params: { commitSha: thread.initialCommitSha } };
-        }
-        return undefined;
-    }
-
-    getThreadLocationPath(): string {
-        const thread = this.thread();
-        return thread.filePath ?? thread.initialFilePath ?? 'problem_statement.md';
-    }
-
-    getThreadRepositoryLabel(): string {
-        const targetType = this.thread().targetType;
-        switch (targetType) {
-            case CommentThreadLocationType.TEMPLATE_REPO:
-                return 'Template';
-            case CommentThreadLocationType.SOLUTION_REPO:
-                return 'Solution';
-            case CommentThreadLocationType.TEST_REPO:
-                return 'Tests';
-            case CommentThreadLocationType.AUXILIARY_REPO:
-                return 'Auxiliary';
-            case CommentThreadLocationType.PROBLEM_STATEMENT:
-            default:
-                return 'Problem Statement';
-        }
     }
 }

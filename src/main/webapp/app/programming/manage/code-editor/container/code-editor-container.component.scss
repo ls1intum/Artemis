@@ -1,18 +1,4 @@
 .editor-title {
     margin-bottom: 0;
     line-height: 1;
-    .editor-sidebar-tabs-card {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        min-height: 0;
-        border: 0;
-        background: transparent;
-    }
-
-    .editor-sidebar-tabs-card > jhi-code-editor-sidebar-tabs {
-        flex: 1 1 auto;
-        min-height: 0;
-        height: 100%;
-    }
 }

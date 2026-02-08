@@ -19,6 +19,7 @@ export type ReviewCommentWidgetManagerConfig = {
     onUpdate: (payload: { commentId: number; text: string }) => void;
     onToggleResolved: (payload: { threadId: number; resolved: boolean }) => void;
     requestRender: () => void;
+    showLocationWarning?: () => boolean;
 };
 
 export class ReviewCommentWidgetManager {
@@ -78,6 +79,9 @@ export class ReviewCommentWidgetManager {
                 continue;
             }
             widgetRef.setInput('thread', thread);
+            if (this.config.showLocationWarning) {
+                widgetRef.setInput('showLocationWarning', this.config.showLocationWarning());
+            }
         }
         return updated;
     }
@@ -188,8 +192,12 @@ export class ReviewCommentWidgetManager {
             if (!widgetRef) {
                 widgetRef = this.viewContainerRef.createComponent(ReviewCommentThreadWidgetComponent);
                 widgetRef.setInput('thread', thread);
+                if (this.config.showLocationWarning) {
+                    widgetRef.setInput('showLocationWarning', this.config.showLocationWarning());
+                }
                 if (!this.collapseState.has(thread.id)) {
-                    this.collapseState.set(thread.id, thread.resolved);
+                    const shouldCollapse = thread.resolved || (this.config.showLocationWarning?.() ?? false);
+                    this.collapseState.set(thread.id, shouldCollapse);
                 }
                 widgetRef.setInput('initialCollapsed', this.collapseState.get(thread.id) ?? false);
                 widgetRef.instance.onDelete.subscribe((commentId) => this.config.onDelete(commentId));
