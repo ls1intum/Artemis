@@ -261,11 +261,11 @@ zonky:
                         max_parallel_maintenance_workers: 2
             mysql:
                 docker:
-                    image: docker.io/library/mysql:${mysql.version}
-                    # tmpfs disabled: Zonky's tmpfs mode sets innodb_log_file_size which was
-                    # removed in MySQL 9.x, causing container startup failure (exit code 1)
+                    # MySQL 8.4 required: Zonky sets innodb_log_file_size which was removed
+                    # in MySQL 9.x (exit code 1). Use 8.4 until Zonky supports MySQL 9.x.
+                    image: docker.io/library/mysql:8.4
                     tmpfs:
-                        enabled: false
+                        enabled: true
                 server:
                     properties:
                         innodb_flush_log_at_trx_commit: 0
