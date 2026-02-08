@@ -428,10 +428,10 @@ describe('MetisConversationService', () => {
 
     describe('updateLastReadDateAndNumberOfUnreadMessages', () => {
         it('should update last read date and unread messages count of the conversation', () => {
-            (metisConversationService as any).activeConversation = groupChat;
-            (metisConversationService as any).conversationsOfUser = [groupChat];
             groupChat.unreadMessagesCount = 0;
             groupChat.hasUnreadMessage = false;
+            (metisConversationService as any).activeConversation = groupChat;
+            (metisConversationService as any).conversationsOfUser = [groupChat];
 
             const nextSpy = jest.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
             const conversationId = groupChat.id;
@@ -453,6 +453,7 @@ describe('MetisConversationService', () => {
 
         it('should not update conversationsOfUser if conversation is not found in the array', () => {
             const nonExistentConversation = { ...groupChat, id: 999 };
+            (metisConversationService as any).conversationsOfUser = [groupChat];
 
             const nextSpy = jest.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
 
@@ -463,6 +464,7 @@ describe('MetisConversationService', () => {
 
         it('should not update active conversation if conversationId does not match', () => {
             (metisConversationService as any).activeConversation = groupChat;
+            (metisConversationService as any).conversationsOfUser = [groupChat];
             const nonExistentConversation = { ...oneToOneChat, id: 999 };
 
             (metisConversationService as any).updateConversationAsRead(nonExistentConversation.id, dayjs(), 5);
@@ -474,10 +476,10 @@ describe('MetisConversationService', () => {
 
     describe('updateConversationAsRead', () => {
         it('should update last read date and unread messages count for active conversation', () => {
-            (metisConversationService as any).activeConversation = groupChat;
-            (metisConversationService as any).conversationsOfUser = [groupChat];
             groupChat.unreadMessagesCount = 5;
             groupChat.hasUnreadMessage = true;
+            (metisConversationService as any).activeConversation = groupChat;
+            (metisConversationService as any).conversationsOfUser = [groupChat];
 
             const nextSpy = jest.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
 
@@ -496,6 +498,7 @@ describe('MetisConversationService', () => {
 
         it('should not update anything if there is no active conversation', () => {
             (metisConversationService as any).activeConversation = undefined;
+            (metisConversationService as any).conversationsOfUser = [groupChat];
 
             const nextSpy = jest.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
 
@@ -506,7 +509,8 @@ describe('MetisConversationService', () => {
 
         it('should not update anything if isMarkedAsUnread flag is true', () => {
             (metisConversationService as any).activeConversation = groupChat;
-            (metisConversationService as any).isMarkedAsUnread = false;
+            (metisConversationService as any).conversationsOfUser = [groupChat];
+            (metisConversationService as any).isMarkedAsUnread = true;
 
             const nextSpy = jest.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
 
@@ -516,8 +520,11 @@ describe('MetisConversationService', () => {
         });
 
         it('should not update conversationsOfUser if active conversation is not found in the array', () => {
+            groupChat.unreadMessagesCount = 5;
+            groupChat.hasUnreadMessage = true;
             const nonExistentConversation = { ...groupChat, id: 999 };
             (metisConversationService as any).activeConversation = nonExistentConversation;
+            (metisConversationService as any).conversationsOfUser = [groupChat];
 
             const nextSpy = jest.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
 

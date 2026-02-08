@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { Params } from '@angular/router';
 import { AnswerPostService } from 'app/communication/service/answer-post.service';
@@ -39,6 +39,8 @@ import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { BehaviorSubject, Observable, ReplaySubject, Subscription, catchError, forkJoin, map, of, switchMap, take, tap, throwError } from 'rxjs';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { onError } from 'app/shared/util/global.utils';
+import { AlertService } from 'app/shared/service/alert.service';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -51,6 +53,7 @@ export class MetisService implements OnDestroy {
     private forwardedMessageService = inject(ForwardedMessageService);
     private savedPostService = inject(SavedPostService);
     private metisConversationService = inject(MetisConversationService);
+    private alertService = inject(AlertService);
     private http = inject(HttpClient);
     private posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
     private totalNumberOfPosts$: ReplaySubject<number> = new ReplaySubject<number>(1);
@@ -684,6 +687,9 @@ export class MetisService implements OnDestroy {
                     const unreadMessagesCount = getUnreadPostsByLastReadDate(this.user, this.cachedPosts, lastReadDate!).length;
                     this.metisConversationService.updateLastReadDateAndNumberOfUnreadMessages(post.conversation!.id, lastReadDate, unreadMessagesCount);
                     this.posts$.next(this.cachedPosts);
+                },
+                error: (errorResponse: HttpErrorResponse) => {
+                    onError(this.alertService, errorResponse);
                 },
             });
     }

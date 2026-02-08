@@ -120,19 +120,20 @@ export class MetisConversationService implements OnDestroy {
 
     public setActiveConversation(conversationIdentifier: ConversationDTO | number | undefined) {
         let cachedConversation: ConversationDTO | undefined = undefined;
+        let conversationId: number | undefined = undefined;
         if (conversationIdentifier) {
             const parameterJustId = typeof conversationIdentifier === 'number';
-            const conversationId = parameterJustId ? conversationIdentifier : conversationIdentifier.id;
+            conversationId = parameterJustId ? conversationIdentifier : conversationIdentifier.id;
             cachedConversation = this.conversationsOfUser.find((conversationInCache) => conversationInCache.id === conversationId);
-            if (this.activeConversation?.id !== conversationId) {
-                this.updateConversationAsRead();
-            }
         }
         if (!cachedConversation && conversationIdentifier) {
             this.alertService.addAlert({
                 type: AlertType.WARNING,
                 message: 'artemisApp.metis.channel.notAMember',
             });
+        }
+        if (this.activeConversation?.id !== conversationId) {
+            this.updateConversationAsRead();
         }
         this.activeConversation = cachedConversation;
         this._activeConversation$.next(this.activeConversation);
