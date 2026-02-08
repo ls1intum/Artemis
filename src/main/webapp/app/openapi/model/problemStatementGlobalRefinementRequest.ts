@@ -20,6 +20,6 @@ export interface ProblemStatementGlobalRefinementRequest {
     /**
      * User prompt for global refinement
      */
-    userPrompt?: string;
+    userPrompt: string;
 }
 
