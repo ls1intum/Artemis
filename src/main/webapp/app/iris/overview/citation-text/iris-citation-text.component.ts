@@ -140,13 +140,15 @@ export class IrisCitationTextComponent {
      * Each item represents a citation with a summary, with the first one marked as active.
      */
     private renderSummaryItems(parsed: IrisCitationParsed[], metas: Array<IrisCitationMetaDTO | undefined>): string {
+        let summaryIndex = 0;
         return parsed
             .map((cite, index) => {
                 if (!cite.summary) return '';
 
                 const meta = metas[index];
-                const isActive = index === 0 ? 'is-active' : '';
+                const isActive = summaryIndex === 0 ? 'is-active' : '';
                 const summaryFallbackTitle = getCitationLabelText(cite);
+                summaryIndex++;
 
                 return `
                     <span class="iris-citation__summary-item ${isActive}">
