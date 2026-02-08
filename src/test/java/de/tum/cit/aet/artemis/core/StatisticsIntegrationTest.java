@@ -11,8 +11,6 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -135,17 +133,16 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
         }
     }
 
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @EnumSource(SpanType.class)
+    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testDataRangeEachGraph(SpanType span) throws Exception {
-        int expectedResultLength = expectedResultLength(span);
-
-        for (GraphType graph : artemisGraphs) {
-            int periodIndex = 0;
-            var parameters = buildParameters(span, periodIndex, graph);
-            Integer[] result = request.get("/api/core/admin/management/statistics/data", HttpStatus.OK, Integer[].class, parameters);
-            assertThat(result).hasSize(expectedResultLength);
+    void testDataRangeEachGraph() throws Exception {
+        for (SpanType span : SpanType.values()) {
+            int expectedResultLength = expectedResultLength(span);
+            for (GraphType graph : artemisGraphs) {
+                var parameters = buildParameters(span, 0, graph);
+                Integer[] result = request.get("/api/core/admin/management/statistics/data", HttpStatus.OK, Integer[].class, parameters);
+                assertThat(result).hasSize(expectedResultLength);
+            }
         }
     }
 
