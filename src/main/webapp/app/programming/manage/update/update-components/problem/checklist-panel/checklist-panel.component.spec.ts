@@ -59,7 +59,7 @@ describe('ChecklistPanelComponent', () => {
     });
 
     it('should call analyzeChecklist on button click', () => {
-        const analyzeSpy = jest.spyOn(apiService, 'analyzeChecklist').mockReturnValue(of(mockResponse));
+        const analyzeSpy = jest.spyOn(apiService, 'analyzeChecklist').mockReturnValue(of(mockResponse) as any);
 
         // Find analyze button
         const button = fixture.debugElement.query(By.css('button'));
@@ -77,7 +77,7 @@ describe('ChecklistPanelComponent', () => {
     });
 
     it('should handle analysis error', () => {
-        jest.spyOn(apiService, 'analyzeChecklist').mockReturnValue(throwError(() => new Error('Error')));
+        jest.spyOn(apiService, 'analyzeChecklist').mockReturnValue(throwError(() => new Error('Error')) as any);
         const errorSpy = jest.spyOn(alertService, 'error');
 
         component.analyze();
@@ -104,7 +104,7 @@ describe('ChecklistPanelComponent', () => {
         };
 
         it('should fix a single quality issue', () => {
-            const actionSpy = jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse));
+            const actionSpy = jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse) as any);
             const emitSpy = jest.spyOn(component.problemStatementChange, 'emit');
 
             component.fixQualityIssue({ description: 'Unclear wording', suggestedFix: 'Reword it', category: 'CLARITY' }, 0);
@@ -129,7 +129,7 @@ describe('ChecklistPanelComponent', () => {
                     { description: 'Issue 2', category: 'COMPLETENESS', severity: 'ERROR' },
                 ],
             });
-            const actionSpy = jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse));
+            const actionSpy = jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse) as any);
 
             component.fixAllQualityIssues();
 
@@ -143,7 +143,7 @@ describe('ChecklistPanelComponent', () => {
 
         it('should adapt difficulty', () => {
             component.analysisResult.set(mockResponse);
-            const actionSpy = jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse));
+            const actionSpy = jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse) as any);
 
             component.adaptDifficulty('HARD');
 
@@ -157,7 +157,7 @@ describe('ChecklistPanelComponent', () => {
         });
 
         it('should emphasize a competency', () => {
-            const actionSpy = jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse));
+            const actionSpy = jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse) as any);
 
             component.emphasizeCompetency('Loops', 'APPLY');
 
@@ -171,7 +171,7 @@ describe('ChecklistPanelComponent', () => {
         });
 
         it('should deemphasize a competency', () => {
-            const actionSpy = jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse));
+            const actionSpy = jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse) as any);
 
             component.deemphasizeCompetency('Loops');
 
@@ -185,7 +185,7 @@ describe('ChecklistPanelComponent', () => {
         });
 
         it('should handle action error', () => {
-            jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(throwError(() => new Error('Failed')));
+            jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(throwError(() => new Error('Failed')) as any);
             const errorSpy = jest.spyOn(alertService, 'error');
 
             component.fixQualityIssue({ description: 'Test', category: 'CLARITY' }, 0);
@@ -209,7 +209,7 @@ describe('ChecklistPanelComponent', () => {
                 updatedProblemStatement: 'Problem statement',
                 applied: false,
             };
-            jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(noChangeResponse));
+            jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(noChangeResponse) as any);
             const warningSpy = jest.spyOn(alertService, 'warning');
 
             component.fixQualityIssue({ description: 'Test', category: 'CLARITY' }, 0);

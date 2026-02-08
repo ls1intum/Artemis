@@ -278,7 +278,7 @@ export class ChecklistPanelComponent {
         this.hyperionApiService.applyChecklistAction(exerciseId, request).subscribe({
             next: (res) => {
                 if (res.applied) {
-                    this.problemStatementChange.emit(res.updatedProblemStatement);
+                    this.problemStatementChange.emit(res.updatedProblemStatement ?? '');
                     this.lastActionSummary.set(res.summary);
                     this.alertService.success('artemisApp.programmingExercise.instructorChecklist.actions.success');
                 } else {
