@@ -4,7 +4,7 @@ import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { IrisCitationParsed } from './iris-citation-text.model';
 import { escapeHtml, formatCitationLabel, getCitationLabelText, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
-import { faChevronLeft, faChevronRight, faCircleExclamation, faCircleQuestion, faFilePdf, faPlayCircle } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faChevronRight, faCircleExclamation, faCircleQuestion, faFilePdf, faFileVideo } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Component that processes text containing citation markers and renders them as interactive citation bubbles.
@@ -25,10 +25,10 @@ export class IrisCitationTextComponent {
      * Used for rendering citation bubbles with appropriate visual indicators.
      */
     private readonly CITATION_TYPE_ICONS = new Map([
-        ['iris-citation--slide', faFilePdf], // PDF/Slide citations
-        ['iris-citation--video', faPlayCircle], // Video lecture citations
+        ['iris-citation--slide', faFilePdf], // Slide citations
+        ['iris-citation--video', faFileVideo], // Transcription citations
         ['iris-citation--faq', faCircleQuestion], // FAQ citations
-        ['iris-citation--source', faCircleExclamation], // External source citations
+        ['iris-citation--source', faCircleExclamation], // Unknown source citations
     ]);
 
     readonly text = input.required<string>();
