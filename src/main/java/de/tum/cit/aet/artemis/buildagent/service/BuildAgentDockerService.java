@@ -261,8 +261,8 @@ public class BuildAgentDockerService {
      * @throws LocalCIException if the image pull is interrupted or fails due to other exceptions.
      */
     public void pullDockerImage(BuildJobQueueItem buildJob, BuildLogsMap buildLogsMap) {
-        if (!buildAgentConfiguration.isDockerAvailable()) {
-            throw new LocalCIException("Docker is not available");
+        if (dockerClientNotAvailable("Cannot pull Docker image.")) {
+            throw new LocalCIException("Docker is not available. Cannot pull image " + buildJob.buildConfig().dockerImage());
         }
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         final String imageName = buildJob.buildConfig().dockerImage();
