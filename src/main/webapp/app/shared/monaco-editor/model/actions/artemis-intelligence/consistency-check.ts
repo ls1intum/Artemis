@@ -75,7 +75,7 @@ export function issuesForSelectedFile(
     const inlineIssues: InlineConsistencyIssue[] = [];
 
     for (const issue of issues) {
-        const locations = issue.locations || [];
+        const locations = issue.relatedLocations || [];
         for (const loc of locations) {
             if (!isMatchingRepository(loc.type, selectedRepo!)) {
                 continue;
@@ -94,7 +94,7 @@ export function issuesForSelectedFile(
                 endLine: loc.endLine,
                 description: issue.description || '',
                 suggestedFix: issue.suggestedFix || '',
-                category: issue.category || ConsistencyIssue.CategoryEnum.Clarity,
+                category: issue.category || ConsistencyIssue.CategoryEnum.IdentifierNamingInconsistency,
                 severity: issue.severity || ConsistencyIssue.SeverityEnum.Low,
             });
         }

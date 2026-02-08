@@ -787,19 +787,36 @@
                 "analyze": "Problemstellung analysieren",
                 "analyzing": "Analysiere...",
                 "defaultMessage": "Klicke auf \"Problemstellung analysieren\", um nach Qualitätsproblemen und Lernzielen zu suchen.",
-                "learningGoals": {
-                    "title": "Abgeleitete Lernziele",
-                    "empty": "Keine Lernziele abgeleitet."
+                "competencies": {
+                    "title": "Top 5 Kompetenzen",
+                    "empty": "Keine Kompetenzen abgeleitet.",
+                    "primary": "Primär",
+                    "evidence": "Belege:",
+                    "emphasize": "Diese Kompetenz hervorheben",
+                    "deemphasize": "Diese Kompetenz abschwächen"
+                },
+                "bloomRadar": {
+                    "title": "Bloom-Taxonomie-Verteilung"
                 },
                 "difficulty": {
                     "title": "Schwierigkeitsgrad",
                     "suggested": "Vorgeschlagen:",
+                    "delta": "Abweichung:",
                     "match": "Übereinstimmung:"
                 },
                 "quality": {
                     "title": "Qualitätsprobleme",
                     "empty": "Keine Qualitätsprobleme gefunden.",
-                    "fix": "Lösung:"
+                    "fix": "Lösung:",
+                    "fixAll": "Alle Probleme beheben",
+                    "fixIssue": "KI-Lösung für dieses Problem anwenden"
+                },
+                "actions": {
+                    "success": "Problemstellung erfolgreich aktualisiert.",
+                    "error": "Aktion konnte nicht angewendet werden. Bitte erneut versuchen.",
+                    "noChanges": "Keine Änderungen für diese Aktion nötig.",
+                    "adaptTo": "Anpassen auf:",
+                    "current": "(aktuell)"
                 }
             }
         },

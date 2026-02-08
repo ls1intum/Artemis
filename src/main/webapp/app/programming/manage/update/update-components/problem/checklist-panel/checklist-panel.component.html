@@ -1,7 +1,7 @@
 <div class="card checklist-panel mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.title">Instructor Checklist</h5>
-        <button class="btn btn-sm btn-primary" (click)="analyze()" [disabled]="isLoading()">
+        <button class="btn btn-sm btn-primary" (click)="analyze()" [disabled]="isLoading() || isApplyingAction()">
             <fa-icon [icon]="isLoading() ? faSpinner : faMagic" [animation]="isLoading() ? 'spin' : undefined" />
             <span class="ms-1">{{
                 (isLoading() ? 'artemisApp.programmingExercise.instructorChecklist.analyzing' : 'artemisApp.programmingExercise.instructorChecklist.analyze') | artemisTranslate
@@ -10,6 +10,15 @@
     </div>
 
     <div class="card-body">
+        <!-- Action summary banner -->
+        @if (lastActionSummary()) {
+            <div class="alert alert-success alert-dismissible fade show py-2 mb-2" role="alert">
+                <fa-icon [icon]="faCheckCircle" class="me-1" />
+                <small>{{ lastActionSummary() }}</small>
+                <button type="button" class="btn-close btn-close-sm" (click)="lastActionSummary.set(undefined)"></button>
+            </div>
+        }
+
         @if (analysisResult(); as result) {
             <div class="analysis-results">
                 <!-- Competencies Section with Radar Overview -->
@@ -83,7 +92,11 @@
                                                         <span class="badge bg-secondary me-2">{{ comp.knowledgeAreaShortTitle }}</span>
                                                         <strong>{{ comp.competencyTitle }}</strong>
                                                         @if (comp.isLikelyPrimary) {
-                                                            <span class="badge bg-primary ms-2">Primary</span>
+                                                            <span
+                                                                class="badge bg-primary ms-2"
+                                                                jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.primary"
+                                                                >Primary</span
+                                                            >
                                                         }
                                                     </div>
                                                     <div class="d-flex align-items-center gap-2 mb-1">
@@ -94,13 +107,39 @@
                                                     </div>
                                                     <p class="mb-0 text-muted small">{{ comp.whyThisMatches }}</p>
                                                 </div>
-                                                <button class="btn btn-sm btn-link" (click)="toggleCompetencyExpand(comp.rank || 0); $event.stopPropagation()">
-                                                    <fa-icon [icon]="isCompetencyExpanded(comp.rank || 0) ? faChevronDown : faChevronRight" />
-                                                </button>
+                                                <div class="d-flex align-items-center gap-1">
+                                                    <button
+                                                        class="btn btn-sm btn-outline-success action-btn"
+                                                        [disabled]="isApplyingAction()"
+                                                        (click)="emphasizeCompetency(comp.competencyTitle || '', comp.taxonomyLevel || ''); $event.stopPropagation()"
+                                                        [attr.title]="'artemisApp.programmingExercise.instructorChecklist.competencies.emphasize' | artemisTranslate"
+                                                    >
+                                                        @if (isActionLoading('emphasize-' + comp.competencyTitle)) {
+                                                            <fa-icon [icon]="faSpinner" animation="spin" size="xs" />
+                                                        } @else {
+                                                            <fa-icon [icon]="faPlus" size="xs" />
+                                                        }
+                                                    </button>
+                                                    <button
+                                                        class="btn btn-sm btn-outline-secondary action-btn"
+                                                        [disabled]="isApplyingAction()"
+                                                        (click)="deemphasizeCompetency(comp.competencyTitle || ''); $event.stopPropagation()"
+                                                        [attr.title]="'artemisApp.programmingExercise.instructorChecklist.competencies.deemphasize' | artemisTranslate"
+                                                    >
+                                                        @if (isActionLoading('deemphasize-' + comp.competencyTitle)) {
+                                                            <fa-icon [icon]="faSpinner" animation="spin" size="xs" />
+                                                        } @else {
+                                                            <fa-icon [icon]="faMinus" size="xs" />
+                                                        }
+                                                    </button>
+                                                    <button class="btn btn-sm btn-link" (click)="toggleCompetencyExpand(comp.rank || 0); $event.stopPropagation()">
+                                                        <fa-icon [icon]="isCompetencyExpanded(comp.rank || 0) ? faChevronDown : faChevronRight" />
+                                                    </button>
+                                                </div>
                                             </div>
                                             @if (isCompetencyExpanded(comp.rank || 0) && comp.evidence?.length) {
                                                 <div class="evidence-section mt-2 ps-3 border-start">
-                                                    <strong class="small">Evidence:</strong>
+                                                    <strong class="small" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.evidence">Evidence:</strong>
                                                     <ul class="small mb-0">
                                                         @for (item of comp.evidence; track item) {
                                                             <li>{{ item }}</li>
@@ -146,7 +185,35 @@
                                     </span>
                                 </div>
                             </div>
-                            <p class="text-muted mb-0">{{ result.difficultyAssessment.reasoning }}</p>
+                            <p class="text-muted mb-2">{{ result.difficultyAssessment.reasoning }}</p>
+
+                            <!-- Difficulty adaptation chips -->
+                            <div class="d-flex align-items-center gap-2 mt-2">
+                                <small class="fw-bold text-muted me-1" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.actions.adaptTo">Adapt to:</small>
+                                @for (level of difficultyLevels; track level) {
+                                    <button
+                                        class="btn btn-sm difficulty-chip"
+                                        [ngClass]="{
+                                            'btn-success': level === 'EASY',
+                                            'btn-warning': level === 'MEDIUM',
+                                            'btn-danger': level === 'HARD',
+                                            'difficulty-chip--current': exercise()?.difficulty === level,
+                                            'difficulty-chip--suggested': result.difficultyAssessment.suggested === level && exercise()?.difficulty !== level,
+                                        }"
+                                        [disabled]="isApplyingAction() || exercise()?.difficulty === level"
+                                        (click)="adaptDifficulty(level)"
+                                    >
+                                        @if (isActionLoading('adapt-' + level)) {
+                                            <fa-icon [icon]="faSpinner" animation="spin" size="xs" />
+                                        } @else {
+                                            {{ level }}
+                                        }
+                                        @if (exercise()?.difficulty === level) {
+                                            <small class="ms-1" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.actions.current">(current)</small>
+                                        }
+                                    </button>
+                                }
+                            </div>
                         </div>
                     }
                 </div>
@@ -169,17 +236,43 @@
                                 </div>
                             }
                             @if (result.qualityIssues && result.qualityIssues.length > 0) {
+                                <!-- Fix All button -->
+                                <div class="px-3 pt-2 pb-1 d-flex justify-content-end">
+                                    <button class="btn btn-sm btn-outline-primary" [disabled]="isApplyingAction()" (click)="fixAllQualityIssues()">
+                                        @if (isActionLoading('fix-all')) {
+                                            <fa-icon [icon]="faSpinner" animation="spin" size="xs" class="me-1" />
+                                        } @else {
+                                            <fa-icon [icon]="faBolt" size="xs" class="me-1" />
+                                        }
+                                        <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.fixAll">Fix All Issues</span>
+                                    </button>
+                                </div>
                                 <ul class="list-group list-group-flush">
-                                    @for (issue of result.qualityIssues; track issue) {
+                                    @for (issue of result.qualityIssues; track issue; let i = $index) {
                                         <li class="list-group-item">
                                             <div class="d-flex w-100 justify-content-between align-items-start">
                                                 <div>
                                                     <span class="badge bg-secondary me-2">{{ issue.category }}</span>
                                                     <span [ngClass]="getSeverityClass(issue.severity)">{{ issue.severity }}</span>
                                                 </div>
-                                                @if (issue.location?.startLine) {
-                                                    <small class="text-muted">Line {{ issue.location?.startLine }}</small>
-                                                }
+                                                <div class="d-flex align-items-center gap-2">
+                                                    @if (issue.location?.startLine) {
+                                                        <small class="text-muted">Line {{ issue.location?.startLine }}</small>
+                                                    }
+                                                    <button
+                                                        class="btn btn-sm btn-outline-warning action-btn"
+                                                        [disabled]="isApplyingAction()"
+                                                        (click)="fixQualityIssue(issue, i)"
+                                                        [attr.title]="'artemisApp.programmingExercise.instructorChecklist.quality.fixIssue' | artemisTranslate"
+                                                    >
+                                                        @if (isActionLoading('fix-issue-' + i)) {
+                                                            <fa-icon [icon]="faSpinner" animation="spin" size="xs" />
+                                                        } @else {
+                                                            <fa-icon [icon]="faWrench" size="xs" />
+                                                        }
+                                                        <span class="ms-1" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.quality.fix">Fix</span>
+                                                    </button>
+                                                </div>
                                             </div>
                                             <p class="mb-1 mt-1">{{ issue.description }}</p>
                                             @if (issue.suggestedFix) {

@@ -1,10 +1,11 @@
-import { Component, Input, inject, signal } from '@angular/core';
+import { Component, inject, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import {
     faArrowDown,
     faArrowUp,
+    faBolt,
     faCheckCircle,
     faChevronDown,
     faChevronRight,
@@ -12,13 +13,17 @@ import {
     faExclamationTriangle,
     faInfoCircle,
     faMagic,
+    faMinus,
+    faPlus,
     faQuestion,
     faSpinner,
+    faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { ChecklistAnalysisResponse } from 'app/openapi/model/checklistAnalysisResponse';
-import { BloomRadar } from 'app/openapi/model/bloomRadar';
+import { ChecklistActionRequest } from 'app/openapi/model/checklistActionRequest';
+import { QualityIssue } from 'app/openapi/model/qualityIssue';
 import { AlertService } from 'app/shared/service/alert.service';
 
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -35,11 +40,16 @@ export class ChecklistPanelComponent {
     private hyperionApiService = inject(HyperionProblemStatementApiService);
     private alertService = inject(AlertService);
 
-    @Input() exercise: ProgrammingExercise;
-    @Input() problemStatement: string;
+    exercise = input.required<ProgrammingExercise>();
+    problemStatement = input.required<string>();
+
+    problemStatementChange = output<string>();
 
     analysisResult = signal<ChecklistAnalysisResponse | undefined>(undefined);
     isLoading = signal<boolean>(false);
+    isApplyingAction = signal<boolean>(false);
+    actionLoadingKey = signal<string | undefined>(undefined);
+    lastActionSummary = signal<string | undefined>(undefined);
 
     // Expanded state for competency evidence
     expandedCompetencies = signal<Set<number>>(new Set());
@@ -49,6 +59,8 @@ export class ChecklistPanelComponent {
         difficulty: true,
         quality: true,
     };
+
+    readonly difficultyLevels = ['EASY', 'MEDIUM', 'HARD'] as const;
 
     // Icons
     faCheckCircle = faCheckCircle;
@@ -62,26 +74,31 @@ export class ChecklistPanelComponent {
     faArrowDown = faArrowDown;
     faEquals = faEquals;
     faQuestion = faQuestion;
+    faWrench = faWrench;
+    faBolt = faBolt;
+    faPlus = faPlus;
+    faMinus = faMinus;
 
     analyze() {
-        if (!this.exercise || !this.exercise.id) {
+        const ex = this.exercise();
+        if (!ex?.id) {
             return;
         }
 
         this.isLoading.set(true);
         const request = {
-            problemStatementMarkdown: this.problemStatement,
-            declaredDifficulty: this.exercise.difficulty,
-            language: this.exercise.programmingLanguage,
+            problemStatementMarkdown: this.problemStatement(),
+            declaredDifficulty: ex.difficulty,
+            language: ex.programmingLanguage,
         };
 
-        this.hyperionApiService.analyzeChecklist(this.exercise.id!, request).subscribe({
+        this.hyperionApiService.analyzeChecklist(ex.id, request).subscribe({
             next: (res: ChecklistAnalysisResponse) => {
                 this.analysisResult.set(res);
                 this.isLoading.set(false);
             },
-            error: (err: unknown) => {
-                this.alertService.error('artemisApp.programmingExercise.checklist.analysisError');
+            error: () => {
+                this.alertService.error('artemisApp.programmingExercise.instructorChecklist.actions.error');
                 this.isLoading.set(false);
             },
         });
@@ -145,103 +162,6 @@ export class ChecklistPanelComponent {
             default:
                 return 'text-secondary';
         }
-    }
-
-    // Bloom radar data for chart
-    get bloomRadarData(): { label: string; value: number }[] {
-        const radar: BloomRadar | undefined = this.analysisResult()?.bloomRadar;
-        if (!radar) return [];
-        return [
-            { label: 'Remember', value: radar.REMEMBER || 0 },
-            { label: 'Understand', value: radar.UNDERSTAND || 0 },
-            { label: 'Apply', value: radar.APPLY || 0 },
-            { label: 'Analyze', value: radar.ANALYZE || 0 },
-            { label: 'Evaluate', value: radar.EVALUATE || 0 },
-            { label: 'Create', value: radar.CREATE || 0 },
-        ];
-    }
-
-    // Radar chart constants
-    private readonly RADAR_RADIUS = 100;
-    private readonly LABEL_OFFSET = 65;
-
-    // Calculate radar point coordinates
-    get radarPoints(): {
-        label: string;
-        value: number;
-        axisX: number;
-        axisY: number;
-        dataX: number;
-        dataY: number;
-        labelX: number;
-        labelY: number;
-        textAnchor: string;
-    }[] {
-        const data = this.bloomRadarData;
-        if (data.length === 0) return [];
-
-        const angleStep = (2 * Math.PI) / data.length;
-        const startAngle = -Math.PI / 2; // Start from top
-
-        return data.map((item, i) => {
-            const angle = startAngle + i * angleStep;
-            const cos = Math.cos(angle);
-            const sin = Math.sin(angle);
-
-            // Axis endpoint
-            const axisX = cos * this.RADAR_RADIUS;
-            const axisY = sin * this.RADAR_RADIUS;
-
-            // Data point (scaled by value)
-            const dataRadius = Math.max(item.value * this.RADAR_RADIUS, 5);
-            const dataX = cos * dataRadius;
-            const dataY = sin * dataRadius;
-
-            // Label position (outside the chart)
-            const labelRadius = this.RADAR_RADIUS + this.LABEL_OFFSET;
-            const labelX = cos * labelRadius;
-            const labelY = sin * labelRadius;
-
-            // Text anchor based on position
-            let textAnchor = 'middle';
-            if (cos < -0.1) textAnchor = 'end';
-            else if (cos > 0.1) textAnchor = 'start';
-
-            return {
-                label: item.label,
-                value: item.value,
-                axisX,
-                axisY,
-                dataX,
-                dataY,
-                labelX,
-                labelY,
-                textAnchor,
-            };
-        });
-    }
-
-    // Generate polygon points string for grid
-    getRadarGridPoints(scale: number): string {
-        const data = this.bloomRadarData;
-        if (data.length === 0) return '';
-
-        const angleStep = (2 * Math.PI) / data.length;
-        const startAngle = -Math.PI / 2;
-
-        const points = data.map((_, i) => {
-            const angle = startAngle + i * angleStep;
-            const x = Math.cos(angle) * this.RADAR_RADIUS * scale;
-            const y = Math.sin(angle) * this.RADAR_RADIUS * scale;
-            return `${x},${y}`;
-        });
-
-        return points.join(' ');
-    }
-
-    // Generate polygon points string for data
-    get radarPolygonPoints(): string {
-        return this.radarPoints.map((p) => `${p.dataX},${p.dataY}`).join(' ');
     }
 
     // Competency radar chart constants
@@ -343,5 +263,108 @@ export class ChecklistPanelComponent {
     // Generate polygon points string for competency data
     get competencyPolygonPoints(): string {
         return this.competencyRadarPoints.map((p) => `${p.dataX},${p.dataY}`).join(' ');
+    }
+
+    // ===== AI Action Methods =====
+
+    private applyAction(request: ChecklistActionRequest, loadingKey: string) {
+        const exerciseId = this.exercise()?.id;
+        if (!exerciseId || this.isApplyingAction()) return;
+
+        this.isApplyingAction.set(true);
+        this.actionLoadingKey.set(loadingKey);
+        this.lastActionSummary.set(undefined);
+
+        this.hyperionApiService.applyChecklistAction(exerciseId, request).subscribe({
+            next: (res) => {
+                if (res.applied) {
+                    this.problemStatementChange.emit(res.updatedProblemStatement);
+                    this.lastActionSummary.set(res.summary);
+                    this.alertService.success('artemisApp.programmingExercise.instructorChecklist.actions.success');
+                } else {
+                    this.alertService.warning('artemisApp.programmingExercise.instructorChecklist.actions.noChanges');
+                }
+                this.isApplyingAction.set(false);
+                this.actionLoadingKey.set(undefined);
+            },
+            error: () => {
+                this.alertService.error('artemisApp.programmingExercise.instructorChecklist.actions.error');
+                this.isApplyingAction.set(false);
+                this.actionLoadingKey.set(undefined);
+            },
+        });
+    }
+
+    fixQualityIssue(issue: QualityIssue, index: number) {
+        this.applyAction(
+            {
+                actionType: ChecklistActionRequest.ActionTypeEnum.FixQualityIssue,
+                problemStatementMarkdown: this.problemStatement(),
+                context: {
+                    issueDescription: issue.description || '',
+                    suggestedFix: issue.suggestedFix || '',
+                    category: issue.category || '',
+                },
+            },
+            `fix-issue-${index}`,
+        );
+    }
+
+    fixAllQualityIssues() {
+        const issues = this.analysisResult()?.qualityIssues || [];
+        const allIssues = issues.map((i, idx) => `${idx + 1}. [${i.category}/${i.severity}] ${i.description} (Fix: ${i.suggestedFix || 'N/A'})`).join('\n');
+
+        this.applyAction(
+            {
+                actionType: ChecklistActionRequest.ActionTypeEnum.FixAllQualityIssues,
+                problemStatementMarkdown: this.problemStatement(),
+                context: { allIssues },
+            },
+            'fix-all',
+        );
+    }
+
+    adaptDifficulty(targetDifficulty: string) {
+        const current = this.exercise()?.difficulty || 'unknown';
+        const reasoning = this.analysisResult()?.difficultyAssessment?.reasoning || '';
+
+        this.applyAction(
+            {
+                actionType: ChecklistActionRequest.ActionTypeEnum.AdaptDifficulty,
+                problemStatementMarkdown: this.problemStatement(),
+                context: {
+                    targetDifficulty,
+                    currentDifficulty: current,
+                    reasoning,
+                },
+            },
+            `adapt-${targetDifficulty}`,
+        );
+    }
+
+    emphasizeCompetency(competencyTitle: string, taxonomyLevel: string) {
+        this.applyAction(
+            {
+                actionType: ChecklistActionRequest.ActionTypeEnum.EmphasizeCompetency,
+                problemStatementMarkdown: this.problemStatement(),
+                context: { competencyTitle, taxonomyLevel },
+            },
+            `emphasize-${competencyTitle}`,
+        );
+    }
+
+    deemphasizeCompetency(competencyTitle: string) {
+        this.applyAction(
+            {
+                actionType: ChecklistActionRequest.ActionTypeEnum.DeemphasizeCompetency,
+                problemStatementMarkdown: this.problemStatement(),
+                context: { competencyTitle },
+            },
+            `deemphasize-${competencyTitle}`,
+        );
+    }
+
+    isActionLoading(key: string): boolean {
+        return this.actionLoadingKey() === key;
     }
 }

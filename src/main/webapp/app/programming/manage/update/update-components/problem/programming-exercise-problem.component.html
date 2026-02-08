@@ -75,7 +75,11 @@
             }
         </div>
 
-        <jhi-checklist-panel [exercise]="programmingExercise()!" [problemStatement]="programmingExercise()?.problemStatement || ''" />
+        <jhi-checklist-panel
+            [exercise]="programmingExercise()!"
+            [problemStatement]="programmingExercise()?.problemStatement || ''"
+            (problemStatementChange)="onProblemStatementChange($event)"
+        />
     }
     @if (isEditFieldDisplayedRecord()?.linkedCompetencies && !programmingExerciseCreationConfig().isExamMode) {
         <div class="form-group">

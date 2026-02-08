@@ -11,6 +11,8 @@ encoder.ts
 model/artifactLocation.ts
 model/bloomRadar.ts
 model/channel.ts
+model/checklistActionRequest.ts
+model/checklistActionResponse.ts
 model/checklistAnalysisRequest.ts
 model/checklistAnalysisResponse.ts
 model/codeGenerationJobStart.ts

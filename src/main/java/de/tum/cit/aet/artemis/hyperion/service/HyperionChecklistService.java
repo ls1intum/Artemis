@@ -21,6 +21,8 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
 import de.tum.cit.aet.artemis.atlas.service.competency.StandardizedCompetencyService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.BloomRadarDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ChecklistActionRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ChecklistActionResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.DifficultyAssessmentDTO;
@@ -118,6 +120,103 @@ public class HyperionChecklistService {
         BloomRadarDTO bloomRadar = computeBloomRadar(competencies);
 
         return new ChecklistAnalysisResponseDTO(competencies, bloomRadar, resultTuple.getT2(), resultTuple.getT3());
+    }
+
+    /**
+     * Applies a checklist action to modify the problem statement using AI.
+     * Builds action-specific instructions and calls the LLM to produce an updated
+     * problem statement.
+     *
+     * @param request the action request containing the action type, problem statement,
+     *                    and context
+     * @return the response containing the updated problem statement
+     */
+    @Observed(name = "hyperion.checklist.action", contextualName = "checklist action", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
+    public ChecklistActionResponseDTO applyChecklistAction(ChecklistActionRequestDTO request) {
+        log.info("Applying checklist action: {}", request.actionType());
+
+        String instructions = buildActionInstructions(request);
+        var templateInput = Map.of("action_type", request.actionType().name(), "instructions", instructions, "problem_statement", request.problemStatementMarkdown());
+
+        String renderedPrompt = templates.render("/prompts/hyperion/checklist_action.st", templateInput);
+
+        try {
+            String result = chatClient.prompt()
+                    .system("You are an expert instructor modifying a programming exercise problem statement. Return ONLY the complete updated problem statement in Markdown.")
+                    .user(renderedPrompt).call().content();
+
+            if (result == null || result.isBlank()) {
+                return ChecklistActionResponseDTO.failed(request.problemStatementMarkdown());
+            }
+
+            String trimmed = result.trim();
+            boolean changed = !trimmed.equals(request.problemStatementMarkdown().trim());
+            String summary = buildActionSummary(request);
+            return new ChecklistActionResponseDTO(trimmed, changed, summary);
+        }
+        catch (Exception e) {
+            log.warn("Failed to apply checklist action {}: {}", request.actionType(), e.getMessage(), e);
+            return ChecklistActionResponseDTO.failed(request.problemStatementMarkdown());
+        }
+    }
+
+    /**
+     * Builds action-specific instructions for the AI prompt based on the action type
+     * and context.
+     */
+    private String buildActionInstructions(ChecklistActionRequestDTO request) {
+        Map<String, String> ctx = request.context() != null ? request.context() : Map.of();
+
+        return switch (request.actionType()) {
+            case FIX_QUALITY_ISSUE -> {
+                String description = ctx.getOrDefault("issueDescription", "Unknown issue");
+                String suggestedFix = ctx.getOrDefault("suggestedFix", "");
+                String category = ctx.getOrDefault("category", "");
+                yield "Fix the following " + category + " quality issue in the problem statement:\n" + "Issue: " + description + "\n"
+                        + (suggestedFix.isEmpty() ? "" : "Suggested fix: " + suggestedFix + "\n") + "Make minimal, targeted changes to address ONLY this specific issue.";
+            }
+            case FIX_ALL_QUALITY_ISSUES -> {
+                String issuesList = ctx.getOrDefault("allIssues", "No issues provided");
+                yield "Fix ALL of the following quality issues in the problem statement:\n" + issuesList + "\n"
+                        + "Address each issue with targeted changes. Do not rewrite unrelated sections.";
+            }
+            case ADAPT_DIFFICULTY -> {
+                String targetDifficulty = ctx.getOrDefault("targetDifficulty", "MEDIUM");
+                String currentDifficulty = ctx.getOrDefault("currentDifficulty", "unknown");
+                String reasoning = ctx.getOrDefault("reasoning", "");
+                yield "Adapt the problem statement difficulty from " + currentDifficulty + " to " + targetDifficulty + ".\n"
+                        + (reasoning.isEmpty() ? "" : "Context: " + reasoning + "\n") + "For EASIER: simplify requirements, reduce edge cases, add more hints and structure.\n"
+                        + "For HARDER: add complexity, edge cases, fewer hints, require deeper analysis.\n" + "Preserve all Artemis task markers and test references.";
+            }
+            case EMPHASIZE_COMPETENCY -> {
+                String competency = ctx.getOrDefault("competencyTitle", "Unknown");
+                String taxonomyLevel = ctx.getOrDefault("taxonomyLevel", "");
+                yield "Increase the emphasis on the competency '" + competency + "'" + (taxonomyLevel.isEmpty() ? "" : " (taxonomy level: " + taxonomyLevel + ")")
+                        + " in the problem statement.\n" + "Add more tasks, examples, or requirements that exercise this skill.\n"
+                        + "Preserve the overall structure and all existing Artemis task markers.";
+            }
+            case DEEMPHASIZE_COMPETENCY -> {
+                String competency = ctx.getOrDefault("competencyTitle", "Unknown");
+                yield "Reduce the emphasis on the competency '" + competency + "' in the problem statement.\n"
+                        + "Simplify or reduce tasks that heavily exercise this skill, without removing essential requirements.\n"
+                        + "Preserve the overall structure and all existing Artemis task markers.";
+            }
+        };
+    }
+
+    /**
+     * Builds a short human-readable summary of what action was applied.
+     */
+    private String buildActionSummary(ChecklistActionRequestDTO request) {
+        Map<String, String> ctx = request.context() != null ? request.context() : Map.of();
+
+        return switch (request.actionType()) {
+            case FIX_QUALITY_ISSUE -> "Fixed quality issue: " + ctx.getOrDefault("category", "unknown");
+            case FIX_ALL_QUALITY_ISSUES -> "Fixed all quality issues";
+            case ADAPT_DIFFICULTY -> "Adapted difficulty to " + ctx.getOrDefault("targetDifficulty", "unknown");
+            case EMPHASIZE_COMPETENCY -> "Emphasized competency: " + ctx.getOrDefault("competencyTitle", "unknown");
+            case DEEMPHASIZE_COMPETENCY -> "De-emphasized competency: " + ctx.getOrDefault("competencyTitle", "unknown");
+        };
     }
 
     /**

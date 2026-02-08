@@ -18,6 +18,8 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.dto.ChecklistActionRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ChecklistActionResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
@@ -134,10 +136,27 @@ public class HyperionProblemStatementResource {
      */
     @EnforceAtLeastEditorInExercise
     @PostMapping("programming-exercises/{exerciseId}/checklist-analysis")
-    public ResponseEntity<ChecklistAnalysisResponseDTO> analyzeChecklist(@PathVariable Long exerciseId, @RequestBody ChecklistAnalysisRequestDTO request) {
+    public ResponseEntity<ChecklistAnalysisResponseDTO> analyzeChecklist(@PathVariable long exerciseId, @RequestBody ChecklistAnalysisRequestDTO request) {
         log.debug("REST request to Hyperion checklist analysis for exercise [{}]", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         var result = checklistService.analyzeChecklist(exercise, request);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * POST programming-exercises/{exerciseId}/checklist-actions: Apply an AI-powered
+     * checklist action to modify the problem statement.
+     *
+     * @param exerciseId the id of the programming exercise
+     * @param request    the action request containing the action type and context
+     * @return the response containing the updated problem statement
+     */
+    @EnforceAtLeastEditorInExercise
+    @PostMapping("programming-exercises/{exerciseId}/checklist-actions")
+    public ResponseEntity<ChecklistActionResponseDTO> applyChecklistAction(@PathVariable long exerciseId, @Valid @RequestBody ChecklistActionRequestDTO request) {
+        log.debug("REST request to Hyperion checklist action [{}] for exercise [{}]", request.actionType(), exerciseId);
+        programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        var result = checklistService.applyChecklistAction(request);
         return ResponseEntity.ok(result);
     }
 }

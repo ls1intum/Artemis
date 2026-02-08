@@ -789,7 +789,11 @@
                 "defaultMessage": "Click \"Analyze Problem Statement\" to check for competencies, difficulty, and quality issues.",
                 "competencies": {
                     "title": "Top 5 Competencies",
-                    "empty": "No competencies inferred."
+                    "empty": "No competencies inferred.",
+                    "primary": "Primary",
+                    "evidence": "Evidence:",
+                    "emphasize": "Emphasize this competency",
+                    "deemphasize": "De-emphasize this competency"
                 },
                 "bloomRadar": {
                     "title": "Bloom's Taxonomy Distribution"
@@ -803,7 +807,16 @@
                 "quality": {
                     "title": "Quality Issues",
                     "empty": "No quality issues found.",
-                    "fix": "Fix:"
+                    "fix": "Fix:",
+                    "fixAll": "Fix All Issues",
+                    "fixIssue": "Apply AI fix for this issue"
+                },
+                "actions": {
+                    "success": "Problem statement updated successfully.",
+                    "error": "Failed to apply the action. Please try again.",
+                    "noChanges": "No changes were needed for this action.",
+                    "adaptTo": "Adapt to:",
+                    "current": "(current)"
                 }
             }
         },

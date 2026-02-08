@@ -1,0 +1,41 @@
+package de.tum.cit.aet.artemis.hyperion.dto;
+
+import java.util.Map;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+
+/**
+ * DTO for checklist action requests that modify the problem statement
+ * based on analysis results.
+ *
+ * @param actionType               the type of action to perform
+ * @param problemStatementMarkdown the current problem statement to modify
+ * @param context                  action-specific context (e.g., issue description, target difficulty, competency title)
+ */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@Schema(description = "Request to apply an AI-powered checklist action to the problem statement")
+public record ChecklistActionRequestDTO(@NotNull @Schema(description = "Type of action to apply") ActionType actionType,
+        @NotBlank @Schema(description = "Current problem statement markdown") String problemStatementMarkdown,
+        @Schema(description = "Action-specific context parameters") Map<String, String> context) {
+
+    /**
+     * Enum representing the types of checklist actions that can be applied.
+     */
+    public enum ActionType {
+        /** Fix a single quality issue identified in the analysis */
+        FIX_QUALITY_ISSUE,
+        /** Fix all quality issues at once */
+        FIX_ALL_QUALITY_ISSUES,
+        /** Adapt the problem statement to a target difficulty level */
+        ADAPT_DIFFICULTY,
+        /** Increase emphasis on a specific competency */
+        EMPHASIZE_COMPETENCY,
+        /** Decrease emphasis on a specific competency */
+        DEEMPHASIZE_COMPETENCY
+    }
+}

@@ -10,7 +10,8 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { of, throwError } from 'rxjs';
 import { ChecklistAnalysisResponse } from 'app/openapi/model/checklistAnalysisResponse';
-import { HttpResponse } from '@angular/common/http';
+import { ChecklistActionResponse } from 'app/openapi/model/checklistActionResponse';
+import { ChecklistActionRequest } from 'app/openapi/model/checklistActionRequest';
 import { By } from '@angular/platform-browser';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 
@@ -48,8 +49,8 @@ describe('ChecklistPanelComponent', () => {
         apiService = TestBed.inject(HyperionProblemStatementApiService);
         alertService = TestBed.inject(AlertService);
 
-        component.exercise = exercise;
-        component.problemStatement = 'Problem statement';
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('problemStatement', 'Problem statement');
         fixture.detectChanges();
     });
 
@@ -58,15 +59,14 @@ describe('ChecklistPanelComponent', () => {
     });
 
     it('should call analyzeChecklist on button click', () => {
-        const analyzeSpy = jest.spyOn(apiService, 'analyzeChecklist').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
+        const analyzeSpy = jest.spyOn(apiService, 'analyzeChecklist').mockReturnValue(of(mockResponse));
 
         // Find analyze button
         const button = fixture.debugElement.query(By.css('button'));
         expect(button).toBeTruthy();
         button.nativeElement.click();
 
-        expect(component.isLoading()).toBeTrue();
-        expect(analyzeSpy).toHaveBeenCalledWith(exercise.id!, expect.objectContaining({ problemStatement: 'Problem statement' }));
+        expect(analyzeSpy).toHaveBeenCalledWith(exercise.id!, expect.objectContaining({ problemStatementMarkdown: 'Problem statement' }));
 
         // Wait for observable
         fixture.detectChanges();
@@ -94,5 +94,127 @@ describe('ChecklistPanelComponent', () => {
         const goalsSection = fixture.debugElement.query(By.css('.analysis-results'));
         expect(goalsSection).toBeTruthy();
         expect(component.analysisResult()).toBeDefined();
+    });
+
+    describe('AI Action Methods', () => {
+        const mockActionResponse: ChecklistActionResponse = {
+            updatedProblemStatement: 'Updated problem statement',
+            applied: true,
+            summary: 'Fixed quality issue',
+        };
+
+        it('should fix a single quality issue', () => {
+            const actionSpy = jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse));
+            const emitSpy = jest.spyOn(component.problemStatementChange, 'emit');
+
+            component.fixQualityIssue({ description: 'Unclear wording', suggestedFix: 'Reword it', category: 'CLARITY' }, 0);
+
+            expect(actionSpy).toHaveBeenCalledWith(
+                exercise.id,
+                expect.objectContaining({
+                    actionType: ChecklistActionRequest.ActionTypeEnum.FixQualityIssue,
+                    problemStatementMarkdown: 'Problem statement',
+                }),
+            );
+            expect(emitSpy).toHaveBeenCalledWith('Updated problem statement');
+            expect(component.isApplyingAction()).toBeFalse();
+            expect(component.lastActionSummary()).toBe('Fixed quality issue');
+        });
+
+        it('should fix all quality issues', () => {
+            component.analysisResult.set({
+                ...mockResponse,
+                qualityIssues: [
+                    { description: 'Issue 1', category: 'CLARITY', severity: 'WARNING' },
+                    { description: 'Issue 2', category: 'COMPLETENESS', severity: 'ERROR' },
+                ],
+            });
+            const actionSpy = jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse));
+
+            component.fixAllQualityIssues();
+
+            expect(actionSpy).toHaveBeenCalledWith(
+                exercise.id,
+                expect.objectContaining({
+                    actionType: ChecklistActionRequest.ActionTypeEnum.FixAllQualityIssues,
+                }),
+            );
+        });
+
+        it('should adapt difficulty', () => {
+            component.analysisResult.set(mockResponse);
+            const actionSpy = jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse));
+
+            component.adaptDifficulty('HARD');
+
+            expect(actionSpy).toHaveBeenCalledWith(
+                exercise.id,
+                expect.objectContaining({
+                    actionType: ChecklistActionRequest.ActionTypeEnum.AdaptDifficulty,
+                    context: expect.objectContaining({ targetDifficulty: 'HARD' }),
+                }),
+            );
+        });
+
+        it('should emphasize a competency', () => {
+            const actionSpy = jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse));
+
+            component.emphasizeCompetency('Loops', 'APPLY');
+
+            expect(actionSpy).toHaveBeenCalledWith(
+                exercise.id,
+                expect.objectContaining({
+                    actionType: ChecklistActionRequest.ActionTypeEnum.EmphasizeCompetency,
+                    context: expect.objectContaining({ competencyTitle: 'Loops', taxonomyLevel: 'APPLY' }),
+                }),
+            );
+        });
+
+        it('should deemphasize a competency', () => {
+            const actionSpy = jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse));
+
+            component.deemphasizeCompetency('Loops');
+
+            expect(actionSpy).toHaveBeenCalledWith(
+                exercise.id,
+                expect.objectContaining({
+                    actionType: ChecklistActionRequest.ActionTypeEnum.DeemphasizeCompetency,
+                    context: expect.objectContaining({ competencyTitle: 'Loops' }),
+                }),
+            );
+        });
+
+        it('should handle action error', () => {
+            jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(throwError(() => new Error('Failed')));
+            const errorSpy = jest.spyOn(alertService, 'error');
+
+            component.fixQualityIssue({ description: 'Test', category: 'CLARITY' }, 0);
+
+            expect(errorSpy).toHaveBeenCalled();
+            expect(component.isApplyingAction()).toBeFalse();
+            expect(component.actionLoadingKey()).toBeUndefined();
+        });
+
+        it('should not apply action when already applying', () => {
+            component.isApplyingAction.set(true);
+            const actionSpy = jest.spyOn(apiService, 'applyChecklistAction');
+
+            component.fixQualityIssue({ description: 'Test', category: 'CLARITY' }, 0);
+
+            expect(actionSpy).not.toHaveBeenCalled();
+        });
+
+        it('should show warning when action produces no changes', () => {
+            const noChangeResponse: ChecklistActionResponse = {
+                updatedProblemStatement: 'Problem statement',
+                applied: false,
+            };
+            jest.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(noChangeResponse));
+            const warningSpy = jest.spyOn(alertService, 'warning');
+
+            component.fixQualityIssue({ description: 'Test', category: 'CLARITY' }, 0);
+
+            expect(warningSpy).toHaveBeenCalled();
+        });
     });
 });

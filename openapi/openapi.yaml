@@ -265,6 +265,26 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ChecklistAnalysisResponse'}
+  /api/hyperion/programming-exercises/{exerciseId}/checklist-actions:
+    post:
+      tags: [hyperion-problem-statement]
+      operationId: applyChecklistAction
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ChecklistActionRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ChecklistActionResponse'}
   /api/hyperion/courses/{courseId}/problem-statements/rewrite:
     post:
       tags: [hyperion-problem-statement]
@@ -496,6 +516,23 @@ components:
         declaredDifficulty: {type: string}
         language: {type: string}
       required: [problemStatementMarkdown]
+    ChecklistActionRequest:
+      type: object
+      description: Request to apply an AI-powered checklist action to the problem
+        statement
+      properties:
+        actionType:
+          type: string
+          description: Type of action to apply
+          enum: [FIX_QUALITY_ISSUE, FIX_ALL_QUALITY_ISSUES, ADAPT_DIFFICULTY, EMPHASIZE_COMPETENCY,
+            DEEMPHASIZE_COMPETENCY]
+        problemStatementMarkdown: {type: string, description: Current problem statement
+            markdown, minLength: 1}
+        context:
+          type: object
+          additionalProperties: {type: string}
+          description: Action-specific context parameters
+      required: [actionType, problemStatementMarkdown]
     TutorialGroupStatus:
       type: object
       properties:
@@ -518,6 +555,15 @@ components:
         qualityIssues:
           type: array
           items: {$ref: '#/components/schemas/QualityIssue'}
+    ChecklistActionResponse:
+      type: object
+      description: Response from applying a checklist action to the problem statement
+      properties:
+        updatedProblemStatement: {type: string, description: The updated problem statement
+            markdown}
+        applied: {type: boolean, description: Whether the action was successfully
+            applied}
+        summary: {type: string, description: Short summary of what was changed}
     CodeGenerationRequest:
       type: object
       properties:
@@ -552,20 +598,28 @@ components:
         jobId: {type: string}
     ConsistencyIssue:
       type: object
+      description: Individual consistency issue details
       properties:
         severity:
           type: string
+          description: Severity of the issue
           enum: [LOW, MEDIUM, HIGH]
+          example: HIGH
         category:
           type: string
+          description: Category of the issue
           enum: [METHOD_RETURN_TYPE_MISMATCH, METHOD_PARAMETER_MISMATCH, CONSTRUCTOR_PARAMETER_MISMATCH,
-            ATTRIBUTE_TYPE_MISMATCH, VISIBILITY_MISMATCH, IDENTIFIER_NAMING_INCONSISTENCY,
-            CLARITY, COHERENCE, COMPLETENESS]
-        description: {type: string}
-        suggestedFix: {type: string}
-        locations:
+            ATTRIBUTE_TYPE_MISMATCH, VISIBILITY_MISMATCH, IDENTIFIER_NAMING_INCONSISTENCY]
+          example: METHOD_RETURN_TYPE_MISMATCH
+        description: {type: string, description: Detailed description of the issue,
+          example: Problem statement does not match test cases}
+        suggestedFix: {type: string, description: Suggested fix for the issue, example: Update
+            problem statement to clarify expected behavior}
+        relatedLocations:
           type: array
+          description: Related locations across artifacts
           items: {$ref: '#/components/schemas/ArtifactLocation'}
+      required: [category, description, relatedLocations, severity, suggestedFix]
     InferredCompetency:
       type: object
       properties:
