@@ -254,6 +254,10 @@ paths:
         in: path
         required: true
         schema: {type: integer, format: int64}
+      - name: exerciseId
+        in: query
+        required: false
+        schema: {type: integer, format: int64}
       requestBody:
         content:
           application/json:
@@ -543,7 +547,7 @@ components:
           maximum: 10000, minimum: 1}
         instruction: {type: string, description: Instruction describing what should
             change, maxLength: 500, minLength: 0}
-      required: [endLine, problemStatementText, startLine]
+      required: [endLine, instruction, problemStatementText, startLine]
     CodeGenerationRequest:
       type: object
       properties:

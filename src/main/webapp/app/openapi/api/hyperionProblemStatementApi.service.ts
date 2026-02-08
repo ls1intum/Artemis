@@ -354,20 +354,32 @@ export class HyperionProblemStatementApiService extends BaseService {
      * @endpoint post /api/hyperion/courses/{courseId}/problem-statements/rewrite
      * @param courseId 
      * @param problemStatementRewriteRequest 
+     * @param exerciseId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public rewriteProblemStatement(courseId: number, problemStatementRewriteRequest: ProblemStatementRewriteRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProblemStatementRewriteResponse>;
-    public rewriteProblemStatement(courseId: number, problemStatementRewriteRequest: ProblemStatementRewriteRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProblemStatementRewriteResponse>>;
-    public rewriteProblemStatement(courseId: number, problemStatementRewriteRequest: ProblemStatementRewriteRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProblemStatementRewriteResponse>>;
-    public rewriteProblemStatement(courseId: number, problemStatementRewriteRequest: ProblemStatementRewriteRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public rewriteProblemStatement(courseId: number, problemStatementRewriteRequest: ProblemStatementRewriteRequest, exerciseId?: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ProblemStatementRewriteResponse>;
+    public rewriteProblemStatement(courseId: number, problemStatementRewriteRequest: ProblemStatementRewriteRequest, exerciseId?: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ProblemStatementRewriteResponse>>;
+    public rewriteProblemStatement(courseId: number, problemStatementRewriteRequest: ProblemStatementRewriteRequest, exerciseId?: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ProblemStatementRewriteResponse>>;
+    public rewriteProblemStatement(courseId: number, problemStatementRewriteRequest: ProblemStatementRewriteRequest, exerciseId?: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
             throw new Error('Required parameter courseId was null or undefined when calling rewriteProblemStatement.');
         }
         if (problemStatementRewriteRequest === null || problemStatementRewriteRequest === undefined) {
             throw new Error('Required parameter problemStatementRewriteRequest was null or undefined when calling rewriteProblemStatement.');
         }
+
+        let localVarQueryParameters = new OpenApiHttpParams(this.encoder);
+
+        localVarQueryParameters = this.addToHttpParams(
+            localVarQueryParameters,
+            'exerciseId',
+            <any>exerciseId,
+            QueryParamStyle.Form,
+            true,
+        );
+
 
         let localVarHeaders = this.defaultHeaders;
 
@@ -409,6 +421,7 @@ export class HyperionProblemStatementApiService extends BaseService {
             {
                 context: localVarHttpContext,
                 body: problemStatementRewriteRequest,
+                params: localVarQueryParameters.toHttpParams(),
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

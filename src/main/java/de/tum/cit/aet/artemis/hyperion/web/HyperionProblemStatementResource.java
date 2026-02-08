@@ -106,8 +106,8 @@ public class HyperionProblemStatementResource {
         if (exerciseId != null) {
             ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
             // Security check: verify exercise belongs to the course
-            Long exerciseCourseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
-            if (!exerciseCourseId.equals(courseId)) {
+            Course exerciseCourse = exercise.getCourseViaExerciseGroupOrCourseMember();
+            if (exerciseCourse == null || !exerciseCourse.getId().equals(courseId)) {
                 throw new BadRequestAlertException("Exercise does not belong to the specified course", "exercise", "exerciseNotInCourse");
             }
             User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -119,16 +119,19 @@ public class HyperionProblemStatementResource {
     /**
      * POST courses/{courseId}/problem-statements/rewrite: Rewrite a problem statement for a course context.
      *
-     * @param courseId the id of the course the problem statement belongs to
-     * @param request  the request containing the original problem statement text
+     * @param courseId   the id of the course the problem statement belongs to
+     * @param exerciseId optional exercise ID for versioning (null during exercise creation)
+     * @param request    the request containing the original problem statement text
      * @return the ResponseEntity with status 200 (OK) and the rewritten problem statement or an error status
      */
     @EnforceAtLeastEditorInCourse
     @PostMapping("courses/{courseId}/problem-statements/rewrite")
-    public ResponseEntity<ProblemStatementRewriteResponseDTO> rewriteProblemStatement(@PathVariable long courseId, @RequestBody ProblemStatementRewriteRequestDTO request) {
-        log.debug("REST request to Hyperion rewrite problem statement for course [{}]", courseId);
+    public ResponseEntity<ProblemStatementRewriteResponseDTO> rewriteProblemStatement(@PathVariable long courseId, @RequestParam(required = false) Long exerciseId,
+            @RequestBody ProblemStatementRewriteRequestDTO request) {
+        log.debug("REST request to Hyperion rewrite problem statement for course [{}], exerciseId [{}]", courseId, exerciseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         var result = problemStatementRewriteService.rewriteProblemStatement(course, request.problemStatementText());
+        createExerciseVersionIfProvided(exerciseId, courseId);
         return ResponseEntity.ok(result);
     }
 

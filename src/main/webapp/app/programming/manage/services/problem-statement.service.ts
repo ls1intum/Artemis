@@ -143,7 +143,10 @@ export class ProblemStatementService {
                     }
                     return { success, content: getContent(response) };
                 }),
-                catchError(() => of({ success: false })),
+                catchError(() => {
+                    this.alertService.error(errorKey);
+                    return of({ success: false });
+                }),
             );
     }
 }

@@ -180,6 +180,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         expect(mockHyperionApiService.refineProblemStatementGlobally).toHaveBeenCalledWith(
             42,
             expect.objectContaining({ problemStatementText: 'Original problem statement', userPrompt: 'Improve clarity' }),
+            undefined,
         );
         expect(comp.showDiff()).toBeTrue();
         expect(mockAlertService.success).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementSuccess');

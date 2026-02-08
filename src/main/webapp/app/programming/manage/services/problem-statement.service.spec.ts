@@ -194,7 +194,7 @@ describe('ProblemStatementService', () => {
             const result = await firstValueFrom(service.refineGlobally(mockExerciseWithId, '', 'prompt', loadingSignal));
 
             expect(result.success).toBeFalse();
-            expect(alertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
+            expect(alertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementError');
             expect(hyperionApiService.refineProblemStatementGlobally).not.toHaveBeenCalled();
         });
     });
@@ -258,7 +258,7 @@ describe('ProblemStatementService', () => {
             const result = await firstValueFrom(service.refineTargeted(mockExerciseWithId, '', mockEvent, loadingSignal));
 
             expect(result.success).toBeFalse();
-            expect(alertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineRefine.error');
+            expect(alertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
             expect(hyperionApiService.refineProblemStatementTargeted).not.toHaveBeenCalled();
         });
     });
