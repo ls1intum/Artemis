@@ -160,17 +160,19 @@ function syncForward(env, checkOnly) {
     if (existsSync(PLAYWRIGHT_PKG) && env.PLAYWRIGHT_VERSION) {
         const playwrightPkg = readPkg(PLAYWRIGHT_PKG);
         const targetVersion = envValueToNpmVersion('PLAYWRIGHT_VERSION', env.PLAYWRIGHT_VERSION);
+        let playwrightChanges = 0;
         for (const section of ['dependencies', 'devDependencies']) {
             if (!playwrightPkg[section]) continue;
             for (const [name, currentVersion] of Object.entries(playwrightPkg[section])) {
                 if (name === '@playwright/test' && currentVersion !== targetVersion) {
                     mismatches.push({ file: 'src/test/playwright/package.json', section, name, current: currentVersion, target: targetVersion, envKey: 'PLAYWRIGHT_VERSION' });
                     playwrightPkg[section][name] = targetVersion;
+                    playwrightChanges++;
                     changes++;
                 }
             }
         }
-        if (!checkOnly && changes > 0) {
+        if (!checkOnly && playwrightChanges > 0) {
             writePkg(PLAYWRIGHT_PKG, playwrightPkg);
         }
     }
