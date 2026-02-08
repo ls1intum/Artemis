@@ -5,8 +5,10 @@ Course: {{courseTitle}}
 Course Description: {{courseDescription}}
 
 ## User Requirements:
-Use the following input exclusively as the specification for the problem statement to generate.
+Use the following text between the markers exclusively as the specification for the problem statement to generate.
+--- BEGIN USER SPECIFICATION ---
 {{userPrompt}}
+--- END USER SPECIFICATION ---
 
 ## Instructions:
 Generate a complete problem statement that follows Artemis formatting standards and includes:

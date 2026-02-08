@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.MA
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.getSanitizedCourseDescription;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.getSanitizedCourseTitle;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.sanitizeInput;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.validateNoInjectionPatterns;
 
 import java.util.Map;
 
@@ -65,6 +66,7 @@ public class HyperionProblemStatementGenerationService {
 
         String sanitizedPrompt = sanitizeInput(userPrompt != null ? userPrompt : "Generate a programming exercise problem statement");
         validateUserPrompt(sanitizedPrompt);
+        validateNoInjectionPatterns(sanitizedPrompt, "ProblemStatementGeneration");
 
         Map<String, String> templateVariables = Map.of("userPrompt", sanitizedPrompt, "courseTitle", getSanitizedCourseTitle(course), "courseDescription",
                 getSanitizedCourseDescription(course));
