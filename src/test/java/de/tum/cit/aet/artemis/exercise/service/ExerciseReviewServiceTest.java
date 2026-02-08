@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -83,6 +84,8 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     private ProgrammingExercise programmingExercise;
 
+    private final List<LocalRepoWithGit> createdRepos = new ArrayList<>();
+
     @BeforeEach
     void initTest() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
@@ -95,6 +98,11 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @AfterEach
     void tearDown() {
+        for (LocalRepoWithGit repo : createdRepos) {
+            repo.git().close();
+            FileUtils.deleteQuietly(repo.workingCopyPath().toFile());
+        }
+        createdRepos.clear();
     }
 
     @Test
@@ -845,7 +853,9 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         Path workingCopyPath = tempFileUtilService.createTempDirectory("review-repo-" + suffix + "-");
         String localRepositoryUri = repositoryUri.getLocalRepositoryPath(localVCBasePath).toUri().toString();
         Git git = Git.cloneRepository().setURI(localRepositoryUri).setDirectory(workingCopyPath.toFile()).call();
-        return new LocalRepoWithGit(repositoryUri, workingCopyPath, git);
+        LocalRepoWithGit repo = new LocalRepoWithGit(repositoryUri, workingCopyPath, git);
+        createdRepos.add(repo);
+        return repo;
     }
 
     private record LocalRepoWithGit(LocalVCRepositoryUri uri, Path workingCopyPath, Git git) {

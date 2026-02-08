@@ -37,8 +37,13 @@ public interface CommentThreadRepository extends ArtemisJpaRepository<CommentThr
      * @param exerciseId the exercise id
      * @return list of comment threads with comments
      */
-    @Query("select distinct ct from CommentThread ct where ct.exercise.id = :exerciseId")
-    @EntityGraph(attributePaths = { "comments", "comments.author" })
+    @Query("""
+            SELECT DISTINCT ct
+            FROM CommentThread ct
+                LEFT JOIN FETCH ct.comments c
+                LEFT JOIN FETCH c.author
+            WHERE ct.exercise.id = :exerciseId
+            """)
     Set<CommentThread> findWithCommentsByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**

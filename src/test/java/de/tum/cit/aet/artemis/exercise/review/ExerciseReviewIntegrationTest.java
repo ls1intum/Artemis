@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -62,6 +61,9 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private CommentThreadGroupRepository commentThreadGroupRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void initTest() {
@@ -571,12 +573,11 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     private void assertBadRequest(String path, Object body, String expectedMessage, String expectedParams) throws Exception {
-        ObjectMapper mapper = (ObjectMapper) ReflectionTestUtils.getField(request, "mapper");
-        String jsonBody = mapper.writeValueAsString(body);
+        String jsonBody = objectMapper.writeValueAsString(body);
         var result = request.performMvcRequest(MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody))
                 .andExpect(status().isBadRequest()).andReturn();
         String content = result.getResponse().getContentAsString();
-        var payload = mapper.readValue(content, java.util.Map.class);
+        var payload = objectMapper.readValue(content, java.util.Map.class);
         assertThat(payload.get("message")).isEqualTo(expectedMessage);
         if (expectedParams != null) {
             assertThat(payload.get("params")).isEqualTo(expectedParams);
@@ -584,12 +585,11 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     private void assertBadRequestWithPut(String path, Object body, String expectedMessage, String expectedParams) throws Exception {
-        ObjectMapper mapper = (ObjectMapper) ReflectionTestUtils.getField(request, "mapper");
-        String jsonBody = mapper.writeValueAsString(body);
+        String jsonBody = objectMapper.writeValueAsString(body);
         var result = request.performMvcRequest(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody))
                 .andExpect(status().isBadRequest()).andReturn();
         String content = result.getResponse().getContentAsString();
-        var payload = mapper.readValue(content, java.util.Map.class);
+        var payload = objectMapper.readValue(content, java.util.Map.class);
         assertThat(payload.get("message")).isEqualTo(expectedMessage);
         if (expectedParams != null) {
             assertThat(payload.get("params")).isEqualTo(expectedParams);
@@ -599,9 +599,8 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
     private void assertBadRequestWithNullBody(String path, String expectedMessage, String expectedParams) throws Exception {
         var result = request.performMvcRequest(MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content("null"))
                 .andExpect(status().isBadRequest()).andReturn();
-        ObjectMapper mapper = (ObjectMapper) ReflectionTestUtils.getField(request, "mapper");
         String content = result.getResponse().getContentAsString();
-        var payload = mapper.readValue(content, java.util.Map.class);
+        var payload = objectMapper.readValue(content, java.util.Map.class);
         assertThat(payload.get("message")).isEqualTo(expectedMessage);
         if (expectedParams != null) {
             assertThat(payload.get("params")).isEqualTo(expectedParams);
@@ -611,9 +610,8 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
     private void assertBadRequestWithPutNullBody(String path, String expectedMessage, String expectedParams) throws Exception {
         var result = request.performMvcRequest(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content("null")).andExpect(status().isBadRequest())
                 .andReturn();
-        ObjectMapper mapper = (ObjectMapper) ReflectionTestUtils.getField(request, "mapper");
         String content = result.getResponse().getContentAsString();
-        var payload = mapper.readValue(content, java.util.Map.class);
+        var payload = objectMapper.readValue(content, java.util.Map.class);
         assertThat(payload.get("message")).isEqualTo(expectedMessage);
         if (expectedParams != null) {
             assertThat(payload.get("params")).isEqualTo(expectedParams);
