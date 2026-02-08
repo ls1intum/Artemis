@@ -532,6 +532,23 @@ dependencyManagement {
         // BOM uses 3-part versions (e.g. 18.1.0); POSTGRES_VERSION from .env may be 2-part (e.g. 18.1)
         def bomVersion = postgres_version.count('.') < 2 ? "${postgres_version}.0" : postgres_version
         mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:${bomVersion}"
+        mavenBom "org.testcontainers:testcontainers-bom:2.0.3"
+    }
+}
+
+// Testcontainers 2.0 renamed modules with a "testcontainers-" prefix.
+// Redirect old artifact names (used by Zonky and Spring Boot BOM) to the new ones.
+configurations.matching { it.name != 'mockitoAgent' }.configureEach {
+    resolutionStrategy {
+        dependencySubstitution {
+            substitute module("org.testcontainers:mysql") using module("org.testcontainers:testcontainers-mysql:2.0.3")
+            substitute module("org.testcontainers:postgresql") using module("org.testcontainers:testcontainers-postgresql:2.0.3")
+            substitute module("org.testcontainers:jdbc") using module("org.testcontainers:testcontainers-jdbc:2.0.3")
+            substitute module("org.testcontainers:database-commons") using module("org.testcontainers:testcontainers-database-commons:2.0.3")
+            substitute module("org.testcontainers:mariadb") using module("org.testcontainers:testcontainers-mariadb:2.0.3")
+            substitute module("org.testcontainers:mssqlserver") using module("org.testcontainers:testcontainers-mssqlserver:2.0.3")
+            substitute module("org.testcontainers:testcontainers") using module("org.testcontainers:testcontainers:2.0.3")
+        }
     }
 }
 
