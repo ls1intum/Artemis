@@ -27,6 +27,20 @@ tasks.withType(Test).configureEach {
     def dbType = System.getProperty('zonky.test.database.type')
     if (dbType) {
         systemProperty 'zonky.test.database.type', dbType
+        // Override Hibernate dialect to match the selected test database.
+        // Without this, H2Dialect from application.yml generates SQL incompatible
+        // with MySQL/PostgreSQL (e.g. "dual cross join" references).
+        switch (dbType.toUpperCase()) {
+            case 'MYSQL':
+                systemProperty 'spring.jpa.database-platform', 'org.hibernate.dialect.MySQLDialect'
+                systemProperty 'spring.jpa.database', 'MYSQL'
+                break
+            case 'POSTGRES':
+                systemProperty 'spring.jpa.database-platform', 'org.hibernate.dialect.PostgreSQLDialect'
+                systemProperty 'spring.jpa.database', 'POSTGRESQL'
+                break
+            // H2 is the default from application.yml, no override needed
+        }
     }
 
     // a collection to track failedTests
