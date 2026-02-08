@@ -205,11 +205,21 @@ describe('ExerciseMetadataSyncService', () => {
             author: { login: 'editor' },
         });
 
-        flushSnapshot(1, 110, { id: 1, title: 'incoming-title' });
+        httpMock.expectNone(() => true);
         await flushPromises();
 
         expect(currentExercise.title).toBe('baseline-title');
         expect(baselineExercise.title).toBe('baseline-title');
+        expect(modalService.open).not.toHaveBeenCalled();
+    });
+
+    it('ignores problem statement-only changes without fetching snapshots', async () => {
+        service.initialize(context);
+        emitAlert(createAlert(120, ['problemStatement']));
+
+        httpMock.expectNone(() => true);
+        await flushPromises();
+
         expect(modalService.open).not.toHaveBeenCalled();
     });
 
@@ -287,6 +297,32 @@ describe('ExerciseMetadataSyncService', () => {
 
         expect(currentExercise.title).toBe('local-title');
         expect(baselineExercise.title).toBe('incoming-title');
+    });
+
+    it('does not raise competency link conflicts when only exercise references differ', async () => {
+        const competency = new Competency();
+        competency.id = 99;
+        competency.title = 'Comp 99';
+
+        const currentExerciseRef = new ProgrammingExercise(undefined, undefined);
+        const baselineExerciseRef = new ProgrammingExercise(undefined, undefined);
+
+        currentExercise.course = { competencies: [competency], prerequisites: [] } as any;
+        baselineExercise.course = currentExercise.course;
+
+        currentExercise.competencyLinks = [new CompetencyExerciseLink(competency, currentExerciseRef, 0.5)];
+        baselineExercise.competencyLinks = [new CompetencyExerciseLink(competency, baselineExerciseRef, 0.5)];
+
+        service.initialize(context);
+        emitAlert(createAlert(121, ['competencyLinks']));
+
+        flushSnapshot(1, 121, {
+            id: 1,
+            competencyLinks: [{ competencyId: { competencyId: 99 }, weight: 0.5 }],
+        });
+        await flushPromises();
+
+        expect(modalService.open).not.toHaveBeenCalled();
     });
 
     it('continues queue processing after a failed snapshot fetch', async () => {

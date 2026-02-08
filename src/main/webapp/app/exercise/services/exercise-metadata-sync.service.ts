@@ -138,23 +138,28 @@ export class ExerciseMetadataSyncService {
             return;
         }
 
+        const handlers = this.getHandlers(context);
+        const changedFields = alert.changedFields ?? [];
+        const effectiveFields = changedFields.filter((field) => field !== 'problemStatement');
+        if (effectiveFields.length === 0) {
+            return;
+        }
+
         const snapshot = await this.fetchSnapshot(context.exerciseId, alert.exerciseVersionId);
         if (!snapshot) {
             return;
         }
 
-        const handlers = this.getHandlers(context);
-        const changedFields = alert.changedFields ?? [];
-        const applicableHandlers = handlers.filter((handler) => changedFields.includes(handler.key));
+        const applicableHandlers = handlers.filter((handler) => effectiveFields.includes(handler.key));
 
         if (applicableHandlers.length === 0) {
-            this.applySnapshotToBaseline(context, snapshot, handlers, changedFields);
+            this.applySnapshotToBaseline(context, snapshot, handlers, effectiveFields);
             return;
         }
 
         const conflicts = this.collectConflicts(context, snapshot, applicableHandlers);
         this.applyNonConflictingChanges(context, snapshot, applicableHandlers, conflicts);
-        this.applySnapshotToBaseline(context, snapshot, handlers, changedFields);
+        this.applySnapshotToBaseline(context, snapshot, handlers, effectiveFields);
 
         if (conflicts.length === 0) {
             return;
@@ -339,6 +344,9 @@ export class ExerciseMetadataSyncService {
      * @returns true if the values are considered equal
      */
     private valuesEqual(value: unknown, otherValue: unknown): boolean {
+        if (this.isCompetencyLinkArray(value) || this.isCompetencyLinkArray(otherValue)) {
+            return isEqual(this.normalizeCompetencyLinks(value), this.normalizeCompetencyLinks(otherValue));
+        }
         if (dayjs.isDayjs(value) || dayjs.isDayjs(otherValue)) {
             const normalizedLeft = dayjs.isDayjs(value) ? value : convertDateFromServer(value as any);
             const normalizedRight = dayjs.isDayjs(otherValue) ? otherValue : convertDateFromServer(otherValue as any);
@@ -348,6 +356,43 @@ export class ExerciseMetadataSyncService {
             return normalizedLeft.isSame(normalizedRight);
         }
         return isEqual(value, otherValue);
+    }
+
+    private isCompetencyLinkArray(value: unknown): value is Array<{ competency?: { id?: number }; weight?: number }> {
+        if (!Array.isArray(value)) {
+            return false;
+        }
+        return value.some((entry) => {
+            if (!entry || typeof entry !== 'object') {
+                return false;
+            }
+            return 'competency' in entry || 'weight' in entry;
+        });
+    }
+
+    private normalizeCompetencyLinks(value: unknown): Array<{ competencyId?: number; weight?: number }> | undefined {
+        if (!Array.isArray(value)) {
+            return undefined;
+        }
+        const normalized = value
+            .filter((entry) => entry && typeof entry === 'object')
+            .map((entry) => {
+                const link = entry as { competency?: { id?: number }; weight?: number };
+                return {
+                    competencyId: link.competency?.id,
+                    weight: link.weight,
+                };
+            });
+        return normalized.sort((left, right) => {
+            const leftId = left.competencyId ?? -1;
+            const rightId = right.competencyId ?? -1;
+            if (leftId !== rightId) {
+                return leftId - rightId;
+            }
+            const leftWeight = left.weight ?? -1;
+            const rightWeight = right.weight ?? -1;
+            return leftWeight - rightWeight;
+        });
     }
 
     /**
