@@ -12,7 +12,9 @@ import { LearningPathInformationDTO } from 'app/atlas/shared/entities/learning-p
 import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { By } from '@angular/platform-browser';
 import { ScienceService } from 'app/shared/science/science.service';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { FaIconComponent, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { NgbHighlight, NgbPagination, NgbPaginationModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('LearningPathsTableComponent', () => {
     let component: LearningPathsTableComponent;
@@ -49,7 +51,12 @@ describe('LearningPathsTableComponent', () => {
                 { provide: AlertService, useClass: MockAlertService },
                 MockProvider(ScienceService),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(LearningPathsTableComponent, {
+                remove: { imports: [NgbPaginationModule, NgbTypeaheadModule, FontAwesomeModule] },
+                add: { imports: [MockComponent(NgbPagination), MockComponent(NgbHighlight), MockComponent(FaIconComponent)] },
+            })
+            .compileComponents();
 
         learningPathApiService = TestBed.inject(LearningPathApiService);
         alertService = TestBed.inject(AlertService);
