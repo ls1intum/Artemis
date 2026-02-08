@@ -146,6 +146,8 @@ configurations.configureEach {
 
     exclude group: "org.testcontainers", module: "mariadb"
     exclude group: "org.testcontainers", module: "mssqlserver"
+    exclude group: "org.testcontainers", module: "testcontainers-mariadb"
+    exclude group: "org.testcontainers", module: "testcontainers-mssqlserver"
 
     exclude group: "jakarta.ws.rs", module: "jsr311-api"
 
@@ -506,7 +508,7 @@ dependencies {
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.4"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.7.1"
     testImplementation "com.redis:testcontainers-redis:2.2.4"
-    testImplementation "org.testcontainers:weaviate:1.21.4"
+    testImplementation "org.testcontainers:testcontainers-weaviate:2.0.3"
     testImplementation "com.tngtech.archunit:archunit:1.4.1"
     testImplementation "org.skyscreamer:jsonassert:1.5.3"
 
@@ -552,6 +554,7 @@ configurations.matching { it.name != 'mockitoAgent' }.configureEach {
             substitute module("org.testcontainers:database-commons") using module("org.testcontainers:testcontainers-database-commons:2.0.3")
             substitute module("org.testcontainers:mariadb") using module("org.testcontainers:testcontainers-mariadb:2.0.3")
             substitute module("org.testcontainers:mssqlserver") using module("org.testcontainers:testcontainers-mssqlserver:2.0.3")
+            substitute module("org.testcontainers:weaviate") using module("org.testcontainers:testcontainers-weaviate:2.0.3")
             substitute module("org.testcontainers:testcontainers") using module("org.testcontainers:testcontainers:2.0.3")
         }
     }
