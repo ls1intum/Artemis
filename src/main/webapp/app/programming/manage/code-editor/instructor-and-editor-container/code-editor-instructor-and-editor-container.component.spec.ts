@@ -33,6 +33,8 @@ import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGe
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { ExerciseReviewCommentService } from 'app/exercise/services/exercise-review-comment.service';
+import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 
 describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
@@ -45,6 +47,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let profileService: ProfileService;
     let artemisIntelligenceService: ArtemisIntelligenceService;
     let consistencyCheckService: ConsistencyCheckService;
+    let reviewCommentService: jest.Mocked<
+        Pick<
+            ExerciseReviewCommentService,
+            'loadThreads' | 'createThreadWithInitialComment' | 'deleteCommentFromThreads' | 'updateUserCommentInThreads' | 'updateResolvedStateInThreads'
+        >
+    >;
 
     const mockIssues: ConsistencyIssue[] = [
         {
@@ -141,6 +149,14 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     });
 
     beforeEach(async () => {
+        reviewCommentService = {
+            loadThreads: jest.fn(),
+            createThreadWithInitialComment: jest.fn(),
+            deleteCommentFromThreads: jest.fn(),
+            updateUserCommentInThreads: jest.fn(),
+            updateResolvedStateInThreads: jest.fn(),
+        };
+
         await TestBed.configureTestingModule({
             imports: [CodeEditorInstructorAndEditorContainerComponent],
             providers: [
@@ -161,6 +177,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ConsistencyCheckService, useValue: { checkConsistencyForProgrammingExercise: jest.fn() } },
                 { provide: ArtemisIntelligenceService, useValue: { consistencyCheck: jest.fn(), isLoading: () => false } },
+                { provide: ExerciseReviewCommentService, useValue: reviewCommentService },
             ],
         })
             // Avoid rendering heavy template dependencies for these tests
@@ -193,10 +210,14 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             selectedRepository: jest.fn().mockReturnValue('SOLUTION'),
             problemStatementIdentifier: 'problem_statement.md',
             jumpToLine: jest.fn(),
+            monacoEditor: {
+                clearReviewCommentDrafts: jest.fn(),
+            },
         };
 
         (comp as any).editableInstructions = {
             jumpToLine: jest.fn(),
+            clearReviewCommentDrafts: jest.fn(),
         };
 
         // Mock jump helper methods
@@ -442,6 +463,87 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             } finally {
                 window.setTimeout = originalSetTimeout;
             }
+        });
+    });
+
+    describe('Review Comments', () => {
+        it('onCommit clears draft widgets and reloads threads', () => {
+            const updatedThreads = [{ id: 1 }] as any;
+            reviewCommentService.loadThreads.mockReturnValue(of(updatedThreads));
+            const clearEditorDraftsSpy = jest.spyOn((comp as any).codeEditorContainer.monacoEditor, 'clearReviewCommentDrafts');
+            const clearInstructionDraftsSpy = jest.spyOn((comp as any).editableInstructions, 'clearReviewCommentDrafts');
+
+            comp.onCommit();
+
+            expect(clearEditorDraftsSpy).toHaveBeenCalledOnce();
+            expect(clearInstructionDraftsSpy).toHaveBeenCalledOnce();
+            expect(reviewCommentService.loadThreads).toHaveBeenCalledWith(42);
+            expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
+        });
+
+        it('onProblemStatementSaved clears markdown drafts and reloads threads', () => {
+            const updatedThreads = [{ id: 2 }] as any;
+            reviewCommentService.loadThreads.mockReturnValue(of(updatedThreads));
+            const clearInstructionDraftsSpy = jest.spyOn((comp as any).editableInstructions, 'clearReviewCommentDrafts');
+
+            comp.onProblemStatementSaved();
+
+            expect(clearInstructionDraftsSpy).toHaveBeenCalledOnce();
+            expect(reviewCommentService.loadThreads).toHaveBeenCalledWith(42);
+            expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
+        });
+
+        it('onSubmitReviewComment creates thread with initial comment and updates local threads', () => {
+            const updatedThreads = [{ id: 3 }] as any;
+            reviewCommentService.createThreadWithInitialComment.mockReturnValue(of(updatedThreads));
+            comp.reviewCommentThreads.set([]);
+            comp.selectedRepository = RepositoryType.TEMPLATE;
+
+            const initialComment = { contentType: 'USER', text: 'Initial comment' } as const;
+            comp.onSubmitReviewComment({ lineNumber: 5, fileName: 'src/Main.java', initialComment });
+
+            expect(reviewCommentService.createThreadWithInitialComment).toHaveBeenCalledWith(42, [], {
+                targetType: CommentThreadLocationType.TEMPLATE_REPO,
+                filePath: 'src/Main.java',
+                lineNumber: 5,
+                initialComment,
+                auxiliaryRepositoryId: undefined,
+            });
+            expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
+        });
+
+        it('onDeleteReviewComment deletes comment and updates local threads', () => {
+            const updatedThreads = [{ id: 4 }] as any;
+            reviewCommentService.deleteCommentFromThreads.mockReturnValue(of(updatedThreads));
+            comp.reviewCommentThreads.set([{ id: 1 }] as any);
+
+            comp.onDeleteReviewComment(99);
+
+            expect(reviewCommentService.deleteCommentFromThreads).toHaveBeenCalledWith(42, [{ id: 1 }], 99);
+            expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
+        });
+
+        it('onUpdateReviewComment updates comment content and local threads', () => {
+            const updatedThreads = [{ id: 5 }] as any;
+            reviewCommentService.updateUserCommentInThreads.mockReturnValue(of(updatedThreads));
+            comp.reviewCommentThreads.set([{ id: 1 }] as any);
+            const content = { contentType: 'USER', text: 'Updated' } as const;
+
+            comp.onUpdateReviewComment({ commentId: 7, content });
+
+            expect(reviewCommentService.updateUserCommentInThreads).toHaveBeenCalledWith(42, [{ id: 1 }], 7, content);
+            expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
+        });
+
+        it('onToggleResolveReviewThread updates resolved state and local threads', () => {
+            const updatedThreads = [{ id: 6, resolved: true }] as any;
+            reviewCommentService.updateResolvedStateInThreads.mockReturnValue(of(updatedThreads));
+            comp.reviewCommentThreads.set([{ id: 1, resolved: false }] as any);
+
+            comp.onToggleResolveReviewThread({ threadId: 6, resolved: true });
+
+            expect(reviewCommentService.updateResolvedStateInThreads).toHaveBeenCalledWith(42, [{ id: 1, resolved: false }], 6, true);
+            expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
         });
     });
 
