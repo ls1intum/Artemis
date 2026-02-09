@@ -40,7 +40,7 @@ public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull LocalDateTime s
     }
 
     /**
-     * DTO used to send the status explanation when e.g. cancelling a tutorial group session
+     * DTO used to send the status explanation when e.g., cancelling a tutorial group session
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TutorialGroupStatusDTO(String statusExplanation) {
@@ -65,9 +65,13 @@ public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull LocalDateTime s
          * @return the converted TutorialGroupSession object
          */
         public TutorialGroupSession toEntity(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
+            String timeZone = tutorialGroupsConfiguration.getCourse().getTimeZone();
+            if (timeZone == null) {
+                throw new BadRequestAlertException("Course has no time zone configured", ENTITY_NAME, "missingTimeZone");
+            }
             TutorialGroupSession tutorialGroupSession = new TutorialGroupSession();
-            tutorialGroupSession.setStart(interpretInTimeZone(date, startTime, tutorialGroupsConfiguration.getCourse().getTimeZone()));
-            tutorialGroupSession.setEnd(interpretInTimeZone(date, endTime, tutorialGroupsConfiguration.getCourse().getTimeZone()));
+            tutorialGroupSession.setStart(interpretInTimeZone(date, startTime, timeZone));
+            tutorialGroupSession.setEnd(interpretInTimeZone(date, endTime, timeZone));
             tutorialGroupSession.setLocation(location);
             return tutorialGroupSession;
         }
@@ -91,8 +95,6 @@ public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull LocalDateTime s
         LocalDateTime end = session.getEnd().withZoneSameInstant(courseZone).toLocalDateTime();
 
         var scheduleDto = session.getTutorialGroupSchedule() != null ? TutorialGroupScheduleDTO.of(session.getTutorialGroupSchedule()) : null;
-
-        // If you want to avoid large nested objects or cycles, use a slim free period DTO or ignore nested config there.
         var freePeriodDto = session.getTutorialGroupFreePeriod() != null ? TutorialGroupFreePeriodDTO.of(session.getTutorialGroupFreePeriod()) : null;
         boolean isCancelled = session.getStatus() == TutorialGroupSessionStatus.CANCELLED;
 

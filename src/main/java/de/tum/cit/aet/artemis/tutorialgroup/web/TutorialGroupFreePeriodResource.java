@@ -116,6 +116,7 @@ public class TutorialGroupFreePeriodResource {
         updatedFreePeriod.setId(existingFreePeriod.getId());
         updatedFreePeriod.setTutorialGroupsConfiguration(configuration);
         updatedFreePeriod.setReason(tutorialGroupFreePeriod.reason());
+        trimStringFields(updatedFreePeriod);
         updatedFreePeriod.setStart(
                 interpretInTimeZone(tutorialGroupFreePeriod.startDate().toLocalDate(), tutorialGroupFreePeriod.startDate().toLocalTime(), configuration.getCourse().getTimeZone()));
         updatedFreePeriod.setEnd(
