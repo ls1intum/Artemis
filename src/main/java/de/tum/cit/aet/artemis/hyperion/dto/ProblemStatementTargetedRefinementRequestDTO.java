@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
@@ -34,18 +35,20 @@ public record ProblemStatementTargetedRefinementRequestDTO(
      */
     public ProblemStatementTargetedRefinementRequestDTO {
         if (startLine != null && endLine != null && startLine > endLine) {
-            throw new IllegalArgumentException("startLine must be less than or equal to endLine");
+            throw new BadRequestAlertException("startLine must be less than or equal to endLine", "ProblemStatement", "ProblemStatementRefinement.invalidLineRange");
         }
         if ((startColumn == null) != (endColumn == null)) {
-            throw new IllegalArgumentException("startColumn and endColumn must be either both null or both non-null");
+            throw new BadRequestAlertException("startColumn and endColumn must be either both null or both non-null", "ProblemStatement",
+                    "ProblemStatementRefinement.invalidColumnRange");
         }
         if (startColumn != null && startLine.equals(endLine) && startColumn > endColumn) {
-            throw new IllegalArgumentException("startColumn must be less than or equal to endColumn on the same line");
+            throw new BadRequestAlertException("startColumn must be less than or equal to endColumn on the same line", "ProblemStatement",
+                    "ProblemStatementRefinement.invalidColumnRange");
         }
         if (instruction != null) {
             instruction = instruction.trim();
             if (instruction.isEmpty()) {
-                throw new IllegalArgumentException("instruction must not be empty after trimming");
+                throw new BadRequestAlertException("instruction must not be empty after trimming", "ProblemStatement", "ProblemStatementRefinement.instructionEmpty");
             }
         }
     }

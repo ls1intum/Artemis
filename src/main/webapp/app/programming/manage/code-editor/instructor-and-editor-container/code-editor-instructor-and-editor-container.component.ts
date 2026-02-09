@@ -552,8 +552,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     if (result.success && result.content) {
                         this.showDiff.set(true);
                         const refinedContent = result.content;
-                        afterNextRender(() => this.editableInstructions.applyRefinedContent(refinedContent), { injector: this.injector });
-                    } else {
+                        afterNextRender(() => this.editableInstructions?.applyRefinedContent(refinedContent), { injector: this.injector });
+                    } else if (!result.errorHandled) {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
                     }
                     this.currentRefinementSubscription = undefined;
