@@ -1,7 +1,7 @@
 import { ReviewCommentWidgetManager, ReviewCommentWidgetManagerConfig } from 'app/exercise/review/review-comment-widget-manager';
 import { ReviewCommentDraftWidgetComponent } from 'app/exercise/review/review-comment-draft-widget/review-comment-draft-widget.component';
 import { ReviewCommentThreadWidgetComponent } from 'app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component';
-import { CommentThreadDTO } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
 
 describe('ReviewCommentWidgetManager', () => {
     const createEditorMock = () => ({
@@ -114,7 +114,7 @@ describe('ReviewCommentWidgetManager', () => {
     it('should add and remove thread widgets incrementally', () => {
         const editor = createEditorMock();
         const vcRef = createViewContainerRefMock();
-        const threads: CommentThreadDTO[] = [{ id: 1, lineNumber: 2, resolved: false } as any];
+        const threads: CommentThread[] = [{ id: 1, lineNumber: 2, resolved: false } as any];
         const config = createConfig({ getThreads: () => threads });
         const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, config);
 
@@ -168,7 +168,7 @@ describe('ReviewCommentWidgetManager', () => {
     it('should dispose draft and thread widgets on disposeAll', () => {
         const editor = createEditorMock();
         const vcRef = createViewContainerRefMock();
-        const threads: CommentThreadDTO[] = [{ id: 2, lineNumber: 1, resolved: false } as any];
+        const threads: CommentThread[] = [{ id: 2, lineNumber: 1, resolved: false } as any];
         const config = createConfig({ getThreads: () => threads });
         const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, config);
 
@@ -189,7 +189,7 @@ describe('ReviewCommentWidgetManager', () => {
     it('should update thread inputs when widgets exist', () => {
         const editor = createEditorMock();
         const vcRef = createViewContainerRefMock();
-        const threads: CommentThreadDTO[] = [{ id: 3, lineNumber: 1, resolved: false } as any];
+        const threads: CommentThread[] = [{ id: 3, lineNumber: 1, resolved: false } as any];
         const config = createConfig({ getThreads: () => threads });
         const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, config);
 

@@ -471,12 +471,10 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             const updatedThreads = [{ id: 1 }] as any;
             reviewCommentService.loadThreads.mockReturnValue(of(updatedThreads));
             const clearEditorDraftsSpy = jest.spyOn((comp as any).codeEditorContainer.monacoEditor, 'clearReviewCommentDrafts');
-            const clearInstructionDraftsSpy = jest.spyOn((comp as any).editableInstructions, 'clearReviewCommentDrafts');
 
             comp.onCommit();
 
             expect(clearEditorDraftsSpy).toHaveBeenCalledOnce();
-            expect(clearInstructionDraftsSpy).toHaveBeenCalledOnce();
             expect(reviewCommentService.loadThreads).toHaveBeenCalledWith(42);
             expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
         });

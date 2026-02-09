@@ -150,7 +150,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
         this.codeEditorContainer?.monacoEditor?.clearReviewCommentDrafts();
-        this.editableInstructions?.clearReviewCommentDrafts();
         this.loadReviewCommentThreads(exerciseId);
     }
 
