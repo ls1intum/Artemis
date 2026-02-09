@@ -98,6 +98,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     testCaseSubscription: Subscription;
     forceRenderSubscription: Subscription;
+    private problemStatementStateReplacementSubscription?: Subscription;
     private problemStatementSyncState?: ProblemStatementSyncState;
     private problemStatementBinding?: MonacoBinding;
     private problemStatementBindingDestroyed = false;
@@ -369,7 +370,42 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         }
         this.teardownProblemStatementSync();
         this.problemStatementSyncState = this.problemStatementSyncService.init(exerciseId, initialText);
-        const binding = new MonacoBinding(this.problemStatementSyncState.text, model, new Set([editorInstance]), this.problemStatementSyncState.awareness);
+        this.createProblemStatementBinding(this.problemStatementSyncState, model, editorInstance);
+        this.problemStatementStateReplacementSubscription = this.problemStatementSyncService.stateReplaced$.subscribe((syncState) => {
+            this.problemStatementSyncState = syncState;
+            // Force model content to the replacement Yjs state to avoid merge/appending when rebinding.
+            model.setValue(syncState.text.toString());
+            this.createProblemStatementBinding(syncState, model, editorInstance);
+        });
+    }
+
+    /**
+     * Tear down Yjs synchronization and release Monaco binding resources.
+     */
+    private teardownProblemStatementSync() {
+        this.problemStatementStateReplacementSubscription?.unsubscribe();
+        this.problemStatementStateReplacementSubscription = undefined;
+        this.problemStatementBinding?.destroy();
+        this.problemStatementBinding = undefined;
+        this.problemStatementBindingDestroyed = false;
+        this.problemStatementSyncState = undefined;
+        this.problemStatementSyncService.reset();
+    }
+
+    /**
+     * Create (or recreate) the Monaco <-> Yjs binding for the problem statement editor.
+     *
+     * This is called on initial setup and whenever the sync service replaces the Y.Doc
+     * after accepting a late winning full-content response. Recreating the binding keeps
+     * Monaco attached to the active Y.Text/Y.Awareness objects.
+     *
+     * @param syncState Current synchronized Yjs primitives.
+     * @param model Monaco text model backing the editor.
+     * @param editorInstance Monaco editor instance bound to the model.
+     */
+    private createProblemStatementBinding(syncState: ProblemStatementSyncState, model: editor.ITextModel, editorInstance: editor.IStandaloneCodeEditor) {
+        this.problemStatementBinding?.destroy();
+        const binding = new MonacoBinding(syncState.text, model, new Set([editorInstance]), syncState.awareness);
         // Monaco may or may not dispose its model and call destroy(); this is a guard against a second call from ngOnDestroy.
         const originalDestroy = binding.destroy.bind(binding);
         this.problemStatementBindingDestroyed = false;
@@ -381,16 +417,5 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             originalDestroy();
         };
         this.problemStatementBinding = binding;
-    }
-
-    /**
-     * Tear down Yjs synchronization and release Monaco binding resources.
-     */
-    private teardownProblemStatementSync() {
-        this.problemStatementBinding?.destroy();
-        this.problemStatementBinding = undefined;
-        this.problemStatementBindingDestroyed = false;
-        this.problemStatementSyncState = undefined;
-        this.problemStatementSyncService.reset();
     }
 }

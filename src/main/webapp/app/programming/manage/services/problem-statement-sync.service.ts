@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Observable, Subject, Subscription } from 'rxjs';
 import * as Y from 'yjs';
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
 import { AccountService } from 'app/core/auth/account.service';
@@ -48,7 +48,11 @@ export class ProblemStatementSyncService {
     private awareness?: Awareness;
     private awaitingInitialSync = false;
     private localLeaderTimestamp = Date.now();
+    private activeLeaderTimestamp = Date.now();
     private fallbackInitialContent = '';
+    private latestInitialSyncRequestId?: string;
+    private queuedFullContentRequests: string[] = [];
+    private stateReplacedSubject = new Subject<ProblemStatementSyncState>();
     // Track initial leader selection and buffer updates until we seed the doc.
     private pendingInitialSync?: {
         requestId: string;
@@ -56,6 +60,16 @@ export class ProblemStatementSyncService {
         bufferedUpdates: Uint8Array[];
         timeoutId?: ReturnType<typeof setTimeout>;
     };
+
+    /**
+     * Stream emitting replacement Yjs primitives when a late winning leader response is accepted.
+     *
+     * Consumers (e.g. Monaco bindings) must rebind to the emitted `text` and `awareness`
+     * instances, because they belong to a freshly created Y.Doc.
+     */
+    get stateReplaced$(): Observable<ProblemStatementSyncState> {
+        return this.stateReplacedSubject.asObservable();
+    }
 
     /**
      * Initialize synchronization for a specific exercise.
@@ -69,6 +83,7 @@ export class ProblemStatementSyncService {
         this.reset();
         this.exerciseId = exerciseId;
         this.localLeaderTimestamp = Date.now();
+        this.activeLeaderTimestamp = this.localLeaderTimestamp;
         this.fallbackInitialContent = initialContent ?? '';
         this.awaitingInitialSync = true;
         this.incomingMessageSubscription = this.syncService.subscribeToUpdates(exerciseId).subscribe((message) => this.handleRemoteMessage(message));
@@ -91,6 +106,8 @@ export class ProblemStatementSyncService {
         this.exerciseId = undefined;
         this.awaitingInitialSync = false;
         this.fallbackInitialContent = '';
+        this.latestInitialSyncRequestId = undefined;
+        this.queuedFullContentRequests = [];
         if (this.pendingInitialSync?.timeoutId) {
             clearTimeout(this.pendingInitialSync.timeoutId);
         }
@@ -107,6 +124,7 @@ export class ProblemStatementSyncService {
             return;
         }
         const requestId = this.generateRequestId();
+        this.latestInitialSyncRequestId = requestId;
         this.pendingInitialSync = { requestId, responses: [], bufferedUpdates: [] };
         const requestEvent: ProblemStatementSyncFullContentRequestEvent = {
             eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
@@ -142,6 +160,23 @@ export class ProblemStatementSyncService {
     }
 
     /**
+     * Handle incoming full-content requests from peers.
+     *
+     * While this client is still choosing its own initial state, requests are queued so we
+     * do not answer with a transient state. Once initialization is finalized, queued requests
+     * are answered in `flushQueuedFullContentRequests()`.
+     *
+     * @param requestId The request id to respond to.
+     */
+    private handleFullContentRequest(requestId: string) {
+        if (this.awaitingInitialSync) {
+            this.queuedFullContentRequests.push(requestId);
+            return;
+        }
+        this.respondWithFullContent(requestId);
+    }
+
+    /**
      * Route a synchronization message from the websocket subscription to the correct handler.
      *
      * @param message The synchronization message to process.
@@ -152,7 +187,7 @@ export class ProblemStatementSyncService {
         }
         switch (message.eventType) {
             case ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST:
-                this.respondWithFullContent(message.requestId);
+                this.handleFullContentRequest(message.requestId);
                 break;
             case ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE:
                 this.handleSyncResponse(message);
@@ -180,8 +215,8 @@ export class ProblemStatementSyncService {
             if (!this.exerciseId) {
                 return;
             }
-            // do not rebroadcast updates made from remote
-            if (origin === ProblemStatementSyncOrigin.Remote) {
+            // do not rebroadcast updates made from remote or seed
+            if (origin === ProblemStatementSyncOrigin.Remote || origin === ProblemStatementSyncOrigin.Seed) {
                 return;
             }
             const updateEvent: ProblemStatementSyncUpdateEvent = {
@@ -216,10 +251,21 @@ export class ProblemStatementSyncService {
      * @param message The incoming full-content response.
      */
     private handleSyncResponse(message: ProblemStatementSyncFullContentResponseEvent) {
-        if (!this.pendingInitialSync || message.responseTo !== this.pendingInitialSync.requestId) {
+        if (this.pendingInitialSync) {
+            if (message.responseTo !== this.pendingInitialSync.requestId) {
+                return;
+            }
+            this.pendingInitialSync.responses.push(message);
             return;
         }
-        this.pendingInitialSync.responses.push(message);
+        if (message.responseTo !== this.latestInitialSyncRequestId) {
+            return;
+        }
+        if (!this.shouldReplaceWithRemoteLeader(message.leaderTimestamp)) {
+            return;
+        }
+        const update = decodeBase64ToUint8Array(message.yjsUpdate);
+        this.replaceDocumentWithRemoteState(update, message.leaderTimestamp);
     }
 
     /**
@@ -257,16 +303,23 @@ export class ProblemStatementSyncService {
             if (this.yDoc) {
                 Y.applyUpdate(this.yDoc, update, ProblemStatementSyncOrigin.Remote);
             }
+            this.activeLeaderTimestamp = selected.leaderTimestamp;
         } else if (this.fallbackInitialContent && this.yDoc && this.yText) {
             this.yDoc.transact(() => {
                 this.yText?.insert(0, this.fallbackInitialContent);
             }, ProblemStatementSyncOrigin.Seed);
+            this.activeLeaderTimestamp = this.localLeaderTimestamp;
         }
         if (this.pendingInitialSync.bufferedUpdates.length && this.yDoc) {
             this.pendingInitialSync.bufferedUpdates.forEach((update) => {
                 Y.applyUpdate(this.yDoc!, update, ProblemStatementSyncOrigin.Remote);
             });
         }
+        // scenario for high network latency
+        // we must send queued full-content responses after the seed update has been sent
+        // because even tho we sent the "seed" update, remote might have initialized with their own seed already
+        // this ensures that remote will replace their seed with our seed
+        this.flushQueuedFullContentRequests();
         this.awaitingInitialSync = false;
         if (this.pendingInitialSync.timeoutId) {
             clearTimeout(this.pendingInitialSync.timeoutId);
@@ -334,5 +387,59 @@ export class ProblemStatementSyncService {
      */
     private generateRequestId(): string {
         return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+
+    /**
+     * Reply to deferred full-content requests collected during initialization.
+     *
+     * Requests are deferred only while `awaitingInitialSync` is true, then drained in FIFO
+     * order right after local initialization is finalized.
+     */
+    private flushQueuedFullContentRequests() {
+        if (!this.queuedFullContentRequests.length) {
+            return;
+        }
+        const requests = this.queuedFullContentRequests;
+        this.queuedFullContentRequests = [];
+        requests.forEach((requestId) => this.respondWithFullContent(requestId));
+    }
+
+    /**
+     * Determine if a remote leader should replace the active local leader.
+     *
+     * Lower leader timestamp wins deterministically.
+     *
+     * @param remoteLeaderTimestamp Timestamp carried by the remote full-content response.
+     * @returns True when the remote leader has precedence.
+     */
+    private shouldReplaceWithRemoteLeader(remoteLeaderTimestamp: number): boolean {
+        return remoteLeaderTimestamp < this.activeLeaderTimestamp;
+    }
+
+    /**
+     * Replace current Yjs primitives with a full state received from a winning remote leader.
+     *
+     * This path handles late full-content responses that arrive after local initialization
+     * has timed out, but are still relevant to the latest request and have a better leader.
+     *
+     * It creates a new Y.Doc, applies the remote snapshot, emits `stateReplaced$` so editor
+     * bindings can reattach to the new doc, and finally destroys the previous doc.
+     *
+     * @param update Encoded full Yjs state to apply.
+     * @param leaderTimestamp Leader timestamp of the selected remote response.
+     */
+    private replaceDocumentWithRemoteState(update: Uint8Array, leaderTimestamp: number) {
+        const oldDoc = this.yDoc;
+        this.initializeYjsDocument();
+        if (!this.yDoc) {
+            return;
+        }
+        Y.applyUpdate(this.yDoc, update, ProblemStatementSyncOrigin.Remote);
+        this.activeLeaderTimestamp = leaderTimestamp;
+        this.awaitingInitialSync = false;
+        this.pendingInitialSync = undefined;
+        clearRemoteSelectionStyles();
+        this.stateReplacedSubject.next({ doc: this.yDoc, text: this.yText!, awareness: this.awareness! });
+        oldDoc?.destroy();
     }
 }
