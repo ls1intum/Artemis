@@ -28,6 +28,7 @@ import io.weaviate.client6.v1.api.collections.Property;
 import io.weaviate.client6.v1.api.collections.ReferenceProperty;
 import io.weaviate.client6.v1.api.collections.VectorConfig;
 import io.weaviate.client6.v1.api.collections.query.Filter;
+import io.weaviate.client6.v1.api.collections.query.FilterOperand;
 
 /**
  * Service for interacting with Weaviate vector database.
@@ -330,12 +331,7 @@ public class WeaviateService {
             var textMatchFilter = Filter.or(titleFilter, problemFilter);
             textFilters.add(textMatchFilter);
 
-            Filter finalFilter = textFilters.getFirst();
-            for (int i = 1; i < textFilters.size(); i++) {
-                finalFilter = finalFilter.and(textFilters.get(i));
-            }
-
-            final Filter searchFilter = finalFilter; // Make it effectively final for lambda
+            final Filter searchFilter = textFilters.size() == 1 ? textFilters.getFirst() : Filter.and(textFilters.toArray(FilterOperand[]::new));
             var response = collection.query.fetchObjects(q -> q.filters(searchFilter).limit(limit));
             List<Map<String, Object>> results = new ArrayList<>();
 
