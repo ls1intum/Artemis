@@ -156,6 +156,9 @@ describe('CourseSidebarComponent', () => {
 
     it('should initialize visible/hidden items on  sidebar update', () => {
         const updateVisibleNavbarItemsSpy = jest.spyOn(component, 'updateVisibleNavbarItems');
+        // Reset to empty first so the signal detects a change when set back
+        fixture.componentRef.setInput('sidebarItems', []);
+        fixture.detectChanges();
         fixture.componentRef.setInput('sidebarItems', mockSidebarItems);
         fixture.detectChanges();
 
@@ -220,11 +223,11 @@ describe('CourseSidebarComponent', () => {
     });
 
     it('should display more icon and label if at least one item gets hidden in the sidebar', () => {
-        component.anyItemHidden.set(true);
+        component.anyItemHidden = signal(true);
         fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('.three-dots').hidden).toBeFalse();
 
-        component.anyItemHidden.set(false);
+        component.anyItemHidden = signal(false);
         fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('.three-dots').hidden).toBeTrue();
     });
