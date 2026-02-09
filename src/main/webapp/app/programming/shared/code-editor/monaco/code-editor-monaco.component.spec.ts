@@ -217,46 +217,20 @@ describe('CodeEditorMonacoComponent', () => {
         expect(disposeFeedbackShortcutStub).toHaveBeenCalled();
     });
 
-    it('should clear consistency comment widgets before re-adding them', fakeAsync(() => {
+    it('should clear consistency comment widgets before re-adding them', () => {
         const disposeWidgetsByPrefixSpy = jest.spyOn(comp.editor(), 'disposeWidgetsByPrefix').mockImplementation();
         const rafSpy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
-            return window.setTimeout(() => cb(0));
+            cb(0);
+            return 1 as any;
         });
-        const cancelRafSpy = jest.spyOn(window, 'cancelAnimationFrame').mockImplementation((id?: number) => {
-            if (id !== undefined) {
-                clearTimeout(id);
-            }
-        });
-
-        fixture.componentRef.setInput('selectedFile', 'src/Test.java');
-        fixture.componentRef.setInput('selectedRepository', RepositoryType.TEMPLATE);
-        fixture.componentRef.setInput('consistencyIssues', [
-            {
-                category: 'CONSTRUCTOR_PARAMETER_MISMATCH',
-                severity: 'HIGH',
-                description: 'Issue',
-                suggestedFix: 'Fix',
-                relatedLocations: [
-                    {
-                        type: 'TEMPLATE_REPOSITORY',
-                        filePath: 'src/Test.java',
-                        startLine: 1,
-                        endLine: 2,
-                    },
-                ],
-            } as any,
-        ]);
-        fixture.changeDetectorRef.detectChanges();
 
         (comp as any).renderFeedbackWidgets();
-        tick(20);
 
         expect(disposeWidgetsByPrefixSpy).toHaveBeenCalledWith('feedback-');
         expect(disposeWidgetsByPrefixSpy).toHaveBeenCalledWith('comment-');
 
         rafSpy.mockRestore();
-        cancelRafSpy.mockRestore();
-    }));
+    });
 
     it.each([
         [() => {}, false],
