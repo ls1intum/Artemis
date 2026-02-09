@@ -143,66 +143,6 @@ public class WeaviateService {
     }
 
     /**
-     * Inserts an object into the Lectures collection.
-     *
-     * @param courseId          the course ID
-     * @param courseLanguage    the course language
-     * @param lectureId         the lecture ID
-     * @param lectureUnitId     the lecture unit ID
-     * @param pageTextContent   the page text content
-     * @param pageNumber        the page number
-     * @param baseUrl           the base URL
-     * @param attachmentVersion the attachment version
-     */
-    public void insertLecturePageChunk(long courseId, String courseLanguage, long lectureId, long lectureUnitId, String pageTextContent, int pageNumber, String baseUrl,
-            int attachmentVersion) {
-
-        var collection = getCollection(WeaviateSchemas.LECTURES_COLLECTION);
-
-        try {
-            collection.data.insert(Map.of(WeaviateSchemas.LecturesProperties.COURSE_ID, courseId, WeaviateSchemas.LecturesProperties.COURSE_LANGUAGE, courseLanguage,
-                    WeaviateSchemas.LecturesProperties.LECTURE_ID, lectureId, WeaviateSchemas.LecturesProperties.LECTURE_UNIT_ID, lectureUnitId,
-                    WeaviateSchemas.LecturesProperties.PAGE_TEXT_CONTENT, pageTextContent, WeaviateSchemas.LecturesProperties.PAGE_NUMBER, pageNumber,
-                    WeaviateSchemas.LecturesProperties.BASE_URL, baseUrl, WeaviateSchemas.LecturesProperties.ATTACHMENT_VERSION, attachmentVersion));
-
-            log.debug("Inserted lecture page chunk for lecture unit {} page {}", lectureUnitId, pageNumber);
-        }
-        catch (IOException e) {
-            log.error("Failed to insert lecture page chunk for lecture unit {} page {}: {}", lectureUnitId, pageNumber, e.getMessage(), e);
-            throw new WeaviateException("Failed to insert lecture page chunk", e);
-        }
-    }
-
-    /**
-     * Inserts an FAQ into the Faqs collection.
-     *
-     * @param courseId          the course ID
-     * @param courseName        the course name
-     * @param courseDescription the course description
-     * @param courseLanguage    the course language
-     * @param faqId             the FAQ ID
-     * @param questionTitle     the question title
-     * @param questionAnswer    the question answer
-     */
-    public void insertFaq(long courseId, String courseName, String courseDescription, String courseLanguage, long faqId, String questionTitle, String questionAnswer) {
-
-        var collection = getCollection(WeaviateSchemas.FAQS_COLLECTION);
-
-        try {
-            collection.data.insert(Map.of(WeaviateSchemas.FaqsProperties.COURSE_ID, courseId, WeaviateSchemas.FaqsProperties.COURSE_NAME, courseName,
-                    WeaviateSchemas.FaqsProperties.COURSE_DESCRIPTION, courseDescription, WeaviateSchemas.FaqsProperties.COURSE_LANGUAGE, courseLanguage,
-                    WeaviateSchemas.FaqsProperties.FAQ_ID, faqId, WeaviateSchemas.FaqsProperties.QUESTION_TITLE, questionTitle, WeaviateSchemas.FaqsProperties.QUESTION_ANSWER,
-                    questionAnswer));
-
-            log.debug("Inserted FAQ {} for course {}", faqId, courseId);
-        }
-        catch (IOException e) {
-            log.error("Failed to insert FAQ {} for course {}: {}", faqId, courseId, e.getMessage(), e);
-            throw new WeaviateException("Failed to insert FAQ", e);
-        }
-    }
-
-    /**
      * Inserts an exercise into the Exercises collection.
      *
      * @param exerciseId          the exercise ID
@@ -224,7 +164,7 @@ public class WeaviateService {
             @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, String exerciseType, @Nullable String programmingLanguage,
             @Nullable String difficulty, double maxPoints, String baseUrl) {
 
-        var collection = getCollection(WeaviateSchemas.EXERCISES_COLLECTION);
+        var collection = getCollection(WeaviateSchemas.PROGRAMMING_EXERCISES_COLLECTION);
 
         Map<String, Object> properties = new HashMap<>();
         properties.put(WeaviateSchemas.ExercisesProperties.EXERCISE_ID, exerciseId);
@@ -276,7 +216,7 @@ public class WeaviateService {
      * @param exerciseId the exercise ID
      */
     public void deleteExercise(long exerciseId) {
-        var collection = getCollection(WeaviateSchemas.EXERCISES_COLLECTION);
+        var collection = getCollection(WeaviateSchemas.PROGRAMMING_EXERCISES_COLLECTION);
 
         // Delete objects where exercise_id equals the given ID
         var deleteResult = collection.data.deleteMany(Filter.property(WeaviateSchemas.ExercisesProperties.EXERCISE_ID).eq(exerciseId));
@@ -320,7 +260,7 @@ public class WeaviateService {
      * @return list of exercise properties as maps
      */
     public List<Map<String, Object>> fetchProgrammingExercisesByCourseId(long courseId, boolean filterReleasedOnly) {
-        var collection = getCollection(WeaviateSchemas.EXERCISES_COLLECTION);
+        var collection = getCollection(WeaviateSchemas.PROGRAMMING_EXERCISES_COLLECTION);
 
         // Build the filter: course_id = courseId AND exercise_type = "programming"
         var courseFilter = Filter.property(WeaviateSchemas.ExercisesProperties.COURSE_ID).eq(courseId);
@@ -373,7 +313,7 @@ public class WeaviateService {
     public List<Map<String, Object>> semanticSearchExercises(String searchQuery, @Nullable Long courseId, int limit) {
         try {
             // For now, fall back to basic text filtering until we implement proper nearText API
-            var collection = getCollection(WeaviateSchemas.EXERCISES_COLLECTION);
+            var collection = getCollection(WeaviateSchemas.PROGRAMMING_EXERCISES_COLLECTION);
 
             // Create basic filters
             var textFilters = new ArrayList<Filter>();
