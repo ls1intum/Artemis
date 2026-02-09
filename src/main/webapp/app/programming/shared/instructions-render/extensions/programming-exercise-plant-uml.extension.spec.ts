@@ -263,7 +263,9 @@ describe('ProgrammingExercisePlantUmlExtensionWrapper', () => {
             expect(callbackCaptures).toHaveLength(3);
 
             // Execute all callbacks (simulates what happens in exam mode when all exercises inject their diagrams)
-            callbackCaptures.forEach((cb) => cb());
+            callbackCaptures.forEach((cb) => {
+                cb();
+            });
 
             // Verify total number of injection calls: 2 + 3 + 1 = 6
             expect(injectSpy).toHaveBeenCalledTimes(6);
