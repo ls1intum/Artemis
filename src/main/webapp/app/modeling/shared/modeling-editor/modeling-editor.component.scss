@@ -53,6 +53,11 @@ $draggable-width: 15px;
     height: 100%;
     overflow-x: auto;
     overflow-y: auto;
+
+    > svg {
+        display: block;
+        margin: 0 auto;
+    }
 }
 
 .scroll-container {
