@@ -59,7 +59,7 @@ describe('IrisBaseChatbotComponent', () => {
         setCurrentCourse: vi.fn(),
     } as any;
     const mockLLMModalService = {
-        open: vi.fn().mockResolvedValue('cloud'),
+        open: vi.fn().mockResolvedValue('none'),
     } as any;
     const mockUserService = {
         updateLLMSelectionDecision: vi.fn().mockReturnValue(of(new HttpResponse<void>())),
@@ -132,13 +132,16 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     describe('when user has not accepted LLM usage policy', () => {
-        it('should set userAccepted to undefined', () => {
+        it('should set userAccepted to undefined', async () => {
             accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
 
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
             fixture.detectChanges();
+            // Flush the pending setTimeout from the constructor that triggers showAISelectionModal
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            await fixture.whenStable();
             expect(component.userAccepted()).toBeUndefined();
         });
     });
@@ -445,7 +448,7 @@ describe('IrisBaseChatbotComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         const sendButton = fixture.debugElement.query(By.css('#irisSendButton')).componentInstance;
 
-        expect(sendButton.disabled).toBeFalsy();
+        expect(sendButton.disabled()).toBeFalsy();
     });
 
     it('should not disable submit button if isLoading is false and error is not fatal', () => {
@@ -456,7 +459,7 @@ describe('IrisBaseChatbotComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         const sendButton = fixture.debugElement.query(By.css('#irisSendButton')).componentInstance;
 
-        expect(sendButton.disabled).toBeFalsy();
+        expect(sendButton.disabled()).toBeFalsy();
     });
 
     it('should handle suggestion click correctly', () => {
@@ -1007,6 +1010,8 @@ describe('IrisBaseChatbotComponent', () => {
             component = fixture.componentInstance;
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
             fixture.detectChanges();
+            // Flush the pending setTimeout from the constructor that triggers showAISelectionModal
+            await new Promise((resolve) => setTimeout(resolve, 0));
             await fixture.whenStable();
 
             expect(component.userAccepted()).toBeUndefined();
@@ -1045,6 +1050,8 @@ describe('IrisBaseChatbotComponent', () => {
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
             fixture.detectChanges();
 
+            // Flush the pending setTimeout from the constructor and then call directly
+            await new Promise((resolve) => setTimeout(resolve, 0));
             await component.showAISelectionModal();
 
             expect(component.userAccepted()).toBe(LLMSelectionDecision.CLOUD_AI);

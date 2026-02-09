@@ -15,3 +15,18 @@
 .consistency-issue-item__actions {
     gap: 0.25rem;
 }
+
+.ai-dropdown-menu {
+    min-width: 17.5rem;
+}
+
+.consistency-issue-nav-btn {
+    width: 27rem;
+    max-width: min(27rem, 40vw);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 1 !important;
+    color: var(--bs-body-color) !important;
+}
