@@ -81,9 +81,12 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     const yDoc = new Y.Doc();
     const yText = yDoc.getText('problem-statement');
+    const yAwareness = {} as any;
+    const stateReplaced$ = new Subject<{ doc: Y.Doc; text: Y.Text; awareness: any }>();
     const problemStatementSyncServiceMock = {
-        init: jest.fn().mockReturnValue({ doc: yDoc, text: yText }),
+        init: jest.fn().mockReturnValue({ doc: yDoc, text: yText, awareness: yAwareness }),
         reset: jest.fn(),
+        stateReplaced$: stateReplaced$.asObservable(),
     };
 
     const defaultForceRender$ = new Subject<void>();

@@ -483,6 +483,12 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         return Optional.empty();
     }
 
+    /**
+     * Returns the exercise id if the given destination belongs to the exercise synchronization topic.
+     *
+     * @param destination websocket destination topic to inspect
+     * @return an optional containing the exercise id for synchronization topics; empty otherwise
+     */
     public static Optional<Long> getExerciseIdFromSynchronizationDestination(String destination) {
         var matcher = EXERCISE_SYNCHRONIZATION_TOPIC_PATTERN.matcher(destination);
         if (matcher.matches()) {
