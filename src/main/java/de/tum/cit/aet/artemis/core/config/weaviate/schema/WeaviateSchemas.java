@@ -74,7 +74,7 @@ public final class WeaviateSchemas {
      */
     public static final WeaviateCollectionSchema EXERCISES_SCHEMA = WeaviateCollectionSchema.of(PROGRAMMING_EXERCISES_COLLECTION,
             List.of(filterable(ExercisesProperties.EXERCISE_ID, INT, "The ID of the exercise"), filterable(ExercisesProperties.COURSE_ID, INT, "The ID of the course"),
-                    nonSearchable(ExercisesProperties.COURSE_NAME, TEXT, "The name of the course"), searchable(ExercisesProperties.TITLE, TEXT, "The title of the exercise"),
+                    searchable(ExercisesProperties.COURSE_NAME, TEXT, "The name of the course"), searchable(ExercisesProperties.TITLE, TEXT, "The title of the exercise"),
                     searchable(ExercisesProperties.SHORT_NAME, TEXT, "The short name of the exercise"),
                     searchable(ExercisesProperties.PROBLEM_STATEMENT, TEXT, "The problem statement of the exercise"),
                     filterable(ExercisesProperties.RELEASE_DATE, DATE, "The release date of the exercise"),
