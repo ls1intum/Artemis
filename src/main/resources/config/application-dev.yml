@@ -151,6 +151,7 @@ artemis:
         http-port: 8001                   # Weaviate HTTP port (avoid conflicts with main app)
         grpc-port: 50051                  # Weaviate gRPC port for better performance
         scheme: http                      # http scheme for development (https should be used in production environments)
+        collection-prefix: artemis        # Prefix for all Weaviate collection names to avoid naming conflicts (e.g. with Pyris)
 
 # Needs to be provided so Sentry's LogbackAppender picks up a sensible configuration
 sentry:
