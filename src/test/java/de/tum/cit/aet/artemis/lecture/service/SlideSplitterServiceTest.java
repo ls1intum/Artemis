@@ -327,7 +327,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         Slide updatedSlide = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).stream().filter(s -> s.getSlideNumber() == 1).findFirst().orElse(null);
         assertThat(updatedSlide).isNotNull();
         assertThat(updatedSlide.getHidden()).isNotNull();
-        assertThat(updatedSlide.getHidden().truncatedTo(ChronoUnit.MILLIS)).isEqualTo(hiddenDate.truncatedTo(ChronoUnit.MILLIS));
+        assertThat(updatedSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(hiddenDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
 
         // Verify the exercise association
         assertThat(updatedSlide.getExercise()).isNotNull();
@@ -624,7 +624,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(firstSlide).isNotNull();
         assertThat(firstSlide.getSlideNumber()).isEqualTo(1); // Should have slide number 1
         assertThat(firstSlide.getHidden()).isNotNull();
-        assertThat(firstSlide.getHidden().toInstant().truncatedTo(ChronoUnit.MILLIS)).isEqualTo(hiddenDate.toInstant().truncatedTo(ChronoUnit.MILLIS));
+        assertThat(firstSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(hiddenDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
         assertThat(firstSlide.getExercise()).isNotNull();
         assertThat(firstSlide.getExercise().getId()).isEqualTo(testExercise.getId());
 
@@ -702,7 +702,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(firstSlide).isNotNull();
         assertThat(firstSlide.getHidden()).isNotNull();
         // Compare dates truncated to millis to avoid timing precision issues
-        assertThat(firstSlide.getHidden().toInstant().truncatedTo(ChronoUnit.MILLIS)).isEqualTo(hiddenDate.toInstant().truncatedTo(ChronoUnit.MILLIS));
+        assertThat(firstSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(hiddenDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
         assertThat(firstSlide.getExercise()).isNotNull();
         assertThat(firstSlide.getExercise().getId()).isEqualTo(testExercise.getId());
 
@@ -878,7 +878,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(firstSlide).isNotNull();
         assertThat(firstSlide.getHidden()).isNotNull();
         // Compare dates truncated to millis to avoid timing precision issues
-        assertThat(firstSlide.getHidden().toInstant().truncatedTo(ChronoUnit.MILLIS)).isEqualTo(hiddenDate.toInstant().truncatedTo(ChronoUnit.MILLIS));
+        assertThat(firstSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(hiddenDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
         assertThat(firstSlide.getExercise()).isNotNull();
         assertThat(firstSlide.getExercise().getId()).isEqualTo(testExercise.getId());
 

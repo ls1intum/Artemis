@@ -45,7 +45,6 @@ public class TestDataSourcePoolConfig {
                     pooled.setDataSource(ds);
                     pooled.setMaximumPoolSize(20);
                     pooled.setMinimumIdle(10);
-                    pooled.setAutoCommit(false);
                     pooled.setMaxLifetime(0);
                     pooled.setConnectionTimeout(30000);
                     pooled.setPoolName("TestPool");

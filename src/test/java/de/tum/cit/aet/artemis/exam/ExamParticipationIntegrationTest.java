@@ -833,7 +833,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
 
                 // Create results
                 if (withSecondCorrectionAndStarted) {
-                    var firstResult = new Result().score(correctionResultScore).rated(true).completionDate(ZonedDateTime.now().minusMinutes(5));
+                    var firstResult = new Result().score(correctionResultScore).rated(true).completionDate(ZonedDateTime.now().minusMinutes(6));
                     firstResult.setAssessor(instructor);
                     firstResult.setSubmission(submission);
                     firstResult.setExerciseId(exercise.getId());

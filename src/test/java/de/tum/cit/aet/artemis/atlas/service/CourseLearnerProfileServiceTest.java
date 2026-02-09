@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.service.profile.CourseLearnerProfileService;
+import de.tum.cit.aet.artemis.atlas.service.profile.LearnerProfileService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 
@@ -30,6 +31,11 @@ class CourseLearnerProfileServiceTest {
 
     @Mock
     private LearnerProfileRepository learnerProfileRepository;
+
+    // while it's not used directly, the mock is needed for the service to work properly, otherwise the test fails with database exceptions
+    @SuppressWarnings("unused")
+    @Mock
+    private LearnerProfileService learnerProfileService;
 
     @InjectMocks
     private CourseLearnerProfileService courseLearnerProfileService;

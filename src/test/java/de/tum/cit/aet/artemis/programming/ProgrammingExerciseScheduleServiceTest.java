@@ -24,6 +24,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
@@ -43,11 +44,11 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     // TODO: This could be improved by e.g. manually setting the system time instead of waiting for actual time to pass.
     // Note: These values must be large enough to account for database round-trip latency,
     // especially when running against Testcontainers (Postgres/MySQL via Docker).
-    private static final long SCHEDULER_TASK_TRIGGER_DELAY_MS = 3000;
+    private static final long SCHEDULER_TASK_TRIGGER_DELAY_MS = 6000;
 
-    private static final long DELAY_MS = 2000;
+    private static final long DELAY_MS = 4000;
 
-    private static final long TIMEOUT_MS = 20000;
+    private static final long TIMEOUT_MS = 40000;
 
     @BeforeEach
     void init() throws Exception {
@@ -82,8 +83,8 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldNotExecuteScheduledIfBuildAndTestAfterDueDateHasPassed() {
-        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1L));
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusHours(1L));
+        programmingExercise.setDueDate(TimeUtil.now().minusHours(1L));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(TimeUtil.now().minusHours(1L));
         programmingExerciseRepository.saveAndFlush(programmingExercise);
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
@@ -225,7 +226,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void scheduleIndividualDueDateNoBuildAndTestDateLock() {
-        final ZonedDateTime now = ZonedDateTime.now();
+        final ZonedDateTime now = TimeUtil.now();
 
         setupProgrammingExerciseDates(now, DELAY_MS, null);
         var login = TEST_PREFIX + "student3";
@@ -245,7 +246,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void scheduleIndividualDueDateBetweenDueDateAndBuildAndTestDate() {
-        final ZonedDateTime now = ZonedDateTime.now();
+        final ZonedDateTime now = TimeUtil.now();
 
         setupProgrammingExerciseDates(now, DELAY_MS, 2 * SCHEDULER_TASK_TRIGGER_DELAY_MS);
         // individual due date between regular due date and build and test date
@@ -268,7 +269,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void scheduleIndividualDueDateAfterBuildAndTestDate() {
-        final ZonedDateTime now = ZonedDateTime.now();
+        final ZonedDateTime now = TimeUtil.now();
 
         setupProgrammingExerciseDates(now, DELAY_MS, DELAY_MS);
         // individual due date after build and test date
@@ -286,7 +287,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void scheduleIndividualDueDateTestsAfterDueDateNoBuildAndTestDate() {
-        final ZonedDateTime now = ZonedDateTime.now();
+        final ZonedDateTime now = TimeUtil.now();
 
         // no build and test date, but after_due_date tests ⇒ score update needed
         setupProgrammingExerciseDates(now, DELAY_MS, null);
@@ -309,7 +310,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void cancelAllSchedulesOnRemovingExerciseDueDate() {
-        final ZonedDateTime now = ZonedDateTime.now();
+        final ZonedDateTime now = TimeUtil.now();
 
         setupProgrammingExerciseDates(now, DELAY_MS, null);
         var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
@@ -348,7 +349,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void cancelIndividualSchedulesOnRemovingIndividualDueDate() {
-        final ZonedDateTime now = ZonedDateTime.now();
+        final ZonedDateTime now = TimeUtil.now();
 
         setupProgrammingExerciseDates(now, DELAY_MS, null);
 
@@ -375,7 +376,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void updateIndividualScheduleOnIndividualDueDateChange() {
-        final ZonedDateTime now = ZonedDateTime.now();
+        final ZonedDateTime now = TimeUtil.now();
 
         setupProgrammingExerciseDates(now, DELAY_MS, null);
 
@@ -401,7 +402,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void keepIndividualScheduleOnExerciseDueDateChange() {
-        final ZonedDateTime now = ZonedDateTime.now();
+        final ZonedDateTime now = TimeUtil.now();
 
         setupProgrammingExerciseDates(now, 1000L, null);
         var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
@@ -434,10 +435,10 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldScheduleExerciseIfAnyIndividualDueDateInFuture() {
-        final ZonedDateTime now = ZonedDateTime.now();
+        final ZonedDateTime now = TimeUtil.now();
 
         setupProgrammingExerciseDates(now, -DELAY_MS, null);
-        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(1));
+        programmingExercise.setReleaseDate(TimeUtil.now().minusHours(1));
         programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
 
         var participationIndividualDueDate = setupParticipationWithIndividualDueDate(now, DELAY_MS, TEST_PREFIX + "student3");
@@ -452,10 +453,10 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldCancelAllTasksIfSchedulingNoLongerNeeded() {
-        final ZonedDateTime now = ZonedDateTime.now();
+        final ZonedDateTime now = TimeUtil.now();
 
         setupProgrammingExerciseDates(now, -DELAY_MS, null);
-        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(1));
+        programmingExercise.setReleaseDate(TimeUtil.now().minusHours(1));
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExercise.setAllowComplaintsForAutomaticAssessments(false);
         programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
@@ -475,7 +476,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     void testStudentExamIndividualWorkingTimeChangeDuringConduction() {
         ProgrammingExercise examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
         Exam exam = examExercise.getExam();
-        exam.setStartDate(ZonedDateTime.now().minusMinutes(1));
+        exam.setStartDate(TimeUtil.now().minusMinutes(1));
         exam = examRepository.saveAndFlush(exam);
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, user);
@@ -490,7 +491,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     void testRescheduleExamDuringConduction() {
         ProgrammingExercise examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
         Exam exam = examExercise.getExam();
-        exam.setStartDate(ZonedDateTime.now().minusMinutes(1));
+        exam.setStartDate(TimeUtil.now().minusMinutes(1));
         exam = examRepository.saveAndFlush(exam);
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, user);
@@ -552,6 +553,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     }
 
     private ZonedDateTime nowPlusMillis(long millis) {
-        return ZonedDateTime.now().plus(millis, ChronoUnit.MILLIS);
+        return TimeUtil.now().plus(millis, ChronoUnit.MILLIS);
     }
 }

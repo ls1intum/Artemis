@@ -343,8 +343,8 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
     private Set<ScienceEvent> createScienceEvents(String userLogin) {
 
         ZonedDateTime timestamp = ZonedDateTime.now();
-        // Rounding timestamp due to rounding during export
-        timestamp = timestamp.withNano(timestamp.getNano() - timestamp.getNano() % 10000);
+        // Truncate to milliseconds to match database precision (datetime(3))
+        timestamp = timestamp.truncatedTo(java.time.temporal.ChronoUnit.MILLIS);
         return Set.of(scienceUtilService.createScienceEvent(userLogin, ScienceEventType.EXERCISE__OPEN, 1L, timestamp),
                 scienceUtilService.createScienceEvent(userLogin, ScienceEventType.LECTURE__OPEN, 2L, timestamp.plusMinutes(1)),
                 scienceUtilService.createScienceEvent(userLogin, ScienceEventType.LECTURE__OPEN_UNIT, 3L, timestamp.plusSeconds(30)));

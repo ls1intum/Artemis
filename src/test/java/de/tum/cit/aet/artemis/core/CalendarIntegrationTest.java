@@ -101,7 +101,9 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private static ZonedDateTime normalizeTimestamp(ZonedDateTime zdt) {
-        return zdt == null ? null : zdt.toInstant().truncatedTo(ChronoUnit.MILLIS).atZone(ZoneOffset.UTC);
+        // Truncate to seconds to absorb ±1ms rounding differences between
+        // Java's truncatedTo(MILLIS) and Postgres JDBC's nearest-ms rounding.
+        return zdt == null ? null : zdt.toInstant().truncatedTo(ChronoUnit.SECONDS).atZone(ZoneOffset.UTC);
     }
 
     static Map<String, List<CalendarEventDTO>> normalizeEventMap(Map<String, List<CalendarEventDTO>> map) {
