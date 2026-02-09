@@ -131,8 +131,6 @@ public class ProgrammingExerciseCreationResource {
             }
 
             exerciseVersionService.createExerciseVersion(newProgrammingExercise);
-
-            // Insert exercise metadata into Weaviate for global search
             exerciseWeaviateService.insertExercise(newProgrammingExercise);
 
             return ResponseEntity.created(new URI("/api/programming/programming-exercises/" + newProgrammingExercise.getId())).body(newProgrammingExercise);

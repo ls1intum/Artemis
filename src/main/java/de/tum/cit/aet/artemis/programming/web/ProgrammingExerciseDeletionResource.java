@@ -109,8 +109,6 @@ public class ProgrammingExerciseDeletionResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
         exerciseService.logDeletion(programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseDeletionService.delete(exerciseId, deleteBaseReposBuildPlans);
-
-        // Delete exercise metadata from Weaviate for global search
         exerciseWeaviateService.deleteExercise(exerciseId);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).build();

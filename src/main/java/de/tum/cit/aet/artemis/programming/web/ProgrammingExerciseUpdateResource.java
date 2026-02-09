@@ -216,8 +216,6 @@ public class ProgrammingExerciseUpdateResource {
         exerciseService.updatePointsInRelatedParticipantScores(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
         slideApi.ifPresent(api -> api.handleDueDateChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise));
         exerciseVersionService.createExerciseVersion(updatedProgrammingExercise, user);
-
-        // Update exercise metadata in Weaviate for global search
         exerciseWeaviateService.updateExercise(savedProgrammingExercise);
 
         return ResponseEntity.ok(savedProgrammingExercise);
