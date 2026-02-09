@@ -15,6 +15,9 @@ import de.tum.cit.aet.artemis.core.config.weaviate.schema.entitySchemas.Programm
  */
 public final class WeaviateSchemas {
 
+    /**
+     * Utility class, should not be instantiated.
+     */
     private WeaviateSchemas() {
     }
 

@@ -18,6 +18,9 @@ import de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviateCollectionSche
  */
 public final class ProgrammingExerciseSchema {
 
+    /**
+     * Utility class, should not be instantiated.
+     */
     private ProgrammingExerciseSchema() {
     }
 
