@@ -341,7 +341,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         if (!hasUserMessage && rawMessages.length > 0 && rawMessages.every((message) => message.sender === IrisSender.LLM)) {
             return [];
         }
-        const processed = _.cloneDeep(rawMessages).reverse();
+        const processed = _.cloneDeep(rawMessages);
         processed.forEach((message) => {
             if (message.content?.[0] && 'textContent' in message.content[0]) {
                 const cnt = message.content[0] as IrisTextMessageContent;
@@ -670,7 +670,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private isNewChatSession(session: IrisSessionDTO): boolean {
         const title = session.title?.trim().toLowerCase();
         const translatedNewChat = this.newChatTitle()?.trim().toLowerCase();
-        return title !== undefined && translatedNewChat !== undefined && title === translatedNewChat;
+        return !!title && !!translatedNewChat && title === translatedNewChat;
     }
 
     /**

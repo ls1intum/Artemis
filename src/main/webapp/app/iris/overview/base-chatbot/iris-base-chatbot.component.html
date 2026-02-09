@@ -158,27 +158,6 @@
             @if (messages()?.length) {
                 <div class="messages" #messagesElement (scroll)="checkChatScroll()">
                     <div class="messages-inner">
-                        @if (
-                            suggestions()?.length &&
-                            isAIEnabled() &&
-                            active() &&
-                            (!rateLimitInfo()?.rateLimit || rateLimitInfo()?.currentMessageCount !== rateLimitInfo()?.rateLimit) &&
-                            !hasActiveStage()
-                        ) {
-                            <div animate.enter="suggestion-entering" animate.leave="suggestion-leaving">
-                                <div class="suggestions-container">
-                                    @for (suggestion of suggestions(); track $index) {
-                                        <button class="suggestion-button" (click)="onSuggestionClick(suggestion)" [disabled]="isLoading()">
-                                            @if (clickedSuggestion() === suggestion) {
-                                                <fa-icon [icon]="faCircleNotch" animation="spin" />
-                                            } @else {
-                                                <span>{{ suggestion }}</span>
-                                            }
-                                        </button>
-                                    }
-                                </div>
-                            </div>
-                        }
                         @for (message of messages(); track message.id ?? $index; let i = $index) {
                             <div
                                 animate.enter="message-entering"
@@ -244,6 +223,27 @@
                                         }
                                     </div>
                                 }
+                            </div>
+                        }
+                        @if (
+                            suggestions()?.length &&
+                            isAIEnabled() &&
+                            active() &&
+                            (!rateLimitInfo()?.rateLimit || rateLimitInfo()?.currentMessageCount !== rateLimitInfo()?.rateLimit) &&
+                            !hasActiveStage()
+                        ) {
+                            <div animate.enter="suggestion-entering" animate.leave="suggestion-leaving">
+                                <div class="suggestions-container">
+                                    @for (suggestion of suggestions(); track $index) {
+                                        <button class="suggestion-button" (click)="onSuggestionClick(suggestion)" [disabled]="isLoading()">
+                                            @if (clickedSuggestion() === suggestion) {
+                                                <fa-icon [icon]="faCircleNotch" animation="spin" />
+                                            } @else {
+                                                <span>{{ suggestion }}</span>
+                                            }
+                                        </button>
+                                    }
+                                </div>
                             </div>
                         }
                     </div>
