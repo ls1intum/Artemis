@@ -13,8 +13,8 @@ export interface Comment {
     content: CommentContent;
     initialVersionId?: number;
     initialCommitSha?: string;
-    createdDate?: string;
-    lastModifiedDate?: string;
+    createdDate: string;
+    lastModifiedDate: string;
 }
 
 export type CreateComment = UserCommentContent;

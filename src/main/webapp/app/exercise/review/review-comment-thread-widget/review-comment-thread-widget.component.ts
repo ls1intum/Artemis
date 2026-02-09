@@ -6,7 +6,7 @@ import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/n
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowUpRightFromSquare, faPen, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { Comment } from 'app/exercise/shared/entities/review/comment.model';
+import { Comment, CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,8 +27,8 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly showLocationWarning = input<boolean>(false);
 
     readonly onDelete = output<number>();
-    readonly onReply = output<string>();
-    readonly onUpdate = output<{ commentId: number; text: string }>();
+    readonly onReply = output<CreateComment>();
+    readonly onUpdate = output<{ commentId: number; content: UpdateCommentContent }>();
     readonly onToggleResolved = output<boolean>();
     readonly onToggleCollapse = output<boolean>();
 
@@ -81,7 +81,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         if (id === undefined || !trimmed) {
             return;
         }
-        this.onUpdate.emit({ commentId: id, text: trimmed });
+        this.onUpdate.emit({ commentId: id, content: { contentType: 'USER', text: trimmed } });
         this.cancelEditing();
     }
 
@@ -93,7 +93,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         if (!trimmed) {
             return;
         }
-        this.onReply.emit(trimmed);
+        this.onReply.emit({ contentType: 'USER', text: trimmed });
         this.replyText = '';
     }
 

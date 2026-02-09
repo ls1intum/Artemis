@@ -41,6 +41,7 @@ import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-
 import { TranslateService } from '@ngx-translate/core';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
 import { matchesSelectedRepository } from 'app/programming/shared/code-editor/util/review-comment-utils';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
@@ -91,14 +92,14 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     readonly highlightDifferences = input<boolean>(false);
     readonly isTutorAssessment = input<boolean>(false);
     readonly disableActions = input<boolean>(false);
-    readonly enableExerciseReviewComments = input<boolean>(false);
     readonly selectedFile = input<string>();
     readonly selectedRepository = input<RepositoryType>();
-    readonly selectedAuxiliaryRepositoryId = input<number | undefined>();
     readonly sessionId = input.required<number | string>();
     readonly buildAnnotations = input<Annotation[]>([]);
     readonly consistencyIssues = input<ConsistencyIssue[]>([]);
     readonly reviewCommentThreads = input<CommentThread[]>([]);
+    readonly enableExerciseReviewComments = input<boolean>(false);
+    readonly selectedAuxiliaryRepositoryId = input<number | undefined>();
 
     readonly onError = output<string>();
     readonly onFileContentChange = output<{ fileName: string; text: string }>();
@@ -108,10 +109,10 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     readonly onDiscardSuggestion = output<Feedback>();
     readonly onHighlightLines = output<MonacoEditorLineHighlight[]>();
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
-    readonly onSubmitReviewComment = output<{ lineNumber: number; fileName: string; text: string }>();
+    readonly onSubmitReviewComment = output<{ lineNumber: number; fileName: string; initialComment: CreateComment }>();
     readonly onDeleteReviewComment = output<number>();
-    readonly onReplyReviewComment = output<{ threadId: number; text: string }>();
-    readonly onUpdateReviewComment = output<{ commentId: number; text: string }>();
+    readonly onReplyReviewComment = output<{ threadId: number; comment: CreateComment }>();
+    readonly onUpdateReviewComment = output<{ commentId: number; content: UpdateCommentContent }>();
     readonly onToggleResolveReviewThread = output<{ threadId: number; resolved: boolean }>();
     readonly onEditorLoaded = output<void>();
 
@@ -172,7 +173,15 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
 
         effect(() => {
             this.reviewCommentThreads();
-            this.renderReviewCommentWidgets();
+            if (this.enableExerciseReviewComments()) {
+                this.renderReviewCommentWidgets();
+            } else {
+                this.reviewCommentManager?.disposeAll();
+            }
+        });
+
+        effect(() => {
+            this.updateEditorInteractionMode();
         });
 
         effect(() => {
@@ -203,16 +212,8 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             this.newFeedbackLines.set([]);
             this.renderFeedbackWidgets();
             this.renderReviewCommentWidgets();
-            if (this.isTutorAssessment() && !this.readOnlyManualFeedback()) {
-                this.setupAddFeedbackButton();
-                this.setupAddFeedbackShortcut();
-            } else if (this.enableExerciseReviewComments()) {
-                this.setupAddReviewCommentButton();
-                this.disposeAddFeedbackShortcut();
-            } else {
-                this.editor().clearLineDecorationsHoverButton();
-                this.disposeAddFeedbackShortcut();
-            }
+            // changeModel() disposes line-decoration hover buttons; re-apply for the active mode.
+            this.updateEditorInteractionMode();
             this.onFileLoad.emit(this.selectedFile()!);
         }
 
@@ -324,6 +325,32 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
 
     setupAddReviewCommentButton(): void {
         this.getReviewCommentManager().updateHoverButton();
+    }
+
+    /**
+     * Applies editor hover-button and shortcut behavior for the currently active mode.
+     * Needs to be re-applied after model changes because Monaco disposes editor decorations/widgets.
+     */
+    private updateEditorInteractionMode(): void {
+        const isTutorFeedbackMode = this.isTutorAssessment() && !this.readOnlyManualFeedback();
+        const reviewCommentsEnabled = this.enableExerciseReviewComments();
+        const selectedFile = this.selectedFile();
+
+        if (!selectedFile) {
+            this.disposeAddFeedbackShortcut();
+            return;
+        }
+
+        if (isTutorFeedbackMode) {
+            this.setupAddFeedbackButton();
+            this.setupAddFeedbackShortcut();
+        } else if (reviewCommentsEnabled) {
+            this.setupAddReviewCommentButton();
+            this.disposeAddFeedbackShortcut();
+        } else {
+            this.editor().clearLineDecorationsHoverButton();
+            this.disposeAddFeedbackShortcut();
+        }
     }
 
     /**
@@ -478,6 +505,9 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     }
 
     private renderReviewCommentWidgets(): void {
+        if (!this.enableExerciseReviewComments() || !this.selectedFile()) {
+            return;
+        }
         if (this.reviewRenderScheduled) {
             return;
         }

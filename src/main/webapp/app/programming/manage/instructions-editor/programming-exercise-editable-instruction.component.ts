@@ -52,6 +52,7 @@ import { Annotation } from 'app/programming/shared/code-editor/monaco/code-edito
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
 import { editor } from 'monaco-editor';
 
 @Component({
@@ -150,10 +151,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     @Output() hasUnsavedChanges = new EventEmitter<boolean>();
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
     @Output() instructionChange = new EventEmitter<string>();
-    readonly onSubmitReviewComment = output<{ lineNumber: number; fileName: string; text: string }>();
+    readonly onSubmitReviewComment = output<{ lineNumber: number; fileName: string; initialComment: CreateComment }>();
     readonly onDeleteReviewComment = output<number>();
-    readonly onReplyReviewComment = output<{ threadId: number; text: string }>();
-    readonly onUpdateReviewComment = output<{ commentId: number; text: string }>();
+    readonly onReplyReviewComment = output<{ threadId: number; comment: CreateComment }>();
+    readonly onUpdateReviewComment = output<{ commentId: number; content: UpdateCommentContent }>();
     readonly onToggleResolveReviewThread = output<{ threadId: number; resolved: boolean }>();
     readonly onProblemStatementSaved = output<void>();
     generateHtmlSubject: Subject<void> = new Subject<void>();

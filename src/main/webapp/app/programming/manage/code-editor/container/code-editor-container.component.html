@@ -77,7 +77,7 @@
             [sessionId]="participation()?.id ?? 'test'"
             [consistencyIssues]="consistencyIssues()"
             [enableExerciseReviewComments]="enableExerciseReviewComments()"
-            [reviewCommentThreads]="reviewCommentsVisible() ? reviewCommentThreads() : []"
+            [reviewCommentThreads]="reviewCommentThreads()"
             (onFileContentChange)="onFileContentChange($event)"
             (onUpdateFeedback)="onUpdateFeedback.emit($event)"
             (onAcceptSuggestion)="onAcceptSuggestion.emit($event)"

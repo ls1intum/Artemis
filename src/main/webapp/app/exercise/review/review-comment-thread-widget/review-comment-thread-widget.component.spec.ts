@@ -45,7 +45,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         comp.editText = '  updated  ';
         comp.saveEditing();
 
-        expect(updateSpy).toHaveBeenCalledWith({ commentId: 7, text: 'updated' });
+        expect(updateSpy).toHaveBeenCalledWith({ commentId: 7, content: { contentType: 'USER', text: 'updated' } });
         expect(comp.editingCommentId).toBeUndefined();
         expect(comp.editText).toBe('');
     });
@@ -68,7 +68,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         comp.replyText = '  reply  ';
         comp.submitReply();
 
-        expect(replySpy).toHaveBeenCalledWith('reply');
+        expect(replySpy).toHaveBeenCalledWith({ contentType: 'USER', text: 'reply' });
         expect(comp.replyText).toBe('');
     });
 

@@ -1,4 +1,4 @@
-import { Comment, CreateComment } from 'app/exercise/shared/entities/review/comment.model';
+import { Comment as Comment, CreateComment as CreateComment } from 'app/exercise/shared/entities/review/comment.model';
 
 export enum CommentThreadLocationType {
     PROBLEM_STATEMENT = 'PROBLEM_STATEMENT',
@@ -22,10 +22,10 @@ export interface CommentThread {
     initialLineNumber: number;
     outdated: boolean;
     resolved: boolean;
-    comments?: Comment[];
+    comments: Comment[];
 }
 
-export interface CreateCommentThread {
+export interface CreateCommentThreadDTO {
     targetType: CommentThreadLocationType;
     auxiliaryRepositoryId?: number;
     initialFilePath?: string;

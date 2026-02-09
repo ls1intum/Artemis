@@ -82,6 +82,7 @@ import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { TranslateService } from '@ngx-translate/core';
 import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 
 export enum MarkdownEditorHeight {
@@ -303,10 +304,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     onLeaveVisualTab = new EventEmitter<void>();
 
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
-    readonly onSubmitReviewComment = output<{ lineNumber: number; fileName: string; text: string }>();
+    readonly onSubmitReviewComment = output<{ lineNumber: number; fileName: string; initialComment: CreateComment }>();
     readonly onDeleteReviewComment = output<number>();
-    readonly onReplyReviewComment = output<{ threadId: number; text: string }>();
-    readonly onUpdateReviewComment = output<{ commentId: number; text: string }>();
+    readonly onReplyReviewComment = output<{ threadId: number; comment: CreateComment }>();
+    readonly onUpdateReviewComment = output<{ commentId: number; content: UpdateCommentContent }>();
     readonly onToggleResolveReviewThread = output<{ threadId: number; resolved: boolean }>();
 
     defaultPreviewHtml: SafeHtml | undefined;

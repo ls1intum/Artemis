@@ -3,6 +3,7 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
 import { ReviewCommentDraftWidgetComponent } from 'app/exercise/review/review-comment-draft-widget/review-comment-draft-widget.component';
 import { ReviewCommentThreadWidgetComponent } from 'app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component';
 import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
 
 export type ReviewCommentWidgetManagerConfig = {
     hoverButtonClass: string;
@@ -13,10 +14,10 @@ export type ReviewCommentWidgetManagerConfig = {
     filterThread: (thread: CommentThread) => boolean;
     getThreadLine: (thread: CommentThread) => number;
     onAdd?: (payload: { lineNumber: number; fileName: string }) => void;
-    onSubmit: (payload: { lineNumber: number; fileName: string; text: string }) => void;
+    onSubmit: (payload: { lineNumber: number; fileName: string; initialComment: CreateComment }) => void;
     onDelete: (commentId: number) => void;
-    onReply: (payload: { threadId: number; text: string }) => void;
-    onUpdate: (payload: { commentId: number; text: string }) => void;
+    onReply: (payload: { threadId: number; comment: CreateComment }) => void;
+    onUpdate: (payload: { commentId: number; content: UpdateCommentContent }) => void;
     onToggleResolved: (payload: { threadId: number; resolved: boolean }) => void;
     requestRender: () => void;
     showLocationWarning?: () => boolean;
@@ -201,7 +202,7 @@ export class ReviewCommentWidgetManager {
                 }
                 widgetRef.setInput('initialCollapsed', this.collapseState.get(thread.id) ?? false);
                 widgetRef.instance.onDelete.subscribe((commentId) => this.config.onDelete(commentId));
-                widgetRef.instance.onReply.subscribe((text) => this.config.onReply({ threadId: thread.id, text }));
+                widgetRef.instance.onReply.subscribe((comment) => this.config.onReply({ threadId: thread.id, comment }));
                 widgetRef.instance.onUpdate.subscribe((event) => this.config.onUpdate(event));
                 widgetRef.instance.onToggleResolved.subscribe((resolved) => this.config.onToggleResolved({ threadId: thread.id, resolved }));
                 widgetRef.instance.onToggleCollapse.subscribe((collapsed) => this.collapseState.set(thread.id, collapsed));
@@ -222,7 +223,7 @@ export class ReviewCommentWidgetManager {
      * @param text The submitted draft text.
      */
     private submitDraft(fileName: string, line: number, text: string): void {
-        this.config.onSubmit({ lineNumber: line + 1, fileName, text });
+        this.config.onSubmit({ lineNumber: line + 1, fileName, initialComment: { contentType: 'USER', text } });
         this.removeDraft(fileName, line);
     }
 

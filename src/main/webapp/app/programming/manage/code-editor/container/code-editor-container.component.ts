@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, ViewChild, effect, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, ViewChild, effect, inject, input, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -30,6 +30,7 @@ import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
 import { editor } from 'monaco-editor';
 
 export enum CollapsableCodeEditorElement {
@@ -82,14 +83,12 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     highlightDifferences = input<boolean>(false);
     disableAutoSave = input<boolean>(false);
     consistencyIssues = input<ConsistencyIssue[]>([]);
-    readonly enableExerciseReviewComments = input<boolean>(false);
-    readonly reviewCommentThreads = input<CommentThread[]>([]);
-    readonly selectedAuxiliaryRepositoryId = input<number | undefined>();
-
-    readonly reviewCommentsVisible = signal<boolean>(true);
     isProblemStatementVisible = input<boolean>(true);
     course = input<Course | undefined>();
     selectedRepository = input<RepositoryType>();
+    enableExerciseReviewComments = input<boolean>(false);
+    reviewCommentThreads = input<CommentThread[]>([]);
+    selectedAuxiliaryRepositoryId = input<number | undefined>();
 
     onCommitStateChange = output<CommitState>();
     onFileChanged = output<void>();
@@ -98,14 +97,13 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     onAcceptSuggestion = output<Feedback>();
     onDiscardSuggestion = output<Feedback>();
     onEditorLoaded = output<void>();
-    readonly onSubmitReviewComment = output<{ lineNumber: number; fileName: string; text: string }>();
-    readonly onDeleteReviewComment = output<number>();
-    readonly onReplyReviewComment = output<{ threadId: number; text: string }>();
-    readonly onUpdateReviewComment = output<{ commentId: number; text: string }>();
-    readonly onToggleResolveReviewThread = output<{ threadId: number; resolved: boolean }>();
-    readonly onNavigateReviewThread = output<CommentThread>();
-    readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
-    readonly onCommit = output<void>();
+    onSubmitReviewComment = output<{ lineNumber: number; fileName: string; initialComment: CreateComment }>();
+    onDeleteReviewComment = output<number>();
+    onReplyReviewComment = output<{ threadId: number; comment: CreateComment }>();
+    onUpdateReviewComment = output<{ commentId: number; content: UpdateCommentContent }>();
+    onToggleResolveReviewThread = output<{ threadId: number; resolved: boolean }>();
+    onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
+    onCommit = output<void>();
 
     /** Work in Progress: temporary properties needed to get first prototype working */
 

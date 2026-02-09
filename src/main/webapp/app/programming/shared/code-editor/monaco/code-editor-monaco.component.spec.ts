@@ -114,6 +114,59 @@ describe('CodeEditorMonacoComponent', () => {
         expect(comp.editor().isReadOnly()).toBeFalse();
     });
 
+    it('should re-apply interaction mode after file selection in ngOnChanges', async () => {
+        const updateInteractionModeStub = jest.spyOn(comp as any, 'updateEditorInteractionMode');
+        const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        fixture.componentRef.setInput('enableExerciseReviewComments', true);
+        fixture.componentRef.setInput('selectedFile', 'file1.java');
+        fixture.changeDetectorRef.detectChanges();
+        updateInteractionModeStub.mockClear();
+
+        await comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, 'file1.java', false) });
+
+        expect(selectFileInEditorStub).toHaveBeenCalledWith('file1.java');
+        expect(updateInteractionModeStub).toHaveBeenCalled();
+    });
+
+    it('should configure review comment mode in updateEditorInteractionMode', () => {
+        const setupReviewCommentButtonStub = jest.spyOn(comp, 'setupAddReviewCommentButton').mockImplementation();
+        const setupAddFeedbackButtonStub = jest.spyOn(comp, 'setupAddFeedbackButton').mockImplementation();
+        const clearHoverButtonStub = jest.spyOn(comp.editor(), 'clearLineDecorationsHoverButton').mockImplementation();
+        const disposeFeedbackShortcutStub = jest.spyOn(comp as any, 'disposeAddFeedbackShortcut').mockImplementation();
+
+        fixture.componentRef.setInput('selectedFile', 'file1.java');
+        fixture.componentRef.setInput('isTutorAssessment', false);
+        fixture.componentRef.setInput('readOnlyManualFeedback', false);
+        fixture.componentRef.setInput('enableExerciseReviewComments', true);
+        fixture.changeDetectorRef.detectChanges();
+
+        (comp as any).updateEditorInteractionMode();
+
+        expect(setupReviewCommentButtonStub).toHaveBeenCalled();
+        expect(setupAddFeedbackButtonStub).not.toHaveBeenCalled();
+        expect(clearHoverButtonStub).not.toHaveBeenCalled();
+        expect(disposeFeedbackShortcutStub).toHaveBeenCalled();
+    });
+
+    it('should clear hover button when neither tutor feedback nor review mode is active', () => {
+        const setupReviewCommentButtonStub = jest.spyOn(comp, 'setupAddReviewCommentButton').mockImplementation();
+        const setupAddFeedbackButtonStub = jest.spyOn(comp, 'setupAddFeedbackButton').mockImplementation();
+        const clearHoverButtonStub = jest.spyOn(comp.editor(), 'clearLineDecorationsHoverButton').mockImplementation();
+        const disposeFeedbackShortcutStub = jest.spyOn(comp as any, 'disposeAddFeedbackShortcut').mockImplementation();
+
+        fixture.componentRef.setInput('selectedFile', 'file1.java');
+        fixture.componentRef.setInput('isTutorAssessment', false);
+        fixture.componentRef.setInput('enableExerciseReviewComments', false);
+        fixture.changeDetectorRef.detectChanges();
+
+        (comp as any).updateEditorInteractionMode();
+
+        expect(setupReviewCommentButtonStub).not.toHaveBeenCalled();
+        expect(setupAddFeedbackButtonStub).not.toHaveBeenCalled();
+        expect(clearHoverButtonStub).toHaveBeenCalled();
+        expect(disposeFeedbackShortcutStub).toHaveBeenCalled();
+    });
+
     it.each([
         [() => {}, false],
         [() => fixture.componentRef.setInput('isTutorAssessment', true), true],

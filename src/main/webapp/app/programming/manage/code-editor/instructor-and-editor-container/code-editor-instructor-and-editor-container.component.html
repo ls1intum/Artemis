@@ -35,7 +35,6 @@
             (onReplyReviewComment)="onReplyReviewComment($event)"
             (onUpdateReviewComment)="onUpdateReviewComment($event)"
             (onToggleResolveReviewThread)="onToggleResolveReviewThread($event)"
-            (onNavigateReviewThread)="onNavigateReviewThread($event)"
         >
             <div editorTitle>
                 <span>{{ exercise?.title }}</span>
@@ -297,7 +296,7 @@
                 [reviewCommentThreads]="reviewCommentThreads()"
                 class="instructions-wrapper__content card-body p-0"
                 (instructionChange)="onInstructionChanged($event)"
-                (onSubmitReviewComment)="onSubmitProblemStatementReviewComment($event)"
+                (onSubmitReviewComment)="onSubmitReviewComment($event, CommentThreadLocationType.PROBLEM_STATEMENT)"
                 (onDeleteReviewComment)="onDeleteReviewComment($event)"
                 (onReplyReviewComment)="onReplyReviewComment($event)"
                 (onUpdateReviewComment)="onUpdateReviewComment($event)"
