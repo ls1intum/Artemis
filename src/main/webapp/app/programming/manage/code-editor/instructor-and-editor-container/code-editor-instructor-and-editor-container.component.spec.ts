@@ -50,7 +50,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let reviewCommentService: jest.Mocked<
         Pick<
             ExerciseReviewCommentService,
-            'loadThreads' | 'createThreadWithInitialComment' | 'deleteCommentFromThreads' | 'updateUserCommentInThreads' | 'updateResolvedStateInThreads'
+            'loadThreads' | 'createThreadWithInitialComment' | 'deleteCommentFromThreads' | 'addReplyToThread' | 'updateUserCommentInThreads' | 'updateResolvedStateInThreads'
         >
     >;
 
@@ -153,6 +153,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             loadThreads: jest.fn(),
             createThreadWithInitialComment: jest.fn(),
             deleteCommentFromThreads: jest.fn(),
+            addReplyToThread: jest.fn(),
             updateUserCommentInThreads: jest.fn(),
             updateResolvedStateInThreads: jest.fn(),
         };
@@ -510,6 +511,15 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
         });
 
+        it('onSubmitReviewComment shows saveFailed error on service failure', () => {
+            reviewCommentService.createThreadWithInitialComment.mockReturnValue(throwError(() => new Error('fail')));
+            const errorSpy = jest.spyOn(alertService, 'error');
+
+            comp.onSubmitReviewComment({ lineNumber: 5, fileName: 'src/Main.java', initialComment: { contentType: 'USER', text: 'Initial comment' } as const });
+
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.review.saveFailed');
+        });
+
         it('onDeleteReviewComment deletes comment and updates local threads', () => {
             const updatedThreads = [{ id: 4 }] as any;
             reviewCommentService.deleteCommentFromThreads.mockReturnValue(of(updatedThreads));
@@ -519,6 +529,36 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             expect(reviewCommentService.deleteCommentFromThreads).toHaveBeenCalledWith(42, [{ id: 1 }], 99);
             expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
+        });
+
+        it('onDeleteReviewComment shows deleteFailed error on service failure', () => {
+            reviewCommentService.deleteCommentFromThreads.mockReturnValue(throwError(() => new Error('fail')));
+            const errorSpy = jest.spyOn(alertService, 'error');
+
+            comp.onDeleteReviewComment(99);
+
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.review.deleteFailed');
+        });
+
+        it('onReplyReviewComment adds reply and updates local threads', () => {
+            const updatedThreads = [{ id: 5, comments: [{ id: 10 }] }] as any;
+            reviewCommentService.addReplyToThread.mockReturnValue(of(updatedThreads));
+            comp.reviewCommentThreads.set([{ id: 5, comments: [] }] as any);
+            const comment = { contentType: 'USER', text: 'Reply' } as const;
+
+            comp.onReplyReviewComment({ threadId: 5, comment });
+
+            expect(reviewCommentService.addReplyToThread).toHaveBeenCalledWith(42, [{ id: 5, comments: [] }], 5, comment);
+            expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
+        });
+
+        it('onReplyReviewComment shows saveFailed error on service failure', () => {
+            reviewCommentService.addReplyToThread.mockReturnValue(throwError(() => new Error('fail')));
+            const errorSpy = jest.spyOn(alertService, 'error');
+
+            comp.onReplyReviewComment({ threadId: 5, comment: { contentType: 'USER', text: 'Reply' } as const });
+
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.review.saveFailed');
         });
 
         it('onUpdateReviewComment updates comment content and local threads', () => {
@@ -533,6 +573,15 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
         });
 
+        it('onUpdateReviewComment shows saveFailed error on service failure', () => {
+            reviewCommentService.updateUserCommentInThreads.mockReturnValue(throwError(() => new Error('fail')));
+            const errorSpy = jest.spyOn(alertService, 'error');
+
+            comp.onUpdateReviewComment({ commentId: 7, content: { contentType: 'USER', text: 'Updated' } as const });
+
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.review.saveFailed');
+        });
+
         it('onToggleResolveReviewThread updates resolved state and local threads', () => {
             const updatedThreads = [{ id: 6, resolved: true }] as any;
             reviewCommentService.updateResolvedStateInThreads.mockReturnValue(of(updatedThreads));
@@ -542,6 +591,25 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             expect(reviewCommentService.updateResolvedStateInThreads).toHaveBeenCalledWith(42, [{ id: 1, resolved: false }], 6, true);
             expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
+        });
+
+        it('onToggleResolveReviewThread shows resolveFailed error on service failure', () => {
+            reviewCommentService.updateResolvedStateInThreads.mockReturnValue(throwError(() => new Error('fail')));
+            const errorSpy = jest.spyOn(alertService, 'error');
+
+            comp.onToggleResolveReviewThread({ threadId: 6, resolved: true });
+
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.review.resolveFailed');
+        });
+
+        it('onCommit shows loadFailed error when loading threads fails', () => {
+            reviewCommentService.loadThreads.mockReturnValue(throwError(() => new Error('fail')));
+            const errorSpy = jest.spyOn(alertService, 'error');
+
+            comp.onCommit();
+
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.review.loadFailed');
+            expect(comp.reviewCommentThreads()).toEqual([]);
         });
     });
 
@@ -775,6 +843,56 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(alertErrorSpy).toHaveBeenCalled();
             expect(comp.lineJumpOnFileLoad).toBeUndefined();
             expect(comp.fileToJumpOn).toBeUndefined();
+            expect(onEditorLoadedSpy).not.toHaveBeenCalled();
+        });
+
+        it('navigateToLocation selects template repo when target is TEMPLATE_REPO and current repo differs', () => {
+            (comp as any).codeEditorContainer.selectedRepository = jest.fn().mockReturnValue(RepositoryType.SOLUTION);
+            const selectTemplateSpy = jest.spyOn(comp, 'selectTemplateParticipation');
+            const onEditorLoadedSpy = jest.spyOn(comp, 'onEditorLoaded');
+
+            (comp as any).navigateToLocation({ targetType: CommentThreadLocationType.TEMPLATE_REPO, filePath: 'src/template/A.java', lineNumber: 10 });
+
+            expect(selectTemplateSpy).toHaveBeenCalledOnce();
+            expect(onEditorLoadedSpy).not.toHaveBeenCalled();
+        });
+
+        it('navigateToLocation selects solution repo when target is SOLUTION_REPO and current repo differs', () => {
+            (comp as any).codeEditorContainer.selectedRepository = jest.fn().mockReturnValue(RepositoryType.TEMPLATE);
+            const selectSolutionSpy = jest.spyOn(comp, 'selectSolutionParticipation');
+            const onEditorLoadedSpy = jest.spyOn(comp, 'onEditorLoaded');
+
+            (comp as any).navigateToLocation({ targetType: CommentThreadLocationType.SOLUTION_REPO, filePath: 'src/solution/B.java', lineNumber: 11 });
+
+            expect(selectSolutionSpy).toHaveBeenCalledOnce();
+            expect(onEditorLoadedSpy).not.toHaveBeenCalled();
+        });
+
+        it('navigateToLocation selects test repo when target is TEST_REPO and current repo differs', () => {
+            (comp as any).codeEditorContainer.selectedRepository = jest.fn().mockReturnValue(RepositoryType.SOLUTION);
+            const selectTestSpy = jest.spyOn(comp, 'selectTestRepository');
+            const onEditorLoadedSpy = jest.spyOn(comp, 'onEditorLoaded');
+
+            (comp as any).navigateToLocation({ targetType: CommentThreadLocationType.TEST_REPO, filePath: 'src/test/C.java', lineNumber: 12 });
+
+            expect(selectTestSpy).toHaveBeenCalledOnce();
+            expect(onEditorLoadedSpy).not.toHaveBeenCalled();
+        });
+
+        it('navigateToLocation selects auxiliary repo when target is AUXILIARY_REPO and current repo differs', () => {
+            (comp as any).codeEditorContainer.selectedRepository = jest.fn().mockReturnValue(RepositoryType.TEMPLATE);
+            comp.selectAuxiliaryRepository = jest.fn();
+            const selectAuxSpy = jest.spyOn(comp, 'selectAuxiliaryRepository');
+            const onEditorLoadedSpy = jest.spyOn(comp, 'onEditorLoaded');
+
+            (comp as any).navigateToLocation({
+                targetType: CommentThreadLocationType.AUXILIARY_REPO,
+                auxiliaryRepositoryId: 77,
+                filePath: 'src/aux/D.java',
+                lineNumber: 13,
+            });
+
+            expect(selectAuxSpy).toHaveBeenCalledWith(77);
             expect(onEditorLoadedSpy).not.toHaveBeenCalled();
         });
 
