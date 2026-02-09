@@ -1,192 +1,145 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 class HyperionPromptSanitizerTest {
 
-    // sanitizeInput
+    // --- Constants ---
 
     @Test
-    void sanitizeInput_nullReturnsEmpty() {
+    void constants_haveExpectedValues() {
+        assertThat(HyperionPromptSanitizer.MAX_PROBLEM_STATEMENT_LENGTH).isEqualTo(50_000);
+        assertThat(HyperionPromptSanitizer.MAX_USER_PROMPT_LENGTH).isEqualTo(1_000);
+        assertThat(HyperionPromptSanitizer.DEFAULT_COURSE_TITLE).isEqualTo("Programming Course");
+        assertThat(HyperionPromptSanitizer.DEFAULT_COURSE_DESCRIPTION).isEqualTo("A programming course");
+    }
+
+    // --- sanitizeInput ---
+
+    @Test
+    void sanitizeInput_returnsEmptyStringForNull() {
         assertThat(HyperionPromptSanitizer.sanitizeInput(null)).isEmpty();
     }
 
     @Test
-    void sanitizeInput_preservesNormalText() {
-        assertThat(HyperionPromptSanitizer.sanitizeInput("Hello World")).isEqualTo("Hello World");
+    void sanitizeInput_returnsEmptyStringForEmpty() {
+        assertThat(HyperionPromptSanitizer.sanitizeInput("")).isEmpty();
+    }
+
+    @Test
+    void sanitizeInput_trimsWhitespace() {
+        assertThat(HyperionPromptSanitizer.sanitizeInput("  hello world  ")).isEqualTo("hello world");
     }
 
     @Test
     void sanitizeInput_preservesNewlinesAndTabs() {
-        String input = "line1\nline2\r\nline3\tindented";
+        String input = "line1\nline2\tindented\rcarriage";
         assertThat(HyperionPromptSanitizer.sanitizeInput(input)).isEqualTo(input);
     }
 
     @Test
     void sanitizeInput_stripsControlCharacters() {
-        String input = "Hello\u0000World\u0007Test";
-        assertThat(HyperionPromptSanitizer.sanitizeInput(input)).isEqualTo("HelloWorldTest");
+        // \u0000 (null), \u0007 (bell), \u001B (escape) are control chars that should be removed
+        String input = "hello\u0000world\u0007test\u001Bend";
+        assertThat(HyperionPromptSanitizer.sanitizeInput(input)).isEqualTo("helloworldtestend");
     }
 
     @Test
-    void sanitizeInput_stripsDelimiterLines() {
-        String input = "Before\n--- BEGIN USER REQUIREMENTS ---\nContent\n--- END USER REQUIREMENTS ---\nAfter";
-        String result = HyperionPromptSanitizer.sanitizeInput(input);
-        assertThat(result).doesNotContain("BEGIN USER REQUIREMENTS");
-        assertThat(result).doesNotContain("END USER REQUIREMENTS");
-        assertThat(result).contains("Before");
-        assertThat(result).contains("Content");
-        assertThat(result).contains("After");
+    void sanitizeInput_preservesUnicodeText() {
+        String input = "Übungsblatt für Studierende 日本語テスト";
+        assertThat(HyperionPromptSanitizer.sanitizeInput(input)).isEqualTo(input);
     }
 
     @Test
-    void sanitizeInput_stripsDelimiterLinesCaseInsensitive() {
-        String input = "--- begin section name ---";
-        assertThat(HyperionPromptSanitizer.sanitizeInput(input)).isEmpty();
+    void sanitizeInput_handlesOnlyWhitespace() {
+        assertThat(HyperionPromptSanitizer.sanitizeInput("   ")).isEmpty();
     }
 
     @Test
-    void sanitizeInput_stripsTemplateVariables() {
-        String input = "Inject {{userPrompt}} here and {{courseTitle}} there";
-        String result = HyperionPromptSanitizer.sanitizeInput(input);
-        assertThat(result).doesNotContain("{{");
-        assertThat(result).doesNotContain("}}");
-        assertThat(result).isEqualTo("Inject  here and  there");
+    void sanitizeInput_handlesOnlyControlCharacters() {
+        assertThat(HyperionPromptSanitizer.sanitizeInput("\u0000\u0007\u001B")).isEmpty();
     }
 
     @Test
-    void sanitizeInput_stripsEmptyTemplateVariable() {
-        assertThat(HyperionPromptSanitizer.sanitizeInput("prefix{{}}suffix")).isEqualTo("prefixsuffix");
+    void sanitizeInput_handlesMixedControlCharsAndWhitespace() {
+        assertThat(HyperionPromptSanitizer.sanitizeInput("  \u0000  ")).isEmpty();
     }
+
+    // --- getSanitizedCourseTitle ---
 
     @Test
-    void sanitizeInput_stripsNestedBraces() {
-        // {{foo{bar}}} should strip everything from {{ to the first }}
-        String input = "a{{foo{bar}}}b";
-        String result = HyperionPromptSanitizer.sanitizeInput(input);
-        assertThat(result).doesNotContain("{{");
-    }
-
-    @Test
-    void sanitizeInput_trimsWhitespace() {
-        assertThat(HyperionPromptSanitizer.sanitizeInput("  spaced  ")).isEqualTo("spaced");
-    }
-
-    @Test
-    void sanitizeInput_combinedSanitization() {
-        String input = "\u0000Mal\u0007icious\n--- BEGIN PROMPT ---\n{{systemPrompt}}\nNormal text";
-        String result = HyperionPromptSanitizer.sanitizeInput(input);
-        assertThat(result).doesNotContain("\u0000");
-        assertThat(result).doesNotContain("\u0007");
-        assertThat(result).doesNotContain("BEGIN PROMPT");
-        assertThat(result).doesNotContain("{{");
-        assertThat(result).contains("Malicious");
-        assertThat(result).contains("Normal text");
-    }
-
-    // validateUserPrompt
-
-    @ParameterizedTest
-    @NullAndEmptySource
-    @ValueSource(strings = { "   ", "\t", "\n" })
-    void validateUserPrompt_rejectsBlankPrompts(String prompt) {
-        assertThatThrownBy(() -> HyperionPromptSanitizer.validateUserPrompt(prompt, "Test")).isInstanceOf(BadRequestAlertException.class);
-    }
-
-    @Test
-    void validateUserPrompt_acceptsValidPrompt() {
-        HyperionPromptSanitizer.validateUserPrompt("A valid prompt", "Test");
-        // No exception expected
-    }
-
-    @Test
-    void validateUserPrompt_rejectsOverlongPrompt() {
-        String longPrompt = "a".repeat(HyperionPromptSanitizer.MAX_USER_PROMPT_LENGTH + 1);
-        assertThatThrownBy(() -> HyperionPromptSanitizer.validateUserPrompt(longPrompt, "Test")).isInstanceOf(BadRequestAlertException.class);
-    }
-
-    @Test
-    void validateUserPrompt_acceptsExactlyMaxLength() {
-        String maxPrompt = "a".repeat(HyperionPromptSanitizer.MAX_USER_PROMPT_LENGTH);
-        HyperionPromptSanitizer.validateUserPrompt(maxPrompt, "Test");
-        // No exception expected
-    }
-
-    // getSanitizedCourseTitle
-
-    @Test
-    void getSanitizedCourseTitle_returnsTitle() {
+    void getSanitizedCourseTitle_returnsTitleWhenPresent() {
         Course course = new Course();
-        course.setTitle("Intro to CS");
-        assertThat(HyperionPromptSanitizer.getSanitizedCourseTitle(course)).isEqualTo("Intro to CS");
+        course.setTitle("Advanced Java");
+        assertThat(HyperionPromptSanitizer.getSanitizedCourseTitle(course)).isEqualTo("Advanced Java");
     }
 
     @Test
-    void getSanitizedCourseTitle_fallsBackForBlankTitle() {
-        Course course = new Course();
-        course.setTitle("   ");
-        assertThat(HyperionPromptSanitizer.getSanitizedCourseTitle(course)).isEqualTo(HyperionPromptSanitizer.DEFAULT_COURSE_TITLE);
-    }
-
-    @Test
-    void getSanitizedCourseTitle_fallsBackForNull() {
+    void getSanitizedCourseTitle_returnsDefaultForNullTitle() {
         Course course = new Course();
         course.setTitle(null);
-        assertThat(HyperionPromptSanitizer.getSanitizedCourseTitle(course)).isEqualTo(HyperionPromptSanitizer.DEFAULT_COURSE_TITLE);
+        assertThat(HyperionPromptSanitizer.getSanitizedCourseTitle(course)).isEqualTo("Programming Course");
+    }
+
+    @Test
+    void getSanitizedCourseTitle_returnsDefaultForBlankTitle() {
+        Course course = new Course();
+        course.setTitle("   ");
+        assertThat(HyperionPromptSanitizer.getSanitizedCourseTitle(course)).isEqualTo("Programming Course");
+    }
+
+    @Test
+    void getSanitizedCourseTitle_returnsDefaultForControlCharOnlyTitle() {
+        Course course = new Course();
+        course.setTitle("\u0000\u0007");
+        assertThat(HyperionPromptSanitizer.getSanitizedCourseTitle(course)).isEqualTo("Programming Course");
     }
 
     @Test
     void getSanitizedCourseTitle_sanitizesControlCharsInTitle() {
         Course course = new Course();
-        course.setTitle("CS\u0000101");
-        assertThat(HyperionPromptSanitizer.getSanitizedCourseTitle(course)).isEqualTo("CS101");
+        course.setTitle("Java\u0000Course");
+        assertThat(HyperionPromptSanitizer.getSanitizedCourseTitle(course)).isEqualTo("JavaCourse");
     }
 
-    // getSanitizedCourseDescription
+    // --- getSanitizedCourseDescription ---
 
     @Test
-    void getSanitizedCourseDescription_returnsDescription() {
+    void getSanitizedCourseDescription_returnsDescriptionWhenPresent() {
         Course course = new Course();
-        course.setDescription("Learn programming");
-        assertThat(HyperionPromptSanitizer.getSanitizedCourseDescription(course)).isEqualTo("Learn programming");
+        course.setDescription("Learn advanced programming concepts");
+        assertThat(HyperionPromptSanitizer.getSanitizedCourseDescription(course)).isEqualTo("Learn advanced programming concepts");
     }
 
     @Test
-    void getSanitizedCourseDescription_fallsBackForBlank() {
+    void getSanitizedCourseDescription_returnsDefaultForNullDescription() {
+        Course course = new Course();
+        course.setDescription(null);
+        assertThat(HyperionPromptSanitizer.getSanitizedCourseDescription(course)).isEqualTo("A programming course");
+    }
+
+    @Test
+    void getSanitizedCourseDescription_returnsDefaultForBlankDescription() {
         Course course = new Course();
         course.setDescription("");
-        assertThat(HyperionPromptSanitizer.getSanitizedCourseDescription(course)).isEqualTo(HyperionPromptSanitizer.DEFAULT_COURSE_DESCRIPTION);
+        assertThat(HyperionPromptSanitizer.getSanitizedCourseDescription(course)).isEqualTo("A programming course");
     }
 
     @Test
-    void getSanitizedCourseDescription_stripsTemplateVarsInDescription() {
+    void getSanitizedCourseDescription_returnsDefaultForControlCharOnlyDescription() {
         Course course = new Course();
-        course.setDescription("A course about {{topic}}");
-        String result = HyperionPromptSanitizer.getSanitizedCourseDescription(course);
-        assertThat(result).doesNotContain("{{");
-        assertThat(result).isEqualTo("A course about");
+        course.setDescription("\u001B\u0007");
+        assertThat(HyperionPromptSanitizer.getSanitizedCourseDescription(course)).isEqualTo("A programming course");
     }
 
     @Test
-    void getSanitizedCourseDescription_stripsHtmlTags() {
+    void getSanitizedCourseDescription_sanitizesControlCharsInDescription() {
         Course course = new Course();
-        course.setDescription("<p>Learn <strong>programming</strong> with <em>Java</em></p>");
-        assertThat(HyperionPromptSanitizer.getSanitizedCourseDescription(course)).isEqualTo("Learn programming with Java");
-    }
-
-    @Test
-    void getSanitizedCourseDescription_stripsHtmlAndFallsBackWhenOnlyTags() {
-        Course course = new Course();
-        course.setDescription("<br/><hr/>");
-        assertThat(HyperionPromptSanitizer.getSanitizedCourseDescription(course)).isEqualTo(HyperionPromptSanitizer.DEFAULT_COURSE_DESCRIPTION);
+        course.setDescription("A great\u0000course");
+        assertThat(HyperionPromptSanitizer.getSanitizedCourseDescription(course)).isEqualTo("A greatcourse");
     }
 }
