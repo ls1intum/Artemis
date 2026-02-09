@@ -3,6 +3,7 @@
  *
  * Parallel to jest-test-setup.ts, this provides global mocks for Vitest tests.
  * NOTE: monaco-editor is mocked via path alias in vitest.config.ts.
+ * NOTE: All tests run in zoneless mode - do not import zone.js
  */
 import '@angular/compiler';
 import '@angular/localize/init';
@@ -122,16 +123,6 @@ console.error = (...args: unknown[]) => {
         }
     }
     originalConsoleError.apply(console, args);
-};
-
-// Also suppress via process.stderr for jsdom messages that bypass console
-const originalStderrWrite = process.stderr.write.bind(process.stderr);
-process.stderr.write = (chunk: string | Uint8Array, ...args: unknown[]): boolean => {
-    const str = typeof chunk === 'string' ? chunk : chunk.toString();
-    if (str.includes('Not implemented')) {
-        return true;
-    }
-    return originalStderrWrite(chunk, ...(args as [BufferEncoding?, ((err?: Error) => void)?]));
 };
 
 // Patch CSSStyleDeclaration to handle CSS custom properties gracefully
