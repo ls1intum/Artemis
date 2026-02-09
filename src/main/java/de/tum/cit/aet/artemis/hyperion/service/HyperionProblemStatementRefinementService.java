@@ -149,12 +149,13 @@ public class HyperionProblemStatementRefinementService {
         TargetedRefinementPromptVariables variables = new TargetedRefinementPromptVariables(textWithLineNumbers, targetedInstruction, getSanitizedCourseTitle(course),
                 getSanitizedCourseDescription(course));
 
-        // Use the targeted refinement template for selection-based instructions
-        String prompt = templateService.render("/prompts/hyperion/refine_problem_statement_targeted.st", variables.asMap());
+        // Use separate system/user templates to prevent prompt injection from user-provided content
+        String systemPrompt = templateService.render("/prompts/hyperion/refine_problem_statement_targeted_system.st", Map.of());
+        String userMessage = templateService.render("/prompts/hyperion/refine_problem_statement_targeted_user.st", variables.asMap());
 
         String refinedProblemStatementText;
         try {
-            refinedProblemStatementText = chatClient.prompt().user(prompt).call().content();
+            refinedProblemStatementText = chatClient.prompt().system(systemPrompt).user(userMessage).call().content();
         }
         catch (Exception e) {
             throw handleRefinementError(course, originalProblemStatementText, e);
@@ -165,7 +166,7 @@ public class HyperionProblemStatementRefinementService {
                     "ProblemStatementRefinement.problemStatementRefinementNull");
         }
 
-        return validateAndReturnResponse(originalProblemStatementText, refinedProblemStatementText);
+        return validateAndReturnResponse(sanitizedProblemStatement, refinedProblemStatementText);
     }
 
     /**
