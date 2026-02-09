@@ -1019,7 +1019,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
 
         comp.onInlineRefinement({ instruction: 'Improve this', startLine: 1, endLine: 2, startColumn: 0, endColumn: 10 });
 
-        expect(problemStatementService.refineTargeted).toHaveBeenCalledWith(comp.exercise, 'Original problem statement', expect.objectContaining({ instruction: 'Improve this' }), comp.isGeneratingOrRefining);
+        expect(problemStatementService.refineTargeted).toHaveBeenCalledWith(
+            comp.exercise,
+            'Original problem statement',
+            expect.objectContaining({ instruction: 'Improve this' }),
+            comp['isGeneratingOrRefining'],
+        );
         expect(comp.showDiff()).toBeTrue();
     });
 
@@ -1033,7 +1038,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
 
         comp.submitRefinement();
 
-        expect(problemStatementService.refineGlobally).toHaveBeenCalledWith(comp.exercise, 'Original problem statement', 'Improve clarity', comp.isGeneratingOrRefining);
+        expect(problemStatementService.refineGlobally).toHaveBeenCalledWith(
+            comp.exercise,
+            'Original problem statement',
+            'Improve clarity',
+            comp['isGeneratingOrRefining'],
+        );
         expect(comp.showDiff()).toBeTrue();
     });
 
