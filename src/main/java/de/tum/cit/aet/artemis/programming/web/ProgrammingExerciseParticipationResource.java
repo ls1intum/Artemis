@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
@@ -497,8 +498,7 @@ public class ProgrammingExerciseParticipationResource {
             return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(exercise, commitId, null, participation));
         }
         catch (IOException e) {
-            log.error("Could not read files at commit {} for participation {}", commitId, participationId, e);
-            return ResponseEntity.internalServerError().build();
+            throw new InternalServerErrorAlertException("Could not read files at commit " + commitId + " for participation " + participationId, ENTITY_NAME, "fileReadError");
         }
     }
 
@@ -538,8 +538,7 @@ public class ProgrammingExerciseParticipationResource {
             }
         }
         catch (IOException e) {
-            log.error("Could not read files at commit {} for exercise {}", commitId, exerciseId, e);
-            return ResponseEntity.internalServerError().build();
+            throw new InternalServerErrorAlertException("Could not read files at commit " + commitId + " for exercise " + exerciseId, ENTITY_NAME, "fileReadError");
         }
     }
 

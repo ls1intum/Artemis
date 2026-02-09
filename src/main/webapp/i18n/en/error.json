@@ -219,6 +219,7 @@
         "userManagement": {
             "onlySuperAdminCanManageAdmins": "You are not a super administrator and therefore not allowed to manage administrator accounts.",
             "cannotRemoveDefaultAdminRights": "You cannot remove super admin rights from the default admin user."
-        }
+        },
+        "fileReadError": "An error occurred while reading the files of the referenced commit. Please try again."
     }
 }
