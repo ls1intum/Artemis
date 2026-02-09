@@ -791,6 +791,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         instance.comp.setupMarkdownSubscriptions();
 
         instance.comp.updateMarkdown();
+        flush();
 
         expect(setExerciseIdSpy).toHaveBeenCalledWith(42);
 
