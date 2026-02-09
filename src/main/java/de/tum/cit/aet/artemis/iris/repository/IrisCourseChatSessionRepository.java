@@ -4,7 +4,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
@@ -29,6 +29,9 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 @Lazy
 @Repository
 @Conditional(IrisEnabled.class)
+// NOTE: You cannot use DISTINCT in queries that return IrisCourseChatSession because of the json columns
+// in IrisMessage (accessed_memories, created_memories). PostgreSQL's json type does not support equality operators.
+// Use Set return types or stream().distinct() in Java to deduplicate instead.
 public interface IrisCourseChatSessionRepository extends ArtemisJpaRepository<IrisCourseChatSession, Long> {
 
     /**
@@ -40,10 +43,10 @@ public interface IrisCourseChatSessionRepository extends ArtemisJpaRepository<Ir
      */
     @Query("""
             SELECT s
-                FROM IrisCourseChatSession s
-                WHERE s.courseId = :courseId
-                    AND s.userId = :userId
-                ORDER BY s.creationDate DESC
+            FROM IrisCourseChatSession s
+            WHERE s.courseId = :courseId
+                AND s.userId = :userId
+            ORDER BY s.creationDate DESC
             """)
     List<IrisCourseChatSession> findByCourseIdAndUserId(@Param("courseId") long courseId, @Param("userId") long userId);
 
@@ -55,9 +58,6 @@ public interface IrisCourseChatSessionRepository extends ArtemisJpaRepository<Ir
             ORDER BY s.creationDate DESC
             """)
     List<IrisCourseChatSession> findSessionsByCourseIdAndUserId(@Param("courseId") long courseId, @Param("userId") long userId, Pageable pageable);
-
-    @EntityGraph(type = LOAD, attributePaths = "messages")
-    Optional<IrisCourseChatSession> findSessionWithMessagesByIdAndUserId(Long id, Long userId);
 
     @EntityGraph(type = LOAD, attributePaths = "messages")
     List<IrisCourseChatSession> findSessionsWithMessagesByIdIn(List<Long> ids);
@@ -117,16 +117,21 @@ public interface IrisCourseChatSessionRepository extends ArtemisJpaRepository<Ir
 
     /**
      * Find all chat sessions with messages for a given course, ordered by creation date.
+     * <p>
+     * Note: This query intentionally does not use DISTINCT because IrisMessage contains json columns
+     * (accessed_memories, created_memories) and PostgreSQL's json type does not support equality operators.
+     * Callers must deduplicate the result if needed (e.g. via {@code stream().distinct()}).
+     * <p>
      *
      * @param courseId the id of the course
-     * @return list of chat sessions with their messages
+     * @return set of chat sessions with their messages (may contain duplicates from the LEFT JOIN)
      */
     @Query("""
-            SELECT DISTINCT s
+            SELECT s
             FROM IrisCourseChatSession s
-            LEFT JOIN FETCH s.messages
+                LEFT JOIN FETCH s.messages
             WHERE s.courseId = :courseId
             ORDER BY s.creationDate ASC
             """)
-    List<IrisCourseChatSession> findAllWithMessagesByCourseId(@Param("courseId") long courseId);
+    Set<IrisCourseChatSession> findAllWithMessagesByCourseId(@Param("courseId") long courseId);
 }

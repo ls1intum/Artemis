@@ -17,6 +17,16 @@ import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO;
 
 /**
  * Spring Data JPA repository for the {@link ExamRoom} entity.
+ *
+ * <p>
+ * <b>Important:</b> Do NOT use {@code SELECT DISTINCT} on queries that return {@link ExamRoom}
+ * or its related entities (e.g., LayoutStrategy). These entities contain {@code json} columns
+ * ({@code exam_seats}, {@code parameters}) and PostgreSQL's {@code json} type does not support
+ * equality operators, causing {@code SELECT DISTINCT} to fail at runtime.
+ * Use {@link java.util.Set} return types or {@code stream().distinct()} in Java to deduplicate instead.
+ *
+ * <p>
+ * TODO: Remove this restriction once the json columns are migrated to jsonb.
  */
 @Conditional(ExamEnabled.class)
 @Lazy
