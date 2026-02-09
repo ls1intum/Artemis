@@ -124,6 +124,9 @@ artemis:
     url: <your-pyris-url>
     secret-token: <your-secret>
 
+  weaviate:
+    enabled: false
+
 # Configure Spring AI, if you want to use Hyperion or Atlas
 spring:
   ai:
