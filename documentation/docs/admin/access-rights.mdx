@@ -51,6 +51,11 @@ For detailed information about passkey authentication, configuration, and the ap
 
 ## Navigation
 
+[//]: # (Refers to CourseManagementResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/core/web/course/CourseManagementResource.java)
+[//]: # (Refers to CourseOverviewResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/core/web/course/CourseOverviewResource.java)
+[//]: # (Refers to AdminUserResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminUserResource.java)
+[//]: # (Refers to PasskeyResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/core/web/PasskeyResource.java)
+
 | Feature                  | Super Admin | Admin | Instructor | Editor | Teaching Assistant | Student |
 |--------------------------|-------------|-------|------------|--------|--------------------|---------|
 | Course Overview          | ✔           | ✔     | ✔          | ✔      | ✔                  | ✔       |
@@ -64,6 +69,10 @@ For detailed information about passkey authentication, configuration, and the ap
 | Approve Passkeys         | ✔           |       |            |        |                    |         |
 
 ## Course
+
+[//]: # (Refers to CourseManagementResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/core/web/course/CourseManagementResource.java)
+[//]: # (Refers to ExerciseResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/exercise/web/ExerciseResource.java)
+[//]: # (Refers to ExamResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/exam/web/ExamResource.java)
 
 | Feature                     | Instructor | Editor | Teaching Assistant |
 |-----------------------------|------------|--------|--------------------|
@@ -117,6 +126,8 @@ The following visibility rules apply to **all exercise types**:
 
 The following permissions apply to all exercise types. Exercise-type-specific sections below list only additional features or where permissions differ.
 
+[//]: # (Refers to ExerciseResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/exercise/web/ExerciseResource.java)
+
 | Feature                             | Instructor          | Editor              | Teaching Assistant  | Student                    |
 |-------------------------------------|---------------------|---------------------|---------------------|----------------------------|
 | View Exercise (course)              | ✔ (if in course)    | ✔ (if in course)    | ✔ (if in course)    | ✔ (if enrolled + released) |
@@ -156,6 +167,9 @@ The following permissions apply to all exercise types. Exercise-type-specific se
 
 The following features are shared across **File Upload, Modeling, and Text** exercises. Programming and Quiz exercises have different submission and assessment models — see their dedicated sections.
 
+[//]: # (Refers to ExampleSubmissionResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/assessment/web/ExampleSubmissionResource.java)
+[//]: # (Refers to AssessmentResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/assessment/web/AssessmentResource.java)
+
 | Feature                         | Instructor          | Editor              | Teaching Assistant  | Student               |
 |---------------------------------|---------------------|---------------------|---------------------|-----------------------|
 | Re-evaluate Exercise            | ✔                   | ✔                   |                     |                       |
@@ -176,6 +190,10 @@ The following features are shared across **File Upload, Modeling, and Text** exe
 ### Programming Exercises
 
 In addition to the [General Functionality](#general-functionality) above, Programming Exercises have these specific features:
+
+[//]: # (Refers to ProgrammingExerciseRetrievalResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseRetrievalResource.java)
+[//]: # (Refers to ProgrammingAssessmentResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingAssessmentResource.java)
+[//]: # (Refers to ProgrammingExerciseTaskResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseTaskResource.java)
 
 | Feature                         | Instructor       | Editor           | Teaching Assistant | Student         |
 |---------------------------------|------------------|------------------|--------------------|-----------------|
@@ -251,6 +269,9 @@ In addition to the [General Functionality](#general-functionality) above, Progra
 
 In addition to the [General Functionality](#general-functionality) above, Quiz Exercises have these specific features:
 
+[//]: # (Refers to QuizExerciseResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/QuizExerciseResource.java)
+[//]: # (Refers to QuizSubmissionResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/QuizSubmissionResource.java)
+
 <Callout variant={CalloutVariant.info}>
     Quiz exercises use a different submission and assessment model from other exercise types. The [Shared Submission and Assessment Features](#shared-submission-and-assessment-features) do not apply to quizzes.
 </Callout>
@@ -311,6 +332,8 @@ Quiz exercises support three modes: **SYNCHRONIZED**, **BATCHED**, and **INDIVID
 
 File Upload Exercises follow the [General Functionality](#general-functionality) and [Shared Submission and Assessment Features](#shared-submission-and-assessment-features) above with no additional exercise-type-specific features.
 
+[//]: # (Refers to FileUploadExerciseResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/fileupload/web/FileUploadExerciseResource.java)
+
 ### Modeling Exercises
 
 In addition to the [General Functionality](#general-functionality) and [Shared Submission and Assessment Features](#shared-submission-and-assessment-features) above, Modeling Exercises have these specific features:
@@ -346,6 +369,10 @@ The permissions below apply to managing these templates, not to students creatin
 
 In addition to the [General Functionality](#general-functionality) and [Shared Submission and Assessment Features](#shared-submission-and-assessment-features) above, Text Exercises have these specific features:
 
+[//]: # (Refers to TextExerciseResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/text/web/TextExerciseResource.java)
+[//]: # (Refers to TextAssessmentResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/text/web/TextAssessmentResource.java)
+[//]: # (Refers to TextAssessmentEventResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/text/web/TextAssessmentEventResource.java)
+
 | Feature                        | Instructor | Editor | Teaching Assistant | Student |
 |--------------------------------|------------|--------|--------------------|---------|
 | Submit Assessment              | ✔          | ✔      | ✔                  |         |
@@ -362,6 +389,9 @@ In addition to the [General Functionality](#general-functionality) and [Shared S
 </Callout>
 
 ## Lectures
+
+[//]: # (Refers to LectureResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/lecture/web/LectureResource.java)
+[//]: # (Refers to LectureUnitResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/lecture/web/LectureUnitResource.java)
 
 | Feature                          | Instructor       | Editor           | Teaching Assistant | Student         |
 |----------------------------------|------------------|------------------|--------------------|-----------------|
@@ -431,6 +461,9 @@ Visibility conditions marked as "(if visible)" or "(if enrolled)" in the table a
 
 
 ## Exam
+
+[//]: # (Refers to ExamResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/exam/web/ExamResource.java)
+[//]: # (Refers to StudentExamResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/exam/web/StudentExamResource.java)
 
 | Feature               | Instructor | Editor | Teaching Assistant |
 |-----------------------|------------|--------|--------------------|
