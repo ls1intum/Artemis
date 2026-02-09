@@ -76,6 +76,10 @@ export class ExerciseEditorSyncService {
     }
 
     subscribeToUpdates(exerciseId: number): Observable<ExerciseEditorSyncEvent> {
+        if (this.exerciseId !== undefined && this.exerciseId !== exerciseId) {
+            this.unsubscribe();
+        }
+
         if (!this.subject) {
             const topic = this.getTopic(exerciseId);
             this.exerciseId = exerciseId;
@@ -99,7 +103,7 @@ export class ExerciseEditorSyncService {
             delete this.subject;
         }
 
-        // Unsubscribe from internal websocket subscription
+        // Unsubscribing the RxJS subscription also tears down the underlying STOMP topic subscription.
         if (this.subscription) {
             this.subscription.unsubscribe();
             delete this.subscription;

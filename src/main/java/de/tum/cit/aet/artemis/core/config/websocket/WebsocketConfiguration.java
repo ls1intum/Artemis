@@ -86,6 +86,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private static final Pattern EXAM_TOPIC_PATTERN = Pattern.compile("^/topic/exams/(\\d+)/.+$");
 
+    private static final Pattern EXERCISE_SYNCHRONIZATION_TOPIC_PATTERN = Pattern.compile("^/topic/exercises/(\\d+)/synchronization$");
+
     public static final String IP_ADDRESS = "IP_ADDRESS";
 
     private final ObjectMapper objectMapper;
@@ -352,6 +354,20 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 }
             }
 
+            if (StompCommand.SEND.equals(headerAccessor.getCommand())) {
+                try {
+                    if (!allowSend(principal, destination)) {
+                        logUnauthorizedDestinationAccess(principal, destination);
+                        return null; // erase forbidden SEND command
+                    }
+                }
+                catch (EntityNotFoundException e) {
+                    log.warn("An error occurred while user {} sent a websocket message to destination {}: {}", principal != null ? principal.getName() : "null", destination,
+                            e.getMessage());
+                    return null;
+                }
+            }
+
             return message;
         }
 
@@ -416,7 +432,25 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 var exam = api.findByIdElseThrow(examId.get());
                 return authorizationCheckService.isAtLeastInstructorInCourse(login, exam.getCourse().getId());
             }
+
+            var synchronizationExerciseId = getExerciseIdFromSynchronizationDestination(destination);
+            if (synchronizationExerciseId.isPresent()) {
+                return authorizationCheckService.isAtLeastTeachingAssistantInExercise(login, synchronizationExerciseId.get());
+            }
+
             return true;
+        }
+
+        private boolean allowSend(@Nullable Principal principal, String destination) {
+            var synchronizationExerciseId = getExerciseIdFromSynchronizationDestination(destination);
+            if (synchronizationExerciseId.isEmpty()) {
+                return true;
+            }
+            if (principal == null) {
+                log.warn("Anonymous user tried to send to the protected topic: {}", destination);
+                return false;
+            }
+            return authorizationCheckService.isAtLeastTeachingAssistantInExercise(principal.getName(), synchronizationExerciseId.get());
         }
 
         private void logUnauthorizedDestinationAccess(Principal principal, String destination) {
@@ -443,6 +477,14 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
      */
     public static Optional<Long> getExamIdFromExamRootDestination(String destination) {
         var matcher = EXAM_TOPIC_PATTERN.matcher(destination);
+        if (matcher.matches()) {
+            return Optional.of(Long.valueOf(matcher.group(1)));
+        }
+        return Optional.empty();
+    }
+
+    public static Optional<Long> getExerciseIdFromSynchronizationDestination(String destination) {
+        var matcher = EXERCISE_SYNCHRONIZATION_TOPIC_PATTERN.matcher(destination);
         if (matcher.matches()) {
             return Optional.of(Long.valueOf(matcher.group(1)));
         }

@@ -208,10 +208,13 @@ describe('ProblemStatementSyncService', () => {
     it('resets state and destroys the Yjs document', fakeAsync(() => {
         const state = service.init(19, 'Seed');
         const destroySpy = jest.spyOn(state.doc, 'destroy');
+        const clearRemoteStylesSpy = jest.spyOn(yjsUtils, 'clearRemoteSelectionStyles');
 
         service.reset();
 
         expect(destroySpy).toHaveBeenCalled();
+        expect(clearRemoteStylesSpy).toHaveBeenCalledOnce();
         tick(500);
+        clearRemoteStylesSpy.mockRestore();
     }));
 });

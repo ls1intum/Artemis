@@ -30,6 +30,14 @@ type RemoteClientStyle = {
 const remoteClientStyles = new Map<number, RemoteClientStyle>();
 const REMOTE_STYLE_ELEMENT_ID = 'yjs-remote-selection-styles';
 
+export const clearRemoteSelectionStyles = () => {
+    remoteClientStyles.clear();
+    if (typeof document === 'undefined') {
+        return;
+    }
+    document.getElementById(REMOTE_STYLE_ELEMENT_ID)?.remove();
+};
+
 export const getColorForClientId = (clientId: number): string => {
     const cached = remoteClientStyles.get(clientId)?.color;
     if (cached) {

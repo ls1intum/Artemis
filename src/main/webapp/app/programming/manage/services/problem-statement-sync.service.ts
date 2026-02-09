@@ -15,6 +15,7 @@ import {
 } from 'app/exercise/services/exercise-editor-sync.service';
 import {
     AwarenessUpdatePayload,
+    clearRemoteSelectionStyles,
     decodeBase64ToUint8Array,
     encodeUint8ArrayToBase64,
     ensureRemoteSelectionStyle,
@@ -33,7 +34,6 @@ export type ProblemStatementSyncState = {
 enum ProblemStatementSyncOrigin {
     Remote = 'remote',
     Seed = 'seed',
-    Init = 'init',
 }
 
 @Injectable({ providedIn: 'root' })
@@ -95,13 +95,14 @@ export class ProblemStatementSyncService {
             clearTimeout(this.pendingInitialSync.timeoutId);
         }
         this.pendingInitialSync = undefined;
+        clearRemoteSelectionStyles();
     }
 
     /**
      * Request the newest problem statement content from other active editors (if any).
      * Ensures unsaved edits in other sessions are synchronized before local editing starts.
      */
-    requestInitialSync() {
+    private requestInitialSync() {
         if (!this.exerciseId) {
             return;
         }
@@ -239,7 +240,6 @@ export class ProblemStatementSyncService {
             return;
         }
         Y.applyUpdate(this.yDoc, update, ProblemStatementSyncOrigin.Remote);
-        this.awaitingInitialSync = false;
     }
 
     /**

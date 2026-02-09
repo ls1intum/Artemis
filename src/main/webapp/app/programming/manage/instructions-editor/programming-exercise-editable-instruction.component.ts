@@ -60,7 +60,12 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
     private problemStatementSyncService = inject(ProblemStatementSyncService);
 
-    // Track previous values for change detection in effect
+    /**
+     * Legacy manual diff state used inside the `effect()` below.
+     * This is intentionally mutable and not a signal; therefore it does not retrigger the effect.
+     * Caveat: if `exercise()` changes multiple times synchronously, intermediate states can be skipped.
+     * Keep this in mind when extending the effect logic.
+     */
     private previousExercise?: ProgrammingExercise;
 
     unsavedChangesValue = false;
@@ -81,7 +86,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                 new RewriteAction(
                     this.artemisIntelligenceService,
                     RewritingVariant.PROBLEM_STATEMENT,
-                    courseId, // Use exerciseId for Hyperion, not courseId
+                    courseId, // courseId is required by Hyperion API.
                     signal<RewriteResult>({ result: '', inconsistencies: undefined, suggestions: undefined, improvement: undefined }),
                 ),
             );
@@ -127,13 +132,19 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     set unsavedChanges(hasChanges: boolean) {
         this.unsavedChangesValue = hasChanges;
+        // Why emit only `true` transitions? Once an exercise is saved, the page would automatically re-nagivate to the exercise page.
+        // This would unmount this component and clear the unsaved changes indicator.
         if (hasChanges) {
             this.hasUnsavedChanges.emit(hasChanges);
         }
     }
 
     constructor() {
-        // React to exercise changes
+        /**
+         * React to exercise changes.
+         * Note: this effect mutates `previousExercise` as an implementation detail for manual diffing.
+         * This is a known legacy pattern and can be fragile for bursty synchronous updates.
+         */
         effect(() => {
             const currentExercise = this.exercise();
 

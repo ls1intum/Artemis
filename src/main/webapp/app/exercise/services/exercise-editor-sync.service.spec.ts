@@ -163,4 +163,42 @@ describe('ExerciseEditorSyncService', () => {
         expect(received1).toEqual([message]);
         expect(received2).toEqual([message]);
     });
+
+    it('re-subscribes when exercise id changes', () => {
+        const firstExerciseMessages = new Subject<ExerciseEditorSyncEvent>();
+        const secondExerciseMessages = new Subject<ExerciseEditorSyncEvent>();
+        websocketService.subscribe.mockReset();
+        websocketService.subscribe.mockReturnValueOnce(firstExerciseMessages.asObservable()).mockReturnValueOnce(secondExerciseMessages.asObservable());
+
+        const firstReceived: ExerciseEditorSyncEvent[] = [];
+        let firstCompleted = false;
+        service.subscribeToUpdates(5).subscribe({
+            next: (message) => firstReceived.push(message),
+            complete: () => (firstCompleted = true),
+        });
+
+        const secondReceived: ExerciseEditorSyncEvent[] = [];
+        service.subscribeToUpdates(6).subscribe((message) => secondReceived.push(message));
+
+        expect(firstCompleted).toBeTrue();
+        expect(websocketService.subscribe).toHaveBeenNthCalledWith(1, '/topic/exercises/5/synchronization');
+        expect(websocketService.subscribe).toHaveBeenNthCalledWith(2, '/topic/exercises/6/synchronization');
+
+        firstExerciseMessages.next({
+            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
+            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            sessionId: 'other-client',
+            yjsUpdate: 'stale',
+        });
+        expect(firstReceived).toHaveLength(0);
+
+        const activeMessage: ExerciseEditorSyncEvent = {
+            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
+            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            sessionId: 'other-client',
+            yjsUpdate: 'active',
+        };
+        secondExerciseMessages.next(activeMessage);
+        expect(secondReceived).toEqual([activeMessage]);
+    });
 });
