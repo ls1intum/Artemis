@@ -452,6 +452,8 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         sharedQueueProcessingService.resetInitializedState();
         // Re-initialize to register pause/resume topic listeners (they are removed in @BeforeEach)
         sharedQueueProcessingService.init();
+        // Force immediate agent registration instead of waiting for the 10-second scheduled delay
+        sharedQueueProcessingService.updateBuildAgentInformation();
 
         // Wait for the scheduled task to add the agent to the map (happens asynchronously after init)
         await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(200)).until(() -> {
@@ -491,6 +493,8 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         sharedQueueProcessingService.resetInitializedState();
         // Re-initialize to register pause/resume topic listeners (they are removed in @BeforeEach)
         sharedQueueProcessingService.init();
+        // Force immediate agent registration instead of waiting for the 10-second scheduled delay
+        sharedQueueProcessingService.updateBuildAgentInformation();
 
         // Wait for the scheduled task to add agents to the map (happens asynchronously after init)
         await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(200)).until(() -> !buildAgentInformation.values().isEmpty());
