@@ -5,6 +5,10 @@ package de.tum.cit.aet.artemis.core.config.weaviate.schema;
  * This record defines the structure and configuration of a property including
  * its name, data type, and indexing settings for BM25 search.
  *
+ * <p>
+ * See <a href="https://weaviate.io/developers/weaviate/manage-collections/inverted-index">Weaviate Inverted Index</a>
+ * for detailed information on indexing properties for search and filtering.
+ *
  * @param name            the name of the property
  * @param dataType        the data type of the property (e.g., "int", "text", "number")
  * @param indexSearchable whether this property should be indexed for BM25 keyword search
