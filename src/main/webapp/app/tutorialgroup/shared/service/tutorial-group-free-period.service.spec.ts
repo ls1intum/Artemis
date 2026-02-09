@@ -25,11 +25,10 @@ describe('TutorialGroupFreePeriodService', () => {
         elemDefault = {
             id: 1,
             reason: 'Example Reason',
-            // Date-only
             startDate: new Date(2021, 0, 1, 0, 0, 0),
             endDate: new Date(2021, 0, 1, 23, 59, 59),
-            tutorialGroupsConfiguration: { id: 1 } as any,
-        } as any;
+            tutorialGroupsConfiguration: { id: 1 },
+        };
     });
 
     afterEach(() => {
@@ -60,9 +59,8 @@ describe('TutorialGroupFreePeriodService', () => {
         expect(result.body.reason).toBe(elemDefault.reason);
 
         // Assert Dates
-        expect(result.body.startDate instanceof Date).toBe(true);
-        expect(result.body.endDate instanceof Date).toBe(true);
-
+        expect(result.body.startDate instanceof Date).toBeTrue();
+        expect(result.body.endDate instanceof Date).toBeTrue();
         expect(result.body.startDate.toISOString()).toBe(elemDefault.startDate!.toISOString());
         expect(result.body.endDate.toISOString()).toBe(elemDefault.endDate!.toISOString());
     });
@@ -78,7 +76,7 @@ describe('TutorialGroupFreePeriodService', () => {
 
         let result: any;
         service
-            .create(1, 1, new TutorialGroupFreePeriodDTO() as any)
+            .create(1, 1, new TutorialGroupFreePeriodDTO())
             .pipe(take(1))
             .subscribe((resp) => (result = resp));
 
@@ -86,8 +84,8 @@ describe('TutorialGroupFreePeriodService', () => {
         req.flush(returnedFromServer);
 
         expect(result.body.id).toBe(0);
-        expect(result.body.startDate instanceof Date).toBe(true);
-        expect(result.body.endDate instanceof Date).toBe(true);
+        expect(result.body.startDate instanceof Date).toBeTrue();
+        expect(result.body.endDate instanceof Date).toBeTrue();
     });
 
     it('update', () => {
@@ -101,7 +99,7 @@ describe('TutorialGroupFreePeriodService', () => {
 
         let result: any;
         service
-            .update(1, 1, 1, new TutorialGroupFreePeriodDTO() as any)
+            .update(1, 1, 1, new TutorialGroupFreePeriodDTO())
             .pipe(take(1))
             .subscribe((resp) => (result = resp));
 
@@ -109,8 +107,8 @@ describe('TutorialGroupFreePeriodService', () => {
         req.flush(returnedFromServer);
 
         expect(result.body.reason).toBe('Test');
-        expect(result.body.startDate instanceof Date).toBe(true);
-        expect(result.body.endDate instanceof Date).toBe(true);
+        expect(result.body.startDate instanceof Date).toBeTrue();
+        expect(result.body.endDate instanceof Date).toBeTrue();
     });
 
     it('delete', () => {

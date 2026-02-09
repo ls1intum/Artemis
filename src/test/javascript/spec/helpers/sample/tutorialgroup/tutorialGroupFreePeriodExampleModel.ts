@@ -60,7 +60,7 @@ export const formDataToTutorialGroupFreePeriodDTO = (formData: TutorialGroupFree
             endDate: new Date(formData.startDate!.getTime()),
             reason: formData.reason,
         };
-        res.endDate!.setHours(23, 59);
+        res.endDate!.setHours(23, 59, 59, 999);
         return res;
     }
 };

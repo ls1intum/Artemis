@@ -40,7 +40,7 @@ public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull LocalDateTime s
     }
 
     /**
-     * DTO used to send the status explanation when i.g. cancelling a tutorial group session
+     * DTO used to send the status explanation when e.g. cancelling a tutorial group session
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TutorialGroupStatusDTO(String statusExplanation) {
