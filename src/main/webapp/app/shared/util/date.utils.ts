@@ -108,5 +108,6 @@ export function localDateTimeStringToDate(localDateTime?: string): Date | undefi
     const [y, m, d] = datePart.split('-').map(Number);
     const [hh, mm, ss] = timePart.split(':').map(Number);
 
-    return new Date(y, (m ?? 1) - 1, d, hh ?? 0, mm ?? 0, ss ?? 0);
+    const date = new Date(y, (m ?? 1) - 1, d ?? 1, hh ?? 0, mm ?? 0, ss ?? 0);
+    return isNaN(date.getTime()) ? undefined : date;
 }
