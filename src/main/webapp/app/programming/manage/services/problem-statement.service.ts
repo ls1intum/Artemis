@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, WritableSignal, inject } from '@angular/core';
 import { Observable, OperatorFunction, catchError, finalize, map, of } from 'rxjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -18,6 +19,7 @@ import {
 export interface OperationResult {
     success: boolean;
     content?: string;
+    errorHandled?: boolean;
 }
 
 // Type aliases for backward compatibility
@@ -67,7 +69,6 @@ export class ProblemStatementService {
                 this.handleApiResponse(
                     loadingSignal,
                     'artemisApp.programmingExercise.problemStatement.generationSuccess',
-                    'artemisApp.programmingExercise.problemStatement.generationError',
                     isValidGenerationResponse,
                     (response) => response?.draftProblemStatement,
                 ),
@@ -91,7 +92,6 @@ export class ProblemStatementService {
                 this.handleApiResponse(
                     loadingSignal,
                     'artemisApp.programmingExercise.problemStatement.refinementSuccess',
-                    'artemisApp.programmingExercise.problemStatement.refinementError',
                     isValidRefinementResponse,
                     (response) => response?.refinedProblemStatement,
                 ),
@@ -118,7 +118,6 @@ export class ProblemStatementService {
                 this.handleApiResponse(
                     loadingSignal,
                     'artemisApp.programmingExercise.problemStatement.inlineRefinement.success',
-                    'artemisApp.programmingExercise.problemStatement.inlineRefinement.error',
                     isValidRefinementResponse,
                     (r) => r?.refinedProblemStatement,
                 ),
@@ -129,7 +128,6 @@ export class ProblemStatementService {
     private handleApiResponse<T>(
         loadingSignal: WritableSignal<boolean>,
         successKey: string,
-        errorKey: string,
         isValid: (response: T) => boolean,
         getContent: (response: T) => string | undefined,
     ): OperatorFunction<T, OperationResult> {
@@ -143,9 +141,9 @@ export class ProblemStatementService {
                     }
                     return { success, content: getContent(response) };
                 }),
-                catchError(() => {
-                    this.alertService.error(errorKey);
-                    return of({ success: false });
+                catchError((error) => {
+                    const handledByInterceptor = error instanceof HttpErrorResponse && !!error.error?.errorKey;
+                    return of({ success: false, errorHandled: handledByInterceptor });
                 }),
             );
     }

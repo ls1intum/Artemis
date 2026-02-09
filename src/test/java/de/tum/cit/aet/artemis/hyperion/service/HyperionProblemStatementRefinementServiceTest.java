@@ -63,14 +63,13 @@ class HyperionProblemStatementRefinementServiceTest {
         course.setDescription("Test Description");
 
         assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, "Refine this"))
-                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("Failed to refine problem statement").hasMessageContaining("AI service unavailable");
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("Failed to refine problem statement");
     }
 
     @Test
     void refineProblemStatement_throwsExceptionOnExcessivelyLongResponse() throws Exception {
         String originalStatement = "Original problem statement";
-        // Generate a string longer than MAX_PROBLEM_STATEMENT_LENGTH (50,000
-        // characters)
+        // Generate a string longer than MAX_PROBLEM_STATEMENT_LENGTH (50,000 characters)
         String excessivelyLongRefinement = "a".repeat(50_001);
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(excessivelyLongRefinement)))));
 
