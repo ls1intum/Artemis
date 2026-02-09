@@ -1,8 +1,6 @@
 package de.tum.cit.aet.artemis.core.config.weaviate.schema;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Represents a complete Weaviate collection schema definition.
@@ -45,33 +43,6 @@ public record WeaviateCollectionSchema(String collectionName, List<WeaviatePrope
      * @return the property definition, or null if not found
      */
     public WeaviatePropertyDefinition getProperty(String name) {
-        return properties.stream().filter(p -> p.name().equals(name)).findFirst().orElse(null);
-    }
-
-    /**
-     * Gets all searchable properties (for BM25 search).
-     *
-     * @return list of searchable properties
-     */
-    public List<WeaviatePropertyDefinition> getSearchableProperties() {
-        return properties.stream().filter(WeaviatePropertyDefinition::indexSearchable).toList();
-    }
-
-    /**
-     * Gets all filterable properties.
-     *
-     * @return list of filterable properties
-     */
-    public List<WeaviatePropertyDefinition> getFilterableProperties() {
-        return properties.stream().filter(WeaviatePropertyDefinition::indexFilterable).toList();
-    }
-
-    /**
-     * Converts the properties to a map for easy lookup.
-     *
-     * @return map of property name to property definition
-     */
-    public Map<String, WeaviatePropertyDefinition> getPropertiesAsMap() {
-        return properties.stream().collect(Collectors.toMap(WeaviatePropertyDefinition::name, p -> p));
+        return properties.stream().filter(property -> property.name().equals(name)).findFirst().orElse(null);
     }
 }
