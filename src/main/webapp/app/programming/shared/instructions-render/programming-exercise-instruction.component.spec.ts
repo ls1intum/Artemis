@@ -645,7 +645,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         flush();
 
         // Extract all container IDs that were targeted by injection calls
-        const targetedIds: string[] = injectSpy.mock.calls.map((call) => call[1]);
+        const targetedIds: string[] = injectSpy.mock.calls.map((call) => call[1] as string);
 
         // CRITICAL: Exactly 6 unique IDs must be present (2 + 1 + 3 diagrams)
         const uniqueIds = new Set(targetedIds);
@@ -699,7 +699,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         instanceB.comp.updateMarkdown();
         flush();
 
-        const targetedIds: string[] = injectSpy.mock.calls.map((call) => call[1]);
+        const targetedIds: string[] = injectSpy.mock.calls.map((call) => call[1] as string);
         const uniqueIds = new Set(targetedIds);
 
         // Must have exactly 4 unique IDs (2 per exercise), despite both having same diagram count
@@ -747,7 +747,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         flush();
 
         // Extract only exercise A's IDs from this render
-        const firstRenderIds = new Set(injectSpy.mock.calls.map((call) => call[1]).filter((id: string) => id.startsWith('plantUml-10-')));
+        const firstRenderIds = new Set(injectSpy.mock.calls.map((call) => call[1] as string).filter((id) => id.startsWith('plantUml-10-')));
         expect(firstRenderIds).toEqual(new Set(['plantUml-10-0', 'plantUml-10-1']));
 
         injectSpy.mockClear();
@@ -766,7 +766,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         flush();
 
         // Extract only exercise A's IDs from the re-render
-        const secondRenderIds = new Set(injectSpy.mock.calls.map((call) => call[1]).filter((id: string) => id.startsWith('plantUml-10-')));
+        const secondRenderIds = new Set(injectSpy.mock.calls.map((call) => call[1] as string).filter((id) => id.startsWith('plantUml-10-')));
 
         // Same exercise must get the same IDs so new SVGs overwrite old DOM containers
         expect(secondRenderIds).toEqual(new Set(['plantUml-10-0', 'plantUml-10-1']));
