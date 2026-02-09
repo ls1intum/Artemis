@@ -26,17 +26,21 @@
     </div>
     @if (showThreadBody) {
         <div class="monaco-review-comment-thread-divider"></div>
-        @for (comment of orderedComments(); track comment.id; let first = $first) {
+        @for (commentVm of renderedComments(); track commentVm.comment.id; let first = $first) {
             <div class="monaco-review-comment-item" [class.monaco-review-comment-item--with-divider]="!first">
                 <div class="monaco-review-comment-header">
                     <div class="monaco-review-comment-title">
-                        {{ getCommentAuthorName(comment) }}
-                        @if (comment.createdDate) {
+                        @if (commentVm.authorName) {
+                            {{ commentVm.authorName }}
+                        } @else {
+                            {{ 'artemisApp.review.systemAuthor' | artemisTranslate }}
+                        }
+                        @if (commentVm.comment.createdDate) {
                             <div class="monaco-review-comment-meta">
-                                {{ 'artemisApp.review.commentedOn' | artemisTranslate: { date: comment.createdDate | artemisDate } }}
-                                @if (isEdited(comment)) {
+                                {{ 'artemisApp.review.commentedOn' | artemisTranslate: { date: commentVm.comment.createdDate | artemisDate } }}
+                                @if (commentVm.isEdited) {
                                     <span class="monaco-review-comment-meta-separator">|</span>
-                                    {{ 'artemisApp.review.lastEdited' | artemisTranslate: { date: comment.lastModifiedDate | artemisDate } }}
+                                    {{ 'artemisApp.review.lastEdited' | artemisTranslate: { date: commentVm.comment.lastModifiedDate | artemisDate } }}
                                 }
                             </div>
                         }
@@ -52,18 +56,18 @@
                             <span class="monaco-review-comment-menu-dots" aria-hidden="true"></span>
                         </button>
                         <div ngbDropdownMenu>
-                            <button type="button" class="dropdown-item" (click)="startEditing(comment)">
+                            <button type="button" class="dropdown-item" (click)="startEditing(commentVm.comment)">
                                 <fa-icon [icon]="faPen" class="me-2" />
                                 {{ 'artemisApp.review.editComment' | artemisTranslate }}
                             </button>
-                            <button type="button" class="dropdown-item text-danger" (click)="deleteComment(comment.id)">
+                            <button type="button" class="dropdown-item text-danger" (click)="deleteComment(commentVm.comment.id)">
                                 <fa-icon [icon]="faTrash" class="me-2" />
                                 {{ 'artemisApp.review.deleteComment' | artemisTranslate }}
                             </button>
                         </div>
                     </div>
                 </div>
-                @if (isEditing(comment)) {
+                @if (editingCommentId === commentVm.comment.id) {
                     <textarea class="monaco-review-comment-textarea" [(ngModel)]="editText"></textarea>
                     <div class="monaco-review-comment-actions">
                         <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancelEditing()">
@@ -74,7 +78,7 @@
                         </button>
                     </div>
                 } @else {
-                    <div class="monaco-review-comment-text">{{ formatReviewCommentText(comment) }}</div>
+                    <div class="monaco-review-comment-text">{{ commentVm.displayText }}</div>
                 }
             </div>
         }

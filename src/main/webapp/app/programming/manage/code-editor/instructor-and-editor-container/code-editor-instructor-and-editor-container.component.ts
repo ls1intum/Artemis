@@ -374,6 +374,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
         const targetType = targetTypeOverride ?? mapRepositoryToThreadLocationType(this.selectedRepository);
+        if (!targetType) {
+            this.alertService.error('artemisApp.review.saveFailed');
+            return;
+        }
         const isProblemStatement = targetType === CommentThreadLocationType.PROBLEM_STATEMENT;
         const auxiliaryRepositoryId = isProblemStatement ? undefined : this.selectedRepository === RepositoryType.AUXILIARY ? this.selectedRepositoryId : undefined;
         this.exerciseReviewCommentService
@@ -716,13 +720,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             // File already loaded, file load event will not fire
             if (this.codeEditorContainer.selectedFile === this.fileToJumpOn) {
                 this.onFileLoad(this.fileToJumpOn!);
-                this.fileToJumpOn = undefined;
                 return;
             }
 
             // Will load file and signal to fileLoad when finished loading
             this.codeEditorContainer.selectedFile = this.fileToJumpOn;
-            this.fileToJumpOn = undefined;
         }
     }
 
@@ -733,9 +735,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      *        The name of the file that was just loaded.
      */
     onFileLoad(fileName: string) {
-        if (this.lineJumpOnFileLoad && this.fileToJumpOn === fileName) {
-            this.codeEditorContainer.jumpToLine(this.lineJumpOnFileLoad);
+        if (this.fileToJumpOn === fileName) {
+            if (this.lineJumpOnFileLoad !== undefined) {
+                this.codeEditorContainer.jumpToLine(this.lineJumpOnFileLoad);
+            }
             this.lineJumpOnFileLoad = undefined;
+            this.fileToJumpOn = undefined;
         }
     }
 }

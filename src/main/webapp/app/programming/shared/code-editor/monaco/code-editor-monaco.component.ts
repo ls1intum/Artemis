@@ -42,7 +42,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
-import { matchesSelectedRepository } from 'app/programming/shared/code-editor/util/review-comment-utils';
+import { isReviewCommentsSupportedRepository, matchesSelectedRepository } from 'app/programming/shared/code-editor/util/review-comment-utils';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
 type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
@@ -172,8 +172,10 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         });
 
         effect(() => {
+            const reviewCommentsEnabled = this.enableExerciseReviewComments() && isReviewCommentsSupportedRepository(this.selectedRepository());
             this.reviewCommentThreads();
-            if (this.enableExerciseReviewComments()) {
+            this.selectedAuxiliaryRepositoryId();
+            if (reviewCommentsEnabled) {
                 this.renderReviewCommentWidgets();
             } else {
                 this.reviewCommentManager?.disposeAll();
@@ -333,7 +335,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
      */
     private updateEditorInteractionMode(): void {
         const isTutorFeedbackMode = this.isTutorAssessment() && !this.readOnlyManualFeedback();
-        const reviewCommentsEnabled = this.enableExerciseReviewComments();
+        const reviewCommentsEnabled = this.enableExerciseReviewComments() && isReviewCommentsSupportedRepository(this.selectedRepository());
         const selectedFile = this.selectedFile();
 
         if (!selectedFile) {
@@ -481,6 +483,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
                     this.changeDetectorRef.detectChanges();
                     const issues = this.consistencyIssues();
                     this.editor().disposeWidgetsByPrefix('feedback-');
+                    this.editor().disposeWidgetsByPrefix('comment-');
                     for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbackInternal(), ...this.feedbackSuggestionsInternal()])) {
                         this.addLineWidgetWithFeedback(feedback);
                     }
@@ -505,7 +508,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     }
 
     private renderReviewCommentWidgets(): void {
-        if (!this.enableExerciseReviewComments() || !this.selectedFile()) {
+        if (!this.enableExerciseReviewComments() || !this.selectedFile() || !isReviewCommentsSupportedRepository(this.selectedRepository())) {
             return;
         }
         if (this.reviewRenderScheduled) {
@@ -526,7 +529,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         if (!this.reviewCommentManager) {
             this.reviewCommentManager = new ReviewCommentWidgetManager(this.editor(), this.viewContainerRef, {
                 hoverButtonClass: CodeEditorMonacoComponent.CLASS_REVIEW_COMMENT_HOVER_BUTTON,
-                shouldShowHoverButton: () => this.enableExerciseReviewComments(),
+                shouldShowHoverButton: () => this.enableExerciseReviewComments() && isReviewCommentsSupportedRepository(this.selectedRepository()),
                 canSubmit: () => this.commitState() !== CommitState.UNCOMMITTED_CHANGES,
                 getDraftFileName: () => this.selectedFile(),
                 getThreads: () => this.reviewCommentThreads(),

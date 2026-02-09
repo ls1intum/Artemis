@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -44,6 +44,14 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     private readonly destroyed$ = new Subject<void>();
     private readonly translateService = inject(TranslateService);
     private readonly changeDetectorRef = inject(ChangeDetectorRef);
+    readonly renderedComments = computed(() => {
+        return this.orderedComments().map((comment) => ({
+            comment,
+            authorName: comment.authorName,
+            isEdited: this.isEdited(comment),
+            displayText: this.formatReviewCommentText(comment),
+        }));
+    });
 
     /**
      * Emits a delete event for the given comment id.
@@ -176,19 +184,6 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             return [severity, category, text].filter(Boolean).join(' - ');
         }
         return content.text ?? '';
-    }
-
-    /**
-     * Resolves the display name for a comment author.
-     *
-     * @param comment The comment whose author should be resolved.
-     * @returns The resolved author name.
-     */
-    getCommentAuthorName(comment: Comment): string {
-        if (comment.authorName) {
-            return comment.authorName;
-        }
-        return '[Artemis User]';
     }
 
     /**

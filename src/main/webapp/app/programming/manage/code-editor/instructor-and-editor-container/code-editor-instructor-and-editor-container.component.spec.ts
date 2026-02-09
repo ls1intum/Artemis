@@ -511,6 +511,16 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
         });
 
+        it('onSubmitReviewComment rejects unsupported repository target mapping', () => {
+            comp.selectedRepository = RepositoryType.ASSIGNMENT;
+            const errorSpy = jest.spyOn(alertService, 'error');
+
+            comp.onSubmitReviewComment({ lineNumber: 5, fileName: 'src/Main.java', initialComment: { contentType: 'USER', text: 'Initial comment' } as const });
+
+            expect(reviewCommentService.createThreadWithInitialComment).not.toHaveBeenCalled();
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.review.saveFailed');
+        });
+
         it('onSubmitReviewComment shows saveFailed error on service failure', () => {
             reviewCommentService.createThreadWithInitialComment.mockReturnValue(throwError(() => new Error('fail')));
             const errorSpy = jest.spyOn(alertService, 'error');
@@ -791,6 +801,26 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect((comp as any).codeEditorContainer.selectedFile).toBe(targetFile);
         });
 
+        it('onEditorLoaded keeps deferred jump state until onFileLoad is called', () => {
+            const targetFile = 'src/tests/ExampleTest.java';
+            const targetLine = 42;
+            comp.fileToJumpOn = targetFile;
+            comp.lineJumpOnFileLoad = targetLine;
+            (comp as any).codeEditorContainer.selectedFile = 'some/other/file.java';
+
+            comp.onEditorLoaded();
+
+            expect((comp as any).codeEditorContainer.selectedFile).toBe(targetFile);
+            expect(comp.fileToJumpOn).toBe(targetFile);
+            expect(comp.lineJumpOnFileLoad).toBe(targetLine);
+
+            comp.onFileLoad(targetFile);
+
+            expect((comp as any).codeEditorContainer.jumpToLine).toHaveBeenCalledWith(targetLine);
+            expect(comp.fileToJumpOn).toBeUndefined();
+            expect(comp.lineJumpOnFileLoad).toBeUndefined();
+        });
+
         it('onFileLoad jumps to line and clears lineJumpOnFileLoad when file matches', () => {
             const targetFile = 'src/solution/Solution.java';
             const targetLine = 60;
@@ -824,6 +854,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             expect((comp as any).codeEditorContainer.jumpToLine).not.toHaveBeenCalled();
             expect(comp.lineJumpOnFileLoad).toBeUndefined();
+            expect(comp.fileToJumpOn).toBeUndefined();
         });
 
         it('shows error and clears jump state when repository selection fails', () => {

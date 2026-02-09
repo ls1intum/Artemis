@@ -1,4 +1,4 @@
-import { mapRepositoryToThreadLocationType, matchesSelectedRepository } from 'app/programming/shared/code-editor/util/review-comment-utils';
+import { isReviewCommentsSupportedRepository, mapRepositoryToThreadLocationType, matchesSelectedRepository } from 'app/programming/shared/code-editor/util/review-comment-utils';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
@@ -56,7 +56,37 @@ describe('mapRepositoryToThreadLocationType', () => {
         expect(mapRepositoryToThreadLocationType(RepositoryType.AUXILIARY)).toBe(CommentThreadLocationType.AUXILIARY_REPO);
     });
 
-    it('should default to template repo', () => {
+    it('should map template repo', () => {
         expect(mapRepositoryToThreadLocationType(RepositoryType.TEMPLATE)).toBe(CommentThreadLocationType.TEMPLATE_REPO);
+    });
+
+    it('should return undefined for unsupported repository type', () => {
+        expect(mapRepositoryToThreadLocationType(RepositoryType.ASSIGNMENT)).toBeUndefined();
+    });
+});
+
+describe('isReviewCommentsSupportedRepository', () => {
+    it('should support template repository', () => {
+        expect(isReviewCommentsSupportedRepository(RepositoryType.TEMPLATE)).toBeTrue();
+    });
+
+    it('should support solution repository', () => {
+        expect(isReviewCommentsSupportedRepository(RepositoryType.SOLUTION)).toBeTrue();
+    });
+
+    it('should support tests repository', () => {
+        expect(isReviewCommentsSupportedRepository(RepositoryType.TESTS)).toBeTrue();
+    });
+
+    it('should support auxiliary repository', () => {
+        expect(isReviewCommentsSupportedRepository(RepositoryType.AUXILIARY)).toBeTrue();
+    });
+
+    it('should not support assignment repository', () => {
+        expect(isReviewCommentsSupportedRepository(RepositoryType.ASSIGNMENT)).toBeFalse();
+    });
+
+    it('should not support undefined repository', () => {
+        expect(isReviewCommentsSupportedRepository(undefined)).toBeFalse();
     });
 });

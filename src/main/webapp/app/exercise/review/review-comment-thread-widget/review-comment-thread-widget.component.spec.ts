@@ -142,14 +142,6 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(comp.formatReviewCommentText(nonUserComment)).toBe('ERROR - CODE - msg');
     });
 
-    it('should return author name or fallback', () => {
-        const withName = { authorName: 'Alice' } as any;
-        const empty = {} as any;
-
-        expect(comp.getCommentAuthorName(withName)).toBe('Alice');
-        expect(comp.getCommentAuthorName(empty)).toBe('[Artemis User]');
-    });
-
     it('should set edit text when starting editing', () => {
         const comment = {
             id: 1,

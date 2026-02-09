@@ -37,7 +37,7 @@ export function matchesSelectedRepository(thread: CommentThread, repositoryType?
  * @param repositoryType The repository type from the code editor.
  * @returns The matching comment thread location type.
  */
-export function mapRepositoryToThreadLocationType(repositoryType: RepositoryType): CommentThreadLocationType {
+export function mapRepositoryToThreadLocationType(repositoryType: RepositoryType): CommentThreadLocationType | undefined {
     switch (repositoryType) {
         case RepositoryType.SOLUTION:
             return CommentThreadLocationType.SOLUTION_REPO;
@@ -45,7 +45,27 @@ export function mapRepositoryToThreadLocationType(repositoryType: RepositoryType
             return CommentThreadLocationType.TEST_REPO;
         case RepositoryType.AUXILIARY:
             return CommentThreadLocationType.AUXILIARY_REPO;
-        default:
+        case RepositoryType.TEMPLATE:
             return CommentThreadLocationType.TEMPLATE_REPO;
+        default:
+            return undefined;
+    }
+}
+
+/**
+ * Checks whether review comments are supported for the selected repository.
+ *
+ * @param repositoryType The repository type from the code editor.
+ * @returns True if review comments are supported for this repository type.
+ */
+export function isReviewCommentsSupportedRepository(repositoryType?: RepositoryType): boolean {
+    switch (repositoryType) {
+        case RepositoryType.SOLUTION:
+        case RepositoryType.TESTS:
+        case RepositoryType.AUXILIARY:
+        case RepositoryType.TEMPLATE:
+            return true;
+        default:
+            return false;
     }
 }
