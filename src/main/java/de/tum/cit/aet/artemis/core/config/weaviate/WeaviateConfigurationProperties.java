@@ -17,7 +17,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * @param httpPort         the Weaviate HTTP port
  * @param grpcPort         the Weaviate gRPC port
  * @param scheme           the HTTP scheme (http/https) - determines secure connection type
- * @param collectionPrefix prefix prepended to all Weaviate collection names to avoid naming conflicts (defaults to "artemis")
+ * @param collectionPrefix prefix prepended to all Weaviate collection names to avoid naming conflicts (e.g. with Pyris collections)
  */
 @ConfigurationProperties(prefix = "artemis.weaviate")
 public record WeaviateConfigurationProperties(boolean enabled, String httpHost, @DefaultValue(DEFAULT_HTTP_PORT) int httpPort, @DefaultValue(DEFAULT_GRPC_PORT) int grpcPort,
