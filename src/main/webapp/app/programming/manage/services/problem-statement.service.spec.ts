@@ -7,7 +7,7 @@ import { FileService } from 'app/shared/service/file.service';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { Course } from 'app/core/course/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('ProblemStatementService', () => {
@@ -100,7 +100,7 @@ describe('ProblemStatementService', () => {
         }));
 
         it('should generate successfully', fakeAsync(() => {
-            hyperionApiMock.generateProblemStatement.mockReturnValue(of({ draftProblemStatement: 'Generated!' }));
+            hyperionApiMock.generateProblemStatement.mockReturnValue(of({ draftProblemStatement: 'Generated!' }) as any);
             const loadingSignal = signal(false);
             let result: any;
             service.generateProblemStatement(exerciseWithCourse, 'Generate a sorting exercise', loadingSignal).subscribe((r) => (result = r));
@@ -112,7 +112,7 @@ describe('ProblemStatementService', () => {
         }));
 
         it('should set loading signal during generation', fakeAsync(() => {
-            hyperionApiMock.generateProblemStatement.mockReturnValue(of({ draftProblemStatement: 'Generated!' }));
+            hyperionApiMock.generateProblemStatement.mockReturnValue(of({ draftProblemStatement: 'Generated!' }) as any);
             const loadingSignal = signal(false);
             service.generateProblemStatement(exerciseWithCourse, 'prompt', loadingSignal).subscribe();
             tick();
@@ -120,7 +120,7 @@ describe('ProblemStatementService', () => {
         }));
 
         it('should handle invalid generation response', fakeAsync(() => {
-            hyperionApiMock.generateProblemStatement.mockReturnValue(of({ draftProblemStatement: '' }));
+            hyperionApiMock.generateProblemStatement.mockReturnValue(of({ draftProblemStatement: '' }) as any);
             const loadingSignal = signal(false);
             let result: any;
             service.generateProblemStatement(exerciseWithCourse, 'prompt', loadingSignal).subscribe((r) => (result = r));
@@ -179,7 +179,7 @@ describe('ProblemStatementService', () => {
         }));
 
         it('should refine globally successfully', fakeAsync(() => {
-            hyperionApiMock.refineProblemStatementGlobally.mockReturnValue(of({ refinedProblemStatement: 'Refined!' }));
+            hyperionApiMock.refineProblemStatementGlobally.mockReturnValue(of({ refinedProblemStatement: 'Refined!' }) as any);
             const loadingSignal = signal(false);
             let result: any;
             service.refineGlobally(exerciseWithCourse, 'original', 'improve clarity', loadingSignal).subscribe((r) => (result = r));
@@ -222,7 +222,7 @@ describe('ProblemStatementService', () => {
         }));
 
         it('should refine targeted successfully', fakeAsync(() => {
-            hyperionApiMock.refineProblemStatementTargeted.mockReturnValue(of({ refinedProblemStatement: 'Targeted refined!' }));
+            hyperionApiMock.refineProblemStatementTargeted.mockReturnValue(of({ refinedProblemStatement: 'Targeted refined!' }) as any);
             const loadingSignal = signal(false);
             let result: any;
             service.refineTargeted(exerciseWithCourse, 'original content', event, loadingSignal).subscribe((r) => (result = r));
