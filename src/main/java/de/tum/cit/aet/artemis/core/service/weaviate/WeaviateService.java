@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviateCollectionSche
 import de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviatePropertyDefinition;
 import de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviateReferenceDefinition;
 import de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviateSchemas;
+import de.tum.cit.aet.artemis.core.config.weaviate.schema.entitySchemas.ProgrammingExerciseSchema;
 import de.tum.cit.aet.artemis.core.exception.WeaviateException;
 import io.weaviate.client6.v1.api.WeaviateClient;
 import io.weaviate.client6.v1.api.collections.CollectionHandle;
@@ -162,40 +163,40 @@ public class WeaviateService {
             @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, String exerciseType, @Nullable String programmingLanguage,
             @Nullable String difficulty, double maxPoints, String baseUrl) {
 
-        var programmingExerciseCollection = getCollection(WeaviateSchemas.PROGRAMMING_EXERCISES_COLLECTION);
+        var programmingExerciseCollection = getCollection(ProgrammingExerciseSchema.COLLECTION_NAME);
 
         Map<String, Object> properties = new HashMap<>();
-        properties.put(WeaviateSchemas.ExercisesProperties.EXERCISE_ID, exerciseId);
-        properties.put(WeaviateSchemas.ExercisesProperties.COURSE_ID, courseId);
-        properties.put(WeaviateSchemas.ExercisesProperties.TITLE, title);
-        properties.put(WeaviateSchemas.ExercisesProperties.EXERCISE_TYPE, exerciseType);
-        properties.put(WeaviateSchemas.ExercisesProperties.MAX_POINTS, maxPoints);
-        properties.put(WeaviateSchemas.ExercisesProperties.BASE_URL, baseUrl);
+        properties.put(ProgrammingExerciseSchema.Properties.EXERCISE_ID, exerciseId);
+        properties.put(ProgrammingExerciseSchema.Properties.COURSE_ID, courseId);
+        properties.put(ProgrammingExerciseSchema.Properties.TITLE, title);
+        properties.put(ProgrammingExerciseSchema.Properties.EXERCISE_TYPE, exerciseType);
+        properties.put(ProgrammingExerciseSchema.Properties.MAX_POINTS, maxPoints);
+        properties.put(ProgrammingExerciseSchema.Properties.BASE_URL, baseUrl);
 
         // Add optional fields only if they are not null
         if (courseName != null) {
-            properties.put(WeaviateSchemas.ExercisesProperties.COURSE_NAME, courseName);
+            properties.put(ProgrammingExerciseSchema.Properties.COURSE_NAME, courseName);
         }
         if (shortName != null) {
-            properties.put(WeaviateSchemas.ExercisesProperties.SHORT_NAME, shortName);
+            properties.put(ProgrammingExerciseSchema.Properties.SHORT_NAME, shortName);
         }
         if (problemStatement != null) {
-            properties.put(WeaviateSchemas.ExercisesProperties.PROBLEM_STATEMENT, problemStatement);
+            properties.put(ProgrammingExerciseSchema.Properties.PROBLEM_STATEMENT, problemStatement);
         }
         if (releaseDate != null) {
-            properties.put(WeaviateSchemas.ExercisesProperties.RELEASE_DATE, formatDate(releaseDate));
+            properties.put(ProgrammingExerciseSchema.Properties.RELEASE_DATE, formatDate(releaseDate));
         }
         if (startDate != null) {
-            properties.put(WeaviateSchemas.ExercisesProperties.START_DATE, formatDate(startDate));
+            properties.put(ProgrammingExerciseSchema.Properties.START_DATE, formatDate(startDate));
         }
         if (dueDate != null) {
-            properties.put(WeaviateSchemas.ExercisesProperties.DUE_DATE, formatDate(dueDate));
+            properties.put(ProgrammingExerciseSchema.Properties.DUE_DATE, formatDate(dueDate));
         }
         if (programmingLanguage != null) {
-            properties.put(WeaviateSchemas.ExercisesProperties.PROGRAMMING_LANGUAGE, programmingLanguage);
+            properties.put(ProgrammingExerciseSchema.Properties.PROGRAMMING_LANGUAGE, programmingLanguage);
         }
         if (difficulty != null) {
-            properties.put(WeaviateSchemas.ExercisesProperties.DIFFICULTY, difficulty);
+            properties.put(ProgrammingExerciseSchema.Properties.DIFFICULTY, difficulty);
         }
 
         try {
@@ -214,9 +215,9 @@ public class WeaviateService {
      * @param exerciseId the exercise ID
      */
     public void deleteProgrammingExercise(long exerciseId) {
-        var programmingExerciseCollection = getCollection(WeaviateSchemas.PROGRAMMING_EXERCISES_COLLECTION);
+        var programmingExerciseCollection = getCollection(ProgrammingExerciseSchema.COLLECTION_NAME);
 
-        var deleteResult = programmingExerciseCollection.data.deleteMany(Filter.property(WeaviateSchemas.ExercisesProperties.EXERCISE_ID).eq(exerciseId));
+        var deleteResult = programmingExerciseCollection.data.deleteMany(Filter.property(ProgrammingExerciseSchema.Properties.EXERCISE_ID).eq(exerciseId));
         log.debug("Deleted {} exercise entries for exercise ID {}", deleteResult.successful(), exerciseId);
     }
 
