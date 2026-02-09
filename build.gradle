@@ -159,9 +159,6 @@ configurations.configureEach {
     // required by JPlag, but not used in this project
     exclude group: "xalan", module: "serializer"
 
-    // we use jackson and want to exclude gson to avoid conflicts and security vulnerabilities
-    exclude group: "com.google.code.gson", module: "gson"
-
     // we do not really use kotlin libraries, exclude to avoid conflicts and security vulnerabilities
     exclude group: "org.jetbrains.kotlin", module: "kotlin-stdlib"
     exclude group: "org.jetbrains.kotlin", module: "kotlin-stdlib-jdk7"
@@ -221,7 +218,6 @@ dependencies {
     implementation "org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc"
     // OpenAI / OpenAI-compatible (dev, localhost:1234, etc.)
     implementation "org.springframework.ai:spring-ai-starter-model-openai"
-
 
     // we have to override those values to use the latest version
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
@@ -396,6 +392,14 @@ dependencies {
     implementation "com.bucket4j:bucket4j_jdk17:${bucket4j_version}"
     implementation "com.bucket4j:bucket4j_jdk17-hazelcast:${bucket4j_version}"
 
+    // Weaviate vector database client for semantic search
+    implementation "io.weaviate:client6:${weaviate_client_version}"
+    constraints {
+        implementation("com.google.code.gson:gson:2.13.2") {
+            because("Required by Weaviate client v6 for JSON serialization")
+        }
+    }
+
     implementation "org.opensaml:opensaml-saml-api:${opensaml_version}"
     implementation "org.opensaml:opensaml-saml-impl:${opensaml_version}"
 
@@ -489,6 +493,7 @@ dependencies {
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.4"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.7.1"
     testImplementation "com.redis:testcontainers-redis:2.2.4"
+    testImplementation "org.testcontainers:weaviate:1.21.4"
     testImplementation "com.tngtech.archunit:archunit:1.4.1"
     testImplementation "org.skyscreamer:jsonassert:1.5.3"
 
