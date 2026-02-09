@@ -19,7 +19,6 @@ export type ReviewCommentWidgetManagerConfig = {
     onReply: (payload: { threadId: number; comment: CreateComment }) => void;
     onUpdate: (payload: { commentId: number; content: UpdateCommentContent }) => void;
     onToggleResolved: (payload: { threadId: number; resolved: boolean }) => void;
-    requestRender: () => void;
     showLocationWarning?: () => boolean;
 };
 
@@ -135,6 +134,8 @@ export class ReviewCommentWidgetManager {
             this.draftWidgetRefs.set(widgetKey, widgetRef);
         }
         widgetRef.setInput('canSubmit', this.config.canSubmit ? this.config.canSubmit() : true);
+        // Re-adding the same draft line must replace the existing Monaco widget to avoid stacked view zones.
+        this.editor.disposeWidgetsByPrefix(this.buildDraftWidgetId(fileName, lineNumberZeroBased));
         this.editor.addLineWidget(lineNumber, this.buildDraftWidgetId(fileName, lineNumberZeroBased), widgetRef.location.nativeElement);
         this.config.onAdd?.({ lineNumber, fileName });
     }
@@ -161,6 +162,8 @@ export class ReviewCommentWidgetManager {
                 this.draftWidgetRefs.set(widgetKey, widgetRef);
             }
             widgetRef.setInput('canSubmit', this.config.canSubmit ? this.config.canSubmit() : true);
+            // Keep rendering idempotent when renderWidgets() runs repeatedly for the same draft.
+            this.editor.disposeWidgetsByPrefix(this.buildDraftWidgetId(activeFileName, line));
             this.editor.addLineWidget(line + 1, this.buildDraftWidgetId(activeFileName, line), widgetRef.location.nativeElement);
         }
     }

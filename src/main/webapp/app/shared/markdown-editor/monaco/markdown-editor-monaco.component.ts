@@ -784,7 +784,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 onReply: (payload) => this.onReplyReviewComment.emit(payload),
                 onUpdate: (payload) => this.onUpdateReviewComment.emit(payload),
                 onToggleResolved: (payload) => this.onToggleResolveReviewThread.emit(payload),
-                requestRender: () => this.renderEditorWidgets(),
                 showLocationWarning: () => this.showLocationWarning(),
             });
         }

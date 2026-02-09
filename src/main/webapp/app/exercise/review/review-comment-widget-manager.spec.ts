@@ -67,7 +67,6 @@ describe('ReviewCommentWidgetManager', () => {
         onReply: jest.fn(),
         onUpdate: jest.fn(),
         onToggleResolved: jest.fn(),
-        requestRender: jest.fn(),
         ...overrides,
     });
 
@@ -109,6 +108,22 @@ describe('ReviewCommentWidgetManager', () => {
 
         expect(editor.disposeWidgetsByPrefix).toHaveBeenCalledWith(expect.stringContaining('review-comment-'));
         expect(draftRef.destroy).toHaveBeenCalled();
+    });
+
+    it('should not create duplicate draft widgets when adding the same line twice', () => {
+        const editor = createEditorMock();
+        const vcRef = createViewContainerRefMock();
+        const config = createConfig();
+        const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, config);
+
+        manager.updateHoverButton();
+        const addCallback = editor.setLineDecorationsHoverButton.mock.calls[0][1];
+        addCallback(5);
+        addCallback(5);
+
+        expect(vcRef.createComponent).toHaveBeenCalledOnce();
+        expect(editor.addLineWidget).toHaveBeenCalledTimes(2);
+        expect(editor.disposeWidgetsByPrefix).toHaveBeenCalledWith(expect.stringContaining('review-comment-file.java-4'));
     });
 
     it('should add and remove thread widgets incrementally', () => {
