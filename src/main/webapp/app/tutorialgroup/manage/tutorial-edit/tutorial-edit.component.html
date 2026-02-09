@@ -1,0 +1,45 @@
+<div class="frame">
+    <h3>General Information</h3>
+    <div class="input-frame">
+        <div class="input-column">
+            <p-inputgroup>
+                <p-inputgroup-addon>
+                    <i class="pi pi-language"></i>
+                </p-inputgroup-addon>
+                <input pInputText [(ngModel)]="title" placeholder="Title" />
+            </p-inputgroup>
+            <p-inputgroup>
+                <p-inputgroup-addon>
+                    <i class="pi pi-flag"></i>
+                </p-inputgroup-addon>
+                <p-select [options]="languages" [(ngModel)]="selectedLanguage" optionLabel="name" placeholder="Language" />
+            </p-inputgroup>
+            <p-inputgroup>
+                <p-inputgroup-addon>
+                    <i class="pi pi-building"></i>
+                </p-inputgroup-addon>
+                <input pInputText [(ngModel)]="campus" placeholder="Campus" />
+            </p-inputgroup>
+        </div>
+        <div class="input-column">
+            <p-inputgroup>
+                <p-inputgroup-addon>
+                    <i class="pi pi-user"></i>
+                </p-inputgroup-addon>
+                <input pInputText placeholder="Tutor" />
+            </p-inputgroup>
+            <div class="toggle-input">
+                <i class="pi pi-compass"></i>
+                <span>Online</span>
+                <p-toggleswitch [(ngModel)]="online" />
+            </div>
+            <p-inputgroup>
+                <p-inputgroup-addon>
+                    <i class="pi pi-hashtag"></i>
+                </p-inputgroup-addon>
+                <p-inputnumber inputId="integeronly" [(ngModel)]="capacity" />
+            </p-inputgroup>
+        </div>
+    </div>
+    <h3>Session Plan</h3>
+</div>
