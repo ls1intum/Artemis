@@ -31,7 +31,7 @@ function parseEnv(path) {
         const trimmed = line.trim();
         if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('=')) continue;
         const [key, ...rest] = trimmed.split('=');
-        vars[key.trim()] = rest.join('=').trim();
+        vars[key.trim()] = rest.join('=').trim().replace(/^(['"])(.*)\1$/, '$2');
     }
     return vars;
 }

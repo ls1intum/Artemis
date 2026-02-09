@@ -22,7 +22,7 @@ tasks.withType(Test).configureEach {
             if (trimmed && !trimmed.startsWith('#') && trimmed.contains('=')) {
                 def parts = trimmed.split('=', 2)
                 def key = parts[0].trim()
-                def value = parts[1].trim()
+                def value = parts[1].trim().replaceAll(/^(['"])(.*)\1$/, '$2')
                 // Convert ENV_VAR_NAME to env.var.name for use as system/Spring properties
                 systemProperty key.toLowerCase().replaceAll('_', '.'), value
             }

@@ -124,7 +124,7 @@ public interface IrisCourseChatSessionRepository extends ArtemisJpaRepository<Ir
      * <p>
      *
      * @param courseId the id of the course
-     * @return set of chat sessions with their messages (may contain duplicates from the LEFT JOIN)
+     * @return set of chat sessions with their messages
      */
     @Query("""
             SELECT s

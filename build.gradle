@@ -40,7 +40,7 @@ if (envFile.exists()) {
         if (trimmed && !trimmed.startsWith('#') && trimmed.contains('=')) {
             def parts = trimmed.split('=', 2)
             // Convert UPPER_CASE to lower_case to match gradle.properties convention
-            ext.set(parts[0].trim().toLowerCase(), parts[1].trim())
+            ext.set(parts[0].trim().toLowerCase(), parts[1].trim().replaceAll(/^(['"])(.*)\1$/, '$2'))
         }
     }
 }
@@ -537,7 +537,8 @@ apply from: "gradle/openapi.gradle"
 dependencyManagement {
     imports {
         // BOM uses 3-part versions (e.g. 18.1.0); POSTGRES_VERSION from .env may be 2-part (e.g. 18.1)
-        def bomVersion = postgres_version.count('.') < 2 ? "${postgres_version}.0" : postgres_version
+        def pgVersion = findProperty('postgres_version') ?: '18.1'
+        def bomVersion = pgVersion.count('.') < 2 ? "${pgVersion}.0" : pgVersion
         mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:${bomVersion}"
         mavenBom "org.testcontainers:testcontainers-bom:2.0.3"
     }
