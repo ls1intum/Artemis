@@ -49,6 +49,20 @@ For detailed information about passkey authentication, configuration, and the ap
     This minimizes the attack surface for critical security operations.
 </Callout>
 
+## Terminology
+
+<Callout variant={CalloutVariant.info}>
+  **Import Exercise** requires at least Editor role in **both** the source and target course.
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+  **Course membership terminology:**
+  - **"if in course"**: User must be assigned to the course as staff (member of the course's TA, Editor, or Instructor group)
+  - **"if enrolled"**: User must be enrolled as a student (member of the course's Student group)
+
+  Both require the user to be associated with the specific course - platform-wide roles alone are not sufficient.
+</Callout>
+
 ## Navigation
 
 [//]: # (Refers to CourseManagementResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/core/web/course/CourseManagementResource.java)
@@ -120,20 +134,6 @@ The following visibility rules apply to **all exercise types**:
 
 <Callout variant={CalloutVariant.info}>
   **Exam exercises** have separate submission handling and do not follow the standard due date rejection rules.
-</Callout>
-
-### Terminology
-
-<Callout variant={CalloutVariant.info}>
-  **Import Exercise** requires at least Editor role in **both** the source and target course.
-</Callout>
-
-<Callout variant={CalloutVariant.info}>
-  **Course membership terminology:**
-  - **"if in course"**: User must be assigned to the course as staff (member of the course's TA, Editor, or Instructor group)
-  - **"if enrolled"**: User must be enrolled as a student (member of the course's Student group)
-
-  Both require the user to be associated with the specific course - platform-wide roles alone are not sufficient.
 </Callout>
 
 ### General Functionality
