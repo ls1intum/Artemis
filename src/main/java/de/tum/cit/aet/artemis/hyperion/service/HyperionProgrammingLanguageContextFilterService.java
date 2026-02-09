@@ -44,7 +44,8 @@ public class HyperionProgrammingLanguageContextFilterService {
     private static final List<String> GLOBAL_EXCLUSIONS = List.of("glob:**/.git/**", "glob:**/.idea/**", "glob:**/.vscode/**", "glob:**/.DS_Store", "glob:**/bin/**",
             "glob:**/obj/**", "glob:**/out/**", "glob:**/target/**", "glob:**/build/**", "glob:**/node_modules/**", "glob:**/__pycache__/**", "glob:**/*.class", "glob:**/*.jar",
             "glob:**/*.war", "glob:**/*.o", "glob:**/*.obj", "glob:**/*.dll", "glob:**/*.exe", "glob:**/*.so", "glob:**/*.dylib", "glob:**/*.db", "glob:**/*.sqlite",
-            "glob:**/*.png", "glob:**/*.jpg", "glob:**/*.jpeg", "glob:**/*.svg", "glob:**/*.zip", "glob:**/*.tar.gz");
+            "glob:**/*.png", "glob:**/*.jpg", "glob:**/*.jpeg", "glob:**/*.svg", "glob:**/*.zip", "glob:**/*.tar.gz", "glob:**/exercise-details.json",
+            "glob:**/Exercise-Details-*.json", "glob:**/problem-statement.md", "glob:**/Problem-Statement-*.md");
 
     // "Safety Net": Broad list of text-based extensions we are willing to read
     private static final Set<String> SAFE_TEXT_EXTENSIONS = Set.of(
@@ -57,8 +58,7 @@ public class HyperionProgrammingLanguageContextFilterService {
             ".md", ".txt", ".csv", ".adoc", ".rst");
 
     public HyperionProgrammingLanguageContextFilterService() {
-        register(new ExclusionStrategy(ProgrammingLanguage.JAVA,
-                List.of("glob:**/gradlew*", "glob:**/mvnw*", "glob:**/.settings/**", "glob:**/.classpath", "glob:**/.project", "glob:**/exercise-details.json")));
+        register(new ExclusionStrategy(ProgrammingLanguage.JAVA, List.of("glob:**/gradlew*", "glob:**/mvnw*", "glob:**/.settings/**", "glob:**/.classpath", "glob:**/.project")));
 
         register(new ExclusionStrategy(ProgrammingLanguage.PYTHON, List.of("glob:**/venv/**", "glob:**/.venv/**", "glob:**/env/**", "glob:**/*.pyc", "glob:**/*.egg-info/**")));
 
