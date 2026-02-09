@@ -17,7 +17,7 @@ class WeaviateClientConfigurationTest {
 
     @Test
     void testWeaviateClientCreationSecure() {
-        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "test-host", 443, 50051, "https");
+        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "test-host", 443, 50051, "https", "");
 
         WeaviateClientConfiguration config = new WeaviateClientConfiguration(properties);
 
@@ -33,7 +33,7 @@ class WeaviateClientConfigurationTest {
 
     @Test
     void testWeaviateClientCreationNonSecure() {
-        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "localhost", 8001, 50051, "http");
+        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "localhost", 8001, 50051, "http", "");
 
         WeaviateClientConfiguration config = new WeaviateClientConfiguration(properties);
 
@@ -49,7 +49,7 @@ class WeaviateClientConfigurationTest {
 
     @Test
     void testWeaviateClientConfigurationFailure() {
-        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "invalid-host", 8001, 50051, "http");
+        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "invalid-host", 8001, 50051, "http", "");
 
         WeaviateClientConfiguration config = new WeaviateClientConfiguration(properties);
 

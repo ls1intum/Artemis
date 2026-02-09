@@ -165,10 +165,11 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     private static void registerWeaviateProperties(DynamicPropertyRegistry registry) {
         if (weaviateContainer != null && weaviateContainer.isRunning()) {
             registry.add("artemis.weaviate.enabled", () -> "true");
-            registry.add("artemis.weaviate.host", weaviateContainer::getHost);
-            registry.add("artemis.weaviate.port", () -> weaviateContainer.getMappedPort(WEAVIATE_HTTP_PORT));
+            registry.add("artemis.weaviate.http-host", weaviateContainer::getHost);
+            registry.add("artemis.weaviate.http-port", () -> weaviateContainer.getMappedPort(WEAVIATE_HTTP_PORT));
             registry.add("artemis.weaviate.grpc-port", () -> weaviateContainer.getMappedPort(WEAVIATE_GRPC_PORT));
-            registry.add("artemis.weaviate.schema-validation.enabled", () -> "false");
+            registry.add("artemis.weaviate.scheme", () -> "http");
+            registry.add("artemis.weaviate.collection-prefix", () -> "Test");
         }
     }
 

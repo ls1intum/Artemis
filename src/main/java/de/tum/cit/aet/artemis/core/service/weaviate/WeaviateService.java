@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.config.weaviate.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviateCollectionSchema;
 import de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviatePropertyDefinition;
 import de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviateReferenceDefinition;
@@ -40,8 +41,21 @@ public class WeaviateService {
 
     private final WeaviateClient client;
 
-    public WeaviateService(WeaviateClient client) {
+    private final String collectionPrefix;
+
+    public WeaviateService(WeaviateClient client, WeaviateConfigurationProperties properties) {
         this.client = client;
+        this.collectionPrefix = properties.collectionPrefix();
+    }
+
+    /**
+     * Resolves the actual collection name by prepending the configured prefix.
+     *
+     * @param baseName the base collection name (e.g. "Exercises")
+     * @return the prefixed collection name (e.g. "TestExercises" when prefix is "Test")
+     */
+    private String resolveCollectionName(String baseName) {
+        return collectionPrefix + baseName;
     }
 
     /**
@@ -65,7 +79,7 @@ public class WeaviateService {
      * @param schema the schema definition
      */
     private void ensureCollectionExists(WeaviateCollectionSchema schema) {
-        String collectionName = schema.collectionName();
+        String collectionName = resolveCollectionName(schema.collectionName());
 
         try {
             if (client.collections.exists(collectionName)) {
@@ -86,7 +100,7 @@ public class WeaviateService {
 
                 // Add references
                 for (WeaviateReferenceDefinition ref : schema.references()) {
-                    col.references(ReferenceProperty.to(ref.name(), ref.targetCollection()));
+                    col.references(ReferenceProperty.to(ref.name(), resolveCollectionName(ref.targetCollection())));
                 }
 
                 return col;
@@ -125,7 +139,7 @@ public class WeaviateService {
      * @return the collection handle
      */
     public CollectionHandle<Map<String, Object>> getCollection(String collectionName) {
-        return client.collections.use(collectionName);
+        return client.collections.use(resolveCollectionName(collectionName));
     }
 
     /**

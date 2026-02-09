@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +19,6 @@ import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
-import io.weaviate.client6.v1.api.collections.query.Filter;
 
 /**
  * Integration test for {@link ExerciseWeaviateService} using a real Weaviate instance via Testcontainers.
@@ -27,8 +27,15 @@ import io.weaviate.client6.v1.api.collections.query.Filter;
  * The Weaviate and transformer inference containers are started by the base class
  * {@link AbstractSpringIntegrationLocalCILocalVCTest}. If Docker is not available,
  * all tests in this class are skipped via {@code assumeTrue}.
+ * <p>
+ * Each test uses unique exercise and course IDs via atomic counters to avoid
+ * interference with other tests running in parallel.
  */
 class ExerciseWeaviateServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+
+    private static final AtomicLong EXERCISE_ID_COUNTER = new AtomicLong(500_000);
+
+    private static final AtomicLong COURSE_ID_COUNTER = new AtomicLong(600_000);
 
     @Autowired
     private ExerciseWeaviateService exerciseWeaviateService;
@@ -37,11 +44,8 @@ class ExerciseWeaviateServiceIntegrationTest extends AbstractSpringIntegrationLo
     private WeaviateService weaviateService;
 
     @BeforeEach
-    void cleanupWeaviateExerciseData() {
+    void checkWeaviateAvailable() {
         assumeTrue(exerciseWeaviateService.isWeaviateAvailable(), "Weaviate is not available (Docker not running?), skipping test");
-        // Delete all exercise objects from the collection for test isolation
-        var collection = weaviateService.getCollection(WeaviateSchemas.EXERCISES_COLLECTION);
-        collection.data.deleteMany(Filter.property(WeaviateSchemas.ExercisesProperties.EXERCISE_ID).gte(0));
     }
 
     private ProgrammingExercise createTestExercise(long exerciseId, long courseId) {
@@ -67,11 +71,13 @@ class ExerciseWeaviateServiceIntegrationTest extends AbstractSpringIntegrationLo
 
     @Test
     void testInsertExercise_shouldStoreInWeaviate() {
-        ProgrammingExercise exercise = createTestExercise(1L, 100L);
+        long exerciseId = EXERCISE_ID_COUNTER.getAndIncrement();
+        long courseId = COURSE_ID_COUNTER.getAndIncrement();
+        ProgrammingExercise exercise = createTestExercise(exerciseId, courseId);
 
         exerciseWeaviateService.insertExercise(exercise);
 
-        List<Map<String, Object>> results = weaviateService.fetchProgrammingExercisesByCourseId(100L, false);
+        List<Map<String, Object>> results = weaviateService.fetchProgrammingExercisesByCourseId(courseId, false);
         assertThat(results).hasSize(1);
 
         Map<String, Object> stored = results.getFirst();
@@ -84,45 +90,51 @@ class ExerciseWeaviateServiceIntegrationTest extends AbstractSpringIntegrationLo
 
     @Test
     void testFetchExercises_shouldReturnOnlyReleasedForStudents() {
+        long courseId = COURSE_ID_COUNTER.getAndIncrement();
+
         // Insert a released exercise (release date in the past)
-        ProgrammingExercise releasedExercise = createTestExercise(1L, 100L);
+        ProgrammingExercise releasedExercise = createTestExercise(EXERCISE_ID_COUNTER.getAndIncrement(), courseId);
         releasedExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
         exerciseWeaviateService.insertExercise(releasedExercise);
 
         // Insert an unreleased exercise (release date in the future)
-        ProgrammingExercise unreleasedExercise = createTestExercise(2L, 100L);
+        ProgrammingExercise unreleasedExercise = createTestExercise(EXERCISE_ID_COUNTER.getAndIncrement(), courseId);
         unreleasedExercise.setTitle("Unreleased Exercise");
         unreleasedExercise.setReleaseDate(ZonedDateTime.now().plusDays(30));
         exerciseWeaviateService.insertExercise(unreleasedExercise);
 
         // Student view (isAtLeastTutor=false -> filterReleasedOnly=true): only released exercises
-        List<Map<String, Object>> studentResults = exerciseWeaviateService.fetchProgrammingExercisesForCourse(100L, false);
+        List<Map<String, Object>> studentResults = exerciseWeaviateService.fetchProgrammingExercisesForCourse(courseId, false);
         assertThat(studentResults).hasSize(1);
         assertThat(studentResults.getFirst()).containsEntry(WeaviateSchemas.ExercisesProperties.TITLE, "Test Programming Exercise");
 
         // Tutor view (isAtLeastTutor=true -> filterReleasedOnly=false): all exercises
-        List<Map<String, Object>> tutorResults = exerciseWeaviateService.fetchProgrammingExercisesForCourse(100L, true);
+        List<Map<String, Object>> tutorResults = exerciseWeaviateService.fetchProgrammingExercisesForCourse(courseId, true);
         assertThat(tutorResults).hasSize(2);
     }
 
     @Test
     void testDeleteExercise_shouldRemoveFromWeaviate() {
-        ProgrammingExercise exercise = createTestExercise(1L, 100L);
+        long exerciseId = EXERCISE_ID_COUNTER.getAndIncrement();
+        long courseId = COURSE_ID_COUNTER.getAndIncrement();
+        ProgrammingExercise exercise = createTestExercise(exerciseId, courseId);
         exerciseWeaviateService.insertExercise(exercise);
 
         // Verify it exists
-        assertThat(weaviateService.fetchProgrammingExercisesByCourseId(100L, false)).hasSize(1);
+        assertThat(weaviateService.fetchProgrammingExercisesByCourseId(courseId, false)).hasSize(1);
 
         // Delete
-        exerciseWeaviateService.deleteExercise(1L);
+        exerciseWeaviateService.deleteExercise(exerciseId);
 
         // Verify it's gone
-        assertThat(weaviateService.fetchProgrammingExercisesByCourseId(100L, false)).isEmpty();
+        assertThat(weaviateService.fetchProgrammingExercisesByCourseId(courseId, false)).isEmpty();
     }
 
     @Test
     void testUpdateExercise_shouldReplaceInWeaviate() {
-        ProgrammingExercise exercise = createTestExercise(1L, 100L);
+        long exerciseId = EXERCISE_ID_COUNTER.getAndIncrement();
+        long courseId = COURSE_ID_COUNTER.getAndIncrement();
+        ProgrammingExercise exercise = createTestExercise(exerciseId, courseId);
         exerciseWeaviateService.insertExercise(exercise);
 
         // Update the exercise
@@ -131,14 +143,16 @@ class ExerciseWeaviateServiceIntegrationTest extends AbstractSpringIntegrationLo
         exerciseWeaviateService.updateExercise(exercise);
 
         // Verify the update - should still be one object, not two
-        List<Map<String, Object>> results = weaviateService.fetchProgrammingExercisesByCourseId(100L, false);
+        List<Map<String, Object>> results = weaviateService.fetchProgrammingExercisesByCourseId(courseId, false);
         assertThat(results).hasSize(1);
         assertThat(results.getFirst()).containsEntry(WeaviateSchemas.ExercisesProperties.TITLE, "Updated Exercise Title");
     }
 
     @Test
     void testInsertExercise_withNullOptionalFields_shouldStoreSuccessfully() {
-        ProgrammingExercise exercise = createTestExercise(1L, 100L);
+        long exerciseId = EXERCISE_ID_COUNTER.getAndIncrement();
+        long courseId = COURSE_ID_COUNTER.getAndIncrement();
+        ProgrammingExercise exercise = createTestExercise(exerciseId, courseId);
         exercise.setShortName(null);
         exercise.setProblemStatement(null);
         exercise.setDifficulty(null);
@@ -149,20 +163,21 @@ class ExerciseWeaviateServiceIntegrationTest extends AbstractSpringIntegrationLo
         exerciseWeaviateService.insertExercise(exercise);
 
         // Use tutor view (no release date filter) since release_date is null
-        List<Map<String, Object>> results = exerciseWeaviateService.fetchProgrammingExercisesForCourse(100L, true);
+        List<Map<String, Object>> results = exerciseWeaviateService.fetchProgrammingExercisesForCourse(courseId, true);
         assertThat(results).hasSize(1);
         assertThat(results.getFirst()).containsEntry(WeaviateSchemas.ExercisesProperties.TITLE, "Test Programming Exercise");
     }
 
     @Test
     void testInsertExercise_withNullId_shouldNotInsert() {
-        ProgrammingExercise exercise = createTestExercise(1L, 100L);
+        long courseId = COURSE_ID_COUNTER.getAndIncrement();
+        ProgrammingExercise exercise = createTestExercise(EXERCISE_ID_COUNTER.getAndIncrement(), courseId);
         exercise.setId(null);
 
         exerciseWeaviateService.insertExercise(exercise);
 
         // Should not have inserted anything
-        List<Map<String, Object>> results = exerciseWeaviateService.fetchProgrammingExercisesForCourse(100L, true);
+        List<Map<String, Object>> results = exerciseWeaviateService.fetchProgrammingExercisesForCourse(courseId, true);
         assertThat(results).isEmpty();
     }
 
@@ -173,14 +188,16 @@ class ExerciseWeaviateServiceIntegrationTest extends AbstractSpringIntegrationLo
 
     @Test
     void testInsertMultipleExercises_shouldAllBeRetrievable() {
-        ProgrammingExercise exercise1 = createTestExercise(1L, 100L);
+        long courseId = COURSE_ID_COUNTER.getAndIncrement();
+
+        ProgrammingExercise exercise1 = createTestExercise(EXERCISE_ID_COUNTER.getAndIncrement(), courseId);
         exerciseWeaviateService.insertExercise(exercise1);
 
-        ProgrammingExercise exercise2 = createTestExercise(2L, 100L);
+        ProgrammingExercise exercise2 = createTestExercise(EXERCISE_ID_COUNTER.getAndIncrement(), courseId);
         exercise2.setTitle("Second Exercise");
         exerciseWeaviateService.insertExercise(exercise2);
 
-        List<Map<String, Object>> results = exerciseWeaviateService.fetchProgrammingExercisesForCourse(100L, true);
+        List<Map<String, Object>> results = exerciseWeaviateService.fetchProgrammingExercisesForCourse(courseId, true);
         assertThat(results).hasSize(2);
 
         List<String> titles = results.stream().map(r -> (String) r.get(WeaviateSchemas.ExercisesProperties.TITLE)).toList();

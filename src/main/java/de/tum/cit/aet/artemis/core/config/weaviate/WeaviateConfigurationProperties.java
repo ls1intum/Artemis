@@ -12,15 +12,16 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * When Weaviate is enabled, all properties must be explicitly configured.
  * Validation is performed in {@link WeaviateClientConfiguration} and {@link de.tum.cit.aet.artemis.core.config.ConfigurationValidator#validateWeaviateConfiguration}.
  *
- * @param enabled  whether Weaviate integration is enabled
- * @param httpHost the Weaviate server HTTP host
- * @param httpPort the Weaviate HTTP port
- * @param grpcPort the Weaviate gRPC port
- * @param scheme   the HTTP scheme (http/https) - determines secure connection type
+ * @param enabled          whether Weaviate integration is enabled
+ * @param httpHost         the Weaviate server HTTP host
+ * @param httpPort         the Weaviate HTTP port
+ * @param grpcPort         the Weaviate gRPC port
+ * @param scheme           the HTTP scheme (http/https) - determines secure connection type
+ * @param collectionPrefix prefix prepended to all Weaviate collection names (useful for test isolation)
  */
 @ConfigurationProperties(prefix = "artemis.weaviate")
 public record WeaviateConfigurationProperties(boolean enabled, String httpHost, @DefaultValue(DEFAULT_HTTP_PORT) int httpPort, @DefaultValue(DEFAULT_GRPC_PORT) int grpcPort,
-        String scheme) {
+        String scheme, @DefaultValue("") String collectionPrefix) {
 
     public static final String DEFAULT_HTTP_PORT = "8001";
 
