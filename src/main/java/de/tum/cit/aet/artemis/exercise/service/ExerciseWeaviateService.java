@@ -2,6 +2,10 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -11,9 +15,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.config.weaviate.schema.entitySchemas.ProgrammingExerciseSchema;
 import de.tum.cit.aet.artemis.core.service.weaviate.WeaviateService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import io.weaviate.client6.v1.api.collections.query.Filter;
 
 /**
  * Service for synchronizing exercise metadata with Weaviate vector database.
@@ -53,16 +59,7 @@ public class ExerciseWeaviateService {
         }
 
         try {
-            var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-            String programmingLanguage = null;
-            if (exercise instanceof ProgrammingExercise programmingExercise && programmingExercise.getProgrammingLanguage() != null) {
-                programmingLanguage = programmingExercise.getProgrammingLanguage().name();
-            }
-
-            weaviateService.get().insertProgrammingExercise(exercise.getId(), course.getId(), course.getTitle(), exercise.getTitle(), exercise.getShortName(),
-                    exercise.getProblemStatement(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getType(), programmingLanguage,
-                    exercise.getDifficulty() != null ? exercise.getDifficulty().name() : null, exercise.getMaxPoints() != null ? exercise.getMaxPoints() : 0.0, serverUrl);
-
+            insertExerciseIntoWeaviate(exercise);
             log.debug("Successfully inserted exercise {} '{}' into Weaviate", exercise.getId(), exercise.getTitle());
         }
         catch (Exception e) {
@@ -71,7 +68,7 @@ public class ExerciseWeaviateService {
     }
 
     /**
-     * Updates exercise metadata in Weaviate.
+     * Updates exercise metadata in Weaviate by deleting and re-inserting.
      * If Weaviate is not enabled, this method does nothing.
      *
      * @param exercise the exercise to update
@@ -88,16 +85,8 @@ public class ExerciseWeaviateService {
         }
 
         try {
-            var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-            String programmingLanguage = null;
-            if (exercise instanceof ProgrammingExercise programmingExercise && programmingExercise.getProgrammingLanguage() != null) {
-                programmingLanguage = programmingExercise.getProgrammingLanguage().name();
-            }
-
-            weaviateService.get().updateProgrammingExercise(exercise.getId(), course.getId(), course.getTitle(), exercise.getTitle(), exercise.getShortName(),
-                    exercise.getProblemStatement(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getType(), programmingLanguage,
-                    exercise.getDifficulty() != null ? exercise.getDifficulty().name() : null, exercise.getMaxPoints() != null ? exercise.getMaxPoints() : 0.0, serverUrl);
-
+            deleteExerciseFromWeaviate(exercise.getId());
+            insertExerciseIntoWeaviate(exercise);
             log.debug("Successfully updated exercise {} '{}' in Weaviate", exercise.getId(), exercise.getTitle());
         }
         catch (Exception e) {
@@ -118,7 +107,7 @@ public class ExerciseWeaviateService {
         }
 
         try {
-            weaviateService.get().deleteProgrammingExercise(exerciseId);
+            deleteExerciseFromWeaviate(exerciseId);
             log.debug("Successfully deleted exercise {} from Weaviate", exerciseId);
         }
         catch (Exception e) {
@@ -135,4 +124,71 @@ public class ExerciseWeaviateService {
         return weaviateService.isPresent();
     }
 
+    /**
+     * Inserts exercise data into the Weaviate collection.
+     *
+     * @param exercise the exercise to insert
+     * @throws Exception if the insertion fails
+     */
+    private void insertExerciseIntoWeaviate(Exercise exercise) throws Exception {
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        var collection = weaviateService.get().getCollection(ProgrammingExerciseSchema.COLLECTION_NAME);
+
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(ProgrammingExerciseSchema.Properties.EXERCISE_ID, exercise.getId());
+        properties.put(ProgrammingExerciseSchema.Properties.COURSE_ID, course.getId());
+        properties.put(ProgrammingExerciseSchema.Properties.TITLE, exercise.getTitle());
+        properties.put(ProgrammingExerciseSchema.Properties.EXERCISE_TYPE, exercise.getType());
+        properties.put(ProgrammingExerciseSchema.Properties.MAX_POINTS, exercise.getMaxPoints() != null ? exercise.getMaxPoints() : 0.0);
+        properties.put(ProgrammingExerciseSchema.Properties.BASE_URL, serverUrl);
+
+        // Add optional fields only if they are not null
+        if (course.getTitle() != null) {
+            properties.put(ProgrammingExerciseSchema.Properties.COURSE_NAME, course.getTitle());
+        }
+        if (exercise.getShortName() != null) {
+            properties.put(ProgrammingExerciseSchema.Properties.SHORT_NAME, exercise.getShortName());
+        }
+        if (exercise.getProblemStatement() != null) {
+            properties.put(ProgrammingExerciseSchema.Properties.PROBLEM_STATEMENT, exercise.getProblemStatement());
+        }
+        if (exercise.getReleaseDate() != null) {
+            properties.put(ProgrammingExerciseSchema.Properties.RELEASE_DATE, formatDate(exercise.getReleaseDate()));
+        }
+        if (exercise.getStartDate() != null) {
+            properties.put(ProgrammingExerciseSchema.Properties.START_DATE, formatDate(exercise.getStartDate()));
+        }
+        if (exercise.getDueDate() != null) {
+            properties.put(ProgrammingExerciseSchema.Properties.DUE_DATE, formatDate(exercise.getDueDate()));
+        }
+        if (exercise instanceof ProgrammingExercise programmingExercise && programmingExercise.getProgrammingLanguage() != null) {
+            properties.put(ProgrammingExerciseSchema.Properties.PROGRAMMING_LANGUAGE, programmingExercise.getProgrammingLanguage().name());
+        }
+        if (exercise.getDifficulty() != null) {
+            properties.put(ProgrammingExerciseSchema.Properties.DIFFICULTY, exercise.getDifficulty().name());
+        }
+
+        collection.data.insert(properties);
+    }
+
+    /**
+     * Deletes all exercise entries for the given exercise ID from the Weaviate collection.
+     *
+     * @param exerciseId the exercise ID
+     */
+    private void deleteExerciseFromWeaviate(long exerciseId) {
+        var collection = weaviateService.get().getCollection(ProgrammingExerciseSchema.COLLECTION_NAME);
+        var deleteResult = collection.data.deleteMany(Filter.property(ProgrammingExerciseSchema.Properties.EXERCISE_ID).eq(exerciseId));
+        log.debug("Deleted {} exercise entries for exercise ID {}", deleteResult.successful(), exerciseId);
+    }
+
+    /**
+     * Formats a ZonedDateTime to RFC3339 format required by Weaviate.
+     *
+     * @param dateTime the date time to format
+     * @return the formatted date string
+     */
+    private String formatDate(ZonedDateTime dateTime) {
+        return dateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    }
 }
