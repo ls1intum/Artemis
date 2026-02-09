@@ -330,7 +330,7 @@ public class WeaviateService {
             var textMatchFilter = Filter.or(titleFilter, problemFilter);
             textFilters.add(textMatchFilter);
 
-            Filter finalFilter = textFilters.get(0);
+            Filter finalFilter = textFilters.getFirst();
             for (int i = 1; i < textFilters.size(); i++) {
                 finalFilter = finalFilter.and(textFilters.get(i));
             }
