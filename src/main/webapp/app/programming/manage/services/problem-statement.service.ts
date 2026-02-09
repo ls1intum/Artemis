@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, WritableSignal, inject } from '@angular/core';
 import { Observable, OperatorFunction, catchError, finalize, map, of } from 'rxjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -18,6 +19,7 @@ import {
 export interface OperationResult {
     success: boolean;
     content?: string;
+    errorHandled?: boolean;
 }
 
 // Type aliases for backward compatibility
@@ -140,7 +142,10 @@ export class ProblemStatementService {
                     }
                     return { success, content: getContent(response) };
                 }),
-                catchError(() => of({ success: false })),
+                catchError((error) => {
+                    const handledByInterceptor = error instanceof HttpErrorResponse && !!error.error?.errorKey;
+                    return of({ success: false, errorHandled: handledByInterceptor });
+                }),
             );
     }
 }

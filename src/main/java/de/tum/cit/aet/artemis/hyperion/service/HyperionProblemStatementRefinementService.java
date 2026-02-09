@@ -109,7 +109,7 @@ public class HyperionProblemStatementRefinementService {
             throw new InternalServerErrorAlertException("Refined problem statement is null", "ProblemStatement", "ProblemStatementRefinement.problemStatementRefinementNull");
         }
 
-        return validateAndReturnResponse(originalProblemStatementText, refinedProblemStatementText);
+        return validateAndReturnResponse(sanitizedProblemStatement, refinedProblemStatementText);
     }
 
     /**

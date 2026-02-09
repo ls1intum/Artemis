@@ -197,7 +197,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                             { injector: this.injector },
                         );
                     }
-                } else {
+                } else if (!result.errorHandled) {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
                 }
             },
@@ -233,7 +233,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                         },
                         { injector: this.injector },
                     );
-                } else {
+                } else if (!result.errorHandled) {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
                 }
             },

@@ -499,7 +499,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         this.currentProblemStatement.set(draftContent);
                     }
                     this.refinementPrompt.set('');
-                } else {
+                } else if (!result.errorHandled) {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
                 }
             },
@@ -527,7 +527,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         const refinedContent = result.content;
                         afterNextRender(() => this.editableInstructions?.applyRefinedContent(refinedContent), { injector: this.injector });
                         this.refinementPrompt.set('');
-                    } else {
+                    } else if (!result.errorHandled) {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
                     }
                 },
