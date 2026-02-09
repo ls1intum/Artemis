@@ -265,7 +265,7 @@ public class WeaviateService {
         // Build the filter: course_id = courseId AND exercise_type = "programming"
         var courseFilter = Filter.property(WeaviateSchemas.ExercisesProperties.COURSE_ID).eq(courseId);
         var typeFilter = Filter.property(WeaviateSchemas.ExercisesProperties.EXERCISE_TYPE).eq("programming");
-        var baseFilter = courseFilter.and(typeFilter);
+        var baseFilter = Filter.and(courseFilter, typeFilter);
 
         Filter finalFilter;
         if (filterReleasedOnly) {
@@ -327,7 +327,7 @@ public class WeaviateService {
             var lowerQuery = searchQuery.toLowerCase();
             var titleFilter = Filter.property(WeaviateSchemas.ExercisesProperties.TITLE).like("*" + lowerQuery + "*");
             var problemFilter = Filter.property(WeaviateSchemas.ExercisesProperties.PROBLEM_STATEMENT).like("*" + lowerQuery + "*");
-            var textMatchFilter = titleFilter.or(problemFilter);
+            var textMatchFilter = Filter.or(titleFilter, problemFilter);
             textFilters.add(textMatchFilter);
 
             Filter finalFilter = textFilters.get(0);
