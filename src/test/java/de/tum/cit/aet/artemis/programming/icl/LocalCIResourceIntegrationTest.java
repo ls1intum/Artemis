@@ -455,7 +455,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         // Force immediate agent registration instead of waiting for the 10-second scheduled delay
         sharedQueueProcessingService.updateBuildAgentInformation();
 
-        // Wait for the scheduled task to add the agent to the map (happens asynchronously after init)
+        // Verify agent is registered (should be immediate after updateBuildAgentInformation, await is a safety net)
         await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(200)).until(() -> {
             var agent = buildAgentInformation.get(buildAgentShortName);
             return agent != null && (agent.status() == BuildAgentStatus.IDLE || agent.status() == BuildAgentStatus.ACTIVE);
@@ -496,7 +496,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         // Force immediate agent registration instead of waiting for the 10-second scheduled delay
         sharedQueueProcessingService.updateBuildAgentInformation();
 
-        // Wait for the scheduled task to add agents to the map (happens asynchronously after init)
+        // Verify agent is registered (should be immediate after updateBuildAgentInformation, await is a safety net)
         await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(200)).until(() -> !buildAgentInformation.values().isEmpty());
 
         request.put("/api/core/admin/agents/pause-all", null, HttpStatus.NO_CONTENT);
