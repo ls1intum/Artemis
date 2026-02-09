@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.shared.config;
 
+import java.sql.SQLException;
+
 import javax.sql.DataSource;
 
 import org.slf4j.Logger;
@@ -33,6 +35,16 @@ public class TestDataSourcePoolConfig {
 
     private static final Logger log = LoggerFactory.getLogger(TestDataSourcePoolConfig.class);
 
+    private static boolean isPostgres(DataSource ds) {
+        try (var conn = ds.getConnection()) {
+            return conn.getMetaData().getDatabaseProductName().toLowerCase().contains("postgres");
+        }
+        catch (SQLException e) {
+            log.warn("Could not determine database type for timezone configuration", e);
+            return false;
+        }
+    }
+
     @Bean
     static BeanPostProcessor dataSourcePoolingPostProcessor() {
         return new BeanPostProcessor() {
@@ -48,6 +60,16 @@ public class TestDataSourcePoolConfig {
                     pooled.setMaxLifetime(0);
                     pooled.setConnectionTimeout(30000);
                     pooled.setPoolName("TestPool");
+
+                    // Set connection init SQL to ensure consistent timezone handling.
+                    // PostgreSQL's TIMESTAMP WITHOUT TIME ZONE can shift values by the JVM
+                    // timezone offset during Hibernate round-trips (especially for @SecondaryTable
+                    // columns). Setting the session timezone to UTC prevents this.
+                    if (isPostgres(ds)) {
+                        pooled.setConnectionInitSql("SET TIME ZONE 'UTC'");
+                        log.info("Configured PostgreSQL connection init SQL: SET TIME ZONE 'UTC'");
+                    }
+
                     return pooled;
                 }
                 return bean;
