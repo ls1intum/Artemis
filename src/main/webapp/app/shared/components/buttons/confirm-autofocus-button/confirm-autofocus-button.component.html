@@ -1,4 +1,4 @@
-<jhi-button [icon]="icon" [title]="title" [tooltip]="tooltip" [disabled]="disabled" [isLoading]="isLoading" [btnType]="btnType" (onClick)="onOpenConfirmationModal()" />
+<jhi-button [icon]="icon()" [title]="title()" [tooltip]="tooltip()" [disabled]="disabled()" [isLoading]="isLoading()" [btnType]="btnType()" (onClick)="onOpenConfirmationModal()" />
 <ng-template #content>
     <ng-content />
 </ng-template>
