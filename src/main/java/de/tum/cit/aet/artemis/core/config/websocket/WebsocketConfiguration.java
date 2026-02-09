@@ -354,20 +354,6 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 }
             }
 
-            if (StompCommand.SEND.equals(headerAccessor.getCommand())) {
-                try {
-                    if (!allowSend(principal, destination)) {
-                        logUnauthorizedDestinationAccess(principal, destination);
-                        return null; // erase forbidden SEND command
-                    }
-                }
-                catch (EntityNotFoundException e) {
-                    log.warn("An error occurred while user {} sent a websocket message to destination {}: {}", principal != null ? principal.getName() : "null", destination,
-                            e.getMessage());
-                    return null;
-                }
-            }
-
             return message;
         }
 
@@ -439,18 +425,6 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             }
 
             return true;
-        }
-
-        private boolean allowSend(@Nullable Principal principal, String destination) {
-            var synchronizationExerciseId = getExerciseIdFromSynchronizationDestination(destination);
-            if (synchronizationExerciseId.isEmpty()) {
-                return true;
-            }
-            if (principal == null) {
-                log.warn("Anonymous user tried to send to the protected topic: {}", destination);
-                return false;
-            }
-            return authorizationCheckService.isAtLeastTeachingAssistantInExercise(principal.getName(), synchronizationExerciseId.get());
         }
 
         private void logUnauthorizedDestinationAccess(Principal principal, String destination) {

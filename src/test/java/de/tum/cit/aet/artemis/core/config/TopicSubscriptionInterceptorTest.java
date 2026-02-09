@@ -134,26 +134,6 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationIndepend
             when(principalMock.getName()).thenReturn(TEST_PREFIX + "student1");
             returnedValue = interceptor.preSend(msgMock, channel);
             assertThat(returnedValue).isNull();
-
-            // Exercise synchronization destination SEND
-            when(headerAccessorMock.getCommand()).thenReturn(StompCommand.SEND);
-            when(headerAccessorMock.getDestination()).thenReturn("/topic/exercises/" + exercise.getId() + "/synchronization");
-
-            when(principalMock.getName()).thenReturn(TEST_PREFIX + "instructor1");
-            returnedValue = interceptor.preSend(msgMock, channel);
-            assertThat(returnedValue).isEqualTo(msgMock);
-
-            when(principalMock.getName()).thenReturn(TEST_PREFIX + "editor1");
-            returnedValue = interceptor.preSend(msgMock, channel);
-            assertThat(returnedValue).isEqualTo(msgMock);
-
-            when(principalMock.getName()).thenReturn(TEST_PREFIX + "tutor1");
-            returnedValue = interceptor.preSend(msgMock, channel);
-            assertThat(returnedValue).isEqualTo(msgMock);
-
-            when(principalMock.getName()).thenReturn(TEST_PREFIX + "student1");
-            returnedValue = interceptor.preSend(msgMock, channel);
-            assertThat(returnedValue).isNull();
         }
     }
 }
