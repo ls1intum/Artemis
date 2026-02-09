@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.core.config.weaviate.schema;
 
 /**
  * Weaviate data types for property definitions.
- * These correspond to the data types supported by Weaviate.
+ * These correspond to the <a href="https://docs.weaviate.io/weaviate/config-refs/datatypes">data types supported by Weaviate</a>.
  */
 public enum WeaviateDataType {
 
