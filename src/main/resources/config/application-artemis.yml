@@ -124,15 +124,8 @@ artemis:
     url: <your-pyris-url>
     secret-token: <your-secret>
 
-  weaviate: # Weaviate vector database for semantic search (requires 'weaviate' profile)
-    host: localhost
-    port: 8001
-    grpc-port: 50051
-    secure: false
-    schema-validation:
-      enabled: true
-      strict: true # Set to false to allow startup despite schema mismatches (not recommended for production)
-      iris-schema-base-url: https://raw.githubusercontent.com/ls1intum/edutelligence/main/iris/src/iris/vector_database
+  weaviate:
+    enabled: false
 
 # Configure Spring AI, if you want to use Hyperion or Atlas
 spring:
