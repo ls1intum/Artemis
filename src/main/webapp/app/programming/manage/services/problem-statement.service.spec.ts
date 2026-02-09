@@ -144,7 +144,7 @@ describe('ProblemStatementService', () => {
             const result = await firstValueFrom(service.generateProblemStatement(mockExerciseWithId, prompt, loadingSignal));
 
             expect(result.success).toBeFalse();
-            expect(alertService.error).toHaveBeenCalled();
+            expect(result.errorHandled).toBeFalse();
             expect(loadingSignal()).toBeFalse();
         });
     });

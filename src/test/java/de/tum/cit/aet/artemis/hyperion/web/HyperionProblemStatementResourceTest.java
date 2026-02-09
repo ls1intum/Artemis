@@ -24,7 +24,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -38,7 +38,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    private ExerciseVersionRepository exerciseVersionRepository;
+    private ExerciseVersionTestRepository exerciseVersionRepository;
 
     private static final String TEST_PREFIX = "hyperionproblemstatementresource";
 
