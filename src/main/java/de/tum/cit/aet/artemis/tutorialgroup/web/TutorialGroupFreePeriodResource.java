@@ -116,7 +116,6 @@ public class TutorialGroupFreePeriodResource {
         updatedFreePeriod.setId(existingFreePeriod.getId());
         updatedFreePeriod.setTutorialGroupsConfiguration(configuration);
         updatedFreePeriod.setReason(tutorialGroupFreePeriod.reason());
-        trimStringFields(updatedFreePeriod);
         updatedFreePeriod.setStart(
                 interpretInTimeZone(tutorialGroupFreePeriod.startDate().toLocalDate(), tutorialGroupFreePeriod.startDate().toLocalTime(), configuration.getCourse().getTimeZone()));
         updatedFreePeriod.setEnd(
@@ -126,6 +125,7 @@ public class TutorialGroupFreePeriodResource {
         // activate previously canceled sessions
         tutorialGroupFreePeriodService.updateOverlappingSessions(configuration.getCourse(), existingFreePeriod, updatedFreePeriod, false);
         // update free period
+        trimStringFields(updatedFreePeriod);
         updatedFreePeriod = tutorialGroupFreePeriodRepository.save(updatedFreePeriod);
         // cancel now overlapping sessions
         tutorialGroupFreePeriodService.cancelOverlappingSessions(configuration.getCourse(), updatedFreePeriod);

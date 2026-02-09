@@ -73,7 +73,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
     void testJustForInstructorEndpoints() throws Exception {
         var freePeriod = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, FIRST_AUGUST_MONDAY_00_00, FIRST_AUGUST_MONDAY_23_59, "Holiday");
-        request.get(getTutorialGroupFreePeriodsPath(freePeriod.getId()), HttpStatus.FORBIDDEN, TutorialGroupFreePeriod.class);
+        request.get(getTutorialGroupFreePeriodsPath(freePeriod.getId()), HttpStatus.FORBIDDEN, TutorialGroupFreePeriodDTO.class);
         request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_00_00, FIRST_AUGUST_MONDAY_23_59, "Holiday"),
                 TutorialGroupFreePeriodDTO.class, HttpStatus.FORBIDDEN);
         request.putWithResponseBody(getTutorialGroupFreePeriodsPath(freePeriod.getId()),
