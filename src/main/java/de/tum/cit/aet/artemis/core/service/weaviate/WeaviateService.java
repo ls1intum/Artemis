@@ -1,12 +1,9 @@
 package de.tum.cit.aet.artemis.core.service.weaviate;
 
 import java.io.IOException;
-import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import jakarta.annotation.PostConstruct;
@@ -22,13 +19,13 @@ import de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviateCollectionSche
 import de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviatePropertyDefinition;
 import de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviateReferenceDefinition;
 import de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviateSchemas;
+import de.tum.cit.aet.artemis.core.exception.WeaviateException;
 import io.weaviate.client6.v1.api.WeaviateClient;
 import io.weaviate.client6.v1.api.collections.CollectionHandle;
 import io.weaviate.client6.v1.api.collections.Property;
 import io.weaviate.client6.v1.api.collections.ReferenceProperty;
 import io.weaviate.client6.v1.api.collections.VectorConfig;
 import io.weaviate.client6.v1.api.collections.query.Filter;
-import io.weaviate.client6.v1.api.collections.query.FilterOperand;
 
 /**
  * Service for interacting with Weaviate vector database.
@@ -90,21 +87,21 @@ public class WeaviateService {
 
             log.info("Creating collection '{}'...", collectionName);
 
-            client.collections.create(collectionName, col -> {
+            client.collections.create(collectionName, collection -> {
                 // Configure text2vec-transformers vectorizer for automatic embeddings
-                col.vectorConfig(VectorConfig.text2vecTransformers());
+                collection.vectorConfig(VectorConfig.text2vecTransformers());
 
                 // Add properties
                 for (WeaviatePropertyDefinition prop : schema.properties()) {
-                    col.properties(createProperty(prop));
+                    collection.properties(createProperty(prop));
                 }
 
                 // Add references
                 for (WeaviateReferenceDefinition ref : schema.references()) {
-                    col.references(ReferenceProperty.to(ref.name(), resolveCollectionName(ref.targetCollection())));
+                    collection.references(ReferenceProperty.to(ref.name(), resolveCollectionName(ref.targetCollection())));
                 }
 
-                return col;
+                return collection;
             });
 
             log.info("Successfully created collection '{}'", collectionName);
@@ -123,12 +120,12 @@ public class WeaviateService {
      */
     private Property createProperty(WeaviatePropertyDefinition definition) {
         return switch (definition.dataType()) {
-            case INT -> Property.integer(definition.name(), p -> p.indexSearchable(definition.indexSearchable()).indexFilterable(definition.indexFilterable()));
-            case TEXT -> Property.text(definition.name(), p -> p.indexSearchable(definition.indexSearchable()).indexFilterable(definition.indexFilterable()));
-            case NUMBER -> Property.number(definition.name(), p -> p.indexSearchable(definition.indexSearchable()).indexFilterable(definition.indexFilterable()));
-            case BOOLEAN -> Property.bool(definition.name(), p -> p.indexFilterable(definition.indexFilterable()));
-            case DATE -> Property.date(definition.name(), p -> p.indexFilterable(definition.indexFilterable()));
-            case UUID -> Property.uuid(definition.name(), p -> p.indexFilterable(definition.indexFilterable()));
+            case INT -> Property.integer(definition.name(), property -> property.indexSearchable(definition.indexSearchable()).indexFilterable(definition.indexFilterable()));
+            case TEXT -> Property.text(definition.name(), property -> property.indexSearchable(definition.indexSearchable()).indexFilterable(definition.indexFilterable()));
+            case NUMBER -> Property.number(definition.name(), property -> property.indexSearchable(definition.indexSearchable()).indexFilterable(definition.indexFilterable()));
+            case BOOLEAN -> Property.bool(definition.name(), property -> property.indexFilterable(definition.indexFilterable()));
+            case DATE -> Property.date(definition.name(), property -> property.indexFilterable(definition.indexFilterable()));
+            case UUID -> Property.uuid(definition.name(), property -> property.indexFilterable(definition.indexFilterable()));
             case BLOB -> Property.blob(definition.name());
         };
     }
@@ -161,11 +158,11 @@ public class WeaviateService {
      * @param maxPoints           the maximum points
      * @param baseUrl             the base URL of the Artemis instance
      */
-    public void insertExercise(long exerciseId, long courseId, @Nullable String courseName, String title, @Nullable String shortName, @Nullable String problemStatement,
+    public void insertProgrammingExercise(long exerciseId, long courseId, @Nullable String courseName, String title, @Nullable String shortName, @Nullable String problemStatement,
             @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, String exerciseType, @Nullable String programmingLanguage,
             @Nullable String difficulty, double maxPoints, String baseUrl) {
 
-        var collection = getCollection(WeaviateSchemas.PROGRAMMING_EXERCISES_COLLECTION);
+        var programmingExerciseCollection = getCollection(WeaviateSchemas.PROGRAMMING_EXERCISES_COLLECTION);
 
         Map<String, Object> properties = new HashMap<>();
         properties.put(WeaviateSchemas.ExercisesProperties.EXERCISE_ID, exerciseId);
@@ -202,7 +199,7 @@ public class WeaviateService {
         }
 
         try {
-            collection.data.insert(properties);
+            programmingExerciseCollection.data.insert(properties);
             log.debug("Inserted exercise {} '{}' for course {}", exerciseId, title, courseId);
         }
         catch (IOException e) {
@@ -216,11 +213,10 @@ public class WeaviateService {
      *
      * @param exerciseId the exercise ID
      */
-    public void deleteExercise(long exerciseId) {
-        var collection = getCollection(WeaviateSchemas.PROGRAMMING_EXERCISES_COLLECTION);
+    public void deleteProgrammingExercise(long exerciseId) {
+        var programmingExerciseCollection = getCollection(WeaviateSchemas.PROGRAMMING_EXERCISES_COLLECTION);
 
-        // Delete objects where exercise_id equals the given ID
-        var deleteResult = collection.data.deleteMany(Filter.property(WeaviateSchemas.ExercisesProperties.EXERCISE_ID).eq(exerciseId));
+        var deleteResult = programmingExerciseCollection.data.deleteMany(Filter.property(WeaviateSchemas.ExercisesProperties.EXERCISE_ID).eq(exerciseId));
         log.debug("Deleted {} exercise entries for exercise ID {}", deleteResult.successful(), exerciseId);
     }
 
@@ -242,55 +238,14 @@ public class WeaviateService {
      * @param maxPoints           the maximum points
      * @param baseUrl             the base URL of the Artemis instance
      */
-    public void updateExercise(long exerciseId, long courseId, @Nullable String courseName, String title, @Nullable String shortName, @Nullable String problemStatement,
+    public void updateProgrammingExercise(long exerciseId, long courseId, @Nullable String courseName, String title, @Nullable String shortName, @Nullable String problemStatement,
             @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, String exerciseType, @Nullable String programmingLanguage,
             @Nullable String difficulty, double maxPoints, String baseUrl) {
         // Delete existing entries first
-        deleteExercise(exerciseId);
+        deleteProgrammingExercise(exerciseId);
         // Insert the updated data
-        insertExercise(exerciseId, courseId, courseName, title, shortName, problemStatement, releaseDate, startDate, dueDate, exerciseType, programmingLanguage, difficulty,
-                maxPoints, baseUrl);
-    }
-
-    /**
-     * Fetches programming exercises for a course from the Exercises collection.
-     * Optionally filters by release date for student visibility.
-     *
-     * @param courseId           the course ID to filter by
-     * @param filterReleasedOnly if true, only return exercises with release_date in the past or null
-     * @return list of exercise properties as maps
-     */
-    public List<Map<String, Object>> fetchProgrammingExercisesByCourseId(long courseId, boolean filterReleasedOnly) {
-        var collection = getCollection(WeaviateSchemas.PROGRAMMING_EXERCISES_COLLECTION);
-
-        // Build the filter: course_id = courseId AND exercise_type = "programming"
-        var courseFilter = Filter.property(WeaviateSchemas.ExercisesProperties.COURSE_ID).eq(courseId);
-        var typeFilter = Filter.property(WeaviateSchemas.ExercisesProperties.EXERCISE_TYPE).eq("programming");
-        var baseFilter = Filter.and(courseFilter, typeFilter);
-
-        Filter finalFilter;
-        if (filterReleasedOnly) {
-            // For students: only show exercises where release_date <= now
-            var releaseDateFilter = Filter.property(WeaviateSchemas.ExercisesProperties.RELEASE_DATE).lte(OffsetDateTime.now());
-            finalFilter = Filter.and(baseFilter, releaseDateFilter);
-        }
-        else {
-            finalFilter = baseFilter;
-        }
-
-        try {
-            var response = collection.query.fetchObjects(q -> q.filters(finalFilter));
-            List<Map<String, Object>> results = new ArrayList<>();
-            for (var obj : response.objects()) {
-                results.add(obj.properties());
-            }
-            log.debug("Fetched {} programming exercises for course {} (filterReleasedOnly={})", results.size(), courseId, filterReleasedOnly);
-            return results;
-        }
-        catch (Exception e) {
-            log.error("Failed to fetch programming exercises for course {}: {}", courseId, e.getMessage(), e);
-            throw new WeaviateException("Failed to fetch programming exercises", e);
-        }
+        insertProgrammingExercise(exerciseId, courseId, courseName, title, shortName, problemStatement, releaseDate, startDate, dueDate, exerciseType, programmingLanguage,
+                difficulty, maxPoints, baseUrl);
     }
 
     /**
@@ -301,80 +256,5 @@ public class WeaviateService {
      */
     private String formatDate(ZonedDateTime dateTime) {
         return dateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-    }
-
-    /**
-     * Performs semantic search on exercises using vector similarity via REST API.
-     *
-     * @param searchQuery the search query text
-     * @param courseId    the course ID to filter by (optional, null for all courses)
-     * @param limit       maximum number of results to return
-     * @return list of exercise properties as maps with similarity scores
-     */
-    public List<Map<String, Object>> semanticSearchExercises(String searchQuery, @Nullable Long courseId, int limit) {
-        try {
-            // For now, fall back to basic text filtering until we implement proper nearText API
-            var collection = getCollection(WeaviateSchemas.PROGRAMMING_EXERCISES_COLLECTION);
-
-            // Create basic filters
-            var textFilters = new ArrayList<Filter>();
-
-            // Add course filter if specified
-            if (courseId != null) {
-                textFilters.add(Filter.property(WeaviateSchemas.ExercisesProperties.COURSE_ID).eq(courseId));
-            }
-
-            // Add text search filters (basic keyword matching for now)
-            var lowerQuery = searchQuery.toLowerCase();
-            var titleFilter = Filter.property(WeaviateSchemas.ExercisesProperties.TITLE).like("*" + lowerQuery + "*");
-            var problemFilter = Filter.property(WeaviateSchemas.ExercisesProperties.PROBLEM_STATEMENT).like("*" + lowerQuery + "*");
-            var textMatchFilter = Filter.or(titleFilter, problemFilter);
-            textFilters.add(textMatchFilter);
-
-            final Filter searchFilter = textFilters.size() == 1 ? textFilters.getFirst() : Filter.and(textFilters.toArray(FilterOperand[]::new));
-            var response = collection.query.fetchObjects(q -> q.filters(searchFilter).limit(limit));
-            List<Map<String, Object>> results = new ArrayList<>();
-
-            for (var obj : response.objects()) {
-                Map<String, Object> result = new HashMap<>(obj.properties());
-                // Add a basic relevance score (for compatibility)
-                result.put("_relevance", 0.8); // Placeholder relevance score
-                results.add(result);
-            }
-
-            log.debug("Basic text search for '{}' returned {} results", searchQuery, results.size());
-            return results;
-        }
-        catch (Exception e) {
-            log.error("Failed to perform search for query '{}': {}", searchQuery, e.getMessage(), e);
-            throw new WeaviateException("Failed to perform search", e);
-        }
-    }
-
-    /**
-     * Checks if the Weaviate connection is healthy.
-     *
-     * @return true if the connection is healthy
-     */
-    public boolean isHealthy() {
-        try {
-            // Check if we can list collections
-            client.collections.list();
-            return true;
-        }
-        catch (Exception e) {
-            log.warn("Weaviate health check failed: {}", e.getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Exception thrown when Weaviate operations fail.
-     */
-    public static class WeaviateException extends RuntimeException {
-
-        public WeaviateException(String message, Throwable cause) {
-            super(message, cause);
-        }
     }
 }

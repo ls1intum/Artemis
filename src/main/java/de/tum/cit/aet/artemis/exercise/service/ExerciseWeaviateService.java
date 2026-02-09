@@ -2,9 +2,6 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -62,8 +59,8 @@ public class ExerciseWeaviateService {
                 programmingLanguage = programmingExercise.getProgrammingLanguage().name();
             }
 
-            weaviateService.get().insertExercise(exercise.getId(), course.getId(), course.getTitle(), exercise.getTitle(), exercise.getShortName(), exercise.getProblemStatement(),
-                    exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getType(), programmingLanguage,
+            weaviateService.get().insertProgrammingExercise(exercise.getId(), course.getId(), course.getTitle(), exercise.getTitle(), exercise.getShortName(),
+                    exercise.getProblemStatement(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getType(), programmingLanguage,
                     exercise.getDifficulty() != null ? exercise.getDifficulty().name() : null, exercise.getMaxPoints() != null ? exercise.getMaxPoints() : 0.0, serverUrl);
 
             log.debug("Successfully inserted exercise {} '{}' into Weaviate", exercise.getId(), exercise.getTitle());
@@ -97,8 +94,8 @@ public class ExerciseWeaviateService {
                 programmingLanguage = programmingExercise.getProgrammingLanguage().name();
             }
 
-            weaviateService.get().updateExercise(exercise.getId(), course.getId(), course.getTitle(), exercise.getTitle(), exercise.getShortName(), exercise.getProblemStatement(),
-                    exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getType(), programmingLanguage,
+            weaviateService.get().updateProgrammingExercise(exercise.getId(), course.getId(), course.getTitle(), exercise.getTitle(), exercise.getShortName(),
+                    exercise.getProblemStatement(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getType(), programmingLanguage,
                     exercise.getDifficulty() != null ? exercise.getDifficulty().name() : null, exercise.getMaxPoints() != null ? exercise.getMaxPoints() : 0.0, serverUrl);
 
             log.debug("Successfully updated exercise {} '{}' in Weaviate", exercise.getId(), exercise.getTitle());
@@ -121,7 +118,7 @@ public class ExerciseWeaviateService {
         }
 
         try {
-            weaviateService.get().deleteExercise(exerciseId);
+            weaviateService.get().deleteProgrammingExercise(exerciseId);
             log.debug("Successfully deleted exercise {} from Weaviate", exerciseId);
         }
         catch (Exception e) {
@@ -138,53 +135,4 @@ public class ExerciseWeaviateService {
         return weaviateService.isPresent();
     }
 
-    /**
-     * Fetches programming exercises for a course from Weaviate.
-     * The results are filtered based on the user's role:
-     * - Students: Only exercises with release_date in the past
-     * - Tutors and above: All exercises
-     *
-     * @param courseId       the course ID to fetch exercises for
-     * @param isAtLeastTutor true if the user is at least a tutor in the course
-     * @return list of exercise properties as maps, or empty list if Weaviate is not available
-     */
-    public List<Map<String, Object>> fetchProgrammingExercisesForCourse(long courseId, boolean isAtLeastTutor) {
-        if (weaviateService.isEmpty()) {
-            log.trace("Weaviate is not enabled, returning empty list for course {}", courseId);
-            return Collections.emptyList();
-        }
-
-        try {
-            // Students only see released exercises, tutors+ see all exercises
-            boolean filterReleasedOnly = !isAtLeastTutor;
-            return weaviateService.get().fetchProgrammingExercisesByCourseId(courseId, filterReleasedOnly);
-        }
-        catch (Exception e) {
-            log.error("Failed to fetch programming exercises for course {} from Weaviate: {}", courseId, e.getMessage(), e);
-            return Collections.emptyList();
-        }
-    }
-
-    /**
-     * Performs semantic search on exercises using natural language queries.
-     *
-     * @param query    the search query
-     * @param courseId optional course ID to filter by
-     * @param limit    maximum number of results
-     * @return list of exercise search results with similarity scores
-     */
-    public List<Map<String, Object>> searchExercises(String query, Long courseId, int limit) {
-        if (weaviateService.isEmpty()) {
-            log.trace("Weaviate is not enabled, returning empty list for search query: {}", query);
-            return Collections.emptyList();
-        }
-
-        try {
-            return weaviateService.get().semanticSearchExercises(query, courseId, limit);
-        }
-        catch (Exception e) {
-            log.error("Failed to search exercises with query '{}': {}", query, e.getMessage(), e);
-            return Collections.emptyList();
-        }
-    }
 }
