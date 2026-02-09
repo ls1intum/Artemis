@@ -10,7 +10,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -91,7 +90,27 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     static final TypeReference<Map<String, List<CalendarEventDTO>>> EVENT_MAP_RETURN_TYPE = new TypeReference<>() {
     };
 
-    static final Comparator<ZonedDateTime> TIMESTAMP_COMPARATOR = Comparator.comparing(zdt -> zdt.toInstant().truncatedTo(ChronoUnit.MILLIS));
+    /**
+     * Normalizes a CalendarEventDTO by converting all ZonedDateTime fields to UTC and truncating to milliseconds.
+     * This is necessary because PostgreSQL normalizes TIMESTAMP WITH TIME ZONE to UTC on storage,
+     * while H2 preserves the original zone. Normalizing both actual (from API/DB) and expected (from in-memory
+     * entities) to UTC ensures assertions work regardless of the database backend.
+     */
+    static CalendarEventDTO normalizeEvent(CalendarEventDTO dto) {
+        return new CalendarEventDTO(dto.id(), dto.type(), dto.title(), normalizeTimestamp(dto.startDate()), normalizeTimestamp(dto.endDate()), dto.location(), dto.facilitator());
+    }
+
+    private static ZonedDateTime normalizeTimestamp(ZonedDateTime zdt) {
+        return zdt == null ? null : zdt.toInstant().truncatedTo(ChronoUnit.MILLIS).atZone(ZoneOffset.UTC);
+    }
+
+    static Map<String, List<CalendarEventDTO>> normalizeEventMap(Map<String, List<CalendarEventDTO>> map) {
+        return map.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().stream().map(CalendarIntegrationTest::normalizeEvent).toList()));
+    }
+
+    static void assertEventMapsEqual(Map<String, List<CalendarEventDTO>> actual, Map<String, List<CalendarEventDTO>> expected) {
+        assertThat(normalizeEventMap(actual)).usingRecursiveComparison().ignoringCollectionOrder().isEqualTo(normalizeEventMap(expected));
+    }
 
     static final String TEST_LANGUAGE_STRING = "ENGLISH";
 
@@ -254,8 +273,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
                 expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -275,8 +293,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
                 expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
         }
 
@@ -301,8 +318,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
                 expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -319,8 +335,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
                 expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -337,8 +352,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
                 expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
@@ -352,8 +366,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             // + TEST_LANGUAGE_STRING;
             // Map<String, List<CalendarEventDTO>> actualResponse = request.get(url, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
             // Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-            // assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR,
-            // ZonedDateTime.class).ignoringCollectionOrder().isEqualTo(expectedResponse);
+            // assertEventMapsEqual(actualResponse, expectedResponse);
             // }
 
             @Test
@@ -371,8 +384,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 expectedResponse.put(expectedEvent1.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent1));
                 expectedResponse.put(expectedEvent2.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent2));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -389,8 +401,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
                 expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -407,8 +418,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
                 expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -425,8 +435,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
                 expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -443,8 +452,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
                 expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
         }
 
@@ -478,8 +486,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3, expectedEvent4)
                         .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -496,8 +503,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
                 expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -512,8 +518,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -537,8 +542,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3, expectedEvent4)
                         .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -555,8 +559,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
                 expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -580,8 +583,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3, expectedEvent4)
                         .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
         }
 
@@ -606,8 +608,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
                 expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -621,8 +622,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -636,8 +636,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -654,8 +653,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
                 expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -672,8 +670,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
                 expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -687,8 +684,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -705,8 +701,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
                 expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -723,8 +718,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
                 expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -743,8 +737,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
                         .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -758,8 +751,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -773,8 +765,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -791,8 +782,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
                 expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -809,8 +799,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
                 expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -829,8 +818,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
                         .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -844,8 +832,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -864,8 +851,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
                         .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -882,8 +868,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
                 expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -900,8 +885,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
                 expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -920,8 +904,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
                         .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -935,8 +918,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -950,8 +932,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -968,8 +949,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
                 expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -986,8 +966,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
                 expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -1006,8 +985,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
                         .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -1021,8 +999,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @Test
@@ -1041,8 +1018,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
                         .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
         }
 
@@ -1087,8 +1063,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
                         .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @ParameterizedTest
@@ -1117,8 +1092,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
                         .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @ParameterizedTest
@@ -1148,8 +1122,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
                         .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @ParameterizedTest
@@ -1173,8 +1146,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @ParameterizedTest
@@ -1203,8 +1175,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
                         .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @ParameterizedTest
@@ -1233,8 +1204,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
                         .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @ParameterizedTest
@@ -1264,8 +1234,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
                         .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
 
             @ParameterizedTest
@@ -1301,8 +1270,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3, expectedEvent4)
                         .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
+                assertEventMapsEqual(actualResponse, expectedResponse);
             }
         }
 
@@ -1332,8 +1300,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3)
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
+            assertEventMapsEqual(actualResponse, expectedResponse);
         }
 
         @Test
@@ -1361,8 +1328,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3)
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
+            assertEventMapsEqual(actualResponse, expectedResponse);
         }
 
         @Test
@@ -1384,8 +1350,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(tutorialGroupSession.getStart().withZoneSameInstant(ZoneId.of(otherTimeZone)).toLocalDate().toString(), List.of(expectedEvent));
 
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
+            assertEventMapsEqual(actualResponse, expectedResponse);
         }
     }
 

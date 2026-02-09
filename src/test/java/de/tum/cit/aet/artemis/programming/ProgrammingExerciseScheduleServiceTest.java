@@ -41,11 +41,13 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
     // When the scheduler is invoked, there is a small delay until the runnable is called.
     // TODO: This could be improved by e.g. manually setting the system time instead of waiting for actual time to pass.
-    private static final long SCHEDULER_TASK_TRIGGER_DELAY_MS = 1200;
+    // Note: These values must be large enough to account for database round-trip latency,
+    // especially when running against Testcontainers (Postgres/MySQL via Docker).
+    private static final long SCHEDULER_TASK_TRIGGER_DELAY_MS = 3000;
 
-    private static final long DELAY_MS = 600;
+    private static final long DELAY_MS = 2000;
 
-    private static final long TIMEOUT_MS = 10000;
+    private static final long TIMEOUT_MS = 20000;
 
     @BeforeEach
     void init() throws Exception {
@@ -247,7 +249,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
         setupProgrammingExerciseDates(now, DELAY_MS, 2 * SCHEDULER_TASK_TRIGGER_DELAY_MS);
         // individual due date between regular due date and build and test date
-        var participationIndividualDueDate = setupParticipationWithIndividualDueDate(now, DELAY_MS * 2 + SCHEDULER_TASK_TRIGGER_DELAY_MS, TEST_PREFIX + "student3");
+        var participationIndividualDueDate = setupParticipationWithIndividualDueDate(now, SCHEDULER_TASK_TRIGGER_DELAY_MS, TEST_PREFIX + "student3");
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());

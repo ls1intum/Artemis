@@ -240,8 +240,8 @@ zonky:
             postgres:
                 docker:
                     image: docker.io/library/postgres:${postgres.version}${postgres.image.variant}
-                    # tmpfs disabled: Zonky's tmpfs mounts may conflict with PostgreSQL 18's
-                    # data directory layout, causing container startup failure (exit code 1)
+                    # Zonky's built-in tmpfs targets /var/lib/postgresql/data which is wrong for PG 18+.
+                    # tmpfs is mounted via PostgresTmpfsContainerCustomizer at /var/lib/postgresql instead.
                     tmpfs:
                         enabled: false
                 server:
