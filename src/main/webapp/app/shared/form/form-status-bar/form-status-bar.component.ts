@@ -30,32 +30,36 @@ export class FormStatusBarComponent implements AfterViewInit {
     }
 
     scrollToHeadline(id: string) {
-        const target = document.getElementById(id);
-        if (!target) return;
+        const headlineElement = document.getElementById(id);
+        if (!headlineElement) return;
 
-        const container = document.getElementById('course-body-container');
-        if (!container) {
-            // Fallback for future layout changes
-            target.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+        // In this view the page scrolls inside a dedicated container (not via window scrolling).
+        const scrollContainerElement = document.getElementById('course-body-container');
+        if (!scrollContainerElement) {
+            // Fallback for future layout changes where the main scroll container might not exist.
+            headlineElement.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
             return;
         }
 
-        const navbarEl = document.querySelector('jhi-navbar') as HTMLElement | null;
-        const navbarHeight = navbarEl?.getBoundingClientRect().height ?? 0;
-        const statusBarHeight = this.statusBar?.nativeElement?.getBoundingClientRect().height ?? 0;
+        const navbarElement = document.querySelector('jhi-navbar') as HTMLElement | null;
+        const navbarHeightPx = navbarElement?.getBoundingClientRect().height ?? 0;
+        const statusBarHeightPx = this.statusBar?.nativeElement?.getBoundingClientRect().height ?? 0;
 
-        // Total offset so that the target headline is not hidden behind the navbar/status bar.
-        const offset = navbarHeight + statusBarHeight;
+        // Total vertical offset so the headline is not hidden behind status bar.
+        const headerOverlapOffsetPx = navbarHeightPx + statusBarHeightPx;
 
-        // Compute the target position within the container:
-        const containerRect = container.getBoundingClientRect();
-        const targetRect = target.getBoundingClientRect();
+        // Convert viewport coordinates into "scroll container content coordinates" to compute an exact scrollTop.
+        const scrollContainerViewportTopPx = scrollContainerElement.getBoundingClientRect().top;
+        const headlineViewportTopPx = headlineElement.getBoundingClientRect().top;
 
-        const currentScrollTop = container.scrollTop;
-        const targetTopWithinContainer = targetRect.top - containerRect.top + currentScrollTop;
+        // Current vertical scroll position inside the scroll container.
+        const scrollContainerScrollTopPx = scrollContainerElement.scrollTop;
 
-        container.scrollTo({
-            top: Math.max(0, targetTopWithinContainer - offset),
+        // Headline's top position within the scroll container's scrollable content.
+        const headlineTopInScrollContainerPx = headlineViewportTopPx - scrollContainerViewportTopPx + scrollContainerScrollTopPx;
+
+        scrollContainerElement.scrollTo({
+            top: Math.max(0, headlineTopInScrollContainerPx - headerOverlapOffsetPx),
             behavior: 'smooth',
         });
     }
