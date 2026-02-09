@@ -105,6 +105,7 @@ info:
     operatorName: Some Artemis Operator # Must be set before starting the application in production. Shown in the about us page and sent to the telemetry service (e.g. the name of the university "Technische Universität München")
     operatorAdminName: Admin # Can be set to be shown in the about us page, and to be sent to the telemetry service
     contact: admin@uni.de # The admins contact email address, shown in the about us page, and sent to the telemetry service
+    localLLMDeploymentEnabled: false # Defines whether local on-premise LLMs are available or not
 
 # Eureka configuration
 eureka:
@@ -144,6 +145,12 @@ artemis:
             allowed-cidrs:
                 - ::/0
                 - 0.0.0.0/0
+    weaviate:
+        enabled: false                    # Disabled by default; set to true to enable Weaviate integration
+        http-host: localhost              # Weaviate server HTTP hostname
+        http-port: 8001                   # Weaviate HTTP port (avoid conflicts with main app)
+        grpc-port: 50051                  # Weaviate gRPC port for better performance
+        scheme: http                      # http scheme for development (https should be used in production environments)
 
 # Needs to be provided so Sentry's LogbackAppender picks up a sensible configuration
 sentry:

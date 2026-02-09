@@ -614,3 +614,17 @@ $progress-bar-background: $gray-300;
 // Tutorial Groups
 $registration-suggestion-panel-bg: $gray-100;
 $registration-suggestion-panel-selection-bg: transparentize($gray-500, 0.7);
+
+// LLM Selection Popup
+$ai-modal-card-bg: $gray-100;
+$ai-modal-cloud-bg: linear-gradient(135deg, rgba(171, 171, 171, 0.55) 0%, rgba(188, 188, 188, 0.56) 100%);
+$ai-modal-cloud-bg-hover: linear-gradient(135deg, rgba(118, 128, 174, 0.55) 0%, rgba(128, 158, 204, 0.56) 100%);
+$ai-modal-local-bg: linear-gradient(135deg, rgba(206, 206, 206, 0.55) 0%, rgba(223, 223, 223, 0.56) 100%);
+$ai-modal-local-bg-hover: linear-gradient(135deg, rgba(186, 186, 186, 0.55) 0%, rgba(203, 203, 203, 0.56) 100%);
+$ai-modal-no-ai-bg: linear-gradient(135deg, $gray-200 0%, $gray-300 100%);
+$ai-modal-no-ai-bg-hover: linear-gradient(135deg, $gray-300 0%, $gray-400 100%);
+$ai-modal-icons-bg: rgba(0, 0, 0, 0.03);
+$ai-modal-description-color: $gray-600;
+$ai-modal-bg: rgba(0, 0, 0, 0.85);
+$ai-modal-subtitle: $black;
+$ai-modal-shadow-hover: rgba(0, 0, 0, 0.4);

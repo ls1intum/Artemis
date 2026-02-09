@@ -175,7 +175,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         processingJobs.put(job1.id(), job1);
         processingJobs.put(job2.id(), job2);
 
-        buildAgentInformation.put(memberAddress, agent1);
+        buildAgentInformation.put(buildAgentShortName, agent1);
     }
 
     @AfterEach
@@ -264,6 +264,16 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     void testGetBuildAgentDetails_returnsAgent() throws Exception {
         var retrievedAgent = request.get("/api/core/admin/build-agent?agentName=" + agent1.buildAgent().name(), HttpStatus.OK, BuildAgentInformation.class);
         assertThat(retrievedAgent.buildAgent().name()).isEqualTo(agent1.buildAgent().name());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetBuildAgentDetails_byMemberAddress_returnsAgent() throws Exception {
+        // Test that we can also look up an agent by its memberAddress (used when navigating from finished jobs)
+        var retrievedAgent = request.get("/api/core/admin/build-agent?agentName=" + URLEncoder.encode(agent1.buildAgent().memberAddress(), StandardCharsets.UTF_8), HttpStatus.OK,
+                BuildAgentInformation.class);
+        assertThat(retrievedAgent.buildAgent().name()).isEqualTo(agent1.buildAgent().name());
+        assertThat(retrievedAgent.buildAgent().memberAddress()).isEqualTo(agent1.buildAgent().memberAddress());
     }
 
     @Test
@@ -434,51 +444,70 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testPauseBuildAgent() throws Exception {
-        // Re-initialize to register pause/resume topic listeners (they are removed in @BeforeEach)
-        sharedQueueProcessingService.init();
+        // Clear the manually added agent from BeforeEach - we want the service to manage its own agent
+        buildAgentInformation.clear();
         // We need to clear the processing jobs to avoid the agent being set to ACTIVE again
         processingJobs.clear();
+        // Reset initialized state so init() will re-register all listeners (including pause/resume topic listeners)
+        sharedQueueProcessingService.resetInitializedState();
+        // Re-initialize to register pause/resume topic listeners (they are removed in @BeforeEach)
+        sharedQueueProcessingService.init();
 
-        request.put("/api/core/admin/agents/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/pause", null, HttpStatus.NO_CONTENT);
-        await().atMost(Duration.ofSeconds(30)) // temporarily increase to debug
-                .pollInterval(Duration.ofMillis(200)).until(() -> {
-                    var agent = buildAgentInformation.get(agent1.buildAgent().memberAddress());
-                    log.info("Current status of agent after pause operation {} : {}", agent.buildAgent().displayName(), agent.status());
-                    return agent.status() == BuildAgentStatus.PAUSED;
-                });
+        // Wait for the scheduled task to add the agent to the map (happens asynchronously after init)
+        await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(200)).until(() -> {
+            var agent = buildAgentInformation.get(buildAgentShortName);
+            return agent != null && (agent.status() == BuildAgentStatus.IDLE || agent.status() == BuildAgentStatus.ACTIVE);
+        });
 
-        request.put("/api/core/admin/agents/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/resume", null, HttpStatus.NO_CONTENT);
-        await().atMost(Duration.ofSeconds(30)) // temporarily increase to debug
-                .pollInterval(Duration.ofMillis(200)).until(() -> {
-                    var agent = buildAgentInformation.get(agent1.buildAgent().memberAddress());
-                    log.info("Current status of agent after resume operation {} : {}", agent.buildAgent().displayName(), agent.status());
-                    return agent.status() == BuildAgentStatus.IDLE;
-                });
+        request.put("/api/core/admin/agents/" + URLEncoder.encode(buildAgentShortName, StandardCharsets.UTF_8) + "/pause", null, HttpStatus.NO_CONTENT);
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
+            var agent = buildAgentInformation.get(buildAgentShortName);
+            if (agent == null) {
+                return false;
+            }
+            log.info("Current status of agent after pause operation {} : {}", agent.buildAgent().displayName(), agent.status());
+            return agent.status() == BuildAgentStatus.PAUSED;
+        });
+
+        request.put("/api/core/admin/agents/" + URLEncoder.encode(buildAgentShortName, StandardCharsets.UTF_8) + "/resume", null, HttpStatus.NO_CONTENT);
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
+            var agent = buildAgentInformation.get(buildAgentShortName);
+            if (agent == null) {
+                return false;
+            }
+            log.info("Current status of agent after resume operation {} : {}", agent.buildAgent().displayName(), agent.status());
+            return agent.status() == BuildAgentStatus.IDLE;
+        });
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testPauseAllBuildAgents() throws Exception {
-        // Re-initialize to register pause/resume topic listeners (they are removed in @BeforeEach)
-        sharedQueueProcessingService.init();
+        // Clear the manually added agent from BeforeEach - we want the service to manage its own agent
+        buildAgentInformation.clear();
         // We need to clear the processing jobs to avoid the agent being set to ACTIVE again
         processingJobs.clear();
+        // Reset initialized state so init() will re-register all listeners (including pause/resume topic listeners)
+        sharedQueueProcessingService.resetInitializedState();
+        // Re-initialize to register pause/resume topic listeners (they are removed in @BeforeEach)
+        sharedQueueProcessingService.init();
+
+        // Wait for the scheduled task to add agents to the map (happens asynchronously after init)
+        await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(200)).until(() -> !buildAgentInformation.values().isEmpty());
 
         request.put("/api/core/admin/agents/pause-all", null, HttpStatus.NO_CONTENT);
-        await().atMost(Duration.ofSeconds(30)) // temporarily increase to debug
-                .pollInterval(Duration.ofMillis(200)).until(() -> {
-                    var agents = buildAgentInformation.values();
-                    printAgentInformation(agents);
-                    return agents.stream().allMatch(agent -> agent.status() == BuildAgentStatus.PAUSED);
-                });
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
+            var agents = buildAgentInformation.values();
+            printAgentInformation(agents);
+            return !agents.isEmpty() && agents.stream().allMatch(agent -> agent.status() == BuildAgentStatus.PAUSED);
+        });
 
         request.put("/api/core/admin/agents/resume-all", null, HttpStatus.NO_CONTENT);
-        await().atMost(Duration.ofSeconds(30)) // temporarily increase to debug
-                .pollInterval(Duration.ofMillis(200)).until(() -> {
-                    var agents = buildAgentInformation.values();
-                    printAgentInformation(agents);
-                    return agents.stream().allMatch(agent -> agent.status() == BuildAgentStatus.IDLE);
-                });
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
+            var agents = buildAgentInformation.values();
+            printAgentInformation(agents);
+            return !agents.isEmpty() && agents.stream().allMatch(agent -> agent.status() == BuildAgentStatus.IDLE);
+        });
     }
 
     private static void printAgentInformation(Collection<BuildAgentInformation> agents) {
@@ -514,9 +543,83 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
 
         agent1 = new BuildAgentInformation(buildAgent, 2, 2, new ArrayList<>(List.of(job1, job2)), BuildAgentStatus.ACTIVE, null, null,
                 buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs());
-        buildAgentInformation.put(buildAgent.memberAddress(), agent1);
+        buildAgentInformation.put(buildAgentShortName, agent1);
 
         var queueDurationEstimation = sharedQueueManagementService.getBuildJobEstimatedStartDate(job4.participationId());
         assertThat(queueDurationEstimation).isCloseTo(now.plusSeconds(48), within(2, ChronoUnit.SECONDS));
+    }
+
+    // --- Tests for getBuildJobById endpoint ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetBuildJobById_runningJob() throws Exception {
+        var result = request.get("/api/core/admin/build-job/" + job1.id(), HttpStatus.OK, BuildJobQueueItem.class);
+        assertThat(result.id()).isEqualTo(job1.id());
+        assertThat(result.name()).isEqualTo(job1.name());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetBuildJobById_queuedJob() throws Exception {
+        queuedJobs.add(job1);
+        // Remove from processing to only have it in the queue
+        processingJobs.remove(job1.id());
+        var result = request.get("/api/core/admin/build-job/" + job1.id(), HttpStatus.OK, BuildJobQueueItem.class);
+        assertThat(result.id()).isEqualTo(job1.id());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetBuildJobById_finishedJob() throws Exception {
+        buildJobRepository.save(finishedJob1);
+        var result = request.get("/api/core/admin/build-job/" + finishedJob1.getBuildJobId(), HttpStatus.OK, FinishedBuildJobDTO.class);
+        assertThat(result.id()).isEqualTo(finishedJob1.getBuildJobId());
+        assertThat(result.status()).isEqualTo(BuildStatus.SUCCESSFUL);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetBuildJobById_notFound() throws Exception {
+        request.get("/api/core/admin/build-job/nonexistent", HttpStatus.NOT_FOUND, Void.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetBuildJobById_instructorForbidden() throws Exception {
+        request.get("/api/core/admin/build-job/" + job1.id(), HttpStatus.FORBIDDEN, Void.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetBuildJobByIdForCourse_runningJob() throws Exception {
+        var result = request.get("/api/programming/courses/" + course.getId() + "/build-job/" + job1.id(), HttpStatus.OK, BuildJobQueueItem.class);
+        assertThat(result.id()).isEqualTo(job1.id());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetBuildJobByIdForCourse_finishedJob() throws Exception {
+        buildJobRepository.save(finishedJob1);
+        var result = request.get("/api/programming/courses/" + course.getId() + "/build-job/" + finishedJob1.getBuildJobId(), HttpStatus.OK, FinishedBuildJobDTO.class);
+        assertThat(result.id()).isEqualTo(finishedJob1.getBuildJobId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetBuildJobByIdForCourse_wrongCourse() throws Exception {
+        request.get("/api/programming/courses/" + Long.MAX_VALUE + "/build-job/" + job1.id(), HttpStatus.FORBIDDEN, Void.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetBuildJobByIdForCourse_notFound() throws Exception {
+        request.get("/api/programming/courses/" + course.getId() + "/build-job/nonexistent", HttpStatus.NOT_FOUND, Void.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    void testGetBuildJobByIdForCourse_wrongInstructorForbidden() throws Exception {
+        request.get("/api/programming/courses/" + course.getId() + "/build-job/" + job1.id(), HttpStatus.FORBIDDEN, Void.class);
     }
 }

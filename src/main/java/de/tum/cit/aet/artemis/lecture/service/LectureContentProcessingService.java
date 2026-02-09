@@ -5,11 +5,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PROCESSING_RETRIE
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.ZonedDateTime;
 import java.util.HexFormat;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -21,7 +22,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
-import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
+import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisOrNebulaEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -46,7 +47,7 @@ import de.tum.cit.aet.artemis.nebula.api.TumLiveApi;
  * <li>FAILED: Processing failed after max retries</li>
  * </ul>
  */
-@Conditional(LectureEnabled.class)
+@Conditional(LectureWithIrisOrNebulaEnabled.class)
 @Service
 @Lazy
 public class LectureContentProcessingService {
@@ -65,15 +66,18 @@ public class LectureContentProcessingService {
 
     private final FeatureToggleService featureToggleService;
 
+    private final ProcessingStateCallbackService processingStateCallbackService;
+
     public LectureContentProcessingService(LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            Optional<LectureTranscriptionApi> transcriptionApi, Optional<TumLiveApi> tumLiveApi, Optional<IrisLectureApi> irisLectureApi,
-            FeatureToggleService featureToggleService) {
+            Optional<LectureTranscriptionApi> transcriptionApi, Optional<TumLiveApi> tumLiveApi, Optional<IrisLectureApi> irisLectureApi, FeatureToggleService featureToggleService,
+            ProcessingStateCallbackService processingStateCallbackService) {
         this.processingStateRepository = processingStateRepository;
         this.transcriptionRepository = transcriptionRepository;
         this.transcriptionApi = transcriptionApi;
         this.tumLiveApi = tumLiveApi;
         this.irisLectureApi = irisLectureApi;
         this.featureToggleService = featureToggleService;
+        this.processingStateCallbackService = processingStateCallbackService;
     }
 
     /**
@@ -106,20 +110,34 @@ public class LectureContentProcessingService {
      */
     @Async
     public void triggerProcessing(AttachmentVideoUnit unit) {
+        // Set auth context due to @Async
+        SecurityUtils.setAuthorizationObject();
+        doTriggerProcessing(unit, Optional.empty());
+    }
+
+    /**
+     * Core processing logic - called by both async triggerProcessing and sync retryProcessing.
+     * This method is synchronous; the @Async annotation on triggerProcessing handles async execution.
+     *
+     * @param unit          the attachment video unit to process
+     * @param stateToDelete if present, delete this state after preflight checks pass (used by retryProcessing)
+     * @return true if preflight checks passed and processing was attempted, false if preflight failed (nothing changed)
+     */
+    private boolean doTriggerProcessing(AttachmentVideoUnit unit, Optional<LectureUnitProcessingState> stateToDelete) {
         if (!featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)) {
             log.debug("LectureContentProcessing feature is disabled, skipping processing");
-            return;
+            return false;
         }
 
         if (unit == null || unit.getId() == null) {
             log.warn("Cannot process null or unsaved lecture unit");
-            return;
+            return false;
         }
 
         // Skip tutorial lectures
         if (unit.getLecture() != null && unit.getLecture().isTutorialLecture()) {
             log.debug("Skipping processing for tutorial lecture unit: {}", unit.getId());
-            return;
+            return false;
         }
 
         // Check content availability
@@ -128,7 +146,7 @@ public class LectureContentProcessingService {
 
         if (!hasVideo && !hasPdf) {
             log.debug("Unit {} has no video or PDF to process", unit.getId());
-            return;
+            return false;
         }
 
         // Check service availability
@@ -137,14 +155,17 @@ public class LectureContentProcessingService {
 
         if (!canTranscribe && !canIngest) {
             log.debug("No processing services available for unit {}", unit.getId());
-            return;
+            return false;
         }
 
-        // Set auth context due to @Async
-        SecurityUtils.setAuthorizationObject();
+        // Preflight passed - now handle existing state
+        if (stateToDelete.isPresent()) {
+            processingStateRepository.delete(stateToDelete.get());
+        }
 
-        // Get existing state or create new (don't persist yet - IDLE should never be in DB)
-        Optional<LectureUnitProcessingState> existingState = processingStateRepository.findByLectureUnit_Id(unit.getId());
+        // Query for state (will be empty if we just deleted, or may exist for normal trigger)
+        Optional<LectureUnitProcessingState> existingState = stateToDelete.isPresent() ? Optional.empty() : processingStateRepository.findByLectureUnit_Id(unit.getId());
+
         LectureUnitProcessingState state = existingState.orElseGet(() -> new LectureUnitProcessingState(unit));
 
         // Detect and handle content changes (updates hash/version in state object)
@@ -160,21 +181,22 @@ public class LectureContentProcessingService {
         // (content changes already transition to IDLE above, so these checks are for unchanged content)
         if (state.isProcessing()) {
             log.debug("Unit {} already processing, skipping", unit.getId());
-            return;
+            return true;
         }
 
         if (state.getPhase() == ProcessingPhase.DONE) {
             log.debug("Unit {} already done, skipping", unit.getId());
-            return;
+            return true;
         }
 
         if (state.getPhase() == ProcessingPhase.FAILED) {
             log.debug("Unit {} in failed state, skipping (use retryProcessing or change content)", unit.getId());
-            return;
+            return true;
         }
 
         // Start the state machine (will save state when actually starting processing)
         advanceProcessing(unit, state, hasVideo, hasPdf);
+        return true;
     }
 
     /**
@@ -212,108 +234,47 @@ public class LectureContentProcessingService {
     }
 
     /**
-     * Called when a transcription completes (from the polling scheduler).
-     *
-     * @param transcription the completed transcription
-     */
-    public void handleTranscriptionComplete(LectureTranscription transcription) {
-        if (transcription.getLectureUnit() == null) {
-            log.warn("Transcription {} has no associated lecture unit", transcription.getId());
-            return;
-        }
-
-        Long unitId = transcription.getLectureUnit().getId();
-        processingStateRepository.findByLectureUnit_Id(unitId).ifPresent(state -> {
-            if (state.getPhase() != ProcessingPhase.TRANSCRIBING) {
-                return;
-            }
-
-            // Race condition check: verify this is the current transcription
-            Optional<LectureTranscription> currentTranscription = transcriptionRepository.findByLectureUnit_Id(unitId);
-            if (currentTranscription.isEmpty() || !currentTranscription.get().getId().equals(transcription.getId())) {
-                log.warn("Ignoring stale transcription callback for unit {}", unitId);
-                return;
-            }
-
-            if (transcription.getTranscriptionStatus() == TranscriptionStatus.COMPLETED) {
-                log.info("Transcription completed for unit {}", unitId);
-                if (irisLectureApi.isPresent()) {
-                    state.resetRetryCount(); // Fresh retries for ingestion phase
-                    startIngestion(state);
-                }
-                else {
-                    log.info("Iris not available, marking unit {} as done after transcription", unitId);
-                    state.transitionTo(ProcessingPhase.DONE);
-                    processingStateRepository.save(state);
-                }
-            }
-            else if (transcription.getTranscriptionStatus() == TranscriptionStatus.FAILED) {
-                log.warn("Transcription failed for unit {}", unitId);
-                handleTranscriptionFailure(state);
-            }
-        });
-    }
-
-    /**
-     * Called when ingestion completes (from the Pyris webhook callback).
-     * Validates the job token to reject stale callbacks from old jobs.
-     *
-     * @param lectureUnitId the ID of the lecture unit
-     * @param jobToken      the job token from the callback
-     * @param success       whether ingestion succeeded
-     */
-    public void handleIngestionComplete(Long lectureUnitId, String jobToken, boolean success) {
-        Optional<LectureUnitProcessingState> stateOpt = processingStateRepository.findByLectureUnit_Id(lectureUnitId);
-
-        if (stateOpt.isEmpty()) {
-            log.warn("Received ingestion callback for unit {} but no processing state exists", lectureUnitId);
-            return;
-        }
-
-        LectureUnitProcessingState state = stateOpt.get();
-
-        // Validate token - reject stale callbacks from old jobs
-        if (!Objects.equals(jobToken, state.getIngestionJobToken())) {
-            log.info("Ignoring stale ingestion callback for unit {} (token mismatch: expected {}, got {})", lectureUnitId, maskToken(state.getIngestionJobToken()),
-                    maskToken(jobToken));
-            return;
-        }
-
-        if (state.getPhase() != ProcessingPhase.INGESTING) {
-            log.warn("Received ingestion callback for unit {} in phase {} (expected INGESTING)", lectureUnitId, state.getPhase());
-            return;
-        }
-
-        if (success) {
-            log.info("Ingestion completed successfully for unit {}", lectureUnitId);
-            state.transitionTo(ProcessingPhase.DONE);
-            state.setIngestionJobToken(null); // Clear token after successful completion
-        }
-        else {
-            log.warn("Ingestion failed for unit {}", lectureUnitId);
-            handleIngestionFailure(state);
-        }
-        processingStateRepository.save(state);
-    }
-
-    /**
      * Manually retry processing for a unit that failed.
+     * This is synchronous - the external API calls (Nebula/Pyris) are just job submissions
+     * which are fast. The actual processing happens on those external systems.
      *
-     * @param lectureUnit the unit to retry
+     * @param lectureUnit the unit to retry (must be in FAILED state)
+     * @return the processing state after retry attempt, or null if retry not possible
      */
-    @Async
-    public void retryProcessing(AttachmentVideoUnit lectureUnit) {
-        // Set auth context due to @Async
-        SecurityUtils.setAuthorizationObject();
-        processingStateRepository.findByLectureUnit_Id(lectureUnit.getId()).ifPresent(state -> {
-            if (state.getPhase() == ProcessingPhase.FAILED) {
-                log.info("Retrying processing for unit {}", lectureUnit.getId());
-                // Delete the failed state - triggerProcessing will create fresh
-                // (hash/version will be set correctly for the new state)
-                processingStateRepository.delete(state);
-                triggerProcessing(lectureUnit);
-            }
-        });
+    @Nullable
+    public LectureUnitProcessingState retryProcessing(AttachmentVideoUnit lectureUnit) {
+        if (lectureUnit == null || lectureUnit.getId() == null) {
+            log.warn("Cannot retry processing for null or unsaved lecture unit");
+            return null;
+        }
+
+        var existingState = processingStateRepository.findByLectureUnit_Id(lectureUnit.getId());
+        if (existingState.isEmpty() || existingState.get().getPhase() != ProcessingPhase.FAILED) {
+            return null;
+        }
+
+        log.info("Retrying processing for unit {}", lectureUnit.getId());
+
+        // Run processing, passing the FAILED state to delete after preflight passes
+        // If preflight fails, the FAILED state is preserved (nothing deleted)
+        // If preflight passes, the FAILED state is deleted and fresh state created
+        boolean preflightPassed = doTriggerProcessing(lectureUnit, existingState);
+        if (!preflightPassed) {
+            // Services unavailable - FAILED state was NOT deleted, return null
+            return null;
+        }
+
+        // Preflight passed, old state was deleted - check what was created
+        var newState = processingStateRepository.findByLectureUnit_Id(lectureUnit.getId());
+        if (newState.isPresent()) {
+            return newState.get();
+        }
+
+        // Processing couldn't start (e.g., no playlist available for video)
+        // Create a FAILED state to provide feedback to the user
+        var failedState = new LectureUnitProcessingState(lectureUnit);
+        failedState.markFailed("artemisApp.attachmentVideoUnit.processing.error.noPlaylist");
+        return processingStateRepository.save(failedState);
     }
 
     /**
@@ -356,7 +317,7 @@ public class LectureContentProcessingService {
         if (existingTranscription.isPresent() && existingTranscription.get().getTranscriptionStatus() == TranscriptionStatus.COMPLETED) {
             log.info("Existing completed transcription found for unit {}, skipping to ingestion", unit.getId());
             if (irisLectureApi.isPresent()) {
-                startIngestion(state);
+                processingStateCallbackService.startIngestion(state);
             }
             else {
                 log.debug("Iris not available, marking unit {} as done", unit.getId());
@@ -381,7 +342,7 @@ public class LectureContentProcessingService {
 
         // No transcription possible - try PDF ingestion
         if (hasPdf && irisLectureApi.isPresent()) {
-            startIngestion(state);
+            processingStateCallbackService.startIngestion(state);
         }
         else {
             // Nothing to do - don't persist IDLE state
@@ -416,111 +377,8 @@ public class LectureContentProcessingService {
             // Transition to TRANSCRIBING so scheduler can find and retry it
             state.transitionTo(ProcessingPhase.TRANSCRIBING);
             log.error("Failed to start transcription for unit {}: {}", unit.getId(), e.getMessage());
-            handleTranscriptionFailure(state);
+            processingStateCallbackService.handleTranscriptionFailure(state);
         }
-    }
-
-    private void startIngestion(LectureUnitProcessingState state) {
-        if (irisLectureApi.isEmpty()) {
-            log.debug("Iris API not available, skipping ingestion for unit {}", state.getLectureUnit().getId());
-            state.transitionTo(ProcessingPhase.DONE);
-            processingStateRepository.save(state);
-            return;
-        }
-
-        LectureUnit unit = state.getLectureUnit();
-        if (!(unit instanceof AttachmentVideoUnit attachmentUnit)) {
-            log.warn("Cannot ingest non-AttachmentVideoUnit");
-            state.markFailed("artemisApp.attachmentVideoUnit.processing.error.invalidUnitType");
-            processingStateRepository.save(state);
-            return;
-        }
-
-        try {
-            // Call API FIRST, BEFORE transitioning state
-            String jobToken = irisLectureApi.get().addLectureUnitToPyrisDB(attachmentUnit);
-
-            if (jobToken == null) {
-                // Not applicable (Iris disabled for course, tutorial lecture, etc.) - mark as done
-                log.debug("Ingestion not applicable for unit {} (course settings or content type)", unit.getId());
-                state.transitionTo(ProcessingPhase.DONE);
-                processingStateRepository.save(state);
-                return;
-            }
-
-            // Job started successfully - now transition to INGESTING
-            state.transitionTo(ProcessingPhase.INGESTING);
-            state.setIngestionJobToken(jobToken);
-            processingStateRepository.save(state);
-            log.info("Ingestion started for unit {} with token {}", unit.getId(), maskToken(jobToken));
-        }
-        catch (Exception e) {
-            // Transition to INGESTING so scheduler can retry (state may be in IDLE or TRANSCRIBING)
-            state.transitionTo(ProcessingPhase.INGESTING);
-            log.error("Failed to start ingestion for unit {}: {}", unit.getId(), e.getMessage());
-            handleIngestionFailure(state);
-        }
-    }
-
-    // -------------------- Failure Handlers --------------------
-
-    private void handleTranscriptionFailure(LectureUnitProcessingState state) {
-        state.incrementRetryCount();
-
-        if (state.getRetryCount() >= MAX_PROCESSING_RETRIES) {
-            // Try to fall back to PDF-only ingestion
-            LectureUnit unit = state.getLectureUnit();
-            boolean hasPdf = unit instanceof AttachmentVideoUnit attachmentUnit && attachmentUnit.getAttachment() != null && attachmentUnit.getAttachment().getLink() != null
-                    && attachmentUnit.getAttachment().getLink().endsWith(".pdf");
-
-            if (hasPdf && irisLectureApi.isPresent()) {
-                log.info("Max transcription retries reached, falling back to PDF-only for unit {}", unit.getId());
-                state.resetRetryCount();
-                startIngestion(state);
-            }
-            else {
-                log.warn("Max transcription retries reached, marking as failed for unit {}", unit.getId());
-                state.markFailed("artemisApp.attachmentVideoUnit.processing.error.transcriptionFailed");
-                processingStateRepository.save(state);
-            }
-        }
-        else {
-            // Stay in TRANSCRIBING phase, scheduler will retry after backoff period
-            long backoffMinutes = calculateBackoffMinutes(state.getRetryCount());
-            state.scheduleRetry(backoffMinutes);
-            log.info("Transcription failed for unit {}, scheduled for retry in {} minutes (attempt {}/{})", state.getLectureUnit().getId(), backoffMinutes, state.getRetryCount(),
-                    MAX_PROCESSING_RETRIES);
-            processingStateRepository.save(state);
-        }
-    }
-
-    private void handleIngestionFailure(LectureUnitProcessingState state) {
-        state.incrementRetryCount();
-
-        if (state.getRetryCount() >= MAX_PROCESSING_RETRIES) {
-            log.warn("Max ingestion retries reached, marking as failed");
-            state.markFailed("artemisApp.attachmentVideoUnit.processing.error.ingestionFailed");
-            processingStateRepository.save(state);
-        }
-        else {
-            // Stay in INGESTING phase, scheduler will retry after backoff period
-            long backoffMinutes = calculateBackoffMinutes(state.getRetryCount());
-            state.scheduleRetry(backoffMinutes);
-            log.info("Ingestion failed for unit {}, scheduled for retry in {} minutes (attempt {}/{})", state.getLectureUnit().getId(), backoffMinutes, state.getRetryCount(),
-                    MAX_PROCESSING_RETRIES);
-            processingStateRepository.save(state);
-        }
-    }
-
-    /**
-     * Calculate exponential backoff delay in minutes.
-     * Formula: 2^retryCount minutes (2, 4, 8, 16, 32 minutes for retries 1-5).
-     *
-     * @param retryCount current retry attempt number
-     * @return backoff delay in minutes
-     */
-    static long calculateBackoffMinutes(int retryCount) {
-        return (long) Math.pow(2, retryCount);
     }
 
     /**
@@ -546,8 +404,8 @@ public class LectureContentProcessingService {
         if (playlistUrl.isPresent()) {
             log.info("Retrying transcription for unit {} (attempt {}/{})", unit.getId(), state.getRetryCount(), MAX_PROCESSING_RETRIES);
             // Update timestamps to mark retry start
-            state.setStartedAt(java.time.ZonedDateTime.now());
-            state.setLastUpdated(java.time.ZonedDateTime.now());
+            state.setStartedAt(ZonedDateTime.now());
+            state.setLastUpdated(ZonedDateTime.now());
             processingStateRepository.save(state);
 
             try {
@@ -557,7 +415,7 @@ public class LectureContentProcessingService {
             }
             catch (Exception e) {
                 log.error("Failed to start transcription retry for unit {}: {}", unit.getId(), e.getMessage());
-                handleTranscriptionFailure(state);
+                processingStateCallbackService.handleTranscriptionFailure(state);
             }
         }
         else {
@@ -567,7 +425,7 @@ public class LectureContentProcessingService {
             if (hasPdf && irisLectureApi.isPresent()) {
                 log.info("Playlist no longer available, falling back to PDF-only for unit {}", unit.getId());
                 state.resetRetryCount();
-                startIngestion(state);
+                processingStateCallbackService.startIngestion(state);
             }
             else {
                 state.markFailed("artemisApp.attachmentVideoUnit.processing.error.noPlaylist");
@@ -583,14 +441,7 @@ public class LectureContentProcessingService {
      * @param state the processing state to retry
      */
     public void retryIngestion(LectureUnitProcessingState state) {
-        log.info("Retrying ingestion for unit {} (attempt {}/{})", state.getLectureUnit().getId(), state.getRetryCount(), MAX_PROCESSING_RETRIES);
-        // Clear retry eligibility - we're starting the retry now
-        state.clearRetryEligibility();
-        // Update timestamps to mark retry start
-        state.setStartedAt(java.time.ZonedDateTime.now());
-        state.setLastUpdated(java.time.ZonedDateTime.now());
-        processingStateRepository.save(state);
-        startIngestion(state);
+        processingStateCallbackService.retryIngestion(state);
     }
 
     // -------------------- Helper Methods --------------------
@@ -703,22 +554,5 @@ public class LectureContentProcessingService {
         catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 algorithm not available", e);
         }
-    }
-
-    /**
-     * Masks a token for safe logging by showing only the first and last 3 characters.
-     *
-     * @param token the token to mask
-     * @return the masked token (e.g., "abc...xyz")
-     */
-    private String maskToken(String token) {
-        if (token == null) {
-            return "null";
-        }
-        int len = token.length();
-        if (len <= 6) {
-            return "***";
-        }
-        return token.substring(0, 3) + "..." + token.substring(len - 3);
     }
 }

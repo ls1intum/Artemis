@@ -30,7 +30,7 @@ export class ChatStatusBarComponent {
     private openTimeout: ReturnType<typeof setTimeout> | undefined;
     private styleTimeout: ReturnType<typeof setTimeout> | undefined;
 
-    readonly stages = input<IrisStageDTO[]>([]);
+    stages = input<IrisStageDTO[]>([]);
 
     // Computed signal that creates copies with lowerCaseState added (avoids mutating input)
     readonly processedStages = computed<ProcessedStage[]>(() => {
