@@ -10,8 +10,6 @@ import java.time.ZoneId;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-import org.jspecify.annotations.NonNull;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -45,17 +43,17 @@ public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull LocalDateTime s
      * DTO used to send the status explanation when i.g. cancelling a tutorial group session
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TutorialGroupStatusDTO(String status_explanation) {
+    public record TutorialGroupStatusDTO(String statusExplanation) {
     }
 
     /**
      * DTO used because we want to interpret the dates in the time zone of the tutorial groups configuration
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TutorialGroupSessionRequestDTO(@NonNull LocalDate date, @NonNull LocalTime startTime, @NonNull LocalTime endTime, @Size(min = 1, max = 2000) String location) {
+    public record TutorialGroupSessionRequestDTO(@NotNull LocalDate date, @NotNull LocalTime startTime, @NotNull LocalTime endTime, @Size(min = 1, max = 2000) String location) {
 
         public void validityCheck() {
-            if (startTime.isAfter(endTime)) {
+            if (!startTime.isBefore(endTime)) {
                 throw new BadRequestAlertException("The start time must be before the end time", ENTITY_NAME, "startTimeAfterEndTime");
             }
         }

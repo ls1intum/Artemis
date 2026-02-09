@@ -57,7 +57,7 @@ export const formDataToTutorialGroupFreePeriodDTO = (formData: TutorialGroupFree
     } else {
         const res = {
             startDate: formData.startDate,
-            endDate: formData.startDate,
+            endDate: new Date(formData.startDate!.getTime()),
             reason: formData.reason,
         };
         res.endDate!.setHours(23, 59);

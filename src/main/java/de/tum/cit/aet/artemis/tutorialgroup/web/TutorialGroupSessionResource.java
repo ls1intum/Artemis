@@ -286,7 +286,7 @@ public class TutorialGroupSessionResource {
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel")
     @EnforceAtLeastTutor
     public ResponseEntity<TutorialGroupSessionDTO> cancel(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
-            @RequestBody TutorialGroupSessionDTO.TutorialGroupStatusDTO tutorialGroupStatusDTO) throws URISyntaxException {
+            @RequestBody TutorialGroupSessionDTO.TutorialGroupStatusDTO tutorialGroupStatusDTO) {
         log.debug("REST request to cancel session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         var sessionToCancel = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         if (sessionToCancel.getTutorialGroupFreePeriod() != null) {
@@ -299,8 +299,8 @@ public class TutorialGroupSessionResource {
                 userAndIsAdminOrInstructorPair.second());
 
         sessionToCancel.setStatus(TutorialGroupSessionStatus.CANCELLED);
-        if (tutorialGroupStatusDTO != null && tutorialGroupStatusDTO.status_explanation() != null && !tutorialGroupStatusDTO.status_explanation().trim().isEmpty()) {
-            sessionToCancel.setStatusExplanation(tutorialGroupStatusDTO.status_explanation().trim());
+        if (tutorialGroupStatusDTO != null && tutorialGroupStatusDTO.statusExplanation() != null && !tutorialGroupStatusDTO.statusExplanation().trim().isEmpty()) {
+            sessionToCancel.setStatusExplanation(tutorialGroupStatusDTO.statusExplanation().trim());
         }
         sessionToCancel = tutorialGroupSessionRepository.save(sessionToCancel);
         var courseZone = ZoneId.of(sessionToCancel.getTutorialGroup().getCourse().getTimeZone());
@@ -317,8 +317,7 @@ public class TutorialGroupSessionResource {
      */
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/activate")
     @EnforceAtLeastTutor
-    public ResponseEntity<TutorialGroupSessionDTO> activate(@PathVariable long courseId, @PathVariable long tutorialGroupId, @PathVariable long sessionId)
-            throws URISyntaxException {
+    public ResponseEntity<TutorialGroupSessionDTO> activate(@PathVariable long courseId, @PathVariable long tutorialGroupId, @PathVariable long sessionId) {
         log.debug("REST request to activate session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         var sessionToActivate = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         if (sessionToActivate.getTutorialGroupFreePeriod() != null) {
