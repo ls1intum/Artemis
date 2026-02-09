@@ -1038,12 +1038,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
 
         comp.submitRefinement();
 
-        expect(problemStatementService.refineGlobally).toHaveBeenCalledWith(
-            comp.exercise,
-            'Original problem statement',
-            'Improve clarity',
-            comp['isGeneratingOrRefining'],
-        );
+        expect(problemStatementService.refineGlobally).toHaveBeenCalledWith(comp.exercise, 'Original problem statement', 'Improve clarity', comp['isGeneratingOrRefining']);
         expect(comp.showDiff()).toBeTrue();
     });
 
