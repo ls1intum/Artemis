@@ -22,13 +22,12 @@ describe('TutorialGroupFreePeriodService', () => {
         service = TestBed.inject(TutorialGroupFreePeriodService);
         httpMock = TestBed.inject(HttpTestingController);
 
-        elemDefault = {
-            id: 1,
-            reason: 'Example Reason',
-            startDate: new Date(2021, 0, 1, 0, 0, 0),
-            endDate: new Date(2021, 0, 1, 23, 59, 59),
-            tutorialGroupsConfiguration: { id: 1 },
-        };
+        elemDefault = new TutorialGroupFreePeriodDTO();
+        elemDefault.id = 1;
+        elemDefault.reason = 'Example Reason';
+        elemDefault.startDate = new Date(Date.UTC(2021, 0, 1, 0, 0, 0));
+        elemDefault.endDate = new Date(Date.UTC(2021, 0, 1, 23, 59, 59));
+        elemDefault.tutorialGroupsConfiguration = { id: 1 };
     });
 
     afterEach(() => {
@@ -37,12 +36,11 @@ describe('TutorialGroupFreePeriodService', () => {
     });
 
     it('getOneOfConfiguration', () => {
-        // server returns LocalDateTime strings without a timezone
         const returnedFromServer = {
             id: elemDefault.id,
             reason: elemDefault.reason,
-            start: '2021-01-01T00:00:00',
-            end: '2021-01-01T23:59:59',
+            start: '2021-01-01T00:00:00Z',
+            end: '2021-01-01T23:59:59Z',
             tutorialGroupsConfiguration: elemDefault.tutorialGroupsConfiguration,
         };
 
@@ -61,16 +59,16 @@ describe('TutorialGroupFreePeriodService', () => {
         // Assert Dates
         expect(result.body.startDate instanceof Date).toBeTrue();
         expect(result.body.endDate instanceof Date).toBeTrue();
-        expect(result.body.startDate.toISOString()).toBe(elemDefault.startDate!.toISOString());
-        expect(result.body.endDate.toISOString()).toBe(elemDefault.endDate!.toISOString());
+        expect(result.body.startDate.getTime()).toBe(elemDefault.startDate!.getTime());
+        expect(result.body.endDate.getTime()).toBe(elemDefault.endDate!.getTime());
     });
 
     it('create', () => {
         const returnedFromServer = {
             id: 0,
             reason: elemDefault.reason,
-            start: '2021-01-01T00:00:00',
-            end: '2021-01-01T23:59:59',
+            start: '2021-01-01T00:00:00Z',
+            end: '2021-01-01T23:59:59Z',
             tutorialGroupsConfiguration: elemDefault.tutorialGroupsConfiguration,
         };
 
@@ -92,8 +90,8 @@ describe('TutorialGroupFreePeriodService', () => {
         const returnedFromServer = {
             id: elemDefault.id,
             reason: 'Test',
-            start: '2021-01-01T00:00:00',
-            end: '2021-01-01T23:59:59',
+            start: '2021-01-01T00:00:00Z',
+            end: '2021-01-01T23:59:59Z',
             tutorialGroupsConfiguration: elemDefault.tutorialGroupsConfiguration,
         };
 
