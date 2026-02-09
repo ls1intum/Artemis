@@ -236,15 +236,22 @@ zonky:
         database:
             prefetching:
                 concurrency: 1
-            type: H2  # Alternatives: H2 / MYSQL / POSTGRES
+            # Default: H2 (in-process, no Docker). Override via Gradle tasks:
+            #   ./gradlew testPostgres -x webapp  (PostgreSQL via Testcontainers)
+            #   ./gradlew testMysql -x webapp     (MySQL via Testcontainers)
+            # Connection pooling for Testcontainers is handled by TestDataSourcePoolConfig.
+            type: H2
             postgres:
                 docker:
                     image: docker.io/library/postgres:${postgres.version}${postgres.image.variant}
-                    # Zonky's built-in tmpfs targets /var/lib/postgresql/data which is wrong for PG 18+.
-                    # tmpfs is mounted via PostgresTmpfsContainerCustomizer at /var/lib/postgresql instead.
+                    # Zonky's built-in tmpfs targets /var/lib/postgresql/data which is wrong for PG 18+
+                    # (PGDATA moved to /var/lib/postgresql/<major>/docker). We disable it here and mount
+                    # tmpfs at /var/lib/postgresql via PostgresTmpfsContainerCustomizer instead.
                     tmpfs:
                         enabled: false
                 server:
+                    # Performance tuning: disable durability guarantees for test speed.
+                    # Safe because test data is ephemeral and does not need crash recovery.
                     properties:
                         fsync: off
                         synchronous_commit: off
@@ -268,9 +275,11 @@ zonky:
             mysql:
                 docker:
                     image: docker.io/library/mysql:${mysql.version}
+                    # MySQL's default DATADIR works with Zonky's tmpfs, no customizer needed.
                     tmpfs:
                         enabled: true
                 server:
+                    # Performance tuning: disable durability guarantees for test speed.
                     properties:
                         innodb_flush_log_at_trx_commit: 0
                         innodb_doublewrite: 0

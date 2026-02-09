@@ -609,8 +609,8 @@ tasks.named("dependencyUpdates").configure {
 // 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
 // 2) Execute tests with coverage report:           ./gradlew test jacocoTestReport -x webapp
 // 2a) Execute tests without coverage report:       ./gradlew test -x webapp
-// 2b) Execute tests with MySQL test container:     ./gradlew testMysql -x webapp
-// 2c) Execute tests with Postgres test container:  ./gradlew testPostgres -x webapp
+// 2b) Execute tests with MySQL test container:     ./gradlew testMysql -x webapp  (requires Docker)
+// 2c) Execute tests with Postgres test container:  ./gradlew testPostgres -x webapp  (requires Docker)
 // 2d) Run a single test:                           ./gradlew test --tests ExamIntegrationTest -x webapp or ./gradlew test --tests ExamIntegrationTest.testGetExamScore -x webapp
 // 2e) Run tests for modules:                       ./gradlew test -DincludeModules=athena,atlas -x webapp (executes all tests in directories ./src/main/test/.../athena and ./src/main/test/.../atlas) + ArchitectureTests
 // 3) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification -x webapp

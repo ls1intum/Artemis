@@ -40,6 +40,14 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 
+/**
+ * Schedules lifecycle tasks (due date, build-and-test, individual due dates) for programming exercises.
+ * <p>
+ * This service uses {@link TimeUtil#now()} instead of {@code ZonedDateTime.now()} for all time comparisons.
+ * {@code TimeUtil.now()} delegates to a ThreadLocal clock that can be frozen in tests via
+ * {@code TimeUtil.setClock(Clock.fixed(...))}. This allows deterministic scheduling decisions in tests
+ * without affecting the real {@link TaskScheduler} which always uses system time.
+ */
 @Lazy
 @Service
 @Profile(PROFILE_CORE_AND_SCHEDULING)

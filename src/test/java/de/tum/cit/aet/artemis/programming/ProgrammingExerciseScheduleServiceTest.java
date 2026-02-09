@@ -42,12 +42,26 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 /**
  * Tests for {@link de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseScheduleService}.
  * <p>
- * Note: Verifications of BUILD_AND_TEST_AFTER_DUE_DATE behavior check that the task is
- * <em>scheduled</em> via {@code scheduleService} rather than verifying the downstream
- * {@code triggerInstructorBuildForExercise} call on {@code programmingTriggerService}.
- * This is because {@code triggerInstructorBuildForExercise} is annotated with {@code @Async},
- * and Spring's CGLIB proxy for {@code @Async} intercepts the method call before Mockito's
- * spy can record it, making direct spy verification unreliable.
+ * <b>Test architecture:</b> This test class extends {@code AbstractProgrammingIntegrationLocalVCSamlTest}
+ * which activates the {@code PROFILE_SCHEDULING} profile. This means {@code MainInstanceMessageSendService}
+ * is used (synchronous direct calls) instead of the Hazelcast-based {@code DistributedInstanceMessageSendService}.
+ * The {@code scheduleService} and {@code programmingExerciseGradingService} are {@code @MockitoSpyBean}s
+ * declared in {@code AbstractArtemisIntegrationTest} and shared across all test classes in the same Spring context.
+ * <p>
+ * <b>Time management:</b> Tests that need deterministic time comparisons call {@link #freezeTime()} which
+ * uses {@link TimeUtil#setClock(Clock)} with a fixed UTC clock. The production code in
+ * {@code ProgrammingExerciseScheduleService} calls {@link TimeUtil#now()} (ThreadLocal-based), so frozen
+ * time only affects the test thread. The real {@code TaskScheduler} still uses real time to fire tasks.
+ * The clock is reset in {@code @AfterEach} via {@link TimeUtil#resetClock()}.
+ * <p>
+ * <b>Spy invocation management:</b> Because spy beans are shared across the Spring context, invocations
+ * from other test classes (or from exercise creation during setup) can leak into verification. The
+ * {@code @BeforeEach} calls {@code clearInvocations()} at the end of setup to establish a clean baseline.
+ * <p>
+ * <b>BUILD_AND_TEST_AFTER_DUE_DATE verification:</b> Tests check that the task is <em>scheduled</em> via
+ * {@code scheduleService} rather than verifying the downstream {@code triggerInstructorBuildForExercise}
+ * call. This is because {@code triggerInstructorBuildForExercise} is {@code @Async}, and Spring's CGLIB
+ * proxy intercepts the method call before Mockito's spy can record it, making direct verification unreliable.
  */
 class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrationLocalVCSamlTest {
 

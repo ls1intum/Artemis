@@ -137,7 +137,18 @@ test {
     maxHeapSize = "6g" // maximum heap size
 }
 
-// Convenience tasks: ./gradlew testMysql -x webapp / ./gradlew testPostgres -x webapp
+// Convenience tasks for running the full test suite against real databases via Testcontainers:
+//   ./gradlew testMysql -x webapp     - Run all tests against MySQL (Docker required)
+//   ./gradlew testPostgres -x webapp  - Run all tests against PostgreSQL (Docker required)
+//
+// These tasks set the Zonky database type and Hibernate dialect/platform so that Spring Boot
+// uses a Testcontainers-managed database instead of the default in-process H2. The database
+// container is automatically started and stopped by Zonky. Connection pooling and timezone
+// handling are configured by TestDataSourcePoolConfig, and PostgreSQL tmpfs is configured
+// by PostgresTmpfsContainerCustomizer.
+//
+// Note: The default 'test' task uses H2 (in-process, no Docker needed). See application.yml
+// for the Zonky configuration (zonky.test.database.type).
 ['Mysql': ['MYSQL', 'org.hibernate.dialect.MySQLDialect', 'MYSQL'],
  'Postgres': ['POSTGRES', 'org.hibernate.dialect.PostgreSQLDialect', 'POSTGRESQL']].each { name, config ->
     tasks.register("test${name}", Test) {
