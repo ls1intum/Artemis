@@ -14,7 +14,7 @@ import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/core/
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ImageComponent } from 'app/shared/image/image.component';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
-import { SimpleChange, signal } from '@angular/core';
+import { signal } from '@angular/core';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
@@ -156,7 +156,8 @@ describe('CourseSidebarComponent', () => {
 
     it('should initialize visible/hidden items on  sidebar update', () => {
         const updateVisibleNavbarItemsSpy = jest.spyOn(component, 'updateVisibleNavbarItems');
-        component.ngOnChanges({ sidebarItems: new SimpleChange([], mockSidebarItems, true) });
+        fixture.componentRef.setInput('sidebarItems', mockSidebarItems);
+        fixture.detectChanges();
 
         expect(updateVisibleNavbarItemsSpy).toHaveBeenCalledWith(window.innerHeight);
     });

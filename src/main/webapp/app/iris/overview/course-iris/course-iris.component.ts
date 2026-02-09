@@ -23,7 +23,7 @@ export class CourseIrisComponent {
         if (!value) {
             return undefined;
         }
-        const parsed = Number.parseInt(value, 10);
+        const parsed = Number(value);
         return Number.isNaN(parsed) ? undefined : parsed;
     });
 

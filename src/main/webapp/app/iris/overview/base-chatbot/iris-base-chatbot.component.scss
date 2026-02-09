@@ -68,7 +68,7 @@
     display: grid;
     grid-template-rows: 0fr;
     opacity: 0;
-    animation: suggestion-enter 0.3s 1.5s ease-in-out forwards;
+    animation: suggestion-enter 0.3s 1s ease-in-out forwards;
 
     > * {
         overflow: hidden;
@@ -228,8 +228,6 @@
 
 .bubble-left {
     --_d: 0%;
-    // border-left: var(--t) solid #0000;
-    // margin-right: var(--t);
     margin-bottom: 8px;
     place-self: center;
     max-width: 100%;
@@ -237,18 +235,12 @@
 
 .bubble-right {
     --_d: 100%;
-    // border-right: var(--t);
-    // margin-left: var(--t);
     place-self: end;
     float: right;
     background-color: var(--iris-tertiary-background);
     border-radius: 8px;
     padding: 16px;
     max-width: 90%;
-    // --r: 13px;
-    /* the radius */
-    // --t: 8px;
-    /* the size of the tail */
 }
 
 .client-chat-error {
@@ -317,7 +309,7 @@ pre {
         display: flex;
         flex-direction: column;
         flex: 1;
-        align-items: stretch; // enter the error message vertically
+        align-items: stretch; // stretch children to full width
         gap: 8px;
         margin: 0 16px;
 
@@ -377,6 +369,7 @@ pre {
                 flex-direction: column-reverse;
                 gap: 40px;
                 margin-inline: auto;
+                padding-bottom: 8px;
             }
         }
     }
@@ -604,10 +597,6 @@ pre {
     display: flex;
     justify-content: flex-end;
     width: fit-content;
-    //padding-bottom: 1.25rem; // space for the buttons
-    //left: 20px;
-    //bottom: -0.5lh;
-    //height: 1lh;
 
     button.btn {
         padding: 4px 6px;

@@ -14,7 +14,7 @@ import {
     faThumbsUp,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Clipboard } from '@angular/cdk/clipboard';
@@ -44,6 +44,20 @@ import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service'
 import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 
+// Session history time bucket boundaries (in days ago)
+const YESTERDAY_OFFSET = 1;
+const LAST_7_DAYS_START = 2;
+const LAST_7_DAYS_END = 6;
+const LAST_30_DAYS_START = 7;
+const LAST_30_DAYS_END = 29;
+const OLDER_SESSIONS_START = 30;
+
+// Interval (in ms) to check if the date has changed for session bucket recalculation
+const DAY_CHANGE_CHECK_INTERVAL_MS = 60000;
+
+// Duration (in ms) to show the "copied" feedback before resetting
+const COPY_FEEDBACK_DURATION_MS = 1500;
+
 @Component({
     selector: 'jhi-iris-base-chatbot',
     templateUrl: './iris-base-chatbot.component.html',
@@ -72,7 +86,6 @@ import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-stat
 })
 export class IrisBaseChatbotComponent implements AfterViewInit {
     protected accountService = inject(AccountService);
-    protected modalService = inject(NgbModal);
     protected translateService = inject(TranslateService);
 
     // Reactive signal for the localized "new chat" title
@@ -164,10 +177,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     });
     readonly filteredNonNewSessions = computed(() => this.filteredSessions().filter((session) => !this.isNewChatSession(session)));
     readonly todaySessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), 0, 0, false, this.dayTick()));
-    readonly yesterdaySessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), 1, 1, false, this.dayTick()));
-    readonly last7DaysSessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), 2, 6, false, this.dayTick()));
-    readonly last30DaysSessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), 7, 29, false, this.dayTick()));
-    readonly olderSessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), 30, undefined, true, this.dayTick()));
+    readonly yesterdaySessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), YESTERDAY_OFFSET, YESTERDAY_OFFSET, false, this.dayTick()));
+    readonly last7DaysSessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), LAST_7_DAYS_START, LAST_7_DAYS_END, false, this.dayTick()));
+    readonly last30DaysSessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), LAST_30_DAYS_START, LAST_30_DAYS_END, false, this.dayTick()));
+    readonly olderSessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), OLDER_SESSIONS_START, undefined, true, this.dayTick()));
 
     // Daily tick signal for reactive date-based session buckets
     readonly dayTick = signal(new Date().toDateString());
@@ -242,7 +255,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         effect((onCleanup) => {
             const rawMessages = this.rawMessages();
             if (rawMessages.length !== this.previousMessageCount) {
-                this.scrollToBottom('auto');
+                this.scrollToBottom('smooth');
                 const timeoutId = setTimeout(() => this.messageTextarea()?.nativeElement?.focus(), 10);
                 onCleanup(() => clearTimeout(timeoutId));
             }
@@ -279,10 +292,14 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
         });
 
-        // Reset clicked suggestion when new suggestions arrive (read without using value to establish dependency)
+        // Reset clicked suggestion when new suggestions arrive and scroll to show them
         effect(() => {
-            this.suggestions();
+            const suggestions = this.suggestions();
             this.clickedSuggestion.set(undefined);
+            if (suggestions.length > 0) {
+                // Scroll after suggestion animation completes (1s delay + 0.3s animation)
+                setTimeout(() => this.scrollToBottom('smooth'), 1350);
+            }
         });
 
         // Focus on message textarea after initialization
@@ -302,13 +319,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
         });
 
-        // Set up daily tick interval to refresh date-based session buckets at midnight
+        // Set up interval to detect date changes and refresh date-based session buckets
         this.dayTickIntervalId = setInterval(() => {
             const currentDay = new Date().toDateString();
             if (this.dayTick() !== currentDay) {
                 this.dayTick.set(currentDay);
             }
-        }, 60000); // Check every minute
+        }, DAY_CHANGE_CHECK_INTERVAL_MS);
         this.destroyRef.onDestroy(() => {
             if (this.dayTickIntervalId) {
                 clearInterval(this.dayTickIntervalId);
@@ -486,7 +503,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
         this.copyResetTimeoutId = setTimeout(() => {
             this.copiedMessageKey.set(undefined);
-        }, 1500);
+        }, COPY_FEEDBACK_DURATION_MS);
     }
 
     /**
@@ -496,11 +513,21 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     scrollToBottom(behavior: ScrollBehavior) {
         setTimeout(() => {
             const messagesElement: HTMLElement = this.messagesElement()?.nativeElement;
-            messagesElement?.scrollTo({
-                top: 0,
+            if (!messagesElement) return;
+            messagesElement.scrollTo({
+                top: messagesElement.scrollHeight,
                 behavior: behavior,
             });
         });
+        // Follow-up scroll after message animation (0.3s) completes to capture full height
+        setTimeout(() => {
+            const messagesElement: HTMLElement = this.messagesElement()?.nativeElement;
+            if (!messagesElement) return;
+            messagesElement.scrollTo({
+                top: messagesElement.scrollHeight,
+                behavior: behavior,
+            });
+        }, 350);
     }
 
     /**
@@ -599,7 +626,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     /**
-     * Resets the height of the chat body.
+     * Resets the textarea height and scroll button position.
      */
     resetChatBodyHeight() {
         const textareaRef = this.messageTextarea();
@@ -615,8 +642,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     checkChatScroll() {
         const messagesElement = this.messagesElement()?.nativeElement;
         if (!messagesElement) return;
-        const scrollTop = messagesElement.scrollTop;
-        this.isScrolledToBottom.set(scrollTop < 50);
+        const { scrollTop, scrollHeight, clientHeight } = messagesElement;
+        this.isScrolledToBottom.set(scrollTop >= scrollHeight - clientHeight - 50);
     }
 
     onSuggestionClick(suggestion: string) {

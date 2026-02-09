@@ -3,10 +3,10 @@
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
+    // Compact spacing to fit within the 17rem sidebar width (see .chat-history-open in parent SCSS)
     padding: 6px;
     margin: 0 8px;
     font-size: 14px;
-    // min-width: 17rem;
 
     .chat-history-text {
         overflow: hidden;
@@ -15,6 +15,7 @@
     }
 
     .related-entity-info {
+        // Constrained to ~1/3 of the 17rem sidebar, leaving room for the session title
         max-width: 6rem;
         border: 1px solid var(--border-color);
         border-radius: 4px;
