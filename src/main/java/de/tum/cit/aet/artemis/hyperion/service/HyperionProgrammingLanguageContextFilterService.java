@@ -56,19 +56,6 @@ public class HyperionProgrammingLanguageContextFilterService {
             // Docs
             ".md", ".txt", ".csv", ".adoc", ".rst");
 
-    private static final Strategy IDENTITY = new Strategy() {
-
-        @Override
-        public ProgrammingLanguage language() {
-            return null;
-        }
-
-        @Override
-        public Map<String, String> filter(Map<String, String> files) {
-            return files == null ? Map.of() : files;
-        }
-    };
-
     public HyperionProgrammingLanguageContextFilterService() {
         register(new ExclusionStrategy(ProgrammingLanguage.JAVA,
                 List.of("glob:**/gradlew*", "glob:**/mvnw*", "glob:**/.settings/**", "glob:**/.classpath", "glob:**/.project", "glob:**/exercise-details.json")));
