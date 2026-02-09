@@ -9,7 +9,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -254,27 +253,18 @@ public class ProgrammingExerciseParticipationService {
         String commitMessage = "Reset Exercise";
 
         if (coAuthor != null) {
-            StringBuilder displayIdentifier = new StringBuilder();
+            StringBuilder displayIdentifier = new StringBuilder("\n\nCo-authored-by:");
 
-            Consumer<StringBuilder> appendDisplayIdentifier = (builder) -> {
-                if (coAuthor.getName() != null) {
-                    builder.append(" ").append(coAuthor.getName());
-                }
-                else if (coAuthor.getEmail() == null) {
-                    builder.append(" ").append(login);
-                }
+            if (coAuthor.getName() != null) {
+                displayIdentifier.append(" ").append(coAuthor.getName());
+            }
+            else if (coAuthor.getEmail() == null) {
+                displayIdentifier.append(" ").append(login);
+            }
 
-                if (coAuthor.getEmail() != null) {
-                    builder.append(" <").append(coAuthor.getEmail()).append(">");
-                }
-            };
-            displayIdentifier.append("\n\nThis is a destructive operation (Repository reset).");
-
-            displayIdentifier.append("\nResponsible person:");
-            appendDisplayIdentifier.accept(displayIdentifier);
-
-            displayIdentifier.append("\n\nCo-authored-by:");
-            appendDisplayIdentifier.accept(displayIdentifier);
+            if (coAuthor.getEmail() != null) {
+                displayIdentifier.append(" <").append(coAuthor.getEmail()).append(">");
+            }
 
             commitMessage += displayIdentifier.toString();
         }
