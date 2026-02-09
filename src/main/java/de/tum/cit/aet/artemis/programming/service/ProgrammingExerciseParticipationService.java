@@ -249,7 +249,7 @@ public class ProgrammingExerciseParticipationService {
             }
         }
         String login = SecurityUtils.getCurrentUserLogin().orElse(null);
-        User coAuthor = userRepository.findOneByLogin(login).orElse(null);
+        User coAuthor = login != null ? userRepository.findOneByLogin(login).orElse(null) : null;
         String commitMessage = "Reset Exercise";
 
         if (coAuthor != null) {
