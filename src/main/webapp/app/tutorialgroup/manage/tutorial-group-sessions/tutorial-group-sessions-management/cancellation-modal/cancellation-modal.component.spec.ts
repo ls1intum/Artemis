@@ -3,8 +3,8 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CancellationModalComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/tutorial-group-sessions-management/cancellation-modal/cancellation-modal.component';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
-import { generateExampleTutorialGroupSession } from 'test/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
-import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { generateExampleTutorialGroupSessionDTO } from 'test/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
+import { TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -21,7 +21,7 @@ describe('CancellationModalComponent', () => {
     const course = { id: 1, timeZone: 'Europe/Berlin' } as Course;
     const tutorialGroupId = 2;
     const tutorialGroupSessionId = 3;
-    const tutorialGroupSession = generateExampleTutorialGroupSession({ id: tutorialGroupSessionId });
+    const tutorialGroupSession = generateExampleTutorialGroupSessionDTO({ id: tutorialGroupSessionId });
     let tutorialGroupSessionService: TutorialGroupSessionService;
 
     beforeEach(() => {
@@ -51,14 +51,14 @@ describe('CancellationModalComponent', () => {
     });
 
     it('should call cancel with active session', () => {
-        const cancelSessionSpy = vi.spyOn(tutorialGroupSessionService, 'cancel').mockReturnValue(of(new HttpResponse<TutorialGroupSession>({ body: tutorialGroupSession })));
+        const cancelSessionSpy = vi.spyOn(tutorialGroupSessionService, 'cancel').mockReturnValue(of(new HttpResponse<TutorialGroupSessionDTO>({ body: tutorialGroupSession })));
         const confirmedSpy = vi.spyOn(component.confirmed, 'emit');
 
         // Set the reason directly
         component.reasonControl!.setValue('National Holiday');
         component.dialogVisible.set(true);
 
-        // Call the method directly to avoid jsdom CSS parsing issues with PrimeNG dialog
+        // Call the method directly to avoid jsdom CSS parsing issues with the PrimeNG dialog
         component.cancelOrActivate();
 
         expect(cancelSessionSpy).toHaveBeenCalledOnce();
@@ -68,10 +68,10 @@ describe('CancellationModalComponent', () => {
     });
 
     it('should call activate with cancelled session', () => {
-        fixture.componentRef.setInput('tutorialGroupSession', { ...tutorialGroupSession, status: TutorialGroupSessionStatus.CANCELLED });
+        fixture.componentRef.setInput('tutorialGroupSession', { ...tutorialGroupSession, isCancelled: true });
         fixture.detectChanges();
 
-        const activateSessionSpy = vi.spyOn(tutorialGroupSessionService, 'activate').mockReturnValue(of(new HttpResponse<TutorialGroupSession>({ body: tutorialGroupSession })));
+        const activateSessionSpy = vi.spyOn(tutorialGroupSessionService, 'activate').mockReturnValue(of(new HttpResponse<TutorialGroupSessionDTO>({ body: tutorialGroupSession })));
         const confirmedSpy = vi.spyOn(component.confirmed, 'emit');
 
         component.dialogVisible.set(true);
@@ -99,13 +99,13 @@ describe('CancellationModalComponent', () => {
 
     it('should return false for isSubmitPossible when form is invalid', () => {
         component.open();
-        // Set reason to a string longer than 255 characters to make form invalid
+        // Set reason to a string longer than 255 characters to make the form invalid
         component.reasonControl!.setValue('a'.repeat(256));
         expect(component.isSubmitPossible).toBe(false);
     });
 
     it('should return empty string for generateSessionLabel when session has no start or end', () => {
-        const sessionWithoutDates = { ...tutorialGroupSession, start: undefined, end: undefined } as TutorialGroupSession;
+        const sessionWithoutDates: TutorialGroupSessionDTO = { ...tutorialGroupSession, startDate: undefined, endDate: undefined };
         expect(component.generateSessionLabel(sessionWithoutDates)).toBe('');
     });
 
@@ -124,7 +124,7 @@ describe('CancellationModalComponent', () => {
     });
 
     it('should handle error when activating session fails', () => {
-        fixture.componentRef.setInput('tutorialGroupSession', { ...tutorialGroupSession, status: TutorialGroupSessionStatus.CANCELLED });
+        fixture.componentRef.setInput('tutorialGroupSession', { ...tutorialGroupSession, isCancelled: true });
         fixture.detectChanges();
 
         const errorResponse = new HttpErrorResponse({ status: 400 });

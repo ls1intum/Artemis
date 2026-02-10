@@ -50,7 +50,7 @@ export class TutorialGroupSessionService {
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
     }
 
-    cancel(courseId: number, tutorialGroupId: number, sessionId: number, explanation: string): Observable<EntityResponseType> {
+    cancel(courseId: number, tutorialGroupId: number, sessionId: number, explanation?: string): Observable<EntityResponseType> {
         return this.httpClient
             .post<TutorialGroupSessionDTO>(
                 `${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}/cancel`,

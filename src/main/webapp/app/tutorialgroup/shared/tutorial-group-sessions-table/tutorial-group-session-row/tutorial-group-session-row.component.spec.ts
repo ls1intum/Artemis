@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { generateExampleTutorialGroupSession } from 'test/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
-import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { generateExampleTutorialGroupSessionDTO } from 'test/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
+import { TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -26,7 +26,7 @@ describe('TutorialGroupSessionRowComponent', () => {
 
     let component: TutorialGroupSessionRowComponent;
     let fixture: ComponentFixture<TutorialGroupSessionRowComponent>;
-    let session: TutorialGroupSession;
+    let session: TutorialGroupSessionDTO;
     let tutorialGroup: TutorialGroup;
 
     beforeEach(async () => {
@@ -37,7 +37,7 @@ describe('TutorialGroupSessionRowComponent', () => {
 
         fixture = TestBed.createComponent(TutorialGroupSessionRowComponent);
         component = fixture.componentInstance;
-        session = generateExampleTutorialGroupSession({});
+        session = generateExampleTutorialGroupSessionDTO({});
         tutorialGroup = generateExampleTutorialGroup({});
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.componentRef.setInput('session', session);
@@ -51,7 +51,7 @@ describe('TutorialGroupSessionRowComponent', () => {
     });
 
     it('should display session canceled button when sessions are cancelled', () => {
-        fixture.componentRef.setInput('session', { ...session, status: TutorialGroupSessionStatus.CANCELLED });
+        fixture.componentRef.setInput('session', { ...session, isCancelled: true });
         fixture.detectChanges();
 
         const sessionCanceledButton = fixture.debugElement.query(By.css('button.btn-outline-danger'));
@@ -62,7 +62,7 @@ describe('TutorialGroupSessionRowComponent', () => {
         const tutorialGroupSessionService = TestBed.inject(TutorialGroupSessionService);
         const updateAttendanceCountSpy = vi
             .spyOn(tutorialGroupSessionService, 'updateAttendanceCount')
-            .mockReturnValue(of(new HttpResponse<TutorialGroupSession>({ body: { ...session, attendanceCount: 5 } })));
+            .mockReturnValue(of(new HttpResponse<TutorialGroupSessionDTO>({ body: { ...session, attendanceCount: 5 } })));
         const attendanceChangedSpy = vi.spyOn(component.attendanceChanged, 'emit');
         changeAttendanceInputAndSave();
 

@@ -8,11 +8,11 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { EditTutorialGroupSessionComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/crud/edit-tutorial-group-session/edit-tutorial-group-session.component';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
-import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import {
     formDataToTutorialGroupSessionDTO,
-    generateExampleTutorialGroupSession,
-    tutorialGroupSessionToTutorialGroupSessionFormData,
+    generateExampleTutorialGroupSessionDTO,
+    tutorialGroupSessionDtoToFormData,
 } from 'test/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
@@ -29,7 +29,7 @@ describe('EditTutorialGroupSessionComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupSessionComponent>;
     let component: EditTutorialGroupSessionComponent;
     let sessionService: TutorialGroupSessionService;
-    let exampleSession: TutorialGroupSession;
+    let exampleSession: TutorialGroupSessionDTO;
     let exampleTutorialGroup: TutorialGroup;
 
     const timeZone = 'Europe/Berlin';
@@ -46,7 +46,7 @@ describe('EditTutorialGroupSessionComponent', () => {
         fixture = TestBed.createComponent(EditTutorialGroupSessionComponent);
         component = fixture.componentInstance;
         sessionService = TestBed.inject(TutorialGroupSessionService);
-        exampleSession = generateExampleTutorialGroupSession({});
+        exampleSession = generateExampleTutorialGroupSessionDTO({});
         exampleTutorialGroup = generateExampleTutorialGroup({});
         fixture.componentRef.setInput('course', course);
         fixture.componentRef.setInput('tutorialGroupSession', exampleSession);
@@ -66,17 +66,17 @@ describe('EditTutorialGroupSessionComponent', () => {
     it('should set form data correctly', () => {
         const formStub: TutorialGroupSessionFormComponent = fixture.debugElement.query(By.directive(TutorialGroupSessionFormComponent)).componentInstance;
         fixture.detectChanges();
-        expect(component.formData).toEqual(tutorialGroupSessionToTutorialGroupSessionFormData(exampleSession, timeZone));
+        expect(component.formData).toEqual(tutorialGroupSessionDtoToFormData(exampleSession, timeZone));
         expect(formStub.formData()).toEqual(component.formData);
     });
 
     it('should send PUT request upon form submission and close dialog', () => {
-        const changedSession: TutorialGroupSession = {
+        const changedSession: TutorialGroupSessionDTO = {
             ...exampleSession,
             location: 'Changed',
         };
 
-        const updateResponse: HttpResponse<TutorialGroupSession> = new HttpResponse({
+        const updateResponse: HttpResponse<TutorialGroupSessionDTO> = new HttpResponse({
             body: changedSession,
             status: 200,
         });
@@ -86,7 +86,7 @@ describe('EditTutorialGroupSessionComponent', () => {
 
         const sessionForm: TutorialGroupSessionFormComponent = fixture.debugElement.query(By.directive(TutorialGroupSessionFormComponent)).componentInstance;
 
-        const formData = tutorialGroupSessionToTutorialGroupSessionFormData(changedSession, timeZone);
+        const formData = tutorialGroupSessionDtoToFormData(changedSession, timeZone);
 
         sessionForm.formSubmitted.emit(formData);
 
@@ -107,7 +107,7 @@ describe('EditTutorialGroupSessionComponent', () => {
         const alertErrorSpy = vi.spyOn(alertService, 'error');
 
         const sessionForm: TutorialGroupSessionFormComponent = fixture.debugElement.query(By.directive(TutorialGroupSessionFormComponent)).componentInstance;
-        const formData = tutorialGroupSessionToTutorialGroupSessionFormData(exampleSession, timeZone);
+        const formData = tutorialGroupSessionDtoToFormData(exampleSession, timeZone);
 
         sessionForm.formSubmitted.emit(formData);
 
@@ -127,7 +127,7 @@ describe('EditTutorialGroupSessionComponent', () => {
         const alertErrorSpy = vi.spyOn(alertService, 'error');
 
         const sessionForm: TutorialGroupSessionFormComponent = fixture.debugElement.query(By.directive(TutorialGroupSessionFormComponent)).componentInstance;
-        const formData = tutorialGroupSessionToTutorialGroupSessionFormData(exampleSession, timeZone);
+        const formData = tutorialGroupSessionDtoToFormData(exampleSession, timeZone);
 
         sessionForm.formSubmitted.emit(formData);
 
@@ -137,14 +137,14 @@ describe('EditTutorialGroupSessionComponent', () => {
 
     it('should return early from updateSession when IDs are missing', () => {
         const captureExceptionSpy = vi.spyOn(Sentry, 'captureException');
-        const sessionWithoutId = generateExampleTutorialGroupSession({});
+        const sessionWithoutId = generateExampleTutorialGroupSessionDTO({});
         sessionWithoutId.id = undefined;
 
         fixture.componentRef.setInput('tutorialGroupSession', sessionWithoutId);
         fixture.detectChanges();
 
         const sessionForm: TutorialGroupSessionFormComponent = fixture.debugElement.query(By.directive(TutorialGroupSessionFormComponent)).componentInstance;
-        const formData = tutorialGroupSessionToTutorialGroupSessionFormData(exampleSession, timeZone);
+        const formData = tutorialGroupSessionDtoToFormData(exampleSession, timeZone);
 
         sessionForm.formSubmitted.emit(formData);
 

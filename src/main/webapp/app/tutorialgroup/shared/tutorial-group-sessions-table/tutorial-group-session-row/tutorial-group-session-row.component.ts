@@ -14,7 +14,7 @@ import {
     signal,
 } from '@angular/core';
 import { faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
-import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -49,13 +49,13 @@ export class TutorialGroupSessionRowComponent {
 
     readonly extraColumn = input<TemplateRef<any>>();
 
-    readonly session = input.required<TutorialGroupSession>();
-    readonly localSession = signal<TutorialGroupSession>({} as TutorialGroupSession);
+    readonly session = input.required<TutorialGroupSessionDTO>();
+    readonly localSession = signal<TutorialGroupSessionDTO>({} as TutorialGroupSessionDTO);
     readonly tutorialGroup = input.required<TutorialGroup>();
     readonly timeZone = input<string>();
     readonly isReadOnly = input(false);
 
-    readonly attendanceChanged = output<TutorialGroupSession>();
+    readonly attendanceChanged = output<TutorialGroupSessionDTO>();
 
     persistedAttendanceCount?: number = undefined;
 
@@ -93,12 +93,12 @@ export class TutorialGroupSessionRowComponent {
 
     updateSomethingBasedOnSession() {
         if (this.localSession()) {
-            this.isCancelled = this.localSession().status === TutorialGroupSessionStatus.CANCELLED;
-            this.hasSchedule = !!this.localSession().tutorialGroupSchedule;
-            this.overlapsWithFreePeriod = !!this.localSession().tutorialGroupFreePeriod;
+            this.isCancelled = !!this.localSession().isCancelled;
+            this.hasSchedule = !!this.localSession().schedule;
+            this.overlapsWithFreePeriod = !!this.localSession().freePeriod;
             if (this.isCancelled) {
                 if (this.overlapsWithFreePeriod) {
-                    this.cancellationReason = this.localSession().tutorialGroupFreePeriod?.reason || undefined;
+                    this.cancellationReason = this.localSession().freePeriod?.reason || undefined;
                 } else {
                     this.cancellationReason = this.localSession().statusExplanation || undefined;
                 }
@@ -118,12 +118,12 @@ export class TutorialGroupSessionRowComponent {
         this.tutorialGroupSessionService
             .updateAttendanceCount(this.tutorialGroup().course!.id!, this.tutorialGroup().id!, this.localSession().id!, this.localSession().attendanceCount!)
             .pipe(
-                map((res: HttpResponse<TutorialGroupSession>) => {
+                map((res: HttpResponse<TutorialGroupSessionDTO>) => {
                     return res.body!;
                 }),
             )
             .subscribe({
-                next: (tutorialGroupSession: TutorialGroupSession) => {
+                next: (tutorialGroupSession: TutorialGroupSessionDTO) => {
                     this.localSession.set(tutorialGroupSession);
                     this.persistedAttendanceCount = this.localSession().attendanceCount;
                     this.attendanceChanged.emit(this.localSession());

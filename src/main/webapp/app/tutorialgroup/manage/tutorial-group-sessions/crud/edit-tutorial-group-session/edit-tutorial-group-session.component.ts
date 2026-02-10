@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, inject, input, output, signal } from '@angular/core';
-import { TutorialGroupSession, TutorialGroupSessionRequestDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSessionDTO, TutorialGroupSessionRequestDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupSessionFormData } from 'app/tutorialgroup/manage/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { finalize, takeUntil } from 'rxjs/operators';
@@ -33,7 +33,7 @@ export class EditTutorialGroupSessionComponent implements OnDestroy {
 
     readonly course = input.required<Course>();
 
-    readonly tutorialGroupSession = input.required<TutorialGroupSession>();
+    readonly tutorialGroupSession = input.required<TutorialGroupSessionDTO>();
 
     isLoading = false;
     formData?: TutorialGroupSessionFormData = undefined;
@@ -46,9 +46,9 @@ export class EditTutorialGroupSessionComponent implements OnDestroy {
             return;
         }
         this.formData = {
-            date: tutorialGroupSession.start?.tz(course.timeZone).toDate(),
-            startTime: tutorialGroupSession.start?.tz(course.timeZone).format('HH:mm:ss'),
-            endTime: tutorialGroupSession.end?.tz(course.timeZone).format('HH:mm:ss'),
+            date: tutorialGroupSession.startDate?.tz(course.timeZone).toDate(),
+            startTime: tutorialGroupSession.startDate?.tz(course.timeZone).format('HH:mm:ss'),
+            endTime: tutorialGroupSession.endDate?.tz(course.timeZone).format('HH:mm:ss'),
             location: tutorialGroupSession.location,
         };
         this.dialogVisible.set(true);
