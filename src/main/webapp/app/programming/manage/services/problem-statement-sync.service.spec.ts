@@ -10,22 +10,24 @@ import * as yjsUtils from 'app/programming/manage/services/yjs-utils';
 describe('ProblemStatementSyncService', () => {
     let service: ProblemStatementSyncService;
     let syncService: jest.Mocked<ExerciseEditorSyncService>;
+    let syncServiceMock: { subscribeToUpdates: jest.Mock; sendSynchronizationUpdate: jest.Mock; unsubscribe: jest.Mock; sessionId: string | undefined };
     let incomingMessages$: Subject<ExerciseEditorSyncEvent>;
 
     beforeEach(() => {
         incomingMessages$ = new Subject<ExerciseEditorSyncEvent>();
+        syncServiceMock = {
+            subscribeToUpdates: jest.fn().mockReturnValue(incomingMessages$.asObservable()),
+            sendSynchronizationUpdate: jest.fn(),
+            unsubscribe: jest.fn(),
+            sessionId: undefined,
+        };
 
         TestBed.configureTestingModule({
             providers: [
                 ProblemStatementSyncService,
                 {
                     provide: ExerciseEditorSyncService,
-                    useValue: {
-                        subscribeToUpdates: jest.fn().mockReturnValue(incomingMessages$.asObservable()),
-                        sendSynchronizationUpdate: jest.fn(),
-                        unsubscribe: jest.fn(),
-                        sessionId: undefined as string | undefined,
-                    },
+                    useValue: syncServiceMock,
                 },
                 {
                     provide: AccountService,
@@ -270,7 +272,7 @@ describe('ProblemStatementSyncService', () => {
     it('uses fallback name when userIdentity returns undefined', () => {
         const accountService = TestBed.inject(AccountService) as jest.Mocked<AccountService>;
         accountService.userIdentity.mockReturnValue(undefined);
-        syncService.sessionId = 'abc123';
+        syncServiceMock.sessionId = 'abc123';
 
         const state = service.init(18, '');
 
