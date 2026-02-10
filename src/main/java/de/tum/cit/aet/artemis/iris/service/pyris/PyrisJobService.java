@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.TranscriptionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 
 /**
@@ -161,6 +162,21 @@ public class PyrisJobService {
     public String addFaqIngestionWebhookJob(long courseId, long faqId) {
         var token = generateJobIdToken();
         var job = new FaqIngestionWebhookJob(token, courseId, faqId);
+        getPyrisJobMap().put(token, job, ingestionJobTimeout, TimeUnit.SECONDS);
+        return token;
+    }
+
+    /**
+     * Adds a new video transcription webhook job to the job map with a timeout.
+     *
+     * @param courseId      the ID of the course associated with the webhook job
+     * @param lectureId     the ID of the lecture associated with the webhook job
+     * @param lectureUnitId the ID of the lecture unit being transcribed
+     * @return a unique token identifying the created webhook job
+     */
+    public String addTranscriptionWebhookJob(long courseId, long lectureId, long lectureUnitId) {
+        var token = generateJobIdToken();
+        var job = new TranscriptionWebhookJob(token, courseId, lectureId, lectureUnitId);
         getPyrisJobMap().put(token, job, ingestionJobTimeout, TimeUnit.SECONDS);
         return token;
     }
