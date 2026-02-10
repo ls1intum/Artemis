@@ -27,10 +27,6 @@
                 "description": "Aktiviere oder deaktiviere Funktionen für alle Nutzer:innen. Änderungen werden sofort wirksam ohne Server-Neustart."
             },
             "profiles": {
-                "iris": {
-                    "name": "Iris (KI-Assistent)",
-                    "description": "Aktiviert den Iris-KI-Tutor, der von LLMs angetrieben wird, für personalisierte Studierendenunterstützung und Code-Hilfe."
-                },
                 "athena": {
                     "name": "Athena (KI-Bewertung)",
                     "description": "Aktiviert Athena ML-basierte automatisierte Feedback-Vorschläge für Text- und Programmieraufgaben."
@@ -69,6 +65,10 @@
                 }
             },
             "modules": {
+                "iris": {
+                    "name": "Iris (KI-Assistent)",
+                    "description": "Aktiviert den Iris-KI-Tutor, der von LLMs angetrieben wird, für personalisierte Studierendenunterstützung und Code-Hilfe."
+                },
                 "atlas": {
                     "name": "Atlas (Adaptives Lernen)",
                     "description": "Aktiviert kompetenzbasierte Lernfunktionen einschließlich Lernpfade, Kompetenz-Tracking und Analysen."
