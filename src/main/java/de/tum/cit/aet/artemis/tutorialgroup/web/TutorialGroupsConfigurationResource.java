@@ -167,7 +167,7 @@ public class TutorialGroupsConfigurationResource {
         }
         if (usePublicChannelSettingChanged) {
             log.debug("Tutorial group channel public setting changed, updating tutorial group channels for course: {}", configurationFromDatabase.getCourse().getId());
-            if (updatedTutorialGroupConfiguration.getUseTutorialGroupChannels()) {
+            if (persistedConfiguration.getUseTutorialGroupChannels()) {
                 tutorialGroupChannelManagementService.changeChannelModeForCourse(configurationFromDatabase.getCourse(), persistedConfiguration.getUsePublicTutorialGroupChannels());
             }
         }
