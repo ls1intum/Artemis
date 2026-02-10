@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
+import de.tum.cit.aet.artemis.iris.api.IrisTranscriptionApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
@@ -25,7 +26,6 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
-import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionInitResponseDTO;
 import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionRequestDTO;
 import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionStatusResponseDTO;
 import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
@@ -55,17 +55,24 @@ public class LectureTranscriptionService {
 
     private final Optional<ProcessingStateCallbackApi> processingStateCallbackApi;
 
+    private final Optional<IrisTranscriptionApi> irisTranscriptionApi;
+
+    private final String artemisBaseUrl;
+
     private final ConcurrentHashMap<String, Integer> failureCountMap = new ConcurrentHashMap<>();
 
     public LectureTranscriptionService(LectureTranscriptionsRepositoryApi lectureTranscriptionsRepositoryApi, LectureUnitRepositoryApi lectureUnitRepositoryApi,
             @Qualifier("nebulaRestTemplate") RestTemplate restTemplate, @Value("${artemis.nebula.url}") String nebulaBaseUrl,
-            @Value("${artemis.nebula.secret-token}") String nebulaSecretToken, Optional<ProcessingStateCallbackApi> processingStateCallbackApi) {
+            @Value("${artemis.nebula.secret-token}") String nebulaSecretToken, Optional<ProcessingStateCallbackApi> processingStateCallbackApi,
+            Optional<IrisTranscriptionApi> irisTranscriptionApi, @Value("${server.url}") String artemisBaseUrl) {
         this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.restTemplate = restTemplate;
         this.nebulaBaseUrl = nebulaBaseUrl;
         this.nebulaSecretToken = nebulaSecretToken;
         this.processingStateCallbackApi = processingStateCallbackApi;
+        this.irisTranscriptionApi = irisTranscriptionApi;
+        this.artemisBaseUrl = artemisBaseUrl;
     }
 
     /**
@@ -211,43 +218,41 @@ public class LectureTranscriptionService {
     }
 
     /**
-     * Initiates a new transcription job with the Nebula service and creates a placeholder transcription entry.
+     * Initiates a new transcription job with the Nebula/Pyris service and creates a placeholder transcription entry.
      *
      * @param lectureId     ID of the lecture
      * @param lectureUnitId ID of the lecture unit
      * @param request       The transcription request containing video URL and other parameters
-     * @return The job ID returned by Nebula
-     * @throws ResponseStatusException if the request fails or Nebula returns an invalid response
+     * @return The job ID (authentication token) for the transcription
+     * @throws ResponseStatusException if the request fails
      */
     public String startNebulaTranscription(Long lectureId, Long lectureUnitId, NebulaTranscriptionRequestDTO request) {
         try {
             log.info("Starting transcription for Lecture ID {}, Unit ID {}", lectureId, lectureUnitId);
 
+            // Generate job token for callback authentication
+            String jobToken = irisTranscriptionApi.map(api -> api.createTranscriptionJob(request.courseId(), lectureId, lectureUnitId))
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Iris transcription API not available"));
+
+            // Build request with settings for callback
+            NebulaTranscriptionRequestDTO.NebulaTranscriptionSettingsDTO settings = new NebulaTranscriptionRequestDTO.NebulaTranscriptionSettingsDTO(jobToken, artemisBaseUrl);
+
+            NebulaTranscriptionRequestDTO fullRequest = new NebulaTranscriptionRequestDTO(request.videoUrl(), request.lectureUnitId(), request.lectureId(), request.courseId(),
+                    request.courseName(), request.lectureName(), request.lectureUnitName(), settings);
+
             HttpHeaders headers = new HttpHeaders();
             headers.set("Content-Type", "application/json");
             headers.set("Authorization", nebulaSecretToken);
-            HttpEntity<NebulaTranscriptionRequestDTO> entity = new HttpEntity<>(request, headers);
+            HttpEntity<NebulaTranscriptionRequestDTO> entity = new HttpEntity<>(fullRequest, headers);
 
-            String url = nebulaBaseUrl + "/transcribe/start";
-            ResponseEntity<NebulaTranscriptionInitResponseDTO> responseEntity = restTemplate.exchange(url, HttpMethod.POST, entity, NebulaTranscriptionInitResponseDTO.class);
-            NebulaTranscriptionInitResponseDTO response = responseEntity.getBody();
+            String url = nebulaBaseUrl + "/api/v1/webhooks/transcription/video";
+            restTemplate.exchange(url, HttpMethod.POST, entity, Void.class);
 
-            // Validate response
-            if (response == null) {
-                log.error("Nebula returned null response body for Lecture ID {}, Unit ID {}", lectureId, lectureUnitId);
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Nebula did not return a response body");
-            }
+            // Create placeholder transcription with our generated token as jobId
+            createEmptyTranscription(lectureId, lectureUnitId, jobToken);
 
-            if (response.jobId() == null) {
-                log.error("Nebula returned null or missing transcription ID for Lecture ID {}, Unit ID {}", lectureId, lectureUnitId);
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Nebula did not return a valid transcription ID");
-            }
-
-            // Create placeholder transcription for async processing
-            createEmptyTranscription(lectureId, lectureUnitId, response.jobId());
-
-            log.info("Transcription started for Lecture ID {}, Unit ID {}, Job ID: {}", lectureId, lectureUnitId, response.jobId());
-            return response.jobId();
+            log.info("Transcription started for Lecture ID {}, Unit ID {}, Job ID: {}", lectureId, lectureUnitId, jobToken);
+            return jobToken;
         }
         catch (Exception e) {
             log.error("Error initiating transcription for Lecture ID: {}, Unit ID: {} → {}", lectureId, lectureUnitId, e.getMessage(), e);
