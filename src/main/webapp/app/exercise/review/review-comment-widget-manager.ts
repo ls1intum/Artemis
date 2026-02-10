@@ -85,6 +85,8 @@ export class ReviewCommentWidgetManager {
      * Disposes all widgets and clears internal tracking state.
      */
     disposeAll(): void {
+        // Ensure Monaco view zones are removed when review comments are disabled/unmounted.
+        this.editor.disposeWidgetsByPrefix('review-comment-');
         this.disposeDraftWidgets();
         this.disposeSavedWidgets();
         this.draftLinesByFile.clear();

@@ -198,6 +198,7 @@ describe('ReviewCommentWidgetManager', () => {
 
         manager.disposeAll();
 
+        expect(editor.disposeWidgetsByPrefix).toHaveBeenCalledWith('review-comment-');
         expect(draftRef.destroy).toHaveBeenCalled();
         expect(threadRef.destroy).toHaveBeenCalled();
     });

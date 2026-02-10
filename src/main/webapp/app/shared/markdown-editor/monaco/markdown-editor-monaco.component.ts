@@ -759,6 +759,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     private updateReviewCommentButton(): void {
+        if (!this.enableExerciseReviewComments() && !this.reviewCommentManager) {
+            return;
+        }
         this.getReviewCommentManager()?.updateHoverButton();
     }
 
@@ -778,7 +781,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 getDraftFileName: () => PROBLEM_STATEMENT_FILE_PATH,
                 getThreads: () => this.reviewCommentThreads(),
                 filterThread: (thread) => this.isProblemStatementThread(thread),
-                getThreadLine: (thread) => (thread.lineNumber ?? 1) - 1,
+                getThreadLine: (thread) => this.getProblemStatementThreadLine(thread),
                 onAdd: (payload) => this.onAddReviewComment.emit(payload),
                 onSubmit: (payload) =>
                     this.onSubmitReviewComment.emit({
@@ -798,5 +801,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     private isProblemStatementThread(thread: CommentThread): boolean {
         return thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT;
+    }
+
+    private getProblemStatementThreadLine(thread: CommentThread): number {
+        return (thread.lineNumber ?? thread.initialLineNumber ?? 1) - 1;
     }
 }

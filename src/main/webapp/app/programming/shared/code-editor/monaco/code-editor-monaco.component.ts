@@ -538,8 +538,8 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
                 getDraftFileName: () => this.selectedFile(),
                 getThreads: () => this.reviewCommentThreads(),
                 filterThread: (thread) =>
-                    thread.filePath === this.selectedFile() && matchesSelectedRepository(thread, this.selectedRepository(), this.selectedAuxiliaryRepositoryId()),
-                getThreadLine: (thread) => (thread.lineNumber ?? 1) - 1,
+                    this.getThreadFilePath(thread) === this.selectedFile() && matchesSelectedRepository(thread, this.selectedRepository(), this.selectedAuxiliaryRepositoryId()),
+                getThreadLine: (thread) => this.getReviewThreadLine(thread),
                 onAdd: (payload) => this.onAddReviewComment.emit(payload),
                 onSubmit: (payload) => {
                     const repositoryType = this.selectedRepository();
@@ -566,6 +566,14 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             });
         }
         return this.reviewCommentManager;
+    }
+
+    private getThreadFilePath(thread: CommentThread): string | undefined {
+        return thread.filePath ?? thread.initialFilePath;
+    }
+
+    private getReviewThreadLine(thread: CommentThread): number {
+        return (thread.lineNumber ?? thread.initialLineNumber ?? 1) - 1;
     }
 
     clearReviewCommentDrafts(): void {

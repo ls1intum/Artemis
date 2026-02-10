@@ -18,8 +18,8 @@ import {
     signal,
 } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
-import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { EMPTY, Observable, Subject, Subscription, of, throwError } from 'rxjs';
+import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProblemStatementAnalysis } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
@@ -232,17 +232,18 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             .pipe(
                 tap(() => {
                     this.unsavedChanges = false;
+                    this.onProblemStatementSaved.emit();
                 }),
                 catchError(() => {
                     // TODO: move to programming exercise translations
                     this.alertService.error(`artemisApp.editor.errors.problemStatementCouldNotBeUpdated`);
-                    return of(undefined);
+                    return EMPTY;
+                }),
+                finalize(() => {
+                    this.savingInstructions = false;
                 }),
             )
-            .subscribe(() => {
-                this.savingInstructions = false;
-                this.onProblemStatementSaved.emit();
-            });
+            .subscribe();
     }
 
     @HostListener('document:keydown.control.s', ['$event'])

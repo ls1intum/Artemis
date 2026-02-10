@@ -115,6 +115,27 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
+    it('should not create a review comment manager when review comments are disabled', () => {
+        fixture.detectChanges();
+        const getReviewCommentManagerSpy = jest.spyOn(comp as any, 'getReviewCommentManager');
+        (comp as any).reviewCommentManager = undefined;
+        fixture.componentRef.setInput('enableExerciseReviewComments', false);
+
+        (comp as any).updateReviewCommentButton();
+
+        expect(getReviewCommentManagerSpy).not.toHaveBeenCalled();
+    });
+
+    it('should use initial line number as fallback for problem statement threads', () => {
+        const thread = { initialLineNumber: 8 } as any;
+        expect((comp as any).getProblemStatementThreadLine(thread)).toBe(7);
+    });
+
+    it('should prefer current line number over initial line number for problem statement threads', () => {
+        const thread = { lineNumber: 5, initialLineNumber: 8 } as any;
+        expect((comp as any).getProblemStatementThreadLine(thread)).toBe(4);
+    });
+
     it.each([
         { tab: MarkdownEditorMonacoComponent.TAB_EDIT, flags: [true, false, false] },
         { tab: MarkdownEditorMonacoComponent.TAB_PREVIEW, flags: [false, true, false] },

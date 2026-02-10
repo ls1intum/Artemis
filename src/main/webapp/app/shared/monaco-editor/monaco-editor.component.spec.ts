@@ -10,6 +10,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
+import * as monaco from 'monaco-editor';
 
 describe('MonacoEditorComponent', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
@@ -182,6 +183,39 @@ describe('MonacoEditorComponent', () => {
         // Case 2 - undefined is passed as line number
         button.moveAndUpdate(undefined);
         expect(button.isVisible()).toBeFalse();
+    });
+
+    it('should restore previous Monaco options when clearing the line decorations hover button', () => {
+        fixture.detectChanges();
+        const updateOptionsSpy = jest.spyOn((comp as any)._editor, 'updateOptions');
+        const originalGetOption = (comp as any)._editor.getOption.bind((comp as any)._editor);
+        const getOptionSpy = jest.spyOn((comp as any)._editor, 'getOption').mockImplementation((option: monaco.editor.EditorOption) => {
+            if (option === monaco.editor.EditorOption.folding) {
+                return false;
+            }
+            if (option === monaco.editor.EditorOption.lineDecorationsWidth) {
+                return '1ch';
+            }
+            return originalGetOption(option);
+        });
+
+        updateOptionsSpy.mockClear();
+        comp.setLineDecorationsHoverButton('testClass', () => {});
+        comp.clearLineDecorationsHoverButton();
+
+        expect(updateOptionsSpy).toHaveBeenNthCalledWith(2, { folding: false, lineDecorationsWidth: '1ch' });
+        expect(getOptionSpy).toHaveBeenCalledWith(monaco.editor.EditorOption.folding);
+        expect(getOptionSpy).toHaveBeenCalledWith(monaco.editor.EditorOption.lineDecorationsWidth);
+    });
+
+    it('should not overwrite editor options when clearing without an active line decorations hover button', () => {
+        fixture.detectChanges();
+        const updateOptionsSpy = jest.spyOn((comp as any)._editor, 'updateOptions');
+        updateOptionsSpy.mockClear();
+
+        comp.clearLineDecorationsHoverButton();
+
+        expect(updateOptionsSpy).not.toHaveBeenCalled();
     });
 
     it('should not allow editing in readonly mode', () => {

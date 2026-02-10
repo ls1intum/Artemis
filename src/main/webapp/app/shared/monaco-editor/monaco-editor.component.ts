@@ -47,6 +47,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     lineHighlights: MonacoEditorLineHighlight[] = [];
     actions: TextEditorAction[] = [];
     lineDecorationsHoverButton?: MonacoEditorLineDecorationsHoverButton;
+    private lineDecorationsFoldingBeforeHoverButton?: boolean;
+    private lineDecorationsWidthBeforeHoverButton?: string | number;
 
     /*
      * Inputs and outputs.
@@ -458,6 +460,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param clickCallback The callback to invoke when the button is clicked. The line number is passed as an argument.
      */
     setLineDecorationsHoverButton(className: string, clickCallback: (lineNumber: number) => void): void {
+        if (!this.lineDecorationsHoverButton) {
+            this.lineDecorationsFoldingBeforeHoverButton = this._editor.getOption(monaco.editor.EditorOption.folding);
+            this.lineDecorationsWidthBeforeHoverButton = this._editor.getOption(monaco.editor.EditorOption.lineDecorationsWidth) as string | number;
+        }
         this.lineDecorationsHoverButton?.dispose();
         this.lineDecorationsHoverButton = new MonacoEditorLineDecorationsHoverButton(
             this._editor,
@@ -473,15 +479,29 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Removes the line decorations hover button and restores default options.
+     * Removes the line decorations hover button and restores the editor options from before the button was added.
      */
     clearLineDecorationsHoverButton(): void {
+        const hadHoverButton = !!this.lineDecorationsHoverButton;
         this.lineDecorationsHoverButton?.dispose();
         this.lineDecorationsHoverButton = undefined;
-        this._editor.updateOptions({
-            folding: true,
-            lineDecorationsWidth: 0,
-        });
+        if (!hadHoverButton) {
+            return;
+        }
+
+        const optionsToRestore: monaco.editor.IEditorOptions = {};
+        if (this.lineDecorationsFoldingBeforeHoverButton !== undefined) {
+            optionsToRestore.folding = this.lineDecorationsFoldingBeforeHoverButton;
+        }
+        if (this.lineDecorationsWidthBeforeHoverButton !== undefined) {
+            optionsToRestore.lineDecorationsWidth = this.lineDecorationsWidthBeforeHoverButton;
+        }
+        if (Object.keys(optionsToRestore).length > 0) {
+            this._editor.updateOptions(optionsToRestore);
+        }
+
+        this.lineDecorationsFoldingBeforeHoverButton = undefined;
+        this.lineDecorationsWidthBeforeHoverButton = undefined;
     }
 
     /**
