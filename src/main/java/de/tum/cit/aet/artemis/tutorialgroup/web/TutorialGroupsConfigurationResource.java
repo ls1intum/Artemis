@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.util.DateUtil.isIso8601DateString;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDate;
+import java.util.Objects;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
@@ -137,17 +138,17 @@ public class TutorialGroupsConfigurationResource {
             throw new BadRequestAlertException("The course has no configured time zone.", ENTITY_NAME, "courseHasNoTimeZone");
         }
 
+        checkEntityIdMatchesPathIds(configurationFromDatabase, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configurationFromDatabase.getCourse(), null);
+
         TutorialGroupsConfiguration updatedTutorialGroupConfiguration = TutorialGroupConfigurationDTO.from(updatedTutorialGroupConfigurationDto);
 
         isValidTutorialGroupConfiguration(updatedTutorialGroupConfiguration);
 
-        boolean useTutorialGroupChannelSettingChanged = !java.util.Objects.equals(configurationFromDatabase.getUseTutorialGroupChannels(),
+        boolean useTutorialGroupChannelSettingChanged = !Objects.equals(configurationFromDatabase.getUseTutorialGroupChannels(),
                 updatedTutorialGroupConfiguration.getUseTutorialGroupChannels());
-        boolean usePublicChannelSettingChanged = !java.util.Objects.equals(configurationFromDatabase.getUsePublicTutorialGroupChannels(),
+        boolean usePublicChannelSettingChanged = !Objects.equals(configurationFromDatabase.getUsePublicTutorialGroupChannels(),
                 updatedTutorialGroupConfiguration.getUsePublicTutorialGroupChannels());
-
-        checkEntityIdMatchesPathIds(configurationFromDatabase, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configurationFromDatabase.getCourse(), null);
 
         configurationFromDatabase.setTutorialPeriodEndInclusive(updatedTutorialGroupConfiguration.getTutorialPeriodEndInclusive());
         configurationFromDatabase.setTutorialPeriodStartInclusive(updatedTutorialGroupConfiguration.getTutorialPeriodStartInclusive());
@@ -157,18 +158,18 @@ public class TutorialGroupsConfigurationResource {
         var persistedConfiguration = tutorialGroupsConfigurationRepository.save(configurationFromDatabase);
 
         if (useTutorialGroupChannelSettingChanged) {
-            log.debug("Tutorial group channel setting changed, updating tutorial group channels for course: {}", configurationFromDatabase.getCourse().getId());
+            log.debug("Tutorial group channel setting changed, updating tutorial group channels for course: {}", persistedConfiguration.getCourse().getId());
             if (persistedConfiguration.getUseTutorialGroupChannels()) {
-                tutorialGroupChannelManagementService.createTutorialGroupsChannelsForAllTutorialGroupsOfCourse(configurationFromDatabase.getCourse());
+                tutorialGroupChannelManagementService.createTutorialGroupsChannelsForAllTutorialGroupsOfCourse(persistedConfiguration.getCourse());
             }
             else {
-                tutorialGroupChannelManagementService.removeTutorialGroupChannelsForCourse(configurationFromDatabase.getCourse());
+                tutorialGroupChannelManagementService.removeTutorialGroupChannelsForCourse(persistedConfiguration.getCourse());
             }
         }
         if (usePublicChannelSettingChanged) {
-            log.debug("Tutorial group channel public setting changed, updating tutorial group channels for course: {}", configurationFromDatabase.getCourse().getId());
+            log.debug("Tutorial group channel public setting changed, updating tutorial group channels for course: {}", persistedConfiguration.getCourse().getId());
             if (persistedConfiguration.getUseTutorialGroupChannels()) {
-                tutorialGroupChannelManagementService.changeChannelModeForCourse(configurationFromDatabase.getCourse(), persistedConfiguration.getUsePublicTutorialGroupChannels());
+                tutorialGroupChannelManagementService.changeChannelModeForCourse(persistedConfiguration.getCourse(), persistedConfiguration.getUsePublicTutorialGroupChannels());
             }
         }
         return ResponseEntity.ok(TutorialGroupConfigurationDTO.of(persistedConfiguration));
