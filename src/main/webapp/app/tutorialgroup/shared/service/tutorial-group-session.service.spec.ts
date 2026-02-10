@@ -5,7 +5,7 @@ import { TestBed } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 import { TutorialGroupSessionDTO, TutorialGroupSessionRequestDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
-import { generateExampleTutorialGroupSession } from 'test/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
+import { generateExampleTutorialGroupSessionDTO } from 'test/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('TutorialGroupSessionService', () => {
@@ -22,7 +22,7 @@ describe('TutorialGroupSessionService', () => {
         service = TestBed.inject(TutorialGroupSessionService);
         httpMock = TestBed.inject(HttpTestingController);
 
-        elemDefault = generateExampleTutorialGroupSession({});
+        elemDefault = generateExampleTutorialGroupSessionDTO({});
     });
 
     afterEach(() => {
