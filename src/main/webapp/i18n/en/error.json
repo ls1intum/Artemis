@@ -224,6 +224,7 @@
             "idExists": "A new tutorial group configuration cannot already have an ID.",
             "alreadyExists": "A tutorial group configuration already exists for this course.",
             "courseHasNoTimeZone": "The course has no configured time zone.",
+            "tutorialGroupConfigurationHasNoTimeZone": "The Tutorial group configuration has no configured time zone.",
             "idNull": "A tutorial group configuration cannot be updated without an id.",
 
             "tutorialPeriodMissing": "Tutorial period start date and end date must be set.",
