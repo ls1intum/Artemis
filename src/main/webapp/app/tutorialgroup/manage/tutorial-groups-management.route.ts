@@ -71,6 +71,15 @@ export const tutorialGroupManagementRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: ':tutorialGroupId/edit2',
+        loadComponent: () => import('app/tutorialgroup/manage/tutorial-edit/tutorial-edit.component').then((m) => m.TutorialEditComponent),
+        data: {
+            authorities: IS_AT_LEAST_INSTRUCTOR,
+            pageTitle: 'artemisApp.pages.editTutorialGroup.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: ':tutorialGroupId/registrations',
         loadComponent: () =>
             import('app/tutorialgroup/manage/tutorial-registrations-container/tutorial-registrations-container.component').then((m) => m.TutorialRegistrationsContainerComponent),
