@@ -44,8 +44,8 @@ describe('ExerciseReviewCommentService', () => {
         service
             .createThreadWithInitialComment(1, existingThreads, {
                 targetType: CommentThreadLocationType.TEMPLATE_REPO,
-                filePath: 'file.java',
-                lineNumber: 2,
+                initialFilePath: 'file.java',
+                initialLineNumber: 2,
                 initialComment: { contentType: 'USER', text: 'hello' },
             })
             .subscribe((threads) => (resultThreads = threads as any));
@@ -56,7 +56,6 @@ describe('ExerciseReviewCommentService', () => {
             targetType: CommentThreadLocationType.TEMPLATE_REPO,
             initialFilePath: 'file.java',
             initialLineNumber: 2,
-            auxiliaryRepositoryId: undefined,
             initialComment: { contentType: 'USER', text: 'hello' },
         });
         req.flush({ id: 2, comments: [] });

@@ -46,12 +46,10 @@ import { ConsistencyCheckError } from 'app/programming/shared/entities/consisten
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
 import { ExerciseReviewCommentService } from 'app/exercise/services/exercise-review-comment.service';
-import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentThread, CommentThreadLocationType, CreateCommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
 
-const PROBLEM_STATEMENT_FILE_PATH = 'problem_statement.md';
 import { getRepoPath } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
-import { mapRepositoryToThreadLocationType } from 'app/programming/shared/code-editor/util/review-comment-utils';
 
 const SEVERITY_ORDER = {
     HIGH: 0,
@@ -119,7 +117,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
     protected readonly RepositoryType = RepositoryType;
-    protected readonly CommentThreadLocationType = CommentThreadLocationType;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly faCheckDouble = faCheckDouble;
     private codeGenAlertService = inject(AlertService);
@@ -153,6 +150,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.loadReviewCommentThreads(exerciseId);
     }
 
+    /**
+     * Clears problem-statement draft widgets and reloads review comment threads after saving.
+     */
     onProblemStatementSaved(): void {
         const exerciseId = this.exercise?.id;
         if (!exerciseId) {
@@ -363,31 +363,17 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     /**
-     * Creates a review comment thread for the selected target.
+     * Creates a review comment thread and updates local thread state.
      *
-     * @param event The line, file, and text of the new comment.
-     * @param targetTypeOverride Optional explicit target type.
+     * @param thread The thread creation payload.
      */
-    onSubmitReviewComment(event: { lineNumber: number; fileName: string; initialComment: CreateComment }, targetTypeOverride?: CommentThreadLocationType): void {
+    onSubmitReviewComment(thread: CreateCommentThread): void {
         const exerciseId = this.exercise?.id;
         if (!exerciseId) {
             return;
         }
-        const targetType = targetTypeOverride ?? mapRepositoryToThreadLocationType(this.selectedRepository);
-        if (!targetType) {
-            this.alertService.error('artemisApp.review.saveFailed');
-            return;
-        }
-        const isProblemStatement = targetType === CommentThreadLocationType.PROBLEM_STATEMENT;
-        const auxiliaryRepositoryId = isProblemStatement ? undefined : this.selectedRepository === RepositoryType.AUXILIARY ? this.selectedRepositoryId : undefined;
         this.exerciseReviewCommentService
-            .createThreadWithInitialComment(exerciseId, this.reviewCommentThreads(), {
-                targetType,
-                filePath: isProblemStatement ? PROBLEM_STATEMENT_FILE_PATH : event.fileName,
-                lineNumber: event.lineNumber,
-                initialComment: event.initialComment,
-                auxiliaryRepositoryId,
-            })
+            .createThreadWithInitialComment(exerciseId, this.reviewCommentThreads(), thread)
             .pipe(
                 tap((updatedThreads) => this.reviewCommentThreads.set(updatedThreads)),
                 catchError(() => {

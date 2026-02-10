@@ -25,7 +25,7 @@ export interface CommentThread {
     comments: Comment[];
 }
 
-export interface CreateCommentThreadDTO {
+export interface CreateCommentThread {
     targetType: CommentThreadLocationType;
     auxiliaryRepositoryId?: number;
     initialFilePath?: string;

@@ -2,18 +2,11 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { Comment, CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
-import { CommentThread, CreateCommentThreadDTO, UpdateThreadResolvedState } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentThread, CreateCommentThread, UpdateThreadResolvedState } from 'app/exercise/shared/entities/review/comment-thread.model';
 
 type CommentThreadArrayResponseType = HttpResponse<CommentThread[]>;
 type CommentThreadResponseType = HttpResponse<CommentThread>;
 type CommentResponseType = HttpResponse<Comment>;
-type CreateThreadWithInitialComment = {
-    targetType: CreateCommentThreadDTO['targetType'];
-    filePath?: string;
-    lineNumber: number;
-    initialComment: CreateComment;
-    auxiliaryRepositoryId?: number;
-};
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseReviewCommentService {
@@ -28,7 +21,7 @@ export class ExerciseReviewCommentService {
      * @param thread The thread payload to create.
      * @returns The HTTP response observable containing the created thread.
      */
-    createThread(exerciseId: number, thread: CreateCommentThreadDTO): Observable<CommentThreadResponseType> {
+    createThread(exerciseId: number, thread: CreateCommentThread): Observable<CommentThreadResponseType> {
         return this.http.post<CommentThread>(`${this.resourceUrl}/${exerciseId}/review-threads`, thread, { observe: 'response' });
     }
 
@@ -37,19 +30,11 @@ export class ExerciseReviewCommentService {
      *
      * @param exerciseId The exercise that owns the thread.
      * @param threads The current thread list.
-     * @param request The minimal request payload from the UI.
+     * @param request The thread creation payload.
      * @returns The updated thread list containing the newly created thread.
      */
-    createThreadWithInitialComment(exerciseId: number, threads: CommentThread[], request: CreateThreadWithInitialComment): Observable<CommentThread[]> {
-        const createThread: CreateCommentThreadDTO = {
-            targetType: request.targetType,
-            initialFilePath: request.targetType === 'PROBLEM_STATEMENT' ? undefined : request.filePath,
-            initialLineNumber: request.lineNumber,
-            auxiliaryRepositoryId: request.auxiliaryRepositoryId,
-            initialComment: request.initialComment,
-        };
-
-        return this.createThread(exerciseId, createThread).pipe(
+    createThreadWithInitialComment(exerciseId: number, threads: CommentThread[], request: CreateCommentThread): Observable<CommentThread[]> {
+        return this.createThread(exerciseId, request).pipe(
             map((response) => response.body),
             map((thread) => {
                 if (!thread?.id) {

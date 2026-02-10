@@ -81,7 +81,7 @@ import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { TranslateService } from '@ngx-translate/core';
-import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentThread, CommentThreadLocationType, CreateCommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 
@@ -304,7 +304,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     onLeaveVisualTab = new EventEmitter<void>();
 
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
-    readonly onSubmitReviewComment = output<{ lineNumber: number; fileName: string; initialComment: CreateComment }>();
+    readonly onSubmitReviewComment = output<CreateCommentThread>();
     readonly onDeleteReviewComment = output<number>();
     readonly onReplyReviewComment = output<{ threadId: number; comment: CreateComment }>();
     readonly onUpdateReviewComment = output<{ commentId: number; content: UpdateCommentContent }>();
@@ -774,12 +774,18 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.reviewCommentManager = new ReviewCommentWidgetManager(this.monacoEditor, this.viewContainerRef, {
                 hoverButtonClass: REVIEW_COMMENT_HOVER_BUTTON_CLASS,
                 shouldShowHoverButton: () => this.enableExerciseReviewComments() && this.inEditMode,
+                canSubmit: () => this.inEditMode && !this.showLocationWarning(),
                 getDraftFileName: () => PROBLEM_STATEMENT_FILE_PATH,
                 getThreads: () => this.reviewCommentThreads(),
                 filterThread: (thread) => this.isProblemStatementThread(thread),
                 getThreadLine: (thread) => (thread.lineNumber ?? 1) - 1,
                 onAdd: (payload) => this.onAddReviewComment.emit(payload),
-                onSubmit: (payload) => this.onSubmitReviewComment.emit(payload),
+                onSubmit: (payload) =>
+                    this.onSubmitReviewComment.emit({
+                        targetType: CommentThreadLocationType.PROBLEM_STATEMENT,
+                        initialLineNumber: payload.lineNumber,
+                        initialComment: payload.initialComment,
+                    }),
                 onDelete: (commentId) => this.onDeleteReviewComment.emit(commentId),
                 onReply: (payload) => this.onReplyReviewComment.emit(payload),
                 onUpdate: (payload) => this.onUpdateReviewComment.emit(payload),

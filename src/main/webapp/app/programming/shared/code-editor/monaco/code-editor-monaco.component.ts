@@ -40,9 +40,9 @@ import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { TranslateService } from '@ngx-translate/core';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
-import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentThread, CreateCommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
-import { isReviewCommentsSupportedRepository, matchesSelectedRepository } from 'app/programming/shared/code-editor/util/review-comment-utils';
+import { isReviewCommentsSupportedRepository, mapRepositoryToThreadLocationType, matchesSelectedRepository } from 'app/programming/shared/code-editor/util/review-comment-utils';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
 type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
@@ -109,7 +109,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     readonly onDiscardSuggestion = output<Feedback>();
     readonly onHighlightLines = output<MonacoEditorLineHighlight[]>();
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
-    readonly onSubmitReviewComment = output<{ lineNumber: number; fileName: string; initialComment: CreateComment }>();
+    readonly onSubmitReviewComment = output<CreateCommentThread>();
     readonly onDeleteReviewComment = output<number>();
     readonly onReplyReviewComment = output<{ threadId: number; comment: CreateComment }>();
     readonly onUpdateReviewComment = output<{ commentId: number; content: UpdateCommentContent }>();
@@ -169,6 +169,10 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         effect(() => {
             const annotations = this.buildAnnotations();
             untracked(() => this.setBuildAnnotations(annotations));
+        });
+
+        effect(() => {
+            this.renderFeedbackWidgets();
         });
 
         effect(() => {
@@ -537,7 +541,23 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
                     thread.filePath === this.selectedFile() && matchesSelectedRepository(thread, this.selectedRepository(), this.selectedAuxiliaryRepositoryId()),
                 getThreadLine: (thread) => (thread.lineNumber ?? 1) - 1,
                 onAdd: (payload) => this.onAddReviewComment.emit(payload),
-                onSubmit: (payload) => this.onSubmitReviewComment.emit(payload),
+                onSubmit: (payload) => {
+                    const repositoryType = this.selectedRepository();
+                    if (!repositoryType) {
+                        return;
+                    }
+                    const targetType = mapRepositoryToThreadLocationType(repositoryType);
+                    if (!targetType) {
+                        return;
+                    }
+                    this.onSubmitReviewComment.emit({
+                        targetType,
+                        auxiliaryRepositoryId: repositoryType === RepositoryType.AUXILIARY ? this.selectedAuxiliaryRepositoryId() : undefined,
+                        initialFilePath: payload.fileName,
+                        initialLineNumber: payload.lineNumber,
+                        initialComment: payload.initialComment,
+                    });
+                },
                 onDelete: (commentId) => this.onDeleteReviewComment.emit(commentId),
                 onReply: (payload) => this.onReplyReviewComment.emit(payload),
                 onUpdate: (payload) => this.onUpdateReviewComment.emit(payload),

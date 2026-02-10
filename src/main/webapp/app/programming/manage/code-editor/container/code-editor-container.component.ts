@@ -29,7 +29,7 @@ import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/co
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentThread, CreateCommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
 import { editor } from 'monaco-editor';
 
@@ -97,7 +97,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     onAcceptSuggestion = output<Feedback>();
     onDiscardSuggestion = output<Feedback>();
     onEditorLoaded = output<void>();
-    onSubmitReviewComment = output<{ lineNumber: number; fileName: string; initialComment: CreateComment }>();
+    onSubmitReviewComment = output<CreateCommentThread>();
     onDeleteReviewComment = output<number>();
     onReplyReviewComment = output<{ threadId: number; comment: CreateComment }>();
     onUpdateReviewComment = output<{ commentId: number; content: UpdateCommentContent }>();

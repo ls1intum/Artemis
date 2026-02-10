@@ -8,18 +8,18 @@ import { CreateComment, UpdateCommentContent } from 'app/exercise/shared/entitie
 export type ReviewCommentWidgetManagerConfig = {
     hoverButtonClass: string;
     shouldShowHoverButton: () => boolean;
-    canSubmit?: () => boolean;
+    canSubmit: () => boolean;
     getDraftFileName: () => string | undefined;
     getThreads: () => CommentThread[];
     filterThread: (thread: CommentThread) => boolean;
     getThreadLine: (thread: CommentThread) => number;
-    onAdd?: (payload: { lineNumber: number; fileName: string }) => void;
+    onAdd: (payload: { lineNumber: number; fileName: string }) => void;
     onSubmit: (payload: { lineNumber: number; fileName: string; initialComment: CreateComment }) => void;
     onDelete: (commentId: number) => void;
     onReply: (payload: { threadId: number; comment: CreateComment }) => void;
     onUpdate: (payload: { commentId: number; content: UpdateCommentContent }) => void;
     onToggleResolved: (payload: { threadId: number; resolved: boolean }) => void;
-    showLocationWarning?: () => boolean;
+    showLocationWarning: () => boolean;
 };
 
 export class ReviewCommentWidgetManager {
@@ -57,7 +57,7 @@ export class ReviewCommentWidgetManager {
      * Pushes the latest submit availability to all draft widgets.
      */
     updateDraftInputs(): void {
-        const canSubmit = this.config.canSubmit ? this.config.canSubmit() : true;
+        const canSubmit = this.config.canSubmit();
         this.draftWidgetRefs.forEach((ref) => ref.setInput('canSubmit', canSubmit));
     }
 
@@ -70,18 +70,13 @@ export class ReviewCommentWidgetManager {
     updateThreadInputs(threads: CommentThread[]): boolean {
         let updated = true;
         for (const thread of threads) {
-            if (thread.id === undefined || thread.id === null) {
-                continue;
-            }
             const widgetRef = this.threadWidgetRefs.get(thread.id);
             if (!widgetRef) {
                 updated = false;
                 continue;
             }
             widgetRef.setInput('thread', thread);
-            if (this.config.showLocationWarning) {
-                widgetRef.setInput('showLocationWarning', this.config.showLocationWarning());
-            }
+            widgetRef.setInput('showLocationWarning', this.config.showLocationWarning());
         }
         return updated;
     }
@@ -133,11 +128,11 @@ export class ReviewCommentWidgetManager {
             widgetRef.instance.onCancel.subscribe(() => this.removeDraft(fileName, lineNumberZeroBased));
             this.draftWidgetRefs.set(widgetKey, widgetRef);
         }
-        widgetRef.setInput('canSubmit', this.config.canSubmit ? this.config.canSubmit() : true);
+        widgetRef.setInput('canSubmit', this.config.canSubmit());
         // Re-adding the same draft line must replace the existing Monaco widget to avoid stacked view zones.
         this.editor.disposeWidgetsByPrefix(this.buildDraftWidgetId(fileName, lineNumberZeroBased));
         this.editor.addLineWidget(lineNumber, this.buildDraftWidgetId(fileName, lineNumberZeroBased), widgetRef.location.nativeElement);
-        this.config.onAdd?.({ lineNumber, fileName });
+        this.config.onAdd({ lineNumber, fileName });
     }
 
     /**
@@ -161,7 +156,7 @@ export class ReviewCommentWidgetManager {
                 widgetRef.instance.onCancel.subscribe(() => this.removeDraft(activeFileName, line));
                 this.draftWidgetRefs.set(widgetKey, widgetRef);
             }
-            widgetRef.setInput('canSubmit', this.config.canSubmit ? this.config.canSubmit() : true);
+            widgetRef.setInput('canSubmit', this.config.canSubmit());
             // Keep rendering idempotent when renderWidgets() runs repeatedly for the same draft.
             this.editor.disposeWidgetsByPrefix(this.buildDraftWidgetId(activeFileName, line));
             this.editor.addLineWidget(line + 1, this.buildDraftWidgetId(activeFileName, line), widgetRef.location.nativeElement);
@@ -175,9 +170,7 @@ export class ReviewCommentWidgetManager {
         const threads = this.config.getThreads().filter((thread) => this.config.filterThread(thread));
         const threadIds = new Set<number>();
         for (const thread of threads) {
-            if (thread.id !== undefined && thread.id !== null) {
-                threadIds.add(thread.id);
-            }
+            threadIds.add(thread.id);
         }
         for (const [threadId, ref] of this.threadWidgetRefs.entries()) {
             if (!threadIds.has(threadId)) {
@@ -187,20 +180,15 @@ export class ReviewCommentWidgetManager {
             }
         }
         for (const thread of threads) {
-            if (thread.id === undefined || thread.id === null) {
-                continue;
-            }
             const line = this.config.getThreadLine(thread);
             const widgetId = this.buildThreadWidgetId(thread.id);
             let widgetRef = this.threadWidgetRefs.get(thread.id);
             if (!widgetRef) {
                 widgetRef = this.viewContainerRef.createComponent(ReviewCommentThreadWidgetComponent);
                 widgetRef.setInput('thread', thread);
-                if (this.config.showLocationWarning) {
-                    widgetRef.setInput('showLocationWarning', this.config.showLocationWarning());
-                }
+                widgetRef.setInput('showLocationWarning', this.config.showLocationWarning());
                 if (!this.collapseState.has(thread.id)) {
-                    const shouldCollapse = thread.resolved || (this.config.showLocationWarning?.() ?? false);
+                    const shouldCollapse = thread.resolved || this.config.showLocationWarning();
                     this.collapseState.set(thread.id, shouldCollapse);
                 }
                 widgetRef.setInput('initialCollapsed', this.collapseState.get(thread.id) ?? false);

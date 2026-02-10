@@ -67,6 +67,7 @@ describe('ReviewCommentWidgetManager', () => {
         onReply: jest.fn(),
         onUpdate: jest.fn(),
         onToggleResolved: jest.fn(),
+        showLocationWarning: () => false,
         ...overrides,
     });
 

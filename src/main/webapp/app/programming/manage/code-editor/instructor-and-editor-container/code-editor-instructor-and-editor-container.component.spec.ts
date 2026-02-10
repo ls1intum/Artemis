@@ -496,36 +496,29 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             const updatedThreads = [{ id: 3 }] as any;
             reviewCommentService.createThreadWithInitialComment.mockReturnValue(of(updatedThreads));
             comp.reviewCommentThreads.set([]);
-            comp.selectedRepository = RepositoryType.TEMPLATE;
 
-            const initialComment = { contentType: 'USER', text: 'Initial comment' } as const;
-            comp.onSubmitReviewComment({ lineNumber: 5, fileName: 'src/Main.java', initialComment });
-
-            expect(reviewCommentService.createThreadWithInitialComment).toHaveBeenCalledWith(42, [], {
+            const createThreadRequest = {
                 targetType: CommentThreadLocationType.TEMPLATE_REPO,
-                filePath: 'src/Main.java',
-                lineNumber: 5,
-                initialComment,
-                auxiliaryRepositoryId: undefined,
-            });
+                initialFilePath: 'src/Main.java',
+                initialLineNumber: 5,
+                initialComment: { contentType: 'USER', text: 'Initial comment' } as const,
+            };
+            comp.onSubmitReviewComment(createThreadRequest);
+
+            expect(reviewCommentService.createThreadWithInitialComment).toHaveBeenCalledWith(42, [], createThreadRequest);
             expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
-        });
-
-        it('onSubmitReviewComment rejects unsupported repository target mapping', () => {
-            comp.selectedRepository = RepositoryType.ASSIGNMENT;
-            const errorSpy = jest.spyOn(alertService, 'error');
-
-            comp.onSubmitReviewComment({ lineNumber: 5, fileName: 'src/Main.java', initialComment: { contentType: 'USER', text: 'Initial comment' } as const });
-
-            expect(reviewCommentService.createThreadWithInitialComment).not.toHaveBeenCalled();
-            expect(errorSpy).toHaveBeenCalledWith('artemisApp.review.saveFailed');
         });
 
         it('onSubmitReviewComment shows saveFailed error on service failure', () => {
             reviewCommentService.createThreadWithInitialComment.mockReturnValue(throwError(() => new Error('fail')));
             const errorSpy = jest.spyOn(alertService, 'error');
 
-            comp.onSubmitReviewComment({ lineNumber: 5, fileName: 'src/Main.java', initialComment: { contentType: 'USER', text: 'Initial comment' } as const });
+            comp.onSubmitReviewComment({
+                targetType: CommentThreadLocationType.TEMPLATE_REPO,
+                initialFilePath: 'src/Main.java',
+                initialLineNumber: 5,
+                initialComment: { contentType: 'USER', text: 'Initial comment' } as const,
+            });
 
             expect(errorSpy).toHaveBeenCalledWith('artemisApp.review.saveFailed');
         });
