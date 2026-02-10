@@ -545,6 +545,11 @@ public final class Constants {
     public static final String LTI_ENABLED_PROPERTY_NAME = "artemis.lti.enabled";
 
     /**
+     * The name of the property used to enable or disable Weaviate integration.
+     */
+    public static final String WEAVIATE_ENABLED_PROPERTY_NAME = "artemis.weaviate.enabled";
+
+    /**
      * The name of the property used to define the directories for file uploads.
      */
     public static final String UPLOADS_FILE_PATH_PROPERTY_NAME = "artemis.file-upload-path";
@@ -605,6 +610,8 @@ public final class Constants {
     public static final String REDIS = "Redis";
 
     public static final String LOCAL = "Local";
+
+    public static final String AI_SELECTION_DECISION = "AI_SELECTION_DECISION";
 
     private Constants() {
     }

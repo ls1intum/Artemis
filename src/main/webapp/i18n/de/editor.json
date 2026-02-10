@@ -114,13 +114,13 @@
                 "totalTestsPassing": "{{passedTests}} von {{totalTests}} Tests bestanden"
             },
             "repoSelect": {
-                "assignmentRepo": "Assignment-Repository",
-                "createAssignmentRepo": "Assignment-Repository erstellen",
+                "assignmentRepo": "Assignment-Repo",
+                "createAssignmentRepo": "Assignment-Repo erstellen",
                 "createAssignmentRepoDisabledTooltip": "Das Assignment-Repository kann für Klausuraufgaben nicht erstellt werden. Bitte nutze stattdessen das Testlauf Feature um die Aufgabe auszuprobieren.",
-                "deleteAssignmentRepo": "Assignment-Repository löschen",
-                "templateRepo": "Template-Repository",
-                "solutionRepo": "Solution-Repository",
-                "testRepo": "Test-Repository",
+                "deleteAssignmentRepo": "Assignment-Repo löschen",
+                "templateRepo": "Template-Repo",
+                "solutionRepo": "Solution-Repo",
+                "testRepo": "Test-Repo",
                 "loadingExercise": "Aufgabe wird geladen",
                 "solutionWarning": "Das Solution-Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem im Solution-Repository hinweisen.",
                 "solutionSuccess": "Das Solution-Repository erfüllt alle Testfälle",
@@ -130,6 +130,7 @@
                 "templateInfo": "Kein Ergebnis verfügbar.",
                 "exerciseHasNoIssues": "Es wurden keine Probleme mit den Repositories identifiziert."
             },
+            "repo": "Repo",
             "switchEditors": "Code-Editor wechseln"
         }
     }

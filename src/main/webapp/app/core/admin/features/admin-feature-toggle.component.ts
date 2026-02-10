@@ -155,7 +155,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         [MODULE_FEATURE_HYPERION]: 'https://docs.artemis.tum.de/admin/hyperion',
         [MODULE_FEATURE_EXAM]: 'https://docs.artemis.tum.de/instructor/exams/intro',
         [MODULE_FEATURE_PLAGIARISM]: 'https://docs.artemis.tum.de/instructor/plagiarism-check',
-        [MODULE_FEATURE_TEXT]: 'https://docs.artemis.tum.de/instructor/exercises/textual-exercise',
+        [MODULE_FEATURE_TEXT]: 'https://docs.artemis.tum.de/instructor/exercises/text-exercise',
         [MODULE_FEATURE_MODELING]: 'https://docs.artemis.tum.de/instructor/exercises/modeling-exercise',
         [MODULE_FEATURE_FILEUPLOAD]: 'https://docs.artemis.tum.de/instructor/exercises/file-upload-exercise',
         [MODULE_FEATURE_LECTURE]: 'https://docs.artemis.tum.de/instructor/lectures',
