@@ -11,7 +11,6 @@ import { EditTutorialGroupFreePeriodComponent } from 'app/tutorialgroup/manage/t
 import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/shared/service/tutorial-group-free-period.service';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import {
-    formDataToTutorialGroupFreePeriodDTO,
     generateExampleTutorialGroupFreePeriod,
     tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData,
 } from 'test/helpers/sample/tutorialgroup/tutorialGroupFreePeriodExampleModel';
@@ -23,6 +22,8 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialGroupFreePeriodsManagementComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component';
+import { TutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
+
 describe('EditTutorialGroupFreePeriodComponent', () => {
     setupTestBed({ zoneless: true });
 
@@ -109,7 +110,15 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         sessionForm.formSubmitted.emit(formData);
 
         expect(updatedStub).toHaveBeenCalledOnce();
-        expect(updatedStub).toHaveBeenCalledWith(course.id!, exampleConfiguration.id!, examplePeriod.id!, formDataToTutorialGroupFreePeriodDTO(formData));
+        expect(updatedStub).toHaveBeenCalledOnce();
+        expect(updatedStub).toHaveBeenCalledWith(course.id!, exampleConfiguration.id!, examplePeriod.id!, expect.any(TutorialGroupFreePeriodDTO));
+
+        const passedDto = updatedStub.mock.calls[0][3] as TutorialGroupFreePeriodDTO;
+
+        expect(passedDto.reason).toBe('Changed');
+        expect(passedDto.startDate?.getTime()).toBe(formData.startDate.getTime());
+
+        expect(passedDto.endDate).toBeDefined();
         expect(freePeriodUpdatedSpy).toHaveBeenCalledOnce();
         expect(component.dialogVisible()).toBe(false);
     });

@@ -3,8 +3,8 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
-import { TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
-import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
+import { TutorialGroupSessionDTO, TutorialGroupSessionRequestDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { generateExampleTutorialGroupSession } from 'test/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
 import { provideHttpClient } from '@angular/common/http';
 
@@ -13,7 +13,7 @@ describe('TutorialGroupSessionService', () => {
 
     let service: TutorialGroupSessionService;
     let httpMock: HttpTestingController;
-    let elemDefault: TutorialGroupSession;
+    let elemDefault: TutorialGroupSessionDTO;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -48,7 +48,7 @@ describe('TutorialGroupSessionService', () => {
         const expected = { ...returnedFromService };
         let result: any;
         service
-            .create(1, 1, new TutorialGroupSessionDTO())
+            .create(1, 1, new TutorialGroupSessionRequestDTO())
             .pipe(take(1))
             .subscribe((resp) => (result = resp));
 
@@ -63,7 +63,7 @@ describe('TutorialGroupSessionService', () => {
         let result: any;
 
         service
-            .update(1, 1, 1, new TutorialGroupSessionDTO())
+            .update(1, 1, 1, new TutorialGroupSessionRequestDTO())
             .pipe(take(1))
             .subscribe((resp) => (result = resp));
 

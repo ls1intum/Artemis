@@ -57,8 +57,8 @@ describe('TutorialGroupFreePeriodService', () => {
         expect(result.body.reason).toBe(elemDefault.reason);
 
         // Assert Dates
-        expect(result.body.startDate instanceof Date).toBeTrue();
-        expect(result.body.endDate instanceof Date).toBeTrue();
+        expect(result.body.startDate instanceof Date).toBe(true);
+        expect(result.body.endDate instanceof Date).toBe(true);
         expect(result.body.startDate.getTime()).toBe(elemDefault.startDate!.getTime());
         expect(result.body.endDate.getTime()).toBe(elemDefault.endDate!.getTime());
     });
@@ -82,8 +82,8 @@ describe('TutorialGroupFreePeriodService', () => {
         req.flush(returnedFromServer);
 
         expect(result.body.id).toBe(0);
-        expect(result.body.startDate instanceof Date).toBeTrue();
-        expect(result.body.endDate instanceof Date).toBeTrue();
+        expect(result.body.startDate instanceof Date).toBe(true);
+        expect(result.body.endDate instanceof Date).toBe(true);
     });
 
     it('update', () => {
@@ -105,8 +105,8 @@ describe('TutorialGroupFreePeriodService', () => {
         req.flush(returnedFromServer);
 
         expect(result.body.reason).toBe('Test');
-        expect(result.body.startDate instanceof Date).toBeTrue();
-        expect(result.body.endDate instanceof Date).toBeTrue();
+        expect(result.body.startDate instanceof Date).toBe(true);
+        expect(result.body.endDate instanceof Date).toBe(true);
     });
 
     it('delete', () => {
