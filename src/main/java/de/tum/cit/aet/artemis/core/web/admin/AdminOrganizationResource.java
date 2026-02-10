@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.core.web.admin;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -11,6 +10,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,11 +24,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.OrganizationCountDTO;
+import de.tum.cit.aet.artemis.core.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
@@ -71,8 +77,10 @@ public class AdminOrganizationResource {
      * Add a course to an organization
      *
      * @param courseId       the id of the course to add
-     * @param organizationId the id of the organization where the course should be added
-     * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
+     * @param organizationId the id of the organization where the course should be
+     *                           added
+     * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found)
+     *         otherwise
      */
     @PostMapping("organizations/{organizationId}/courses/{courseId}")
     public ResponseEntity<Void> addCourseToOrganization(@PathVariable Long courseId, @PathVariable Long organizationId) {
@@ -88,8 +96,10 @@ public class AdminOrganizationResource {
      * Remove a course from an organization
      *
      * @param courseId       the id of the course to remove
-     * @param organizationId the id of the organization from with the course should be removed
-     * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
+     * @param organizationId the id of the organization from with the course should
+     *                           be removed
+     * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found)
+     *         otherwise
      */
     @DeleteMapping("organizations/{organizationId}/courses/{courseId}")
     public ResponseEntity<Void> removeCourseFromOrganization(@PathVariable Long courseId, @PathVariable Long organizationId) {
@@ -104,8 +114,10 @@ public class AdminOrganizationResource {
      * Add a user to an organization
      *
      * @param userLogin      the login of the user to add
-     * @param organizationId the id of the organization where the user should be added
-     * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
+     * @param organizationId the id of the organization where the user should be
+     *                           added
+     * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found)
+     *         otherwise
      */
     @PostMapping("organizations/{organizationId}/users/{userLogin}")
     public ResponseEntity<Void> addUserToOrganization(@PathVariable String userLogin, @PathVariable Long organizationId) {
@@ -124,8 +136,10 @@ public class AdminOrganizationResource {
      * from the Access Groups of a course if already added.
      *
      * @param userLogin      the login of the user to remove
-     * @param organizationId the id of the organization from with the user should be removed
-     * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
+     * @param organizationId the id of the organization from with the user should be
+     *                           removed
+     * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found)
+     *         otherwise
      */
     @DeleteMapping("organizations/{organizationId}/users/{userLogin}")
     public ResponseEntity<Void> removeUserFromOrganization(@PathVariable String userLogin, @PathVariable Long organizationId) {
@@ -141,7 +155,8 @@ public class AdminOrganizationResource {
      * POST organizations : Add a new organization
      *
      * @param organization the organization entity to add
-     * @return the ResponseEntity containing the added organization with status 200 (OK), or 404 (Not Found) otherwise
+     * @return the ResponseEntity containing the added organization with status 200
+     *         (OK), or 404 (Not Found) otherwise
      */
     @PostMapping("organizations")
     public ResponseEntity<Organization> addOrganization(@RequestBody Organization organization) {
@@ -156,7 +171,8 @@ public class AdminOrganizationResource {
      *
      * @param organizationId id of the organization in the body
      * @param organization   the updated organization entity
-     * @return the ResponseEntity containing the updated organization with status 200 (OK), or 404 (Not Found) otherwise
+     * @return the ResponseEntity containing the updated organization with status
+     *         200 (OK), or 404 (Not Found) otherwise
      */
     @PutMapping("organizations/{organizationId}")
     public ResponseEntity<Organization> updateOrganization(@PathVariable Long organizationId, @RequestBody Organization organization) {
@@ -176,7 +192,8 @@ public class AdminOrganizationResource {
      * DELETE organizations/:organizationId : Delete an existing organization
      *
      * @param organizationId the id of the organization to remove
-     * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
+     * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found)
+     *         otherwise
      */
     @DeleteMapping("organizations/{organizationId}")
     public ResponseEntity<Void> deleteOrganization(@PathVariable Long organizationId) {
@@ -188,7 +205,8 @@ public class AdminOrganizationResource {
     /**
      * GET organizations : Get all organizations
      *
-     * @return ResponseEntity containing a list of all organizations with status 200 (OK)
+     * @return ResponseEntity containing a list of all organizations with status 200
+     *         (OK)
      */
     @GetMapping("organizations")
     public ResponseEntity<List<Organization>> getAllOrganizations() {
@@ -198,11 +216,43 @@ public class AdminOrganizationResource {
         return new ResponseEntity<>(organizations, HttpStatus.OK);
     }
 
+    @GetMapping("organizations")
+    public ResponseEntity<List<OrganizationDTO>> getOrganizations(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int pageSize,
+            @RequestParam(defaultValue = "id,asc") String sort) {
+        log.debug("REST request to get all organizations page={} pageSize={} sort={}", page, pageSize, sort);
+
+        Sort springSort = parseSingleSort(sort);
+        Pageable pageable = PageRequest.of(page, pageSize, springSort);
+
+        Page<OrganizationDTO> result = organizationRepository.findAllWithUserAndCourseCounts(pageable);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("X-Total-Count", String.valueOf(result.getTotalElements()));
+
+        return ResponseEntity.ok().headers(headers).body(result.getContent());
+    }
+
+    private Sort parseSingleSort(String sort) {
+        // Expected format: field,asc | field,desc
+        if (sort == null || sort.isBlank()) {
+            return Sort.by("id").ascending();
+        }
+
+        String[] parts = sort.split(",");
+        String field = parts[0].trim();
+        String direction = parts.length > 1 ? parts[1].trim().toLowerCase() : "asc";
+
+        return "desc".equals(direction) ? Sort.by(field).descending() : Sort.by(field).ascending();
+    }
+
     /**
-     * GET organizations/:organizationId/count : Get the number of users and courses currently mapped to an organization
+     * GET organizations/:organizationId/count : Get the number of users and courses
+     * currently mapped to an organization
      *
-     * @param organizationId the id of the organization to retrieve the number of users and courses
-     * @return ResponseEntity containing a map containing the numbers of users and courses
+     * @param organizationId the id of the organization to retrieve the number of
+     *                           users and courses
+     * @return ResponseEntity containing a map containing the numbers of users and
+     *         courses
      */
     @GetMapping("organizations/{organizationId}/count")
     public ResponseEntity<OrganizationCountDTO> getNumberOfUsersAndCoursesByOrganization(@PathVariable long organizationId) {
@@ -212,27 +262,6 @@ public class AdminOrganizationResource {
                 organizationRepository.getNumberOfCoursesByOrganizationId(organizationId));
 
         return new ResponseEntity<>(numberOfUsersAndCourses, HttpStatus.OK);
-    }
-
-    /**
-     * GET organizations/count-all : Get the number of users and courses currently mapped to each organization
-     *
-     * @return ResponseEntity containing a map containing the organizations' id as key and an inner map
-     *         containing their relative numbers of users and courses
-     */
-    @GetMapping("organizations/count-all")
-    public ResponseEntity<List<OrganizationCountDTO>> getNumberOfUsersAndCoursesOfAllOrganizations() {
-        log.debug("REST request to get number of users and courses of all organizations");
-
-        List<OrganizationCountDTO> result = new ArrayList<>();
-        // TODO: we should avoid findAll() and instead calculate the data directly in the database
-        List<Organization> organizations = organizationRepository.findAll();
-        for (Organization organization : organizations) {
-            result.add(new OrganizationCountDTO(organization.getId(), organizationRepository.getNumberOfUsersByOrganizationId(organization.getId()),
-                    organizationRepository.getNumberOfCoursesByOrganizationId(organization.getId())));
-        }
-
-        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
     /**
@@ -250,10 +279,12 @@ public class AdminOrganizationResource {
     }
 
     /**
-     * GET organizations/:organizationId/full : Get an organization by its id with eagerly loaded users and courses
+     * GET organizations/:organizationId/full : Get an organization by its id with
+     * eagerly loaded users and courses
      *
      * @param organizationId the id of the organization to get
-     * @return ResponseEntity containing the organization with eagerly loaded users and courses, with status 200 (OK)
+     * @return ResponseEntity containing the organization with eagerly loaded users
+     *         and courses, with status 200 (OK)
      *         if exists, else with status 404 (Not Found)
      */
     @GetMapping("organizations/{organizationId}/full")
@@ -264,10 +295,12 @@ public class AdminOrganizationResource {
     }
 
     /**
-     * GET organizations/users/:userId : Get all organizations currently containing a given user
+     * GET organizations/users/:userId : Get all organizations currently containing
+     * a given user
      *
      * @param userId the id of the user that the organizations should contain
-     * @return ResponseEntity containing a set of organizations containing the given user
+     * @return ResponseEntity containing a set of organizations containing the given
+     *         user
      */
     @GetMapping("organizations/users/{userId}")
     public ResponseEntity<Set<Organization>> getAllOrganizationsByUser(@PathVariable Long userId) {
@@ -277,10 +310,12 @@ public class AdminOrganizationResource {
     }
 
     /**
-     * GET organizations/:organizationId/title : Returns the title of the organization with the given id
+     * GET organizations/:organizationId/title : Returns the title of the
+     * organization with the given id
      *
      * @param organizationId the id of the organization
-     * @return the title of the organization wrapped in an ResponseEntity or 404 Not Found if no organization with that id exists
+     * @return the title of the organization wrapped in an ResponseEntity or 404 Not
+     *         Found if no organization with that id exists
      */
     @GetMapping("organizations/{organizationId}/title")
     public ResponseEntity<String> getOrganizationTitle(@PathVariable Long organizationId) {

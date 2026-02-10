@@ -24,7 +24,7 @@ export class OrganizationSelectorComponent implements OnInit {
     availableOrganizations: Organization[];
 
     ngOnInit(): void {
-        this.organizationService.getOrganizations().subscribe((data) => {
+        this.organizationService.getAllOrganizations().subscribe((data) => {
             this.availableOrganizations = data;
             const currentOrganizations = this.organizations();
             if (currentOrganizations !== undefined) {

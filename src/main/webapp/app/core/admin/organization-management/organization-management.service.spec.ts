@@ -68,19 +68,6 @@ describe('Organization Service', () => {
         expect(result).toEqual(returnElement);
     });
 
-    it('should return number of users and courses of organization', async () => {
-        const returnElement = new OrganizationCountDto();
-        returnElement.numberOfCourses = 2;
-        returnElement.numberOfUsers = 17;
-        const resultPromise = firstValueFrom(service.getNumberOfUsersAndCoursesOfOrganizations());
-
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnElement);
-
-        const result = await resultPromise;
-        expect(result).toEqual(returnElement);
-    });
-
     it('should return all Organizations a course is assigned to', async () => {
         const returnElement = createTestReturnElement();
         const resultPromise = firstValueFrom(service.getOrganizationsByCourse(1));

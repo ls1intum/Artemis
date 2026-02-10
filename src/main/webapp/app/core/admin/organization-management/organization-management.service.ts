@@ -1,10 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 
 import { Organization } from 'app/core/shared/entities/organization.model';
-import { OrganizationCountDto } from 'app/core/admin/organization-management/organization-count-dto.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+
+export interface PagedResponse<T> {
+    data: T[];
+    total: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class OrganizationManagementService {
@@ -17,16 +21,31 @@ export class OrganizationManagementService {
     /**
      * Send GET request to retrieve all organizations
      */
-    getOrganizations(): Observable<Organization[]> {
+    getAllOrganizations(): Observable<Organization[]> {
         return this.http.get<Organization[]>(this.adminResourceUrl).pipe(tap((orgs) => orgs?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
     }
 
-    /**
-     * Send GET request to retrieve the number of users and courses of
-     * all organizations
-     */
-    getNumberOfUsersAndCoursesOfOrganizations(): Observable<OrganizationCountDto[]> {
-        return this.http.get<OrganizationCountDto[]>(this.adminResourceUrl + '/count-all');
+    getOrganizations(params: {
+        page?: number;
+        pageSize?: number;
+        sort?: string; // e.g. 'name,asc'
+    }): Observable<PagedResponse<Organization>> {
+        return this.http
+            .get<Organization[]>(this.adminResourceUrl, {
+                params: {
+                    page: params.page ?? 0,
+                    pageSize: params.pageSize ?? 20,
+                    ...(params.sort ? { sort: params.sort } : {}),
+                },
+                observe: 'response',
+            })
+            .pipe(
+                tap((res) => res.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
+                map((res) => ({
+                    data: res.body ?? [],
+                    total: Number(res.headers.get('X-Total-Count') ?? 0),
+                })),
+            );
     }
 
     /**
