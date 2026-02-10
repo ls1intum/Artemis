@@ -34,6 +34,7 @@ import { RouterLink } from '@angular/router';
     selector: 'jhi-students-room-distribution-dialog',
     standalone: true,
     templateUrl: './students-room-distribution-dialog.component.html',
+    styleUrl: './students-room-distribution-dialog.component.scss',
     encapsulation: ViewEncapsulation.None,
     imports: [FormsModule, TranslateDirective, FaIconComponent, NgbTypeaheadModule, ArtemisTranslatePipe, HelpIconComponent, DialogModule, ButtonModule, RouterLink],
 })
