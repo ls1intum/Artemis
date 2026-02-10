@@ -258,7 +258,7 @@ public class AtlasAgentService {
         Map<String, String> variables = Map.of();
         String systemPrompt = templateService.render(resourcePath, variables);
 
-        // Append courseId to system prompt in order for the sub-companions to have course context (invisible to conversation history)
+        // Append courseId to system prompt in order for the sub-agents to have course context (invisible to conversation history)
         String systemPromptWithContext = systemPrompt + "\n\nCONTEXT FOR THIS REQUEST:\nCourse ID: " + courseId;
 
         // Build chat client with memory advisor for this specific session

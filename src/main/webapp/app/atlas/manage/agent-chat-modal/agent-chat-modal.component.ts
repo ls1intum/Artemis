@@ -443,49 +443,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     }
 
     /**
-     * Gets competencies for a message by converting graph nodes to CourseCompetency objects.
-     */
-    protected getCompetenciesForMessage(message: ChatMessage): CourseCompetency[] | null {
-        if (!message.relationGraphPreview?.nodes) {
-            return null;
-        }
-
-        return message.relationGraphPreview.nodes.map((node) => {
-            const competency = new Competency();
-            competency.id = Number(node.id);
-            competency.title = node.label;
-            return competency;
-        });
-    }
-
-    /**
-     * Gets relations for a message by converting graph edges to CompetencyRelationDTO objects.
-     * Uses a hash-based ID generation to ensure stable, unique IDs for ngx-graph.
-     */
-    protected getRelationsForMessage(message: ChatMessage): CompetencyRelationDTO[] | null {
-        if (!message.relationGraphPreview?.edges) {
-            return null;
-        }
-
-        return message.relationGraphPreview.edges.map((edge) => {
-            // Generate a stable numeric ID from the edge ID string
-            // This ensures consistent IDs across renders for ngx-graph
-            const relationId = this.hashStringToPositiveInt(edge.id);
-
-            // Validate relation type against known enum values
-            const validRelationTypes = Object.values(CompetencyRelationType);
-            const relationType = validRelationTypes.includes(edge.relationType) ? edge.relationType : CompetencyRelationType.ASSUMES;
-
-            return {
-                id: relationId,
-                headCompetencyId: Number(edge.source),
-                tailCompetencyId: Number(edge.target),
-                relationType,
-            };
-        });
-    }
-
-    /**
      * Generates a stable positive integer hash from a string.
      * Used to create consistent numeric IDs for ngx-graph edges.
      */

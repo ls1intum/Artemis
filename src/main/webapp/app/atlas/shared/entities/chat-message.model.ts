@@ -5,18 +5,11 @@ export interface ChatMessage {
     content: string;
     isUser: boolean;
     timestamp: Date;
-    canCreateCompetencies?: boolean;
-    competencyPreview?: CompetencyPreview;
-    batchCompetencyPreview?: CompetencyPreview[]; // For batch operations (multiple competencies)
-    relationPreview?: CompetencyRelationPreview;
-    batchRelationPreview?: CompetencyRelationPreview[]; // For batch relation operations
     relationGraphPreview?: RelationGraphPreview; // Graph visualization for relation preview
     competencyPreviews?: CompetencyPreview[]; // Unified array for competency previews
-    relationPreviews?: CompetencyRelationPreview[]; // Unified array for relation previews (new)
+    relationPreviews?: CompetencyRelationPreview[]; // Unified array for relation previews
     competencyCreated?: boolean;
-    batchCreated?: boolean; // For batch creation/update completion
     relationCreated?: boolean;
-    batchRelationCreated?: boolean; // For batch relation creation completion
     planPending?: boolean;
     planApproved?: boolean;
     // Pre-computed graph data for stable rendering

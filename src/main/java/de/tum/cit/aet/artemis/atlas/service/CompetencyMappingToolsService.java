@@ -197,7 +197,7 @@ public class CompetencyMappingToolsService {
             return "Error: No relations provided for preview.";
         }
 
-        List<CompetencyRelationPreviewDTO> previews = buildPreviewDTOs(relations, viewOnly);
+        List<CompetencyRelationPreviewDTO> previews = buildPreviewDTOs(relations, viewOnly, courseId);
         if (previews == null) {
             return "Error: Competency not found for relation mapping";
         }
@@ -254,7 +254,8 @@ public class CompetencyMappingToolsService {
             return toJson(new SuggestResponse(suggestedRelations.size(), suggestedRelations));
         }
         catch (Exception e) {
-            return errorResponse("Failed to get ML-based relation suggestions: " + e.getMessage());
+            log.error("Failed to get ML-based relation suggestions", e);
+            return errorResponse("Failed to get ML-based relation suggestions");
         }
     }
 
@@ -286,9 +287,14 @@ public class CompetencyMappingToolsService {
 
         for (CompetencyRelationDTO rel : relations) {
             try {
-                Optional<CompetencyPair> competencies = fetchCompetencies(rel.headCompetencyId(), rel.tailCompetencyId());
+                if (rel.headCompetencyId() == rel.tailCompetencyId()) {
+                    errors.add("Cannot create self-referential relation");
+                    continue;
+                }
+
+                Optional<CompetencyPair> competencies = fetchCompetencies(rel.headCompetencyId(), rel.tailCompetencyId(), courseId);
                 if (competencies.isEmpty()) {
-                    errors.add("Competency not found for relation");
+                    errors.add("Competency not found for relation or competency does not belong to the specified course");
                     continue;
                 }
 
@@ -311,17 +317,23 @@ public class CompetencyMappingToolsService {
                         continue;
                     }
 
-                    CompetencyRelation relation = existing.get();
-                    relation.setHeadCompetency(competencies.get().head());
-                    relation.setTailCompetency(competencies.get().tail());
-                    relation.setType(rel.relationType());
-
-                    competencyRelationRepository.save(relation);
+                    // Delete old relation and create new one via service to ensure circular dependency validation
+                    competencyRelationRepository.delete(existing.get());
+                    competencyRelationService.createCompetencyRelation(competencies.get().tail(), competencies.get().head(), rel.relationType(), course);
                     updateCount++;
+
+                    // Sync with AtlasML for updated relation
+                    try {
+                        atlasMLApi.mapCompetencyToCompetency(rel.headCompetencyId(), rel.tailCompetencyId());
+                    }
+                    catch (Exception e) {
+                        log.warn("Failed to sync updated relation to AtlasML: {}", e.getMessage());
+                    }
                 }
             }
             catch (Exception e) {
-                errors.add("Failed to save relation: " + e.getMessage());
+                log.error("Failed to save relation", e);
+                errors.add("Failed to save relation");
             }
         }
 
@@ -355,17 +367,22 @@ public class CompetencyMappingToolsService {
     }
 
     /**
-     * Fetches head and tail competencies by their IDs.
+     * Fetches head and tail competencies by their IDs and validates they belong to the specified course.
      *
-     * @param headId the head competency ID
-     * @param tailId the tail competency ID
-     * @return CompetencyPair containing both competencies, or null if either is not found
+     * @param headId   the head competency ID
+     * @param tailId   the tail competency ID
+     * @param courseId the expected course ID that both competencies must belong to
+     * @return CompetencyPair containing both competencies, or empty if either is not found or doesn't belong to the course
      */
-    private Optional<CompetencyPair> fetchCompetencies(Long headId, Long tailId) {
+    private Optional<CompetencyPair> fetchCompetencies(Long headId, Long tailId, Long courseId) {
         Optional<CourseCompetency> headCompetency = courseCompetencyRepository.findById(headId);
         Optional<CourseCompetency> tailCompetency = courseCompetencyRepository.findById(tailId);
 
         if (headCompetency.isEmpty() || tailCompetency.isEmpty()) {
+            return Optional.empty();
+        }
+
+        if (!headCompetency.get().getCourse().getId().equals(courseId) || !tailCompetency.get().getCourse().getId().equals(courseId)) {
             return Optional.empty();
         }
 
@@ -377,13 +394,14 @@ public class CompetencyMappingToolsService {
      *
      * @param relations list of relation operations
      * @param viewOnly  whether this is view-only mode
+     * @param courseId  the course ID for validation
      * @return list of preview DTOs, or null if any competency is not found
      */
-    private List<CompetencyRelationPreviewDTO> buildPreviewDTOs(List<CompetencyRelationDTO> relations, Boolean viewOnly) {
+    private List<CompetencyRelationPreviewDTO> buildPreviewDTOs(List<CompetencyRelationDTO> relations, Boolean viewOnly, Long courseId) {
         List<CompetencyRelationPreviewDTO> previews = new ArrayList<>();
 
         for (CompetencyRelationDTO rel : relations) {
-            Optional<CompetencyPair> competencies = fetchCompetencies(rel.headCompetencyId(), rel.tailCompetencyId());
+            Optional<CompetencyPair> competencies = fetchCompetencies(rel.headCompetencyId(), rel.tailCompetencyId(), courseId);
             if (competencies.isEmpty()) {
                 return null;
             }
