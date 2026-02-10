@@ -8,9 +8,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.service.AutonomousTutorService;
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
 import de.tum.cit.aet.artemis.iris.service.IrisRewritingService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
@@ -19,6 +21,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.Pyr
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting.PyrisRewritingStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
@@ -58,12 +61,15 @@ public class PyrisStatusUpdateService {
 
     private final IrisTutorSuggestionSessionService irisTutorSuggestionSessionService;
 
+    private final AutonomousTutorService autonomousTutorService;
+
     private final Optional<ProcessingStateCallbackApi> processingStateCallbackApi;
 
     public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisExerciseChatSessionService irisExerciseChatSessionService,
             IrisTextExerciseChatSessionService irisTextExerciseChatSessionService, IrisCourseChatSessionService courseChatSessionService,
             IrisCompetencyGenerationService competencyGenerationService, IrisLectureChatSessionService irisLectureChatSessionService, IrisRewritingService rewritingService,
-            IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, Optional<ProcessingStateCallbackApi> processingStateCallbackApi) {
+            IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, AutonomousTutorService autonomousTutorService,
+            Optional<ProcessingStateCallbackApi> processingStateCallbackApi) {
         this.pyrisJobService = pyrisJobService;
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
         this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
@@ -72,6 +78,7 @@ public class PyrisStatusUpdateService {
         this.irisLectureChatSessionService = irisLectureChatSessionService;
         this.rewritingService = rewritingService;
         this.irisTutorSuggestionSessionService = irisTutorSuggestionSessionService;
+        this.autonomousTutorService = autonomousTutorService;
         this.processingStateCallbackApi = processingStateCallbackApi;
     }
 
@@ -213,6 +220,18 @@ public class PyrisStatusUpdateService {
         var updatedJob = irisTutorSuggestionSessionService.handleStatusUpdate(job, statusUpdate);
 
         removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
+    }
+
+    /**
+     * Handles the status update of an autonomous tutor job.
+     *
+     * @param job          the job that is updated
+     * @param statusUpdate the status update received
+     */
+    public void handleStatusUpdate(AutonomousTutorJob job, PyrisAutonomousTutorPipelineStatusUpdateDTO statusUpdate) {
+        autonomousTutorService.handleStatusUpdate(job, statusUpdate);
+
+        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), job);
     }
 
 }
