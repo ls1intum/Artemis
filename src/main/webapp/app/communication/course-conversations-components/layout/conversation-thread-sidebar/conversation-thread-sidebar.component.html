@@ -25,12 +25,7 @@
                                     : ('artemisApp.conversationsLayout.threadSideBar.expand' | artemisTranslate)
                             "
                         />
-                        <fa-icon
-                            class="pointer"
-                            [ngbTooltip]="'artemisApp.conversationsLayout.threadSideBar.close' | artemisTranslate"
-                            [icon]="faXmark"
-                            (click)="closePostThread.emit()"
-                        />
+                        <fa-icon class="pointer" [ngbTooltip]="'artemisApp.conversationsLayout.threadSideBar.close' | artemisTranslate" [icon]="faXmark" (click)="closeThread()" />
                     </div>
                 </div>
             </div>

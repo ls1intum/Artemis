@@ -89,6 +89,11 @@ artemis:
     conversion-service-url: http://localhost:8080
   hyperion:
     enabled: false  # Set this to true to enable the hyperion service on startup, requires Spring AI to be configured below.
+  llm:  # Shared LLM configuration for Spring AI-based services (Hyperion, Atlas)
+    model-costs:  # Token costs for usage tracking (EUR per million tokens)
+      gpt-5-mini:
+        input-cost-per-million-eur: 0.23
+        output-cost-per-million-eur: 1.84
   atlas:
     chat-model: gpt-4o
     temperature: 0.2
@@ -119,6 +124,9 @@ artemis:
     url: <your-pyris-url>
     secret-token: <your-secret>
 
+  weaviate:
+    enabled: false
+
 # Configure Spring AI, if you want to use Hyperion or Atlas
 spring:
   ai:
@@ -141,8 +149,7 @@ spring:
         options:
           model: openai/gpt-oss-20b    # or whatever name your local server expects
           temperature: 0.7
-
-## Alternative configuration for Azure OpenAI
+    ## Alternative configuration for Azure OpenAI
     # Use Azure OpenAI chat model auto-config
 #    model:
 #      chat: azure-openai
