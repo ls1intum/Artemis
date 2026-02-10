@@ -22,6 +22,9 @@ import { isExamExercise } from 'app/shared/util/utils';
 import { Subject } from 'rxjs';
 import { debounceTime, shareReplay } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
+import { CodeEditorFileSyncService, FileSyncState } from 'app/programming/manage/services/code-editor-file-sync.service';
+import { repositoryTypeToSyncTarget } from 'app/exercise/services/exercise-editor-sync.service';
+import { MonacoBinding } from 'y-monaco';
 /**
  * Enumeration specifying the loading state
  */
@@ -50,6 +53,12 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     private problemStatementChanges$ = new Subject<string>();
     protected alertService = inject(AlertService);
     protected translateService = inject(TranslateService);
+    protected fileSyncService = inject(CodeEditorFileSyncService);
+
+    private currentFileBinding?: MonacoBinding;
+    private fileBindingDestroyed = false;
+    private previousSyncedFile?: string;
+    private stateReplacedSubscription?: Subscription;
 
     ButtonSize = ButtonSize;
     LOADING_STATE = LOADING_STATE;
@@ -177,6 +186,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
+        this.teardownFileBinding();
+        this.fileSyncService.reset();
     }
 
     /**
@@ -217,6 +228,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         if (this.codeEditorContainer != undefined) {
             this.codeEditorContainer.initializeProperties();
         }
+        this.teardownFileBinding();
+        this.fileSyncService.reset();
         if (domainType === DomainType.AUXILIARY_REPOSITORY) {
             this.selectedRepository = RepositoryType.AUXILIARY;
             this.selectedRepositoryId = domainValue.id;
@@ -225,6 +238,15 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         } else {
             this.selectedParticipation = this.exercise.templateParticipation!;
             this.selectedRepository = RepositoryType.TESTS;
+        }
+        if (this.exercise?.id && this.selectedRepository) {
+            try {
+                const syncTarget = repositoryTypeToSyncTarget(this.selectedRepository);
+                const auxId = this.selectedRepository === RepositoryType.AUXILIARY ? this.selectedRepositoryId : undefined;
+                this.fileSyncService.init(this.exercise.id, syncTarget, auxId);
+            } catch {
+                // No sync target for this repository type (e.g. ASSIGNMENT/USER)
+            }
         }
     }
 
@@ -374,6 +396,81 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             .subscribe({
                 error: (err: Error) => this.onError(err.message),
             });
+    }
+
+    /**
+     * Called when a file finishes loading in Monaco (via onFileLoad event).
+     * Creates the Yjs <-> Monaco binding for real-time collaborative editing.
+     */
+    protected onFileSyncLoad(fileName: string): void {
+        this.teardownFileBinding();
+        if (this.previousSyncedFile) {
+            this.fileSyncService.closeFile(this.previousSyncedFile);
+            this.previousSyncedFile = undefined;
+        }
+
+        if (!this.fileSyncService.isInitialized()) {
+            return;
+        }
+
+        const monacoComponent = this.codeEditorContainer?.monacoEditor;
+        if (!monacoComponent || monacoComponent.binaryFileSelected()) {
+            return;
+        }
+
+        const editorComponent = monacoComponent.editor();
+        const model = editorComponent.getModel();
+        const editorInstance = editorComponent.getEditor();
+        if (!model || !editorInstance) {
+            return;
+        }
+
+        const fallbackContent = editorComponent.getText();
+        const syncState = this.fileSyncService.openFile(fileName, fallbackContent);
+        if (!syncState) {
+            return;
+        }
+        this.previousSyncedFile = fileName;
+
+        // Clear model content — the MonacoBinding will populate from Y.Text
+        model.setValue('');
+        this.createFileBinding(syncState, model, editorInstance);
+
+        this.stateReplacedSubscription = this.fileSyncService.stateReplaced$.pipe(filter((event) => event.filePath === fileName)).subscribe((replacedState) => {
+            model.setValue(replacedState.text.toString());
+            this.createFileBinding(replacedState, model, editorInstance);
+        });
+    }
+
+    /**
+     * Create (or recreate) the Monaco <-> Yjs binding for a code file.
+     * Uses a double-destroy guard pattern to prevent duplicate cleanup.
+     */
+    private createFileBinding(
+        syncState: FileSyncState,
+        model: import('monaco-editor').editor.ITextModel,
+        editorInstance: import('monaco-editor').editor.IStandaloneCodeEditor,
+    ): void {
+        this.currentFileBinding?.destroy();
+        this.fileBindingDestroyed = false;
+        const binding = new MonacoBinding(syncState.text, model, new Set([editorInstance]), syncState.awareness);
+        const originalDestroy = binding.destroy.bind(binding);
+        binding.destroy = () => {
+            if (this.fileBindingDestroyed) {
+                return;
+            }
+            this.fileBindingDestroyed = true;
+            originalDestroy();
+        };
+        this.currentFileBinding = binding;
+    }
+
+    private teardownFileBinding(): void {
+        this.stateReplacedSubscription?.unsubscribe();
+        this.stateReplacedSubscription = undefined;
+        this.currentFileBinding?.destroy();
+        this.currentFileBinding = undefined;
+        this.fileBindingDestroyed = false;
     }
 
     /**

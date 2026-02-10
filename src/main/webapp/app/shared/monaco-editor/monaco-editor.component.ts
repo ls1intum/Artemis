@@ -516,6 +516,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     /**
      * Registers a custom backspace command that deletes the last grapheme cluster when pressing backspace.
+     * Uses a targeted delete range (only the grapheme) instead of replacing the entire line,
+     * so that collaborative editing (y-monaco) sees a minimal edit and cursor positions stay correct.
      * @param editor The editor to register the command for.
      */
     private registerCustomBackspaceAction(editor: monaco.editor.IStandaloneCodeEditor) {
@@ -547,23 +549,18 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
                     const lastGrapheme = graphemes.pop();
                     const deletedLength = lastGrapheme?.length ?? 1;
-                    const newTextBeforeCursor = graphemes.join('');
-                    const textAfterCursor = lineContent.substring(column - 1);
-
-                    const newLineContent = newTextBeforeCursor + textAfterCursor;
+                    const deleteStartColumn = column - deletedLength;
 
                     model.pushEditOperations(
                         [],
                         [
                             {
-                                range: new monaco.Range(lineNumber, 1, lineNumber, lineContent.length + 1),
-                                text: newLineContent,
+                                range: new monaco.Range(lineNumber, deleteStartColumn, lineNumber, column),
+                                text: '',
                             },
                         ],
-                        () => null,
+                        () => [new monaco.Selection(lineNumber, deleteStartColumn, lineNumber, deleteStartColumn)],
                     );
-                    const newCursorPosition = column - deletedLength;
-                    editor.setSelection(new monaco.Range(lineNumber, newCursorPosition, lineNumber, newCursorPosition));
                 },
                 'editorTextFocus && !findWidgetVisible',
             ) || undefined;

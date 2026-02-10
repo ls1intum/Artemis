@@ -38,6 +38,7 @@ import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websock
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { Subscription, catchError, of, take } from 'rxjs';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { CodeEditorFileSyncService } from 'app/programming/manage/services/code-editor-file-sync.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
@@ -57,6 +58,7 @@ const SEVERITY_ORDER = {
     selector: 'jhi-code-editor-instructor',
     templateUrl: './code-editor-instructor-and-editor-container.component.html',
     styleUrl: 'code-editor-instructor-and-editor-container.scss',
+    providers: [CodeEditorFileSyncService],
     imports: [
         FaIconComponent,
         TranslateDirective,
@@ -510,6 +512,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      *        The name of the file that was just loaded.
      */
     onFileLoad(fileName: string) {
+        this.onFileSyncLoad(fileName);
         if (this.lineJumpOnFileLoad && this.fileToJumpOn === fileName) {
             this.codeEditorContainer.jumpToLine(this.lineJumpOnFileLoad);
             this.lineJumpOnFileLoad = undefined;

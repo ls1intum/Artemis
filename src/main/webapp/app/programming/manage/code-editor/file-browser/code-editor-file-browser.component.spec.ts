@@ -3,7 +3,15 @@ import { MockComponent } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { Subject, of } from 'rxjs';
-import { CommitState, FileBadge, FileBadgeType, FileType, GitConflictState, PROBLEM_STATEMENT_IDENTIFIER } from 'app/programming/shared/code-editor/model/code-editor.model';
+import {
+    CommitState,
+    DeleteFileChange,
+    FileBadge,
+    FileBadgeType,
+    FileType,
+    GitConflictState,
+    PROBLEM_STATEMENT_IDENTIFIER,
+} from 'app/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
 import { CodeEditorFileBrowserFolderComponent } from 'app/programming/manage/code-editor/file-browser/folder/code-editor-file-browser-folder.component';
@@ -20,6 +28,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeEditorFileBrowserProblemStatementComponent } from 'app/programming/manage/code-editor/file-browser/problem-statement/code-editor-file-browser-problem-statement.component';
+import { CodeEditorFileSyncService } from 'app/programming/manage/services/code-editor-file-sync.service';
 
 describe('CodeEditorFileBrowserComponent', () => {
     let comp: CodeEditorFileBrowserComponent;
@@ -1124,5 +1133,75 @@ describe('CodeEditorFileBrowserComponent', () => {
             const result = comp.getFolderBadges({ value: 'folderB', collapsed: true } as TreeViewItem<string>);
             expect(result).toEqual([new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 3)]); // 1 + 2
         });
+    });
+
+    describe('file sync service integration', () => {
+        let mockSyncService: jest.Mocked<Pick<CodeEditorFileSyncService, 'emitFileCreated' | 'emitFileDeleted' | 'emitFileRenamed'>>;
+
+        beforeEach(() => {
+            mockSyncService = {
+                emitFileCreated: jest.fn(),
+                emitFileDeleted: jest.fn(),
+                emitFileRenamed: jest.fn(),
+            };
+            fixture.componentRef.setInput('fileSyncService', mockSyncService);
+            fixture.detectChanges();
+        });
+
+        it('should call emitFileDeleted on file deletion', () => {
+            comp.repositoryFiles = { 'src/File.java': FileType.FILE };
+            comp.setupTreeview();
+            fixture.changeDetectorRef.detectChanges();
+
+            comp.onFileDeleted(new DeleteFileChange(FileType.FILE, 'src/File.java'));
+
+            expect(mockSyncService.emitFileDeleted).toHaveBeenCalledWith('src/File.java', 'FILE');
+        });
+
+        it('should call emitFileDeleted with FOLDER for folder deletion', () => {
+            comp.repositoryFiles = { 'src/pkg': FileType.FOLDER };
+            comp.setupTreeview();
+            fixture.changeDetectorRef.detectChanges();
+
+            comp.onFileDeleted(new DeleteFileChange(FileType.FOLDER, 'src/pkg'));
+
+            expect(mockSyncService.emitFileDeleted).toHaveBeenCalledWith('src/pkg', 'FOLDER');
+        });
+
+        it('should call emitFileRenamed on file rename', fakeAsync(() => {
+            comp.repositoryFiles = { 'oldFile.java': FileType.FILE };
+            comp.setupTreeview();
+            comp.renamingFile = ['oldFile.java', 'oldFile.java', FileType.FILE];
+            fixture.changeDetectorRef.detectChanges();
+
+            comp.onRenameFile('newFile.java');
+            tick();
+
+            expect(mockSyncService.emitFileRenamed).toHaveBeenCalledWith('oldFile.java', 'newFile.java', 'FILE');
+        }));
+
+        it('should call emitFileCreated on file creation', fakeAsync(() => {
+            comp.repositoryFiles = {};
+            comp.creatingFile = ['', FileType.FILE];
+            fixture.changeDetectorRef.detectChanges();
+
+            comp.onCreateFile('NewFile.java');
+            tick();
+
+            expect(mockSyncService.emitFileCreated).toHaveBeenCalledWith('NewFile.java', 'FILE');
+        }));
+
+        it('should call emitFileCreated with FOLDER on folder creation', fakeAsync(() => {
+            const createFolderStub = jest.spyOn(codeEditorRepositoryFileService, 'createFolder').mockReturnValue(of(undefined));
+            comp.repositoryFiles = {};
+            comp.creatingFile = ['', FileType.FOLDER];
+            fixture.changeDetectorRef.detectChanges();
+
+            comp.onCreateFile('newpkg');
+            tick();
+
+            expect(createFolderStub).toHaveBeenCalledWith('newpkg');
+            expect(mockSyncService.emitFileCreated).toHaveBeenCalledWith('newpkg', 'FOLDER');
+        }));
     });
 });

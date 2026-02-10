@@ -19,6 +19,9 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { editor } from 'monaco-editor';
+import { Subject } from 'rxjs';
+import { ExerciseEditorSyncEventType, FileCreatedEvent, FileDeletedEvent, FileRenamedEvent } from 'app/exercise/services/exercise-editor-sync.service';
+import { CodeEditorFileSyncService } from 'app/programming/manage/services/code-editor-file-sync.service';
 
 class MockFileService {
     updateFileReferences = jest.fn((refs) => refs);
@@ -248,5 +251,112 @@ describe('CodeEditorContainerComponent', () => {
         component.fileLoad('src/main/App.java');
 
         expect(spy).toHaveBeenCalledWith('src/main/App.java');
+    });
+
+    describe('remote file tree sync events', () => {
+        let fileTreeChange$: Subject<FileCreatedEvent | FileDeletedEvent | FileRenamedEvent>;
+        let mockSyncService: Partial<CodeEditorFileSyncService>;
+
+        beforeEach(() => {
+            fileTreeChange$ = new Subject();
+            mockSyncService = { fileTreeChange$: fileTreeChange$.asObservable() } as any;
+        });
+
+        /**
+         * Helper: sets the fileSyncService input, runs detectChanges (which triggers the effect
+         * and resets @ViewChild to undefined because the template is ''), then re-assigns the
+         * fileBrowser mock so the subscription handler can delegate to it.
+         */
+        function activateSyncService(syncService: Partial<CodeEditorFileSyncService>) {
+            fixture.componentRef.setInput('fileSyncService', syncService);
+            fixture.detectChanges();
+            // @ViewChild is undefined in template-less tests; re-assign after detectChanges
+            component.fileBrowser = { handleFileChange: jest.fn() } as any;
+        }
+
+        it('should subscribe to fileTreeChange$ when fileSyncService is set', () => {
+            activateSyncService(mockSyncService);
+
+            fileTreeChange$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_CREATED,
+                target: 0 as any,
+                filePath: 'src/New.java',
+                fileType: 'FILE',
+                timestamp: 1,
+            });
+
+            expect(component.fileBrowser.handleFileChange).toHaveBeenCalledWith(new CreateFileChange(FileType.FILE, 'src/New.java'));
+        });
+
+        it('should handle remote FILE_DELETED by delegating to fileBrowser', () => {
+            activateSyncService(mockSyncService);
+
+            fileTreeChange$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_DELETED,
+                target: 0 as any,
+                filePath: 'src/Old.java',
+                fileType: 'FILE',
+                timestamp: 1,
+            });
+
+            expect(component.fileBrowser.handleFileChange).toHaveBeenCalledWith(new DeleteFileChange(FileType.FILE, 'src/Old.java'));
+        });
+
+        it('should handle remote FILE_RENAMED by delegating to fileBrowser', () => {
+            activateSyncService(mockSyncService);
+
+            fileTreeChange$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_RENAMED,
+                target: 0 as any,
+                oldPath: 'src/Old.java',
+                newPath: 'src/New.java',
+                fileType: 'FILE',
+                timestamp: 1,
+            });
+
+            expect(component.fileBrowser.handleFileChange).toHaveBeenCalledWith(new RenameFileChange(FileType.FILE, 'src/Old.java', 'src/New.java'));
+        });
+
+        it('should map FOLDER fileType correctly', () => {
+            activateSyncService(mockSyncService);
+
+            fileTreeChange$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_CREATED,
+                target: 0 as any,
+                filePath: 'src/newpkg',
+                fileType: 'FOLDER',
+                timestamp: 1,
+            });
+
+            expect(component.fileBrowser.handleFileChange).toHaveBeenCalledWith(new CreateFileChange(FileType.FOLDER, 'src/newpkg'));
+        });
+
+        it('should unsubscribe from previous sync service when a new one is set', () => {
+            activateSyncService(mockSyncService);
+
+            const newFileTreeChange$ = new Subject<FileCreatedEvent | FileDeletedEvent | FileRenamedEvent>();
+            const newMockSyncService = { fileTreeChange$: newFileTreeChange$.asObservable() } as any;
+            activateSyncService(newMockSyncService);
+
+            // Old stream should no longer trigger handler
+            fileTreeChange$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_CREATED,
+                target: 0 as any,
+                filePath: 'old-stream.java',
+                fileType: 'FILE',
+                timestamp: 1,
+            });
+            expect(component.fileBrowser.handleFileChange).not.toHaveBeenCalled();
+
+            // New stream should work
+            newFileTreeChange$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_CREATED,
+                target: 0 as any,
+                filePath: 'new-stream.java',
+                fileType: 'FILE',
+                timestamp: 1,
+            });
+            expect(component.fileBrowser.handleFileChange).toHaveBeenCalledWith(new CreateFileChange(FileType.FILE, 'new-stream.java'));
+        });
     });
 });

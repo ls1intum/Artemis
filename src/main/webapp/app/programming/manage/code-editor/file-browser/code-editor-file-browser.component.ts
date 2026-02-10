@@ -37,6 +37,7 @@ import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'ap
 import {
     CommitState,
     CreateFileChange,
+    DeleteFileChange,
     EditorState,
     FileBadge,
     FileBadgeType,
@@ -49,6 +50,7 @@ import {
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
 import { findItemInList } from 'app/programming/shared/code-editor/treeview/helpers/tree-view-helper';
+import { CodeEditorFileSyncService } from 'app/programming/manage/services/code-editor-file-sync.service';
 
 export type InteractableEvent = {
     // Click event object; contains target information
@@ -146,6 +148,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
     allowHiddenFiles = input<boolean>(false);
 
     isProblemStatementVisible = input<boolean>(true);
+    fileSyncService = input<CodeEditorFileSyncService | undefined>();
 
     onToggleCollapse = output<InteractableEvent>();
     onFileChange = output<[string[], FileChange]>();
@@ -352,6 +355,9 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
      */
     onFileDeleted(fileChange: FileChange) {
         this.handleFileChange(fileChange);
+        if (fileChange instanceof DeleteFileChange) {
+            this.fileSyncService()?.emitFileDeleted(fileChange.fileName, this.toSyncFileType(fileChange.fileType));
+        }
     }
 
     /**
@@ -534,6 +540,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
             .subscribe({
                 next: () => {
                     this.handleFileChange(new RenameFileChange(fileType, filePath, newFilePath));
+                    this.fileSyncService()?.emitFileRenamed(filePath, newFilePath, this.toSyncFileType(fileType));
                     this.renamingFile = undefined;
                 },
                 error: () => this.onError.emit('fileOperationFailed'),
@@ -586,6 +593,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
                 .subscribe({
                     next: () => {
                         this.handleFileChange(new CreateFileChange(FileType.FILE, file));
+                        this.fileSyncService()?.emitFileCreated(file, 'FILE');
                         this.creatingFile = undefined;
                     },
                     error: () => this.onError.emit('fileOperationFailed'),
@@ -596,6 +604,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
                 .subscribe({
                     next: () => {
                         this.handleFileChange(new CreateFileChange(FileType.FOLDER, file));
+                        this.fileSyncService()?.emitFileCreated(file, 'FOLDER');
                         this.creatingFile = undefined;
                     },
                     error: () => this.onError.emit('fileOperationFailed'),
@@ -724,5 +733,9 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
             }
         }
         return Array.from(folderBadgesMap.entries()).map(([type, count]) => new FileBadge(type, count));
+    }
+
+    private toSyncFileType(type: FileType): 'FILE' | 'FOLDER' {
+        return type === FileType.FILE ? 'FILE' : 'FOLDER';
     }
 }

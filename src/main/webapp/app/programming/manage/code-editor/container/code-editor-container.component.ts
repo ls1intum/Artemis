@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, ViewChild, effect, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnDestroy, ViewChild, effect, inject, input, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -30,6 +30,9 @@ import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { editor } from 'monaco-editor';
+import { CodeEditorFileSyncService } from 'app/programming/manage/services/code-editor-file-sync.service';
+import { Subscription } from 'rxjs';
+import { ExerciseEditorSyncEventType, FileCreatedEvent, FileDeletedEvent, FileRenamedEvent } from 'app/exercise/services/exercise-editor-sync.service';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -52,7 +55,7 @@ export enum CollapsableCodeEditorElement {
         KeysPipe,
     ],
 })
-export class CodeEditorContainerComponent implements ComponentCanDeactivate {
+export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnDestroy {
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
     private fileService = inject(CodeEditorFileService);
@@ -84,6 +87,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     isProblemStatementVisible = input<boolean>(true);
     course = input<Course | undefined>();
     selectedRepository = input<RepositoryType>();
+    fileSyncService = input<CodeEditorFileSyncService | undefined>();
 
     onCommitStateChange = output<CommitState>();
     onFileChanged = output<void>();
@@ -127,12 +131,26 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     errorFiles: string[] = [];
     annotations: Array<Annotation> = [];
 
+    private fileTreeChangeSubscription?: Subscription;
+
     constructor() {
         this.initializeProperties();
 
         effect(() => {
             this.updateFileBadges();
         });
+
+        effect(() => {
+            const syncService = this.fileSyncService();
+            this.fileTreeChangeSubscription?.unsubscribe();
+            if (syncService) {
+                this.fileTreeChangeSubscription = syncService.fileTreeChange$.subscribe((event) => this.handleRemoteFileTreeEvent(event));
+            }
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.fileTreeChangeSubscription?.unsubscribe();
     }
 
     get unsavedFiles() {
@@ -224,6 +242,29 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         this.monacoEditor?.onFileChange(fileChange);
 
         this.onFileChanged.emit();
+    }
+
+    /**
+     * Handle remote file tree change events from the sync service.
+     * Delegates to fileBrowser.handleFileChange() which updates repositoryFiles, rebuilds
+     * the tree view, and emits onFileChange — mirroring the local file operation flow exactly.
+     */
+    private handleRemoteFileTreeEvent(event: FileCreatedEvent | FileDeletedEvent | FileRenamedEvent): void {
+        switch (event.eventType) {
+            case ExerciseEditorSyncEventType.FILE_CREATED:
+                this.fileBrowser?.handleFileChange(new CreateFileChange(this.mapFileType(event.fileType), event.filePath));
+                break;
+            case ExerciseEditorSyncEventType.FILE_DELETED:
+                this.fileBrowser?.handleFileChange(new DeleteFileChange(this.mapFileType(event.fileType), event.filePath));
+                break;
+            case ExerciseEditorSyncEventType.FILE_RENAMED:
+                this.fileBrowser?.handleFileChange(new RenameFileChange(this.mapFileType(event.fileType), event.oldPath, event.newPath));
+                break;
+        }
+    }
+
+    private mapFileType(type: 'FILE' | 'FOLDER'): FileType {
+        return type === 'FILE' ? FileType.FILE : FileType.FOLDER;
     }
 
     /**

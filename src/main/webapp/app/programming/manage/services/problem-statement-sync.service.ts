@@ -353,13 +353,12 @@ export class ProblemStatementSyncService {
         const color = getColorForClientId(awareness.clientID);
         const fallbackName = sessionId ? `Editor ${sessionId.slice(0, 6)}` : 'Editor';
         awareness.setLocalStateField('user', { name: fallbackName, color });
-        this.accountService.identity().then((user) => {
-            if (!user) {
-                return;
-            }
-            const name = (user.name ?? [user.firstName, user.lastName].filter(Boolean).join(' ').trim()) || user.login || fallbackName;
-            awareness.setLocalStateField('user', { name, color });
-        });
+        const user = this.accountService.userIdentity();
+        if (!user) {
+            return;
+        }
+        const name = (user.name ?? [user.firstName, user.lastName].filter(Boolean).join(' ').trim()) || user.login || fallbackName;
+        awareness.setLocalStateField('user', { name, color });
     }
 
     /**

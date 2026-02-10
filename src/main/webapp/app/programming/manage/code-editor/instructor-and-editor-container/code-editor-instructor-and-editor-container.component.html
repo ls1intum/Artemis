@@ -25,6 +25,7 @@
             [course]="course"
             [allowHiddenFiles]="true"
             [consistencyIssues]="consistencyIssues()"
+            [fileSyncService]="fileSyncService"
             (onFileLoad)="onFileLoad($event)"
             (onEditorLoaded)="onEditorLoaded()"
         >
