@@ -30,6 +30,14 @@ type RemoteClientStyle = {
 const remoteClientStyles = new Map<number, RemoteClientStyle>();
 const REMOTE_STYLE_ELEMENT_ID = 'yjs-remote-selection-styles';
 
+export const clearRemoteSelectionStyles = () => {
+    remoteClientStyles.clear();
+    if (typeof document === 'undefined') {
+        return;
+    }
+    document.getElementById(REMOTE_STYLE_ELEMENT_ID)?.remove();
+};
+
 export const getColorForClientId = (clientId: number): string => {
     const cached = remoteClientStyles.get(clientId)?.color;
     if (cached) {
@@ -47,7 +55,24 @@ export const getColorForClientId = (clientId: number): string => {
 };
 
 const escapeCssContent = (value: string): string => {
-    return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    let escaped = '';
+    for (const char of value) {
+        if (char === '\\') {
+            escaped += '\\\\';
+            continue;
+        }
+        if (char === '"') {
+            escaped += '\\"';
+            continue;
+        }
+        const codePoint = char.codePointAt(0) ?? 0;
+        if (codePoint < 0x20 || codePoint === 0x2028 || codePoint === 0x2029) {
+            escaped += `\\${codePoint.toString(16).toUpperCase().padStart(6, '0')}`;
+            continue;
+        }
+        escaped += char;
+    }
+    return escaped;
 };
 
 const getInitials = (value: string): string => {

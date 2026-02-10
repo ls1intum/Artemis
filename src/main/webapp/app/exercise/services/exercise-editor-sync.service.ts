@@ -173,7 +173,7 @@ export class ExerciseEditorSyncService {
             delete this.subject;
         }
 
-        // Unsubscribe from internal websocket subscription
+        // Unsubscribing the RxJS subscription also tears down the underlying STOMP topic subscription.
         if (this.subscription) {
             this.subscription.unsubscribe();
             delete this.subscription;

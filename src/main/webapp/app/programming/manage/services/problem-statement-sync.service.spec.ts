@@ -2,7 +2,7 @@ import { TestBed, fakeAsync, flushMicrotasks, tick } from '@angular/core/testing
 import { Subject } from 'rxjs';
 import * as Y from 'yjs';
 import { Awareness, encodeAwarenessUpdate } from 'y-protocols/awareness';
-import { ProblemStatementSyncService } from 'app/programming/manage/services/problem-statement-sync.service';
+import { ProblemStatementSyncService, ProblemStatementSyncState } from 'app/programming/manage/services/problem-statement-sync.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExerciseEditorSyncEvent, ExerciseEditorSyncEventType, ExerciseEditorSyncService, ExerciseEditorSyncTarget } from 'app/exercise/services/exercise-editor-sync.service';
 import * as yjsUtils from 'app/programming/manage/services/yjs-utils';
@@ -89,7 +89,7 @@ describe('ProblemStatementSyncService', () => {
         expect(state.text.toString()).toBe('Hello Artemis');
     }));
 
-    it('responds to full-content requests with the current document state', () => {
+    it('responds to full-content requests with the current document state', fakeAsync(() => {
         const state = service.init(7, '');
         state.text.insert(0, 'Current content');
         syncService.sendSynchronizationUpdate.mockClear();
@@ -100,6 +100,7 @@ describe('ProblemStatementSyncService', () => {
             requestId: 'req-123',
             timestamp: 1,
         });
+        tick(500);
 
         expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
             7,
@@ -117,7 +118,7 @@ describe('ProblemStatementSyncService', () => {
         const responseDoc = new Y.Doc();
         Y.applyUpdate(responseDoc, decoded);
         expect(responseDoc.getText('problem-statement').toString()).toBe('Current content');
-    });
+    }));
 
     it('uses the earliest leader response during initial sync', fakeAsync(() => {
         const state = service.init(11, '');
@@ -156,19 +157,76 @@ describe('ProblemStatementSyncService', () => {
         expect(state.text.toString()).toBe('Earlier leader');
     }));
 
-    it('seeds fallback content and broadcasts it when no response arrives', fakeAsync(() => {
+    it('queues full-content requests while initializing and responds after finalize', fakeAsync(() => {
+        const state = service.init(12, '');
+        const requestIdToQueue = 'queued-request';
+        syncService.sendSynchronizationUpdate.mockClear();
+
+        incomingMessages$.next({
+            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
+            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            requestId: requestIdToQueue,
+            timestamp: 1,
+        });
+        expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalled();
+
+        tick(500);
+
+        expect(state.text.toString()).toBe('');
+        expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
+            12,
+            expect.objectContaining({
+                eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE,
+                target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+                responseTo: requestIdToQueue,
+            }),
+        );
+    }));
+
+    it('replaces the yjs state when a late winning full-content response arrives', fakeAsync(() => {
+        const state = service.init(14, 'Fallback statement');
+        const requestCall = (syncService.sendSynchronizationUpdate as jest.Mock).mock.calls.find(
+            ([, message]) => message.eventType === ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
+        );
+        const requestId = requestCall?.[1].requestId as string;
+        expect(requestId).toBeDefined();
+
+        let replacedState: ProblemStatementSyncState | undefined;
+        const subscription = service.stateReplaced$.subscribe((nextState) => {
+            replacedState = nextState;
+        });
+
+        tick(500);
+        expect(state.text.toString()).toBe('Fallback statement');
+
+        const lateLeaderDoc = new Y.Doc();
+        lateLeaderDoc.getText('problem-statement').insert(0, 'Late winning leader');
+        incomingMessages$.next({
+            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE,
+            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            responseTo: requestId,
+            yjsUpdate: yjsUtils.encodeUint8ArrayToBase64(Y.encodeStateAsUpdate(lateLeaderDoc)),
+            leaderTimestamp: 1,
+            timestamp: 2,
+        });
+
+        expect(replacedState).toBeDefined();
+        expect(replacedState?.text.toString()).toBe('Late winning leader');
+        subscription.unsubscribe();
+    }));
+
+    it('seeds fallback content without rebroadcasting seed as sync update', fakeAsync(() => {
         const state = service.init(13, 'Fallback statement');
         syncService.sendSynchronizationUpdate.mockClear();
 
         tick(500);
 
         expect(state.text.toString()).toBe('Fallback statement');
-        expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
+        expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalledWith(
             13,
             expect.objectContaining({
                 target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
                 eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
-                yjsUpdate: expect.any(String),
             }),
         );
     }));
@@ -208,10 +266,13 @@ describe('ProblemStatementSyncService', () => {
     it('resets state and destroys the Yjs document', fakeAsync(() => {
         const state = service.init(19, 'Seed');
         const destroySpy = jest.spyOn(state.doc, 'destroy');
+        const clearRemoteStylesSpy = jest.spyOn(yjsUtils, 'clearRemoteSelectionStyles');
 
         service.reset();
 
         expect(destroySpy).toHaveBeenCalled();
+        expect(clearRemoteStylesSpy).toHaveBeenCalledOnce();
         tick(500);
+        clearRemoteStylesSpy.mockRestore();
     }));
 });
