@@ -36,6 +36,15 @@ enum ProblemStatementSyncOrigin {
     Seed = 'seed',
 }
 
+/**
+ * Manages Yjs-based collaborative real-time synchronization for problem statement editing.
+ *
+ * This service is provided at the root level (singleton). It supports only one active exercise
+ * session at a time. Calling `init()` while a prior session is active will silently reset the
+ * previous session. This is acceptable because the consuming component
+ * (`ProgrammingExerciseEditableInstructionComponent`) is always destroyed and recreated on
+ * navigation, ensuring a clean lifecycle.
+ */
 @Injectable({ providedIn: 'root' })
 export class ProblemStatementSyncService {
     private syncService = inject(ExerciseEditorSyncService);
@@ -49,9 +58,13 @@ export class ProblemStatementSyncService {
     private awaitingInitialSync = false;
     private localLeaderTimestamp = Date.now();
     private activeLeaderTimestamp = Date.now();
+    private activeLeaderSessionId?: string;
     private fallbackInitialContent = '';
     private latestInitialSyncRequestId?: string;
     private queuedFullContentRequests: string[] = [];
+    // This Subject is intentionally never completed. As a root singleton, the service outlives
+    // individual component lifecycles. Completing it on reset() would prevent subsequent init()
+    // calls from emitting. Consumers must unsubscribe when they are destroyed.
     private stateReplacedSubject = new Subject<ProblemStatementSyncState>();
     // Track initial leader selection and buffer updates until we seed the doc.
     private pendingInitialSync?: {
@@ -107,6 +120,7 @@ export class ProblemStatementSyncService {
         this.awaitingInitialSync = false;
         this.fallbackInitialContent = '';
         this.latestInitialSyncRequestId = undefined;
+        this.activeLeaderSessionId = undefined;
         this.queuedFullContentRequests = [];
         if (this.pendingInitialSync?.timeoutId) {
             clearTimeout(this.pendingInitialSync.timeoutId);
@@ -132,6 +146,9 @@ export class ProblemStatementSyncService {
             requestId,
         };
         this.syncService.sendSynchronizationUpdate(this.exerciseId, requestEvent);
+        // 500ms collection window for initial sync responses. This balances responsiveness with
+        // giving peers enough time to respond. On slow networks, late responses are still handled
+        // correctly via replaceDocumentWithRemoteState(), though this causes a visible rebinding.
         this.pendingInitialSync.timeoutId = setTimeout(() => this.finalizeInitialSync(), 500);
     }
 
@@ -149,6 +166,8 @@ export class ProblemStatementSyncService {
             return;
         }
         const update = Y.encodeStateAsUpdate(this.yDoc);
+        // Intentionally send localLeaderTimestamp (not activeLeaderTimestamp) to avoid
+        // impersonating another client's leader authority when forwarding adopted state.
         const responseEvent: ProblemStatementSyncFullContentResponseEvent = {
             eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE,
             target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
@@ -261,16 +280,16 @@ export class ProblemStatementSyncService {
         if (message.responseTo !== this.latestInitialSyncRequestId) {
             return;
         }
-        if (!this.shouldReplaceWithRemoteLeader(message.leaderTimestamp)) {
+        if (!this.shouldReplaceWithRemoteLeader(message.leaderTimestamp, message.sessionId)) {
             return;
         }
         const update = decodeBase64ToUint8Array(message.yjsUpdate);
-        this.replaceDocumentWithRemoteState(update, message.leaderTimestamp);
+        this.replaceDocumentWithRemoteState(update, message.leaderTimestamp, message.sessionId);
     }
 
     /**
      * Apply incremental Yjs updates from other editors.
-     * While initial sync is pending, updates are buffered until initilization finalize.
+     * While initial sync is pending, updates are buffered until initialization is finalized.
      *
      * @param message The incoming incremental update.
      */
@@ -298,17 +317,29 @@ export class ProblemStatementSyncService {
         }
         const responses = this.pendingInitialSync.responses;
         if (responses.length) {
-            const selected = responses.reduce((best, next) => (next.leaderTimestamp < best.leaderTimestamp ? next : best));
+            const selected = responses.reduce((best, next) => {
+                // Primary sort: earliest timestamp wins
+                if (next.leaderTimestamp < best.leaderTimestamp) {
+                    return next;
+                }
+                if (next.leaderTimestamp > best.leaderTimestamp) {
+                    return best;
+                }
+                // Tie-breaker: lexicographically smaller sessionId wins for determinism
+                return (next.sessionId ?? '') < (best.sessionId ?? '') ? next : best;
+            });
             const update = decodeBase64ToUint8Array(selected.yjsUpdate);
             if (this.yDoc) {
                 Y.applyUpdate(this.yDoc, update, ProblemStatementSyncOrigin.Remote);
             }
             this.activeLeaderTimestamp = selected.leaderTimestamp;
+            this.activeLeaderSessionId = selected.sessionId;
         } else if (this.fallbackInitialContent && this.yDoc && this.yText) {
             this.yDoc.transact(() => {
                 this.yText?.insert(0, this.fallbackInitialContent);
             }, ProblemStatementSyncOrigin.Seed);
             this.activeLeaderTimestamp = this.localLeaderTimestamp;
+            this.activeLeaderSessionId = this.syncService.sessionId;
         }
         if (this.pendingInitialSync.bufferedUpdates.length && this.yDoc) {
             this.pendingInitialSync.bufferedUpdates.forEach((update) => {
@@ -352,14 +383,13 @@ export class ProblemStatementSyncService {
         const sessionId = this.syncService.sessionId;
         const color = getColorForClientId(awareness.clientID);
         const fallbackName = sessionId ? `Editor ${sessionId.slice(0, 6)}` : 'Editor';
-        awareness.setLocalStateField('user', { name: fallbackName, color });
-        this.accountService.identity().then((user) => {
-            if (!user) {
-                return;
-            }
+        const user = this.accountService.userIdentity();
+        if (user) {
             const name = (user.name ?? [user.firstName, user.lastName].filter(Boolean).join(' ').trim()) || user.login || fallbackName;
             awareness.setLocalStateField('user', { name, color });
-        });
+        } else {
+            awareness.setLocalStateField('user', { name: fallbackName, color });
+        }
     }
 
     /**
@@ -381,7 +411,8 @@ export class ProblemStatementSyncService {
 
     /**
      * Generate a request id for full-content synchronization requests.
-     * Used to match responses to the most recent request.
+     * Used to match responses to the most recent request. Uses Date.now() + Math.random()
+     * which is sufficient for matching request/response pairs in a small peer group.
      *
      * @returns A unique request id.
      */
@@ -407,13 +438,22 @@ export class ProblemStatementSyncService {
     /**
      * Determine if a remote leader should replace the active local leader.
      *
-     * Lower leader timestamp wins deterministically.
+     * Lower leader timestamp wins deterministically. In case of timestamp collision,
+     * lexicographically smaller sessionId wins as a tie-breaker.
      *
      * @param remoteLeaderTimestamp Timestamp carried by the remote full-content response.
+     * @param remoteSessionId Session ID of the remote leader.
      * @returns True when the remote leader has precedence.
      */
-    private shouldReplaceWithRemoteLeader(remoteLeaderTimestamp: number): boolean {
-        return remoteLeaderTimestamp < this.activeLeaderTimestamp;
+    private shouldReplaceWithRemoteLeader(remoteLeaderTimestamp: number, remoteSessionId?: string): boolean {
+        if (remoteLeaderTimestamp < this.activeLeaderTimestamp) {
+            return true;
+        }
+        if (remoteLeaderTimestamp > this.activeLeaderTimestamp) {
+            return false;
+        }
+        // Tie-breaker: lexicographically smaller sessionId wins for determinism
+        return (remoteSessionId ?? '') < (this.activeLeaderSessionId ?? '');
     }
 
     /**
@@ -427,8 +467,9 @@ export class ProblemStatementSyncService {
      *
      * @param update Encoded full Yjs state to apply.
      * @param leaderTimestamp Leader timestamp of the selected remote response.
+     * @param sessionId Session ID of the selected remote response.
      */
-    private replaceDocumentWithRemoteState(update: Uint8Array, leaderTimestamp: number) {
+    private replaceDocumentWithRemoteState(update: Uint8Array, leaderTimestamp: number, sessionId?: string) {
         const oldDoc = this.yDoc;
         this.initializeYjsDocument();
         if (!this.yDoc) {
@@ -436,6 +477,7 @@ export class ProblemStatementSyncService {
         }
         Y.applyUpdate(this.yDoc, update, ProblemStatementSyncOrigin.Remote);
         this.activeLeaderTimestamp = leaderTimestamp;
+        this.activeLeaderSessionId = sessionId;
         this.awaitingInitialSync = false;
         this.pendingInitialSync = undefined;
         clearRemoteSelectionStyles();
