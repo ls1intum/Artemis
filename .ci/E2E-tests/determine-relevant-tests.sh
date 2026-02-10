@@ -81,7 +81,6 @@ if [ ! -f "$MAPPING_FILE" ]; then
     write_output "RUN_ALL_TESTS" "true"
     write_output "RELEVANT_TESTS" ""
     write_output "REMAINING_TESTS" ""
-    write_output "IGNORE_TESTS" ""
     write_output "RELEVANT_COUNT" "0"
     write_output "REMAINING_COUNT" "0"
     exit 0
@@ -128,7 +127,6 @@ if [ -z "$CHANGED_FILES" ]; then
     write_output "RUN_ALL_TESTS" "true"
     write_output "RELEVANT_TESTS" ""
     write_output "REMAINING_TESTS" ""
-    write_output "IGNORE_TESTS" ""
     write_output "RELEVANT_COUNT" "0"
     write_output "REMAINING_COUNT" "0"
     exit 0
@@ -186,7 +184,6 @@ if [ "$RUN_ALL_TESTS" = "true" ] || [ "$PLAYWRIGHT_INFRA_CHANGE" = "true" ]; the
     write_output "RUN_ALL_TESTS" "true"
     write_output "RELEVANT_TESTS" ""
     write_output "REMAINING_TESTS" ""
-    write_output "IGNORE_TESTS" ""
     write_output "RELEVANT_COUNT" "0"
     write_output "REMAINING_COUNT" "0"
     exit 0
@@ -222,21 +219,17 @@ if [ "$ONLY_PLAYWRIGHT_TEST_CHANGES" = "true" ] && [ "$PLAYWRIGHT_INFRA_CHANGE" 
 fi
 
 # Determine remaining tests (all tests minus relevant tests)
-# This is a bit tricky because we need to handle partial overlaps
-# IGNORE_PATH_SET tracks child paths already executed in Phase 1.
+# When a relevant test is a child of an all-test path (e.g., relevant=e2e/exercise/quiz-exercise/
+# and all-test=e2e/exercise/), we expand the parent into its direct children and only exclude
+# the ones already covered by Phase 1.
 REMAINING_TESTS=()
-declare -A IGNORE_PATH_SET
 
 if [ "$SKIP_REMAINING_TESTS" = "false" ]; then
     for test_path in "${ALL_TEST_PATHS[@]}"; do
         IS_COVERED=false
-        
+        HAS_PARTIAL_OVERLAP=false
+
         for relevant in "${RELEVANT_TESTS[@]}"; do
-            # Check if this test path is covered by a relevant test
-            # A test path is covered if:
-            # 1. It equals a relevant path
-            # 2. It starts with a relevant path (e.g., e2e/exam/ covers e2e/exam/*)
-            # 3. A relevant path starts with it (more specific test path covers general)
             if [ "$test_path" = "$relevant" ]; then
                 IS_COVERED=true
                 break
@@ -245,13 +238,40 @@ if [ "$SKIP_REMAINING_TESTS" = "false" ]; then
                 IS_COVERED=true
                 break
             elif [[ "$relevant" == "$test_path"* ]]; then
-                # relevant is a child of test_path - avoid duplicate runs
-                IS_COVERED=true
-                IGNORE_PATH_SET["$relevant"]=1
+                # relevant is a child of test_path - partial overlap
+                HAS_PARTIAL_OVERLAP=true
             fi
         done
-        
-        if [ "$IS_COVERED" = "false" ]; then
+
+        if [ "$IS_COVERED" = "true" ]; then
+            continue
+        fi
+
+        if [ "$HAS_PARTIAL_OVERLAP" = "true" ]; then
+            # Expand this parent directory into its direct children, excluding those covered by Phase 1
+            local_dir="$REPO_ROOT/src/test/playwright/$test_path"
+            if [ -d "$local_dir" ]; then
+                while IFS= read -r child; do
+                    [ -z "$child" ] && continue
+                    if [ -d "$REPO_ROOT/src/test/playwright/$child" ]; then
+                        child_path="$child/"
+                    else
+                        child_path="$child"
+                    fi
+                    # Check if this child is covered by any relevant test
+                    CHILD_COVERED=false
+                    for relevant in "${RELEVANT_TESTS[@]}"; do
+                        if [ "$child_path" = "$relevant" ] || [[ "$child_path" == "$relevant"* ]]; then
+                            CHILD_COVERED=true
+                            break
+                        fi
+                    done
+                    if [ "$CHILD_COVERED" = "false" ]; then
+                        REMAINING_TESTS+=("$child_path")
+                    fi
+                done < <(cd "$REPO_ROOT/src/test/playwright" && find "$test_path" -maxdepth 1 -mindepth 1 \( -type d -o -name '*.spec.ts' \) -print)
+            fi
+        else
             REMAINING_TESTS+=("$test_path")
         fi
     done
@@ -268,17 +288,6 @@ if [ ${#REMAINING_TESTS[@]} -gt 0 ]; then
     mapfile -t REMAINING_TESTS_SORTED < <(printf '%s\n' "${REMAINING_TESTS[@]}" | sort -u)
 else
     REMAINING_TESTS_SORTED=()
-fi
-
-IGNORE_PATHS=()
-for ignore_path in "${!IGNORE_PATH_SET[@]}"; do
-    IGNORE_PATHS+=("$ignore_path")
-done
-
-if [ ${#IGNORE_PATHS[@]} -gt 0 ]; then
-    mapfile -t IGNORE_PATHS_SORTED < <(printf '%s\n' "${IGNORE_PATHS[@]}" | sort -u)
-else
-    IGNORE_PATHS_SORTED=()
 fi
 
 echo ""
@@ -317,19 +326,9 @@ for test in "${REMAINING_TESTS_SORTED[@]}"; do
     fi
 done
 
-IGNORE_TESTS_STRING=""
-for test in "${IGNORE_PATHS_SORTED[@]}"; do
-    if [ -n "$IGNORE_TESTS_STRING" ]; then
-        IGNORE_TESTS_STRING="$IGNORE_TESTS_STRING $test"
-    else
-        IGNORE_TESTS_STRING="$test"
-    fi
-done
-
 write_output "RUN_ALL_TESTS" "false"
 write_output "RELEVANT_TESTS" "$RELEVANT_TESTS_STRING"
 write_output "REMAINING_TESTS" "$REMAINING_TESTS_STRING"
-write_output "IGNORE_TESTS" "$IGNORE_TESTS_STRING"
 write_output "RELEVANT_COUNT" "${#RELEVANT_TESTS_SORTED[@]}"
 write_output "REMAINING_COUNT" "${#REMAINING_TESTS_SORTED[@]}"
 
