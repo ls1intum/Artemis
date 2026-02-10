@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisText
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.transcription.PyrisTranscriptionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.TranscriptionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 
 /**
@@ -249,6 +251,31 @@ public class PyrisInternalStatusUpdateResource {
             throw new ConflictException("Run ID is not an ingestion job", "Job", "invalidRunId");
         }
         pyrisStatusUpdateService.handleStatusUpdate(faqIngestionWebhookJob, statusUpdateDTO);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * {@code POST internal/webhooks/transcription/runs/{runId}/status} : Set the status of a Video Transcription job.
+     *
+     * @param runId           the ID of the job
+     * @param statusUpdateDTO the status update
+     * @param request         the HTTP request
+     * @return a {@link ResponseEntity} with status {@code 200 (OK)}
+     * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
+     * @throws AccessForbiddenException if the token is invalid
+     */
+    @PostMapping("webhooks/transcription/runs/{runId}/status")
+    @Internal
+    public ResponseEntity<Void> setStatusOfTranscriptionJob(@PathVariable String runId, @RequestBody PyrisTranscriptionStatusUpdateDTO statusUpdateDTO,
+            HttpServletRequest request) {
+        PyrisJob job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, PyrisJob.class);
+        if (!job.jobId().equals(runId)) {
+            throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
+        }
+        if (!(job instanceof TranscriptionWebhookJob transcriptionWebhookJob)) {
+            throw new ConflictException("Run ID is not a transcription job", "Job", "invalidRunId");
+        }
+        pyrisStatusUpdateService.handleStatusUpdate(transcriptionWebhookJob, statusUpdateDTO);
         return ResponseEntity.ok().build();
     }
 }
