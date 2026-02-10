@@ -181,19 +181,16 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
      * @return All newest room versions with eagerly loaded layout strategies.
      */
     @Query("""
-            WITH latestRooms AS (
-                SELECT
-                    roomNumber AS roomNumber,
-                    MAX(createdDate) AS maxCreatedDate
-                FROM ExamRoom
-                GROUP BY roomNumber
-            )
-            SELECT examRoom
-            FROM ExamRoom examRoom
-            JOIN latestRooms latestRoom
-                ON examRoom.roomNumber = latestRoom.roomNumber
-                AND examRoom.createdDate = latestRoom.maxCreatedDate
-            LEFT JOIN FETCH examRoom.layoutStrategies
+            SELECT roomPartition.examRoom
+            FROM (
+                SELECT examRoom AS examRoom, ROW_NUMBER() OVER (
+                    PARTITION BY examRoom.roomNumber
+                    ORDER BY examRoom.createdDate DESC, examRoom.id DESC
+                ) AS rowNumber
+                FROM ExamRoom examRoom
+            ) roomPartition
+            LEFT JOIN FETCH roomPartition.examRoom.layoutStrategies
+            WHERE roomPartition.rowNumber = 1
             """)
     Set<ExamRoom> findAllNewestExamRoomVersionsWithEagerLayoutStrategies();
 }

@@ -13,7 +13,7 @@ import { SessionStorageService } from 'app/shared/service/session-storage.servic
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Router, UrlTree } from '@angular/router';
+import { Router, UrlTree, provideRouter } from '@angular/router';
 import { fakeAsync, tick } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
@@ -23,8 +23,6 @@ import { MockStudentsRoomDistributionService } from 'test/helpers/mocks/service/
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
-
-import { RouterTestingModule } from '@angular/router/testing';
 
 function dispatchInputEvent(inputElement: HTMLInputElement, value: string) {
     inputElement.value = value;
@@ -47,13 +45,14 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FaIconComponent, FormsModule, RouterTestingModule],
+            imports: [FaIconComponent, FormsModule],
             declarations: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent)],
             providers: [
                 MockProvider(NgbActiveModal),
                 MockProvider(HttpClient),
                 MockProvider(SessionStorageService),
                 MockProvider(LocalStorageService),
+                provideRouter([]),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: StudentsRoomDistributionService, useClass: MockStudentsRoomDistributionService },

@@ -27,7 +27,13 @@ import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUploadInformationDTO;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomService;
 
 /**
- * REST controller for managing exam rooms
+ * REST controller for managing exam rooms.
+ * <p>
+ * Exam rooms are generally not bound to specific courses or exams, and can therefore be modified by every instructor.
+ * The exam room management is essentially a very simplified, globally shared repository, where instructors can view
+ * existing exam rooms and add new exam rooms or versions thereof.
+ * <p>
+ * Course and exam specific connections between are managed by {@link ExamRoomDistributionResource}.
  */
 @Conditional(ExamEnabled.class)
 @Lazy
@@ -60,7 +66,6 @@ public class ExamRoomManagementResource {
      *                    "building" : short enclosing building name
      *                    "rows" : list of rows
      *                    "layouts" : list of layouts
-     *
      * @return a response entity with status 200 and information about the upload process.
      */
     @PostMapping(value = "upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -90,7 +95,7 @@ public class ExamRoomManagementResource {
     @GetMapping("overview")
     @EnforceAtLeastInstructor
     public ResponseEntity<ExamRoomOverviewDTO> getExamRoomOverview() {
-        log.info("REST request to get exam room admin overview");
+        log.debug("REST request to get exam room overview");
 
         var examRoomAdminOverviewDTO = examRoomService.getExamRoomOverview();
         return ResponseEntity.ok(examRoomAdminOverviewDTO);

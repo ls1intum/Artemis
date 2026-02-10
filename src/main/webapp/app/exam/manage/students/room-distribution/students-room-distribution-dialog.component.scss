@@ -1,0 +1,20 @@
+.distribution-dialog-width {
+    width: 45dvw;
+}
+
+.distribution-reserve-factor-input {
+    width: 3rem;
+}
+
+.distribution-rooms-table-wrapper {
+    max-height: 45dvh;
+    overflow-y: auto;
+}
+
+.distribution-footer-container {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}

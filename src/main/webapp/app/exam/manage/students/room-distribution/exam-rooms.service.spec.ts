@@ -1,5 +1,5 @@
 /**
- * Vitest tests for ExamRoomsService.
+ * Tests for ExamRoomsService.
  * Tests the HTTP service for managing exam rooms.
  */
 import { TestBed } from '@angular/core/testing';
@@ -20,6 +20,10 @@ describe('ExamRoomsService', () => {
 
         service = TestBed.inject(ExamRoomsService);
         httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(async () => {
+        httpMock.verify();
     });
 
     it('should be created', () => {
