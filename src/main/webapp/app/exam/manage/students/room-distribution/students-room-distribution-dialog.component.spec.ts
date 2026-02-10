@@ -13,7 +13,7 @@ import { SessionStorageService } from 'app/shared/service/session-storage.servic
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Router, UrlTree, provideRouter } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { fakeAsync, tick } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
@@ -33,7 +33,6 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     let component: StudentsRoomDistributionDialogComponent;
     let fixture: ComponentFixture<StudentsRoomDistributionDialogComponent>;
     let service: StudentsRoomDistributionService | MockStudentsRoomDistributionService;
-    let router: Router;
 
     const course: Course = { id: 1 };
     const exam: Exam = { course, id: 2, title: 'Exam Title' };
@@ -63,7 +62,6 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         component = fixture.componentInstance;
         fixture.componentRef.setInput('courseId', course.id);
         fixture.componentRef.setInput('exam', exam);
-        router = TestBed.inject(Router);
         service = TestBed.inject(StudentsRoomDistributionService) as unknown as MockStudentsRoomDistributionService;
 
         jest.spyOn(service, 'loadRoomData').mockImplementation(() => {
@@ -272,19 +270,13 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         expect(component.selectedRooms()).toContain(rooms[1]);
     });
 
-    it('should redirect to exam room management page', async () => {
-        const navigateSpy = jest.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
-
+    it('exam room management link should open in a new tab', () => {
         fixture.detectChanges();
 
         const link: HTMLAnchorElement = fixture.debugElement.nativeElement.querySelector('#examRoomManagementLink');
+
         expect(link).toBeTruthy();
-
-        link.click();
-        await fixture.whenStable();
-        expect(navigateSpy).toHaveBeenCalledOnce();
-
-        const [urlTree] = navigateSpy.mock.calls[0] as [UrlTree, unknown];
-        expect(router.serializeUrl(urlTree)).toContain('exams/rooms');
+        expect(link.href).toContain('/exams/rooms');
+        expect(link.target).toBe('_blank');
     });
 });
