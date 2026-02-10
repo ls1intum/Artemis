@@ -97,9 +97,11 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
 
     void testJustForInstructorEndpoints() throws Exception {
         var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY);
-        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId, configuration.getId()), configuration, TutorialGroupsConfiguration.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId, configuration.getId()), TutorialGroupConfigurationDTO.of(configuration),
+                TutorialGroupConfigurationDTO.class, HttpStatus.FORBIDDEN);
         this.deleteExampleConfiguration();
-        request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId), buildExampleConfiguration(courseId), TutorialGroupsConfiguration.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId), TutorialGroupConfigurationDTO.of(buildExampleConfiguration(courseId)),
+                TutorialGroupConfigurationDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
