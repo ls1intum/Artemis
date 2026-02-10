@@ -87,11 +87,12 @@ public class TutorialGroupFreePeriodResource {
     /**
      * PUT courses/:courseId/tutorial-groups-configuration/:tutorialGroupsConfigurationId/tutorial-free-periods/:tutorialGroupFreePeriodId : Updates an existing tutorial-free
      * period
-     * `@param` courseId the id of the course to which the tutorial groups configuration belongs
-     * `@param` tutorialGroupsConfigurationId the id of the tutorial groups configuration to which the tutorial group free period should be added
-     * `@param` tutorialGroupFreePeriodId the id of the tutorial group free period to update
-     * `@param` tutorialGroupFreePeriod the updated tutorial group free period data
-     * `@return` ResponseEntity with status 200 (OK) and in the body the updated tutorial group free period dto
+     *
+     * @param courseId                      the id of the course to which the tutorial groups configuration belongs
+     * @param tutorialGroupsConfigurationId the id of the tutorial groups configuration to which the tutorial group free period should be added
+     * @param tutorialGroupFreePeriodId     the id of the tutorial group free period to update
+     * @param tutorialGroupFreePeriod       the updated tutorial group free period data
+     * @return ResponseEntity with status 200 (OK) and in the body the updated tutorial group free period dto
      */
     @PutMapping("courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}")
     @EnforceAtLeastInstructor
