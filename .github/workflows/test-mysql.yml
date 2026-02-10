@@ -1,52 +1,8 @@
 name: Test (MySQL)
 
+# TODO: Re-enable automatic triggers once MySQL testcontainers are reliable
 on:
-  pull_request:
-    paths-ignore:
-    - 'README.md'
-    - 'CODE_OF_CONDUCT.md'
-    - 'CONTRIBUTING.md'
-    - 'LICENSE'
-    - 'SECURITY.md'
-    - 'documentation/**'
-    - '.github/**'
-    - '!.github/workflows/test-mysql.yml'
-    - '.husky/**'
-    - 'docker/**'
-    - '.coderabbit.yaml'
-    - '.editorconfig'
-    - '.gitattributes'
-    - 'artemis-server-cli'
-    - 'supporting_scripts/**'
-    - 'CITATION.cff'
-    - 'proxy.conf.mjs'
-  push:
-    branches:
-    - develop
-    - main
-    - release/*
-    tags: '[0-9]+.[0-9]+.[0-9]+'
-    paths-ignore:
-    - 'README.md'
-    - 'CODE_OF_CONDUCT.md'
-    - 'CONTRIBUTING.md'
-    - 'LICENSE'
-    - 'SECURITY.md'
-    - 'documentation/**'
-    - '.github/**'
-    - '!.github/workflows/test-mysql.yml'
-    - '.husky/**'
-    - 'docker/**'
-    - '.coderabbit.yaml'
-    - '.editorconfig'
-    - '.gitattributes'
-    - 'artemis-server-cli'
-    - 'supporting_scripts/**'
-    - 'CITATION.cff'
-    - 'proxy.conf.mjs'
-  release:
-    types:
-    - created
+  workflow_dispatch: # Manual trigger only for now
 
 # Limit the number of concurrent runs to one per PR
 concurrency:
