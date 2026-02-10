@@ -107,11 +107,19 @@ artemis:
         matlab:
             license-server: "1234@license-server"
 
+    # Iris configuration - disabled by default, enabled in application-artemis.yml for tests
+    iris:
+        enabled: false
+
     # Nebula configuration for tests
     nebula:
         enabled: true
         url: http://localhost:8080  # dummy URL for tests
         secret-token: test-secret         # dummy secret for tests
+
+    weaviate:
+      enabled: false
+
     tum-live:
         api-base-url: https://mocke.tum.live/api/v2
 

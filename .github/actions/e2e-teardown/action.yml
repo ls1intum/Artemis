@@ -1,0 +1,48 @@
+name: 'E2E Test Teardown'
+description: 'Common teardown steps for E2E test jobs'
+
+inputs:
+  artifact-name-suffix:
+    description: 'Suffix for artifact names (e.g., "Phase 1", "Phase 2", "")'
+    required: false
+    default: ''
+  require-tests:
+    description: 'Whether to fail if no test files found (error vs warn)'
+    required: false
+    default: 'warn'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Clean up intermediate test result files
+      shell: bash
+      run: |
+        # Playwright generates 3 XML files: results-parallel.xml, results-sequential.xml, and results.xml (merged).
+        # If all 3 are uploaded, the JUnit reporter counts tests from each file, causing double-counting
+        # (e.g., ~418 tests reported instead of ~223 actual tests).
+        # We remove the intermediate files to keep only the merged results.xml.
+        echo "Removing intermediate XML files (results-parallel.xml, results-sequential.xml) to prevent"
+        echo "double-counting in test reports. Only the merged results.xml should be uploaded."
+        rm -f src/test/playwright/test-reports/results-parallel.xml || true
+        rm -f src/test/playwright/test-reports/results-sequential.xml || true
+        echo "Listing remaining XML files:"
+        ls -la src/test/playwright/test-reports/*.xml 2>/dev/null || echo "No XML files found"
+
+    - name: Upload JUnit Test Results
+      if: success() || failure()
+      uses: actions/upload-artifact@v6
+      with:
+        name: JUnit Test Results${{ inputs.artifact-name-suffix && format(' {0}', inputs.artifact-name-suffix) || '' }}
+        if-no-files-found: ${{ inputs.require-tests }}
+        path: src/test/playwright/test-reports/*.xml
+
+    - name: Upload Client Test Coverage Report
+      if: success() || failure()
+      uses: actions/upload-artifact@v6
+      with:
+        name: E2E Client Coverage Report${{ inputs.artifact-name-suffix && format(' {0}', inputs.artifact-name-suffix) || '' }}
+        path: src/test/playwright/test-reports/client-coverage
+
+    - name: Run cleanup script (after E2E)
+      shell: bash
+      run: .ci/E2E-tests/cleanup.sh || true
