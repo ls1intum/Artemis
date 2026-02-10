@@ -187,6 +187,11 @@
                     "name": "API Rate Limiting",
                     "description": "Protects the application from abuse and overload by limiting the number of specific API requests per user within a given time period.",
                     "disableWarning": "Specific API endpoints are not protected by rate limiting, which can lead to potential abuse or overload."
+                },
+                "AutonomousTutor": {
+                    "name": "Autonomous Tutor",
+                    "description": "Enables the Iris-powered autonomous tutor that automatically responds to student posts in course channels with contextually relevant answers.",
+                    "disableWarning": "The autonomous tutor will not automatically respond to student posts. Students will need to wait for manual tutor responses."
                 }
             }
         }
