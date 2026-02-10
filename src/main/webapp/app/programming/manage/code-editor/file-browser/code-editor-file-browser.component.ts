@@ -1,4 +1,5 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild, computed, effect, inject, input, output } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, DestroyRef, ElementRef, OnDestroy, OnInit, ViewChild, computed, effect, inject, input, output } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { catchError, finalize, map as rxMap, switchMap, tap } from 'rxjs/operators';
@@ -81,12 +82,13 @@ export interface FileTreeItem extends TreeItem<string> {
         ArtemisTranslatePipe,
     ],
 })
-export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, IFileDeleteDelegate {
+export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, OnDestroy, IFileDeleteDelegate {
     modalService = inject(NgbModal);
     private repositoryFileService = inject(CodeEditorRepositoryFileService);
     private repositoryService = inject(CodeEditorRepositoryService);
     private fileService = inject(CodeEditorFileService);
     private conflictService = inject(CodeEditorConflictStateService);
+    private destroyRef = inject(DestroyRef);
     CommitState = CommitState;
     FileType = FileType;
     constructor() {
@@ -229,6 +231,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, IF
         }
     }
 
+    ngOnDestroy(): void {
+        this.conflictSubscription?.unsubscribe();
+    }
+
     /**
      * After the view was initialized, we create an interact.js resizable object,
      * designate the edges which can be used to resize the target element and set min and max values.
@@ -303,6 +309,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, IF
                     this.isLoadingFiles = false;
                     this.changeDetectorRef.markForCheck();
                 }),
+                takeUntilDestroyed(this.destroyRef),
             )
             .subscribe({
                 error: (error: Error) => {
@@ -522,13 +529,15 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, IF
             return;
         }
 
-        this.renameFile(filePath, newFileName).subscribe({
-            next: () => {
-                this.handleFileChange(new RenameFileChange(fileType, filePath, newFilePath));
-                this.renamingFile = undefined;
-            },
-            error: () => this.onError.emit('fileOperationFailed'),
-        });
+        this.renameFile(filePath, newFileName)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => {
+                    this.handleFileChange(new RenameFileChange(fileType, filePath, newFilePath));
+                    this.renamingFile = undefined;
+                },
+                error: () => this.onError.emit('fileOperationFailed'),
+            });
     }
 
     /**
@@ -572,21 +581,25 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, IF
 
         const file = folderPath ? `${folderPath}/${fileName}` : fileName;
         if (fileType === FileType.FILE) {
-            this.createFile(file).subscribe({
-                next: () => {
-                    this.handleFileChange(new CreateFileChange(FileType.FILE, file));
-                    this.creatingFile = undefined;
-                },
-                error: () => this.onError.emit('fileOperationFailed'),
-            });
+            this.createFile(file)
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe({
+                    next: () => {
+                        this.handleFileChange(new CreateFileChange(FileType.FILE, file));
+                        this.creatingFile = undefined;
+                    },
+                    error: () => this.onError.emit('fileOperationFailed'),
+                });
         } else {
-            this.createFolder(file).subscribe({
-                next: () => {
-                    this.handleFileChange(new CreateFileChange(FileType.FOLDER, file));
-                    this.creatingFile = undefined;
-                },
-                error: () => this.onError.emit('fileOperationFailed'),
-            });
+            this.createFolder(file)
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe({
+                    next: () => {
+                        this.handleFileChange(new CreateFileChange(FileType.FOLDER, file));
+                        this.creatingFile = undefined;
+                    },
+                    error: () => this.onError.emit('fileOperationFailed'),
+                });
         }
     }
 
