@@ -219,55 +219,51 @@ public class PyrisStatusUpdateService {
 
     /**
      * Handles the status update of a video transcription job.
-     * Parses the result JSON and saves the transcription when complete.
+     * When complete, saves the transcription result and notifies the callback service.
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(TranscriptionWebhookJob job, PyrisTranscriptionStatusUpdateDTO statusUpdate) {
         var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
-        var hasError = statusUpdate.stages().stream().map(PyrisStageDTO::state).anyMatch(state -> state == PyrisStageState.ERROR);
 
         if (isDone) {
             pyrisJobService.removeJob(job);
-
-            lectureTranscriptionsRepositoryApi.ifPresent(api -> {
-                Optional<LectureTranscription> transcriptionOpt = api.findByJobId(job.jobId());
-                if (transcriptionOpt.isEmpty()) {
-                    log.error("No transcription found for jobId: {}", job.jobId());
-                    return;
-                }
-
-                LectureTranscription transcription = transcriptionOpt.get();
-
-                if (hasError) {
-                    transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
-                    LectureTranscription savedTranscription = api.save(transcription);
-                    log.warn("Transcription failed for jobId: {}", job.jobId());
-                    processingStateCallbackApi.ifPresent(callback -> callback.handleTranscriptionComplete(savedTranscription));
-                }
-                else if (statusUpdate.result() != null) {
-                    try {
-                        PyrisTranscriptionResultDTO result = objectMapper.readValue(statusUpdate.result(), PyrisTranscriptionResultDTO.class);
-                        transcription.setLanguage(result.language());
-                        transcription.setSegments(result.segments());
-                        transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
-                        LectureTranscription savedTranscription = api.save(transcription);
-                        log.info("Transcription completed and saved for jobId: {}", job.jobId());
-                        processingStateCallbackApi.ifPresent(callback -> callback.handleTranscriptionComplete(savedTranscription));
-                    }
-                    catch (JsonProcessingException e) {
-                        log.error("Failed to parse transcription result for jobId: {}", job.jobId(), e);
-                        transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
-                        LectureTranscription savedTranscription = api.save(transcription);
-                        processingStateCallbackApi.ifPresent(callback -> callback.handleTranscriptionComplete(savedTranscription));
-                    }
-                }
-            });
+            boolean success = statusUpdate.stages().stream().map(PyrisStageDTO::state).noneMatch(state -> state == PyrisStageState.ERROR);
+            saveTranscriptionResult(job.jobId(), success, statusUpdate.result());
         }
         else {
             pyrisJobService.updateJob(job);
         }
+    }
+
+    private void saveTranscriptionResult(String jobId, boolean success, String resultJson) {
+        lectureTranscriptionsRepositoryApi.ifPresent(api -> {
+            LectureTranscription transcription = api.findByJobId(jobId).orElse(null);
+            if (transcription == null) {
+                log.error("No transcription found for jobId: {}", jobId);
+                return;
+            }
+
+            if (!success) {
+                transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
+            }
+            else if (resultJson != null) {
+                try {
+                    PyrisTranscriptionResultDTO result = objectMapper.readValue(resultJson, PyrisTranscriptionResultDTO.class);
+                    transcription.setLanguage(result.language());
+                    transcription.setSegments(result.segments());
+                    transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
+                }
+                catch (JsonProcessingException e) {
+                    log.error("Failed to parse transcription result for jobId: {}", jobId, e);
+                    transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
+                }
+            }
+
+            LectureTranscription saved = api.save(transcription);
+            processingStateCallbackApi.ifPresent(callback -> callback.handleTranscriptionComplete(saved));
+        });
     }
 
 }
