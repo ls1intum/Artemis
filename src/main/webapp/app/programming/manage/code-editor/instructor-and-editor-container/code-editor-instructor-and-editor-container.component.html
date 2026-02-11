@@ -190,7 +190,7 @@
                                     <span jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateCode">Generate Code</span>
                                 </button>
 
-                                @if (exercise.isAtLeastInstructor) {
+                                @if (exercise.isAtLeastEditor) {
                                     <!-- Problem Statement Refinement -->
                                     <button ngbDropdownItem (click)="toggleRefinementPrompt(); aiDropdown.close()" [disabled]="isAiApplying()">
                                         <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
@@ -230,6 +230,13 @@
                                 }
                             </div>
                         </div>
+
+                        @if (isGeneratingOrRefining()) {
+                            <button type="button" class="btn btn-sm btn-secondary ms-1" (click)="cancelRefinement()">
+                                <fa-icon [fixedWidth]="true" [icon]="faBan" class="sm" />
+                                <span class="d-none d-sm-inline" jhiTranslate="entity.action.cancel"></span>
+                            </button>
+                        }
 
                         <!-- Refinement Prompt Popup (positioned relative to dropdown) -->
                         @if (showRefinementPrompt()) {

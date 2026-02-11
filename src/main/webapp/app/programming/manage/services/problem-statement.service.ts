@@ -20,10 +20,6 @@ export interface OperationResult {
     errorHandled?: boolean;
 }
 
-// Type aliases for backward compatibility
-export type GenerationResult = OperationResult;
-export type RefinementResult = OperationResult;
-
 /**
  * Service that centralizes problem statement generation, refinement, and template loading operations.
  * Eliminates duplicate API subscription logic across components.
@@ -54,7 +50,7 @@ export class ProblemStatementService {
     }
 
     /** Generates a problem statement using the provided prompt. */
-    generateProblemStatement(exercise: ProgrammingExercise | undefined, prompt: string, loadingSignal: WritableSignal<boolean>): Observable<GenerationResult> {
+    generateProblemStatement(exercise: ProgrammingExercise | undefined, prompt: string, loadingSignal: WritableSignal<boolean>): Observable<OperationResult> {
         const courseId = getCourseId(exercise);
         if (!courseId || !prompt?.trim()) {
             return of({ success: false });
@@ -74,7 +70,7 @@ export class ProblemStatementService {
     }
 
     /** Refines a problem statement globally using the provided prompt. */
-    refineGlobally(exercise: ProgrammingExercise | undefined, currentContent: string, prompt: string, loadingSignal: WritableSignal<boolean>): Observable<RefinementResult> {
+    refineGlobally(exercise: ProgrammingExercise | undefined, currentContent: string, prompt: string, loadingSignal: WritableSignal<boolean>): Observable<OperationResult> {
         const courseId = getCourseId(exercise);
         if (!courseId || !prompt?.trim() || !currentContent?.trim()) {
             if (!currentContent?.trim()) {

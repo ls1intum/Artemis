@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.MAX_PROBLEM_STATEMENT_LENGTH;
-import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.MAX_USER_PROMPT_LENGTH;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.getSanitizedCourseDescription;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.getSanitizedCourseTitle;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.sanitizeInput;
@@ -17,7 +16,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationResponseDTO;
@@ -64,7 +62,7 @@ public class HyperionProblemStatementGenerationService {
         }
 
         String sanitizedPrompt = sanitizeInput(userPrompt != null ? userPrompt : "Generate a programming exercise problem statement");
-        validateUserPrompt(sanitizedPrompt);
+        HyperionPromptSanitizer.validateUserPrompt(sanitizedPrompt, "ProblemStatementGeneration");
 
         String systemPrompt = templateService.render("/prompts/hyperion/generate_draft_problem_statement_system.st", Map.of());
 
@@ -96,16 +94,4 @@ public class HyperionProblemStatementGenerationService {
         return new ProblemStatementGenerationResponseDTO(generatedProblemStatement);
     }
 
-    /**
-     * Validates that the user prompt is not empty and does not exceed the maximum allowed length.
-     */
-    private void validateUserPrompt(String userPrompt) {
-        if (userPrompt == null || userPrompt.isBlank()) {
-            throw new BadRequestAlertException("User prompt cannot be empty", "ProblemStatement", "ProblemStatementGeneration.userPromptEmpty");
-        }
-        if (userPrompt.length() > MAX_USER_PROMPT_LENGTH) {
-            throw new BadRequestAlertException("User prompt exceeds maximum length of " + MAX_USER_PROMPT_LENGTH + " characters", "ProblemStatement",
-                    "ProblemStatementGeneration.userPromptTooLong");
-        }
-    }
 }

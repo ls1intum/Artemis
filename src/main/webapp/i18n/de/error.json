@@ -216,7 +216,6 @@
             "problemStatementEmpty": "Die Aufgabenbeschreibung darf nicht leer sein.",
             "userPromptEmpty": "Die Benutzereingabe darf nicht leer sein.",
             "userPromptTooLong": "Die Benutzereingabe ist zu lang. Bitte kürze deine Anweisungen und versuche es erneut.",
-            "noRefinementInstructions": "Keine Verfeinerungsanweisungen vorhanden. Bitte füge Canvas-Kommentare hinzu, um anzugeben, wie die Aufgabenbeschreibung verfeinert werden soll.",
             "chatClientNotConfigured": "KI-Verfeinerung ist derzeit nicht verfügbar. Bitte kontaktiere den Administrator.",
             "chatClientNotConfigured_detail": "Der KI-Chat-Client ist nicht konfiguriert.",
             "problemStatementTooLong": "Die Aufgabenbeschreibung ist zu lang. Bitte kürze den Inhalt und versuche es erneut.",

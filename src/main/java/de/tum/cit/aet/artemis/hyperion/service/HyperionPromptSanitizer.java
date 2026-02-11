@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service;
 import java.util.regex.Pattern;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 /**
  * Shared utility class for sanitizing and validating inputs used in Hyperion prompt templates.
@@ -36,6 +37,24 @@ final class HyperionPromptSanitizer {
 
     private HyperionPromptSanitizer() {
         // utility class
+    }
+
+    /**
+     * Validates that the user prompt is not empty and does not exceed the maximum allowed length.
+     *
+     * @param userPrompt     the sanitized user prompt to validate
+     * @param errorKeyPrefix prefix for error keys (e.g. "ProblemStatementRefinement" or
+     *                           "ProblemStatementGeneration")
+     * @throws BadRequestAlertException if the prompt is blank or exceeds the maximum length
+     */
+    static void validateUserPrompt(String userPrompt, String errorKeyPrefix) {
+        if (userPrompt == null || userPrompt.isBlank()) {
+            throw new BadRequestAlertException("User prompt cannot be empty", "ProblemStatement", errorKeyPrefix + ".userPromptEmpty");
+        }
+        if (userPrompt.length() > MAX_USER_PROMPT_LENGTH) {
+            throw new BadRequestAlertException("User prompt exceeds maximum length of " + MAX_USER_PROMPT_LENGTH + " characters", "ProblemStatement",
+                    errorKeyPrefix + ".userPromptTooLong");
+        }
     }
 
     /**

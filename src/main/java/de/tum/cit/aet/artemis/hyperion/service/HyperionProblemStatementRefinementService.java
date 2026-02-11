@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.MAX_PROBLEM_STATEMENT_LENGTH;
-import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.MAX_USER_PROMPT_LENGTH;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.getSanitizedCourseDescription;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.getSanitizedCourseTitle;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionPromptSanitizer.sanitizeInput;
@@ -66,7 +65,7 @@ public class HyperionProblemStatementRefinementService {
         validateRefinementPrerequisites(originalProblemStatementText);
 
         String sanitizedPrompt = sanitizeInput(userPrompt);
-        validateUserPrompt(sanitizedPrompt);
+        HyperionPromptSanitizer.validateUserPrompt(sanitizedPrompt, "ProblemStatementRefinement");
 
         String sanitizedProblemStatement = sanitizeInput(originalProblemStatementText);
 
@@ -112,18 +111,10 @@ public class HyperionProblemStatementRefinementService {
 
     /**
      * Handles refinement errors by logging and returning an appropriate exception to throw.
-     * Re-throws InternalServerErrorAlertException and BadRequestAlertException unchanged to preserve specific error keys.
      *
      * @return a RuntimeException that the caller must throw
      */
     private RuntimeException handleRefinementError(Course course, String originalProblemStatementText, Exception e) {
-        if (e instanceof InternalServerErrorAlertException alertException) {
-            return alertException;
-        }
-        if (e instanceof BadRequestAlertException badRequestException) {
-            return badRequestException;
-        }
-
         log.error("Error refining problem statement for course [{}]. Original statement length: {}. Error: {}", course.getId(), originalProblemStatementText.length(),
                 e.getMessage(), e);
 
@@ -146,28 +137,9 @@ public class HyperionProblemStatementRefinementService {
         }
     }
 
-    /**
-     * Validates that the user prompt is not empty and does not exceed the maximum allowed length.
-     */
-    private void validateUserPrompt(String userPrompt) {
-        if (userPrompt == null || userPrompt.isBlank()) {
-            throw new BadRequestAlertException("User prompt cannot be empty", "ProblemStatement", "ProblemStatementRefinement.userPromptEmpty");
-        }
-        if (userPrompt.length() > MAX_USER_PROMPT_LENGTH) {
-            throw new BadRequestAlertException("User prompt exceeds maximum length of " + MAX_USER_PROMPT_LENGTH + " characters", "ProblemStatement",
-                    "ProblemStatementRefinement.userPromptTooLong");
-        }
-    }
+    private record GlobalRefinementPromptVariables(String problemStatement, String userPrompt, String courseTitle, String courseDescription) {
 
-    private interface RefinementPromptVariables {
-
-        Map<String, String> asMap();
-    }
-
-    private record GlobalRefinementPromptVariables(String problemStatement, String userPrompt, String courseTitle, String courseDescription) implements RefinementPromptVariables {
-
-        @Override
-        public Map<String, String> asMap() {
+        Map<String, String> asMap() {
             return Map.of("problemStatement", problemStatement, "userPrompt", userPrompt, "courseTitle", courseTitle, "courseDescription", courseDescription);
         }
     }

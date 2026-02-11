@@ -423,6 +423,16 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     /**
+     * Cancels the ongoing problem statement generation or refinement.
+     * Preserves the user's prompt so they can retry or modify it.
+     */
+    cancelRefinement(): void {
+        this.currentRefinementSubscription?.unsubscribe();
+        this.currentRefinementSubscription = undefined;
+        this.isGeneratingOrRefining.set(false);
+    }
+
+    /**
      * Toggles the refinement prompt visibility.
      */
     toggleRefinementPrompt(): void {
@@ -479,7 +489,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private refineProblemStatement(prompt: string): void {
-        if (!this.exercise?.problemStatement?.trim()) {
+        const currentContent = this.editableInstructions?.getCurrentContent() ?? this.exercise?.problemStatement;
+        if (!currentContent?.trim()) {
             this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
             return;
         }
@@ -487,23 +498,21 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.showRefinementPrompt.set(false);
 
         this.currentRefinementSubscription?.unsubscribe();
-        this.currentRefinementSubscription = this.problemStatementService
-            .refineGlobally(this.exercise, this.exercise.problemStatement, prompt, this.isGeneratingOrRefining)
-            .subscribe({
-                next: (result) => {
-                    if (result.success && result.content) {
-                        this.showDiff.set(true);
-                        const refinedContent = result.content;
-                        afterNextRender(() => this.editableInstructions?.applyRefinedContent(refinedContent), { injector: this.injector });
-                        this.refinementPrompt.set('');
-                    } else if (!result.errorHandled) {
-                        this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
-                    }
-                },
-                error: () => {
+        this.currentRefinementSubscription = this.problemStatementService.refineGlobally(this.exercise, currentContent, prompt, this.isGeneratingOrRefining).subscribe({
+            next: (result) => {
+                if (result.success && result.content) {
+                    this.showDiff.set(true);
+                    const refinedContent = result.content;
+                    afterNextRender(() => this.editableInstructions?.applyRefinedContent(refinedContent), { injector: this.injector });
+                    this.refinementPrompt.set('');
+                } else if (!result.errorHandled) {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
-                },
-            });
+                }
+            },
+            error: () => {
+                this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
+            },
+        });
     }
 
     /**

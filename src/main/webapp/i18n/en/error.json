@@ -216,7 +216,6 @@
             "problemStatementEmpty": "The problem statement cannot be empty.",
             "userPromptEmpty": "The user prompt cannot be empty.",
             "userPromptTooLong": "The user prompt is too long. Please shorten your instructions and try again.",
-            "noRefinementInstructions": "No refinement instructions were provided. Please add canvas-style comments to specify how the problem statement should be refined.",
             "chatClientNotConfigured": "AI refinement is currently unavailable. Please contact your administrator.",
             "chatClientNotConfigured_detail": "AI chat client is not configured.",
             "problemStatementTooLong": "The problem statement is too long. Please reduce the content and try again.",
