@@ -164,6 +164,13 @@ public class ExerciseWeaviateService {
         collection.data.insert(properties);
     }
 
+    /**
+     * Adds properties that are common to all exercise types if their values are present.
+     *
+     * @param exercise   the exercise providing optional metadata such as dates or difficulty
+     * @param course     the owning course used for denormalized course metadata
+     * @param properties the property map that will be sent to Weaviate
+     */
     private void addSharedExerciseProperties(Exercise exercise, Course course, Map<String, Object> properties) {
         if (course.getTitle() != null) {
             properties.put(ExerciseSchema.Properties.COURSE_NAME, course.getTitle());
@@ -188,6 +195,12 @@ public class ExerciseWeaviateService {
         }
     }
 
+    /**
+     * Adds exam-related properties, including denormalized exam metadata when the exercise belongs to an exam.
+     *
+     * @param exercise   the exercise whose exam details should be added
+     * @param properties the property map that will be sent to Weaviate
+     */
     private void addExamProperties(Exercise exercise, Map<String, Object> properties) {
         properties.put(ExerciseSchema.Properties.IS_EXAM_EXERCISE, exercise.isExamExercise());
         if (!exercise.isExamExercise()) {
