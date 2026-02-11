@@ -98,6 +98,12 @@ export type ExerciseEditorSyncEvent =
 
 /**
  * Subscribes to exercise editor synchronization events and filters loopback updates.
+ * Relays exercise editor synchronization messages over WebSocket.
+ *
+ * This service is provided at the root level (singleton) and supports only one exercise
+ * subscription at a time. Calling `subscribeToUpdates()` for a different exercise will
+ * silently complete the previous Subject and unsubscribe existing observers. This is by
+ * design — the consuming component is always destroyed and recreated on navigation.
  */
 @Injectable({ providedIn: 'root' })
 export class ExerciseEditorSyncService {
@@ -128,6 +134,9 @@ export class ExerciseEditorSyncService {
     sendSynchronizationUpdate(exerciseId: number, message: ExerciseEditorSyncEvent): void {
         if (!this.subscription) {
             throw new Error('Cannot send synchronization message: not subscribed to websocket topic');
+        }
+        if (this.exerciseId !== exerciseId) {
+            throw new Error(`Cannot send synchronization message: exerciseId ${exerciseId} does not match subscribed exerciseId ${this.exerciseId}`);
         }
         const topic = this.getTopic(exerciseId);
         this.websocketService.send(topic, { ...message, timestamp: message.timestamp ?? Date.now(), sessionId: this.sessionId });
@@ -170,15 +179,15 @@ export class ExerciseEditorSyncService {
         // Complete the Subject to notify all observers that the stream has ended
         if (this.subject) {
             this.subject.complete();
-            delete this.subject;
+            this.subject = undefined;
         }
 
         // Unsubscribing the RxJS subscription also tears down the underlying STOMP topic subscription.
         if (this.subscription) {
             this.subscription.unsubscribe();
-            delete this.subscription;
+            this.subscription = undefined;
         }
-        delete this.exerciseId;
+        this.exerciseId = undefined;
     }
 
     /**

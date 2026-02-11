@@ -209,6 +209,18 @@ describe('ExerciseEditorSyncService', () => {
         expect(() => service.sendSynchronizationUpdate(5, message)).toThrow('Cannot send synchronization message: not subscribed to websocket topic');
     });
 
+    it('throws error when sending to wrong exercise id', () => {
+        service.subscribeToUpdates(5);
+
+        const message: ExerciseEditorSyncEvent = {
+            eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
+            target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            yjsUpdate: 'update',
+        };
+
+        expect(() => service.sendSynchronizationUpdate(6, message)).toThrow('Cannot send synchronization message: exerciseId 6 does not match subscribed exerciseId 5');
+    });
+
     it('completes Subject when unsubscribing', () => {
         const received: ExerciseEditorSyncEvent[] = [];
         let completed = false;

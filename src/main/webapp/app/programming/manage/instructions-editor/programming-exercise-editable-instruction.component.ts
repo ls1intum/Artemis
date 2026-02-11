@@ -353,6 +353,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * Set up collaborative Yjs synchronization for the markdown editor.
      * Creates the Yjs document/binding and wires Monaco to the shared text.
      *
+     * Note: This method is only called once during ngAfterViewInit(). The component is always
+     * destroyed and recreated when navigating to a different exercise, so there is no need to
+     * watch for exercise ID changes or reinitialize sync when the exercise input changes.
+     *
      * @param exerciseId The exercise id to scope synchronization updates.
      * @param initialText The initial problem statement content used for seeding.
      */
