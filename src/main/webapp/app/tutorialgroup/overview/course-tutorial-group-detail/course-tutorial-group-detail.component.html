@@ -45,7 +45,7 @@
             }
             @if (allowManagementActions()) {
                 <a [routerLink]="['registrations']" pButton class="p-button-secondary p-button-sm" data-testid="registrations-link">Registrations</a>
-                <button pButton class="p-button-primary p-button-sm" data-testid="edit-button">Edit</button>
+                <a [routerLink]="['edit2']" pButton class="p-button-primary p-button-sm" data-testid="edit-button">Edit</a>
                 <button pButton severity="danger" class="p-button-primary p-button-sm" data-testid="delete-button" (click)="deleteTutorialGroup()">Delete</button>
             }
         }

@@ -9,6 +9,8 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { AutoCompleteModule } from 'primeng/autocomplete';
 import { DatePickerModule } from 'primeng/datepicker';
 import { TooltipModule } from 'primeng/tooltip';
+import { ButtonModule } from 'primeng/button';
+import { RouterLink } from '@angular/router';
 
 type Mode = {
     name: string;
@@ -42,6 +44,8 @@ type Validation = { status: ValidationStatus.INVALID; message: string } | { stat
         AutoCompleteModule,
         DatePickerModule,
         TooltipModule,
+        ButtonModule,
+        RouterLink,
     ],
     templateUrl: './tutorial-edit.component.html',
     styleUrl: './tutorial-edit.component.scss',

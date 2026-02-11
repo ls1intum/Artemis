@@ -117,4 +117,8 @@
     </p-inputgroup>
     <label class="field-label">Location</label>
     <input class="field-control" type="text" placeholder="Location" pInputText [(ngModel)]="location" />
+    <div class="controls-footer">
+        <a [routerLink]="['..']" pButton class="p-button-secondary p-button-sm" data-testid="cancel-button">Cancel</a>
+        <button pButton class="p-button-primary p-button-sm" data-testid="save-button">Save</button>
+    </div>
 </div>
