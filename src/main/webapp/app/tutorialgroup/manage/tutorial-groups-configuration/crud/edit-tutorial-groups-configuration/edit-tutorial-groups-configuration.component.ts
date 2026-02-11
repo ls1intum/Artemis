@@ -55,8 +55,8 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
                         this.tutorialGroupsConfiguration = tutorialGroupsConfigurationResult.body;
                         this.formData = {
                             period: [
-                                this.tutorialGroupsConfiguration.tutorialPeriodStartInclusive!.toDate(),
-                                this.tutorialGroupsConfiguration.tutorialPeriodEndInclusive!.toDate(),
+                                new Date(this.tutorialGroupsConfiguration.tutorialPeriodStartInclusive!),
+                                new Date(this.tutorialGroupsConfiguration.tutorialPeriodEndInclusive!),
                             ],
                             useTutorialGroupChannels: this.tutorialGroupsConfiguration.useTutorialGroupChannels,
                             usePublicTutorialGroupChannels: this.tutorialGroupsConfiguration.usePublicTutorialGroupChannels,
