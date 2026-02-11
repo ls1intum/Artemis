@@ -134,7 +134,14 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
     });
 
     it('should load all free periods and sort by start date descending', () => {
-        expect(component.tutorialGroupFreePeriods).toEqual([thirdOfJanuaryPeriod, secondOfJanuaryPeriod, firstOfJanuaryPeriod]);
+        expect(component.tutorialGroupFreePeriods.map((freePeriod) => freePeriod.id)).toEqual([3, 2, 1]);
+
+        expect(component.tutorialGroupFreePeriods).toMatchObject([
+            { id: 3, start: dayjs.utc('2021-01-03T00:00:00'), end: dayjs.utc('2021-01-03T23:59:59') },
+            { id: 2, start: dayjs.utc('2021-01-02T00:00:00'), end: dayjs.utc('2021-01-02T23:59:59') },
+            { id: 1, start: dayjs.utc('2021-01-01T00:00:00'), end: dayjs.utc('2021-01-01T23:59:59') },
+        ]);
+
         expect(findConfigurationSpy).toHaveBeenCalledOnce();
         expect(findConfigurationSpy).toHaveBeenCalledWith(courseId);
     });

@@ -1,5 +1,6 @@
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
-import { convertDateFromClient, convertDateStringFromServer } from 'app/shared/util/date.utils';
+import { convertDateFromClient } from 'app/shared/util/date.utils';
+import dayjs from 'dayjs/esm';
 
 export class TutorialGroupFreePeriodDTO {
     public id?: number;
@@ -18,7 +19,7 @@ export function toTutorialGroupFreePeriodDTO(entity: TutorialGroupFreePeriod): T
 export function fromTutorialGroupFreePeriodDTO(dto: TutorialGroupFreePeriodDTO): TutorialGroupFreePeriod {
     return {
         id: dto.id,
-        start: convertDateStringFromServer(dto.start),
-        end: convertDateStringFromServer(dto.end),
+        start: dto.start ? dayjs.utc(dto.start) : undefined,
+        end: dto.end ? dayjs.utc(dto.end) : undefined,
     };
 }
