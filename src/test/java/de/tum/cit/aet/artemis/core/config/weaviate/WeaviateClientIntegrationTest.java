@@ -29,6 +29,8 @@ import io.weaviate.client6.v1.api.WeaviateClient;
 @EnabledIf("isDockerAvailable")
 class WeaviateClientIntegrationTest {
 
+    private static final String TEST_COLLECTION_PREFIX = "TestArtemis_";
+
     // Injected by test.gradle from weaviate_server_version in gradle.properties
     private static final String WEAVIATE_IMAGE;
 
@@ -70,7 +72,7 @@ class WeaviateClientIntegrationTest {
         int httpPort = weaviate.getMappedPort(8080);
         int grpcPort = weaviate.getMappedPort(50051);
 
-        var properties = new WeaviateConfigurationProperties(true, host, httpPort, grpcPort, "http", "");
+        var properties = new WeaviateConfigurationProperties(true, host, httpPort, grpcPort, "http", TEST_COLLECTION_PREFIX);
         var config = new WeaviateClientConfiguration(properties);
 
         try (WeaviateClient client = config.weaviateClient()) {
