@@ -792,6 +792,9 @@
                     "empty": "No competencies inferred.",
                     "primary": "Primary",
                     "evidence": "Evidence:",
+                    "relatedTasks": "Related tasks:",
+                    "taskCoverage": "Task coverage:",
+                    "testCoverage": "Test coverage:",
                     "emphasize": "Emphasize this competency",
                     "deemphasize": "De-emphasize this competency"
                 },
@@ -802,7 +805,9 @@
                     "title": "Difficulty Assessment",
                     "suggested": "Suggested:",
                     "delta": "Delta:",
-                    "match": "Match:"
+                    "match": "Match:",
+                    "tasks": "Tasks:",
+                    "tests": "Tests:"
                 },
                 "quality": {
                     "title": "Quality Assessment",

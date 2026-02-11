@@ -788,10 +788,13 @@
                 "analyzing": "Analysiere...",
                 "defaultMessage": "Klicke auf \"Problemstellung analysieren\", um nach Qualitätsproblemen und Lernzielen zu suchen.",
                 "competencies": {
-                    "title": "Top 5 Kompetenzen",
+                    "title": "Geschätzte Lernziele",
                     "empty": "Keine Kompetenzen abgeleitet.",
                     "primary": "Primär",
                     "evidence": "Belege:",
+                    "relatedTasks": "Zugehörige Aufgaben:",
+                    "taskCoverage": "Aufgabenabdeckung:",
+                    "testCoverage": "Testabdeckung:",
                     "emphasize": "Diese Kompetenz hervorheben",
                     "deemphasize": "Diese Kompetenz abschwächen"
                 },
@@ -799,15 +802,18 @@
                     "title": "Bloom-Taxonomie-Verteilung"
                 },
                 "difficulty": {
-                    "title": "Schwierigkeitsgrad",
+                    "title": "Schwierigkeitsbewertung",
                     "suggested": "Vorgeschlagen:",
                     "delta": "Abweichung:",
-                    "match": "Übereinstimmung:"
+                    "match": "Übereinstimmung:",
+                    "tasks": "Aufgaben:",
+                    "tests": "Tests:"
                 },
                 "quality": {
-                    "title": "Qualitätsprobleme",
+                    "title": "Qualitätsbewertung",
                     "empty": "Keine Qualitätsprobleme gefunden.",
-                    "fix": "Lösung:",
+                    "fix": "Beheben",
+                    "suggestedFix": "Vorgeschlagene Lösung:",
                     "fixAll": "Alle Probleme beheben",
                     "fixIssue": "KI-Lösung für dieses Problem anwenden"
                 },

@@ -186,6 +186,26 @@
                                                             {{ getRelevanceLabel(comp.confidence) }}
                                                         </span>
                                                     </div>
+                                                    @if (comp.taskCoverageRatio !== null || comp.testCoverageRatio !== null) {
+                                                        <div class="d-flex align-items-center gap-2 mt-1">
+                                                            @if (comp.taskCoverageRatio !== null) {
+                                                                <span class="badge bg-light text-dark border">
+                                                                    <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.taskCoverage"
+                                                                        >Task coverage:</span
+                                                                    >
+                                                                    {{ (comp.taskCoverageRatio * 100).toFixed(0) }}%
+                                                                </span>
+                                                            }
+                                                            @if (comp.testCoverageRatio !== null) {
+                                                                <span class="badge bg-light text-dark border">
+                                                                    <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.testCoverage"
+                                                                        >Test coverage:</span
+                                                                    >
+                                                                    {{ (comp.testCoverageRatio * 100).toFixed(0) }}%
+                                                                </span>
+                                                            }
+                                                        </div>
+                                                    }
                                                     @if (comp.whyThisMatches) {
                                                         <p class="mb-0 text-muted small mt-1">{{ comp.whyThisMatches }}</p>
                                                     }
@@ -220,14 +240,24 @@
                                                     </button>
                                                 </div>
                                             </div>
-                                            @if (isCompetencyExpanded(comp.rank || 0) && comp.evidence?.length) {
+                                            @if (isCompetencyExpanded(comp.rank || 0)) {
                                                 <div class="evidence-section mt-2">
-                                                    <strong class="small" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.evidence">Evidence:</strong>
-                                                    <ul class="small mb-0">
-                                                        @for (item of comp.evidence; track item) {
-                                                            <li>{{ item }}</li>
-                                                        }
-                                                    </ul>
+                                                    @if (comp.relatedTaskNames?.length) {
+                                                        <strong class="small" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.relatedTasks"
+                                                            >Related tasks:</strong
+                                                        >
+                                                        <span class="small text-muted ms-1">{{ comp.relatedTaskNames!.join(', ') }}</span>
+                                                    }
+                                                    @if (comp.evidence?.length) {
+                                                        <strong class="small" jhiTranslate="artemisApp.programmingExercise.instructorChecklist.competencies.evidence"
+                                                            >Evidence:</strong
+                                                        >
+                                                        <ul class="small mb-0">
+                                                            @for (item of comp.evidence; track item) {
+                                                                <li>{{ item }}</li>
+                                                            }
+                                                        </ul>
+                                                    }
                                                 </div>
                                             }
                                         </div>
@@ -268,6 +298,22 @@
                                     </span>
                                 </div>
                             </div>
+                            @if (result.difficultyAssessment.taskCount !== null || result.difficultyAssessment.testCount !== null) {
+                                <div class="d-flex align-items-center gap-3 mb-2">
+                                    @if (result.difficultyAssessment.taskCount !== null) {
+                                        <span class="badge bg-light text-dark border">
+                                            <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.tasks">Tasks:</span>
+                                            {{ result.difficultyAssessment.taskCount }}
+                                        </span>
+                                    }
+                                    @if (result.difficultyAssessment.testCount !== null) {
+                                        <span class="badge bg-light text-dark border">
+                                            <span jhiTranslate="artemisApp.programmingExercise.instructorChecklist.difficulty.tests">Tests:</span>
+                                            {{ result.difficultyAssessment.testCount }}
+                                        </span>
+                                    }
+                                </div>
+                            }
                             <p class="text-muted mb-2">{{ result.difficultyAssessment.reasoning }}</p>
 
                             <!-- Difficulty adaptation chips -->

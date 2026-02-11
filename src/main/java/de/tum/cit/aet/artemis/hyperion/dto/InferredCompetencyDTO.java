@@ -19,8 +19,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param evidence                Short evidence bullets from problem statement
  * @param whyThisMatches          Instructor-friendly explanation of the match
  * @param isLikelyPrimary         True if this is the primary competency
+ * @param relatedTaskNames        Names of exercise tasks that exercise this
+ *                                    competency (mapped by LLM)
+ * @param taskCoverageRatio       Fraction of exercise tasks involving this
+ *                                    competency (0.0 to 1.0)
+ * @param testCoverageRatio       Fraction of test cases covering this
+ *                                    competency's tasks (0.0 to 1.0)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record InferredCompetencyDTO(String knowledgeAreaShortTitle, String competencyTitle, String competencyVersion, Long catalogSourceId, String taxonomyLevel, Double confidence,
-        Integer rank, List<String> evidence, String whyThisMatches, Boolean isLikelyPrimary) {
+        Integer rank, List<String> evidence, String whyThisMatches, Boolean isLikelyPrimary, List<String> relatedTaskNames, Double taskCoverageRatio, Double testCoverageRatio) {
 }

@@ -204,9 +204,9 @@ export class ChecklistPanelComponent {
     private readonly QUALITY_RADAR_RADIUS = 80;
     private readonly QUALITY_CATEGORIES = ['CLARITY', 'COHERENCE', 'COMPLETENESS'] as const;
     private readonly QUALITY_COLORS: Record<string, string> = {
-        CLARITY: '#3b82f6',
-        COHERENCE: '#8b5cf6',
-        COMPLETENESS: '#10b981',
+        CLARITY: 'var(--bs-primary)',
+        COHERENCE: 'var(--bs-info)',
+        COMPLETENESS: 'var(--bs-success)',
     };
 
     qualityScores = computed(() => {
@@ -269,7 +269,7 @@ export class ChecklistPanelComponent {
 
     // ===== AI Action Methods =====
 
-    private applyAction(request: ChecklistActionRequest, loadingKey: string) {
+    private applyAction(request: ChecklistActionRequest, loadingKey: string, onApplied?: () => void) {
         const exerciseId = this.exercise()?.id;
         if (!exerciseId || this.isApplyingAction()) return;
 
@@ -281,10 +281,7 @@ export class ChecklistPanelComponent {
                 if (res.applied) {
                     this.problemStatementChange.emit(res.updatedProblemStatement ?? '');
                     this.alertService.success('artemisApp.programmingExercise.instructorChecklist.actions.success');
-                    // Use the embedded re-analysis from the same response
-                    if (res.updatedAnalysis) {
-                        this.analysisResult.set(res.updatedAnalysis);
-                    }
+                    onApplied?.();
                 } else {
                     this.alertService.warning('artemisApp.programmingExercise.instructorChecklist.actions.noChanges');
                 }
@@ -299,6 +296,13 @@ export class ChecklistPanelComponent {
         });
     }
 
+    private updateAnalysisOptimistically(updater: (current: ChecklistAnalysisResponse) => ChecklistAnalysisResponse) {
+        const current = this.analysisResult();
+        if (current) {
+            this.analysisResult.set(updater(current));
+        }
+    }
+
     fixQualityIssue(issue: QualityIssue, index: number) {
         this.applyAction(
             {
@@ -311,6 +315,7 @@ export class ChecklistPanelComponent {
                 },
             },
             `fix-issue-${index}`,
+            () => this.updateAnalysisOptimistically((r) => ({ ...r, qualityIssues: (r.qualityIssues ?? []).filter((_, i) => i !== index) })),
         );
     }
 
@@ -325,12 +330,14 @@ export class ChecklistPanelComponent {
                 context: { allIssues },
             },
             'fix-all',
+            () => this.updateAnalysisOptimistically((r) => ({ ...r, qualityIssues: [] })),
         );
     }
 
     adaptDifficulty(targetDifficulty: string) {
         const current = this.exercise()?.difficulty || 'unknown';
-        const reasoning = this.analysisResult()?.difficultyAssessment?.reasoning || '';
+        const assessment = this.analysisResult()?.difficultyAssessment;
+        const reasoning = assessment?.reasoning || '';
 
         this.applyAction(
             {
@@ -340,31 +347,68 @@ export class ChecklistPanelComponent {
                     targetDifficulty,
                     currentDifficulty: current,
                     reasoning,
+                    taskCount: String(assessment?.taskCount ?? 'unknown'),
+                    testCount: String(assessment?.testCount ?? 'unknown'),
                 },
             },
             `adapt-${targetDifficulty}`,
+            () =>
+                this.updateAnalysisOptimistically((r) => ({
+                    ...r,
+                    difficultyAssessment: {
+                        ...r.difficultyAssessment,
+                        suggested: targetDifficulty,
+                        delta: 'MATCH',
+                        reasoning: `Adapted to ${targetDifficulty}. Re-analyze for an updated assessment.`,
+                    },
+                })),
         );
     }
 
     emphasizeCompetency(competencyTitle: string, taxonomyLevel: string) {
+        const comp = this.analysisResult()?.inferredCompetencies?.find((c) => c.competencyTitle === competencyTitle);
         this.applyAction(
             {
                 actionType: ChecklistActionRequest.ActionTypeEnum.EmphasizeCompetency,
                 problemStatementMarkdown: this.problemStatement(),
-                context: { competencyTitle, taxonomyLevel },
+                context: {
+                    competencyTitle,
+                    taxonomyLevel,
+                    taskCoverage: String(comp?.taskCoverageRatio ?? 'unknown'),
+                    relatedTasks: comp?.relatedTaskNames?.join(', ') ?? '',
+                },
             },
             `emphasize-${competencyTitle}`,
+            () =>
+                this.updateAnalysisOptimistically((r) => ({
+                    ...r,
+                    inferredCompetencies: (r.inferredCompetencies ?? []).map((c) =>
+                        c.competencyTitle === competencyTitle ? { ...c, confidence: Math.min(1.0, (c.confidence ?? 0.5) + 0.15) } : c,
+                    ),
+                })),
         );
     }
 
     deemphasizeCompetency(competencyTitle: string) {
+        const comp = this.analysisResult()?.inferredCompetencies?.find((c) => c.competencyTitle === competencyTitle);
         this.applyAction(
             {
                 actionType: ChecklistActionRequest.ActionTypeEnum.DeemphasizeCompetency,
                 problemStatementMarkdown: this.problemStatement(),
-                context: { competencyTitle },
+                context: {
+                    competencyTitle,
+                    taskCoverage: String(comp?.taskCoverageRatio ?? 'unknown'),
+                    relatedTasks: comp?.relatedTaskNames?.join(', ') ?? '',
+                },
             },
             `deemphasize-${competencyTitle}`,
+            () =>
+                this.updateAnalysisOptimistically((r) => ({
+                    ...r,
+                    inferredCompetencies: (r.inferredCompetencies ?? []).map((c) =>
+                        c.competencyTitle === competencyTitle ? { ...c, confidence: Math.max(0.1, (c.confidence ?? 0.5) - 0.2) } : c,
+                    ),
+                })),
         );
     }
 

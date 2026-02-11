@@ -23,6 +23,8 @@ import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistAnalysisResponseDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import io.micrometer.observation.ObservationRegistry;
 
 class HyperionChecklistServiceTest {
@@ -35,6 +37,12 @@ class HyperionChecklistServiceTest {
 
     @Mock
     private StandardizedCompetencyApi standardizedCompetencyApi;
+
+    @Mock
+    private ProgrammingExerciseTaskRepository taskRepository;
+
+    @Mock
+    private ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     private HyperionChecklistService hyperionChecklistService;
 
@@ -50,8 +58,12 @@ class HyperionChecklistServiceTest {
         // Mock StandardizedCompetencyService to return empty catalog
         when(standardizedCompetencyApi.getAllForTreeView()).thenReturn(List.of());
 
+        when(taskRepository.findByExerciseIdWithTestCases(any())).thenReturn(java.util.Set.of());
+        when(testCaseRepository.findByExerciseId(any())).thenReturn(java.util.Set.of());
+
         var templateService = new HyperionPromptTemplateService();
-        this.hyperionChecklistService = new HyperionChecklistService(chatClient, templateService, observationRegistry, standardizedCompetencyApi);
+        this.hyperionChecklistService = new HyperionChecklistService(chatClient, templateService, observationRegistry, standardizedCompetencyApi, taskRepository,
+                testCaseRepository);
     }
 
     @Test
@@ -99,7 +111,7 @@ class HyperionChecklistServiceTest {
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> {
             Prompt p = invocation.getArgument(0);
             String text = p.getContents();
-            if (text.contains("TOP 5 most relevant competencies")) {
+            if (text.contains("1 to 5 most relevant competencies")) {
                 return new ChatResponse(List.of(new Generation(new AssistantMessage(competenciesJson))));
             }
             else if (text.contains("suggest the appropriate difficulty level")) {
@@ -143,7 +155,7 @@ class HyperionChecklistServiceTest {
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> {
             Prompt p = invocation.getArgument(0);
             String text = p.getContents();
-            if (text.contains("TOP 5 most relevant competencies")) {
+            if (text.contains("1 to 5 most relevant competencies")) {
                 return new ChatResponse(List.of(new Generation(new AssistantMessage(competenciesJson))));
             }
             else if (text.contains("suggest the appropriate difficulty level")) {
@@ -193,7 +205,7 @@ class HyperionChecklistServiceTest {
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> {
             Prompt p = invocation.getArgument(0);
             String text = p.getContents();
-            if (text.contains("TOP 5 most relevant competencies")) {
+            if (text.contains("1 to 5 most relevant competencies")) {
                 return new ChatResponse(List.of(new Generation(new AssistantMessage(competenciesJson))));
             }
             else if (text.contains("suggest the appropriate difficulty level")) {

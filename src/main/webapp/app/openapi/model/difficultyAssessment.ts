@@ -15,5 +15,7 @@ export interface DifficultyAssessment {
     reasoning?: string;
     matchesDeclared?: boolean;
     delta?: string;
+    taskCount?: number;
+    testCount?: number;
 }
 

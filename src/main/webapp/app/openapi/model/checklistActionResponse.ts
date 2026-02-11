@@ -7,7 +7,6 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { ChecklistAnalysisResponse } from './checklistAnalysisResponse';
 
 
 /**
@@ -26,9 +25,5 @@ export interface ChecklistActionResponse {
      * Short summary of what was changed
      */
     summary?: string;
-    /**
-     * Re-analyzed checklist for the updated problem statement
-     */
-    updatedAnalysis?: ChecklistAnalysisResponse;
 }
 
