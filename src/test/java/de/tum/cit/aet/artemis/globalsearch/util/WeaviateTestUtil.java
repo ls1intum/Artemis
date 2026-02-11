@@ -6,9 +6,12 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entitySchemas.ExerciseSchema;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import io.weaviate.client6.v1.api.collections.query.Filter;
 
 /**
@@ -74,6 +77,54 @@ public final class WeaviateTestUtil {
         }
         if (programmingExercise.getProjectType() != null) {
             assertThat(properties.get(ExerciseSchema.Properties.PROJECT_TYPE)).isEqualTo(programmingExercise.getProjectType().name());
+        }
+    }
+
+    /**
+     * Asserts that the exercise exists in Weaviate and verifies modeling-specific properties.
+     *
+     * @param weaviateService  the Weaviate service to query
+     * @param modelingExercise the modeling exercise whose metadata should be verified in Weaviate
+     */
+    public static void assertModelingExerciseExistsInWeaviate(WeaviateService weaviateService, ModelingExercise modelingExercise) throws Exception {
+        assertExerciseExistsInWeaviate(weaviateService, modelingExercise);
+
+        var properties = queryExerciseProperties(weaviateService, modelingExercise.getId());
+        if (modelingExercise.getDiagramType() != null) {
+            assertThat(properties.get(ExerciseSchema.Properties.DIAGRAM_TYPE)).isEqualTo(modelingExercise.getDiagramType().name());
+        }
+    }
+
+    /**
+     * Asserts that the exercise exists in Weaviate and verifies quiz-specific properties.
+     *
+     * @param weaviateService the Weaviate service to query
+     * @param quizExercise    the quiz exercise whose metadata should be verified in Weaviate
+     */
+    public static void assertQuizExerciseExistsInWeaviate(WeaviateService weaviateService, QuizExercise quizExercise) throws Exception {
+        assertExerciseExistsInWeaviate(weaviateService, quizExercise);
+
+        var properties = queryExerciseProperties(weaviateService, quizExercise.getId());
+        if (quizExercise.getQuizMode() != null) {
+            assertThat(properties.get(ExerciseSchema.Properties.QUIZ_MODE)).isEqualTo(quizExercise.getQuizMode().name());
+        }
+        if (quizExercise.getDuration() != null) {
+            assertThat(((Number) properties.get(ExerciseSchema.Properties.QUIZ_DURATION)).longValue()).isEqualTo(quizExercise.getDuration());
+        }
+    }
+
+    /**
+     * Asserts that the exercise exists in Weaviate and verifies file-upload-specific properties.
+     *
+     * @param weaviateService    the Weaviate service to query
+     * @param fileUploadExercise the file upload exercise whose metadata should be verified in Weaviate
+     */
+    public static void assertFileUploadExerciseExistsInWeaviate(WeaviateService weaviateService, FileUploadExercise fileUploadExercise) throws Exception {
+        assertExerciseExistsInWeaviate(weaviateService, fileUploadExercise);
+
+        var properties = queryExerciseProperties(weaviateService, fileUploadExercise.getId());
+        if (fileUploadExercise.getFilePattern() != null) {
+            assertThat(properties.get(ExerciseSchema.Properties.FILE_PATTERN)).isEqualTo(fileUploadExercise.getFilePattern());
         }
     }
 
