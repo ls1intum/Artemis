@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -146,7 +147,7 @@ public class ExerciseWeaviateService {
      * @throws Exception if the insertion fails
      */
     private void insertExerciseIntoWeaviate(Exercise exercise) throws Exception {
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         var collection = weaviateService.orElseThrow().getCollection(ExerciseSchema.COLLECTION_NAME);
 
         Map<String, Object> properties = new HashMap<>();
@@ -179,22 +180,29 @@ public class ExerciseWeaviateService {
             properties.put(ExerciseSchema.Properties.DIFFICULTY, exercise.getDifficulty().name());
         }
 
-        // Exam properties
-        properties.put(ExerciseSchema.Properties.IS_EXAM_EXERCISE, exercise.isExamExercise());
-        if (exercise.isExamExercise()) {
-            Exam exam = exercise.getExam();
-            if (exam != null) {
-                properties.put(ExerciseSchema.Properties.EXAM_ID, exam.getId());
-                properties.put(ExerciseSchema.Properties.TEST_EXAM, exam.isTestExam());
-                properties.put(ExerciseSchema.Properties.EXAM_VISIBLE_DATE, formatDate(exam.getVisibleDate()));
-                properties.put(ExerciseSchema.Properties.EXAM_START_DATE, formatDate(exam.getStartDate()));
-                properties.put(ExerciseSchema.Properties.EXAM_END_DATE, formatDate(exam.getEndDate()));
-            }
-        }
+        addExamProperties(exercise, properties);
 
         addExerciseTypeSpecificProperties(exercise, properties);
 
         collection.data.insert(properties);
+    }
+
+    private void addExamProperties(Exercise exercise, Map<String, Object> properties) {
+        properties.put(ExerciseSchema.Properties.IS_EXAM_EXERCISE, exercise.isExamExercise());
+        if (!exercise.isExamExercise()) {
+            return;
+        }
+
+        Exam exam = exercise.getExam();
+        if (exam == null) {
+            return;
+        }
+
+        properties.put(ExerciseSchema.Properties.EXAM_ID, exam.getId());
+        properties.put(ExerciseSchema.Properties.TEST_EXAM, exam.isTestExam());
+        properties.put(ExerciseSchema.Properties.EXAM_VISIBLE_DATE, formatDate(exam.getVisibleDate()));
+        properties.put(ExerciseSchema.Properties.EXAM_START_DATE, formatDate(exam.getStartDate()));
+        properties.put(ExerciseSchema.Properties.EXAM_END_DATE, formatDate(exam.getEndDate()));
     }
 
     /**
