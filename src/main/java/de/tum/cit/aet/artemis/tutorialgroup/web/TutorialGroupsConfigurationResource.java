@@ -69,11 +69,12 @@ public class TutorialGroupsConfigurationResource {
      */
     @GetMapping("courses/{courseId}/tutorial-groups-configuration")
     @EnforceAtLeastStudent
-    public ResponseEntity<TutorialGroupsConfiguration> getOneOfCourse(@PathVariable Long courseId) {
+    public ResponseEntity<TutorialGroupConfigurationDTO> getOneOfCourse(@PathVariable Long courseId) {
         log.debug("REST request to get tutorial groups configuration of course: {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        return ResponseEntity.ok().body(tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElse(null));
+        var configuration = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElse(null);
+        return ResponseEntity.ok().body(TutorialGroupConfigurationDTO.of(configuration));
     }
 
     /**

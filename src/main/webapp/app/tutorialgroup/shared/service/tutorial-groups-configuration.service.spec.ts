@@ -3,19 +3,19 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
-import { generateExampleTutorialGroupsConfiguration } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
+import { generateExampleTutorialGroupsConfigurationDTO } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { provideHttpClient } from '@angular/common/http';
-import { tutorialGroupConfigurationDtoFromEntity } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
+import { TutorialGroupConfigurationDTO, tutorialGroupConfigurationDtoFromEntity } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
 describe('TutorialGroupsConfigurationService', () => {
     setupTestBed({ zoneless: true });
 
     let service: TutorialGroupsConfigurationService;
     let httpMock: HttpTestingController;
-    let elemDefault: TutorialGroupsConfiguration;
+    let elemDefault: TutorialGroupConfigurationDTO;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -24,7 +24,7 @@ describe('TutorialGroupsConfigurationService', () => {
         service = TestBed.inject(TutorialGroupsConfigurationService);
         httpMock = TestBed.inject(HttpTestingController);
 
-        elemDefault = generateExampleTutorialGroupsConfiguration({});
+        elemDefault = generateExampleTutorialGroupsConfigurationDTO({});
     });
 
     afterEach(() => {
@@ -46,7 +46,7 @@ describe('TutorialGroupsConfigurationService', () => {
     });
 
     it('create', () => {
-        const returnedFromService = { ...tutorialGroupConfigurationDtoFromEntity(elemDefault), id: 0 };
+        const returnedFromService = { ...elemDefault, id: 0 };
         const expected = { ...returnedFromService };
         let result: any;
         service
@@ -60,7 +60,7 @@ describe('TutorialGroupsConfigurationService', () => {
     });
 
     it('update', () => {
-        const returnedFromService = { ...tutorialGroupConfigurationDtoFromEntity(elemDefault) };
+        const returnedFromService = { ...elemDefault, location: 'Test' };
         const expected = { ...returnedFromService };
         let result: any;
 

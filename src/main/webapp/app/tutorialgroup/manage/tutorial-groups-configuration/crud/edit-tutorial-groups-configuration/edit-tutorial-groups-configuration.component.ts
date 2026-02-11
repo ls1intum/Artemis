@@ -12,7 +12,7 @@ import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
-import { TutorialGroupConfigurationDTO } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
+import { TutorialGroupConfigurationDTO, tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
 @Component({
     selector: 'jhi-edit-tutorial-groups-configuration',
@@ -82,7 +82,6 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
         this.tutorialGroupsConfigurationService
             .update(this.course.id!, this.tutorialGroupConfigurationId, this.tutorialGroupsConfiguration, period ?? [])
             .pipe(
-                switchMap(() => this.tutorialGroupsConfigurationService.getOneOfCourse(this.course.id!)),
                 finalize(() => {
                     this.isLoading = false;
                     this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups']);
@@ -91,7 +90,7 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
             )
             .subscribe({
                 next: (resp) => {
-                    this.course.tutorialGroupsConfiguration = resp.body!;
+                    this.course.tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(resp.body!);
                     this.courseStorageService.updateCourse(this.course);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),

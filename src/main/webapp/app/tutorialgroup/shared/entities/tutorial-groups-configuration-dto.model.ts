@@ -18,3 +18,15 @@ export function tutorialGroupConfigurationDtoFromEntity(tutorialGroupsConfigurat
         usePublicTutorialGroupChannels: tutorialGroupsConfiguration.usePublicTutorialGroupChannels,
     };
 }
+export function tutorialGroupsConfigurationEntityFromDto(dto: TutorialGroupConfigurationDTO): TutorialGroupsConfiguration {
+    const entity = new TutorialGroupsConfiguration();
+
+    entity.id = dto.id;
+    entity.tutorialPeriodStartInclusive = dto.tutorialPeriodStartInclusive;
+    entity.tutorialPeriodEndInclusive = dto.tutorialPeriodEndInclusive;
+
+    entity.useTutorialGroupChannels = dto.useTutorialGroupChannels;
+    entity.usePublicTutorialGroupChannels = dto.usePublicTutorialGroupChannels;
+
+    return entity;
+}

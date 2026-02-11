@@ -6,7 +6,6 @@ import { map } from 'rxjs/operators';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { TutorialGroupConfigurationDTO } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
-type EntityResponseType = HttpResponse<TutorialGroupsConfiguration>;
 type DtoResponseType = HttpResponse<TutorialGroupConfigurationDTO>;
 
 @Injectable({ providedIn: 'root' })
@@ -17,8 +16,8 @@ export class TutorialGroupsConfigurationService {
 
     getOneOfCourse(courseId: number) {
         return this.httpClient
-            .get<TutorialGroupsConfiguration>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertEntityResponseDatesFromServer(res)));
+            .get<TutorialGroupConfigurationDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration`, { observe: 'response' })
+            .pipe(map((res: DtoResponseType) => this.convertDtoResponseDatesFromServer(res)));
     }
 
     create(tutorialGroupsConfigurationDto: TutorialGroupConfigurationDTO, courseId: number, period: Date[]): Observable<DtoResponseType> {
@@ -48,14 +47,6 @@ export class TutorialGroupsConfigurationService {
         }
         return tutorialGroupsConfiguration;
     }
-
-    private convertEntityResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
-        if (res.body) {
-            this.convertTutorialGroupsConfigurationDatesFromServer(res.body);
-        }
-        return res;
-    }
-
     private convertDtoResponseDatesFromServer(res: DtoResponseType): DtoResponseType {
         if (res.body) {
             res.body.tutorialPeriodStartInclusive = convertDateFromServer(res.body.tutorialPeriodStartInclusive);
