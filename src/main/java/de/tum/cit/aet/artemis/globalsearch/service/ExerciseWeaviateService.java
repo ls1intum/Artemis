@@ -157,7 +157,14 @@ public class ExerciseWeaviateService {
         properties.put(ExerciseSchema.Properties.EXERCISE_TYPE, exercise.getType());
         properties.put(ExerciseSchema.Properties.MAX_POINTS, exercise.getMaxPoints() != null ? exercise.getMaxPoints() : 0.0);
 
-        // Add optional shared fields only if they are not null
+        addSharedExerciseProperties(exercise, course, properties);
+        addExamProperties(exercise, properties);
+        addExerciseTypeSpecificProperties(exercise, properties);
+
+        collection.data.insert(properties);
+    }
+
+    private void addSharedExerciseProperties(Exercise exercise, Course course, Map<String, Object> properties) {
         if (course.getTitle() != null) {
             properties.put(ExerciseSchema.Properties.COURSE_NAME, course.getTitle());
         }
@@ -179,12 +186,6 @@ public class ExerciseWeaviateService {
         if (exercise.getDifficulty() != null) {
             properties.put(ExerciseSchema.Properties.DIFFICULTY, exercise.getDifficulty().name());
         }
-
-        addExamProperties(exercise, properties);
-
-        addExerciseTypeSpecificProperties(exercise, properties);
-
-        collection.data.insert(properties);
     }
 
     private void addExamProperties(Exercise exercise, Map<String, Object> properties) {
