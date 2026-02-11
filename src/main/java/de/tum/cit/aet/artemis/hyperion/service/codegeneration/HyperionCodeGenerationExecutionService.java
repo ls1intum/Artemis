@@ -424,9 +424,6 @@ public class HyperionCodeGenerationExecutionService {
             return "";
         }
         String safeType = location.type() != null ? location.type().toString() : "";
-        if (safeType.isBlank()) {
-            safeType = "";
-        }
         // Default to problem_statement.md when the location doesn't specify a concrete file path.
         String path = location.filePath() != null && !location.filePath().isBlank() ? location.filePath() : "problem_statement.md";
         String lineSuffix = "";
@@ -436,7 +433,7 @@ public class HyperionCodeGenerationExecutionService {
         else if (location.startLine() != null) {
             lineSuffix = ":" + location.startLine();
         }
-        String typePrefix = safeType.isEmpty() ? "" : safeType + ":";
+        String typePrefix = safeType.isBlank() ? "" : safeType + ":";
         return typePrefix + path + lineSuffix;
     }
 

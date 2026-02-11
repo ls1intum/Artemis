@@ -52,6 +52,12 @@ public class HyperionTestRepositoryService extends HyperionCodeGenerationService
         this.contextRenderer = contextRenderer;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @throws IllegalArgumentException if {@code exercise}, {@code repositoryStructure}, or {@code consistencyIssues} is {@code null}
+     * @throws NetworkingException      if repository access fails or AI service communication fails
+     */
     @Override
     protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, String previousBuildLogs, String repositoryStructure,
             String consistencyIssues) throws NetworkingException {
@@ -64,6 +70,12 @@ public class HyperionTestRepositoryService extends HyperionCodeGenerationService
         return callChatClient("/prompts/hyperion/test/1_plan.st", templateVariables);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @throws IllegalArgumentException if {@code exercise}, {@code repositoryStructure}, or {@code consistencyIssues} is {@code null}
+     * @throws NetworkingException      if AI service communication fails
+     */
     @Override
     protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure, String consistencyIssues)
             throws NetworkingException {
@@ -72,6 +84,12 @@ public class HyperionTestRepositoryService extends HyperionCodeGenerationService
         return callChatClient("/prompts/hyperion/test/2_file_structure.st", templateVariables);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @throws IllegalArgumentException if {@code exercise}, {@code repositoryStructure}, or {@code consistencyIssues} is {@code null}
+     * @throws NetworkingException      if AI service communication fails
+     */
     @Override
     protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure,
             String consistencyIssues) throws NetworkingException {
@@ -82,6 +100,12 @@ public class HyperionTestRepositoryService extends HyperionCodeGenerationService
         return callChatClient("/prompts/hyperion/test/3_headers.st", templateVariables);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @throws IllegalArgumentException if {@code exercise}, {@code repositoryStructure}, or {@code consistencyIssues} is {@code null}
+     * @throws NetworkingException      if AI service communication fails
+     */
     @Override
     protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure, String consistencyIssues)
             throws NetworkingException {

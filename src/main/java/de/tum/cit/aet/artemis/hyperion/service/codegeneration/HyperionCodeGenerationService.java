@@ -65,7 +65,8 @@ public abstract class HyperionCodeGenerationService {
      * @param repositoryStructure tree-format representation of current repository structure
      * @param consistencyIssues   formatted consistency issues to inform the generation prompts
      * @return list of generated code files
-     * @throws NetworkingException if AI service communication fails
+     * @throws IllegalArgumentException if any required argument is {@code null}
+     * @throws NetworkingException      if AI service communication fails
      */
     public List<GeneratedFileDTO> generateCode(User user, ProgrammingExercise exercise, String previousBuildLogs, String repositoryStructure, String consistencyIssues)
             throws NetworkingException {
