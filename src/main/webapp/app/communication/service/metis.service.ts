@@ -684,8 +684,8 @@ export class MetisService implements OnDestroy {
             .subscribe({
                 next: () => {
                     const lastReadDate = post.creationDate!.subtract(1, 'millisecond');
-                    const unreadMessagesCount = getUnreadPostsByLastReadDate(this.user, this.cachedPosts, lastReadDate!).length;
-                    this.metisConversationService.updateLastReadDateAndNumberOfUnreadMessages(post.conversation!.id, lastReadDate, unreadMessagesCount);
+                    const unreadMessagesCount = getUnreadPostsByLastReadDate(this.user, this.cachedPosts, lastReadDate).length;
+                    this.metisConversationService.updateConversationUnreadState(post.conversation!.id, lastReadDate, unreadMessagesCount);
                     this.posts$.next(this.cachedPosts);
                 },
                 error: (errorResponse: HttpErrorResponse) => {

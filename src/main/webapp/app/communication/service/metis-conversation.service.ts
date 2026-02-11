@@ -167,18 +167,18 @@ export class MetisConversationService implements OnDestroy {
         this.hasUnreadMessagesCheck();
     }
 
-    public updateLastReadDateAndNumberOfUnreadMessages(conversationId: number | undefined, lastReadDate: dayjs.Dayjs | undefined, unreadMessagesCount: number | undefined) {
+    public updateConversationUnreadState(conversationId: number | undefined, lastReadDate: dayjs.Dayjs | undefined, unreadMessagesCount: number | undefined) {
         if (this.activeConversation && this.activeConversation?.id === conversationId) {
             this.activeConversation.lastReadDate = lastReadDate;
             this.activeConversation.unreadMessagesCount = unreadMessagesCount;
-            this.activeConversation.hasUnreadMessage = true;
+            this.activeConversation.hasUnreadMessage = (unreadMessagesCount ?? 0) > 0;
             this.isMarkedAsUnread = true;
         }
         const indexOfConversationToUpdate = this.conversationsOfUser.findIndex((conversation) => conversation.id === conversationId);
         if (indexOfConversationToUpdate !== -1) {
             this.conversationsOfUser[indexOfConversationToUpdate].lastReadDate = lastReadDate;
             this.conversationsOfUser[indexOfConversationToUpdate].unreadMessagesCount = unreadMessagesCount;
-            this.conversationsOfUser[indexOfConversationToUpdate].hasUnreadMessage = true;
+            this.conversationsOfUser[indexOfConversationToUpdate].hasUnreadMessage = (unreadMessagesCount ?? 0) > 0;
             this._conversationsOfUser$.next(this.conversationsOfUser);
         }
     }

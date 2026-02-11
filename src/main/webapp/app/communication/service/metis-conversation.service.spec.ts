@@ -426,7 +426,7 @@ describe('MetisConversationService', () => {
         expect(markAllChannelAsReadSpy).toHaveBeenCalledOnce();
     });
 
-    describe('updateLastReadDateAndNumberOfUnreadMessages', () => {
+    describe('updateConversationUnreadState', () => {
         it('should update last read date and unread messages count of the conversation', () => {
             groupChat.unreadMessagesCount = 0;
             groupChat.hasUnreadMessage = false;
@@ -437,7 +437,7 @@ describe('MetisConversationService', () => {
             const conversationId = groupChat.id;
             const lastReadDate = dayjs();
             const unreadMessagesCount = 4;
-            (metisConversationService as any).updateLastReadDateAndNumberOfUnreadMessages(conversationId, lastReadDate, unreadMessagesCount);
+            (metisConversationService as any).updateConversationUnreadState(conversationId, lastReadDate, unreadMessagesCount);
 
             expect((metisConversationService as any).activeConversation.unreadMessagesCount).toBe(unreadMessagesCount);
             expect((metisConversationService as any).activeConversation.hasUnreadMessage).toBeTrue();
@@ -457,7 +457,7 @@ describe('MetisConversationService', () => {
 
             const nextSpy = jest.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
 
-            (metisConversationService as any).updateLastReadDateAndNumberOfUnreadMessages(nonExistentConversation.id, dayjs(), 5);
+            (metisConversationService as any).updateConversationUnreadState(nonExistentConversation.id, dayjs(), 5);
 
             expect(nextSpy).not.toHaveBeenCalled();
         });
@@ -469,7 +469,7 @@ describe('MetisConversationService', () => {
             (metisConversationService as any).conversationsOfUser = [groupChat];
             const nonExistentConversation = { ...oneToOneChat, id: 999 };
 
-            (metisConversationService as any).updateLastReadDateAndNumberOfUnreadMessages(nonExistentConversation.id, dayjs(), 5);
+            (metisConversationService as any).updateConversationUnreadState(nonExistentConversation.id, dayjs(), 5);
 
             expect((metisConversationService as any).activeConversation.unreadMessagesCount).toBe(0);
             expect((metisConversationService as any).activeConversation.hasUnreadMessage).toBeFalse();
