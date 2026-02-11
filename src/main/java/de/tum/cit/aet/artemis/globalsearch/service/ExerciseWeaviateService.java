@@ -170,15 +170,9 @@ public class ExerciseWeaviateService {
             if (exam != null) {
                 properties.put(ExerciseSchema.Properties.EXAM_ID, exam.getId());
                 properties.put(ExerciseSchema.Properties.TEST_EXAM, exam.isTestExam());
-                if (exam.getVisibleDate() != null) {
-                    properties.put(ExerciseSchema.Properties.EXAM_VISIBLE_DATE, formatDate(exam.getVisibleDate()));
-                }
-                if (exam.getStartDate() != null) {
-                    properties.put(ExerciseSchema.Properties.EXAM_START_DATE, formatDate(exam.getStartDate()));
-                }
-                if (exam.getEndDate() != null) {
-                    properties.put(ExerciseSchema.Properties.EXAM_END_DATE, formatDate(exam.getEndDate()));
-                }
+                properties.put(ExerciseSchema.Properties.EXAM_VISIBLE_DATE, formatDate(exam.getVisibleDate()));
+                properties.put(ExerciseSchema.Properties.EXAM_START_DATE, formatDate(exam.getStartDate()));
+                properties.put(ExerciseSchema.Properties.EXAM_END_DATE, formatDate(exam.getEndDate()));
             }
         }
 
