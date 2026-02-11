@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -65,14 +66,17 @@ public class QuizExerciseDeletionResource {
 
     private final Optional<AtlasMLApi> atlasMLApi;
 
+    private final ExerciseWeaviateService exerciseWeaviateService;
+
     public QuizExerciseDeletionResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, UserRepository userRepository,
-            ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, Optional<AtlasMLApi> atlasMLApi) {
+            ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, Optional<AtlasMLApi> atlasMLApi, ExerciseWeaviateService exerciseWeaviateService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.userRepository = userRepository;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.atlasMLApi = atlasMLApi;
+        this.exerciseWeaviateService = exerciseWeaviateService;
     }
 
     /**
@@ -107,6 +111,7 @@ public class QuizExerciseDeletionResource {
         quizExerciseService.cancelScheduledQuiz(quizExerciseId);
 
         FileUtil.deleteFiles(imagesToDelete);
+        exerciseWeaviateService.deleteExercise(quizExerciseId);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, quizExercise.getTitle())).build();
     }

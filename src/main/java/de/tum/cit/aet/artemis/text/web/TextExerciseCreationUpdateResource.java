@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
+import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
@@ -84,11 +85,13 @@ public class TextExerciseCreationUpdateResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
+    private final ExerciseWeaviateService exerciseWeaviateService;
+
     public TextExerciseCreationUpdateResource(TextExerciseRepository textExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ParticipationRepository participationRepository, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, InstanceMessageSendService instanceMessageSendService, ChannelService channelService,
             ExerciseVersionService exerciseVersionService, Optional<AthenaApi> athenaApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi,
-            Optional<AtlasMLApi> atlasMLApi) {
+            Optional<AtlasMLApi> atlasMLApi, ExerciseWeaviateService exerciseWeaviateService) {
         this.textExerciseRepository = textExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -103,6 +106,7 @@ public class TextExerciseCreationUpdateResource {
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
         this.atlasMLApi = atlasMLApi;
+        this.exerciseWeaviateService = exerciseWeaviateService;
     }
 
     /**
@@ -152,6 +156,7 @@ public class TextExerciseCreationUpdateResource {
         notifyAtlasML(result, OperationTypeDTO.UPDATE, "text exercise creation");
 
         exerciseVersionService.createExerciseVersion(result);
+        exerciseWeaviateService.insertExercise(result);
 
         return ResponseEntity.created(new URI("/api/text/text-exercises/" + result.getId())).body(result);
     }
@@ -221,6 +226,8 @@ public class TextExerciseCreationUpdateResource {
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(textExerciseBeforeUpdate, Optional.of(textExercise)));
 
         exerciseVersionService.createExerciseVersion(updatedTextExercise);
+        exerciseWeaviateService.updateExercise(updatedTextExercise);
+
         return ResponseEntity.ok(updatedTextExercise);
     }
 

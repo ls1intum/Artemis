@@ -67,6 +67,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionExportService;
+import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -132,13 +133,15 @@ public class ModelingExerciseResource {
 
     private final Optional<CompetencyApi> competencyApi;
 
+    private final ExerciseWeaviateService exerciseWeaviateService;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, ModelingExerciseImportService modelingExerciseImportService,
             SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService, GroupNotificationScheduleService groupNotificationScheduleService,
             GradingCriterionRepository gradingCriterionRepository, ChannelService channelService, ChannelRepository channelRepository,
             ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi,
-            Optional<CompetencyApi> competencyApi) {
+            Optional<CompetencyApi> competencyApi, ExerciseWeaviateService exerciseWeaviateService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -159,6 +162,7 @@ public class ModelingExerciseResource {
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
         this.atlasMLApi = atlasMLApi;
+        this.exerciseWeaviateService = exerciseWeaviateService;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -211,6 +215,7 @@ public class ModelingExerciseResource {
             }
         });
         exerciseVersionService.createExerciseVersion(result);
+        exerciseWeaviateService.insertExercise(result);
 
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId())).body(result);
     }
@@ -307,6 +312,8 @@ public class ModelingExerciseResource {
         });
 
         exerciseVersionService.createExerciseVersion(persistedExercise);
+        exerciseWeaviateService.updateExercise(persistedExercise);
+
         return ResponseEntity.ok(persistedExercise);
     }
 
@@ -387,6 +394,7 @@ public class ModelingExerciseResource {
         // up all lazy references correctly.
         exerciseService.logDeletion(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseDeletionService.delete(exerciseId, false);
+        exerciseWeaviateService.deleteExercise(exerciseId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, modelingExercise.getTitle())).build();
     }
 
@@ -430,6 +438,7 @@ public class ModelingExerciseResource {
         // Notify AtlasML about the imported exercise
         atlasMLApi.ifPresent(api -> api.saveExerciseWithCompetencies(newModelingExercise));
         exerciseVersionService.createExerciseVersion(newModelingExercise, user);
+        exerciseWeaviateService.insertExercise(newModelingExercise);
 
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + newModelingExercise.getId())).body(newModelingExercise);
     }
