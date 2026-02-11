@@ -110,23 +110,27 @@ export class ProblemStatementSyncService {
      * Safe to call multiple times; clears any pending initial sync timeout.
      */
     reset() {
+        // Clear pending timeout first to prevent finalizeInitialSync from firing
+        // after syncService.unsubscribe() has torn down the websocket subscription.
+        if (this.pendingInitialSync?.timeoutId) {
+            clearTimeout(this.pendingInitialSync.timeoutId);
+        }
+        this.pendingInitialSync = undefined;
         this.incomingMessageSubscription?.unsubscribe();
         this.incomingMessageSubscription = undefined;
+        // Clear exerciseId before unsubscribe/destroy so that any Yjs update events
+        // triggered by doc.destroy() bail out in the guard (line: if (!this.exerciseId)).
+        this.exerciseId = undefined;
         this.syncService.unsubscribe();
         this.yDoc?.destroy();
         this.yDoc = undefined;
         this.yText = undefined;
         this.awareness = undefined;
-        this.exerciseId = undefined;
         this.awaitingInitialSync = false;
         this.fallbackInitialContent = '';
         this.latestInitialSyncRequestId = undefined;
         this.activeLeaderSessionId = undefined;
         this.queuedFullContentRequests = [];
-        if (this.pendingInitialSync?.timeoutId) {
-            clearTimeout(this.pendingInitialSync.timeoutId);
-        }
-        this.pendingInitialSync = undefined;
         clearRemoteSelectionStyles();
     }
 
