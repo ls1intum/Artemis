@@ -11,8 +11,10 @@ import { By } from '@angular/platform-browser';
 import { CreateTutorialGroupsConfigurationComponent } from 'app/tutorialgroup/manage/tutorial-groups-configuration/crud/create-tutorial-groups-configuration/create-tutorial-groups-configuration.component';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
 import { TutorialGroupsConfigurationFormStubComponent } from 'test/helpers/stubs/tutorialgroup/tutorial-groups-configuration-form-sub.component';
-import { generateExampleTutorialGroupsConfiguration, tutorialsGroupsConfigurationToFormData } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
-import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
+import {
+    generateExampleTutorialGroupsConfigurationDTO,
+    tutorialsGroupsConfigurationDtoToFormData,
+} from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -22,6 +24,7 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { TutorialGroupConfigurationDTO } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
 describe('CreateTutorialGroupsConfigurationComponent', () => {
     setupTestBed({ zoneless: true });
@@ -72,10 +75,10 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
     });
 
     it('should send POST request upon form submission and navigate', () => {
-        const exampleConfiguration = generateExampleTutorialGroupsConfiguration({});
+        const exampleConfiguration = generateExampleTutorialGroupsConfigurationDTO({});
         delete exampleConfiguration.id;
 
-        const createResponse: HttpResponse<TutorialGroupsConfiguration> = new HttpResponse({
+        const createResponse: HttpResponse<TutorialGroupConfigurationDTO> = new HttpResponse({
             body: exampleConfiguration,
             status: 201,
         });
@@ -86,7 +89,7 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
 
         const sessionForm: TutorialGroupsConfigurationFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupsConfigurationFormComponent)).componentInstance;
 
-        const formData = tutorialsGroupsConfigurationToFormData(exampleConfiguration);
+        const formData = tutorialsGroupsConfigurationDtoToFormData(exampleConfiguration);
 
         sessionForm.formSubmitted.emit(formData);
 

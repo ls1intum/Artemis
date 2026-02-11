@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { TutorialGroupsConfigurationFormData } from 'app/tutorialgroup/manage/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -13,6 +12,7 @@ import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
+import { TutorialGroupConfigurationDTO } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
 @Component({
     selector: 'jhi-edit-tutorial-groups-configuration',
@@ -31,7 +31,7 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
     ngUnsubscribe = new Subject<void>();
 
     isLoading = false;
-    tutorialGroupsConfiguration: TutorialGroupsConfiguration;
+    tutorialGroupsConfiguration: TutorialGroupConfigurationDTO;
     formData: TutorialGroupsConfigurationFormData;
     course: Course;
     tutorialGroupConfigurationId: number;
@@ -90,8 +90,7 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
             )
             .subscribe({
                 next: (resp) => {
-                    const updatedConfiguration = resp.body!;
-                    this.course.tutorialGroupsConfiguration = updatedConfiguration;
+                    this.course.tutorialGroupsConfiguration = resp.body!;
                     this.courseStorageService.updateCourse(this.course);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),

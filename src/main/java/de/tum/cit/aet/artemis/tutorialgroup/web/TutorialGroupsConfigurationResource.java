@@ -101,7 +101,7 @@ public class TutorialGroupsConfigurationResource {
         }
         TutorialGroupsConfiguration configuration = TutorialGroupConfigurationDTO.from(tutorialGroupConfigurationDto);
 
-        validTutorialGroupConfiguration(configuration);
+        validateTutorialGroupConfiguration(configuration);
         configuration.setCourse(course);
         var persistedConfiguration = tutorialGroupsConfigurationRepository.save(configuration);
         course.setTutorialGroupsConfiguration(persistedConfiguration);
@@ -143,7 +143,7 @@ public class TutorialGroupsConfigurationResource {
 
         TutorialGroupsConfiguration updatedTutorialGroupConfiguration = TutorialGroupConfigurationDTO.from(updatedTutorialGroupConfigurationDto);
 
-        validTutorialGroupConfiguration(updatedTutorialGroupConfiguration);
+        validateTutorialGroupConfiguration(updatedTutorialGroupConfiguration);
 
         boolean useTutorialGroupChannelSettingChanged = !Objects.equals(configurationFromDatabase.getUseTutorialGroupChannels(),
                 updatedTutorialGroupConfiguration.getUseTutorialGroupChannels());
@@ -175,7 +175,7 @@ public class TutorialGroupsConfigurationResource {
         return ResponseEntity.ok(TutorialGroupConfigurationDTO.of(persistedConfiguration));
     }
 
-    private static void validTutorialGroupConfiguration(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
+    private static void validateTutorialGroupConfiguration(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
         if (tutorialGroupsConfiguration.getTutorialPeriodStartInclusive() == null || tutorialGroupsConfiguration.getTutorialPeriodEndInclusive() == null) {
             throw new BadRequestAlertException("Tutorial period start date and end date must be set.", ENTITY_NAME, "tutorialPeriodMissing");
         }
