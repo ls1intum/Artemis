@@ -10,7 +10,7 @@ import * as yjsUtils from 'app/programming/manage/services/yjs-utils';
 describe('ProblemStatementSyncService', () => {
     let service: ProblemStatementSyncService;
     let syncService: jest.Mocked<ExerciseEditorSyncService>;
-    let syncServiceMock: { subscribeToUpdates: jest.Mock; sendSynchronizationUpdate: jest.Mock; unsubscribe: jest.Mock; sessionId: string | undefined };
+    let syncServiceMock: { subscribeToUpdates: jest.Mock; sendSynchronizationUpdate: jest.Mock; unsubscribe: jest.Mock; sessionId: string };
     let incomingMessages$: Subject<ExerciseEditorSyncEvent>;
 
     beforeEach(() => {
@@ -19,7 +19,7 @@ describe('ProblemStatementSyncService', () => {
             subscribeToUpdates: jest.fn().mockReturnValue(incomingMessages$.asObservable()),
             sendSynchronizationUpdate: jest.fn(),
             unsubscribe: jest.fn(),
-            sessionId: undefined,
+            sessionId: 'local-session-id',
         };
 
         TestBed.configureTestingModule({

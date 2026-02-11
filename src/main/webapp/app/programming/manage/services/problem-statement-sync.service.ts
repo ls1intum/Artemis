@@ -112,6 +112,7 @@ export class ProblemStatementSyncService {
     reset() {
         this.incomingMessageSubscription?.unsubscribe();
         this.incomingMessageSubscription = undefined;
+        this.syncService.unsubscribe();
         this.yDoc?.destroy();
         this.yDoc = undefined;
         this.yText = undefined;
