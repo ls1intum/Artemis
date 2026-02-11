@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Map;
 
+import org.testcontainers.DockerClientFactory;
+
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -26,16 +28,36 @@ public final class WeaviateTestUtil {
     }
 
     /**
+     * Returns {@code true} when Weaviate assertions should be skipped because
+     * Docker is not available on the current machine.
+     * If Docker IS available but the service is {@code null}, this method fails
+     * the test with a descriptive error instead of silently skipping.
+     */
+    private static boolean shouldSkipWeaviateAssertions(WeaviateService weaviateService) {
+        if (weaviateService != null) {
+            return false;
+        }
+        if (!DockerClientFactory.instance().isDockerAvailable()) {
+            return true;
+        }
+        throw new AssertionError("WeaviateService is null even though Docker is available — the Weaviate Testcontainer should be running. "
+                + "Check that the Weaviate container started successfully and that artemis.weaviate.enabled is set to true.");
+    }
+
+    /**
      * Queries Weaviate for the exercise with the given ID and returns its properties,
      * or {@code null} if no exercise was found.
-     * Fails the test if the Weaviate service is not available.
+     * Returns {@code null} without querying if Docker is not available.
+     * Fails the test if Docker is available but WeaviateService is null.
      *
-     * @param weaviateService the Weaviate service to query
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
      * @param exerciseId      the ID of the exercise to look up
-     * @return the exercise properties map, or {@code null} if not found
+     * @return the exercise properties map, or {@code null} if not found or Docker unavailable
      */
     public static Map<String, Object> queryExerciseProperties(WeaviateService weaviateService, long exerciseId) throws Exception {
-        assertThat(weaviateService).as("WeaviateService must not be null — is the Weaviate Testcontainer running?").isNotNull();
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return null;
+        }
         var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
         var response = collection.query.fetchObjects(q -> q.filters(Filter.property(ExerciseSchema.Properties.EXERCISE_ID).eq(exerciseId)).limit(1));
         if (response.objects().isEmpty()) {
@@ -46,11 +68,15 @@ public final class WeaviateTestUtil {
 
     /**
      * Asserts that the exercise exists in Weaviate and its core properties match the given exercise.
+     * Skips if Docker is not available. Fails if Docker is available but WeaviateService is null.
      *
-     * @param weaviateService the Weaviate service to query
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
      * @param exercise        the exercise whose metadata should be verified in Weaviate
      */
     public static void assertExerciseExistsInWeaviate(WeaviateService weaviateService, Exercise exercise) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
         var properties = queryExerciseProperties(weaviateService, exercise.getId());
         assertThat(properties).as("Exercise %d should exist in Weaviate", exercise.getId()).isNotNull();
 
@@ -69,6 +95,9 @@ public final class WeaviateTestUtil {
      * @param programmingExercise the programming exercise whose metadata should be verified in Weaviate
      */
     public static void assertProgrammingExerciseExistsInWeaviate(WeaviateService weaviateService, ProgrammingExercise programmingExercise) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
         assertExerciseExistsInWeaviate(weaviateService, programmingExercise);
 
         var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
@@ -87,6 +116,9 @@ public final class WeaviateTestUtil {
      * @param modelingExercise the modeling exercise whose metadata should be verified in Weaviate
      */
     public static void assertModelingExerciseExistsInWeaviate(WeaviateService weaviateService, ModelingExercise modelingExercise) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
         assertExerciseExistsInWeaviate(weaviateService, modelingExercise);
 
         var properties = queryExerciseProperties(weaviateService, modelingExercise.getId());
@@ -102,6 +134,9 @@ public final class WeaviateTestUtil {
      * @param quizExercise    the quiz exercise whose metadata should be verified in Weaviate
      */
     public static void assertQuizExerciseExistsInWeaviate(WeaviateService weaviateService, QuizExercise quizExercise) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
         assertExerciseExistsInWeaviate(weaviateService, quizExercise);
 
         var properties = queryExerciseProperties(weaviateService, quizExercise.getId());
@@ -120,6 +155,9 @@ public final class WeaviateTestUtil {
      * @param fileUploadExercise the file upload exercise whose metadata should be verified in Weaviate
      */
     public static void assertFileUploadExerciseExistsInWeaviate(WeaviateService weaviateService, FileUploadExercise fileUploadExercise) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
         assertExerciseExistsInWeaviate(weaviateService, fileUploadExercise);
 
         var properties = queryExerciseProperties(weaviateService, fileUploadExercise.getId());
@@ -130,11 +168,15 @@ public final class WeaviateTestUtil {
 
     /**
      * Asserts that no exercise with the given ID exists in Weaviate.
+     * Skips if Docker is not available. Fails if Docker is available but WeaviateService is null.
      *
-     * @param weaviateService the Weaviate service to query
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
      * @param exerciseId      the ID of the exercise that should not exist
      */
     public static void assertExerciseNotInWeaviate(WeaviateService weaviateService, long exerciseId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
         var properties = queryExerciseProperties(weaviateService, exerciseId);
         assertThat(properties).as("Exercise %d should not exist in Weaviate", exerciseId).isNull();
     }
