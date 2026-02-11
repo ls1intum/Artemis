@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.globalsearch.config.schema.entitySchemas;
 
+import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateDataType.BOOLEAN;
 import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateDataType.DATE;
 import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateDataType.INT;
 import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateDataType.NUMBER;
@@ -64,6 +65,20 @@ public final class ExerciseSchema {
 
         public static final String MAX_POINTS = "max_points";
 
+        // Exam properties
+
+        public static final String IS_EXAM_EXERCISE = "is_exam_exercise";
+
+        public static final String EXAM_ID = "exam_id";
+
+        public static final String EXAM_VISIBLE_DATE = "exam_visible_date";
+
+        public static final String EXAM_START_DATE = "exam_start_date";
+
+        public static final String EXAM_END_DATE = "exam_end_date";
+
+        public static final String TEST_EXAM = "test_exam";
+
         // Programming exercise properties
 
         public static final String PROGRAMMING_LANGUAGE = "programming_language";
@@ -101,6 +116,13 @@ public final class ExerciseSchema {
             nonSearchable(Properties.DUE_DATE, DATE, "The due date of the exercise"),
             filterable(Properties.EXERCISE_TYPE, TEXT, "The type of the exercise (programming, quiz, modeling, text, file-upload)"),
             filterable(Properties.DIFFICULTY, TEXT, "The difficulty level of the exercise"), nonSearchable(Properties.MAX_POINTS, NUMBER, "The maximum points for the exercise"),
+            // Exam properties
+            filterable(Properties.IS_EXAM_EXERCISE, BOOLEAN, "Whether this exercise belongs to an exam"),
+            filterable(Properties.EXAM_ID, INT, "The ID of the exam (exam exercises only)"),
+            filterable(Properties.EXAM_VISIBLE_DATE, DATE, "The visible date of the exam (exam exercises only)"),
+            filterable(Properties.EXAM_START_DATE, DATE, "The start date of the exam (exam exercises only)"),
+            filterable(Properties.EXAM_END_DATE, DATE, "The end date of the exam (exam exercises only)"),
+            filterable(Properties.TEST_EXAM, BOOLEAN, "Whether this is a test exam (exam exercises only)"),
             // Programming exercise properties
             filterable(Properties.PROGRAMMING_LANGUAGE, TEXT, "The programming language (programming exercises only)"),
             filterable(Properties.PROJECT_TYPE, TEXT, "The project type (programming exercises only)"),

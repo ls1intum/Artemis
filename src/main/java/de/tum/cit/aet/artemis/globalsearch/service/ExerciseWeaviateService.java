@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entitySchemas.ExerciseSchema;
@@ -160,6 +161,25 @@ public class ExerciseWeaviateService {
         }
         if (exercise.getDifficulty() != null) {
             properties.put(ExerciseSchema.Properties.DIFFICULTY, exercise.getDifficulty().name());
+        }
+
+        // Exam properties
+        properties.put(ExerciseSchema.Properties.IS_EXAM_EXERCISE, exercise.isExamExercise());
+        if (exercise.isExamExercise()) {
+            Exam exam = exercise.getExam();
+            if (exam != null) {
+                properties.put(ExerciseSchema.Properties.EXAM_ID, exam.getId());
+                properties.put(ExerciseSchema.Properties.TEST_EXAM, exam.isTestExam());
+                if (exam.getVisibleDate() != null) {
+                    properties.put(ExerciseSchema.Properties.EXAM_VISIBLE_DATE, formatDate(exam.getVisibleDate()));
+                }
+                if (exam.getStartDate() != null) {
+                    properties.put(ExerciseSchema.Properties.EXAM_START_DATE, formatDate(exam.getStartDate()));
+                }
+                if (exam.getEndDate() != null) {
+                    properties.put(ExerciseSchema.Properties.EXAM_END_DATE, formatDate(exam.getEndDate()));
+                }
+            }
         }
 
         addExerciseTypeSpecificProperties(exercise, properties);
