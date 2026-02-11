@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, HostListener, ViewEncapsulation, computed, inject, input } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { TranslateService } from '@ngx-translate/core';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { IrisCitationParsed } from './iris-citation-text.model';
@@ -20,6 +21,7 @@ import { faChevronLeft, faChevronRight, faCircleExclamation, faCircleQuestion, f
 })
 export class IrisCitationTextComponent {
     private readonly domSanitizer = inject(DomSanitizer);
+    private readonly translateService = inject(TranslateService);
 
     /**
      * Maps citation type classes to FontAwesome icons.
@@ -129,7 +131,8 @@ export class IrisCitationTextComponent {
         const title = lectureUnitTitle || fallbackTitle || '';
 
         const titleHtml = title ? `<span class="iris-citation__summary-title">${escapeHtml(title)}</span>` : '';
-        const lectureHtml = lectureTitle ? `<span class="iris-citation__summary-lecture">in ${escapeHtml(lectureTitle)}</span>` : '';
+        const lectureContext = lectureTitle ? this.translateService.instant('artemisApp.iris.citation.inLecture', { title: escapeHtml(lectureTitle) }) : '';
+        const lectureHtml = lectureContext ? `<span class="iris-citation__summary-lecture">${lectureContext}</span>` : '';
         const summaryHtml = summaryText ? `<span class="iris-citation__summary-text">${escapeHtml(summaryText)}</span>` : '';
 
         return `${titleHtml}${lectureHtml}${summaryHtml}`;

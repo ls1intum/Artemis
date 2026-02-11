@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { IrisCitationTextComponent } from './iris-citation-text.component';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { provideHttpClient } from '@angular/common/http';
@@ -20,7 +22,7 @@ describe('IrisCitationTextComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [IrisCitationTextComponent],
-            providers: [provideHttpClient()],
+            providers: [provideHttpClient(), { provide: TranslateService, useClass: MockTranslateService }],
         });
 
         fixture = TestBed.createComponent(IrisCitationTextComponent);
