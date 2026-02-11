@@ -5,13 +5,16 @@ import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 
 **If you are new to client testing, it is highly recommended that you work through the** [testing part](https://angular.dev/guide/testing) **of the angular tutorial.**
 
-Most client tests use [Jest](https://jestjs.io) as the testing framework.
 We use [NgMocks](https://www.npmjs.com/package/ng-mocks/) for mocking the dependencies of an angular component.
 
+<Callout variant={CalloutVariant.danger}>
+**Jest is deprecated.** We are actively migrating all client tests from Jest to [Vitest](https://vitest.dev/).
+All new tests should be written using Vitest. Do not write new tests using Jest.
+The authoritative list of modules already migrated to Vitest is defined by the `include` patterns in `vitest.config.ts`.
+</Callout>
+
 <Callout variant={CalloutVariant.info}>
-**Vitest for Zoneless Modules**: Modules migrated to Angular's zoneless change detection use
-[Vitest](https://vitest.dev/) instead of Jest. The authoritative list of Vitest modules is defined by the
-`include` patterns in `vitest.config.ts`.
+**Vitest** is the preferred testing framework for all client tests.
 
 **Running Vitest tests:**
 
@@ -19,12 +22,15 @@ We use [NgMocks](https://www.npmjs.com/package/ng-mocks/) for mocking the depend
 - Single run: `npm run vitest:run`
 - With coverage: `npm run vitest:coverage`
 
-**Key differences from Jest:**
+**Key differences from Jest (for migrating existing tests):**
 
 - Use `vi.spyOn()` instead of `jest.spyOn()`
 - Use `vi.fn()` instead of `jest.fn()`
 - Use `vi.clearAllMocks()` instead of `jest.clearAllMocks()`
+- Use `vi.restoreAllMocks()` instead of `jest.restoreAllMocks()`
 </Callout>
+
+Some existing tests still use [Jest](https://jestjs.io) and will be migrated incrementally.
 
 You can run all Jest tests by invoking `npm run test` in the root directory of the Artemis project.
 If you want to run individual tests, you can use the following commands:
@@ -33,6 +39,11 @@ If you want to run individual tests, you can use the following commands:
 2. Run all tests in a module or folder: `npm run test:one -- --test-path-pattern='src/main/webapp/app/fileupload/.*$'`
 
 ## General Test Pattern
+
+<Callout variant={CalloutVariant.info}>
+The code examples below use `jest.*` APIs for historical context, as many existing tests still use Jest.
+**For new tests, replace all `jest.*` calls with their `vi.*` equivalents** (e.g. `vi.spyOn()`, `vi.fn()`, `vi.restoreAllMocks()`).
+</Callout>
 
 The most basic test looks like this:
 
