@@ -47,7 +47,7 @@ export class IrisCitationTextComponent {
      */
     private processText(text: string, citationInfo: IrisCitationMetaDTO[]): string {
         // Apply markdown rendering (this converts markdown syntax to HTML)
-        const markdownHtml = htmlForMarkdown(text);
+        const markdownHtml = htmlForMarkdown(text, [], undefined, undefined, true);
 
         // Replace [cite:...] blocks in the HTML with citation bubbles
         const withCitations = replaceCitationBlocks(markdownHtml, citationInfo, {
