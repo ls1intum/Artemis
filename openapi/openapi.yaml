@@ -458,6 +458,163 @@ paths:
         schema: {type: string}
       responses:
         '200': {description: OK}
+  /api/exercise/exercises/{exerciseId}/review-threads:
+    post:
+      tags: [exercise-review]
+      operationId: createReviewThread
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateCommentThreadDTO'}
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CommentThreadDTO'}
+    get:
+      tags: [exercise-review]
+      operationId: getReviewThreads
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CommentThreadDTO'}
+  /api/exercise/exercises/{exerciseId}/review-thread-groups:
+    post:
+      tags: [exercise-review]
+      operationId: createReviewThreadGroup
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateCommentThreadGroupDTO'}
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CommentThreadGroupDTO'}
+  /api/exercise/exercises/{exerciseId}/review-thread-groups/{groupId}:
+    delete:
+      tags: [exercise-review]
+      operationId: deleteReviewThreadGroup
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: groupId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
+  /api/exercise/exercises/{exerciseId}/review-threads/{threadId}/comments:
+    post:
+      tags: [exercise-review]
+      operationId: createUserComment
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: threadId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UserCommentContentDTO'}
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CommentDTO'}
+  /api/exercise/exercises/{exerciseId}/review-threads/{threadId}/resolved:
+    put:
+      tags: [exercise-review]
+      operationId: updateReviewThreadResolvedState
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: threadId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateThreadResolvedStateDTO'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CommentThreadDTO'}
+  /api/exercise/exercises/{exerciseId}/review-comments/{commentId}:
+    put:
+      tags: [exercise-review]
+      operationId: updateUserCommentContent
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: commentId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UserCommentContentDTO'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CommentDTO'}
+    delete:
+      tags: [exercise-review]
+      operationId: deleteReviewComment
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: commentId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
 components:
   schemas:
     Costs:
@@ -703,8 +860,8 @@ components:
           example: PROBLEM_STATEMENT
         filePath: {type: string, description: 'Path to file, empty or problem_statement.md
             for problem statement', example: src/main/java/Main.java}
-        startLine: {type: integer, format: int32, description: Start line number (1-based)}
-        endLine: {type: integer, format: int32, description: End line number (1-based)}
+        startLine: {type: integer, format: int32, description: Start line number (1-based), minimum: 1}
+        endLine: {type: integer, format: int32, description: End line number (1-based), minimum: 1}
       required: [endLine, filePath, startLine, type]
     RewriteFaqResponse:
       type: object
@@ -787,3 +944,140 @@ components:
         userPrompt: {type: string, description: User prompt for global refinement,
           maxLength: 1000, minLength: 0}
       required: [problemStatementText, userPrompt]
+    CodeGenerationRequestDTO:
+      type: object
+      description: Request DTO for code generation
+      properties:
+        repositoryType:
+          type: string
+          description: Type of repository to generate code for
+          enum: [TEMPLATE, SOLUTION, TESTS]
+          example: SOLUTION
+    CommentThreadLocationType:
+      type: string
+      description: Location type of a review comment thread
+      enum: [PROBLEM_STATEMENT, TEMPLATE_REPO, SOLUTION_REPO, TEST_REPO, AUXILIARY_REPO]
+    CommentType:
+      type: string
+      description: Type of review comment
+      enum: [USER, CONSISTENCY_CHECK]
+    InlineCodeChangeDTO:
+      type: object
+      description: Inline code change suggestion that can be applied to a specific line range
+      properties:
+        startLine: {type: integer, format: int32, description: First line number (inclusive) of the replacement range}
+        endLine: {type: integer, format: int32, description: Last line number (inclusive) of the replacement range}
+        expectedCode: {type: string, description: Code expected in the replacement range before applying the change}
+        replacementCode: {type: string, description: Code that replaces the expected code within the range}
+        applied: {type: boolean, description: Whether the change has been applied}
+    UserCommentContentDTO:
+      type: object
+      description: Content for a user-provided review comment
+      properties:
+        text: {type: string, description: Comment text supplied by the reviewer}
+      required: [text]
+    ConsistencyIssueCommentContentDTO:
+      type: object
+      description: Content describing a detected consistency issue in a review
+      properties:
+        contentType:
+          type: string
+          enum: [CONSISTENCY_CHECK]
+        severity:
+          type: string
+          description: Severity level assigned to the issue
+          enum: [LOW, MEDIUM, HIGH]
+        category:
+          type: string
+          description: Category of the consistency issue
+          enum: [METHOD_RETURN_TYPE_MISMATCH, METHOD_PARAMETER_MISMATCH, CONSTRUCTOR_PARAMETER_MISMATCH, ATTRIBUTE_TYPE_MISMATCH, VISIBILITY_MISMATCH,
+            IDENTIFIER_NAMING_INCONSISTENCY]
+        text: {type: string, description: Human-readable description of the issue}
+        suggestedFix:
+          allOf:
+          - {$ref: '#/components/schemas/InlineCodeChangeDTO'}
+          nullable: true
+          description: Inline code change suggestion, if applicable
+      required: [category, contentType, severity, text]
+    CommentContentDTO:
+      description: Base type for review comment content. Discriminator is contentType.
+      oneOf:
+      - {$ref: '#/components/schemas/UserCommentContentDTO'}
+      - {$ref: '#/components/schemas/ConsistencyIssueCommentContentDTO'}
+    CreateCommentThreadDTO:
+      type: object
+      description: Request payload to create a new comment thread
+      properties:
+        targetType: {$ref: '#/components/schemas/CommentThreadLocationType'}
+        auxiliaryRepositoryId: {type: integer, format: int64, description: Identifier of the auxiliary repository, if applicable}
+        initialFilePath: {type: string, description: Initial file path captured at thread creation}
+        initialLineNumber: {type: integer, format: int32, description: Initial line number captured at thread creation, minimum: 1}
+        initialComment: {$ref: '#/components/schemas/UserCommentContentDTO'}
+      required: [initialComment, initialLineNumber, targetType]
+    CreateCommentThreadGroupDTO:
+      type: object
+      description: Request payload to create a new comment thread group
+      properties:
+        threadIds:
+          type: array
+          description: Thread ids to associate with the new group
+          items: {type: integer, format: int64}
+          minItems: 2
+      required: [threadIds]
+    UpdateThreadResolvedStateDTO:
+      type: object
+      description: Request payload to update the resolved state of a thread
+      properties:
+        resolved: {type: boolean, description: Whether the thread is resolved}
+      required: [resolved]
+    CommentDTO:
+      type: object
+      description: DTO representing a review comment
+      properties:
+        id: {type: integer, format: int64, description: Comment identifier}
+        threadId: {type: integer, format: int64, description: Identifier of the owning comment thread}
+        authorName: {type: string, description: Display name of the author, if available}
+        type: {$ref: '#/components/schemas/CommentType'}
+        content: {$ref: '#/components/schemas/CommentContentDTO'}
+        initialVersionId: {type: integer, format: int64, description: Identifier of the initial exercise version, if available}
+        initialCommitSha: {type: string, description: Initial commit SHA for repository-based comments, if available}
+        createdDate: {type: string, format: date-time, description: Creation timestamp}
+        lastModifiedDate: {type: string, format: date-time, description: Last modification timestamp}
+      required: [content, createdDate, id, threadId, type]
+    CommentThreadDTO:
+      type: object
+      description: DTO representing a review comment thread
+      properties:
+        id: {type: integer, format: int64, description: Thread identifier}
+        groupId: {type: integer, format: int64, description: Grouping identifier for related threads}
+        exerciseId: {type: integer, format: int64, description: Identifier of the owning exercise}
+        targetType: {$ref: '#/components/schemas/CommentThreadLocationType'}
+        auxiliaryRepositoryId: {type: integer, format: int64, description: Identifier of the auxiliary repository, if applicable}
+        initialVersionId: {type: integer, format: int64, description: Identifier of the initial exercise version, if available}
+        initialCommitSha: {type: string, description: Initial commit SHA for repository-based threads, if available}
+        filePath: {type: string, description: Current file path for repository-based threads}
+        initialFilePath: {type: string, description: Initial file path captured at thread creation}
+        lineNumber: {type: integer, format: int32, description: Current line number for repository-based threads, minimum: 1}
+        initialLineNumber: {type: integer, format: int32, description: Initial line number captured at thread creation, minimum: 1}
+        outdated: {type: boolean, description: Whether the thread is outdated}
+        resolved: {type: boolean, description: Whether the thread is resolved}
+        comments:
+          type: array
+          description: Comments belonging to the thread
+          items: {$ref: '#/components/schemas/CommentDTO'}
+      required: [comments, exerciseId, id, initialLineNumber, outdated, resolved, targetType]
+    CommentThreadGroupDTO:
+      type: object
+      description: DTO representing a comment thread group
+      properties:
+        id: {type: integer, format: int64, description: Group identifier}
+        exerciseId: {type: integer, format: int64, description: Identifier of the owning exercise}
+        threadIds:
+          type: array
+          description: Thread identifiers associated with the group
+          items: {type: integer, format: int64}
+      required: [exerciseId, id, threadIds]
+
+
+
+
