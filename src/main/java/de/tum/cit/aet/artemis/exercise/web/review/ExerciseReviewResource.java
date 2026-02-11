@@ -106,7 +106,7 @@ public class ExerciseReviewResource {
      *
      * @param exerciseId the exercise id
      * @param groupId    the group id
-     * @return 200 OK
+     * @return 204 No Content
      */
     @DeleteMapping("exercises/{exerciseId}/review-thread-groups/{groupId}")
     @EnforceAtLeastInstructorInExercise
@@ -138,7 +138,7 @@ public class ExerciseReviewResource {
      *
      * @param exerciseId the exercise id
      * @param commentId  the comment id
-     * @return 200 OK
+     * @return 204 No Content
      */
     @DeleteMapping("exercises/{exerciseId}/review-comments/{commentId}")
     @EnforceAtLeastInstructorInExercise

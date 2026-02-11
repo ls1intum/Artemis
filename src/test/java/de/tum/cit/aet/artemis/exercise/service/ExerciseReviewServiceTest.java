@@ -224,7 +224,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         exerciseReviewService.deleteComment(first.getId());
 
         assertThat(commentThreadRepository.findById(thread.getId())).isPresent();
-        assertThat(commentRepository.countByThreadId(thread.getId())).isEqualTo(2);
+        assertThat(commentRepository.findByThreadIdOrderByCreatedDateAsc(thread.getId())).hasSize(2);
     }
 
     @Test
@@ -234,7 +234,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         exerciseReviewService.createUserComment(thread.getId(), buildUserCommentContent("First"));
         exerciseReviewService.createUserComment(thread.getId(), buildUserCommentContent("Second"));
 
-        long count = commentRepository.countByThreadId(thread.getId());
+        long count = commentRepository.findByThreadIdOrderByCreatedDateAsc(thread.getId()).size();
 
         assertThat(count).isEqualTo(3);
     }

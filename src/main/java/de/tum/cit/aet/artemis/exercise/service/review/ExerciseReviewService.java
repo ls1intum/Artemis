@@ -207,7 +207,7 @@ public class ExerciseReviewService {
     public void deleteComment(long commentId) {
         Comment comment = commentRepository.findWithThreadById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment", commentId));
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, comment.getThread().getExercise().getId());
-        commentRepository.deleteCommentWithCascade(commentId);
+        commentRepository.deleteCommentWithCascade(comment);
     }
 
     /**
@@ -410,7 +410,7 @@ public class ExerciseReviewService {
             return;
         }
 
-        List<CommentThread> threads = commentThreadRepository.findByExerciseId(currentSnapshot.id());
+        List<CommentThread> threads = commentThreadRepository.findByExerciseIdAndOutdatedFalseAndLineNumberIsNotNull(currentSnapshot.id());
         if (threads.isEmpty()) {
             return;
         }
@@ -776,7 +776,7 @@ public class ExerciseReviewService {
     }
 
     private Comment buildUserComment(CommentThread thread, UserCommentContentDTO dto) {
-        User author = userRepository.getUserWithGroupsAndAuthorities();
+        User author = userRepository.getUser();
         Comment comment = new Comment();
         comment.setType(CommentType.USER);
         comment.setContent(dto);

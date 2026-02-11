@@ -32,6 +32,15 @@ public interface CommentThreadRepository extends ArtemisJpaRepository<CommentThr
     List<CommentThread> findByExerciseId(long exerciseId);
 
     /**
+     * Find all active comment threads for a given exercise that have a concrete line reference.
+     * These are the only threads relevant for version-based line remapping.
+     *
+     * @param exerciseId the exercise id
+     * @return list of active line-bound comment threads
+     */
+    List<CommentThread> findByExerciseIdAndOutdatedFalseAndLineNumberIsNotNull(long exerciseId);
+
+    /**
      * Find all comment threads for a given exercise with their comments loaded.
      *
      * @param exerciseId the exercise id

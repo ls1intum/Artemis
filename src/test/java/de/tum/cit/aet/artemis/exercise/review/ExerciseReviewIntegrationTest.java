@@ -157,7 +157,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
         request.delete(reviewCommentPath(exercise.getId(), initialComment.id()), HttpStatus.NO_CONTENT);
 
-        assertThat(commentRepository.countByThreadId(createdThread.id())).isZero();
+        assertThat(commentRepository.findByThreadIdOrderByCreatedDateAsc(createdThread.id())).isEmpty();
         assertThat(commentThreadRepository.findById(createdThread.id())).isEmpty();
     }
 
@@ -340,7 +340,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
         request.delete(reviewCommentPath(exercise.getId(), reply.id()), HttpStatus.NO_CONTENT);
 
-        assertThat(commentRepository.countByThreadId(createdThread.id())).isEqualTo(1);
+        assertThat(commentRepository.findByThreadIdOrderByCreatedDateAsc(createdThread.id())).hasSize(1);
         assertThat(commentThreadRepository.findById(createdThread.id())).isPresent();
     }
 
