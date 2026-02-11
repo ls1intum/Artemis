@@ -156,7 +156,7 @@ public class ExerciseWeaviateService {
      */
     private void insertExerciseIntoWeaviate(Exercise exercise) throws Exception {
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        var collection = weaviateService.get().getCollection(ExerciseSchema.COLLECTION_NAME);
+        var collection = weaviateService.orElseThrow().getCollection(ExerciseSchema.COLLECTION_NAME);
 
         Map<String, Object> properties = new HashMap<>();
         properties.put(ExerciseSchema.Properties.EXERCISE_ID, exercise.getId());
@@ -252,7 +252,7 @@ public class ExerciseWeaviateService {
      * @param exerciseId the exercise ID
      */
     private void deleteExerciseFromWeaviate(long exerciseId) {
-        var collection = weaviateService.get().getCollection(ExerciseSchema.COLLECTION_NAME);
+        var collection = weaviateService.orElseThrow().getCollection(ExerciseSchema.COLLECTION_NAME);
         var deleteResult = collection.data.deleteMany(Filter.property(ExerciseSchema.Properties.EXERCISE_ID).eq(exerciseId));
         log.debug("Deleted {} exercise entries for exercise ID {}", deleteResult.successful(), exerciseId);
     }
