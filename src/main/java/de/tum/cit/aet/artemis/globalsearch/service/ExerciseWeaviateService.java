@@ -140,15 +140,6 @@ public class ExerciseWeaviateService {
     }
 
     /**
-     * Checks if Weaviate integration is available.
-     *
-     * @return true if Weaviate is enabled and available
-     */
-    public boolean isWeaviateAvailable() {
-        return weaviateService.isPresent();
-    }
-
-    /**
      * Inserts exercise data into the Weaviate collection.
      *
      * @param exercise the exercise to insert
