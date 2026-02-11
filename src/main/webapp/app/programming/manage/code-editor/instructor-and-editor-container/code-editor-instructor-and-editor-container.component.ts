@@ -223,7 +223,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         const requestId = this.restoreRequestId;
         this.statusSubscription = this.hyperionCodeGenerationApi.generateCode(this.exercise.id, { repositoryType, checkOnly: true }).subscribe({
             next: (res) => {
-                if (requestId != this.restoreRequestId) {
+                if (requestId !== this.restoreRequestId) {
                     return;
                 }
                 if (res?.jobId) {
@@ -233,7 +233,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 }
             },
             error: () => {
-                if (requestId != this.restoreRequestId) {
+                if (requestId !== this.restoreRequestId) {
                     return;
                 }
                 this.clearJobSubscription(true);

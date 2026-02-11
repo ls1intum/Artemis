@@ -113,6 +113,7 @@ public class HyperionCodeGenerationJobService {
         String key = jobKey(exerciseId);
         JobInfo job = getJobMap().get(key);
         if (job != null && job.jobId().equals(jobId)) {
+            // Removal is best-effort: the entry may have been evicted/replaced, and remove(key, value) will no-op in that case.
             getJobMap().remove(key, job);
         }
     }
@@ -125,7 +126,7 @@ public class HyperionCodeGenerationJobService {
         return String.valueOf(exerciseId);
     }
 
-    public record JobClaim(JobInfo job, boolean started) {
+    private record JobClaim(JobInfo job, boolean started) {
     }
 
     public record JobInfo(String jobId, String userLogin, long exerciseId, RepositoryType repositoryType, Instant startedAt) implements Serializable {

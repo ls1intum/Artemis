@@ -62,7 +62,7 @@ public class HyperionCodeGenerationResource {
      * Uses AI-powered iterative approach to generate, compile, and improve code based on build feedback.
      * Supports generation for SOLUTION, TEMPLATE, and TESTS repositories.
      * Uses websocket to stream progress and completion events.
-     * When {@code checkOnly} is true, returns the current job without starting a new one.
+     * When {@code checkOnly} is true, returns the current job for the requesting user without starting a new one.
      *
      * @param exerciseId the ID of the programming exercise
      * @param request    the request containing repository type
@@ -73,7 +73,12 @@ public class HyperionCodeGenerationResource {
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<CodeGenerationJobStartDTO> generateCode(@PathVariable long exerciseId, @Valid @RequestBody CodeGenerationRequestDTO request) {
         log.debug("REST request to generate code for programming exercise [{}] with repository type [{}]", exerciseId, request.repositoryType());
-        validateGenerationRequest(exerciseId, request);
+        if (request.checkOnly()) {
+            validateExerciseId(exerciseId);
+        }
+        else {
+            validateGenerationRequest(exerciseId, request);
+        }
         ProgrammingExercise exercise = loadProgrammingExercise(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (request.checkOnly()) {
@@ -81,7 +86,7 @@ public class HyperionCodeGenerationResource {
                     .orElseGet(() -> ResponseEntity.noContent().build());
         }
         String jobId = codeGenerationJobService.startJob(user, exercise, request.repositoryType());
-        log.info(ResponseEntity.ok(new CodeGenerationJobStartDTO(jobId)).toString());
+        log.info("Started code generation job [{}] for exercise [{}]", jobId, exerciseId);
         return ResponseEntity.ok(new CodeGenerationJobStartDTO(jobId));
     }
 

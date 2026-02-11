@@ -365,6 +365,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TEMPLATE });
             expect(comp.isGeneratingCode()).toBeFalse();
+            // One modal from generateCode() confirmation and one from the "already running" error handler.
             expect(openSpy).toHaveBeenCalledTimes(2);
             expect(addAlertSpy).not.toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -373,6 +374,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                 }),
             );
         });
+
         it('should call executeRefresh and cleanup on DONE', async () => {
             comp.selectedRepository = RepositoryType.SOLUTION;
             (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-4' }));

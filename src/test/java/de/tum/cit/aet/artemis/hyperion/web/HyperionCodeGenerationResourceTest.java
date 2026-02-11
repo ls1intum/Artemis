@@ -234,4 +234,20 @@ class HyperionCodeGenerationResourceTest {
         verify(codeGenerationJobService).getActiveJob(testUser, testExercise);
         verify(codeGenerationJobService, never()).startJob(testUser, testExercise, RepositoryType.SOLUTION);
     }
+
+    @Test
+    void generateCode_withCheckOnlyAndNoActiveJob_returnsNoContent() {
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, true);
+
+        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
+        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
+        when(codeGenerationJobService.getActiveJob(testUser, testExercise)).thenReturn(Optional.empty());
+
+        ResponseEntity<CodeGenerationJobStartDTO> response = resource.generateCode(1L, request);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(204);
+        assertThat(response.getBody()).isNull();
+        verify(codeGenerationJobService).getActiveJob(testUser, testExercise);
+        verify(codeGenerationJobService, never()).startJob(testUser, testExercise, RepositoryType.SOLUTION);
+    }
 }
