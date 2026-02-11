@@ -73,8 +73,9 @@ public class TutorialGroupsConfigurationResource {
         log.debug("REST request to get tutorial groups configuration of course: {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        var configuration = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElse(null);
-        return ResponseEntity.ok().body(TutorialGroupConfigurationDTO.of(configuration));
+        return tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).map(TutorialGroupConfigurationDTO::of).map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+
     }
 
     /**

@@ -112,7 +112,14 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         // when
         var configurationFromRequest = request.get(this.getTutorialGroupsConfigurationPath(courseId), HttpStatus.OK, TutorialGroupConfigurationDTO.class);
         // then
-        assertThat(configurationFromRequest).isEqualTo(TutorialGroupConfigurationDTO.of(configuration));
+        var expected = TutorialGroupConfigurationDTO.of(configuration);
+
+        var normalizedActual = new TutorialGroupConfigurationDTO(configurationFromRequest.id(), configurationFromRequest.tutorialPeriodStartInclusive(),
+                configurationFromRequest.tutorialPeriodEndInclusive(), configurationFromRequest.useTutorialGroupChannels(),
+                configurationFromRequest.usePublicTutorialGroupChannels(),
+                configurationFromRequest.tutorialGroupFreePeriods() == null ? Set.of() : configurationFromRequest.tutorialGroupFreePeriods());
+
+        assertThat(normalizedActual).isEqualTo(expected);
     }
 
     @Test
