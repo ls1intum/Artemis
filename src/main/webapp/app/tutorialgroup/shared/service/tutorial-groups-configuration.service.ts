@@ -17,14 +17,14 @@ export class TutorialGroupsConfigurationService {
     getOneOfCourse(courseId: number) {
         return this.httpClient
             .get<TutorialGroupConfigurationDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration`, { observe: 'response' })
-            .pipe(map((res: DtoResponseType) => this.convertDtoResponseDatesFromServer(res)));
+            .pipe(map((res: DtoResponseType) => res));
     }
 
     create(tutorialGroupsConfigurationDto: TutorialGroupConfigurationDTO, courseId: number, period: Date[]): Observable<DtoResponseType> {
         const copy = this.convertTutorialGroupsConfigurationDatesFromClient(tutorialGroupsConfigurationDto, period);
         return this.httpClient
             .post<TutorialGroupConfigurationDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration`, copy, { observe: 'response' })
-            .pipe(map((res: DtoResponseType) => this.convertDtoResponseDatesFromServer(res)));
+            .pipe(map((res: DtoResponseType) => res));
     }
 
     update(courseId: number, tutorialGroupConfigurationId: number, tutorialGroupsConfigurationDto: TutorialGroupConfigurationDTO, period: Date[]): Observable<DtoResponseType> {
@@ -33,7 +33,7 @@ export class TutorialGroupsConfigurationService {
             .put<TutorialGroupConfigurationDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupConfigurationId}`, copy, {
                 observe: 'response',
             })
-            .pipe(map((res: DtoResponseType) => this.convertDtoResponseDatesFromServer(res)));
+            .pipe(map((res: DtoResponseType) => res));
     }
 
     convertTutorialGroupsConfigurationDatesFromServer(tutorialGroupsConfiguration: TutorialGroupsConfiguration): TutorialGroupsConfiguration {
@@ -47,18 +47,12 @@ export class TutorialGroupsConfigurationService {
         }
         return tutorialGroupsConfiguration;
     }
-    private convertDtoResponseDatesFromServer(res: DtoResponseType): DtoResponseType {
-        if (res.body) {
-            res.body.tutorialPeriodStartInclusive = convertDateFromServer(res.body.tutorialPeriodStartInclusive);
-            res.body.tutorialPeriodEndInclusive = convertDateFromServer(res.body.tutorialPeriodEndInclusive);
-        }
-        return res;
-    }
 
     private convertTutorialGroupsConfigurationDatesFromClient(tutorialGroupsConfigurationDto: TutorialGroupConfigurationDTO, period: Date[]): TutorialGroupConfigurationDTO {
         return Object.assign({}, tutorialGroupsConfigurationDto, {
             tutorialPeriodStartInclusive: toISO8601DateString(period[0]),
             tutorialPeriodEndInclusive: toISO8601DateString(period[1]),
+            tutorialGroupFreePeriods: tutorialGroupsConfigurationDto.tutorialGroupFreePeriods ?? [],
         });
     }
 }
