@@ -6,7 +6,7 @@
         [ngClass]="{ 'content-overflow': isOverflowing(), 'bubble-visible': newIrisMessage(), 'bubble-hidden': !newIrisMessage() }"
     >
         @if (newIrisMessage()) {
-            <div class="bubble-text" [innerHTML]="newIrisMessage() | htmlForMarkdown"></div>
+            <div class="bubble-text" [innerHTML]="newIrisMessage() | htmlForMarkdown: [] : undefined : undefined : true"></div>
             @if (isOverflowing()) {
                 <div class="read-more">
                     <fa-icon [icon]="faArrowRight" class="read-more-icon" />

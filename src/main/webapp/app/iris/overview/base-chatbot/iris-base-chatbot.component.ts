@@ -341,15 +341,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         if (!hasUserMessage && rawMessages.length > 0 && rawMessages.every((message) => message.sender === IrisSender.LLM)) {
             return [];
         }
-        const processed = _.cloneDeep(rawMessages);
-        processed.forEach((message) => {
-            if (message.content?.[0] && 'textContent' in message.content[0]) {
-                const cnt = message.content[0] as IrisTextMessageContent;
-                cnt.textContent = cnt.textContent.replace(/\n\n/g, '\n\u00A0\n');
-                cnt.textContent = cnt.textContent.replace(/\n/g, '\n\n');
-            }
-        });
-        return processed;
+        return _.cloneDeep(rawMessages);
     }
 
     ngAfterViewInit() {
