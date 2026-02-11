@@ -15,15 +15,60 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 
+/**
+ * DTO representing the {@link TutorialGroupsConfiguration}.
+ *
+ * <p>
+ * This DTO is used to transfer tutorial group configuration data between the server and the client.
+ * Date values are represented as {@link String} on the API layer to avoid implicit time zone
+ * conversions on the client side.
+ * </p>
+ *
+ * <p>
+ * The fields {@code tutorialPeriodStartInclusive} and {@code tutorialPeriodEndInclusive}
+ * represent local dates (ISO-8601 format, e.g. {@code yyyy-MM-dd}).
+ * The server is responsible for interpreting these values in the course time zone.
+ * </p>
+ *
+ * <p>
+ * Free periods are optionally included. If the underlying JPA collection is not initialized,
+ * an empty set is returned to avoid {@code LazyInitializationException}.
+ * </p>
+ *
+ * @param id                             the unique identifier of the configuration
+ * @param tutorialPeriodStartInclusive   start date (inclusive) of the tutorial period in ISO-8601 format
+ * @param tutorialPeriodEndInclusive     end date (inclusive) of the tutorial period in ISO-8601 format
+ * @param useTutorialGroupChannels       whether tutorial group channels are enabled
+ * @param usePublicTutorialGroupChannels whether public tutorial group channels are enabled
+ * @param tutorialGroupFreePeriods       optional set of free periods during the tutorial period
+ */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TutorialGroupConfigurationDTO(Long id, @NotNull String tutorialPeriodStartInclusive, @NotNull String tutorialPeriodEndInclusive,
         @NotNull Boolean useTutorialGroupChannels, @NotNull Boolean usePublicTutorialGroupChannels, Set<TutorialGroupFreePeriodDTO> tutorialGroupFreePeriods) {
 
     private static final String ENTITY_NAME = "tutorialGroupsConfiguration";
 
+    /**
+     * DTO representing a {@link TutorialGroupFreePeriod}.
+     *
+     * <p>
+     * Date-time values are serialized as ISO-8601 strings and parsed on the server
+     * using {@link ZonedDateTime#parse(CharSequence)}.
+     * </p>
+     *
+     * @param id    the unique identifier of the free period
+     * @param start start date-time in ISO-8601 format
+     * @param end   end date-time in ISO-8601 format
+     */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TutorialGroupFreePeriodDTO(@NotNull Long id, String start, String end) {
 
+        /**
+         * Creates a DTO from the given {@link TutorialGroupFreePeriod} entity.
+         *
+         * @param freePeriod the entity to convert
+         * @return a DTO representation of the entity
+         */
         public static TutorialGroupFreePeriodDTO of(TutorialGroupFreePeriod freePeriod) {
             Objects.requireNonNull(freePeriod, "tutorialGroupFreePeriod must exist");
 
@@ -31,6 +76,12 @@ public record TutorialGroupConfigurationDTO(Long id, @NotNull String tutorialPer
                     freePeriod.getEnd() != null ? freePeriod.getEnd().toString() : null);
         }
 
+        /**
+         * Creates a {@link TutorialGroupFreePeriod} entity from the given DTO.
+         *
+         * @param dto the DTO to convert
+         * @return a new entity populated with the values from the DTO
+         */
         public static TutorialGroupFreePeriod from(TutorialGroupFreePeriodDTO dto) {
             Objects.requireNonNull(dto, "tutorialGroupFreePeriodDTO must exist");
 
