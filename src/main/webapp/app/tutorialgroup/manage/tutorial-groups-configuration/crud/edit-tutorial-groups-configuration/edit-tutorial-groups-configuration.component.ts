@@ -82,6 +82,7 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
         this.tutorialGroupsConfigurationService
             .update(this.course.id!, this.tutorialGroupConfigurationId, this.tutorialGroupsConfiguration, period ?? [])
             .pipe(
+                switchMap(() => this.tutorialGroupsConfigurationService.getOneOfCourse(this.course.id!)),
                 finalize(() => {
                     this.isLoading = false;
                     this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups']);
