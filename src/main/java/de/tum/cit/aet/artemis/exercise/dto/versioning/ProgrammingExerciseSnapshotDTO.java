@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.exercise.dto.versioning;
 
 import java.io.Serializable;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -149,6 +148,6 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
     }
 
     private static ZonedDateTime toUtc(ZonedDateTime zdt) {
-        return zdt == null ? null : zdt.withZoneSameInstant(ZoneOffset.UTC);
+        return ExerciseSnapshotDTO.toUtc(zdt);
     }
 }

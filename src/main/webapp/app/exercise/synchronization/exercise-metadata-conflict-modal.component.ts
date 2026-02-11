@@ -12,6 +12,7 @@ import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
+import { normalizeCategoryArray, normalizeCategoryEntry } from 'app/exercise/synchronization/exercise-metadata-snapshot-shared.mapper';
 
 /**
  * Single field conflict between current editor state and incoming snapshot.
@@ -210,8 +211,8 @@ export class ExerciseMetadataConflictModalComponent {
 
         return entries.map((entry) => ({
             labelKey: entry.labelKey,
-            current: current ? (current as any)[entry.key] : undefined,
-            incoming: incoming ? (incoming as any)[entry.key] : undefined,
+            current: current ? current[entry.key as keyof ProgrammingExerciseBuildConfig] : undefined,
+            incoming: incoming ? incoming[entry.key as keyof ProgrammingExerciseBuildConfig] : undefined,
         }));
     }
 
@@ -219,75 +220,25 @@ export class ExerciseMetadataConflictModalComponent {
      * Normalizes category values into a list of exercise categories.
      */
     toCategoryEntries(value: unknown): ExerciseCategory[] {
-        const entries: ExerciseCategory[] = [];
-        const addCategory = (category: ExerciseCategory | undefined): void => {
-            if (!category?.category || category.category.trim().length === 0) {
-                return;
-            }
-            entries.push(category);
-        };
         if (!value) {
-            return entries;
+            return [];
         }
         if (Array.isArray(value)) {
-            for (const entry of value) {
-                addCategory(this.normalizeCategory(entry));
-            }
-            return entries;
+            return normalizeCategoryArray(value);
         }
         if (typeof value === 'string') {
-            const parsed = this.tryParseJson(value);
-            if (parsed !== undefined) {
-                return this.toCategoryEntries(parsed);
-            }
-            const parts = value.split(',');
-            for (const part of parts) {
-                const trimmed = part.trim();
-                if (trimmed.length > 0) {
-                    entries.push(new ExerciseCategory(trimmed, undefined));
+            try {
+                const parsed = JSON.parse(value);
+                if (parsed !== undefined) {
+                    return this.toCategoryEntries(parsed);
                 }
+            } catch {
+                // not JSON, try comma-split
             }
-            return entries;
+            return normalizeCategoryArray(value.split(','));
         }
-        addCategory(this.normalizeCategory(value));
-        return entries;
-    }
-
-    private normalizeCategory(value: unknown): ExerciseCategory | undefined {
-        if (!value) {
-            return undefined;
-        }
-        if (value instanceof ExerciseCategory) {
-            return value;
-        }
-        if (typeof value === 'string') {
-            const trimmed = value.trim();
-            if (!trimmed) {
-                return undefined;
-            }
-            const parsed = this.tryParseJson(trimmed);
-            if (parsed !== undefined) {
-                return this.normalizeCategory(parsed);
-            }
-            return new ExerciseCategory(trimmed, undefined);
-        }
-        if (typeof value === 'object' && 'category' in value) {
-            const category = (value as { category?: string }).category?.trim();
-            if (!category) {
-                return undefined;
-            }
-            const color = (value as { color?: string }).color;
-            return new ExerciseCategory(category, color);
-        }
-        return undefined;
-    }
-
-    private tryParseJson(value: string): unknown | undefined {
-        try {
-            return JSON.parse(value);
-        } catch {
-            return undefined;
-        }
+        const entry = normalizeCategoryEntry(value);
+        return entry ? [entry] : [];
     }
 
     /**

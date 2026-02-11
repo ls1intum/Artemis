@@ -17,7 +17,6 @@ import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { ExerciseMetadataFieldHandler, createExerciseMetadataHandlers } from 'app/exercise/synchronization/exercise-metadata-handlers';
 import { ExerciseMetadataConflictModalComponent, ExerciseMetadataConflictModalResult } from 'app/exercise/synchronization/exercise-metadata-conflict-modal.component';
 import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/exercise-metadata-snapshot.dto';
-import { convertDateFromServer } from 'app/shared/util/date.utils';
 
 /**
  * Context required to apply metadata synchronization to a live exercise editor.
@@ -56,6 +55,9 @@ export class ExerciseMetadataSyncService {
      * @param context the metadata synchronization context
      */
     initialize<T extends Exercise>(context: ExerciseMetadataSyncContext<T>): void {
+        if (this.subscriptionActive && this.context?.exerciseId !== context.exerciseId) {
+            this.destroy();
+        }
         this.context = context as ExerciseMetadataSyncContext<Exercise>;
         if (this.subscriptionActive) {
             return;
@@ -348,10 +350,10 @@ export class ExerciseMetadataSyncService {
             return isEqual(this.normalizeCompetencyLinks(value), this.normalizeCompetencyLinks(otherValue));
         }
         if (dayjs.isDayjs(value) || dayjs.isDayjs(otherValue)) {
-            const normalizedLeft = dayjs.isDayjs(value) ? value : convertDateFromServer(value as any);
-            const normalizedRight = dayjs.isDayjs(otherValue) ? otherValue : convertDateFromServer(otherValue as any);
-            if (!normalizedLeft || !normalizedRight) {
-                return false;
+            const normalizedLeft = dayjs.isDayjs(value) ? value : typeof value === 'string' ? dayjs(value) : undefined;
+            const normalizedRight = dayjs.isDayjs(otherValue) ? otherValue : typeof otherValue === 'string' ? dayjs(otherValue) : undefined;
+            if (!normalizedLeft?.isValid() || !normalizedRight?.isValid()) {
+                return normalizedLeft === normalizedRight;
             }
             return normalizedLeft.isSame(normalizedRight);
         }

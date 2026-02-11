@@ -9,7 +9,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { ExerciseSnapshotDTO, TeamAssignmentConfigSnapshot } from 'app/exercise/synchronization/exercise-metadata-snapshot.dto';
-import { toCompetencyLinks, toTeamAssignmentConfig } from 'app/exercise/synchronization/exercise-metadata-snapshot-shared.mapper';
+import { normalizeCategoryArray, toCompetencyLinks, toTeamAssignmentConfig } from 'app/exercise/synchronization/exercise-metadata-snapshot-shared.mapper';
 import { toAuxiliaryRepositories, toBuildConfig } from 'app/exercise/synchronization/exercise-metadata-snapshot-programming.mapper';
 
 /**
@@ -30,40 +30,7 @@ const normalizeCategories = (value: unknown): ExerciseCategory[] | undefined => 
     if (!Array.isArray(value)) {
         return undefined;
     }
-
-    const categories = value
-        .map((entry) => {
-            if (typeof entry === 'string') {
-                const trimmed = entry.trim();
-                if (!trimmed) {
-                    return undefined;
-                }
-                try {
-                    const parsed = JSON.parse(trimmed);
-                    if (parsed && typeof parsed === 'object' && 'category' in parsed) {
-                        const category = (parsed as ExerciseCategory).category?.trim();
-                        if (!category) {
-                            return undefined;
-                        }
-                        return new ExerciseCategory(category, (parsed as ExerciseCategory).color);
-                    }
-                } catch {
-                    // category is not JSON-encoded, treat it as plain text
-                }
-                return new ExerciseCategory(trimmed, undefined);
-            }
-            if (entry instanceof ExerciseCategory) {
-                const category = entry.category?.trim();
-                return category ? new ExerciseCategory(category, entry.color) : undefined;
-            }
-            if (entry && typeof entry === 'object' && 'category' in entry) {
-                const category = (entry as ExerciseCategory).category?.trim();
-                return category ? new ExerciseCategory(category, (entry as ExerciseCategory).color) : undefined;
-            }
-            return undefined;
-        })
-        .filter((entry): entry is ExerciseCategory => entry !== undefined);
-
+    const categories = normalizeCategoryArray(value);
     return categories.length > 0 ? categories : undefined;
 };
 

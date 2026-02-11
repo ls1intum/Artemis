@@ -274,7 +274,7 @@ public class ExerciseVersionService {
         addIfChanged(changedFields, "allowComplaintsForAutomaticAssessments", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::allowComplaintsForAutomaticAssessments);
         addIfChanged(changedFields, "allowFeedbackRequests", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::allowFeedbackRequests);
         addIfChanged(changedFields, "includedInOverallScore", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::includedInOverallScore);
-        addIfChanged(changedFields, "problemStatement", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::problemStatement);
+        // problemStatement is excluded: changes are broadcast via Yjs client-to-client synchronization, not metadata sync.
         addIfChanged(changedFields, "gradingInstructions", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::gradingInstructions);
         addIfChanged(changedFields, "categories", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::categories);
         addIfChanged(changedFields, "teamAssignmentConfig", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::teamAssignmentConfig);

@@ -9,6 +9,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.jupiter.api.AfterEach;
@@ -21,9 +22,11 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.synchronization.ExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncEventType;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseNewCommitAlertDTO;
+import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseNewVersionAlertDTO;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 
 class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
@@ -132,5 +135,29 @@ class ExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalC
         RequestContextHolder.setRequestAttributes(nonServletAttributes);
 
         assertThat(ExerciseEditorSyncService.getClientSessionId()).isNull();
+    }
+
+    /**
+     * Verifies that exercise version alerts are broadcast with expected payload fields.
+     */
+    @Test
+    void broadcastNewExerciseVersionAlert() {
+        User author = new User();
+        author.setLogin("instructor1");
+        author.setFirstName("Test");
+        author.setLastName("Instructor");
+
+        synchronizationService.broadcastNewExerciseVersionAlert(95L, 7L, author, Set.of("title", "maxPoints"));
+
+        var captor = ArgumentCaptor.forClass(ExerciseNewVersionAlertDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/exercises/95/synchronization"), captor.capture());
+        var sentMessage = captor.getValue();
+
+        assertThat(sentMessage.eventType()).isEqualTo(ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT);
+        assertThat(sentMessage.target()).isEqualTo(ExerciseEditorSyncTarget.EXERCISE_METADATA);
+        assertThat(sentMessage.exerciseVersionId()).isEqualTo(7L);
+        assertThat(sentMessage.changedFields()).containsExactlyInAnyOrder("title", "maxPoints");
+        assertThat(sentMessage.author()).isNotNull();
+        assertThat(sentMessage.author().getLogin()).isEqualTo("instructor1");
     }
 }

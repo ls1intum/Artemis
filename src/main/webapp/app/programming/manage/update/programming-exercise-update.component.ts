@@ -662,6 +662,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
     }
 
+    /**
+     * Ensures that {@link exerciseCategories} and {@link programmingExercise.categories} reference the same array.
+     * This is required for metadata sync: the category handler modifies the array in-place,
+     * so both references must point to the same object for changes to propagate correctly.
+     */
     private ensureExerciseCategoriesReference() {
         this.exerciseCategories = this.programmingExercise.categories ?? this.exerciseCategories ?? [];
         this.programmingExercise.categories = this.exerciseCategories;

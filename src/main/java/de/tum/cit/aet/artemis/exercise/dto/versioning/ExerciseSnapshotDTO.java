@@ -109,7 +109,7 @@ public record ExerciseSnapshotDTO(
         }
     }
 
-    private static ZonedDateTime toUtc(ZonedDateTime zdt) {
+    static ZonedDateTime toUtc(ZonedDateTime zdt) {
         return zdt == null ? null : zdt.withZoneSameInstant(ZoneOffset.UTC);
     }
 
