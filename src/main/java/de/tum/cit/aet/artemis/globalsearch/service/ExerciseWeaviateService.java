@@ -10,7 +10,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -32,9 +31,6 @@ public class ExerciseWeaviateService {
     private static final Logger log = LoggerFactory.getLogger(ExerciseWeaviateService.class);
 
     private final Optional<WeaviateService> weaviateService;
-
-    @Value("${server.url:http://localhost:9000}")
-    private String serverUrl;
 
     public ExerciseWeaviateService(Optional<WeaviateService> weaviateService) {
         this.weaviateService = weaviateService;
@@ -139,7 +135,6 @@ public class ExerciseWeaviateService {
         properties.put(ProgrammingExerciseSchema.Properties.TITLE, exercise.getTitle());
         properties.put(ProgrammingExerciseSchema.Properties.EXERCISE_TYPE, exercise.getType());
         properties.put(ProgrammingExerciseSchema.Properties.MAX_POINTS, exercise.getMaxPoints() != null ? exercise.getMaxPoints() : 0.0);
-        properties.put(ProgrammingExerciseSchema.Properties.BASE_URL, serverUrl);
 
         // Add optional fields only if they are not null
         if (course.getTitle() != null) {

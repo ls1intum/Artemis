@@ -60,8 +60,6 @@ public final class ProgrammingExerciseSchema {
 
         public static final String MAX_POINTS = "max_points";
 
-        public static final String BASE_URL = "base_url";
-
         private Properties() {
         }
     }
@@ -76,6 +74,5 @@ public final class ProgrammingExerciseSchema {
             nonSearchable(Properties.START_DATE, DATE, "The start date of the exercise"), nonSearchable(Properties.DUE_DATE, DATE, "The due date of the exercise"),
             filterable(Properties.EXERCISE_TYPE, TEXT, "The type of the exercise (programming, quiz, modeling, text, file-upload)"),
             filterable(Properties.PROGRAMMING_LANGUAGE, TEXT, "The programming language (for programming exercises)"),
-            filterable(Properties.DIFFICULTY, TEXT, "The difficulty level of the exercise"), nonSearchable(Properties.MAX_POINTS, NUMBER, "The maximum points for the exercise"),
-            nonSearchable(Properties.BASE_URL, TEXT, "The base URL of the Artemis instance")));
+            filterable(Properties.DIFFICULTY, TEXT, "The difficulty level of the exercise"), nonSearchable(Properties.MAX_POINTS, NUMBER, "The maximum points for the exercise")));
 }
