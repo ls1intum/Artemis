@@ -14,27 +14,68 @@ Key principles:
 * Use lazy loading to keep the initial bundle size small.
 * Prioritize code quality and test coverage. Reuse code and avoid duplication. Write meaningful tests.
 
-**Angular Migration**
+**Angular 21 Best Practices**
+
+<Callout variant={CalloutVariant.danger}>
+**Legacy Angular decorators (`@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, `@ContentChildren`) must not be used in new code.**
+Use Angular's signal-based APIs instead. An ESLint rule (`enforce-signal-apis-in-migrated-modules`) enforces this in fully migrated modules and will fail the build if legacy decorators are reintroduced. In modules not yet fully migrated, prefer signal-based APIs for new components but maintain consistency within existing components.
+</Callout>
 
 * Use **standalone components** instead of Angular modules: https://angular.dev/reference/migrations/standalone
-* Use the new `signals` to granular track how and where state is used throughout an application, allowing Angular to optimize rendering updates: https://angular.dev/guide/signals
+* Use **signals** for reactive state management. Signals allow Angular to granularly track how and where state is used, enabling optimized rendering updates: https://angular.dev/guide/signals
 * Find out more in the following guide: https://blog.angular-university.io/angular-signal-components
-* Use the new `input()` and `output()` decorators instead of `@Input()` and `@Output()`.
+
+* Use `input()` / `input.required()` instead of `@Input()`, and `output()` instead of `@Output()`:
 
     ```ts
-    // Don't
+    // Don't - legacy decorators are forbidden
     @Input() myInput: string;
     @Output() myOutput = new EventEmitter<string>();
 
-    // Do
+    // Do - use signal-based APIs
     myInput = input<string>();
+    myRequiredInput = input.required<string>();
     myOutput = output<string>();
     ```
 
-* Use the new `inject` function for dependency injection: https://angular.dev/reference/migrations/inject-function
-* Use the new query syntax for `viewChild()`, `contentChild()`, etc.: https://ngxtension.netlify.app/utilities/migrations/queries-migration
+* Use `viewChild()` / `viewChild.required()` instead of `@ViewChild()`, and `viewChildren()` instead of `@ViewChildren()`:
+
+    ```ts
+    // Don't - legacy decorators are forbidden
+    @ViewChild('myRef') myRef?: MyComponent;
+    @ViewChildren(MyComponent) myRefs?: QueryList<MyComponent>;
+
+    // Do - use signal-based query APIs
+    myRef = viewChild<MyComponent>('myRef');
+    myRequiredRef = viewChild.required<MyComponent>('myRef');
+    myRefs = viewChildren<MyComponent>(MyComponent);
+    ```
+
+* Use `signal()`, `computed()`, and `effect()` for component state instead of plain class fields:
+
+    ```ts
+    // Don't - plain fields don't integrate with Angular's change detection
+    count = 0;
+    doubled = this.count * 2;
+
+    // Do - signals enable fine-grained reactivity
+    count = signal(0);
+    doubled = computed(() => this.count() * 2);
+    ```
+
+* Use the `inject()` function for dependency injection instead of constructor injection: https://angular.dev/reference/migrations/inject-function
 * Prefer `OnPush` change detection for components: https://blog.angular-university.io/onpush-change-detection-how-it-works
 * See the migration example: https://github.com/ls1intum/Artemis/pull/9299
+
+**UI Component Library: PrimeNG**
+
+<Callout variant={CalloutVariant.info}>
+**We are migrating from Bootstrap to PrimeNG.** All new UI elements must be implemented using [PrimeNG](https://primeng.org/) components. Do not introduce new Bootstrap components. Existing Bootstrap usage will be migrated incrementally.
+</Callout>
+
+* Use PrimeNG components (buttons, tables, dialogs, inputs, etc.) for all new UI development.
+* Refer to the PrimeNG documentation for available components and usage: https://primeng.org/
+* Bootstrap CSS utility classes (e.g. `d-flex`, `ms-2`) may still be used for layout until the migration is complete, but prefer PrimeNG's built-in layout capabilities where available.
 
 <Callout variant={CalloutVariant.danger}>
 **Never invoke methods from the html template. The automatic change tracking in Angular will kill the application performance!**
@@ -352,7 +393,7 @@ From a methodology viewpoint we encourage the use of [BEM](http://getbem.com/int
 }
 ```
 
-Within the component html files, we encourage the use of [bootstrap css](https://getbootstrap.com/):
+For new UI elements, use [PrimeNG](https://primeng.org/) components instead of Bootstrap components. Bootstrap CSS utility classes (e.g. `d-flex`, `ms-2`) may still be used for layout until the migration is complete:
 
 ```html
 <div class="d-flex ms-2">some content</div>
