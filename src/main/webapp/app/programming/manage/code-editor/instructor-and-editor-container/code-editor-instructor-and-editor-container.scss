@@ -1,13 +1,6 @@
 @import 'bootstrap/scss/functions';
 @import 'bootstrap/scss/variables';
 
-// Custom sizing variables (no Bootstrap equivalents)
-$ai-dropdown-min-width: 17.5rem;
-$consistency-nav-btn-width: 27rem;
-$consistency-nav-btn-max-vw: 40vw;
-$refinement-popup-max-vw: 90vw;
-$refinement-textarea-min-height: 8rem;
-
 .btn-outline-primary:not(.list-group-item).dropdown-toggle.show {
     color: var(--default-btn-font);
 }
@@ -27,12 +20,12 @@ $refinement-textarea-min-height: 8rem;
 }
 
 .ai-dropdown-menu {
-    min-width: $ai-dropdown-min-width;
+    min-width: 17.5rem;
 }
 
 .consistency-issue-nav-btn {
-    width: $consistency-nav-btn-width;
-    max-width: min($consistency-nav-btn-width, $consistency-nav-btn-max-vw);
+    width: 27rem;
+    max-width: min(27rem, 40vw);
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
@@ -48,36 +41,35 @@ $refinement-textarea-min-height: 8rem;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: $modal-backdrop-bg;
-    opacity: $modal-backdrop-opacity;
-    z-index: $zindex-modal-backdrop;
+    background: var(--p-mask-background);
+    z-index: 1100;
 }
 
 .refinement-prompt-popup {
     position: absolute;
-    top: calc(100% + map-get($spacers, 2));
+    top: calc(100% + 0.5rem);
     left: 0;
-    z-index: $zindex-modal;
-    width: $modal-md;
-    max-width: $refinement-popup-max-vw;
-    background: var(--bs-body-bg);
-    border: $border-width solid var(--bs-primary);
-    border-radius: $modal-content-border-radius;
-    box-shadow: var(--bs-box-shadow-lg);
+    z-index: 1101;
+    width: 32rem;
+    max-width: 90vw;
+    background: var(--p-dialog-background);
+    border: 1px solid var(--p-primary-color);
+    border-radius: var(--p-dialog-border-radius);
+    box-shadow: var(--p-dialog-shadow);
     overflow: hidden;
 
     .btn-close {
-        filter: $btn-close-white-filter;
-        opacity: $btn-close-opacity;
+        filter: invert(1) grayscale(100%) brightness(200%);
+        opacity: 0.7;
 
         &:hover {
-            opacity: $btn-close-hover-opacity;
+            opacity: 1;
         }
     }
 
     .refinement-textarea {
-        min-height: $refinement-textarea-min-height;
+        min-height: 8rem;
         resize: vertical;
-        font-size: $font-size-sm;
+        font-size: 0.875rem;
     }
 }

@@ -39,6 +39,8 @@ export default defineConfig({
             'src/main/webapp/app/modeling/**/*.spec.ts', // include modeling tests
             'src/main/webapp/app/iris/**/*.spec.ts', // include iris tests
             'src/main/webapp/app/shared/components/buttons/**/*.spec.ts', // include shared buttons
+            'src/main/webapp/app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component.spec.ts',
+            'src/main/webapp/app/programming/manage/update/update-components/problem/programming-exercise-problem.component.spec.ts',
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,

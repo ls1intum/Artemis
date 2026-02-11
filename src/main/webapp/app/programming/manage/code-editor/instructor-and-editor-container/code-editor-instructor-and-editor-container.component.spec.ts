@@ -1,8 +1,7 @@
-import 'zone.js';
-import 'zone.js/testing';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { type Mock, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Provider } from '@angular/core';
-import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { Subject, of, throwError } from 'rxjs';
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
@@ -65,18 +64,18 @@ function getBaseProviders(additionalProviders: Provider[] = []): Provider[] {
         { provide: Router, useClass: MockRouter },
         { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
         { provide: CourseExerciseService, useClass: MockCourseExerciseService },
-        { provide: DomainService, useValue: { setDomain: jest.fn() } },
-        { provide: Location, useValue: { replaceState: jest.fn() } },
+        { provide: DomainService, useValue: { setDomain: vi.fn() } },
+        { provide: Location, useValue: { replaceState: vi.fn() } },
         { provide: ParticipationService, useClass: MockParticipationService },
         { provide: ActivatedRoute, useValue: { params: of({}) } },
-        { provide: HyperionCodeGenerationApiService, useValue: { generateCode: jest.fn() } },
-        { provide: NgbModal, useValue: { open: jest.fn(() => ({ componentInstance: {}, result: Promise.resolve() })) } },
-        { provide: HyperionWebsocketService, useValue: { subscribeToJob: jest.fn(), unsubscribeFromJob: jest.fn() } },
-        { provide: CodeEditorRepositoryService, useValue: { pull: jest.fn(() => of(void 0)) } },
-        { provide: CodeEditorRepositoryFileService, useValue: { getRepositoryContent: jest.fn(() => of({})) } },
+        { provide: HyperionCodeGenerationApiService, useValue: { generateCode: vi.fn() } },
+        { provide: NgbModal, useValue: { open: vi.fn(() => ({ componentInstance: {}, result: Promise.resolve() })) } },
+        { provide: HyperionWebsocketService, useValue: { subscribeToJob: vi.fn(), unsubscribeFromJob: vi.fn() } },
+        { provide: CodeEditorRepositoryService, useValue: { pull: vi.fn(() => of(void 0)) } },
+        { provide: CodeEditorRepositoryFileService, useValue: { getRepositoryContent: vi.fn(() => of({})) } },
         { provide: TranslateService, useClass: MockTranslateService },
-        { provide: ConsistencyCheckService, useValue: { checkConsistencyForProgrammingExercise: jest.fn() } },
-        { provide: ArtemisIntelligenceService, useValue: { consistencyCheck: jest.fn(), isLoading: () => false } },
+        { provide: ConsistencyCheckService, useValue: { checkConsistencyForProgrammingExercise: vi.fn() } },
+        { provide: ArtemisIntelligenceService, useValue: { consistencyCheck: vi.fn(), isLoading: () => false } },
         ...additionalProviders,
     ];
 }
@@ -97,11 +96,13 @@ async function configureTestBed(additionalProviders: Provider[] = []): Promise<v
 }
 
 describe('CodeEditorInstructorAndEditorContainerComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let comp: CodeEditorInstructorAndEditorContainerComponent;
 
-    let codeGenerationApi: jest.Mocked<Pick<HyperionCodeGenerationApiService, 'generateCode'>>;
-    let ws: jest.Mocked<Pick<HyperionWebsocketService, 'subscribeToJob' | 'unsubscribeFromJob'>>;
+    let codeGenerationApi: { generateCode: Mock };
+    let ws: { subscribeToJob: Mock; unsubscribeFromJob: Mock };
     let alertService: AlertService;
     let repoService: CodeEditorRepositoryService;
     let profileService: ProfileService;
@@ -194,27 +195,19 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         },
     ];
 
-    beforeAll(() => {
-        try {
-            TestBed.initTestEnvironment(BrowserTestingModule, platformBrowserTesting());
-        } catch (error) {
-            // already initialized in some runners
-        }
-    });
-
     beforeEach(async () => {
         await configureTestBed();
 
         alertService = TestBed.inject(AlertService);
-        codeGenerationApi = TestBed.inject(HyperionCodeGenerationApiService) as unknown as jest.Mocked<Pick<HyperionCodeGenerationApiService, 'generateCode'>>;
-        ws = TestBed.inject(HyperionWebsocketService) as unknown as jest.Mocked<Pick<HyperionWebsocketService, 'subscribeToJob' | 'unsubscribeFromJob'>>;
+        codeGenerationApi = TestBed.inject(HyperionCodeGenerationApiService) as unknown as { generateCode: Mock };
+        ws = TestBed.inject(HyperionWebsocketService) as unknown as { subscribeToJob: Mock; unsubscribeFromJob: Mock };
         profileService = TestBed.inject(ProfileService);
         repoService = TestBed.inject(CodeEditorRepositoryService);
         artemisIntelligenceService = TestBed.inject(ArtemisIntelligenceService);
         consistencyCheckService = TestBed.inject(ConsistencyCheckService);
 
         // Enable Hyperion by default so property initialization is deterministic
-        jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
 
         fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
         comp = fixture.componentInstance;
@@ -224,26 +217,26 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         // Mock codeEditorContainer and editableInstructions
         (comp as any).codeEditorContainer = {
-            actions: { executeRefresh: jest.fn() },
+            actions: { executeRefresh: vi.fn() },
             selectedFile: undefined as string | undefined,
-            selectedRepository: jest.fn().mockReturnValue('SOLUTION'),
+            selectedRepository: vi.fn().mockReturnValue('SOLUTION'),
             problemStatementIdentifier: 'problem_statement.md',
-            jumpToLine: jest.fn(),
+            jumpToLine: vi.fn(),
         };
 
         (comp as any).editableInstructions = {
-            jumpToLine: jest.fn(),
+            jumpToLine: vi.fn(),
         };
 
         // Mock jump helper methods
-        comp.selectTemplateParticipation = jest.fn().mockResolvedValue(undefined);
-        comp.selectSolutionParticipation = jest.fn().mockResolvedValue(undefined);
-        comp.selectTestRepository = jest.fn().mockResolvedValue(undefined);
+        comp.selectTemplateParticipation = vi.fn().mockResolvedValue(undefined);
+        comp.selectSolutionParticipation = vi.fn().mockResolvedValue(undefined);
+        comp.selectTestRepository = vi.fn().mockResolvedValue(undefined);
     });
 
     afterEach(() => {
         fixture?.destroy();
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     describe('Code Generation', () => {
@@ -266,7 +259,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         });
 
         it('should warn on unsupported repository types', () => {
-            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
             comp.selectedRepository = RepositoryType.ASSIGNMENT; // unsupported
 
             comp.generateCode();
@@ -278,12 +271,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         });
 
         it('should call API, subscribe, and show success alert on DONE success', async () => {
-            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
             comp.selectedRepository = RepositoryType.TEMPLATE;
 
-            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-1' }));
+            (codeGenerationApi.generateCode as Mock).mockReturnValue(of({ jobId: 'job-1' }));
             const job$ = new Subject<any>();
-            (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
+            (ws.subscribeToJob as Mock).mockReturnValue(job$.asObservable());
 
             comp.generateCode();
             await Promise.resolve(); // resolve modal
@@ -304,12 +297,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         });
 
         it('should call API, subscribe, and show partial success alert on DONE failure', async () => {
-            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
             comp.selectedRepository = RepositoryType.SOLUTION;
 
-            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-2' }));
+            (codeGenerationApi.generateCode as Mock).mockReturnValue(of({ jobId: 'job-2' }));
             const job$ = new Subject<any>();
-            (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
+            (ws.subscribeToJob as Mock).mockReturnValue(job$.asObservable());
 
             comp.generateCode();
             await Promise.resolve();
@@ -329,10 +322,10 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         });
 
         it('should show error alert on API error', async () => {
-            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
             comp.selectedRepository = RepositoryType.TESTS;
 
-            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(throwError(() => new Error('fail')) as any);
+            (codeGenerationApi.generateCode as Mock).mockReturnValue(throwError(() => new Error('fail')) as any);
 
             comp.generateCode();
             await Promise.resolve();
@@ -355,7 +348,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         });
 
         it('should compute hyperionEnabled as false when feature disabled', () => {
-            jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
 
             // Recreate the component so the property initializer runs with the new spy value
             fixture.destroy();
@@ -367,11 +360,11 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         it('should trigger repository pull on FILE_UPDATED and NEW_FILE events', async () => {
             comp.selectedRepository = RepositoryType.TEMPLATE;
-            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-3' }));
+            (codeGenerationApi.generateCode as Mock).mockReturnValue(of({ jobId: 'job-3' }));
 
             const job$ = new Subject<any>();
-            (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
-            const pullSpy = jest.spyOn(repoService, 'pull');
+            (ws.subscribeToJob as Mock).mockReturnValue(job$.asObservable());
+            const pullSpy = vi.spyOn(repoService, 'pull');
 
             comp.generateCode();
             await Promise.resolve();
@@ -384,9 +377,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         it('should call executeRefresh and cleanup on DONE', async () => {
             comp.selectedRepository = RepositoryType.SOLUTION;
-            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-4' }));
+            (codeGenerationApi.generateCode as Mock).mockReturnValue(of({ jobId: 'job-4' }));
             const job$ = new Subject<any>();
-            (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
+            (ws.subscribeToJob as Mock).mockReturnValue(job$.asObservable());
 
             const executeRefresh = (comp as any).codeEditorContainer.actions.executeRefresh;
 
@@ -402,11 +395,11 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         });
 
         it('should show danger alert and cleanup on ERROR event', async () => {
-            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
             comp.selectedRepository = RepositoryType.TEMPLATE;
-            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-5' }));
+            (codeGenerationApi.generateCode as Mock).mockReturnValue(of({ jobId: 'job-5' }));
             const job$ = new Subject<any>();
-            (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
+            (ws.subscribeToJob as Mock).mockReturnValue(job$.asObservable());
 
             comp.generateCode();
             await Promise.resolve();
@@ -420,10 +413,10 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         });
 
         it('should show danger alert and cleanup when job stream errors', async () => {
-            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
             comp.selectedRepository = RepositoryType.TESTS;
-            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-6' }));
-            (ws.subscribeToJob as jest.Mock).mockReturnValue(throwError(() => new Error('ws')));
+            (codeGenerationApi.generateCode as Mock).mockReturnValue(of({ jobId: 'job-6' }));
+            (ws.subscribeToJob as Mock).mockReturnValue(throwError(() => new Error('ws')));
 
             comp.generateCode();
             await Promise.resolve();
@@ -434,9 +427,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         });
 
         it('should show danger alert when response has no job id', async () => {
-            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
             comp.selectedRepository = RepositoryType.TEMPLATE;
-            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({}));
+            (codeGenerationApi.generateCode as Mock).mockReturnValue(of({}));
 
             comp.generateCode();
             await Promise.resolve();
@@ -446,9 +439,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         });
 
         it('should show timeout warning and cleanup when generation exceeds time limit', async () => {
-            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
             comp.selectedRepository = RepositoryType.SOLUTION;
-            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-7' }));
+            (codeGenerationApi.generateCode as Mock).mockReturnValue(of({ jobId: 'job-7' }));
 
             // Intercept setTimeout to capture the scheduled callback and invoke it immediately
             const originalSetTimeout = window.setTimeout;
@@ -460,7 +453,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             }) as any;
 
             try {
-                (ws.subscribeToJob as jest.Mock).mockReturnValue(new Subject<any>().asObservable());
+                (ws.subscribeToJob as Mock).mockReturnValue(new Subject<any>().asObservable());
                 comp.generateCode();
                 await Promise.resolve();
                 expect(comp.isGeneratingCode()).toBeTrue();
@@ -487,9 +480,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         error1.type = ErrorType.TEMPLATE_BUILD_PLAN_MISSING;
 
         it('runs full consistency check and shows success when no issues', () => {
-            const check1Spy = jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
-            const check2Spy = jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
-            const successSpy = jest.spyOn(alertService, 'success');
+            const check1Spy = vi.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
+            const check2Spy = vi.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
+            const successSpy = vi.spyOn(alertService, 'success');
 
             comp.checkConsistencies(comp.exercise!);
             expect(consistencyCheckService.checkConsistencyForProgrammingExercise).toHaveBeenCalledWith(42);
@@ -501,9 +494,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         });
 
         it('error when first consistency check fails', () => {
-            const check1Spy = jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([error1]));
-            const check2Spy = jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
-            const failSpy = jest.spyOn(alertService, 'error');
+            const check1Spy = vi.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([error1]));
+            const check2Spy = vi.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
+            const failSpy = vi.spyOn(alertService, 'error');
 
             comp.checkConsistencies(comp.exercise!);
             expect(consistencyCheckService.checkConsistencyForProgrammingExercise).toHaveBeenCalledWith(42);
@@ -514,9 +507,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         });
 
         it('error when exercise id undefined', () => {
-            const check1Spy = jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([error1]));
-            const check2Spy = jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
-            const failSpy = jest.spyOn(alertService, 'error');
+            const check1Spy = vi.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([error1]));
+            const check2Spy = vi.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
+            const failSpy = vi.spyOn(alertService, 'error');
 
             comp.checkConsistencies({ id: undefined } as any);
 
@@ -568,7 +561,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.selectedIssue = sorted[0];
             comp.locationIndex = 0;
 
-            const jumpSpy = jest.spyOn(comp as any, 'jumpToLocation').mockImplementation();
+            const jumpSpy = vi.spyOn(comp as any, 'jumpToLocation').mockImplementation();
 
             // Next step
             comp.navigateGlobal(1);
@@ -601,7 +594,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.selectedIssue = sorted[0];
             comp.locationIndex = 0;
 
-            const jumpSpy = jest.spyOn(comp as any, 'jumpToLocation').mockImplementation();
+            const jumpSpy = vi.spyOn(comp as any, 'jumpToLocation').mockImplementation();
 
             // Previous step -> Wrap to last issue, last location
             // Last issue is sorted[4] (Issue 3 Low), 1 location.
@@ -616,7 +609,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(jumpSpy).toHaveBeenCalledWith(lastIssue, lastLocIndex);
         });
 
-        it('navigates to PROBLEM_STATEMENT and calls jumpToLine', fakeAsync(() => {
+        it('navigates to PROBLEM_STATEMENT and calls jumpToLine', async () => {
             // Mock issue with ProblemStatement
             const issue = mockIssues[0]; // ProblemStatement issue
             const loc = issue.relatedLocations[0];
@@ -624,21 +617,21 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.selectedIssue = issue;
             comp.locationIndex = 0;
 
-            const jumpSpy = jest.spyOn((comp as any).editableInstructions, 'jumpToLine');
+            const jumpSpy = vi.spyOn((comp as any).editableInstructions, 'jumpToLine');
 
-            (comp as any).jumpToLocation(issue, 0); // Corrected: use (comp as any)
-            tick();
+            (comp as any).jumpToLocation(issue, 0);
+            await Promise.resolve();
 
             expect((comp as any).codeEditorContainer.selectedFile).toBe('problem_statement.md');
             expect(jumpSpy).toHaveBeenCalledWith(loc.endLine);
-        }));
+        });
 
         it('onEditorLoaded calls onFileLoad immediately when file is already selected', () => {
             const targetFile = 'src/tests/ExampleTest.java';
             comp.fileToJumpOn = targetFile;
             (comp as any).codeEditorContainer.selectedFile = targetFile;
 
-            const onFileLoadSpy = jest.spyOn(comp, 'onFileLoad');
+            const onFileLoadSpy = vi.spyOn(comp, 'onFileLoad');
 
             comp.onEditorLoaded();
 
@@ -651,7 +644,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.fileToJumpOn = targetFile;
             (comp as any).codeEditorContainer.selectedFile = 'some/other/file.java';
 
-            const onFileLoadSpy = jest.spyOn(comp, 'onFileLoad');
+            const onFileLoadSpy = vi.spyOn(comp, 'onFileLoad');
 
             comp.onEditorLoaded();
 
@@ -696,15 +689,15 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         it('shows error and clears jump state when repository selection fails', () => {
             const issue = mockIssues[3]; // TESTS_REPOSITORY
-            (comp as any).codeEditorContainer.selectedRepository = jest.fn().mockReturnValue('SOLUTION');
+            (comp as any).codeEditorContainer.selectedRepository = vi.fn().mockReturnValue('SOLUTION');
 
             const error = new Error('repo selection failed');
-            jest.spyOn(comp, 'selectTestRepository').mockImplementation(() => {
+            vi.spyOn(comp, 'selectTestRepository').mockImplementation(() => {
                 throw error;
             });
 
-            const alertErrorSpy = jest.spyOn(alertService, 'error');
-            const onEditorLoadedSpy = jest.spyOn(comp, 'onEditorLoaded');
+            const alertErrorSpy = vi.spyOn(alertService, 'error');
+            const onEditorLoadedSpy = vi.spyOn(comp, 'onEditorLoaded');
 
             (comp as any).jumpToLocation(issue, 0);
 
@@ -719,9 +712,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             (comp as any).showConsistencyIssuesToolbar.set(true);
             comp.selectedIssue = mockIssues[0];
 
-            jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
-            jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
-            jest.spyOn(alertService, 'success');
+            vi.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
+            vi.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
+            vi.spyOn(alertService, 'success');
 
             comp.checkConsistencies(comp.exercise!);
 
@@ -732,6 +725,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 });
 
 describe('CodeEditorInstructorAndEditorContainerComponent - Diff Editor', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let comp: CodeEditorInstructorAndEditorContainerComponent;
 
@@ -745,7 +740,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Diff Editor', () => 
 
     afterEach(() => {
         fixture?.destroy();
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should accept refinement and update problem statement', () => {
@@ -761,8 +756,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Diff Editor', () => 
         comp.showDiff.set(true);
         // Mock the internal editableInstructions to have revertAll and getCurrentContent methods
         const mockEditable = {
-            revertAll: jest.fn(),
-            getCurrentContent: jest.fn().mockReturnValue('Reverted content'),
+            revertAll: vi.fn(),
+            getCurrentContent: vi.fn().mockReturnValue('Reverted content'),
         };
         comp.editableInstructions = mockEditable as unknown as ProgrammingExerciseEditableInstructionComponent;
 
@@ -774,23 +769,26 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Diff Editor', () => 
 });
 
 describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Refinement', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let comp: CodeEditorInstructorAndEditorContainerComponent;
     let alertService: AlertService;
-    let hyperionApiService: jest.Mocked<Pick<HyperionProblemStatementApiService, 'refineProblemStatementGlobally' | 'generateProblemStatement'>>;
+    let hyperionApiService: { refineProblemStatementGlobally: Mock; generateProblemStatement: Mock };
 
     beforeEach(async () => {
         await configureTestBed([
             {
                 provide: HyperionProblemStatementApiService,
-                useValue: { refineProblemStatementGlobally: jest.fn(), generateProblemStatement: jest.fn() },
+                useValue: { refineProblemStatementGlobally: vi.fn(), generateProblemStatement: vi.fn() },
             },
         ]);
 
         alertService = TestBed.inject(AlertService);
-        hyperionApiService = TestBed.inject(HyperionProblemStatementApiService) as unknown as jest.Mocked<
-            Pick<HyperionProblemStatementApiService, 'refineProblemStatementGlobally' | 'generateProblemStatement'>
-        >;
+        hyperionApiService = TestBed.inject(HyperionProblemStatementApiService) as unknown as {
+            refineProblemStatementGlobally: Mock;
+            generateProblemStatement: Mock;
+        };
 
         fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
         comp = fixture.componentInstance;
@@ -799,7 +797,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
 
     afterEach(() => {
         fixture?.destroy();
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     // Full Refinement Tests
@@ -821,9 +819,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
     });
 
     it('should submit full refinement successfully', () => {
-        const successSpy = jest.spyOn(alertService, 'success');
+        const successSpy = vi.spyOn(alertService, 'success');
         const mockResponse: ProblemStatementRefinementResponse = { refinedProblemStatement: 'Refined content' };
-        (hyperionApiService.refineProblemStatementGlobally as jest.Mock).mockReturnValue(of(mockResponse));
+        (hyperionApiService.refineProblemStatementGlobally as Mock).mockReturnValue(of(mockResponse));
 
         comp.templateLoaded.set(true);
         comp.templateProblemStatement.set('Template');
@@ -863,8 +861,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
     });
 
     it('should handle full refinement API error', () => {
-        const errorSpy = jest.spyOn(alertService, 'error');
-        (hyperionApiService.refineProblemStatementGlobally as jest.Mock).mockReturnValue(throwError(() => new Error('API error')));
+        const errorSpy = vi.spyOn(alertService, 'error');
+        (hyperionApiService.refineProblemStatementGlobally as Mock).mockReturnValue(throwError(() => new Error('API error')));
 
         comp.templateLoaded.set(true);
         comp.templateProblemStatement.set('Template');
