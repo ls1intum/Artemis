@@ -113,12 +113,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         var configurationFromRequest = request.get(this.getTutorialGroupsConfigurationPath(courseId), HttpStatus.OK, TutorialGroupConfigurationDTO.class);
         // then
         var expected = TutorialGroupConfigurationDTO.of(configuration);
-
-        var normalizedActual = new TutorialGroupConfigurationDTO(configurationFromRequest.id(), configurationFromRequest.tutorialPeriodStartInclusive(),
-                configurationFromRequest.tutorialPeriodEndInclusive(), configurationFromRequest.useTutorialGroupChannels(),
-                configurationFromRequest.usePublicTutorialGroupChannels(),
-                configurationFromRequest.tutorialGroupFreePeriods() == null ? Set.of() : configurationFromRequest.tutorialGroupFreePeriods());
-
+        var normalizedActual = withNormalizedFreePeriods(configurationFromRequest);
         assertThat(normalizedActual).isEqualTo(expected);
     }
 
@@ -283,5 +278,10 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
                 persistedSchedule.getLocation(), TutorialGroupSessionStatus.ACTIVE, null);
         assertThat(tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(courseId)).hasSize(0);
 
+    }
+
+    private TutorialGroupConfigurationDTO withNormalizedFreePeriods(TutorialGroupConfigurationDTO dto) {
+        return new TutorialGroupConfigurationDTO(dto.id(), dto.tutorialPeriodStartInclusive(), dto.tutorialPeriodEndInclusive(), dto.useTutorialGroupChannels(),
+                dto.usePublicTutorialGroupChannels(), dto.tutorialGroupFreePeriods() == null ? Set.of() : dto.tutorialGroupFreePeriods());
     }
 }

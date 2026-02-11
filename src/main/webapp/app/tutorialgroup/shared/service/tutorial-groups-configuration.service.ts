@@ -2,7 +2,6 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { convertDateFromServer, toISO8601DateString } from 'app/shared/util/date.utils';
-import { map } from 'rxjs/operators';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { TutorialGroupConfigurationDTO } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
@@ -15,25 +14,19 @@ export class TutorialGroupsConfigurationService {
     private resourceURL = 'api/tutorialgroup';
 
     getOneOfCourse(courseId: number) {
-        return this.httpClient
-            .get<TutorialGroupConfigurationDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration`, { observe: 'response' })
-            .pipe(map((res: DtoResponseType) => res));
+        return this.httpClient.get<TutorialGroupConfigurationDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration`, { observe: 'response' });
     }
 
     create(tutorialGroupsConfigurationDto: TutorialGroupConfigurationDTO, courseId: number, period: Date[]): Observable<DtoResponseType> {
         const copy = this.convertTutorialGroupsConfigurationDatesFromClient(tutorialGroupsConfigurationDto, period);
-        return this.httpClient
-            .post<TutorialGroupConfigurationDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration`, copy, { observe: 'response' })
-            .pipe(map((res: DtoResponseType) => res));
+        return this.httpClient.post<TutorialGroupConfigurationDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration`, copy, { observe: 'response' });
     }
 
     update(courseId: number, tutorialGroupConfigurationId: number, tutorialGroupsConfigurationDto: TutorialGroupConfigurationDTO, period: Date[]): Observable<DtoResponseType> {
         const copy = this.convertTutorialGroupsConfigurationDatesFromClient(tutorialGroupsConfigurationDto, period);
-        return this.httpClient
-            .put<TutorialGroupConfigurationDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupConfigurationId}`, copy, {
-                observe: 'response',
-            })
-            .pipe(map((res: DtoResponseType) => res));
+        return this.httpClient.put<TutorialGroupConfigurationDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupConfigurationId}`, copy, {
+            observe: 'response',
+        });
     }
 
     convertTutorialGroupsConfigurationDatesFromServer(tutorialGroupsConfiguration: TutorialGroupsConfiguration): TutorialGroupsConfiguration {
