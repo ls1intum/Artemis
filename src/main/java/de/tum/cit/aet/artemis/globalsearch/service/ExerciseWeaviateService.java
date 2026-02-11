@@ -15,8 +15,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entitySchemas.ProgrammingExerciseSchema;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entitySchemas.ExerciseSchema;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import io.weaviate.client6.v1.api.collections.query.Filter;
 
 /**
@@ -127,42 +130,81 @@ public class ExerciseWeaviateService {
      */
     private void insertExerciseIntoWeaviate(Exercise exercise) throws Exception {
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        var collection = weaviateService.get().getCollection(ProgrammingExerciseSchema.COLLECTION_NAME);
+        var collection = weaviateService.get().getCollection(ExerciseSchema.COLLECTION_NAME);
 
         Map<String, Object> properties = new HashMap<>();
-        properties.put(ProgrammingExerciseSchema.Properties.EXERCISE_ID, exercise.getId());
-        properties.put(ProgrammingExerciseSchema.Properties.COURSE_ID, course.getId());
-        properties.put(ProgrammingExerciseSchema.Properties.TITLE, exercise.getTitle());
-        properties.put(ProgrammingExerciseSchema.Properties.EXERCISE_TYPE, exercise.getType());
-        properties.put(ProgrammingExerciseSchema.Properties.MAX_POINTS, exercise.getMaxPoints() != null ? exercise.getMaxPoints() : 0.0);
+        properties.put(ExerciseSchema.Properties.EXERCISE_ID, exercise.getId());
+        properties.put(ExerciseSchema.Properties.COURSE_ID, course.getId());
+        properties.put(ExerciseSchema.Properties.TITLE, exercise.getTitle());
+        properties.put(ExerciseSchema.Properties.EXERCISE_TYPE, exercise.getType());
+        properties.put(ExerciseSchema.Properties.MAX_POINTS, exercise.getMaxPoints() != null ? exercise.getMaxPoints() : 0.0);
 
-        // Add optional fields only if they are not null
+        // Add optional shared fields only if they are not null
         if (course.getTitle() != null) {
-            properties.put(ProgrammingExerciseSchema.Properties.COURSE_NAME, course.getTitle());
+            properties.put(ExerciseSchema.Properties.COURSE_NAME, course.getTitle());
         }
         if (exercise.getShortName() != null) {
-            properties.put(ProgrammingExerciseSchema.Properties.SHORT_NAME, exercise.getShortName());
+            properties.put(ExerciseSchema.Properties.SHORT_NAME, exercise.getShortName());
         }
         if (exercise.getProblemStatement() != null) {
-            properties.put(ProgrammingExerciseSchema.Properties.PROBLEM_STATEMENT, exercise.getProblemStatement());
+            properties.put(ExerciseSchema.Properties.PROBLEM_STATEMENT, exercise.getProblemStatement());
         }
         if (exercise.getReleaseDate() != null) {
-            properties.put(ProgrammingExerciseSchema.Properties.RELEASE_DATE, formatDate(exercise.getReleaseDate()));
+            properties.put(ExerciseSchema.Properties.RELEASE_DATE, formatDate(exercise.getReleaseDate()));
         }
         if (exercise.getStartDate() != null) {
-            properties.put(ProgrammingExerciseSchema.Properties.START_DATE, formatDate(exercise.getStartDate()));
+            properties.put(ExerciseSchema.Properties.START_DATE, formatDate(exercise.getStartDate()));
         }
         if (exercise.getDueDate() != null) {
-            properties.put(ProgrammingExerciseSchema.Properties.DUE_DATE, formatDate(exercise.getDueDate()));
-        }
-        if (exercise instanceof ProgrammingExercise programmingExercise && programmingExercise.getProgrammingLanguage() != null) {
-            properties.put(ProgrammingExerciseSchema.Properties.PROGRAMMING_LANGUAGE, programmingExercise.getProgrammingLanguage().name());
+            properties.put(ExerciseSchema.Properties.DUE_DATE, formatDate(exercise.getDueDate()));
         }
         if (exercise.getDifficulty() != null) {
-            properties.put(ProgrammingExerciseSchema.Properties.DIFFICULTY, exercise.getDifficulty().name());
+            properties.put(ExerciseSchema.Properties.DIFFICULTY, exercise.getDifficulty().name());
         }
 
+        addExerciseTypeSpecificProperties(exercise, properties);
+
         collection.data.insert(properties);
+    }
+
+    /**
+     * Adds exercise type-specific properties to the Weaviate property map based on the exercise type.
+     *
+     * @param exercise   the exercise
+     * @param properties the property map to populate
+     */
+    private void addExerciseTypeSpecificProperties(Exercise exercise, Map<String, Object> properties) {
+        switch (exercise) {
+            case ProgrammingExercise programmingExercise -> {
+                if (programmingExercise.getProgrammingLanguage() != null) {
+                    properties.put(ExerciseSchema.Properties.PROGRAMMING_LANGUAGE, programmingExercise.getProgrammingLanguage().name());
+                }
+                if (programmingExercise.getProjectType() != null) {
+                    properties.put(ExerciseSchema.Properties.PROJECT_TYPE, programmingExercise.getProjectType().name());
+                }
+            }
+            case ModelingExercise modelingExercise -> {
+                if (modelingExercise.getDiagramType() != null) {
+                    properties.put(ExerciseSchema.Properties.DIAGRAM_TYPE, modelingExercise.getDiagramType().name());
+                }
+            }
+            case QuizExercise quizExercise -> {
+                if (quizExercise.getQuizMode() != null) {
+                    properties.put(ExerciseSchema.Properties.QUIZ_MODE, quizExercise.getQuizMode().name());
+                }
+                if (quizExercise.getDuration() != null) {
+                    properties.put(ExerciseSchema.Properties.QUIZ_DURATION, quizExercise.getDuration());
+                }
+            }
+            case FileUploadExercise fileUploadExercise -> {
+                if (fileUploadExercise.getFilePattern() != null) {
+                    properties.put(ExerciseSchema.Properties.FILE_PATTERN, fileUploadExercise.getFilePattern());
+                }
+            }
+            default -> {
+                // TextExercise and any other types have no additional properties
+            }
+        }
     }
 
     /**
@@ -171,8 +213,8 @@ public class ExerciseWeaviateService {
      * @param exerciseId the exercise ID
      */
     private void deleteExerciseFromWeaviate(long exerciseId) {
-        var collection = weaviateService.get().getCollection(ProgrammingExerciseSchema.COLLECTION_NAME);
-        var deleteResult = collection.data.deleteMany(Filter.property(ProgrammingExerciseSchema.Properties.EXERCISE_ID).eq(exerciseId));
+        var collection = weaviateService.get().getCollection(ExerciseSchema.COLLECTION_NAME);
+        var deleteResult = collection.data.deleteMany(Filter.property(ExerciseSchema.Properties.EXERCISE_ID).eq(exerciseId));
         log.debug("Deleted {} exercise entries for exercise ID {}", deleteResult.successful(), exerciseId);
     }
 

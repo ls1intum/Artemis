@@ -5,12 +5,12 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import de.tum.cit.aet.artemis.globalsearch.config.schema.entitySchemas.ProgrammingExerciseSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entitySchemas.ExerciseSchema;
 
 /**
  * Registry of all Weaviate collection schemas defined in Artemis.
  * <p>
- * Individual schema definitions live in their own classes (e.g. {@link ProgrammingExerciseSchema}).
+ * Individual schema definitions live in their own classes (e.g. {@link ExerciseSchema}).
  * This class aggregates them for startup initialization and lookup.
  */
 public final class WeaviateSchemas {
@@ -24,7 +24,7 @@ public final class WeaviateSchemas {
     /**
      * List of all Weaviate collection schemas defined in Artemis.
      */
-    public static final List<WeaviateCollectionSchema> ALL_SCHEMAS = List.of(ProgrammingExerciseSchema.SCHEMA);
+    public static final List<WeaviateCollectionSchema> ALL_SCHEMAS = List.of(ExerciseSchema.SCHEMA);
 
     /**
      * Map of collection name to schema for quick lookup.
