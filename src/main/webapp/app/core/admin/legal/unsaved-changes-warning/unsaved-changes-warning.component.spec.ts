@@ -2,7 +2,7 @@
  * Vitest tests for UnsavedChangesWarningComponent.
  * Tests the modal warning functionality for unsaved changes.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
@@ -24,6 +24,10 @@ describe('UnsavedChangesWarningComponent', () => {
         fixture = TestBed.createComponent(UnsavedChangesWarningComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should create component', () => {

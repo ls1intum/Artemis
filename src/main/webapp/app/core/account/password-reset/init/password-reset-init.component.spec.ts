@@ -1,7 +1,7 @@
 /**
  * Vitest tests for PasswordResetInitComponent.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed, inject } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FormBuilder } from '@angular/forms';
@@ -39,6 +39,10 @@ describe('PasswordResetInitComponent', () => {
 
         fixture = TestBed.createComponent(PasswordResetInitComponent);
         comp = fixture.componentInstance;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('sets focus after the view has been initialized', () => {

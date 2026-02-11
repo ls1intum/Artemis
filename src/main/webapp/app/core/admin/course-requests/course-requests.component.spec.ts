@@ -74,7 +74,7 @@ describe('CourseRequestsComponent', () => {
     };
 
     beforeEach(async () => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
 
         await TestBed.configureTestingModule({
             imports: [CourseRequestsComponent, TranslateModule.forRoot(), OwlNativeDateTimeModule],

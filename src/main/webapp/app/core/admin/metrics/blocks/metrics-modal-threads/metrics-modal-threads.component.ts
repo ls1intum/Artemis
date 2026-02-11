@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { Component, OnInit, input, model } from '@angular/core';
+import { Component, computed, input, model, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
@@ -14,58 +14,41 @@ import { DialogModule } from 'primeng/dialog';
     templateUrl: './metrics-modal-threads.component.html',
     imports: [TranslateDirective, FaIconComponent, FormsModule, NgClass, ArtemisTranslatePipe, DialogModule],
 })
-export class MetricsModalThreadsComponent implements OnInit {
+export class MetricsModalThreadsComponent {
     ThreadState = ThreadState;
 
-    private threadStateFilter?: ThreadState;
+    private threadStateFilter = signal<ThreadState | undefined>(undefined);
     get selectedThreadState(): ThreadState | undefined {
-        return this.threadStateFilter;
+        return this.threadStateFilter();
     }
 
     readonly visible = model<boolean>(false);
     readonly threads = input<Thread[]>([]);
 
     set selectedThreadState(newValue: ThreadState | undefined) {
-        this.threadStateFilter = newValue;
-        this.refreshFilteredThreads();
+        this.threadStateFilter.set(newValue);
     }
 
-    threadFilter?: string;
+    private readonly _threadFilter = signal<string | undefined>(undefined);
+    get threadFilter(): string | undefined {
+        return this._threadFilter();
+    }
+    set threadFilter(value: string | undefined) {
+        this._threadFilter.set(value);
+    }
 
-    filteredThreads: Thread[] = [];
+    readonly threadDumpRunnable = computed(() => this.threads().filter((t) => t.threadState === ThreadState.Runnable).length);
+    readonly threadDumpWaiting = computed(() => this.threads().filter((t) => t.threadState === ThreadState.Waiting).length);
+    readonly threadDumpTimedWaiting = computed(() => this.threads().filter((t) => t.threadState === ThreadState.TimedWaiting).length);
+    readonly threadDumpBlocked = computed(() => this.threads().filter((t) => t.threadState === ThreadState.Blocked).length);
+    readonly threadDumpAll = computed(() => this.threadDumpRunnable() + this.threadDumpWaiting() + this.threadDumpTimedWaiting() + this.threadDumpBlocked());
 
-    threadDumpAll = 0;
-    threadDumpBlocked = 0;
-    threadDumpRunnable = 0;
-    threadDumpTimedWaiting = 0;
-    threadDumpWaiting = 0;
+    readonly filteredThreads = computed(() => {
+        return this.threads().filter((thread) => this.isMatchingTextFilter(thread) && this.isMatchingSelectedThreadState(thread));
+    });
 
     // Icons
     faCheck = faCheck;
-
-    ngOnInit(): void {
-        this.threads().forEach((thread) => {
-            switch (thread.threadState) {
-                case ThreadState.Runnable:
-                    this.threadDumpRunnable += 1;
-                    break;
-                case ThreadState.Waiting:
-                    this.threadDumpWaiting += 1;
-                    break;
-                case ThreadState.TimedWaiting:
-                    this.threadDumpTimedWaiting += 1;
-                    break;
-                case ThreadState.Blocked:
-                    this.threadDumpBlocked += 1;
-                    break;
-                default:
-                    break;
-            }
-        });
-
-        this.threadDumpAll = this.threadDumpRunnable + this.threadDumpWaiting + this.threadDumpTimedWaiting + this.threadDumpBlocked;
-        this.filteredThreads = this.threads();
-    }
 
     getBgClass(threadState: ThreadState): string {
         switch (threadState) {
@@ -83,7 +66,8 @@ export class MetricsModalThreadsComponent implements OnInit {
     }
 
     private isMatchingTextFilter(thread: Thread): boolean {
-        if (this.threadFilter == undefined) {
+        const filter = this._threadFilter();
+        if (filter == undefined) {
             return true;
         }
 
@@ -91,19 +75,16 @@ export class MetricsModalThreadsComponent implements OnInit {
         const filteredAttributes = ['threadName', 'threadId', 'blockedTime', 'blockedCount', 'waitedTime', 'waitedCount', 'lockName'];
         return Object.keys(thread)
             .filter((key) => filteredAttributes.includes(key))
-            .some((key) => thread[key as keyof Thread]?.toString().toLowerCase().includes(this.threadFilter!.toLowerCase()));
+            .some((key) => thread[key as keyof Thread]?.toString().toLowerCase().includes(filter.toLowerCase()));
     }
 
     private isMatchingSelectedThreadState(thread: Thread): boolean {
-        if (this.selectedThreadState == undefined) {
+        const state = this.threadStateFilter();
+        if (state == undefined) {
             return true;
         }
 
-        return thread.threadState === this.selectedThreadState!;
-    }
-
-    refreshFilteredThreads() {
-        this.filteredThreads = this.threads()?.filter((thread) => this.isMatchingTextFilter(thread) && this.isMatchingSelectedThreadState(thread)) ?? [];
+        return thread.threadState === state;
     }
 
     dismiss(): void {

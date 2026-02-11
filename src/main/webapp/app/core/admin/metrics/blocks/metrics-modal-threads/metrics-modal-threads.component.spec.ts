@@ -55,19 +55,19 @@ describe('MetricsModalThreadsComponent', () => {
     });
 
     afterEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
     });
 
-    describe('onInit', () => {
+    describe('thread counts', () => {
         it('should count all thread types', () => {
             fixture.componentRef.setInput('threads', runnableThreads.concat(waitingThreads));
             fixture.detectChanges();
 
-            expect(comp.threadDumpAll).toBe(comp.threads().length);
-            expect(comp.threadDumpBlocked).toBe(0);
-            expect(comp.threadDumpRunnable).toBe(runnableThreads.length);
-            expect(comp.threadDumpTimedWaiting).toBe(0);
-            expect(comp.threadDumpWaiting).toBe(waitingThreads.length);
+            expect(comp.threadDumpAll()).toBe(comp.threads().length);
+            expect(comp.threadDumpBlocked()).toBe(0);
+            expect(comp.threadDumpRunnable()).toBe(runnableThreads.length);
+            expect(comp.threadDumpTimedWaiting()).toBe(0);
+            expect(comp.threadDumpWaiting()).toBe(waitingThreads.length);
         });
     });
 
@@ -88,9 +88,7 @@ describe('MetricsModalThreadsComponent', () => {
             fixture.detectChanges();
             comp.selectedThreadState = undefined;
 
-            comp.refreshFilteredThreads();
-
-            expect(comp.filteredThreads).toEqual(runnableThreads.concat(waitingThreads));
+            expect(comp.filteredThreads()).toEqual(runnableThreads.concat(waitingThreads));
         });
 
         it('should filter threads by selected thread state', () => {
@@ -98,9 +96,7 @@ describe('MetricsModalThreadsComponent', () => {
             fixture.detectChanges();
             comp.selectedThreadState = ThreadState.Runnable;
 
-            comp.refreshFilteredThreads();
-
-            expect(comp.filteredThreads).toEqual(runnableThreads);
+            expect(comp.filteredThreads()).toEqual(runnableThreads);
         });
 
         it('should return all threads when filter text is undefined', () => {
@@ -108,9 +104,7 @@ describe('MetricsModalThreadsComponent', () => {
             fixture.detectChanges();
             comp.threadFilter = undefined;
 
-            comp.refreshFilteredThreads();
-
-            expect(comp.filteredThreads).toEqual(runnableThreads.concat(waitingThreads));
+            expect(comp.filteredThreads()).toEqual(runnableThreads.concat(waitingThreads));
         });
 
         it('should filter threads by filter text', () => {
@@ -118,9 +112,7 @@ describe('MetricsModalThreadsComponent', () => {
             fixture.detectChanges();
             comp.threadFilter = '2';
 
-            comp.refreshFilteredThreads();
-
-            expect(comp.filteredThreads).toEqual([runnableThreads[1]]);
+            expect(comp.filteredThreads()).toEqual([runnableThreads[1]]);
         });
 
         it('should filter by both thread state and filter text', () => {
@@ -129,9 +121,7 @@ describe('MetricsModalThreadsComponent', () => {
             comp.threadFilter = '2';
             comp.selectedThreadState = ThreadState.Waiting;
 
-            comp.refreshFilteredThreads();
-
-            expect(comp.filteredThreads).toEqual([]);
+            expect(comp.filteredThreads()).toEqual([]);
         });
     });
 

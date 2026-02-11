@@ -2,7 +2,7 @@
  * Vitest tests for CleanupOperationModalComponent.
  * Tests the modal component for executing and monitoring cleanup operations.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentRef, signal } from '@angular/core';
@@ -95,6 +95,10 @@ describe('CleanupOperationModalComponent', () => {
         component = fixture.componentInstance;
         componentRef = fixture.componentRef;
         dataCleanupService = TestBed.inject(DataCleanupService);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should create component', () => {

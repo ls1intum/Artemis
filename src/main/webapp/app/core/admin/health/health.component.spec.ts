@@ -1,7 +1,7 @@
 /**
  * Vitest tests for HealthComponent.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
@@ -30,6 +30,10 @@ describe('HealthComponent', () => {
         fixture = TestBed.createComponent(HealthComponent);
         comp = fixture.componentInstance;
         healthService = TestBed.inject(HealthService);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should return bg-success class for UP status', () => {

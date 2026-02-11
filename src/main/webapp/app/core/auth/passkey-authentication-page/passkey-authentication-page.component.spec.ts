@@ -93,7 +93,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
             fixture.detectChanges();
 
             // Wait for all promises to resolve
-            await new Promise(process.nextTick);
+            await fixture.whenStable();
 
             expect(navigateByUrlSpy).toHaveBeenCalledWith('/admin/user-management');
         });

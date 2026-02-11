@@ -65,7 +65,7 @@ describe('VcsAccessTokensSettingsComponent', () => {
     });
 
     afterEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
         fixture.destroy();
         TestBed.resetTestingModule();
     });

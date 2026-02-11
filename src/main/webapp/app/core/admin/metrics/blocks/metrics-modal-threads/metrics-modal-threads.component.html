@@ -7,37 +7,37 @@
             @if (selectedThreadState === undefined) {
                 <fa-icon [icon]="faCheck" />
             }
-            All&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpAll }}</span>
+            All&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpAll() }}</span>
         </span>
         <span class="badge bg-success hand" (click)="selectedThreadState = ThreadState.Runnable">
             @if (selectedThreadState === ThreadState.Runnable) {
                 <fa-icon [icon]="faCheck" />
             }
-            Runnable&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpRunnable }}</span>
+            Runnable&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpRunnable() }}</span>
         </span>
         <span class="badge bg-info hand" (click)="selectedThreadState = ThreadState.Waiting">
             @if (selectedThreadState === ThreadState.Waiting) {
                 <fa-icon [icon]="faCheck" />
             }
-            Waiting&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpWaiting }}</span>
+            Waiting&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpWaiting() }}</span>
         </span>
         <span class="badge bg-warning hand" (click)="selectedThreadState = ThreadState.TimedWaiting">
             @if (selectedThreadState === ThreadState.TimedWaiting) {
                 <fa-icon [icon]="faCheck" />
             }
-            Timed Waiting&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpTimedWaiting }}</span>
+            Timed Waiting&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpTimedWaiting() }}</span>
         </span>
         <span class="badge bg-danger hand" (click)="selectedThreadState = ThreadState.Blocked">
             @if (selectedThreadState === ThreadState.Blocked) {
                 <fa-icon [icon]="faCheck" />
             }
-            Blocked&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpBlocked }}</span>
+            Blocked&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpBlocked() }}</span>
         </span>
     </div>
     <div class="mt-2">&nbsp;</div>
-    {{ 'metrics.filter' | artemisTranslate }}: {{ filteredThreads.length }} {{ 'metrics.matches' | artemisTranslate }}
-    <input type="text" (keyup)="refreshFilteredThreads()" [(ngModel)]="threadFilter" class="form-control" />
-    @for (thread of filteredThreads; track thread) {
+    {{ 'metrics.filter' | artemisTranslate }}: {{ filteredThreads().length }} {{ 'metrics.matches' | artemisTranslate }}
+    <input type="text" [(ngModel)]="threadFilter" class="form-control" />
+    @for (thread of filteredThreads(); track thread) {
         <div class="pad">
             <h6>
                 <span class="badge" [ngClass]="getBgClass(thread.threadState)">{{ thread.threadState }}</span>

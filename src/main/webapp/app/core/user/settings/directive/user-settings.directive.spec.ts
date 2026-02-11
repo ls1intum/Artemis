@@ -83,7 +83,7 @@ describe('User Settings Directive', () => {
     });
 
     afterEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('ngOnInit', () => {

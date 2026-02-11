@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
@@ -22,6 +22,10 @@ describe('CourseManagementResolve', () => {
         resolver = TestBed.inject(CourseManagementResolve);
         service = TestBed.inject(CourseManagementService);
         route = new ActivatedRouteSnapshot();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should return course when courseId param is present', () => {

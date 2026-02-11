@@ -38,6 +38,7 @@ describe('AdminSystemNotificationService', () => {
 
     afterEach(() => {
         httpMock.verify();
+        vi.restoreAllMocks();
     });
 
     describe('create', () => {

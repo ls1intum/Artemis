@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -29,6 +29,7 @@ describe('SshUserSettingsFingerprintsService', () => {
     it('should get SSH fingerprints', async () => {
         const promise = sshFingerprintsService.getSshFingerprints();
         const req = httpMock.expectOne({ method: 'GET', url: getUserUrl });
+        expect(req.request.url).toBe(getUserUrl);
         req.flush({});
         await promise;
     });

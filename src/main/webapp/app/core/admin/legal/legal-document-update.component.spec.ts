@@ -65,7 +65,7 @@ describe('LegalDocumentUpdateComponent', () => {
     });
 
     afterEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should show warning on language change with unsaved changes', () => {

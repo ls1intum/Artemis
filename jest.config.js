@@ -104,7 +104,7 @@ module.exports = {
     coveragePathIgnorePatterns: [
         '<rootDir>/src/main/webapp/app/assessment/',        // assessment module uses Vitest
         '<rootDir>/src/main/webapp/app/buildagent/',        // buildagent module uses Vitest
-        '<rootDir>/src/main/webapp/app/core/',              // core account module uses Vitest
+        '<rootDir>/src/main/webapp/app/core/',              // core module uses Vitest
         '<rootDir>/src/main/webapp/app/fileupload/',        // fileupload module uses Vitest
         '<rootDir>/src/main/webapp/app/iris/',              // iris module uses Vitest
         '<rootDir>/src/main/webapp/app/lecture/',           // lecture module uses Vitest
@@ -148,7 +148,7 @@ module.exports = {
     testPathIgnorePatterns: [
         '<rootDir>/src/main/webapp/app/assessment/',    // assessment module
         '<rootDir>/src/main/webapp/app/buildagent/',    // buildagent module
-        '<rootDir>/src/main/webapp/app/core/',          // core account module
+        '<rootDir>/src/main/webapp/app/core/',          // core module
         '<rootDir>/src/main/webapp/app/fileupload/',    // fileupload module
         '<rootDir>/src/main/webapp/app/iris/',          // iris module
         '<rootDir>/src/main/webapp/app/lecture/',       // lecture module

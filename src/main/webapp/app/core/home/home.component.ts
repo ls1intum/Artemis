@@ -1,4 +1,5 @@
-import { AfterViewChecked, Component, OnInit, Renderer2, inject, signal } from '@angular/core';
+import { AfterViewChecked, Component, DestroyRef, OnInit, Renderer2, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { Credentials } from 'app/core/auth/auth-jwt.service';
@@ -46,6 +47,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     private readonly translateService = inject(TranslateService);
     private readonly webauthnService = inject(WebauthnService);
     private readonly localStorageService = inject(LocalStorageService);
+    private readonly destroyRef = inject(DestroyRef);
 
     protected usernameTouched = false;
     protected passwordTouched = false;
@@ -150,13 +152,13 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             this.usernameRegexPattern = new RegExp(/^(?!.*@.*@)[a-zA-Z0-9.@_-]{7,50}$/);
         }
         this.usernamePlaceholderTranslated = this.translateService.instant(this.usernamePlaceholder);
-        this.translateService.onLangChange.subscribe(() => {
+        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             this.usernamePlaceholderTranslated = this.translateService.instant(this.usernamePlaceholder);
         });
 
         this.isRegistrationEnabled = !!this.profileInfo.registrationEnabled;
         this.needsToAcceptTerms = !!this.profileInfo.needsToAcceptTerms;
-        this.activatedRoute.queryParams.subscribe((params) => {
+        this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             const loginFormOverride = params.hasOwnProperty('showLoginForm');
             this.isPasswordLoginDisabled = !!this.profileInfo?.saml2 && this.profileInfo.saml2.passwordLoginDisabled && !loginFormOverride;
         });

@@ -274,7 +274,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Inits the available filter and maps the functions.
      */
     initFilters() {
-        const filters = this.filters();
+        const filters = new UserFilter();
         filters.authorityFilter = this.initFilter<AuthorityFilter>(UserStorageKey.AUTHORITY, AuthorityFilter);
         filters.originFilter = this.initFilter<OriginFilter>(UserStorageKey.ORIGIN, OriginFilter);
         filters.registrationNumberFilter = this.initFilter<RegistrationNumberFilter>(UserStorageKey.REGISTRATION_NUMBER, RegistrationNumberFilter);
@@ -317,7 +317,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Method to add or remove an authority filter and store the selected authority filters in the local store if required.
      */
     toggleAuthorityFilter(filter: Set<AuthorityFilter>, value: AuthorityFilter) {
-        this.filters().noAuthority = false;
         this.updateNoAuthority(false);
         this.toggleFilter<AuthorityFilter>(filter, value, this.authorityKey);
     }
@@ -397,14 +396,18 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     updateNoAuthority(value: boolean) {
         this.localStorageService.store<boolean>(UserStorageKey.NO_AUTHORITY, value);
-        this.filters().noAuthority = value;
+        const filters = Object.assign(new UserFilter(), this.filters());
+        filters.noAuthority = value;
+        this.filters.set(filters);
     }
 
     /**
      * Deselect all roles
      */
     deselectAllRoles() {
-        this.filters().authorityFilter.clear();
+        const filters = Object.assign(new UserFilter(), this.filters());
+        filters.authorityFilter = new Set();
+        this.filters.set(filters);
         this.localStorageService.remove(UserStorageKey.AUTHORITY);
         this.updateNoAuthority(false);
     }
@@ -413,7 +416,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Select empty roles
      */
     selectEmptyRoles() {
-        this.filters().authorityFilter.clear();
+        const filters = Object.assign(new UserFilter(), this.filters());
+        filters.authorityFilter = new Set();
+        this.filters.set(filters);
         this.updateNoAuthority(true);
     }
 
@@ -421,7 +426,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Select all roles
      */
     selectAllRoles() {
-        this.filters().authorityFilter = new Set(this.authorityFilters);
+        const filters = Object.assign(new UserFilter(), this.filters());
+        filters.authorityFilter = new Set(this.authorityFilters);
+        this.filters.set(filters);
         this.updateNoAuthority(false);
     }
 

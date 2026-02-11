@@ -20,7 +20,7 @@ import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-route
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
+import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 import { User } from 'app/core/user/user.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { Saml2LoginComponent } from './saml2-login/saml2-login.component';

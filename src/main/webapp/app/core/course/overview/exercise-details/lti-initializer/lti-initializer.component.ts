@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LtiInitializerModalComponent } from 'app/core/course/overview/exercise-details/lti-initializer/lti-initializer-modal.component';
 import { UserService } from 'app/core/user/shared/user.service';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -16,13 +17,14 @@ export class LtiInitializerComponent implements OnInit {
     private router = inject(Router);
     private activatedRoute = inject(ActivatedRoute);
     private accountService = inject(AccountService);
+    private destroyRef = inject(DestroyRef);
 
     showLtiModal = signal(false);
     ltiLoginName = signal('');
     ltiPassword = signal('');
 
     ngOnInit() {
-        this.activatedRoute.queryParams.subscribe((queryParams) => {
+        this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((queryParams) => {
             if (queryParams['initialize'] !== undefined) {
                 this.userService.initializeLTIUser().subscribe((res) => {
                     const password = res.body?.password;
