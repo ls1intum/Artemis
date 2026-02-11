@@ -275,8 +275,8 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             WHERE e.course.instructorGroupName IN :groups
                 AND (
                     CONCAT(e.id, '') = :searchTerm
-                    OR e.title LIKE %:searchTerm%
-                    OR e.course.title LIKE %:searchTerm%
+                    OR LOWER(e.title) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
+                    OR LOWER(e.course.title) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
                 )
             """)
     Page<Exam> queryBySearchTermInCoursesWhereInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
@@ -296,8 +296,8 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
                 AND e.exerciseGroups IS NOT EMPTY
                 AND (
                     CONCAT(e.id, '') = :searchTerm
-                    OR e.title LIKE %:searchTerm%
-                    OR e.course.title LIKE %:searchTerm%
+                    OR LOWER(e.title) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
+                    OR LOWER(e.course.title) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
                 )
             """)
     Page<Exam> queryNonEmptyBySearchTermInCoursesWhereInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
@@ -314,8 +314,8 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             FROM Exam e
             WHERE (
                 CONCAT(e.id, '') = :searchTerm
-                OR e.title LIKE %:searchTerm%
-                OR e.course.title LIKE %:searchTerm%
+                OR LOWER(e.title) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
+                OR LOWER(e.course.title) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
             )
             """)
     Page<Exam> queryBySearchTermInAllCourses(@Param("searchTerm") String searchTerm, Pageable pageable);
@@ -333,8 +333,8 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             WHERE e.exerciseGroups IS NOT EMPTY
                 AND (
                     CONCAT(e.id, '') = :searchTerm
-                    OR e.title LIKE %:searchTerm%
-                    OR e.course.title LIKE %:searchTerm%
+                    OR LOWER(e.title) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
+                    OR LOWER(e.course.title) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
                 )
             """)
     Page<Exam> queryNonEmptyBySearchTermInAllCourses(@Param("searchTerm") String searchTerm, Pageable pageable);
