@@ -374,7 +374,7 @@ public class HyperionCodeGenerationExecutionService {
      * Builds a prompt-friendly summary of consistency check issues for the given exercise.
      *
      * @param exercise the programming exercise to analyze
-     * @return formatted consistency issues or {@code "None"} when no issues are found or the check fails
+     * @return formatted consistency issues, {@code "None"} when no issues are found, or a failure marker if the check fails
      */
     private String buildConsistencyIssuesPrompt(ProgrammingExercise exercise) {
         try {
@@ -408,7 +408,8 @@ public class HyperionCodeGenerationExecutionService {
         }
         catch (RuntimeException e) {
             log.warn("Consistency check failed for exercise {}: {}", exercise.getId(), e.getMessage(), e);
-            return "None";
+            // Best-effort context for code generation only; don't surface this to the client (not a consistency check flow).
+            return "Unavailable (consistency check failed)";
         }
     }
 

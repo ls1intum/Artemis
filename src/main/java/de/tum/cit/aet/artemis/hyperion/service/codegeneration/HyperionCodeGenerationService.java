@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.codegeneration;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
@@ -37,6 +39,8 @@ public abstract class HyperionCodeGenerationService {
     private static final Logger log = LoggerFactory.getLogger(HyperionCodeGenerationService.class);
 
     private static final int MAX_CONSISTENCY_ISSUES_LENGTH = 10000;
+
+    private static final String CONTROL_CHARS_PATTERN = "[\\p{Cntrl}&&[^\r\n\t]]";
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -65,6 +69,9 @@ public abstract class HyperionCodeGenerationService {
      */
     public List<GeneratedFileDTO> generateCode(User user, ProgrammingExercise exercise, String previousBuildLogs, String repositoryStructure, String consistencyIssues)
             throws NetworkingException {
+        Assert.notNull(user, "user must not be null");
+        Assert.notNull(exercise, "exercise must not be null");
+        Assert.notNull(repositoryStructure, "repositoryStructure must not be null");
         String normalizedConsistencyIssues = normalizeConsistencyIssues(consistencyIssues);
         CodeGenerationResponseDTO solutionPlanResponse = generateSolutionPlan(user, exercise, previousBuildLogs, repositoryStructure, normalizedConsistencyIssues);
         defineFileStructure(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure, normalizedConsistencyIssues);
@@ -75,18 +82,27 @@ public abstract class HyperionCodeGenerationService {
     }
 
     private String normalizeConsistencyIssues(String consistencyIssues) {
-        if (consistencyIssues == null) {
-            return "";
-        }
+        Assert.notNull(consistencyIssues, "consistencyIssues must not be null");
         String trimmed = consistencyIssues.trim();
         if (trimmed.isEmpty()) {
             return "";
         }
-        String sanitized = trimmed.replaceAll("[\\p{Cntrl}&&[^\r\n\t]]", "").trim();
+        String sanitized = trimmed.replaceAll(CONTROL_CHARS_PATTERN, "").trim();
         if (sanitized.length() > MAX_CONSISTENCY_ISSUES_LENGTH) {
             return sanitized.substring(0, MAX_CONSISTENCY_ISSUES_LENGTH);
         }
         return sanitized;
+    }
+
+    protected Map<String, Object> baseTemplateVariables(ProgrammingExercise exercise, String repositoryStructure, String consistencyIssues) {
+        Assert.notNull(exercise, "exercise must not be null");
+        Assert.notNull(repositoryStructure, "repositoryStructure must not be null");
+        Assert.notNull(consistencyIssues, "consistencyIssues must not be null");
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("programmingLanguage", exercise.getProgrammingLanguage());
+        variables.put("repositoryStructure", repositoryStructure);
+        variables.put("consistencyIssues", consistencyIssues);
+        return variables;
     }
 
     /**

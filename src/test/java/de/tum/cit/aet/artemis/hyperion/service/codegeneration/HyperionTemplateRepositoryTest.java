@@ -252,17 +252,9 @@ class HyperionTemplateRepositoryServiceTest {
     }
 
     @Test
-    void generateSolutionPlan_withNullRepositoryStructure_usesEmptyString() throws Exception {
-        String jsonResponse = "{\"solutionPlan\":\"test plan\",\"files\":[]}";
-
-        when(contextRenderer.getExistingSolutionCode(any(ProgrammingExercise.class), any(GitService.class))).thenReturn("public class Solution {}");
-        when(templates.renderObject(any(String.class), anyMap())).thenReturn("rendered");
-        when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse));
-
-        templateRepository.generateSolutionPlan(user, exercise, "logs", null, "consistency issues");
-
-        verify(templates).renderObject(eq("/prompts/hyperion/template/1_plan.st"), anyMap());
-        verify(chatModel).call(any(Prompt.class));
+    void generateSolutionPlan_withNullRepositoryStructure_throwsIllegalArgumentException() {
+        assertThatThrownBy(() -> templateRepository.generateSolutionPlan(user, exercise, "logs", null, "consistency issues")).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("repositoryStructure must not be null");
     }
 
     private ChatResponse createChatResponse(String content) {

@@ -99,14 +99,15 @@ class HyperionCodeGenerationServiceTest {
     }
 
     @Test
-    void generateCode_withNullRepositoryStructure_handlesGracefully() throws Exception {
-        String coreLogicJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Test.java\",\"content\":\"class Test {}\"}]}";
-        setupMockTemplateAndChatResponses(coreLogicJson);
+    void generateCode_withNullRepositoryStructure_throwsIllegalArgumentException() {
+        assertThatThrownBy(() -> strategy.generateCode(user, exercise, "logs", null, "consistency issues")).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("repositoryStructure must not be null");
+    }
 
-        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, "logs", null, "consistency issues");
-
-        assertThat(result).hasSize(1);
-        verify(chatModel, times(4)).call(any(Prompt.class));
+    @Test
+    void generateCode_withNullConsistencyIssues_throwsIllegalArgumentException() {
+        assertThatThrownBy(() -> strategy.generateCode(user, exercise, "logs", "repo structure", null)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("consistencyIssues must not be null");
     }
 
     @Test
