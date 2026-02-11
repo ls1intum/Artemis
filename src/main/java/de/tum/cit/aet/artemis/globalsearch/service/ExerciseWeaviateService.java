@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entitySchemas.ExerciseSchema;
@@ -111,6 +112,30 @@ public class ExerciseWeaviateService {
         }
         catch (Exception e) {
             log.error("Failed to delete exercise {} from Weaviate: {}", exerciseId, e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Updates Weaviate metadata for all exercises belonging to an exam.
+     * This should be called when exam dates change to keep the denormalized
+     * exam date fields (visible date, start date, end date) in sync.
+     * If Weaviate is not enabled, this method does nothing.
+     *
+     * @param exam the exam whose exercises should be updated (must have exercise groups and exercises loaded)
+     */
+    public void updateExamExercises(Exam exam) {
+        if (weaviateService.isEmpty()) {
+            return;
+        }
+
+        if (exam == null || exam.getExerciseGroups() == null) {
+            return;
+        }
+
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            for (Exercise exercise : exerciseGroup.getExercises()) {
+                updateExercise(exercise);
+            }
         }
     }
 

@@ -115,6 +115,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseForPlagiarismCasesOverviewDTO
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
+import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import tech.jhipster.web.util.PaginationUtil;
 
@@ -181,12 +182,15 @@ public class ExamResource {
 
     private final ExamUserService examUserService;
 
+    private final ExerciseWeaviateService exerciseWeaviateService;
+
     public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamDeletionService examDeletionService,
             ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService,
             AuthorizationCheckService authCheckService, ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository,
             AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, ExamImportService examImportService,
             CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository, ExerciseRepository exerciseRepository,
-            ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService, ExamUserService examUserService) {
+            ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService, ExamUserService examUserService,
+            ExerciseWeaviateService exerciseWeaviateService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -209,6 +213,7 @@ public class ExamResource {
         this.examLiveEventsService = examLiveEventsService;
         this.studentExamService = studentExamService;
         this.examUserService = examUserService;
+        this.exerciseWeaviateService = exerciseWeaviateService;
     }
 
     /**
@@ -291,8 +296,9 @@ public class ExamResource {
 
         // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
         Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS).toInstant());
-        if (comparator.compare(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) != 0
-                || comparator.compare(originalExam.getStartDate(), updatedExam.getStartDate()) != 0) {
+        boolean visibleOrStartDateChanged = comparator.compare(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) != 0
+                || comparator.compare(originalExam.getStartDate(), updatedExam.getStartDate()) != 0;
+        if (visibleOrStartDateChanged) {
             // for all programming exercises in the exam, send their ids for scheduling
             examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(ProgrammingExercise.class::isInstance).map(Exercise::getId)
                     .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
@@ -303,6 +309,11 @@ public class ExamResource {
         if (workingTimeChange != 0) {
             Exam examWithStudentExams = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(savedExam.getId());
             examService.updateStudentExamsAndRescheduleExercises(examWithStudentExams, originalExamDuration, workingTimeChange);
+        }
+
+        boolean endDateChanged = comparator.compare(originalExam.getEndDate(), updatedExam.getEndDate()) != 0;
+        if (visibleOrStartDateChanged || endDateChanged) {
+            exerciseWeaviateService.updateExamExercises(examWithExercises);
         }
 
         if (updatedChannel != null) {
@@ -343,6 +354,9 @@ public class ExamResource {
 
         // 2. Re-calculate the working times of all student exams
         examService.updateStudentExamsAndRescheduleExercises(exam, originalExamDuration, workingTimeChange);
+
+        // 3. Update Weaviate exercise metadata since the exam end date changed
+        exerciseWeaviateService.updateExamExercises(exam);
 
         return ResponseEntity.ok(exam);
     }
