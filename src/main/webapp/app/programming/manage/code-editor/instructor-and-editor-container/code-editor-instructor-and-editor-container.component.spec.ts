@@ -561,7 +561,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.selectedIssue = sorted[0];
             comp.locationIndex = 0;
 
-            const jumpSpy = vi.spyOn(comp as any, 'jumpToLocation').mockImplementation();
+            const jumpSpy = vi.spyOn(comp as any, 'jumpToLocation').mockImplementation(() => {});
 
             // Next step
             comp.navigateGlobal(1);
@@ -594,7 +594,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.selectedIssue = sorted[0];
             comp.locationIndex = 0;
 
-            const jumpSpy = vi.spyOn(comp as any, 'jumpToLocation').mockImplementation();
+            const jumpSpy = vi.spyOn(comp as any, 'jumpToLocation').mockImplementation(() => {});
 
             // Previous step -> Wrap to last issue, last location
             // Last issue is sorted[4] (Issue 3 Low), 1 location.
