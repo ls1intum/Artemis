@@ -23,6 +23,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,6 +38,8 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.testcontainers.DockerClientFactory;
+import org.testcontainers.weaviate.WeaviateContainer;
 
 import com.github.dockerjava.api.DockerClient;
 
@@ -48,6 +52,7 @@ import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateSchemas;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
@@ -96,17 +101,24 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 @ContextConfiguration(classes = TestBuildAgentConfiguration.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
 
+    private static final Logger log = LoggerFactory.getLogger(AbstractSpringIntegrationLocalCILocalVCTest.class);
+
     private static final int serverPort;
 
     private static final int sshPort;
 
     private static final int hazelcastPort;
 
+    protected static final WeaviateContainer weaviateContainer;
+
+    private static final String WEAVIATE_COLLECTION_PREFIX = "Test";
+
     // Static initializer runs before @DynamicPropertySource, ensuring ports and containers are available when Spring context starts
     static {
         serverPort = findAvailableTcpPort();
         sshPort = findAvailableTcpPort();
         hazelcastPort = findAvailableTcpPort();
+        weaviateContainer = tryStartWeaviateContainer();
     }
 
     @DynamicPropertySource
@@ -116,6 +128,68 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         registry.add("artemis.version-control.ssh-port", () -> sshPort);
         registry.add("artemis.version-control.ssh-template-clone-url", () -> "ssh://git@localhost:" + sshPort + "/");
         registry.add("spring.hazelcast.port", () -> hazelcastPort);
+
+        if (weaviateContainer != null && weaviateContainer.isRunning()) {
+            registry.add("artemis.weaviate.enabled", () -> true);
+            registry.add("artemis.weaviate.http-host", weaviateContainer::getHost);
+            registry.add("artemis.weaviate.http-port", () -> weaviateContainer.getMappedPort(8080));
+            registry.add("artemis.weaviate.grpc-port", () -> weaviateContainer.getMappedPort(50051));
+            registry.add("artemis.weaviate.scheme", () -> "http");
+            registry.add("artemis.weaviate.collection-prefix", () -> WEAVIATE_COLLECTION_PREFIX);
+        }
+    }
+
+    /**
+     * Attempts to start a Weaviate Testcontainer. Pre-creates all Weaviate collections without
+     * a vectorizer so that the application's {@code WeaviateService.initializeCollections()} finds
+     * them already present and skips creation (which would require the text2vec-transformers module).
+     *
+     * @return the running container, or {@code null} if Docker is unavailable or the container fails to start
+     */
+    private static WeaviateContainer tryStartWeaviateContainer() {
+        try {
+            if (!DockerClientFactory.instance().isDockerAvailable()) {
+                log.info("Docker is not available, Weaviate integration tests will be skipped");
+                return null;
+            }
+            String version = System.getProperty("weaviate.server.version");
+            if (version == null || version.isBlank()) {
+                log.info("weaviate.server.version system property not set, Weaviate integration tests will be skipped");
+                return null;
+            }
+            String image = "cr.weaviate.io/semitechnologies/weaviate:" + version;
+            WeaviateContainer container = new WeaviateContainer(image);
+            container.start();
+
+            preCreateCollections(container);
+            log.info("Weaviate Testcontainer started successfully on ports HTTP={}, gRPC={}", container.getMappedPort(8080), container.getMappedPort(50051));
+            return container;
+        }
+        catch (Exception e) {
+            log.warn("Failed to start Weaviate Testcontainer, Weaviate integration tests will be skipped: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Pre-creates all Weaviate collections (without vectorizer) so that the application's
+     * WeaviateService.initializeCollections() finds them already present and does not attempt
+     * to create them with the text2vec-transformers vectorizer (which is not available in the test container).
+     */
+    private static void preCreateCollections(WeaviateContainer container) {
+        try (var client = io.weaviate.client6.v1.api.WeaviateClient
+                .connectToLocal(config -> config.host(container.getHost()).port(container.getMappedPort(8080)).grpcPort(container.getMappedPort(50051)))) {
+            for (var schema : WeaviateSchemas.ALL_SCHEMAS) {
+                String collectionName = WEAVIATE_COLLECTION_PREFIX + schema.collectionName();
+                if (!client.collections.exists(collectionName)) {
+                    client.collections.create(collectionName);
+                    log.debug("Pre-created Weaviate collection '{}'", collectionName);
+                }
+            }
+        }
+        catch (Exception e) {
+            log.warn("Failed to pre-create Weaviate collections: {}", e.getMessage());
+        }
     }
 
     private static int findAvailableTcpPort() {
