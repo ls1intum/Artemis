@@ -38,7 +38,6 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
-import org.testcontainers.DockerClientFactory;
 import org.testcontainers.weaviate.WeaviateContainer;
 
 import com.github.dockerjava.api.DockerClient;
@@ -76,6 +75,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStu
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
 
 // Must start up an actual web server such that the tests can communicate with the ArtemisGitServlet using JGit.
 // Otherwise, only MockMvc requests could be used. The port this runs on is defined at server.port (see @TestPropertySource).
@@ -118,7 +118,10 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         serverPort = findAvailableTcpPort();
         sshPort = findAvailableTcpPort();
         hazelcastPort = findAvailableTcpPort();
-        weaviateContainer = tryStartWeaviateContainer();
+        weaviateContainer = WeaviateTestContainerFactory.getContainer();
+        if (weaviateContainer != null && weaviateContainer.isRunning()) {
+            preCreateCollections(weaviateContainer);
+        }
     }
 
     @DynamicPropertySource
@@ -136,38 +139,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
             registry.add("artemis.weaviate.grpc-port", () -> weaviateContainer.getMappedPort(50051));
             registry.add("artemis.weaviate.scheme", () -> "http");
             registry.add("artemis.weaviate.collection-prefix", () -> WEAVIATE_COLLECTION_PREFIX);
-        }
-    }
-
-    /**
-     * Attempts to start a Weaviate Testcontainer. Pre-creates all Weaviate collections without
-     * a vectorizer so that the application's {@code WeaviateService.initializeCollections()} finds
-     * them already present and skips creation (which would require the text2vec-transformers module).
-     *
-     * @return the running container, or {@code null} if Docker is unavailable or the container fails to start
-     */
-    private static WeaviateContainer tryStartWeaviateContainer() {
-        try {
-            if (!DockerClientFactory.instance().isDockerAvailable()) {
-                log.info("Docker is not available, Weaviate integration tests will be skipped");
-                return null;
-            }
-            String version = System.getProperty("weaviate.server.version");
-            if (version == null || version.isBlank()) {
-                log.info("weaviate.server.version system property not set, Weaviate integration tests will be skipped");
-                return null;
-            }
-            String image = "cr.weaviate.io/semitechnologies/weaviate:" + version;
-            WeaviateContainer container = new WeaviateContainer(image);
-            container.start();
-
-            preCreateCollections(container);
-            log.info("Weaviate Testcontainer started successfully on ports HTTP={}, gRPC={}", container.getMappedPort(8080), container.getMappedPort(50051));
-            return container;
-        }
-        catch (Exception e) {
-            log.warn("Failed to start Weaviate Testcontainer, Weaviate integration tests will be skipped: {}", e.getMessage());
-            return null;
         }
     }
 
