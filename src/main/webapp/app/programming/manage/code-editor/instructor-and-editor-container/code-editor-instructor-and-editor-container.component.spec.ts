@@ -472,6 +472,17 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                 window.setTimeout = originalSetTimeout;
             }
         });
+
+        it('should clear subscription when restore check-only has no active job', () => {
+            comp.selectedRepository = RepositoryType.SOLUTION;
+            const clearSpy = jest.spyOn(comp as any, 'clearJobSubscription');
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({}));
+
+            (comp as any).restoreCodeGenerationState();
+
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.SOLUTION, checkOnly: true });
+            expect(clearSpy).toHaveBeenCalledWith(true);
+        });
     });
 
     describe('Consistency Checks', () => {
