@@ -328,8 +328,46 @@
                 margin-bottom: 7px;
             }
 
+            h1,
+            h2,
+            h3 {
+                font-weight: bold;
+            }
+
+            h1 {
+                font-size: 1.55rem;
+            }
+
+            h2 {
+                font-size: 1.4rem;
+            }
+
+            h3 {
+                font-size: 1.25rem;
+            }
+
             pre code {
                 line-height: 1;
+            }
+
+            .table {
+                border-collapse: collapse;
+                font-size: 0.875rem;
+
+                th,
+                td {
+                    border: 1px solid var(--bs-border-color);
+                    padding: 6px 10px;
+                }
+
+                th {
+                    background-color: var(--iris-table-header-background);
+                }
+            }
+
+            > span {
+                display: block;
+                overflow-x: auto;
             }
         }
     }
