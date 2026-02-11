@@ -907,23 +907,6 @@ describe('IrisBaseChatbotComponent', () => {
         });
     });
 
-    describe('processMessages edge cases', () => {
-        it('should return empty array when all messages are from LLM only', () => {
-            const llmOnlyMessages = [
-                { id: 1, sender: 'LLM', content: [{ type: 'TEXT', textContent: 'Hello' }] },
-                { id: 2, sender: 'LLM', content: [{ type: 'TEXT', textContent: 'How can I help?' }] },
-            ];
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(llmOnlyMessages as any));
-
-            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
-            component = fixture.componentInstance;
-            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
-            fixture.detectChanges();
-
-            expect(component.messages()).toEqual([]);
-        });
-    });
-
     describe('adjustTextareaRows', () => {
         it('should reset height and return early when textarea is empty', () => {
             component.userAccepted.set(LLMSelectionDecision.CLOUD_AI);
@@ -1193,8 +1176,8 @@ describe('IrisBaseChatbotComponent', () => {
             fixture.detectChanges();
 
             const processedMessages = component.messages();
-            const llmContent = processedMessages[0].content![0] as IrisTextMessageContent;
-            const userContent = processedMessages[1].content![0] as IrisTextMessageContent;
+            const userContent = processedMessages[0].content![0] as IrisTextMessageContent;
+            const llmContent = processedMessages[1].content![0] as IrisTextMessageContent;
             // Neither message type should have newlines modified — line breaks are handled by markdown-it's breaks: true option
             expect(llmContent.textContent).toBe(tableMarkdown);
             expect(userContent.textContent).toBe(userText);

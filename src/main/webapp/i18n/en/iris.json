@@ -174,6 +174,8 @@
             "chatHistory": {
                 "title": "Chats",
                 "newChat": "New chat",
+                "openChatHistory": "Open chat history",
+                "aboutIris": "About Iris",
                 "today": "Today",
                 "yesterday": "Yesterday",
                 "last7Days": "Last 7 Days",

@@ -334,13 +334,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     /**
-     * Process messages for display (clone, reverse, format)
+     * Process messages for display (clone)
      */
     private processMessages(rawMessages: IrisMessage[]): IrisMessage[] {
-        const hasUserMessage = rawMessages.some((message) => message.sender === IrisSender.USER);
-        if (!hasUserMessage && rawMessages.length > 0 && rawMessages.every((message) => message.sender === IrisSender.LLM)) {
-            return [];
-        }
         return _.cloneDeep(rawMessages);
     }
 

@@ -136,6 +136,40 @@ describe('ChatHistoryItemComponent', () => {
         testSessionRendering(session, faKeyboard, 'artemisApp.iris.chatHistory.relatedEntityTooltip.programmingExercise', 'Exercise 1');
     });
 
+    it('should detect new chat session using translated title', async () => {
+        // MockTranslateService.stream returns the key itself as the translated value
+        const translatedKey = 'artemisApp.iris.chatHistory.newChat';
+        const session: IrisSessionDTO = {
+            id: 4,
+            title: translatedKey,
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+
+        fixture.componentRef.setInput('session', session);
+        await fixture.whenStable();
+
+        expect(component.isNewChat()).toBe(true);
+    });
+
+    it('should not detect regular session as new chat', async () => {
+        const session: IrisSessionDTO = {
+            id: 5,
+            title: 'Some regular chat title',
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+
+        fixture.componentRef.setInput('session', session);
+        await fixture.whenStable();
+
+        expect(component.isNewChat()).toBe(false);
+    });
+
     it('should not render an icon and entity name for course session', async () => {
         const session: IrisSessionDTO = {
             id: 3,

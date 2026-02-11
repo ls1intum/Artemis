@@ -1,10 +1,12 @@
-import { ChangeDetectionStrategy, Component, Signal, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Signal, computed, inject, input, output } from '@angular/core';
 import { DatePipe, NgClass } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChalkboardUser, faKeyboard, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 
@@ -17,7 +19,8 @@ import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChatHistoryItemComponent {
-    private static readonly NEW_CHAT_TITLES = new Set(['new chat', 'neuer chat']);
+    private readonly translateService = inject(TranslateService);
+    private readonly newChatTitle = toSignal(this.translateService.stream('artemisApp.iris.chatHistory.newChat'), { initialValue: '' });
 
     session = input.required<IrisSessionDTO>();
     active = input<boolean>(false);
@@ -26,7 +29,8 @@ export class ChatHistoryItemComponent {
     relatedEntityName: Signal<string | undefined> = computed(() => this.session().entityName);
     readonly isNewChat = computed(() => {
         const title = this.session().title?.trim().toLowerCase();
-        return title !== undefined && ChatHistoryItemComponent.NEW_CHAT_TITLES.has(title);
+        const translatedNewChat = this.newChatTitle()?.trim().toLowerCase();
+        return !!title && !!translatedNewChat && title === translatedNewChat;
     });
     readonly faPlus = faPlus;
     sessionClicked = output<IrisSessionDTO>();

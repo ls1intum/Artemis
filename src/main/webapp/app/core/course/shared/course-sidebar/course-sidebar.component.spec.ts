@@ -223,12 +223,12 @@ describe('CourseSidebarComponent', () => {
     });
 
     it('should display more icon and label if at least one item gets hidden in the sidebar', () => {
-        component.anyItemHidden = signal(true);
-        fixture.changeDetectorRef.detectChanges();
+        component.anyItemHidden.set(true);
+        fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('.three-dots').hidden).toBeFalse();
 
-        component.anyItemHidden = signal(false);
-        fixture.changeDetectorRef.detectChanges();
+        component.anyItemHidden.set(false);
+        fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('.three-dots').hidden).toBeTrue();
     });
     it('should display course icon when available', () => {

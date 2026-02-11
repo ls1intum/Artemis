@@ -11,15 +11,30 @@
                         tabindex="0"
                         (keydown.enter)="setChatHistoryVisibility(true)"
                         (keydown.space)="setChatHistoryVisibility(true)"
+                        [attr.aria-label]="'artemisApp.iris.chatHistory.openChatHistory' | artemisTranslate"
                     >
                         <fa-icon [icon]="faMagnifyingGlass" />
                     </div>
-                    <div class="new-chat-button" (click)="openNewSession()" role="button" tabindex="0" (keydown.enter)="openNewSession()" (keydown.space)="openNewSession()">
+                    <div
+                        class="new-chat-button"
+                        (click)="openNewSession()"
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="openNewSession()"
+                        (keydown.space)="openNewSession()"
+                        [attr.aria-label]="'artemisApp.iris.chatHistory.newChat' | artemisTranslate"
+                    >
                         <fa-icon [icon]="faPenToSquare" class="new-chat-icon" />
                     </div>
                     @if (!isChatGptWrapper()) {
                         <div class="collapsed-bottom">
-                            <a [routerLink]="'/about-iris'" target="_blank" rel="noopener noreferrer" class="collapsed-icon-button">
+                            <a
+                                [routerLink]="'/about-iris'"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="collapsed-icon-button"
+                                [attr.aria-label]="'artemisApp.iris.chatHistory.aboutIris' | artemisTranslate"
+                            >
                                 <fa-icon [icon]="faCircleInfo" class="info-button" />
                             </a>
                         </div>
@@ -186,7 +201,12 @@
                                                     </div>
 
                                                     <div class="rate-message-buttons toolbox">
-                                                        <button class="btn btn-sm rate-button-not-clicked" (click)="copyMessage(message, i)" aria-label="Copy" title="Copy">
+                                                        <button
+                                                            class="btn btn-sm rate-button-not-clicked"
+                                                            (click)="copyMessage(message, i)"
+                                                            [attr.aria-label]="'artemisApp.exerciseChatbot.actions.copy' | artemisTranslate"
+                                                            [title]="'artemisApp.exerciseChatbot.actions.copy' | artemisTranslate"
+                                                        >
                                                             <fa-icon [icon]="isCopied(message, i) ? faCheck : faCopy" />
                                                         </button>
                                                         <button
@@ -196,8 +216,8 @@
                                                             [class.rate-button-not-clicked]="!(message | as: IrisAssistantMessage).helpful"
                                                             (click)="rateMessage(message, true)"
                                                             [disabled]="(message | as: IrisAssistantMessage).helpful"
-                                                            aria-label="Good response"
-                                                            title="Good response"
+                                                            [attr.aria-label]="'artemisApp.exerciseChatbot.actions.goodResponse' | artemisTranslate"
+                                                            [title]="'artemisApp.exerciseChatbot.actions.goodResponse' | artemisTranslate"
                                                         >
                                                             <fa-icon [icon]="faThumbsUp" />
                                                         </button>
@@ -208,8 +228,8 @@
                                                             [class.rate-button-not-clicked]="(message | as: IrisAssistantMessage).helpful !== false"
                                                             (click)="rateMessage(message, false)"
                                                             [disabled]="(message | as: IrisAssistantMessage).helpful === false"
-                                                            aria-label="Bad response"
-                                                            title="Bad response"
+                                                            [attr.aria-label]="'artemisApp.exerciseChatbot.actions.badResponse' | artemisTranslate"
+                                                            [title]="'artemisApp.exerciseChatbot.actions.badResponse' | artemisTranslate"
                                                         >
                                                             <fa-icon [icon]="faThumbsDown" />
                                                         </button>

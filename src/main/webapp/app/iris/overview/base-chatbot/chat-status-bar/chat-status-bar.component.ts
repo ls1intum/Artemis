@@ -26,8 +26,7 @@ export class ChatStatusBarComponent {
     readonly displayedSubText = signal<string | undefined>(undefined);
     readonly style = signal<string | undefined>(undefined);
 
-    // Timeouts are not signals since they're not used in the template
-    private openTimeout: ReturnType<typeof setTimeout> | undefined;
+    // Timeout is not a signal since it's not used in the template
     private styleTimeout: ReturnType<typeof setTimeout> | undefined;
 
     stages = input<IrisStageDTO[]>([]);
@@ -51,7 +50,6 @@ export class ChatStatusBarComponent {
             const stages = this.stages();
             const firstUnfinished = stages.find((stage) => !this.isStageFinished(stage));
             if (firstUnfinished) {
-                clearTimeout(this.openTimeout);
                 clearTimeout(this.styleTimeout);
                 this.open.set(true);
                 // Only update style tag if the active stage changed; otherwise the animations are reset on each change
@@ -77,7 +75,6 @@ export class ChatStatusBarComponent {
 
             // Cleanup timeouts when effect re-runs or component destroys
             onCleanup(() => {
-                clearTimeout(this.openTimeout);
                 clearTimeout(this.styleTimeout);
             });
         });
