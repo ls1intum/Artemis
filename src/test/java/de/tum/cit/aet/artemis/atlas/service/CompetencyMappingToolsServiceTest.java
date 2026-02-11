@@ -78,10 +78,12 @@ class CompetencyMappingToolsServiceTest {
         head = new Competency();
         head.setId(1L);
         head.setTitle("Head");
+        head.setCourse(course);
 
         tail = new Competency();
         tail.setId(2L);
         tail.setTitle("Tail");
+        tail.setCourse(course);
 
         AtlasAgentService.resetCompetencyModifiedFlag();
         CompetencyMappingToolsService.clearAllPreviews();
