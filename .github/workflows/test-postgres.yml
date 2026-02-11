@@ -1,3 +1,5 @@
+# Runs on every PR intentionally: PostgreSQL testcontainer runs are fast and catch
+# database-specific issues early. The H2-based test run may be disabled in the future.
 name: Test (PostgreSQL)
 
 on:

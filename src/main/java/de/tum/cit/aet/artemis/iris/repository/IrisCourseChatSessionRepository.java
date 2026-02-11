@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.repository;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -116,12 +117,12 @@ public interface IrisCourseChatSessionRepository extends ArtemisJpaRepository<Ir
     long countByCourseId(long courseId);
 
     /**
-     * Find all chat sessions with messages for a given course, ordered by creation date.
+     * Find all chat sessions with messages for a given course.
      * <p>
      * Note: This query intentionally does not use DISTINCT because IrisMessage contains json columns
      * (accessed_memories, created_memories) and PostgreSQL's json type does not support equality operators.
-     * Callers must deduplicate the result if needed (e.g. via {@code stream().distinct()}).
-     * <p>
+     * The return type is {@code Set} to deduplicate results from the LEFT JOIN FETCH.
+     * Use {@link #findAllWithMessagesByCourseIdSortedByCreationDate(long)} for sorted results.
      *
      * @param courseId the id of the course
      * @return set of chat sessions with their messages
@@ -131,7 +132,18 @@ public interface IrisCourseChatSessionRepository extends ArtemisJpaRepository<Ir
             FROM IrisCourseChatSession s
                 LEFT JOIN FETCH s.messages
             WHERE s.courseId = :courseId
-            ORDER BY s.creationDate ASC
             """)
     Set<IrisCourseChatSession> findAllWithMessagesByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Find all chat sessions with messages for a given course, sorted by creation date ascending.
+     * Sorting is done in Java because the query returns a {@code Set} to avoid issues with
+     * DISTINCT and PostgreSQL's json columns.
+     *
+     * @param courseId the id of the course
+     * @return list of chat sessions with their messages, sorted by creation date ascending
+     */
+    default List<IrisCourseChatSession> findAllWithMessagesByCourseIdSortedByCreationDate(long courseId) {
+        return findAllWithMessagesByCourseId(courseId).stream().sorted(Comparator.comparing(IrisCourseChatSession::getCreationDate)).toList();
+    }
 }

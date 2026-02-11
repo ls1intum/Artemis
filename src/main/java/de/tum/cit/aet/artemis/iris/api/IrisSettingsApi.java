@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.iris.api;
 
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Conditional;
@@ -76,11 +75,11 @@ public class IrisSettingsApi extends AbstractIrisApi {
      * Finds all Iris course chat sessions with messages for export.
      *
      * @param courseId the ID of the course
-     * @return set of chat session export DTOs with messages
+     * @return list of chat session export DTOs with messages, sorted by creation date
      */
-    public Set<IrisChatSessionExportDTO> findCourseChatSessionsForExport(long courseId) {
-        Set<IrisCourseChatSession> sessions = irisCourseChatSessionRepository.findAllWithMessagesByCourseId(courseId);
-        return sessions.stream().map(this::convertToExportDTO).collect(Collectors.toUnmodifiableSet());
+    public List<IrisChatSessionExportDTO> findCourseChatSessionsForExport(long courseId) {
+        List<IrisCourseChatSession> sessions = irisCourseChatSessionRepository.findAllWithMessagesByCourseIdSortedByCreationDate(courseId);
+        return sessions.stream().map(this::convertToExportDTO).toList();
     }
 
     private IrisChatSessionExportDTO convertToExportDTO(IrisCourseChatSession session) {

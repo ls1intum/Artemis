@@ -33,16 +33,10 @@ plugins {
 }
 
 // Load Docker image versions from .env (single source of truth for Docker, tests, and build dependencies)
-def envFile = file('.env')
-if (envFile.exists()) {
-    envFile.readLines().each { line ->
-        def trimmed = line.trim()
-        if (trimmed && !trimmed.startsWith('#') && trimmed.contains('=')) {
-            def parts = trimmed.split('=', 2)
-            // Convert UPPER_CASE to lower_case to match gradle.properties convention
-            ext.set(parts[0].trim().toLowerCase(), parts[1].trim().replaceAll(/^(['"])(.*)\1$/, '$2'))
-        }
-    }
+apply from: 'gradle/env.gradle'
+envProperties.each { key, value ->
+    // Convert UPPER_CASE to lower_case to match gradle.properties convention
+    ext.set(key.toLowerCase(), value)
 }
 
 group = "de.tum.cit.aet.artemis"

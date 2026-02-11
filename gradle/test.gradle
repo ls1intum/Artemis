@@ -13,20 +13,15 @@ tasks.withType(Test).configureEach {
     // Pass weaviate server version to integration tests
     systemProperty 'weaviate.server.version', findProperty('weaviate_server_version')
 
+    // Pin the Ryuk container image version (Testcontainers reads this env var)
+    environment 'TESTCONTAINERS_RYUK_CONTAINER_IMAGE', "testcontainers/ryuk:${findProperty('ryuk_version')}"
+
     // Pass Docker image versions from .env to integration tests as system properties
     // (e.g. MYSQL_VERSION=9.6.0 becomes -Dmysql.version=9.6.0, usable in Spring YAML as ${mysql.version})
-    def envFile = file("${rootDir}/.env")
-    if (envFile.exists()) {
-        envFile.readLines().each { line ->
-            def trimmed = line.trim()
-            if (trimmed && !trimmed.startsWith('#') && trimmed.contains('=')) {
-                def parts = trimmed.split('=', 2)
-                def key = parts[0].trim()
-                def value = parts[1].trim().replaceAll(/^(['"])(.*)\1$/, '$2')
-                // Convert ENV_VAR_NAME to env.var.name for use as system/Spring properties
-                systemProperty key.toLowerCase().replaceAll('_', '.'), value
-            }
-        }
+    // Parsed by gradle/env.gradle, applied in build.gradle
+    rootProject.envProperties.each { key, value ->
+        // Convert ENV_VAR_NAME to env.var.name for use as system/Spring properties
+        systemProperty key.toLowerCase().replaceAll('_', '.'), value
     }
 
     // Forward Gradle command-line -D properties to the test JVM for database type selection
