@@ -6,7 +6,7 @@
         [ngClass]="{ 'content-overflow': isOverflowing(), 'bubble-visible': newIrisMessage(), 'bubble-hidden': !newIrisMessage() }"
     >
         @if (newIrisMessage()) {
-            <span [innerHTML]="newIrisMessage() | htmlForMarkdown"></span>
+            <span [innerHTML]="newIrisMessage() | htmlForMarkdown: [] : undefined : undefined : true"></span>
             @if (isOverflowing()) {
                 <div class="read-more">
                     <span jhiTranslate="artemisApp.iris.chatBubble.seeFull"></span>
