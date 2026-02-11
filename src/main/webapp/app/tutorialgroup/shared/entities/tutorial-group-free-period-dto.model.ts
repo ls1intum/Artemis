@@ -6,13 +6,15 @@ export class TutorialGroupFreePeriodDTO {
     public id?: number;
     public start?: string;
     public end?: string;
+    public reason?: string;
 }
 
-export function toTutorialGroupFreePeriodDTO(entity: TutorialGroupFreePeriod): TutorialGroupFreePeriodDTO {
+export function toTutorialGroupFreePeriodDTO(tutorialGroupFreePeriod: TutorialGroupFreePeriod): TutorialGroupFreePeriodDTO {
     return {
-        id: entity.id,
-        start: convertDateFromClient(entity.start),
-        end: convertDateFromClient(entity.end),
+        id: tutorialGroupFreePeriod.id,
+        start: convertDateFromClient(tutorialGroupFreePeriod.start),
+        end: convertDateFromClient(tutorialGroupFreePeriod.end),
+        reason: tutorialGroupFreePeriod.reason,
     };
 }
 
@@ -21,5 +23,6 @@ export function fromTutorialGroupFreePeriodDTO(dto: TutorialGroupFreePeriodDTO):
         id: dto.id,
         start: dto.start ? dayjs.utc(dto.start) : undefined,
         end: dto.end ? dayjs.utc(dto.end) : undefined,
+        reason: dto.reason,
     };
 }

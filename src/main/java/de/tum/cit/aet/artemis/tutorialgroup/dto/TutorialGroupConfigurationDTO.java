@@ -51,17 +51,13 @@ public record TutorialGroupConfigurationDTO(Long id, @NotNull String tutorialPer
     /**
      * DTO representing a {@link TutorialGroupFreePeriod}.
      *
-     * <p>
-     * Date-time values are serialized as ISO-8601 strings and parsed on the server
-     * using {@link ZonedDateTime#parse(CharSequence)}.
-     * </p>
-     *
-     * @param id    the unique identifier of the free period
-     * @param start start date-time in ISO-8601 format
-     * @param end   end date-time in ISO-8601 format
+     * @param id     the unique identifier of the free period
+     * @param start  start date-time in ISO-8601 format
+     * @param end    end date-time in ISO-8601 format
+     * @param reason optional reason for the free period
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TutorialGroupFreePeriodDTO(@NotNull Long id, String start, String end) {
+    public record TutorialGroupFreePeriodDTO(@NotNull Long id, String start, String end, String reason) {
 
         /**
          * Creates a DTO from the given {@link TutorialGroupFreePeriod} entity.
@@ -73,7 +69,7 @@ public record TutorialGroupConfigurationDTO(Long id, @NotNull String tutorialPer
             Objects.requireNonNull(freePeriod, "tutorialGroupFreePeriod must exist");
 
             return new TutorialGroupFreePeriodDTO(freePeriod.getId(), freePeriod.getStart() != null ? freePeriod.getStart().toString() : null,
-                    freePeriod.getEnd() != null ? freePeriod.getEnd().toString() : null);
+                    freePeriod.getEnd() != null ? freePeriod.getEnd().toString() : null, freePeriod.getReason());
         }
 
         /**
@@ -89,7 +85,7 @@ public record TutorialGroupConfigurationDTO(Long id, @NotNull String tutorialPer
             freePeriod.setId(dto.id());
             freePeriod.setStart(dto.start() != null ? ZonedDateTime.parse(dto.start()) : null);
             freePeriod.setEnd(dto.end() != null ? ZonedDateTime.parse(dto.end()) : null);
-
+            freePeriod.setReason(dto.reason());
             return freePeriod;
         }
     }
