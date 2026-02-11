@@ -1047,7 +1047,7 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     describe('processMessages newline handling', () => {
-        it('should NOT apply newline doubling to LLM messages', () => {
+        it('should not apply newline doubling to any messages', () => {
             const tableMarkdown = '| Item | Details |\n|------|--------|\n| Lang | Java |';
             const llmMessage = {
                 sender: IrisSender.LLM,
@@ -1056,20 +1056,6 @@ describe('IrisBaseChatbotComponent', () => {
                 sentAt: dayjs(),
             } as IrisAssistantMessage;
 
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([llmMessage]));
-
-            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
-            component = fixture.componentInstance;
-            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
-            fixture.detectChanges();
-
-            const processedMessages = component.messages();
-            const processedContent = processedMessages[0].content![0] as IrisTextMessageContent;
-            // Table markdown should be preserved without newline doubling
-            expect(processedContent.textContent).toBe(tableMarkdown);
-        });
-
-        it('should still apply newline doubling to USER messages', () => {
             const userText = 'Line1\nLine2\n\nLine3';
             const userMessage = {
                 sender: IrisSender.USER,
@@ -1078,7 +1064,7 @@ describe('IrisBaseChatbotComponent', () => {
                 sentAt: dayjs(),
             } as IrisUserMessage;
 
-            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([userMessage]));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([userMessage, llmMessage]));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
@@ -1086,9 +1072,11 @@ describe('IrisBaseChatbotComponent', () => {
             fixture.detectChanges();
 
             const processedMessages = component.messages();
-            const processedContent = processedMessages[0].content![0] as IrisTextMessageContent;
-            // User messages should have newlines doubled (with NBSP preservation for original double newlines)
-            expect(processedContent.textContent).toBe('Line1\n\nLine2\n\n\u00A0\n\nLine3');
+            const llmContent = processedMessages[0].content![0] as IrisTextMessageContent;
+            const userContent = processedMessages[1].content![0] as IrisTextMessageContent;
+            // Neither message type should have newlines modified — line breaks are handled by markdown-it's breaks: true option
+            expect(llmContent.textContent).toBe(tableMarkdown);
+            expect(userContent.textContent).toBe(userText);
         });
     });
 });

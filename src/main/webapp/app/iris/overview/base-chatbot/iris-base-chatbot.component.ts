@@ -253,15 +253,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
      * Process messages for display (clone, reverse, format)
      */
     private processMessages(rawMessages: IrisMessage[]): IrisMessage[] {
-        const processed = _.cloneDeep(rawMessages).reverse();
-        processed.forEach((message) => {
-            if (message.sender === IrisSender.USER && message.content?.[0] && 'textContent' in message.content[0]) {
-                const cnt = message.content[0] as IrisTextMessageContent;
-                cnt.textContent = cnt.textContent.replace(/\n\n/g, '\n\u00A0\n');
-                cnt.textContent = cnt.textContent.replace(/\n/g, '\n\n');
-            }
-        });
-        return processed;
+        return _.cloneDeep(rawMessages).reverse();
     }
 
     ngAfterViewInit() {
