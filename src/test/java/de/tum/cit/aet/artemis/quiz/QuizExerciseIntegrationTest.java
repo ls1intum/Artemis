@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.quiz;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseNotInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertQuizExerciseExistsInWeaviate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.byLessThan;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
@@ -62,6 +64,7 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseIntegrationTestService;
+import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestionStatistic;
@@ -155,6 +158,9 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     @Autowired
     private ConversationUtilService conversationUtilService;
 
+    @Autowired(required = false)
+    private WeaviateService weaviateService;
+
     private static List<Arguments> testPerformJoin_args() {
         var now = ZonedDateTime.now();
         var longPast = now.minusHours(4);
@@ -208,6 +214,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, quizMode);
         createdQuizAssert(quizExercise);
         checkCreatedFiles(quizExercise);
+        assertQuizExerciseExistsInWeaviate(weaviateService, quizExercise);
     }
 
     @Test
@@ -266,7 +273,8 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     @EnumSource(QuizMode.class)
     void testUpdateQuizExercise(QuizMode quizMode) throws Exception {
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, quizMode);
-        updateQuizAndAssert(quizExercise);
+        QuizExercise updatedQuizExercise = updateQuizAndAssert(quizExercise);
+        assertQuizExerciseExistsInWeaviate(weaviateService, updatedQuizExercise);
     }
 
     @Test
@@ -531,6 +539,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         assertThat(quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is created correctly").isNotNull();
         request.delete("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK);
         assertThat(quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is deleted correctly").isNull();
+        assertExerciseNotInWeaviate(weaviateService, quizExercise.getId());
     }
 
     @Test
@@ -2086,7 +2095,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         }
     }
 
-    private void updateQuizAndAssert(QuizExercise quizExercise) throws Exception {
+    private QuizExercise updateQuizAndAssert(QuizExercise quizExercise) throws Exception {
         updateMultipleChoice(quizExercise);
 
         quizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), OK);
@@ -2157,6 +2166,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
                 assertThat(solutions.getFirst().getText()).as("Text for solution is correct").isEqualTo("long");
             }
         }
+        return quizExercise;
     }
 
     private void updateMultipleChoice(QuizExercise quizExercise) {

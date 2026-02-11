@@ -32,10 +32,13 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.web.client.RestTemplate;
+import org.testcontainers.weaviate.WeaviateContainer;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
@@ -46,6 +49,7 @@ import de.tum.cit.aet.artemis.core.service.PasskeyAuthenticationService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.VulnerabilityService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateSchemas;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
 import de.tum.cit.aet.artemis.nebula.service.LectureTranscriptionService;
@@ -53,6 +57,7 @@ import de.tum.cit.aet.artemis.nebula.service.TumLiveService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
 
 /**
  * This SpringBootTest is used for tests that only require a minimal set of Active Spring Profiles.
@@ -69,6 +74,50 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractSpringIntegrationIndependentTest.class);
+
+    protected static final WeaviateContainer weaviateContainer;
+
+    private static final String WEAVIATE_COLLECTION_PREFIX = "Test";
+
+    static {
+        weaviateContainer = WeaviateTestContainerFactory.getContainer();
+        if (weaviateContainer != null && weaviateContainer.isRunning()) {
+            preCreateCollections(weaviateContainer);
+        }
+    }
+
+    @DynamicPropertySource
+    static void registerWeaviateProperties(DynamicPropertyRegistry registry) {
+        if (weaviateContainer != null && weaviateContainer.isRunning()) {
+            registry.add("artemis.weaviate.enabled", () -> true);
+            registry.add("artemis.weaviate.http-host", weaviateContainer::getHost);
+            registry.add("artemis.weaviate.http-port", () -> weaviateContainer.getMappedPort(8080));
+            registry.add("artemis.weaviate.grpc-port", () -> weaviateContainer.getMappedPort(50051));
+            registry.add("artemis.weaviate.scheme", () -> "http");
+            registry.add("artemis.weaviate.collection-prefix", () -> WEAVIATE_COLLECTION_PREFIX);
+        }
+    }
+
+    /**
+     * Pre-creates all Weaviate collections (without vectorizer) so that the application's
+     * WeaviateService.initializeCollections() finds them already present and does not attempt
+     * to create them with the text2vec-transformers vectorizer (which is not available in the test container).
+     */
+    private static void preCreateCollections(WeaviateContainer container) {
+        try (var client = io.weaviate.client6.v1.api.WeaviateClient
+                .connectToLocal(config -> config.host(container.getHost()).port(container.getMappedPort(8080)).grpcPort(container.getMappedPort(50051)))) {
+            for (var schema : WeaviateSchemas.ALL_SCHEMAS) {
+                String collectionName = WEAVIATE_COLLECTION_PREFIX + schema.collectionName();
+                if (!client.collections.exists(collectionName)) {
+                    client.collections.create(collectionName);
+                    log.debug("Pre-created Weaviate collection '{}'", collectionName);
+                }
+            }
+        }
+        catch (Exception e) {
+            log.warn("Failed to pre-create Weaviate collections: {}", e.getMessage());
+        }
+    }
 
     @MockitoSpyBean
     protected OAuth2JWKSService oAuth2JWKSService;
