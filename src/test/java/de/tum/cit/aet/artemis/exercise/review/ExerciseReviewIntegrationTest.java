@@ -157,7 +157,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
         request.delete(reviewCommentPath(exercise.getId(), initialComment.id()), HttpStatus.NO_CONTENT);
 
-        assertThat(commentRepository.countByThreadId(createdThread.id())).isZero();
+        assertThat(commentRepository.findByThreadIdOrderByCreatedDateAsc(createdThread.id())).isEmpty();
         assertThat(commentThreadRepository.findById(createdThread.id())).isEmpty();
     }
 
@@ -217,6 +217,24 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         CreateCommentThreadDTO dto = new CreateCommentThreadDTO(CommentThreadLocationType.TEMPLATE_REPO, null, null, 1, buildUserComment("Text"));
 
         assertBadRequest(reviewThreadsPath(exercise.getId()), dto, "error.initialFilePathMissing", THREAD_ENTITY_NAME);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectRepositoryThreadWithBlankInitialFilePath() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CreateCommentThreadDTO dto = new CreateCommentThreadDTO(CommentThreadLocationType.TEMPLATE_REPO, null, "   ", 1, buildUserComment("Text"));
+
+        assertBadRequest(reviewThreadsPath(exercise.getId()), dto, "error.initialFilePathBlank", THREAD_ENTITY_NAME);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectRepositoryThreadWithTooLongInitialFilePath() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CreateCommentThreadDTO dto = new CreateCommentThreadDTO(CommentThreadLocationType.TEMPLATE_REPO, null, "a".repeat(1025), 1, buildUserComment("Text"));
+
+        assertBadRequest(reviewThreadsPath(exercise.getId()), dto, "error.http.400", null);
     }
 
     @Test
@@ -340,7 +358,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
         request.delete(reviewCommentPath(exercise.getId(), reply.id()), HttpStatus.NO_CONTENT);
 
-        assertThat(commentRepository.countByThreadId(createdThread.id())).isEqualTo(1);
+        assertThat(commentRepository.findByThreadIdOrderByCreatedDateAsc(createdThread.id())).hasSize(1);
         assertThat(commentThreadRepository.findById(createdThread.id())).isPresent();
     }
 
