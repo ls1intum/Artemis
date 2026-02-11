@@ -223,6 +223,8 @@ describe('CourseSidebarComponent', () => {
     });
 
     it('should display more icon and label if at least one item gets hidden in the sidebar', () => {
+        jest.spyOn(component, 'updateVisibleNavbarItems').mockImplementation(() => {});
+
         component.anyItemHidden.set(true);
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('.three-dots').hidden).toBeFalse();
