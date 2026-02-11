@@ -179,18 +179,20 @@ public class ExerciseReviewService {
     /**
      * Create a new comment within a thread.
      *
-     * @param threadId the thread id
-     * @param dto      the comment content to create
+     * @param exerciseId the exercise id from the request path
+     * @param threadId   the thread id
+     * @param dto        the comment content to create
      * @return the persisted comment
      * @throws EntityNotFoundException  if the thread does not exist
-     * @throws BadRequestAlertException if validation fails
+     * @throws BadRequestAlertException if validation fails or the thread exercise does not match the request exercise
      */
-    public Comment createUserComment(long threadId, UserCommentContentDTO dto) {
+    public Comment createUserComment(long exerciseId, long threadId, UserCommentContentDTO dto) {
         if (dto == null) {
             throw new BadRequestAlertException("Comment content must be set", COMMENT_ENTITY_NAME, "contentMissing");
         }
         CommentThread thread = findThreadByIdElseThrow(threadId);
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, thread.getExercise().getId());
+        validateExerciseIdMatchesRequest(exerciseId, thread.getExercise().getId(), THREAD_ENTITY_NAME);
 
         Comment comment = buildUserComment(thread, dto);
         return commentRepository.save(comment);
@@ -201,30 +203,35 @@ public class ExerciseReviewService {
      * If the deleted comment was the last one in its thread, the thread is removed.
      * If that thread was the last in its group, the group is removed as well.
      *
-     * @param commentId the comment id
-     * @throws EntityNotFoundException if the comment does not exist
+     * @param exerciseId the exercise id from the request path
+     * @param commentId  the comment id
+     * @throws EntityNotFoundException  if the comment does not exist
+     * @throws BadRequestAlertException if the comment exercise does not match the request exercise
      */
-    public void deleteComment(long commentId) {
+    public void deleteComment(long exerciseId, long commentId) {
         Comment comment = commentRepository.findWithThreadById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment", commentId));
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, comment.getThread().getExercise().getId());
+        validateExerciseIdMatchesRequest(exerciseId, comment.getThread().getExercise().getId(), COMMENT_ENTITY_NAME);
         commentRepository.deleteCommentWithCascade(comment);
     }
 
     /**
      * Update the resolved flag of a thread.
      *
-     * @param threadId the thread id
-     * @param dto      whether the thread is resolved
+     * @param exerciseId the exercise id from the request path
+     * @param threadId   the thread id
+     * @param dto        whether the thread is resolved
      * @return the updated thread
      * @throws EntityNotFoundException  if the thread does not exist
-     * @throws BadRequestAlertException if validation fails
+     * @throws BadRequestAlertException if validation fails or the thread exercise does not match the request exercise
      */
-    public CommentThread updateThreadResolvedState(long threadId, UpdateThreadResolvedStateDTO dto) {
+    public CommentThread updateThreadResolvedState(long exerciseId, long threadId, UpdateThreadResolvedStateDTO dto) {
         if (dto == null) {
             throw new BadRequestAlertException("Request body must be set", THREAD_ENTITY_NAME, "bodyMissing");
         }
         CommentThread thread = findThreadByIdElseThrow(threadId);
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, thread.getExercise().getId());
+        validateExerciseIdMatchesRequest(exerciseId, thread.getExercise().getId(), THREAD_ENTITY_NAME);
         thread.setResolved(dto.resolved());
         CommentThread saved = commentThreadRepository.save(thread);
         return commentThreadRepository.findWithCommentsById(saved.getId()).orElse(saved);
@@ -233,18 +240,20 @@ public class ExerciseReviewService {
     /**
      * Update the content of a comment.
      *
-     * @param commentId the comment id
-     * @param dto       the new comment content
+     * @param exerciseId the exercise id from the request path
+     * @param commentId  the comment id
+     * @param dto        the new comment content
      * @return the updated comment
      * @throws EntityNotFoundException  if the comment does not exist
-     * @throws BadRequestAlertException if validation fails
+     * @throws BadRequestAlertException if validation fails or the comment exercise does not match the request exercise
      */
-    public Comment updateUserCommentContent(long commentId, UserCommentContentDTO dto) {
+    public Comment updateUserCommentContent(long exerciseId, long commentId, UserCommentContentDTO dto) {
         if (dto == null) {
             throw new BadRequestAlertException("Comment content must be set", COMMENT_ENTITY_NAME, "contentMissing");
         }
         Comment comment = commentRepository.findWithThreadById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment", commentId));
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, comment.getThread().getExercise().getId());
+        validateExerciseIdMatchesRequest(exerciseId, comment.getThread().getExercise().getId(), COMMENT_ENTITY_NAME);
         validateContentMatchesType(comment.getType(), dto);
         comment.setContent(dto);
         Comment saved = commentRepository.save(comment);
@@ -300,13 +309,16 @@ public class ExerciseReviewService {
     /**
      * Delete a comment thread group by id.
      *
-     * @param groupId the group id
-     * @throws EntityNotFoundException if the group does not exist
+     * @param exerciseId the exercise id from the request path
+     * @param groupId    the group id
+     * @throws EntityNotFoundException  if the group does not exist
+     * @throws BadRequestAlertException if the group exercise does not match the request exercise
      */
-    public void deleteGroup(long groupId) {
+    public void deleteGroup(long exerciseId, long groupId) {
         CommentThreadGroup group = commentThreadGroupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("CommentThreadGroup", groupId));
 
         authorizationCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, group.getExercise().getId());
+        validateExerciseIdMatchesRequest(exerciseId, group.getExercise().getId(), THREAD_GROUP_ENTITY_NAME);
 
         List<CommentThread> threads = commentThreadRepository.findByGroupId(groupId);
         if (!threads.isEmpty()) {
@@ -327,6 +339,20 @@ public class ExerciseReviewService {
      */
     private CommentThread findThreadByIdElseThrow(long threadId) {
         return commentThreadRepository.findById(threadId).orElseThrow(() -> new EntityNotFoundException("CommentThread", threadId));
+    }
+
+    /**
+     * Ensures the exercise id in the request path matches the exercise of the target entity.
+     *
+     * @param requestExerciseId the exercise id from the URL path
+     * @param entityExerciseId  the exercise id of the loaded entity
+     * @param entityName        the entity name used in the API error payload
+     * @throws BadRequestAlertException if the ids differ
+     */
+    private void validateExerciseIdMatchesRequest(long requestExerciseId, Long entityExerciseId, String entityName) {
+        if (!Objects.equals(requestExerciseId, entityExerciseId)) {
+            throw new BadRequestAlertException("Entity exercise does not match request", entityName, "exerciseMismatch");
+        }
     }
 
     /**

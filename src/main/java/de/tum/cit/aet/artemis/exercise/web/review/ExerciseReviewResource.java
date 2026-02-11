@@ -112,7 +112,7 @@ public class ExerciseReviewResource {
     @EnforceAtLeastInstructorInExercise
     public ResponseEntity<Void> deleteThreadGroup(@PathVariable long exerciseId, @PathVariable long groupId) {
         log.debug("REST request to delete exercise review thread group {} for exercise {}", groupId, exerciseId);
-        exerciseReviewService.deleteGroup(groupId);
+        exerciseReviewService.deleteGroup(exerciseId, groupId);
         return ResponseEntity.noContent().build();
     }
 
@@ -129,7 +129,7 @@ public class ExerciseReviewResource {
     public ResponseEntity<CommentDTO> createUserComment(@PathVariable long exerciseId, @PathVariable long threadId, @Valid @NotNull @RequestBody UserCommentContentDTO content)
             throws URISyntaxException {
         log.debug("REST request to create exercise review comment for thread {}", threadId);
-        Comment savedComment = exerciseReviewService.createUserComment(threadId, content);
+        Comment savedComment = exerciseReviewService.createUserComment(exerciseId, threadId, content);
         return ResponseEntity.created(new URI("/api/exercise/exercises/" + exerciseId + "/review-comments/" + savedComment.getId())).body(new CommentDTO(savedComment));
     }
 
@@ -144,7 +144,7 @@ public class ExerciseReviewResource {
     @EnforceAtLeastInstructorInExercise
     public ResponseEntity<Void> deleteComment(@PathVariable long exerciseId, @PathVariable long commentId) {
         log.debug("REST request to delete comment {} for exercise {}", commentId, exerciseId);
-        exerciseReviewService.deleteComment(commentId);
+        exerciseReviewService.deleteComment(exerciseId, commentId);
         return ResponseEntity.noContent().build();
     }
 
@@ -161,7 +161,7 @@ public class ExerciseReviewResource {
     public ResponseEntity<CommentThreadDTO> updateThreadResolvedState(@PathVariable long exerciseId, @PathVariable long threadId,
             @Valid @NotNull @RequestBody UpdateThreadResolvedStateDTO dto) {
         log.debug("REST request to update resolved state of thread {} for exercise {}", threadId, exerciseId);
-        CommentThread updated = exerciseReviewService.updateThreadResolvedState(threadId, dto);
+        CommentThread updated = exerciseReviewService.updateThreadResolvedState(exerciseId, threadId, dto);
         return ResponseEntity.ok(new CommentThreadDTO(updated, mapComments(updated)));
     }
 
@@ -178,7 +178,7 @@ public class ExerciseReviewResource {
     public ResponseEntity<CommentDTO> updateUserCommentContent(@PathVariable long exerciseId, @PathVariable long commentId,
             @Valid @NotNull @RequestBody UserCommentContentDTO dto) {
         log.debug("REST request to update content of comment {} for exercise {}", commentId, exerciseId);
-        Comment updated = exerciseReviewService.updateUserCommentContent(commentId, dto);
+        Comment updated = exerciseReviewService.updateUserCommentContent(exerciseId, commentId, dto);
         return ResponseEntity.ok(new CommentDTO(updated));
     }
 
