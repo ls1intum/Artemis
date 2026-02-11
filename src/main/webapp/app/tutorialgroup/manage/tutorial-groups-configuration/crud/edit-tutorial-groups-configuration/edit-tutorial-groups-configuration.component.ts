@@ -13,6 +13,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
 import { TutorialGroupConfigurationDTO, tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-edit-tutorial-groups-configuration',
@@ -55,8 +56,8 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
                         this.tutorialGroupsConfiguration = tutorialGroupsConfigurationResult.body;
                         this.formData = {
                             period: [
-                                new Date(this.tutorialGroupsConfiguration.tutorialPeriodStartInclusive!),
-                                new Date(this.tutorialGroupsConfiguration.tutorialPeriodEndInclusive!),
+                                dayjs(this.tutorialGroupsConfiguration.tutorialPeriodStartInclusive!).toDate(),
+                                dayjs(this.tutorialGroupsConfiguration.tutorialPeriodEndInclusive!).toDate(),
                             ],
                             useTutorialGroupChannels: this.tutorialGroupsConfiguration.useTutorialGroupChannels,
                             usePublicTutorialGroupChannels: this.tutorialGroupsConfiguration.usePublicTutorialGroupChannels,
