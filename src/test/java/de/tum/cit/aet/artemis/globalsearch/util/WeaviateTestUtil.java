@@ -25,12 +25,14 @@ public final class WeaviateTestUtil {
     /**
      * Queries Weaviate for the exercise with the given ID and returns its properties,
      * or {@code null} if no exercise was found.
+     * Fails the test if the Weaviate service is not available.
      *
      * @param weaviateService the Weaviate service to query
      * @param exerciseId      the ID of the exercise to look up
      * @return the exercise properties map, or {@code null} if not found
      */
     public static Map<String, Object> queryExerciseProperties(WeaviateService weaviateService, long exerciseId) throws Exception {
+        assertThat(weaviateService).as("WeaviateService must not be null — is the Weaviate Testcontainer running?").isNotNull();
         var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
         var response = collection.query.fetchObjects(q -> q.filters(Filter.property(ExerciseSchema.Properties.EXERCISE_ID).eq(exerciseId)).limit(1));
         if (response.objects().isEmpty()) {

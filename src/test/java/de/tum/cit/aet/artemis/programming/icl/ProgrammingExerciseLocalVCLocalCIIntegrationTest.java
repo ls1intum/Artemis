@@ -205,6 +205,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         localVCLocalCITestService.testLatestSubmission(createdExercise.getSolutionParticipation().getId(), null, 13, false);
 
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(createdExercise));
+
         assertProgrammingExerciseExistsInWeaviate(weaviateService, createdExercise);
     }
 
@@ -231,10 +232,10 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         assertThat(updatedExercise.getReleaseDate()).isEqualTo(programmingExercise.getReleaseDate());
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(programmingExercise), eq(Optional.of(programmingExercise)));
 
-        var properties = queryExerciseProperties(weaviateService, updatedExercise.getId());
-        assertThat(properties).isNotNull();
-        assertThat(properties.get(ExerciseSchema.Properties.TITLE)).isEqualTo(updatedExercise.getTitle());
-        assertThat(((Number) properties.get(ExerciseSchema.Properties.EXERCISE_ID)).longValue()).isEqualTo(updatedExercise.getId());
+        var weaviateProperties = queryExerciseProperties(weaviateService, updatedExercise.getId());
+        assertThat(weaviateProperties).isNotNull();
+        assertThat(weaviateProperties.get(ExerciseSchema.Properties.TITLE)).isEqualTo(updatedExercise.getTitle());
+        assertThat(((Number) weaviateProperties.get(ExerciseSchema.Properties.EXERCISE_ID)).longValue()).isEqualTo(updatedExercise.getId());
     }
 
     @Test
@@ -269,6 +270,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         LocalVCRepositoryUri testsRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTestRepositoryUri());
         assertThat(testsRepositoryUri.getLocalRepositoryPath(localVCBasePath)).doesNotExist();
         verify(competencyProgressApi).updateProgressByCompetencyAsync(eq(competency));
+
         assertExerciseNotInWeaviate(weaviateService, exerciseId);
     }
 
@@ -325,6 +327,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(templateParticipation));
         verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(solutionParticipation));
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(importedExercise));
+
         assertProgrammingExerciseExistsInWeaviate(weaviateService, importedExercise);
     }
 
