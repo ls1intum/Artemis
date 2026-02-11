@@ -11,6 +11,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
+import de.tum.cit.aet.artemis.core.config.valves.HealthCheckValve;
+import de.tum.cit.aet.artemis.core.config.valves.PublicTimeValve;
+
 @Profile(PROFILE_CORE)
 @Configuration
 @Lazy
@@ -26,6 +29,8 @@ public class TomcatConfiguration {
         return (TomcatServletWebServerFactory container) -> {
             // Add health check valve for ultra-fast /ping responses used by load balancers
             container.addEngineValves(new HealthCheckValve());
+            // Add time valve for ultra-fast /time responses used by the webapp
+            container.addEngineValves(new PublicTimeValve());
 
             container.addContextCustomizers((Context context) -> {
 

@@ -25,7 +25,7 @@ export class ArtemisServerDateService implements ServerDateService {
         const http = inject(HttpClient);
 
         this.http = http;
-        this.resourceUrl = 'api/core/public/time';
+        this.resourceUrl = 'time';
         this.recentOffsets = new Array<number>();
         this.recentClientDates = new Array<dayjs.Dayjs>();
     }
@@ -46,7 +46,7 @@ export class ArtemisServerDateService implements ServerDateService {
         // TODO: one additional optimization could be to take the duration for request -> response into account here
         if (shouldSync) {
             // get new server date
-            this.http.get<string>(this.resourceUrl).subscribe((serverDate) => {
+            this.http.get(this.resourceUrl, { responseType: 'text' }).subscribe((serverDate) => {
                 this.setServerDate(serverDate);
             });
         }

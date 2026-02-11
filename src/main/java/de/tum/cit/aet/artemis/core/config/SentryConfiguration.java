@@ -76,7 +76,7 @@ public class SentryConfiguration {
                     // We're not interested in HEAD requests, so we just drop them (113 transactions per minute)
                     return 0.0;
                 }
-                if (url.equals("/api/core/public/time")) {
+                if (url.equals("/time")) {
                     // Time endpoint is called very frequently, and we don't want to consider it.
                     return 0.0;
                 }

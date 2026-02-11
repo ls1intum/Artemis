@@ -44,7 +44,7 @@ export class SentryErrorHandler extends ErrorHandler {
                 const { name, inheritOrSampleWith } = samplingContext;
 
                 // Sample none of the time transactions
-                if (name.includes('api/core/public/time')) {
+                if (/\/time(?:\?|$)/.test(name)) {
                     return 0.0;
                 }
                 // Sample less of the iris status transactions

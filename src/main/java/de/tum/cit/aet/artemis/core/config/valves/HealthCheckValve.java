@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.config;
+package de.tum.cit.aet.artemis.core.config.valves;
 
 import java.io.IOException;
 
@@ -9,7 +9,7 @@ import org.apache.catalina.connector.Response;
 import org.apache.catalina.valves.ValveBase;
 
 /**
- * Ultra-fast health check valve that handles /ping requests at the Tomcat level.
+ * Ultra-fast public health check valve that handles /ping requests at the Tomcat level.
  * Bypasses all Spring filters, interceptors, and MVC processing for minimal latency.
  * Used by load balancers to detect unresponsive nodes.
  */
