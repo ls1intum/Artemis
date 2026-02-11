@@ -23,13 +23,13 @@ class WeaviateConfigurationPropertiesTest {
         assertThat(properties.grpcPort()).isEqualTo(60051);
         assertThat(properties.secure()).isTrue();
         assertThat(properties.scheme()).isEqualTo("https");
-        assertThat(properties.collectionPrefix()).isEmpty();
+        assertThat(properties.collectionPrefix()).isEqualTo(TEST_COLLECTION_PREFIX);
     }
 
     @Test
     void testTypicalDefaults() {
         // Test typical default configuration values
-        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(false, "localhost", 8001, 50051, "http", TEST_COLLECTION_PREFIX);
+        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(false, "localhost", 8001, 50051, "http", "Artemis_");
 
         assertThat(properties.enabled()).isFalse();
         assertThat(properties.httpHost()).isEqualTo("localhost");
@@ -37,7 +37,7 @@ class WeaviateConfigurationPropertiesTest {
         assertThat(properties.grpcPort()).isEqualTo(50051);
         assertThat(properties.secure()).isFalse();
         assertThat(properties.scheme()).isEqualTo("http");
-        assertThat(properties.collectionPrefix()).isEmpty();
+        assertThat(properties.collectionPrefix()).isEqualTo("Artemis_");
     }
 
     @Test
