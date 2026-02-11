@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,57 +58,61 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testInsertExercise_storesMetadataInWeaviate() throws Exception {
-        exerciseWeaviateService.insertExercise(programmingExercise);
+    @Nested
+    class ExerciseWeaviateServiceTests {
 
-        var properties = queryExerciseProperties(programmingExercise.getId());
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testInsertExercise_storesMetadataInWeaviate() throws Exception {
+            exerciseWeaviateService.insertExercise(programmingExercise);
 
-        assertThat(properties).isNotNull();
-        assertThat(properties.get(ExerciseSchema.Properties.TITLE)).isEqualTo(programmingExercise.getTitle());
-        assertThat(properties.get(ExerciseSchema.Properties.EXERCISE_TYPE)).isEqualTo("programming");
-        assertThat(properties.get(ExerciseSchema.Properties.PROGRAMMING_LANGUAGE)).isEqualTo(programmingExercise.getProgrammingLanguage().name());
-        assertThat(((Number) properties.get(ExerciseSchema.Properties.COURSE_ID)).longValue()).isEqualTo(course.getId());
-        assertThat(((Number) properties.get(ExerciseSchema.Properties.EXERCISE_ID)).longValue()).isEqualTo(programmingExercise.getId());
-        assertThat(properties.get(ExerciseSchema.Properties.IS_EXAM_EXERCISE)).isEqualTo(false);
-        assertThat(((Number) properties.get(ExerciseSchema.Properties.MAX_POINTS)).doubleValue()).isEqualTo(programmingExercise.getMaxPoints());
-    }
+            var properties = queryExerciseProperties(programmingExercise.getId());
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateExercise_updatesMetadataInWeaviate() throws Exception {
-        exerciseWeaviateService.insertExercise(programmingExercise);
+            assertThat(properties).isNotNull();
+            assertThat(properties.get(ExerciseSchema.Properties.TITLE)).isEqualTo(programmingExercise.getTitle());
+            assertThat(properties.get(ExerciseSchema.Properties.EXERCISE_TYPE)).isEqualTo("programming");
+            assertThat(properties.get(ExerciseSchema.Properties.PROGRAMMING_LANGUAGE)).isEqualTo(programmingExercise.getProgrammingLanguage().name());
+            assertThat(((Number) properties.get(ExerciseSchema.Properties.COURSE_ID)).longValue()).isEqualTo(course.getId());
+            assertThat(((Number) properties.get(ExerciseSchema.Properties.EXERCISE_ID)).longValue()).isEqualTo(programmingExercise.getId());
+            assertThat(properties.get(ExerciseSchema.Properties.IS_EXAM_EXERCISE)).isEqualTo(false);
+            assertThat(((Number) properties.get(ExerciseSchema.Properties.MAX_POINTS)).doubleValue()).isEqualTo(programmingExercise.getMaxPoints());
+        }
 
-        // Modify exercise properties
-        String updatedTitle = "Updated Weaviate Test Title";
-        double updatedMaxPoints = 42.0;
-        programmingExercise.setTitle(updatedTitle);
-        programmingExercise.setMaxPoints(updatedMaxPoints);
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testUpdateExercise_updatesMetadataInWeaviate() throws Exception {
+            exerciseWeaviateService.insertExercise(programmingExercise);
 
-        exerciseWeaviateService.updateExercise(programmingExercise);
+            // Modify exercise properties
+            String updatedTitle = "Updated Weaviate Test Title";
+            double updatedMaxPoints = 42.0;
+            programmingExercise.setTitle(updatedTitle);
+            programmingExercise.setMaxPoints(updatedMaxPoints);
 
-        var properties = queryExerciseProperties(programmingExercise.getId());
+            exerciseWeaviateService.updateExercise(programmingExercise);
 
-        assertThat(properties).isNotNull();
-        assertThat(properties.get(ExerciseSchema.Properties.TITLE)).isEqualTo(updatedTitle);
-        assertThat(((Number) properties.get(ExerciseSchema.Properties.MAX_POINTS)).doubleValue()).isEqualTo(updatedMaxPoints);
-        assertThat(((Number) properties.get(ExerciseSchema.Properties.EXERCISE_ID)).longValue()).isEqualTo(programmingExercise.getId());
-    }
+            var properties = queryExerciseProperties(programmingExercise.getId());
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testDeleteExercise_removesMetadataFromWeaviate() throws Exception {
-        exerciseWeaviateService.insertExercise(programmingExercise);
+            assertThat(properties).isNotNull();
+            assertThat(properties.get(ExerciseSchema.Properties.TITLE)).isEqualTo(updatedTitle);
+            assertThat(((Number) properties.get(ExerciseSchema.Properties.MAX_POINTS)).doubleValue()).isEqualTo(updatedMaxPoints);
+            assertThat(((Number) properties.get(ExerciseSchema.Properties.EXERCISE_ID)).longValue()).isEqualTo(programmingExercise.getId());
+        }
 
-        // Verify the exercise exists in Weaviate before deletion
-        var propertiesBefore = queryExerciseProperties(programmingExercise.getId());
-        assertThat(propertiesBefore).isNotNull();
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testDeleteExercise_removesMetadataFromWeaviate() throws Exception {
+            exerciseWeaviateService.insertExercise(programmingExercise);
 
-        exerciseWeaviateService.deleteExercise(programmingExercise.getId());
+            // Verify the exercise exists in Weaviate before deletion
+            var propertiesBefore = queryExerciseProperties(programmingExercise.getId());
+            assertThat(propertiesBefore).isNotNull();
 
-        var propertiesAfter = queryExerciseProperties(programmingExercise.getId());
-        assertThat(propertiesAfter).isNull();
+            exerciseWeaviateService.deleteExercise(programmingExercise.getId());
+
+            var propertiesAfter = queryExerciseProperties(programmingExercise.getId());
+            assertThat(propertiesAfter).isNull();
+        }
     }
 
     /**
