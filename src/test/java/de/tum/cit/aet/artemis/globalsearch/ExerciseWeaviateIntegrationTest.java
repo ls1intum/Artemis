@@ -1,8 +1,9 @@
 package de.tum.cit.aet.artemis.globalsearch;
 
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseExistsInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseNotInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryExerciseProperties;
 import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -19,7 +20,6 @@ import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import io.weaviate.client6.v1.api.collections.query.Filter;
 
 /**
  * Integration tests for {@link ExerciseWeaviateService} using a real Weaviate Testcontainer.
@@ -43,8 +43,6 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
-    private Course course;
-
     private ProgrammingExercise programmingExercise;
 
     static boolean isWeaviateEnabled() {
@@ -54,7 +52,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
     }
 
@@ -66,14 +64,10 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         void testInsertExercise_storesMetadataInWeaviate() throws Exception {
             exerciseWeaviateService.insertExercise(programmingExercise);
 
-            var properties = queryExerciseProperties(programmingExercise.getId());
+            assertExerciseExistsInWeaviate(weaviateService, programmingExercise);
 
-            assertThat(properties).isNotNull();
-            assertThat(properties.get(ExerciseSchema.Properties.TITLE)).isEqualTo(programmingExercise.getTitle());
-            assertThat(properties.get(ExerciseSchema.Properties.EXERCISE_TYPE)).isEqualTo("programming");
+            var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
             assertThat(properties.get(ExerciseSchema.Properties.PROGRAMMING_LANGUAGE)).isEqualTo(programmingExercise.getProgrammingLanguage().name());
-            assertThat(((Number) properties.get(ExerciseSchema.Properties.COURSE_ID)).longValue()).isEqualTo(course.getId());
-            assertThat(((Number) properties.get(ExerciseSchema.Properties.EXERCISE_ID)).longValue()).isEqualTo(programmingExercise.getId());
             assertThat(properties.get(ExerciseSchema.Properties.IS_EXAM_EXERCISE)).isEqualTo(false);
             assertThat(((Number) properties.get(ExerciseSchema.Properties.MAX_POINTS)).doubleValue()).isEqualTo(programmingExercise.getMaxPoints());
         }
@@ -91,7 +85,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
 
             exerciseWeaviateService.updateExercise(programmingExercise);
 
-            var properties = queryExerciseProperties(programmingExercise.getId());
+            var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
 
             assertThat(properties).isNotNull();
             assertThat(properties.get(ExerciseSchema.Properties.TITLE)).isEqualTo(updatedTitle);
@@ -104,27 +98,11 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
         void testDeleteExercise_removesMetadataFromWeaviate() throws Exception {
             exerciseWeaviateService.insertExercise(programmingExercise);
 
-            // Verify the exercise exists in Weaviate before deletion
-            var propertiesBefore = queryExerciseProperties(programmingExercise.getId());
-            assertThat(propertiesBefore).isNotNull();
+            assertExerciseExistsInWeaviate(weaviateService, programmingExercise);
 
             exerciseWeaviateService.deleteExercise(programmingExercise.getId());
 
-            var propertiesAfter = queryExerciseProperties(programmingExercise.getId());
-            assertThat(propertiesAfter).isNull();
+            assertExerciseNotInWeaviate(weaviateService, programmingExercise.getId());
         }
-    }
-
-    /**
-     * Queries Weaviate for the exercise with the given ID and returns its properties,
-     * or {@code null} if no exercise was found.
-     */
-    private Map<String, Object> queryExerciseProperties(long exerciseId) throws Exception {
-        var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
-        var response = collection.query.fetchObjects(q -> q.filters(Filter.property(ExerciseSchema.Properties.EXERCISE_ID).eq(exerciseId)).limit(1));
-        if (response.objects().isEmpty()) {
-            return null;
-        }
-        return response.objects().getFirst().properties();
     }
 }
