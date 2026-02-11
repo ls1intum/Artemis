@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
 import de.tum.cit.aet.artemis.core.exception.WeaviateConnectionException;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateClientConfiguration;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import io.weaviate.client6.v1.api.WeaviateClient;
 
 /**

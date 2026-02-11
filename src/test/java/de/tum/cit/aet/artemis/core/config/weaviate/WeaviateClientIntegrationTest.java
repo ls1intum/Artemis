@@ -9,6 +9,8 @@ import org.junit.jupiter.api.condition.EnabledIf;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.weaviate.WeaviateContainer;
 
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateClientConfiguration;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import io.weaviate.client6.v1.api.WeaviateClient;
 
 /**

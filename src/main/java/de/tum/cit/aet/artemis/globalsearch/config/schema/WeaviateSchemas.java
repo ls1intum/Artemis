@@ -1,11 +1,11 @@
-package de.tum.cit.aet.artemis.core.config.weaviate.schema;
+package de.tum.cit.aet.artemis.globalsearch.config.schema;
 
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import de.tum.cit.aet.artemis.core.config.weaviate.schema.entitySchemas.ProgrammingExerciseSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entitySchemas.ProgrammingExerciseSchema;
 
 /**
  * Registry of all Weaviate collection schemas defined in Artemis.

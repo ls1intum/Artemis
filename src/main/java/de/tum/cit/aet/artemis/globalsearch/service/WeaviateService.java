@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.service.weaviate;
+package de.tum.cit.aet.artemis.globalsearch.service;
 
 import java.io.IOException;
 import java.util.Map;
@@ -10,12 +10,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.config.weaviate.WeaviateConfigurationProperties;
-import de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviateCollectionSchema;
-import de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviatePropertyDefinition;
-import de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviateReferenceDefinition;
-import de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviateSchemas;
 import de.tum.cit.aet.artemis.core.exception.WeaviateException;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateCollectionSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviatePropertyDefinition;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateReferenceDefinition;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateSchemas;
 import io.weaviate.client6.v1.api.WeaviateClient;
 import io.weaviate.client6.v1.api.collections.CollectionHandle;
 import io.weaviate.client6.v1.api.collections.Property;

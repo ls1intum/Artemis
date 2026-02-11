@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.config.weaviate;
+package de.tum.cit.aet.artemis.globalsearch.config;
 
 import static de.tum.cit.aet.artemis.core.config.ConfigurationValidator.HTTPS_SCHEME;
 

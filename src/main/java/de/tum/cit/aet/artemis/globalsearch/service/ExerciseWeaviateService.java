@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exercise.service;
+package de.tum.cit.aet.artemis.globalsearch.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -15,9 +15,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.config.weaviate.schema.entitySchemas.ProgrammingExerciseSchema;
-import de.tum.cit.aet.artemis.core.service.weaviate.WeaviateService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entitySchemas.ProgrammingExerciseSchema;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import io.weaviate.client6.v1.api.collections.query.Filter;
 

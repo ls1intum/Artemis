@@ -1,16 +1,16 @@
-package de.tum.cit.aet.artemis.core.config.weaviate.schema.entitySchemas;
+package de.tum.cit.aet.artemis.globalsearch.config.schema.entitySchemas;
 
-import static de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviateDataType.DATE;
-import static de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviateDataType.INT;
-import static de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviateDataType.NUMBER;
-import static de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviateDataType.TEXT;
-import static de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviatePropertyDefinition.filterable;
-import static de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviatePropertyDefinition.nonSearchable;
-import static de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviatePropertyDefinition.searchable;
+import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateDataType.DATE;
+import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateDataType.INT;
+import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateDataType.NUMBER;
+import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateDataType.TEXT;
+import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviatePropertyDefinition.filterable;
+import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviatePropertyDefinition.nonSearchable;
+import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviatePropertyDefinition.searchable;
 
 import java.util.List;
 
-import de.tum.cit.aet.artemis.core.config.weaviate.schema.WeaviateCollectionSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateCollectionSchema;
 
 /**
  * Schema definition for the ProgrammingExercises Weaviate collection.

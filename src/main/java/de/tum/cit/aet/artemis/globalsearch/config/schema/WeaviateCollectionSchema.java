@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.config.weaviate.schema;
+package de.tum.cit.aet.artemis.globalsearch.config.schema;
 
 import java.util.List;
 
