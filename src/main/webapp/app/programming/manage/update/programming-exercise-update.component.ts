@@ -201,7 +201,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public customBuildPlansSupported = '';
     public theiaEnabled = false;
     public plagiarismEnabled = false;
-    public hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+    public hyperionEnabled = false;
     public isGeneratingWithAi = false;
 
     // Additional options for import
@@ -551,6 +551,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
         this.theiaEnabled = this.profileService.isProfileActive(PROFILE_THEIA);
         this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
+        this.hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
         this.defineSupportedProgrammingLanguages();
     }
 
@@ -728,6 +729,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
     }
 
+    // Not a computed signal yet: this depends on mutable, non-signal fields (e.g., programmingExercise properties),
+    // so converting would require a broader signal migration to avoid stale values.
     shouldShowGenerateWithAi(): boolean {
         return (
             this.hyperionEnabled &&
@@ -751,6 +754,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         } else {
             ref.then((reference) => {
                 reference.componentInstance.confirmed.subscribe(() => {
+                    this.saveExerciseWithAi();
+                });
+                reference.componentInstance.reEvaluated.subscribe(() => {
+                    // Re-evaluation only applies to existing exercises; for creation, proceed with the AI setup.
                     this.saveExerciseWithAi();
                 });
             });
@@ -855,12 +862,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 requestOptions.notificationText = this.notificationText;
             }
             this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise, requestOptions));
+        } else if (emptyRepositories) {
+            this.subscribeToSaveResponseWithAi(this.programmingExerciseService.automaticSetup(this.programmingExercise, true));
         } else {
-            if (emptyRepositories) {
-                this.subscribeToSaveResponseWithAi(this.programmingExerciseService.automaticSetup(this.programmingExercise, true));
-            } else {
-                this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise));
-            }
+            this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise));
         }
     }
 

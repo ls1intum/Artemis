@@ -21,12 +21,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 @ExtendWith(MockitoExtension.class)
@@ -52,7 +52,7 @@ class ProgrammingExerciseRepositoryServiceTest {
     }
 
     @Test
-    void clearRepositorySources_removesSourcesAndAddsReadme() throws Exception {
+    void clearRepositorySources_removesSourcesAndAddsGitkeep() throws Exception {
         Path repoPath = tempDir.resolve("repo");
         Files.createDirectories(repoPath.resolve("src"));
         FileUtils.writeStringToFile(repoPath.resolve("src/Main.java").toFile(), "class Main {}", StandardCharsets.UTF_8);
@@ -60,11 +60,11 @@ class ProgrammingExerciseRepositoryServiceTest {
         Repository repository = mockRepository(repoPath);
         User user = new User();
 
-        ReflectionTestUtils.invokeMethod(programmingExerciseRepositoryService, "clearRepositorySources", repository, "template", user);
+        programmingExerciseRepositoryService.clearRepositorySources(repository, RepositoryType.TEMPLATE, user);
 
         try (var files = Files.list(repoPath.resolve("src"))) {
             var filenames = files.map(path -> path.getFileName().toString()).sorted().toList();
-            assertThat(filenames).containsExactly("README.md");
+            assertThat(filenames).containsExactly(".gitkeep");
         }
 
         verify(gitService).stageAllChanges(repository);
@@ -79,7 +79,7 @@ class ProgrammingExerciseRepositoryServiceTest {
         Repository repository = mockRepository(repoPath);
         User user = new User();
 
-        ReflectionTestUtils.invokeMethod(programmingExerciseRepositoryService, "clearRepositorySources", repository, "solution", user);
+        programmingExerciseRepositoryService.clearRepositorySources(repository, RepositoryType.SOLUTION, user);
 
         verifyNoInteractions(gitService);
     }

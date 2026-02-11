@@ -40,6 +40,11 @@ export type ProgrammingExerciseResetOptions = {
     recreateBuildPlans: boolean;
 };
 
+enum EmptyRepositoriesQueryParam {
+    Enabled = 'true',
+    Disabled = 'false',
+}
+
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseService {
     private http = inject(HttpClient);
@@ -58,7 +63,8 @@ export class ProgrammingExerciseService {
         let copy = this.convertDataFromClient(programmingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
-        const params = emptyRepositories ? new HttpParams().set('emptyRepositories', 'true') : undefined;
+        const emptyRepositoriesParam = emptyRepositories ? EmptyRepositoriesQueryParam.Enabled : EmptyRepositoriesQueryParam.Disabled;
+        const params = new HttpParams().set('emptyRepositories', emptyRepositoriesParam);
         return this.http
             .post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response', params })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));

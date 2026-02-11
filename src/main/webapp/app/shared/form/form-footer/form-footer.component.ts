@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, computed, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faBan, faExclamationCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
@@ -34,22 +34,26 @@ export class FormFooterComponent {
     protected readonly faExclamationCircle = faExclamationCircle;
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
 
-    @Input() isSaving = false;
-    @Input() isDisabled = false;
-    @Input() invalidReasons: ValidationReason[] = [];
+    isSaving = input(false);
+    isDisabled = input(false);
+    invalidReasons = input<ValidationReason[]>([]);
     showGenerateWithAi = input(false);
     isGeneratingWithAi = input(false);
-    @Input() notificationText?: string;
-    @Input() switchEditMode?: () => void;
+    notificationText = input<string | undefined>();
+    switchEditMode = input<(() => void) | undefined>();
     isImport = input<boolean>();
     isCreation = input<boolean>();
     isSimpleMode = input<boolean>();
     areAuxiliaryRepositoriesValid = input<boolean>(true);
 
-    @Output() notificationTextChange = new EventEmitter<string>();
-    @Output() save = new EventEmitter<void>();
+    notificationTextChange = output<string>();
+    save = output<void>();
     generateWithAi = output<void>();
-    @Output() onCancel = new EventEmitter<void>();
+    onCancel = output<void>();
 
     saveTitle = computed<string>(() => (this.isImport() ? 'entity.action.import' : this.isCreation() ? 'entity.action.generate' : 'entity.action.save'));
+
+    onSwitchEditMode() {
+        this.switchEditMode()?.();
+    }
 }

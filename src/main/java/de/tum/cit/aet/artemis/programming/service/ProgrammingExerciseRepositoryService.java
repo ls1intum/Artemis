@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
@@ -115,6 +116,8 @@ public class ProgrammingExerciseRepositoryService {
      * @param emptyRepositories   if true, clear sources in template, solution, and test repositories after setup
      */
     void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator, boolean emptyRepositories) throws GitAPIException {
+        Objects.requireNonNull(programmingExercise, "ProgrammingExercise must not be null");
+        Objects.requireNonNull(exerciseCreator, "Exercise creator must not be null");
         final RepositoryResources exerciseResources = getRepositoryResources(programmingExercise, RepositoryType.TEMPLATE);
         final RepositoryResources solutionResources = getRepositoryResources(programmingExercise, RepositoryType.SOLUTION);
         final RepositoryResources testResources = getRepositoryResources(programmingExercise, RepositoryType.TESTS);
@@ -122,9 +125,9 @@ public class ProgrammingExerciseRepositoryService {
         setupRepositories(programmingExercise, exerciseCreator, exerciseResources, solutionResources, testResources);
 
         if (emptyRepositories) {
-            clearRepositorySources(exerciseResources.repository, "template", exerciseCreator);
-            clearRepositorySources(solutionResources.repository, "solution", exerciseCreator);
-            clearRepositorySources(testResources.repository, "test", exerciseCreator);
+            clearRepositorySources(exerciseResources.repository, RepositoryType.TEMPLATE, exerciseCreator);
+            clearRepositorySources(solutionResources.repository, RepositoryType.SOLUTION, exerciseCreator);
+            // Keep tests as a fallback in case AI generation is aborted or fails.
         }
     }
 
@@ -136,10 +139,11 @@ public class ProgrammingExerciseRepositoryService {
      * Clears the repository sources while keeping build scaffolding in place.
      *
      * @param repository      the repository to clean
-     * @param repositoryLabel label for logging and commit message
+     * @param repositoryType  the repository type for logging and commit message
      * @param exerciseCreator the user performing the cleanup
      */
-    private void clearRepositorySources(final Repository repository, final String repositoryLabel, final User exerciseCreator) throws GitAPIException {
+    void clearRepositorySources(final Repository repository, final RepositoryType repositoryType, final User exerciseCreator) throws GitAPIException {
+        final String repositoryLabel = repositoryType.name().toLowerCase(Locale.ROOT);
         Path sourcePath = repository.getLocalPath().resolve("src");
         if (!Files.exists(sourcePath)) {
             log.warn("Skipping AI empty setup: no src directory found in {} repository {}", repositoryLabel, repository.getRemoteRepositoryUri());
@@ -147,14 +151,18 @@ public class ProgrammingExerciseRepositoryService {
         }
         try {
             FileUtils.cleanDirectory(sourcePath.toFile());
-            Path readmeFile = sourcePath.resolve("README.md");
-            if (!Files.exists(readmeFile)) {
-                FileUtils.writeStringToFile(readmeFile.toFile(), "", StandardCharsets.UTF_8);
+            Path keepFile = sourcePath.resolve(".gitkeep");
+            if (!Files.exists(keepFile)) {
+                FileUtils.writeStringToFile(keepFile.toFile(), "", StandardCharsets.UTF_8);
             }
             commitAndPushRepository(repository, "Cleared " + repositoryLabel + " sources for AI generation", true, exerciseCreator);
         }
         catch (IOException ex) {
-            log.warn("Failed to clean {} sources for AI generation: {}", repositoryLabel, ex.getMessage());
+            log.error("Failed to clean {} sources for AI generation", repositoryLabel, ex);
+            GitAPIException exception = new GitAPIException("Failed to clean " + repositoryLabel + " sources for AI generation: " + ex.getMessage()) {
+            };
+            exception.initCause(ex);
+            throw exception;
         }
     }
 

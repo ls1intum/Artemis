@@ -12,6 +12,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
@@ -29,13 +30,16 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
@@ -75,6 +79,8 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private final ProgrammingExerciseAtlasIrisService programmingExerciseAtlasIrisService;
 
+    private final ModuleFeatureService moduleFeatureService;
+
     private final Optional<VersionControlService> versionControlService;
 
     private final GitService gitService;
@@ -98,7 +104,7 @@ public class ProgrammingExerciseCreationUpdateService {
             UserRepository userRepository, ExerciseService exerciseService, ProgrammingExerciseRepository programmingExerciseRepository, ChannelService channelService,
             ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService,
             ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService, ProgrammingExerciseAtlasIrisService programmingExerciseAtlasIrisService,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            ModuleFeatureService moduleFeatureService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             Optional<VersionControlService> versionControlService, ParticipationRepository participationRepository, GitService gitService) {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
@@ -112,6 +118,7 @@ public class ProgrammingExerciseCreationUpdateService {
         this.programmingExerciseBuildPlanService = programmingExerciseBuildPlanService;
         this.programmingExerciseCreationScheduleService = programmingExerciseCreationScheduleService;
         this.programmingExerciseAtlasIrisService = programmingExerciseAtlasIrisService;
+        this.moduleFeatureService = moduleFeatureService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
@@ -156,6 +163,11 @@ public class ProgrammingExerciseCreationUpdateService {
      * @throws IOException     If the template files couldn't be read
      */
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, boolean emptyRepositories) throws GitAPIException, IOException {
+        Objects.requireNonNull(programmingExercise, "ProgrammingExercise must not be null");
+        Objects.requireNonNull(programmingExercise.getBuildConfig(), "ProgrammingExercise build config must not be null");
+        if (emptyRepositories) {
+            validateAiGenerationPreconditions(programmingExercise);
+        }
         final User exerciseCreator = userRepository.getUser();
 
         // The client sends a solution and template participation object (filled with null values) when creating a programming exercise.
@@ -209,6 +221,15 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExerciseAtlasIrisService.updateCompetencyProgressOnCreation(savedProgrammingExercise);
 
         return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+    }
+
+    private void validateAiGenerationPreconditions(ProgrammingExercise programmingExercise) {
+        if (!moduleFeatureService.isHyperionEnabled()) {
+            throw new BadRequestAlertException("Hyperion is disabled on this server", "programmingExercise", "hyperionDisabled");
+        }
+        if (programmingExercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
+            throw new BadRequestAlertException("AI generation is only supported for Java", "programmingExercise", "hyperionUnsupportedLanguage");
+        }
     }
 
     /**
