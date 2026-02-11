@@ -758,6 +758,30 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSearchTermMatchesTitle_caseInsensitive() throws Exception {
+        final Course course = courseUtilService.addEmptyCourse();
+        final var now = ZonedDateTime.now();
+        ModelingExercise exercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course);
+        exercise.setTitle("CamelCaseModelingTitle");
+        exercise = modelingExerciseTestRepository.save(exercise);
+
+        // Search with lowercase should find the exercise
+        final var searchLowercase = pageableSearchUtilService.configureSearch("camelcasemodelingtitle");
+        final var resultLowercase = request.getSearchResult("/api/modeling/modeling-exercises", HttpStatus.OK, ModelingExercise.class,
+                pageableSearchUtilService.searchMapping(searchLowercase));
+        assertThat(resultLowercase.getResultsOnPage()).hasSize(1);
+        assertThat(resultLowercase.getResultsOnPage().getFirst().getId()).isEqualTo(exercise.getId());
+
+        // Search with uppercase should also find the exercise
+        final var searchUppercase = pageableSearchUtilService.configureSearch("CAMELCASEMODELINGTITLE");
+        final var resultUppercase = request.getSearchResult("/api/modeling/modeling-exercises", HttpStatus.OK, ModelingExercise.class,
+                pageableSearchUtilService.searchMapping(searchUppercase));
+        assertThat(resultUppercase.getResultsOnPage()).hasSize(1);
+        assertThat(resultUppercase.getResultsOnPage().getFirst().getId()).isEqualTo(exercise.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
         final String titleExtension = "testInstructorGetsResultsFromOwningCoursesNotEmpty";
         modelingExerciseUtilService.addCourseWithOneModelingExercise("ClassDiagram" + titleExtension);
