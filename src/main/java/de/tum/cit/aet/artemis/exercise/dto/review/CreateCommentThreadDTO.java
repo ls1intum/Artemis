@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.dto.review;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -15,7 +16,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "Request payload to create a new comment thread.")
 public record CreateCommentThreadDTO(@Schema(description = "Location type of the thread.") @NotNull CommentThreadLocationType targetType,
         @Schema(description = "Identifier of the auxiliary repository, if applicable.") Long auxiliaryRepositoryId,
-        @Schema(description = "Initial file path captured at thread creation.") String initialFilePath,
+        @Schema(description = "Initial file path captured at thread creation.") @Size(max = 1024) String initialFilePath,
         @Schema(description = "Initial line number captured at thread creation.") @NotNull @Min(1) Integer initialLineNumber,
         @Schema(description = "Initial user comment that populates the thread.") @NotNull @Valid UserCommentContentDTO initialComment) {
 

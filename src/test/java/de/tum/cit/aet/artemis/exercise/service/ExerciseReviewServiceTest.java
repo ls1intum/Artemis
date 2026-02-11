@@ -304,6 +304,23 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectThreadCreationWithBlankInitialFilePath() {
+        CreateCommentThreadDTO dto = new CreateCommentThreadDTO(CommentThreadLocationType.TEMPLATE_REPO, null, "   ", 1, new UserCommentContentDTO("Initial"));
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exerciseReviewService.createThread(programmingExercise.getId(), dto));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectThreadCreationWithTooLongInitialFilePath() {
+        String tooLongPath = "a".repeat(1025);
+        CreateCommentThreadDTO dto = new CreateCommentThreadDTO(CommentThreadLocationType.TEMPLATE_REPO, null, tooLongPath, 1, new UserCommentContentDTO("Initial"));
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exerciseReviewService.createThread(programmingExercise.getId(), dto));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRejectThreadGroupCreationWithNullBody() {
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exerciseReviewService.createGroup(programmingExercise.getId(), null));
     }
@@ -776,6 +793,23 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
         CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
         assertThat(updated.getLineNumber()).isEqualTo(originalLine);
+    }
+
+    @Test
+    void shouldUpdateProblemStatementThreadsWhenProgrammingDataMissing() {
+        CommentThread thread = persistThread(programmingExercise);
+        thread.setLineNumber(2);
+        thread.setInitialLineNumber(2);
+        commentThreadRepository.save(thread);
+
+        ExerciseSnapshotDTO previous = buildExerciseSnapshot(programmingExercise.getId(), "line1\nline2\nline3\n", null);
+        ExerciseSnapshotDTO current = buildExerciseSnapshot(programmingExercise.getId(), "line1\ninserted\nline2\nline3\n", null);
+
+        exerciseReviewService.updateThreadsForVersionChange(previous, current);
+
+        CommentThread updated = commentThreadRepository.findById(thread.getId()).orElseThrow();
+        assertThat(updated.getLineNumber()).isEqualTo(3);
+        assertThat(updated.isOutdated()).isFalse();
     }
 
     @Test

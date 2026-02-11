@@ -404,6 +404,12 @@ public class ExerciseReviewService {
             throw new BadRequestAlertException("Initial file path is not allowed for problem statement threads", THREAD_ENTITY_NAME, "initialFilePathNotAllowed");
         }
         if (dto.targetType() != CommentThreadLocationType.PROBLEM_STATEMENT) {
+            if (dto.initialFilePath().isBlank()) {
+                throw new BadRequestAlertException("Initial file path must not be blank for repository threads", THREAD_ENTITY_NAME, "initialFilePathBlank");
+            }
+            if (dto.initialFilePath().length() > 1024) {
+                throw new BadRequestAlertException("Initial file path must not exceed 1024 characters", THREAD_ENTITY_NAME, "initialFilePathTooLong");
+            }
             try {
                 FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(dto.initialFilePath());
             }
@@ -420,7 +426,10 @@ public class ExerciseReviewService {
     }
 
     /**
-     * Update thread line numbers and outdated state based on a new exercise version (repository threads only).
+     * Update thread line numbers and outdated state based on a new exercise version.
+     * This algorithm will be made more efficient in a future PR.
+     * Problem-statement threads are mapped using the problem statement text in the snapshots.
+     * Repository threads are mapped only when both snapshots contain programming data.
      *
      * @param previousSnapshot the previous exercise snapshot
      * @param currentSnapshot  the current exercise snapshot
@@ -430,11 +439,13 @@ public class ExerciseReviewService {
             return;
         }
 
-        ProgrammingExerciseSnapshotDTO previousProgramming = previousSnapshot.programmingData();
-        ProgrammingExerciseSnapshotDTO currentProgramming = currentSnapshot.programmingData();
-        if (previousProgramming == null || currentProgramming == null || !Objects.equals(previousSnapshot.id(), currentSnapshot.id())) {
+        if (!Objects.equals(previousSnapshot.id(), currentSnapshot.id())) {
             return;
         }
+
+        ProgrammingExerciseSnapshotDTO previousProgramming = previousSnapshot.programmingData();
+        ProgrammingExerciseSnapshotDTO currentProgramming = currentSnapshot.programmingData();
+        boolean hasProgrammingSnapshots = previousProgramming != null && currentProgramming != null;
 
         List<CommentThread> threads = commentThreadRepository.findByExerciseIdAndOutdatedFalseAndLineNumberIsNotNull(currentSnapshot.id());
         if (threads.isEmpty()) {
@@ -464,6 +475,10 @@ public class ExerciseReviewService {
                 if (modified) {
                     modifiedThreads.add(thread);
                 }
+                continue;
+            }
+
+            if (!hasProgrammingSnapshots) {
                 continue;
             }
 

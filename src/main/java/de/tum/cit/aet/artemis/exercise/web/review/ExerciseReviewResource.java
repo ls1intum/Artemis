@@ -81,6 +81,7 @@ public class ExerciseReviewResource {
     public ResponseEntity<List<CommentThreadDTO>> getThreads(@PathVariable long exerciseId) {
         log.debug("REST request to get exercise review threads for exercise {}", exerciseId);
         List<CommentThreadDTO> threads = exerciseReviewService.findThreadsWithCommentsByExerciseId(exerciseId).stream()
+                .sorted(Comparator.comparing(CommentThread::getId, Comparator.nullsLast(Comparator.naturalOrder())))
                 .map(thread -> new CommentThreadDTO(thread, mapComments(thread))).toList();
         return ResponseEntity.ok(threads);
     }

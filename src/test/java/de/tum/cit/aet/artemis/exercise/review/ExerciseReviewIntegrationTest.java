@@ -221,6 +221,24 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectRepositoryThreadWithBlankInitialFilePath() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CreateCommentThreadDTO dto = new CreateCommentThreadDTO(CommentThreadLocationType.TEMPLATE_REPO, null, "   ", 1, buildUserComment("Text"));
+
+        assertBadRequest(reviewThreadsPath(exercise.getId()), dto, "error.initialFilePathBlank", THREAD_ENTITY_NAME);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectRepositoryThreadWithTooLongInitialFilePath() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CreateCommentThreadDTO dto = new CreateCommentThreadDTO(CommentThreadLocationType.TEMPLATE_REPO, null, "a".repeat(1025), 1, buildUserComment("Text"));
+
+        assertBadRequest(reviewThreadsPath(exercise.getId()), dto, "error.http.400", null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldAllowProblemStatementThreadWithoutFilePath() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
         CreateCommentThreadDTO dto = new CreateCommentThreadDTO(CommentThreadLocationType.PROBLEM_STATEMENT, null, null, 1, buildUserComment("Text"));
