@@ -19,18 +19,10 @@ export const generateExampleTutorialGroupsConfiguration = ({
     return exampleConfiguration;
 };
 
-export const tutorialsGroupsConfigurationToFormData = (entity: TutorialGroupsConfiguration): TutorialGroupsConfigurationFormData => {
-    return {
-        period: [entity.tutorialPeriodStartInclusive!.toDate(), entity.tutorialPeriodEndInclusive!.toDate()],
-        useTutorialGroupChannels: entity.useTutorialGroupChannels,
-        usePublicTutorialGroupChannels: entity.usePublicTutorialGroupChannels,
-    };
-};
-
 export const generateExampleTutorialGroupsConfigurationDTO = ({
     id = 1,
-    tutorialPeriodStartInclusive = dayjs('2021-01-01'),
-    tutorialPeriodEndInclusive = dayjs('2021-01-02'),
+    tutorialPeriodStartInclusive = '2021-01-01',
+    tutorialPeriodEndInclusive = '2021-01-02',
     useTutorialGroupChannels = true,
     usePublicTutorialGroupChannels = true,
 }: Partial<TutorialGroupConfigurationDTO> = {}) => {
