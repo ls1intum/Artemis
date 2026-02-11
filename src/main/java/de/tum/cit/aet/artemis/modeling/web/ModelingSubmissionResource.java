@@ -394,7 +394,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         // do not send the result to the client if the assessment is not finished
         Result latestResult = modelingSubmission.getLatestResult();
-        if (latestResult != null && (latestResult.getCompletionDate() == null || latestResult.getAssessor() == null)) {
+        if (latestResult != null && latestResult.getAssessmentType() != AssessmentType.AUTOMATIC_ATHENA
+                && (latestResult.getCompletionDate() == null || latestResult.getAssessor() == null)) {
             modelingSubmission.setResults(List.of());
         }
 

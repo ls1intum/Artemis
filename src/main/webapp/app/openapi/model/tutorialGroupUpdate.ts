@@ -7,9 +7,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { TutorialGroup } from './tutorialGroup';
 
 
 export interface TutorialGroupUpdate { 
+    tutorialGroup: TutorialGroup;
     notificationText?: string;
     updateTutorialGroupChannelName?: boolean;
 }
