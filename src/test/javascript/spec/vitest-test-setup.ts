@@ -8,11 +8,7 @@
 import '@angular/compiler';
 import '@angular/localize/init';
 import '@analogjs/vitest-angular/setup-snapshots';
-import { expect, vi } from 'vitest';
-import * as matchers from 'jest-extended';
-
-// Register jest-extended matchers (toBeTrue, toBeFalse, etc.) for Vitest compatibility
-expect.extend(matchers);
+import { vi } from 'vitest';
 
 import 'app/shared/util/array.extension';
 
