@@ -144,7 +144,7 @@ public final class WeaviateTestUtil {
             assertThat(properties.get(ExerciseSchema.Properties.QUIZ_MODE)).isEqualTo(quizExercise.getQuizMode().name());
         }
         if (quizExercise.getDuration() != null) {
-            assertThat(((Number) properties.get(ExerciseSchema.Properties.QUIZ_DURATION)).longValue()).isEqualTo(quizExercise.getDuration());
+            assertThat(((Number) properties.get(ExerciseSchema.Properties.QUIZ_DURATION)).intValue()).isEqualTo(quizExercise.getDuration());
         }
     }
 
