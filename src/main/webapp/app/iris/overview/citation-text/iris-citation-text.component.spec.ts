@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { IrisCitationTextComponent } from './iris-citation-text.component';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { provideHttpClient } from '@angular/common/http';
@@ -7,8 +8,14 @@ import { escapeHtml, formatCitationLabel, isCitationType, parseCitation, removeC
 import { CITATION_REGEX } from './iris-citation-text.model';
 
 describe('IrisCitationTextComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: IrisCitationTextComponent;
     let fixture: ComponentFixture<IrisCitationTextComponent>;
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
     beforeEach(() => {
         TestBed.configureTestingModule({
