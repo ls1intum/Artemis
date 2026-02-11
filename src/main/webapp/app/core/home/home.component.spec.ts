@@ -10,7 +10,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -23,6 +23,9 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 import { User } from 'app/core/user/user.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { RouterLink } from '@angular/router';
 
 describe('HomeComponent', () => {
     setupTestBed({ zoneless: true });
@@ -46,7 +49,6 @@ describe('HomeComponent', () => {
         router.setUrl('');
 
         await TestBed.configureTestingModule({
-            imports: [MockRouterLinkDirective, SetupPasskeyModalComponent],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useValue: route },
@@ -61,7 +63,12 @@ describe('HomeComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(HomeComponent, {
+                remove: { imports: [Saml2LoginComponent, ButtonComponent, RouterLink] },
+                add: { imports: [MockComponent(Saml2LoginComponent), MockComponent(ButtonComponent), MockRouterLinkDirective] },
+            })
+            .compileComponents();
 
         localStorageService = TestBed.inject(LocalStorageService);
         localStorageService.clear();
