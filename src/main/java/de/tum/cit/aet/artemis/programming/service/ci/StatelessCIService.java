@@ -46,4 +46,7 @@ public interface StatelessCIService {
      */
     ConnectorHealth health();
 
+    // This method is temporary, for an adaptation to the new-result endpoint
+    // TODO: remove after endpoint handling is refactored.
+    String getPlanKey(Object requestBody) throws ContinuousIntegrationException;
 }

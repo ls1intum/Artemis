@@ -63,6 +63,13 @@ public class LocalCIService implements StatelessCIService {
         return new ConnectorHealth(true, Map.of("buildAgents", distributedDataAccessService.getBuildAgentInformation()));
     }
 
+    // This method is temporary, for an adaptation to the new-result endpoint
+    // TODO: remove after endpoint handling is refactored.
+    @Override
+    public String getPlanKey(Object requestBody) throws ContinuousIntegrationException {
+        return "";
+    }
+
     @Override
     public UUID build(BuildTriggerRequestDTO buildTriggerRequestDTO) throws ContinuousIntegrationException {
         // Not necessary for LocalCI as the trigger is handled by the trigger service directly

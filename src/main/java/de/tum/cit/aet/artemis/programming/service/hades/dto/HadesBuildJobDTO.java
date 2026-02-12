@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * This record wraps a build request for Hades. It contains the name of a job, volumes, metadata, timestamp, priority, and steps.
  * The steps are a list of HadesBuildStepDTOs.
  * The metadata is a hashmap containing key-value pairs for the metadata which should be shared between all build steps.
- * The API Specification for Hades can be found here: https://github.com/Mtze/hades/blob/main/shared/payload/payload.go
+ * The API Specification for Hades can be found here: https://github.com/ls1intum/hades/blob/main/shared/payload/payload.go
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record HadesBuildJobDTO(String name, List<Volume> volumes, HashMap<String, String> metadata, String timestamp, Integer priority, List<HadesBuildStepDTO> steps)

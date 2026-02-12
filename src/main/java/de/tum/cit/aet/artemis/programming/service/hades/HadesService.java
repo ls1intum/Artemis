@@ -138,9 +138,18 @@ public class HadesService implements StatelessCIService {
         return health;
     }
 
+    // This method is temporary, for an adaptation to the new-result endpoint
+    // TODO: remove after endpoint handling is refactored.
+    @Override
+    public String getPlanKey(Object requestBody) throws ContinuousIntegrationException {
+        return "";
+    }
+
     private HadesBuildJobDTO convertToHadesBuildJobDTO(BuildTriggerRequestDTO buildTriggerRequestDTO) throws JsonProcessingException {
         var metadata = new HashMap<String, String>();
         var steps = new ArrayList<HadesBuildStepDTO>();
+
+        metadata.put("JOB_NAME", String.valueOf(buildTriggerRequestDTO.participationId()));
 
         // Create Clone Step
         var cloneMetadata = new HashMap<String, String>();
