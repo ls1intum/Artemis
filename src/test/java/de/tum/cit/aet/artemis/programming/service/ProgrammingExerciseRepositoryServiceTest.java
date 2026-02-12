@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -79,7 +80,8 @@ class ProgrammingExerciseRepositoryServiceTest {
         Repository repository = mockRepository(repoPath);
         User user = new User();
 
-        programmingExerciseRepositoryService.clearRepositorySources(repository, RepositoryType.SOLUTION, user);
+        assertThatThrownBy(() -> programmingExerciseRepositoryService.clearRepositorySources(repository, RepositoryType.SOLUTION, user)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no src directory found");
 
         verifyNoInteractions(gitService);
     }

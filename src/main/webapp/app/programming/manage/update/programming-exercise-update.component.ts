@@ -710,13 +710,13 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     save() {
-        const ref = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise, this.isExamMode);
+        const preUpdateModalRef = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise, this.isExamMode);
         this.determineProjectTypeIfNotSelectedAndInSimpleMode();
 
         if (!this.modalService.hasOpenModals()) {
             this.saveExercise();
         } else {
-            ref.then((reference) => {
+            preUpdateModalRef.then((reference) => {
                 reference.componentInstance.confirmed.subscribe(() => {
                     this.saveExercise();
                 });
@@ -746,13 +746,13 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * Saves the programming exercise with AI preparation.
      */
     saveWithAi() {
-        const ref = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise, this.isExamMode);
+        const preUpdateModalRef = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise, this.isExamMode);
         this.determineProjectTypeIfNotSelectedAndInSimpleMode();
 
         if (!this.modalService.hasOpenModals()) {
             this.saveExerciseWithAi();
         } else {
-            ref.then((reference) => {
+            preUpdateModalRef.then((reference) => {
                 reference.componentInstance.confirmed.subscribe(() => {
                     this.saveExerciseWithAi();
                 });

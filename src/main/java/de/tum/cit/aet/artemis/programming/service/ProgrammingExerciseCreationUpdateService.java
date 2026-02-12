@@ -12,7 +12,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
@@ -30,7 +29,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
@@ -163,8 +161,12 @@ public class ProgrammingExerciseCreationUpdateService {
      * @throws IOException     If the template files couldn't be read
      */
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, boolean emptyRepositories) throws GitAPIException, IOException {
-        Objects.requireNonNull(programmingExercise, "ProgrammingExercise must not be null");
-        Objects.requireNonNull(programmingExercise.getBuildConfig(), "ProgrammingExercise build config must not be null");
+        if (programmingExercise == null) {
+            throw new IllegalArgumentException("ProgrammingExercise must not be null");
+        }
+        if (programmingExercise.getBuildConfig() == null) {
+            throw new IllegalArgumentException("ProgrammingExercise build config must not be null");
+        }
         if (emptyRepositories) {
             validateAiGenerationPreconditions(programmingExercise);
         }
@@ -225,10 +227,10 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private void validateAiGenerationPreconditions(ProgrammingExercise programmingExercise) {
         if (!moduleFeatureService.isHyperionEnabled()) {
-            throw new BadRequestAlertException("Hyperion is disabled on this server", "programmingExercise", "hyperionDisabled");
+            throw new IllegalStateException("Hyperion is disabled on this server");
         }
         if (programmingExercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
-            throw new BadRequestAlertException("AI generation is only supported for Java", "programmingExercise", "hyperionUnsupportedLanguage");
+            throw new IllegalStateException("AI generation is only supported for Java");
         }
     }
 

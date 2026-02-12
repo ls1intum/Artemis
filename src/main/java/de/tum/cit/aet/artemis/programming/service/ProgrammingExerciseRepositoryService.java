@@ -6,7 +6,6 @@ import static de.tum.cit.aet.artemis.programming.domain.ProjectType.isMavenProje
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -14,7 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
@@ -116,8 +114,12 @@ public class ProgrammingExerciseRepositoryService {
      * @param emptyRepositories   if true, clear sources in template, solution, and test repositories after setup
      */
     void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator, boolean emptyRepositories) throws GitAPIException {
-        Objects.requireNonNull(programmingExercise, "ProgrammingExercise must not be null");
-        Objects.requireNonNull(exerciseCreator, "Exercise creator must not be null");
+        if (programmingExercise == null) {
+            throw new IllegalArgumentException("ProgrammingExercise must not be null");
+        }
+        if (exerciseCreator == null) {
+            throw new IllegalArgumentException("Exercise creator must not be null");
+        }
         final RepositoryResources exerciseResources = getRepositoryResources(programmingExercise, RepositoryType.TEMPLATE);
         final RepositoryResources solutionResources = getRepositoryResources(programmingExercise, RepositoryType.SOLUTION);
         final RepositoryResources testResources = getRepositoryResources(programmingExercise, RepositoryType.TESTS);
@@ -125,10 +127,14 @@ public class ProgrammingExerciseRepositoryService {
         setupRepositories(programmingExercise, exerciseCreator, exerciseResources, solutionResources, testResources);
 
         if (emptyRepositories) {
-            clearRepositorySources(exerciseResources.repository, RepositoryType.TEMPLATE, exerciseCreator);
-            clearRepositorySources(solutionResources.repository, RepositoryType.SOLUTION, exerciseCreator);
-            // Keep tests as a fallback in case AI generation is aborted or fails.
+            clearRepositoriesForAiGenerationKeepingTests(exerciseResources.repository, solutionResources.repository, exerciseCreator);
         }
+    }
+
+    private void clearRepositoriesForAiGenerationKeepingTests(final Repository templateRepository, final Repository solutionRepository, final User exerciseCreator)
+            throws GitAPIException {
+        clearRepositorySources(templateRepository, RepositoryType.TEMPLATE, exerciseCreator);
+        clearRepositorySources(solutionRepository, RepositoryType.SOLUTION, exerciseCreator);
     }
 
     private record RepositoryResources(Repository repository, Resource[] resources, Path prefix, Resource[] projectTypeResources, Path projectTypePrefix,
@@ -146,20 +152,23 @@ public class ProgrammingExerciseRepositoryService {
         final String repositoryLabel = repositoryType.name().toLowerCase(Locale.ROOT);
         Path sourcePath = repository.getLocalPath().resolve("src");
         if (!Files.exists(sourcePath)) {
-            log.warn("Skipping AI empty setup: no src directory found in {} repository {}", repositoryLabel, repository.getRemoteRepositoryUri());
-            return;
+            throw new IllegalStateException(
+                    "Cannot clear sources for AI generation: no src directory found in " + repositoryLabel + " repository " + repository.getRemoteRepositoryUri());
         }
         try {
             FileUtils.cleanDirectory(sourcePath.toFile());
             Path keepFile = sourcePath.resolve(".gitkeep");
             if (!Files.exists(keepFile)) {
-                FileUtils.writeStringToFile(keepFile.toFile(), "", StandardCharsets.UTF_8);
+                try (var outputStream = FileUtils.openOutputStream(keepFile.toFile())) {
+                    outputStream.write(new byte[0]);
+                }
             }
             commitAndPushRepository(repository, "Cleared " + repositoryLabel + " sources for AI generation", true, exerciseCreator);
         }
         catch (IOException ex) {
             log.error("Failed to clean {} sources for AI generation", repositoryLabel, ex);
-            GitAPIException exception = new GitAPIException("Failed to clean " + repositoryLabel + " sources for AI generation: " + ex.getMessage()) {
+            String message = String.format("Failed to clean %s sources for AI generation: %s", repositoryLabel, ex.getMessage());
+            GitAPIException exception = new GitAPIException(message) {
             };
             exception.initCause(ex);
             throw exception;
