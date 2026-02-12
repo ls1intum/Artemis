@@ -384,12 +384,13 @@ public class HyperionCodeGenerationExecutionService {
             }
 
             StringBuilder builder = new StringBuilder();
-            int index = 1;
+            int consistencyIssueCounter = 1;
             for (ConsistencyIssueDTO issue : response.issues()) {
                 if (issue == null) {
                     continue;
                 }
-                builder.append(index++).append(". [").append(issue.severity()).append("] ").append(issue.category()).append(": ").append(issue.description()).append('\n');
+                builder.append(consistencyIssueCounter++).append(". [").append(issue.severity()).append("] ").append(issue.category()).append(": ").append(issue.description())
+                        .append('\n');
                 if (issue.suggestedFix() != null && !issue.suggestedFix().isBlank()) {
                     builder.append("   Suggested fix: ").append(issue.suggestedFix()).append('\n');
                 }

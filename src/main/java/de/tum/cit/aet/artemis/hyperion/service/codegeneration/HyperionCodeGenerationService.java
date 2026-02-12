@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
@@ -38,8 +37,15 @@ public abstract class HyperionCodeGenerationService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionCodeGenerationService.class);
 
+    /**
+     * Maximum number of characters kept when passing consistency issues into AI prompts.
+     */
     private static final int MAX_CONSISTENCY_ISSUES_LENGTH = 10000;
 
+    /**
+     * Regex that matches control characters except carriage return, line feed, and tab.
+     * Used to sanitize consistency issue text before prompt rendering.
+     */
     private static final String CONTROL_CHARS_PATTERN = "[\\p{Cntrl}&&[^\r\n\t]]";
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
@@ -65,14 +71,19 @@ public abstract class HyperionCodeGenerationService {
      * @param repositoryStructure tree-format representation of current repository structure
      * @param consistencyIssues   formatted consistency issues to inform the generation prompts
      * @return list of generated code files
-     * @throws IllegalArgumentException if any required argument is {@code null}
-     * @throws NetworkingException      if AI service communication fails
+     * @throws NetworkingException if AI service communication fails
      */
     public List<GeneratedFileDTO> generateCode(User user, ProgrammingExercise exercise, String previousBuildLogs, String repositoryStructure, String consistencyIssues)
             throws NetworkingException {
-        Assert.notNull(user, "user must not be null");
-        Assert.notNull(exercise, "exercise must not be null");
-        Assert.notNull(repositoryStructure, "repositoryStructure must not be null");
+        if (user == null) {
+            throw new IllegalArgumentException("user must not be null");
+        }
+        if (exercise == null) {
+            throw new IllegalArgumentException("exercise must not be null");
+        }
+        if (repositoryStructure == null) {
+            throw new IllegalArgumentException("repositoryStructure must not be null");
+        }
         String normalizedConsistencyIssues = normalizeConsistencyIssues(consistencyIssues);
         CodeGenerationResponseDTO solutionPlanResponse = generateSolutionPlan(user, exercise, previousBuildLogs, repositoryStructure, normalizedConsistencyIssues);
         defineFileStructure(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure, normalizedConsistencyIssues);
@@ -83,7 +94,9 @@ public abstract class HyperionCodeGenerationService {
     }
 
     private String normalizeConsistencyIssues(String consistencyIssues) {
-        Assert.notNull(consistencyIssues, "consistencyIssues must not be null");
+        if (consistencyIssues == null) {
+            throw new IllegalArgumentException("consistencyIssues must not be null");
+        }
         String trimmed = consistencyIssues.trim();
         if (trimmed.isEmpty()) {
             return "";
@@ -96,9 +109,15 @@ public abstract class HyperionCodeGenerationService {
     }
 
     protected Map<String, Object> baseTemplateVariables(ProgrammingExercise exercise, String repositoryStructure, String consistencyIssues) {
-        Assert.notNull(exercise, "exercise must not be null");
-        Assert.notNull(repositoryStructure, "repositoryStructure must not be null");
-        Assert.notNull(consistencyIssues, "consistencyIssues must not be null");
+        if (exercise == null) {
+            throw new IllegalArgumentException("exercise must not be null");
+        }
+        if (repositoryStructure == null) {
+            throw new IllegalArgumentException("repositoryStructure must not be null");
+        }
+        if (consistencyIssues == null) {
+            throw new IllegalArgumentException("consistencyIssues must not be null");
+        }
         Map<String, Object> variables = new HashMap<>();
         variables.put("programmingLanguage", exercise.getProgrammingLanguage());
         variables.put("repositoryStructure", repositoryStructure);
