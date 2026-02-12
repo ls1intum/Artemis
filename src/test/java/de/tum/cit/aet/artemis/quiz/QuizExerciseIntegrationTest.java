@@ -1359,11 +1359,13 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testUpdateQuizExerciseInvalidBadRequest() throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
+        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(2), QuizMode.SYNCHRONIZED);
         assertThat(quizExercise.isValid()).isTrue();
 
-        // make the exercise invalid
-        quizExercise.setTitle(null);
+        // make the exercise invalid by setting a negative duration
+        // Note: null title does not propagate through the DTO due to @JsonInclude(NON_EMPTY),
+        // so we use duration instead which is always sent as a non-null value
+        quizExercise.setDuration(-1);
         assertThat(quizExercise.isValid()).isFalse();
         updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.BAD_REQUEST);
     }
