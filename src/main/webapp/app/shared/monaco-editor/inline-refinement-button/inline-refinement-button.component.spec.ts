@@ -159,7 +159,6 @@ describe('InlineRefinementButtonComponent', () => {
         fixture.detectChanges();
 
         langChangeSubject.next({ lang: 'de' });
-        tick();
 
         expect(cdrSpy).toHaveBeenCalled();
     }));
