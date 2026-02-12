@@ -1,6 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { type MockInstance, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
@@ -40,7 +38,6 @@ import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-in
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 
 describe('ProgrammingExerciseEditableInstructionComponent', () => {
-    setupTestBed({ zoneless: true });
     let comp: ProgrammingExerciseEditableInstructionComponent;
     let fixture: ComponentFixture<ProgrammingExerciseEditableInstructionComponent>;
     let debugElement: DebugElement;
@@ -49,9 +46,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let alertService: AlertService;
 
-    let subscribeForTestCaseSpy: MockInstance;
-    let getLatestResultWithFeedbacksStub: MockInstance;
-    let generateHtmlSubjectStub: MockInstance;
+    let subscribeForTestCaseSpy: jest.SpyInstance;
+    let getLatestResultWithFeedbacksStub: jest.SpyInstance;
+    let generateHtmlSubjectStub: jest.SpyInstance;
 
     const templateParticipation = new TemplateProgrammingExerciseParticipation();
     templateParticipation.id = 99;
@@ -77,8 +74,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip), FaIconComponent, ProgrammingExerciseEditableInstructionComponent],
+            imports: [MockDirective(NgbTooltip), FaIconComponent],
             declarations: [
+                ProgrammingExerciseEditableInstructionComponent,
                 MockComponent(ProgrammingExerciseInstructionAnalysisComponent),
                 MockComponent(MarkdownEditorMonacoComponent),
                 MockComponent(ProgrammingExerciseInstructionComponent),
@@ -107,9 +105,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 gradingService = TestBed.inject(ProgrammingExerciseGradingService);
                 (gradingService as MockProgrammingExerciseGradingService).initSubject([]);
                 programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
-                subscribeForTestCaseSpy = vi.spyOn(gradingService, 'subscribeForTestCases');
-                getLatestResultWithFeedbacksStub = vi.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
-                generateHtmlSubjectStub = vi.spyOn(comp.generateHtmlSubject, 'next');
+                subscribeForTestCaseSpy = jest.spyOn(gradingService, 'subscribeForTestCases');
+                getLatestResultWithFeedbacksStub = jest.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
+                generateHtmlSubjectStub = jest.spyOn(comp.generateHtmlSubject, 'next');
                 programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
                 alertService = TestBed.inject(AlertService);
             });
@@ -117,24 +115,25 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     afterEach(() => {
         (gradingService as MockProgrammingExerciseGradingService).initSubject([]);
-        vi.restoreAllMocks();
+        jest.restoreAllMocks();
     });
 
-    it('should not have any test cases if the test case service emits an empty array', async () => {
+    it('should not have any test cases if the test case service emits an empty array', fakeAsync(() => {
         comp.exercise = exercise;
         comp.participation = participation;
 
         triggerChanges(comp, { property: 'exercise', currentValue: exercise });
         fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
+        tick();
 
         expect(subscribeForTestCaseSpy).toHaveBeenNthCalledWith(1, exercise.id);
         expect(comp.exerciseTestCases).toHaveLength(0);
 
         fixture.destroy();
-    });
+        flush();
+    }));
 
-    it('should have test cases according to the result of the test case service if it does not return an empty array', async () => {
+    it('should have test cases according to the result of the test case service if it does not return an empty array', fakeAsync(() => {
         comp.exercise = exercise;
         comp.participation = participation;
 
@@ -143,7 +142,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         (gradingService as MockProgrammingExerciseGradingService).nextTestCases(testCases);
 
         fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
+        tick();
 
         expect(subscribeForTestCaseSpy).toHaveBeenNthCalledWith(1, exercise.id);
         expect(comp.exerciseTestCases).toHaveLength(2);
@@ -156,9 +155,10 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         ]);
 
         fixture.destroy();
-    });
+        flush();
+    }));
 
-    it('should update test cases if a new test case result comes in', async () => {
+    it('should update test cases if a new test case result comes in', fakeAsync(() => {
         comp.exercise = exercise;
         comp.participation = participation;
 
@@ -167,23 +167,24 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         (gradingService as MockProgrammingExerciseGradingService).nextTestCases(testCases);
 
         fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
+        tick();
 
         expect(comp.exerciseTestCases).toHaveLength(2);
         expect(comp.exerciseTestCases).toEqual(['test1', 'test2']);
 
         (gradingService as MockProgrammingExerciseGradingService).nextTestCases([{ testName: 'testX' }]);
         fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
+        tick();
 
         expect(comp.exerciseTestCases).toHaveLength(0);
 
         expect(subscribeForTestCaseSpy).toHaveBeenNthCalledWith(1, exercise.id);
 
         fixture.destroy();
-    });
+        flush();
+    }));
 
-    it('should try to retrieve the test case values from the solution repos last build result if there are no testCases (empty result)', async () => {
+    it('should try to retrieve the test case values from the solution repos last build result if there are no testCases (empty result)', fakeAsync(() => {
         comp.exercise = exercise;
         comp.participation = participation;
         const subject = new Subject<Result>();
@@ -200,15 +201,16 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(getLatestResultWithFeedbacksStub).toHaveBeenNthCalledWith(1, exercise.templateParticipation!.id!);
 
         subject.next({ feedbacks: [{ testCase: { testName: 'testY' } }, { testCase: { testName: 'testX' } }] } as Result);
-        await fixture.whenStable();
+        tick();
 
         expect(comp.exerciseTestCases).toHaveLength(2);
         expect(comp.exerciseTestCases).toEqual(['testX', 'testY']);
 
         fixture.destroy();
-    });
+        flush();
+    }));
 
-    it('should not try to query test cases or solution participation results if the exercise is being created (there can be no test cases yet)', async () => {
+    it('should not try to query test cases or solution participation results if the exercise is being created (there can be no test cases yet)', fakeAsync(() => {
         comp.exercise = exercise;
         comp.participation = participation;
         comp.editMode = false;
@@ -216,7 +218,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
         fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
+        tick();
 
         expect(comp.exerciseTestCases).toHaveLength(0);
 
@@ -228,9 +230,10 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(saveProblemStatementButton).toBeNull();
 
         fixture.destroy();
-    });
+        flush();
+    }));
 
-    it('should re-render the preview html when forceRender has emitted', async () => {
+    it('should re-render the preview html when forceRender has emitted', fakeAsync(() => {
         const forceRenderSubject = new Subject<void>();
         comp.exercise = exercise;
         comp.participation = participation;
@@ -239,7 +242,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
         fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
+        tick();
 
         // Initial render is triggered in ngAfterViewInit when showPreview is true
         const callCountAfterInit = generateHtmlSubjectStub.mock.calls.length;
@@ -250,10 +253,11 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(generateHtmlSubjectStub).toHaveBeenCalledTimes(callCountAfterInit + 1);
 
         fixture.destroy();
-    });
+        flush();
+    }));
 
-    it('should update the code editor annotations when receiving a new ProblemStatementAnalysis', () => {
-        const setAnnotationsStub = vi.fn();
+    it('should update the code editor annotations when receiving a new ProblemStatementAnalysis', fakeAsync(() => {
+        const setAnnotationsStub = jest.fn();
         // The component is mocked, so we need to set the monacoEditor property to a mock object.
         comp.markdownEditorMonaco = { monacoEditor: { setAnnotations: setAnnotationsStub } } as unknown as MarkdownEditorMonacoComponent;
 
@@ -274,13 +278,14 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(setAnnotationsStub).toHaveBeenCalledExactlyOnceWith(expectedWarnings);
 
         fixture.destroy();
-    });
+        flush();
+    }));
 
     it('should save the problem statement to the server', () => {
         comp.exercise = exercise;
         comp.editMode = true;
 
-        const updateProblemStatement = vi.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(of(new HttpResponse({ body: exercise })));
+        const updateProblemStatement = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(of(new HttpResponse({ body: exercise })));
 
         comp.updateProblemStatement('new problem statement');
         comp.saveInstructions({ stopPropagation: () => {} } as Event);
@@ -289,8 +294,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     });
 
     it('should log an error on save', () => {
-        const updateProblemStatementSpy = vi.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(throwError(() => undefined));
-        const logErrorSpy = vi.spyOn(alertService, 'error');
+        const updateProblemStatementSpy = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(throwError(() => undefined));
+        const logErrorSpy = jest.spyOn(alertService, 'error');
 
         comp.exercise = exercise;
         comp.editMode = true;
@@ -301,7 +306,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     });
 
     it('should save on key commands', () => {
-        const saveInstructionsSpy = vi.spyOn(comp, 'saveInstructions');
+        const saveInstructionsSpy = jest.spyOn(comp, 'saveInstructions');
         comp.exercise = exercise;
         comp.editMode = true;
 
@@ -313,7 +318,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     });
 
     it('should have intelligence actions when Hyperion is active', () => {
-        const isModuleFeatureActiveSpy = vi.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockReturnValue(true);
+        const isModuleFeatureActiveSpy = jest.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockReturnValue(true);
 
         // Komponente erneut erzeugen, damit computed() neu berechnet wird
         fixture = TestBed.createComponent(ProgrammingExerciseEditableInstructionComponent);
@@ -331,13 +336,13 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith(MODULE_FEATURE_HYPERION);
     });
 
-    it('should cleanup subscriptions on destroy', async () => {
+    it('should cleanup subscriptions on destroy', fakeAsync(() => {
         comp.exercise = exercise;
         comp.participation = participation;
 
         triggerChanges(comp, { property: 'exercise', currentValue: exercise });
         fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
+        tick();
 
         // Get subscription reference before destroy
         const testCaseSubscription = comp.testCaseSubscription;
@@ -349,16 +354,18 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         if (testCaseSubscription) {
             expect(testCaseSubscription.closed).toBeTrue();
         }
-    });
 
-    it('should subscribe for test cases when exercise changes', async () => {
+        flush();
+    }));
+
+    it('should subscribe for test cases when exercise changes', fakeAsync(() => {
         const newExercise = { ...exercise, id: 31 } as ProgrammingExercise;
         comp.exercise = exercise;
         comp.participation = participation;
 
         triggerChanges(comp, { property: 'exercise', currentValue: exercise });
         fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
+        tick();
 
         // Reset spy
         generateHtmlSubjectStub.mockClear();
@@ -367,10 +374,11 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         comp.exercise = newExercise;
         triggerChanges(comp, { property: 'exercise', currentValue: newExercise, previousValue: exercise });
         fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
+        tick();
 
         expect(subscribeForTestCaseSpy).toHaveBeenCalledWith(newExercise.id);
 
         fixture.destroy();
-    });
+        flush();
+    }));
 });

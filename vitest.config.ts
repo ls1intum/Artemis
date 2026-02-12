@@ -41,9 +41,6 @@ export default defineConfig({
             'src/main/webapp/app/shared/components/buttons/**/*.spec.ts', // include shared buttons
             'src/main/webapp/app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component.spec.ts',
             'src/main/webapp/app/programming/manage/update/update-components/problem/programming-exercise-problem.component.spec.ts',
-            'src/main/webapp/app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component.spec.ts',
-            'src/main/webapp/app/shared/markdown-editor/monaco/markdown-editor-monaco.component.spec.ts',
-            'src/main/webapp/app/shared/monaco-editor/monaco-editor.component.spec.ts',
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,

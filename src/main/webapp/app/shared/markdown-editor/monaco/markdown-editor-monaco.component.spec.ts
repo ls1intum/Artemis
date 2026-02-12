@@ -1,9 +1,7 @@
-import { vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { NgbNavModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -28,13 +26,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from 'app/shared/service/file-uploader.service';
 
 describe('MarkdownEditorMonacoComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<MarkdownEditorMonacoComponent>;
     let comp: MarkdownEditorMonacoComponent;
     let fileUploaderService: FileUploaderService;
 
     beforeEach(() => {
-        global.ResizeObserver = MockResizeObserver as any;
         TestBed.configureTestingModule({
             providers: [
                 MockProvider(FileUploaderService),
@@ -43,9 +39,18 @@ describe('MarkdownEditorMonacoComponent', () => {
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-            imports: [FormsModule, NgbNavModule, MockDirective(NgbTooltip), DragDropModule, MarkdownEditorMonacoComponent],
-            declarations: [MockComponent(MonacoEditorComponent), MockComponent(ColorSelectorComponent), MockDirective(NgbTooltip), MockPipe(ArtemisTranslatePipe)],
+            imports: [FormsModule, NgbNavModule, MockDirective(NgbTooltip), DragDropModule],
+            declarations: [
+                MarkdownEditorMonacoComponent,
+                MockComponent(MonacoEditorComponent),
+                MockComponent(ColorSelectorComponent),
+                MockDirective(NgbTooltip),
+                MockPipe(ArtemisTranslatePipe),
+            ],
         }).compileComponents();
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
         fixture = TestBed.createComponent(MarkdownEditorMonacoComponent);
         comp = fixture.componentInstance;
         comp.externalHeight = true;
@@ -54,7 +59,7 @@ describe('MarkdownEditorMonacoComponent', () => {
     });
 
     afterEach(() => {
-        vi.restoreAllMocks();
+        jest.restoreAllMocks();
     });
 
     it('should limit the vertical drag position based on the input values', () => {
@@ -72,7 +77,7 @@ describe('MarkdownEditorMonacoComponent', () => {
 
     it('should emit and update on markdown change', () => {
         const text = 'test';
-        const textChangeSpy = vi.spyOn(comp.markdownChange, 'emit');
+        const textChangeSpy = jest.spyOn(comp.markdownChange, 'emit');
         fixture.detectChanges();
         comp.onTextChanged({ text: text, fileName: 'test-file.md' });
         expect(textChangeSpy).toHaveBeenCalledWith(text);
@@ -80,32 +85,32 @@ describe('MarkdownEditorMonacoComponent', () => {
     });
 
     it('should notify when switching to preview mode', () => {
-        const emitSpy = vi.spyOn(comp.onPreviewSelect, 'emit');
+        const emitSpy = jest.spyOn(comp.onPreviewSelect, 'emit');
         fixture.detectChanges();
-        comp.onNavChanged({ nextId: 'editor_preview', activeId: 'editor', preventDefault: vi.fn() });
+        comp.onNavChanged({ nextId: 'editor_preview', activeId: 'editor', preventDefault: jest.fn() });
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
     it('should layout and focus the editor when switching to editor mode', () => {
         fixture.detectChanges();
-        const adjustEditorDimensionsSpy = vi.spyOn(comp, 'adjustEditorDimensions');
-        const focusSpy = vi.spyOn(comp.monacoEditor, 'focus');
+        const adjustEditorDimensionsSpy = jest.spyOn(comp, 'adjustEditorDimensions');
+        const focusSpy = jest.spyOn(comp.monacoEditor, 'focus');
         comp.onNavChanged({
             nextId: MarkdownEditorMonacoComponent.TAB_EDIT,
             activeId: MarkdownEditorMonacoComponent.TAB_PREVIEW,
-            preventDefault: vi.fn(),
+            preventDefault: jest.fn(),
         });
         expect(adjustEditorDimensionsSpy).toHaveBeenCalledOnce();
         expect(focusSpy).toHaveBeenCalledOnce();
     });
 
     it('should emit when leaving the visual tab', () => {
-        const emitSpy = vi.spyOn(comp.onLeaveVisualTab, 'emit');
+        const emitSpy = jest.spyOn(comp.onLeaveVisualTab, 'emit');
         fixture.detectChanges();
         comp.onNavChanged({
             nextId: MarkdownEditorMonacoComponent.TAB_EDIT,
             activeId: MarkdownEditorMonacoComponent.TAB_VISUAL,
-            preventDefault: vi.fn(),
+            preventDefault: jest.fn(),
         });
         expect(emitSpy).toHaveBeenCalledOnce();
     });
@@ -116,13 +121,13 @@ describe('MarkdownEditorMonacoComponent', () => {
         { tab: MarkdownEditorMonacoComponent.TAB_VISUAL, flags: [false, false, true] },
     ])(`should set the correct flags when navigating to $tab`, ({ tab, flags }) => {
         fixture.detectChanges();
-        comp.onNavChanged({ nextId: tab, activeId: MarkdownEditorMonacoComponent.TAB_EDIT, preventDefault: vi.fn() });
+        comp.onNavChanged({ nextId: tab, activeId: MarkdownEditorMonacoComponent.TAB_EDIT, preventDefault: jest.fn() });
         expect([comp.inEditMode, comp.inPreviewMode, comp.inVisualMode]).toEqual(flags);
     });
 
     it('should embed manually uploaded files', () => {
         const inputEvent = { target: { files: [new File([''], 'test.png')] } } as unknown as InputEvent;
-        const embedFilesStub = vi.spyOn(comp, 'embedFiles').mockImplementation(() => {});
+        const embedFilesStub = jest.spyOn(comp, 'embedFiles').mockImplementation();
         fixture.detectChanges();
         const files = [new File([''], 'test.png')];
         comp.onFileUpload(inputEvent);
@@ -130,44 +135,44 @@ describe('MarkdownEditorMonacoComponent', () => {
     });
 
     it('should not embed via manual upload if the event contains no files', () => {
-        const embedFilesStub = vi.spyOn(comp, 'embedFiles').mockImplementation(() => {});
+        const embedFilesStub = jest.spyOn(comp, 'embedFiles').mockImplementation();
         fixture.detectChanges();
         comp.onFileUpload({ target: { files: [] } } as any);
         expect(embedFilesStub).not.toHaveBeenCalled();
     });
 
     it('should embed dropped files', () => {
-        const embedFilesStub = vi.spyOn(comp, 'embedFiles').mockImplementation(() => {});
+        const embedFilesStub = jest.spyOn(comp, 'embedFiles').mockImplementation();
         fixture.detectChanges();
         const files = [new File([''], 'test.png')];
-        const event = { dataTransfer: { files }, preventDefault: vi.fn() };
+        const event = { dataTransfer: { files }, preventDefault: jest.fn() };
         comp.onFileDrop(event as any);
         expect(embedFilesStub).toHaveBeenCalledExactlyOnceWith(files);
     });
 
     it('should not try to embed via drop if the event contains no files', () => {
-        const embedFilesStub = vi.spyOn(comp, 'embedFiles').mockImplementation(() => {});
+        const embedFilesStub = jest.spyOn(comp, 'embedFiles').mockImplementation();
         fixture.detectChanges();
-        comp.onFileDrop({ dataTransfer: { files: [] }, preventDefault: vi.fn() } as any);
+        comp.onFileDrop({ dataTransfer: { files: [] }, preventDefault: jest.fn() } as any);
         expect(embedFilesStub).not.toHaveBeenCalled();
     });
 
-    it('should notify if the upload of a markdown file failed', async () => {
+    it('should notify if the upload of a markdown file failed', fakeAsync(() => {
         const alertService = TestBed.inject(AlertService);
-        const alertSpy = vi.spyOn(alertService, 'addAlert');
+        const alertSpy = jest.spyOn(alertService, 'addAlert');
         const files = [new File([''], 'test.png')];
-        const uploadMarkdownFileStub = vi.spyOn(fileUploaderService, 'uploadMarkdownFile').mockRejectedValue(new Error('Test error'));
+        const uploadMarkdownFileStub = jest.spyOn(fileUploaderService, 'uploadMarkdownFile').mockRejectedValue(new Error('Test error'));
         fixture.detectChanges();
         comp.embedFiles(files);
-        await fixture.whenStable();
+        flush();
         expect(uploadMarkdownFileStub).toHaveBeenCalledOnce();
         expect(alertSpy).toHaveBeenCalledOnce();
-    });
+    }));
 
     it('should set the upload callback on the attachment actions', () => {
         const attachmentAction = new AttachmentAction();
-        const setUploadCallbackSpy = vi.spyOn(attachmentAction, 'setUploadCallback');
-        const embedFilesStub = vi.spyOn(comp, 'embedFiles').mockImplementation(() => {});
+        const setUploadCallbackSpy = jest.spyOn(attachmentAction, 'setUploadCallback');
+        const embedFilesStub = jest.spyOn(comp, 'embedFiles').mockImplementation();
         comp.defaultActions = [attachmentAction];
         comp.enableFileUpload = true;
         fixture.detectChanges();
@@ -179,24 +184,24 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(embedFilesStub).toHaveBeenCalledExactlyOnceWith([]);
     });
 
-    it('should embed image and .pdf files', async () => {
+    it('should embed image and .pdf files', fakeAsync(() => {
         const urlAction = new UrlAction();
-        const urlStub = vi.spyOn(urlAction, 'executeInCurrentEditor').mockImplementation(() => {});
+        const urlStub = jest.spyOn(urlAction, 'executeInCurrentEditor').mockImplementation();
         const attachmentAction = new AttachmentAction();
-        const attachmentStub = vi.spyOn(attachmentAction, 'executeInCurrentEditor').mockImplementation(() => {});
+        const attachmentStub = jest.spyOn(attachmentAction, 'executeInCurrentEditor').mockImplementation();
         const fileInformation = [
             { file: new File([''], 'test.png'), url: 'https://test.invalid/generated42.png' },
             { file: new File([''], 'test.pdf'), url: 'https://test.invalid/generated1234.pdf' },
         ];
         comp.defaultActions = [urlAction, attachmentAction];
         const files = [new File([''], 'test.png'), new File([''], 'test.pdf')];
-        const uploadMarkdownFileStub = vi.spyOn(fileUploaderService, 'uploadMarkdownFile').mockImplementation((file: File) => {
+        const uploadMarkdownFileStub = jest.spyOn(fileUploaderService, 'uploadMarkdownFile').mockImplementation((file: File) => {
             const path = file.name.endsWith('.png') ? fileInformation[0].url : fileInformation[1].url;
             return Promise.resolve({ path });
         });
         fixture.detectChanges();
         comp.embedFiles(files);
-        await fixture.whenStable();
+        flush();
         // Each file should be uploaded.
         expect(uploadMarkdownFileStub).toHaveBeenCalledTimes(2);
         expect(uploadMarkdownFileStub).toHaveBeenNthCalledWith(1, files[0]);
@@ -210,13 +215,13 @@ describe('MarkdownEditorMonacoComponent', () => {
             url: fileInformation[1].url,
             text: fileInformation[1].file.name,
         });
-    });
+    }));
 
     it('should not embed files if file upload is disabled', () => {
         const urlAction = new UrlAction();
-        const urlStub = vi.spyOn(urlAction, 'executeInCurrentEditor').mockImplementation(() => {});
+        const urlStub = jest.spyOn(urlAction, 'executeInCurrentEditor').mockImplementation();
         const attachmentAction = new AttachmentAction();
-        const attachmentStub = vi.spyOn(attachmentAction, 'executeInCurrentEditor').mockImplementation(() => {});
+        const attachmentStub = jest.spyOn(attachmentAction, 'executeInCurrentEditor').mockImplementation();
         const files = [new File([''], 'test.png'), new File([''], 'test.pdf')];
         comp.defaultActions = [urlAction, attachmentAction];
         comp.enableFileUpload = false;
@@ -228,7 +233,7 @@ describe('MarkdownEditorMonacoComponent', () => {
 
     it('should execute the action when clicked', () => {
         const action = new UrlAction();
-        const executeInCurrentEditorStub = vi.spyOn(action, 'executeInCurrentEditor').mockImplementation(() => {});
+        const executeInCurrentEditorStub = jest.spyOn(action, 'executeInCurrentEditor').mockImplementation();
         comp.defaultActions = [action];
         fixture.detectChanges();
         comp.handleActionClick(new MouseEvent('click'), action);
@@ -237,7 +242,7 @@ describe('MarkdownEditorMonacoComponent', () => {
 
     it('should open the color selector', () => {
         fixture.detectChanges();
-        const openColorSelectorSpy = vi.spyOn(comp.colorSelector, 'openColorSelector');
+        const openColorSelectorSpy = jest.spyOn(comp.colorSelector, 'openColorSelector');
         const event = new MouseEvent('click');
         comp.openColorSelector(event);
         expect(openColorSelectorSpy).toHaveBeenCalledExactlyOnceWith(event, comp.colorPickerMarginTop, comp.colorPickerHeight);
@@ -246,7 +251,7 @@ describe('MarkdownEditorMonacoComponent', () => {
     it('should pass the correct color as argument to the color action', () => {
         comp.colorAction = new ColorAction();
         fixture.detectChanges();
-        const executeInCurrentEditorStub = vi.spyOn(comp.colorAction, 'executeInCurrentEditor').mockImplementation(() => {});
+        const executeInCurrentEditorStub = jest.spyOn(comp.colorAction, 'executeInCurrentEditor').mockImplementation();
         const markdownColors = comp.colorSignal();
         for (let i = 0; i < markdownColors.length; i++) {
             const color = markdownColors[i];
@@ -290,7 +295,7 @@ describe('MarkdownEditorMonacoComponent', () => {
     it('should not react to content height changes if file upload is enabled but the footer has not loaded', () => {
         comp.externalHeight = false;
         comp.initialEditorHeight = MarkdownEditorHeight.SMALL;
-        vi.spyOn(comp, 'getElementClientHeight').mockReturnValue(0);
+        jest.spyOn(comp, 'getElementClientHeight').mockReturnValue(0);
         comp.enableFileUpload = true;
         comp.linkEditorHeightToContentHeight = true;
         comp.resizableMinHeight = MarkdownEditorHeight.INLINE;
@@ -303,7 +308,7 @@ describe('MarkdownEditorMonacoComponent', () => {
 
     it('should react to content height changes if the height is linked to the editor', () => {
         comp.externalHeight = false;
-        vi.spyOn(comp, 'getElementClientHeight').mockReturnValue(20);
+        jest.spyOn(comp, 'getElementClientHeight').mockReturnValue(20);
         comp.linkEditorHeightToContentHeight = true;
         comp.resizableMaxHeight = MarkdownEditorHeight.LARGE;
         fixture.detectChanges();
@@ -316,26 +321,26 @@ describe('MarkdownEditorMonacoComponent', () => {
 
     it('should adjust the wrapper height when resized manually', () => {
         comp.externalHeight = false;
-        const cdkDragMove = { source: { reset: vi.fn() }, pointerPosition: { y: 300 } } as unknown as CdkDragMove;
+        const cdkDragMove = { source: { reset: jest.fn() }, pointerPosition: { y: 300 } } as unknown as CdkDragMove;
         const wrapperTop = 100;
         const dragElemHeight = 20;
         fixture.detectChanges();
-        vi.spyOn(comp, 'getElementClientHeight').mockReturnValue(dragElemHeight);
-        vi.spyOn(comp.wrapper.nativeElement, 'getBoundingClientRect').mockReturnValue({ top: wrapperTop } as DOMRect);
+        jest.spyOn(comp, 'getElementClientHeight').mockReturnValue(dragElemHeight);
+        jest.spyOn(comp.wrapper.nativeElement, 'getBoundingClientRect').mockReturnValue({ top: wrapperTop } as DOMRect);
         comp.onResizeMoved(cdkDragMove);
         expect(comp.targetWrapperHeight).toBe(300 - wrapperTop - dragElemHeight / 2);
     });
 
     it('should use the correct options to enable text field mode', () => {
         fixture.detectChanges();
-        const applySpy = vi.spyOn(comp.monacoEditor, 'applyOptionPreset');
+        const applySpy = jest.spyOn(comp.monacoEditor, 'applyOptionPreset');
         comp.enableTextFieldMode();
         expect(applySpy).toHaveBeenCalledExactlyOnceWith(COMMUNICATION_MARKDOWN_EDITOR_OPTIONS);
     });
 
     it('should apply option presets to the editor', () => {
         fixture.detectChanges();
-        const applySpy = vi.spyOn(comp.monacoEditor, 'applyOptionPreset');
+        const applySpy = jest.spyOn(comp.monacoEditor, 'applyOptionPreset');
         const preset = new MonacoEditorOptionPreset({ lineNumbers: 'off' });
         comp.applyOptionPreset(preset);
         expect(applySpy).toHaveBeenCalledExactlyOnceWith(preset);
@@ -407,7 +412,7 @@ describe('MarkdownEditorMonacoComponent', () => {
 
     it('should emit closeEditor on close button click', () => {
         fixture.detectChanges();
-        const emitSpy = vi.spyOn(comp.closeEditor, 'emit');
+        const emitSpy = jest.spyOn(comp.closeEditor, 'emit');
 
         comp.onCloseButtonClick();
 
