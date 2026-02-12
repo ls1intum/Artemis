@@ -5,6 +5,7 @@ import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 import { faArrowRight, faBookmark, faCheck, faEnvelopeOpenText, faInfoCircle, faPencilAlt, faShare, faSmile, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark as farBookmark } from '@fortawesome/free-regular-svg-icons';
 import { EmojiComponent } from 'app/communication/emoji/emoji.component';
 import { EmojiPickerComponent } from 'app/communication/emoji/emoji-picker.component';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
@@ -92,6 +93,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     readonly onBookmarkClicked = output<void>();
     readonly DisplayPriority = DisplayPriority;
     readonly faBookmark = faBookmark;
+    readonly farBookmark = farBookmark;
     readonly faSmile = faSmile;
     readonly faCheck = faCheck;
     readonly faPencilAlt = faPencilAlt;
