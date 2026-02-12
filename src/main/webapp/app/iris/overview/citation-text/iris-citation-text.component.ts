@@ -94,22 +94,22 @@ export class IrisCitationTextComponent {
     /**
      * Renders a group of citations as HTML with aggregation count, summary tooltips, and navigation controls.
      */
-    private renderCitationGroupHtml(parsed: IrisCitationParsed[], metas: Array<IrisCitationMetaDTO | undefined>): string {
-        const first = parsed[0];
+    private renderCitationGroupHtml(parsedIrisCitation: IrisCitationParsed[], metadata: Array<IrisCitationMetaDTO | undefined>): string {
+        const first = parsedIrisCitation[0];
         const label = formatCitationLabel(first);
         const typeClass = resolveCitationTypeClass(first);
-        const hasSummary = parsed.some((p) => !!p.summary);
+        const hasSummary = parsedIrisCitation.some((p) => !!p.summary);
         const groupClasses = `iris-citation-group ${typeClass}${hasSummary ? ' iris-citation-group--has-summary' : ''}`;
-        const count = parsed.length - 1;
+        const count = parsedIrisCitation.length - 1;
         const iconSvg = this.getIconSvg(typeClass);
 
         // Render summary tooltip with navigation if available
         const summaryContent = hasSummary
             ? `<span class="iris-citation__summary">
                    <span class="iris-citation__summary-content">
-                       ${this.renderSummaryItems(parsed, metas)}
+                       ${this.renderSummaryItems(parsedIrisCitation, metadata)}
                    </span>
-                   ${this.renderNavigationControls(parsed.filter((p) => !!p.summary).length)}
+                   ${this.renderNavigationControls(parsedIrisCitation.filter((p) => !!p.summary).length)}
                </span>`
             : '';
 
@@ -241,7 +241,8 @@ export class IrisCitationTextComponent {
         const summaryItems = Array.from(citationGroup.querySelectorAll('.iris-citation__summary-item'));
         const counterDisplay = citationGroup.querySelector('.iris-citation__nav span');
 
-        if (navButtons.length !== 2 || summaryItems.length === 0) return;
+        const hasInvalidNavigationStructure = navButtons.length !== 2 || summaryItems.length === 0;
+        if (hasInvalidNavigationStructure) return;
 
         const currentActiveIndex = summaryItems.findIndex((item) => item.classList.contains('is-active'));
         const currentIndex = currentActiveIndex >= 0 ? currentActiveIndex : 0;

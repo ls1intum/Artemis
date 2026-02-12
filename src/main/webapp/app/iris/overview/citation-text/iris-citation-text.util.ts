@@ -2,6 +2,19 @@ import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta
 import { CITATION_REGEX, CitationRenderOptions, IrisCitationParsed } from './iris-citation-text.model';
 
 /**
+ * Citation parsing constants.
+ */
+const CITE_PREFIX = '[cite:';
+const CITE_AMOUNT_PARTS = 7;
+const INDEX_TYPE_IN_CITE_PARTS = 0;
+const INDEX_ENTITY_ID_IN_CITE_PARTS = 1;
+const INDEX_PAGE_IN_CITE_PARTS = 2;
+const INDEX_START_IN_CITE_PARTS = 3;
+const INDEX_END_IN_CITE_PARTS = 4;
+const INDEX_KEYWORD_IN_CITE_PARTS = 5;
+const INDEX_SUMMARY_IN_CITE_PARTS = 6;
+
+/**
  * Token used while splitting text into citation and non-citation chunks.
  */
 type CitationToken = { type: 'text'; value: string } | { type: 'citation'; value: string };
@@ -12,11 +25,7 @@ type CitationToken = { type: 'text'; value: string } | { type: 'citation'; value
  * @returns Map of entity ID to citation metadata.
  */
 function buildCitationMap(citationInfo: IrisCitationMetaDTO[]): Map<number, IrisCitationMetaDTO> {
-    const citationMap = new Map<number, IrisCitationMetaDTO>();
-    citationInfo.forEach((citation) => {
-        citationMap.set(citation.entityId, citation);
-    });
-    return citationMap;
+    return new Map(citationInfo.map((citation) => [citation.entityId, citation]));
 }
 
 /**
@@ -42,6 +51,85 @@ function tokenizeText(text: string): CitationToken[] {
 }
 
 /**
+ * Result of collecting adjacent citations.
+ */
+type CitationCollectionResult = {
+    citationGroup: string[];
+    nextTokenIndex: number;
+    pendingWhitespace: string;
+};
+
+/**
+ * Collects adjacent citation tokens, grouping those separated only by whitespace.
+ * @param tokens Array of all tokens.
+ * @param startIndex Index of the first citation token.
+ * @returns Collection result with citation group and next index to process.
+ */
+function collectAdjacentCitations(tokens: CitationToken[], startIndex: number): CitationCollectionResult {
+    const citationGroup: string[] = [tokens[startIndex].value];
+    let nextTokenIndex = startIndex + 1;
+    let pendingWhitespace = '';
+
+    while (nextTokenIndex < tokens.length) {
+        const nextToken = tokens[nextTokenIndex];
+        if (nextToken.type === 'text' && /^\s*$/.test(nextToken.value)) {
+            pendingWhitespace += nextToken.value;
+            nextTokenIndex += 1;
+            continue;
+        }
+        if (nextToken.type === 'citation') {
+            citationGroup.push(nextToken.value);
+            pendingWhitespace = '';
+            nextTokenIndex += 1;
+            continue;
+        }
+        break;
+    }
+
+    return { citationGroup, nextTokenIndex, pendingWhitespace };
+}
+
+/**
+ * Renders a group of citations.
+ * @param citationGroup Array of raw citation strings.
+ * @param citationMap Map of citation metadata.
+ * @param options Render callbacks.
+ * @returns Rendered HTML string.
+ */
+function renderCitationGroup(citationGroup: string[], citationMap: Map<number, IrisCitationMetaDTO>, options: CitationRenderOptions): string {
+    const parsedGroup = citationGroup.map((raw) => parseCitation(raw)).filter((parsed): parsed is IrisCitationParsed => parsed !== undefined);
+
+    if (parsedGroup.length !== citationGroup.length) {
+        return citationGroup.join('');
+    }
+
+    const citationMetadata = parsedGroup.map((entry) => {
+        const entityIdNum = Number(entry.entityId);
+        return entry.type === 'L' && Number.isFinite(entityIdNum) ? citationMap.get(entityIdNum) : undefined;
+    });
+
+    return options.renderGroup(parsedGroup, citationMetadata);
+}
+
+/**
+ * Renders a single citation token.
+ * @param citationValue Raw citation string.
+ * @param citationMap Map of citation metadata.
+ * @param options Render callbacks.
+ * @returns Rendered HTML string.
+ */
+function renderSingleCitation(citationValue: string, citationMap: Map<number, IrisCitationMetaDTO>, options: CitationRenderOptions): string {
+    const parsed = parseCitation(citationValue);
+    if (!parsed) {
+        return citationValue;
+    }
+
+    const entityIdNum = Number(parsed.entityId);
+    const meta = parsed.type === 'L' && Number.isFinite(entityIdNum) ? citationMap.get(entityIdNum) : undefined;
+    return options.renderSingle(parsed, meta);
+}
+
+/**
  * Renders tokens into HTML, grouping adjacent citations.
  * @param tokens Array of citation and text tokens.
  * @param citationMap Map of citation metadata.
@@ -50,73 +138,30 @@ function tokenizeText(text: string): CitationToken[] {
  */
 function renderTokens(tokens: CitationToken[], citationMap: Map<number, IrisCitationMetaDTO>, options: CitationRenderOptions): string[] {
     const rendered: string[] = [];
-    let i = 0;
-    while (i < tokens.length) {
-        const token = tokens[i];
+    let tokenIndex = 0;
+
+    while (tokenIndex < tokens.length) {
+        const token = tokens[tokenIndex];
+
         if (token.type === 'text') {
             rendered.push(token.value);
-            i += 1;
+            tokenIndex += 1;
             continue;
         }
 
-        const citationGroup: string[] = [token.value];
-        let j = i + 1;
-        let pendingWhitespace = '';
-        while (j < tokens.length) {
-            const nextToken = tokens[j];
-            if (nextToken.type === 'text' && /^\s*$/.test(nextToken.value)) {
-                pendingWhitespace += nextToken.value;
-                j += 1;
-                continue;
-            }
-            if (nextToken.type === 'citation') {
-                citationGroup.push(nextToken.value);
-                pendingWhitespace = '';
-                j += 1;
-                continue;
-            }
-            break;
-        }
+        const { citationGroup, nextTokenIndex, pendingWhitespace } = collectAdjacentCitations(tokens, tokenIndex);
 
         if (citationGroup.length > 1) {
-            const parsedGroup: IrisCitationParsed[] = [];
-            citationGroup.forEach((raw) => {
-                const parsed = parseCitation(raw);
-                if (parsed) {
-                    parsedGroup.push(parsed);
-                }
-            });
-
-            if (parsedGroup.length !== citationGroup.length) {
-                rendered.push(citationGroup.join(''));
-            } else {
-                const metas: Array<IrisCitationMetaDTO | undefined> = [];
-                parsedGroup.forEach((entry) => {
-                    const entityIdNum = Number(entry.entityId);
-                    metas.push(entry.type === 'L' && Number.isFinite(entityIdNum) ? citationMap.get(entityIdNum) : undefined);
-                });
-                rendered.push(options.renderGroup(parsedGroup, metas));
-            }
-
-            if (pendingWhitespace) {
-                rendered.push(pendingWhitespace);
-            }
-            i = j;
-            continue;
-        }
-
-        const parsed = parseCitation(token.value);
-        if (!parsed) {
-            rendered.push(token.value);
+            rendered.push(renderCitationGroup(citationGroup, citationMap, options));
         } else {
-            const entityIdNum = Number(parsed.entityId);
-            const meta = parsed.type === 'L' && Number.isFinite(entityIdNum) ? citationMap.get(entityIdNum) : undefined;
-            rendered.push(options.renderSingle(parsed, meta));
+            rendered.push(renderSingleCitation(token.value, citationMap, options));
         }
+
         if (pendingWhitespace) {
             rendered.push(pendingWhitespace);
         }
-        i = j;
+
+        tokenIndex = nextTokenIndex;
     }
 
     return rendered;
@@ -147,27 +192,27 @@ export function replaceCitationBlocks(text: string, citationInfo: IrisCitationMe
  * @returns The parsed citation or undefined if invalid.
  */
 export function parseCitation(raw: string): IrisCitationParsed | undefined {
-    const content = raw.slice(6, -1); // strip "[cite:" and trailing "]"
+    const content = raw.slice(CITE_PREFIX.length, -1); // strip "[cite:" and trailing "]"
     const parts = content.split(':');
-    if (parts.length < 7) {
+    if (parts.length < CITE_AMOUNT_PARTS) {
         return undefined;
     }
 
-    const type = parts[0];
+    const type = parts[INDEX_TYPE_IN_CITE_PARTS];
     if (!isCitationType(type)) {
         return undefined;
     }
 
-    const entityId = parts[1];
+    const entityId = parts[INDEX_ENTITY_ID_IN_CITE_PARTS];
     if (!entityId) {
         return undefined;
     }
 
-    const page = parts[2] ?? '';
-    const start = parts[3] ?? '';
-    const end = parts[4] ?? '';
-    const keyword = parts[5] ?? '';
-    const summary = parts.length > 6 ? parts.slice(6).join(':') : '';
+    const page = parts[INDEX_PAGE_IN_CITE_PARTS] ?? '';
+    const start = parts[INDEX_START_IN_CITE_PARTS] ?? '';
+    const end = parts[INDEX_END_IN_CITE_PARTS] ?? '';
+    const keyword = parts[INDEX_KEYWORD_IN_CITE_PARTS] ?? '';
+    const summary = parts.length > INDEX_SUMMARY_IN_CITE_PARTS ? parts.slice(INDEX_SUMMARY_IN_CITE_PARTS).join(':') : '';
 
     return { type, entityId, page, start, end, keyword, summary };
 }
@@ -220,12 +265,23 @@ export function formatCitationLabel(parsed: IrisCitationParsed): string {
 }
 
 /**
+ * Map for HTML character escaping.
+ */
+const HTML_ESCAPE_MAP: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+};
+
+/**
  * Escapes HTML special characters in a string.
  * @param text The raw text to escape.
  * @returns The escaped text.
  */
 export function escapeHtml(text: string): string {
-    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    return text.replace(/[&<>"']/g, (char) => HTML_ESCAPE_MAP[char]);
 }
 
 /**
