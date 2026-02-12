@@ -63,6 +63,13 @@ public class StatelessJenkinsCIService implements StatelessCIService {
         }
     }
 
+    // This method is temporary, for an adaptation to the new-result endpoint
+    // TODO: remove after endpoint handling is refactored.
+    @Override
+    public String getPlanKey(Object requestBody) throws ContinuousIntegrationException {
+        return "";
+    }
+
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
         // For stateless CI, we cannot track individual build statuses by participation
