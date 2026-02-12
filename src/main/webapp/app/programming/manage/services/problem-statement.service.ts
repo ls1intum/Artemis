@@ -95,7 +95,7 @@ export class ProblemStatementService {
         currentContent: string,
         event: InlineRefinementEvent,
         loadingSignal: WritableSignal<boolean>,
-    ): Observable<RefinementResult> {
+    ): Observable<OperationResult> {
         const courseId = getCourseId(exercise);
         if (!courseId || !currentContent?.trim()) {
             this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');

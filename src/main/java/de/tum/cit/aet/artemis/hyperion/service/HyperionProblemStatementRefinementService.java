@@ -350,11 +350,9 @@ public class HyperionProblemStatementRefinementService {
         }
     }
 
-    private record TargetedRefinementPromptVariables(String textWithLineNumbers, String targetedInstructions, String courseTitle, String courseDescription)
-            implements RefinementPromptVariables {
+    private record TargetedRefinementPromptVariables(String textWithLineNumbers, String targetedInstructions, String courseTitle, String courseDescription) {
 
-        @Override
-        public Map<String, String> asMap() {
+        Map<String, String> asMap() {
             return Map.of("textWithLineNumbers", textWithLineNumbers, "targetedInstructions", targetedInstructions, "courseTitle", courseTitle, "courseDescription",
                     courseDescription);
         }
