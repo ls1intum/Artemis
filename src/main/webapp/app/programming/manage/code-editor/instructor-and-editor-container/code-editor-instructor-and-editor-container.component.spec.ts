@@ -1,6 +1,7 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Provider } from '@angular/core';
 import { type Mock, type Mocked, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Subject, of, throwError } from 'rxjs';
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
@@ -36,6 +37,8 @@ import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@forta
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
+
+setupTestBed({ zoneless: true });
 
 /**
  * Creates a typed mock ProgrammingExercise for testing.
@@ -606,7 +609,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(jumpSpy).toHaveBeenCalledWith(lastIssue, lastLocIndex);
         });
 
-        it('navigates to PROBLEM_STATEMENT and calls jumpToLine', fakeAsync(() => {
+        it('navigates to PROBLEM_STATEMENT and calls jumpToLine', async () => {
             // Mock issue with ProblemStatement
             const issue = mockIssues[0]; // ProblemStatement issue
             const loc = issue.relatedLocations[0];
@@ -617,11 +620,11 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             const jumpSpy = vi.spyOn((comp as any).editableInstructions, 'jumpToLine');
 
             (comp as any).jumpToLocation(issue, 0); // Corrected: use (comp as any)
-            tick();
+            await fixture.whenStable();
 
             expect((comp as any).codeEditorContainer.selectedFile).toBe('problem_statement.md');
             expect(jumpSpy).toHaveBeenCalledWith(loc.endLine);
-        }));
+        });
 
         it('onEditorLoaded calls onFileLoad immediately when file is already selected', () => {
             const targetFile = 'src/tests/ExampleTest.java';

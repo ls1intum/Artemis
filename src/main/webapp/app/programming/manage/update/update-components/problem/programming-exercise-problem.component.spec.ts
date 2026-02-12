@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,6 +19,8 @@ import { ProblemStatementGenerationResponse } from 'app/openapi/model/problemSta
 import { AlertService } from 'app/shared/service/alert.service';
 import { ProblemStatementGenerationRequest } from 'app/openapi/model/problemStatementGenerationRequest';
 import { ProblemStatementRefinementResponse } from 'app/openapi/model/problemStatementRefinementResponse';
+
+setupTestBed({ zoneless: true });
 
 describe('ProgrammingExerciseProblemComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseProblemComponent>;

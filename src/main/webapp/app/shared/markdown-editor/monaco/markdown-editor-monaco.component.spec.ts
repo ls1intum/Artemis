@@ -1,8 +1,9 @@
 import { vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { NgbNavModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -25,6 +26,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from 'app/shared/service/file-uploader.service';
+
+setupTestBed({ zoneless: true });
 
 describe('MarkdownEditorMonacoComponent', () => {
     let fixture: ComponentFixture<MarkdownEditorMonacoComponent>;
@@ -158,17 +161,17 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(embedFilesStub).not.toHaveBeenCalled();
     });
 
-    it('should notify if the upload of a markdown file failed', fakeAsync(() => {
+    it('should notify if the upload of a markdown file failed', async () => {
         const alertService = TestBed.inject(AlertService);
         const alertSpy = vi.spyOn(alertService, 'addAlert');
         const files = [new File([''], 'test.png')];
         const uploadMarkdownFileStub = vi.spyOn(fileUploaderService, 'uploadMarkdownFile').mockRejectedValue(new Error('Test error'));
         fixture.detectChanges();
         comp.embedFiles(files);
-        flush();
+        await fixture.whenStable();
         expect(uploadMarkdownFileStub).toHaveBeenCalledOnce();
         expect(alertSpy).toHaveBeenCalledOnce();
-    }));
+    });
 
     it('should set the upload callback on the attachment actions', () => {
         const attachmentAction = new AttachmentAction();
@@ -185,7 +188,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(embedFilesStub).toHaveBeenCalledExactlyOnceWith([]);
     });
 
-    it('should embed image and .pdf files', fakeAsync(() => {
+    it('should embed image and .pdf files', async () => {
         const urlAction = new UrlAction();
         const urlStub = vi.spyOn(urlAction, 'executeInCurrentEditor').mockImplementation(() => {});
         const attachmentAction = new AttachmentAction();
@@ -202,7 +205,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         });
         fixture.detectChanges();
         comp.embedFiles(files);
-        flush();
+        await fixture.whenStable();
         // Each file should be uploaded.
         expect(uploadMarkdownFileStub).toHaveBeenCalledTimes(2);
         expect(uploadMarkdownFileStub).toHaveBeenNthCalledWith(1, files[0]);
@@ -216,7 +219,7 @@ describe('MarkdownEditorMonacoComponent', () => {
             url: fileInformation[1].url,
             text: fileInformation[1].file.name,
         });
-    }));
+    });
 
     it('should not embed files if file upload is disabled', () => {
         const urlAction = new UrlAction();

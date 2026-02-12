@@ -1,5 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
@@ -11,6 +12,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
+
+setupTestBed({ zoneless: true });
 
 describe('MonacoEditorComponent', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
@@ -94,7 +97,7 @@ describe('MonacoEditorComponent', () => {
         expect(comp.getText()).toEqual(singleLineText);
     });
 
-    it('should layout matching mode with fixed size', fakeAsync(() => {
+    it('should layout matching mode with fixed size', async () => {
         fixture.detectChanges();
         const layoutSpy = vi.spyOn(comp['_editor'], 'layout');
 
@@ -107,13 +110,13 @@ describe('MonacoEditorComponent', () => {
         vi.spyOn(comp['monacoEditorService'], 'createStandaloneDiffEditor').mockReturnValue(mockDiffEditor as any);
         fixture.componentRef.setInput('mode', 'diff');
         fixture.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         comp.layoutWithFixedSize(600, 400);
         expect(mockDiffEditor.layout).toHaveBeenCalledWith({ width: 600, height: 400 });
-    }));
+    });
 
-    it('should extract file path from model uri on change', fakeAsync(() => {
+    it('should extract file path from model uri on change', async () => {
         fixture.detectChanges();
         const emitSpy = vi.spyOn(comp.textChanged, 'emit');
         // Ensure getText returns content, as extraction relies on it
@@ -128,10 +131,10 @@ describe('MonacoEditorComponent', () => {
 
         // Trigger change
         comp['emitTextChangeEvent']();
-        tick();
+        await fixture.whenStable();
 
         expect(emitSpy).toHaveBeenCalledWith({ text: 'content', fileName: 'path/to/file.ts' });
-    }));
+    });
 
     it('should notify when the text changes', () => {
         const valueCallbackStub = vi.fn();
@@ -141,18 +144,20 @@ describe('MonacoEditorComponent', () => {
         expect(valueCallbackStub).toHaveBeenCalledExactlyOnceWith({ text: singleLineText, fileName: expect.any(String) });
     });
 
-    it('should only send a notification once per delay interval', fakeAsync(() => {
+    it('should only send a notification once per delay interval', () => {
+        vi.useFakeTimers();
         const delay = 1000;
         const valueCallbackStub = vi.fn();
         fixture.componentRef.setInput('textChangedEmitDelay', delay);
         fixture.detectChanges();
         comp.textChanged.subscribe(valueCallbackStub);
         comp.setText('too early');
-        tick(1);
+        vi.advanceTimersByTime(1);
         comp.setText(singleLineText);
-        tick(delay);
+        vi.advanceTimersByTime(delay);
         expect(valueCallbackStub).toHaveBeenCalledExactlyOnceWith({ text: singleLineText, fileName: expect.any(String) });
-    }));
+        vi.useRealTimers();
+    });
 
     it('should be set to readOnly depending on the input', () => {
         fixture.componentRef.setInput('readOnly', true);
@@ -418,7 +423,7 @@ describe('MonacoEditorComponent', () => {
         expect(comp.getLineContent(2)).toBe('');
     });
 
-    it('should delete a combined emoji entirely on backspace press', fakeAsync(() => {
+    it('should delete a combined emoji entirely on backspace press', async () => {
         fixture.detectChanges();
         const combinedEmoji = '🇩🇪';
         comp.setText(combinedEmoji);
@@ -431,12 +436,12 @@ describe('MonacoEditorComponent', () => {
         expect(commandId).toBeDefined();
 
         comp['_editor'].trigger('keyboard', commandId!, null);
-        tick();
+        await fixture.whenStable();
 
         expect(comp.getText()).toBe('');
-    }));
+    });
 
-    it('should delete combined emojis one cluster at a time on backspace press', fakeAsync(() => {
+    it('should delete combined emojis one cluster at a time on backspace press', async () => {
         fixture.detectChanges();
 
         const emoji1 = '🇩🇪';
@@ -449,7 +454,7 @@ describe('MonacoEditorComponent', () => {
         let commandId = comp.getCustomBackspaceCommandId();
         expect(commandId).toBeDefined();
         comp['_editor'].trigger('keyboard', commandId!, null);
-        tick();
+        await fixture.whenStable();
         fixture.detectChanges();
 
         expect(comp.getText()).toEqual(emoji1);
@@ -459,13 +464,13 @@ describe('MonacoEditorComponent', () => {
         commandId = comp.getCustomBackspaceCommandId();
         expect(commandId).toBeDefined();
         comp['_editor'].trigger('keyboard', commandId!, null);
-        tick();
+        await fixture.whenStable();
         fixture.detectChanges();
 
         expect(comp.getText()).toBe('');
-    }));
+    });
 
-    it('should delete only one emoji at a time in mixed text', fakeAsync(() => {
+    it('should delete only one emoji at a time in mixed text', async () => {
         fixture.detectChanges();
 
         const textWithEmoji = 'Hello 🇩🇪 World!';
@@ -477,12 +482,12 @@ describe('MonacoEditorComponent', () => {
         expect(commandId).toBeDefined();
 
         comp['_editor'].trigger('keyboard', commandId!, null);
-        tick();
+        await fixture.whenStable();
 
         expect(comp.getText()).toBe('Hello  World!');
-    }));
+    });
 
-    it('should place the cursor correctly after deleting an emoji', fakeAsync(() => {
+    it('should place the cursor correctly after deleting an emoji', async () => {
         fixture.detectChanges();
 
         const fullText = 'Hello 👋 World!';
@@ -491,19 +496,19 @@ describe('MonacoEditorComponent', () => {
 
         const commandId = comp.getCustomBackspaceCommandId();
         comp['_editor'].trigger('keyboard', commandId!, null);
-        tick();
+        await fixture.whenStable();
 
         const newPosition = comp.getPosition();
         expect(newPosition.column).toBe(7);
-    }));
+    });
 
-    it('should initialize diff mode when mode input is set to diff', fakeAsync(() => {
+    it('should initialize diff mode when mode input is set to diff', async () => {
         fixture.componentRef.setInput('mode', 'diff');
         fixture.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         expect(comp['_diffEditor']).toBeDefined();
-    }));
+    });
 
     it('should return the active editor correctly in normal mode', () => {
         fixture.detectChanges();
@@ -541,7 +546,7 @@ describe('MonacoEditorComponent', () => {
         expect(comp['textChangedEmitTimeouts']).toBeDefined();
     });
 
-    it('should create diff editor lazily when entering diff mode', fakeAsync(() => {
+    it('should create diff editor lazily when entering diff mode', async () => {
         fixture.detectChanges();
         // Initially undefined
         expect(comp['_diffEditor']).toBeUndefined();
@@ -552,13 +557,13 @@ describe('MonacoEditorComponent', () => {
 
         fixture.componentRef.setInput('mode', 'diff');
         fixture.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         expect(createDiffSpy).toHaveBeenCalled();
         expect(comp['_diffEditor']).toBeDefined();
-    }));
+    });
 
-    it('should dispose diff editor when leaving diff mode and sync content if needed', fakeAsync(() => {
+    it('should dispose diff editor when leaving diff mode and sync content if needed', async () => {
         fixture.detectChanges();
 
         const editorSetValueSpy = vi.spyOn(comp['_editor'], 'setValue').mockImplementation(() => {});
@@ -569,7 +574,7 @@ describe('MonacoEditorComponent', () => {
 
         fixture.componentRef.setInput('mode', 'diff');
         fixture.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         expect(comp['_diffEditor']).toBeDefined();
 
@@ -579,13 +584,13 @@ describe('MonacoEditorComponent', () => {
         // Switch back to normal
         fixture.componentRef.setInput('mode', 'normal');
         fixture.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         expect(mockDiffEditor.dispose).toHaveBeenCalled();
         expect(editorSetValueSpy).toHaveBeenCalledWith('modified content');
-    }));
+    });
 
-    it('should apply diff content in diff mode', fakeAsync(() => {
+    it('should apply diff content in diff mode', async () => {
         fixture.detectChanges();
 
         const setValueSpy = vi.fn();
@@ -608,15 +613,15 @@ describe('MonacoEditorComponent', () => {
 
         fixture.componentRef.setInput('mode', 'diff');
         fixture.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         comp.applyDiffContent('new content');
 
         expect(setValueSpy).toHaveBeenCalledWith('new content');
         expect(layoutSpy).toHaveBeenCalled();
-    }));
+    });
 
-    it('should share the same model between normal editor and modified diff editor', fakeAsync(() => {
+    it('should share the same model between normal editor and modified diff editor', async () => {
         fixture.detectChanges();
         const mockModel = {
             getValue: vi.fn().mockReturnValue('shared content'),
@@ -634,7 +639,7 @@ describe('MonacoEditorComponent', () => {
 
         fixture.componentRef.setInput('mode', 'diff');
         fixture.detectChanges();
-        tick();
+        await fixture.whenStable();
 
         // Verify that setModel was called with the shared model as 'modified'
         expect(setModelSpy).toHaveBeenCalledWith(
@@ -642,5 +647,5 @@ describe('MonacoEditorComponent', () => {
                 modified: mockModel,
             }),
         );
-    }));
+    });
 });
