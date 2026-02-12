@@ -114,7 +114,9 @@ export class IrisCitationTextComponent {
             : '';
 
         return `
-            <span class="${groupClasses}">
+            <span class="${groupClasses}"
+                  data-citations="${escapeHtml(JSON.stringify(parsedIrisCitation))}"
+                  data-metas="${escapeHtml(JSON.stringify(metadata))}">
                 <span class="iris-citation ${typeClass}">
                     <span class="iris-citation__icon">${iconSvg}</span>
                     <span class="iris-citation__text">${label}</span>
@@ -158,7 +160,8 @@ export class IrisCitationTextComponent {
                 summaryIndex++;
 
                 return `
-                    <span class="iris-citation__summary-item ${isActive}">
+                    <span class="iris-citation__summary-item ${isActive}"
+                          data-citation-index="${index}">
                         ${this.renderSummaryContent(cite.summary, meta, summaryFallbackTitle)}
                     </span>
                 `.trim();
@@ -221,6 +224,31 @@ export class IrisCitationTextComponent {
     }
 
     /**
+     * Updates the citation bubble icon and keyword to match a different citation.
+     * Used when navigating through citation groups.
+     */
+    private updateCitationBubble(citationGroup: HTMLElement, citation: IrisCitationParsed): void {
+        const bubble = citationGroup.querySelector('.iris-citation') as HTMLElement;
+        if (!bubble) return;
+
+        const iconElement = bubble.querySelector('.iris-citation__icon') as HTMLElement;
+        const textElement = bubble.querySelector('.iris-citation__text') as HTMLElement;
+        if (!iconElement || !textElement) return;
+
+        const newTypeClass = resolveCitationTypeClass(citation);
+        const newLabel = formatCitationLabel(citation);
+        const newIconSvg = this.getIconSvg(newTypeClass);
+
+        iconElement.innerHTML = newIconSvg;
+
+        textElement.innerHTML = newLabel;
+
+        const typeClasses = ['iris-citation--slide', 'iris-citation--video', 'iris-citation--faq', 'iris-citation--source'];
+        typeClasses.forEach((cls) => bubble.classList.remove(cls));
+        bubble.classList.add(newTypeClass);
+    }
+
+    /**
      * Handles navigation button clicks using event delegation.
      */
     @HostListener('click', ['$event'])
@@ -255,6 +283,24 @@ export class IrisCitationTextComponent {
         });
         if (counterDisplay) {
             counterDisplay.textContent = `${newIndex + 1} / ${summaryItems.length}`;
+        }
+
+        const activeSummaryItem = summaryItems[newIndex] as HTMLElement;
+        const citationIndex = parseInt(activeSummaryItem.getAttribute('data-citation-index') || '0', 10);
+
+        const citationsData = citationGroup.getAttribute('data-citations');
+
+        if (citationsData) {
+            try {
+                const parsedCitations = JSON.parse(citationsData) as IrisCitationParsed[];
+                const citation = parsedCitations[citationIndex];
+
+                if (citation) {
+                    this.updateCitationBubble(citationGroup as HTMLElement, citation);
+                }
+            } catch (e) {
+                // Fail silently if JSON parsing fails
+            }
         }
     }
 
