@@ -153,6 +153,9 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
+import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
@@ -348,6 +351,12 @@ public class CourseTestService {
 
     @Autowired
     private Optional<CourseLearnerProfileRepository> courseLearnerProfileRepository;
+
+    @Autowired(required = false)
+    private WeaviateService weaviateService;
+
+    @Autowired(required = false)
+    private ExerciseWeaviateService exerciseWeaviateService;
 
     @Autowired
     private Optional<TutorialGroupUtilService> tutorialGroupUtilService;
@@ -592,11 +601,27 @@ public class CourseTestService {
             }
         }
 
+        // Insert exercises into Weaviate before deletion to verify cleanup
+        List<Long> allExerciseIds = new ArrayList<>();
+        for (Course course : courses) {
+            for (Exercise exercise : course.getExercises()) {
+                allExerciseIds.add(exercise.getId());
+                if (exerciseWeaviateService != null) {
+                    exerciseWeaviateService.insertExercise(exercise);
+                }
+            }
+        }
+
         for (Course course : courses) {
             if (!course.getExercises().isEmpty()) {
                 groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(course.getExercises().iterator().next());
             }
             request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
+        }
+
+        // Verify exercises are removed from Weaviate after course deletion
+        for (Long exerciseId : allExerciseIds) {
+            WeaviateTestUtil.assertExerciseNotInWeaviate(weaviateService, exerciseId);
         }
 
         for (Course course : courses) {

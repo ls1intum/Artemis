@@ -48,7 +48,7 @@ public class WeaviateService {
      * Resolves the actual collection name by prepending the configured prefix.
      *
      * @param baseName the base collection name (e.g. "Exercises")
-     * @return the prefixed collection name (e.g. "TestExercises" when prefix is "Test")
+     * @return the prefixed collection name (e.g. "Artemis_Exercises" when prefix is "Artemis_")
      */
     private String resolveCollectionName(String baseName) {
         return collectionPrefix + baseName;

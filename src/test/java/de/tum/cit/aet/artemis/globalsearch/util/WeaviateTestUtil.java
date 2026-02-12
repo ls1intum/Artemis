@@ -2,11 +2,14 @@ package de.tum.cit.aet.artemis.globalsearch.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 import org.testcontainers.DockerClientFactory;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entitySchemas.ExerciseSchema;
@@ -59,7 +62,7 @@ public final class WeaviateTestUtil {
             return null;
         }
         var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
-        var response = collection.query.fetchObjects(q -> q.filters(Filter.property(ExerciseSchema.Properties.EXERCISE_ID).eq(exerciseId)).limit(1));
+        var response = collection.query.fetchObjects(query -> query.filters(Filter.property(ExerciseSchema.Properties.EXERCISE_ID).eq(exerciseId)).limit(1));
         if (response.objects().isEmpty()) {
             return null;
         }
@@ -164,6 +167,41 @@ public final class WeaviateTestUtil {
         if (fileUploadExercise.getFilePattern() != null) {
             assertThat(properties.get(ExerciseSchema.Properties.FILE_PATTERN)).isEqualTo(fileUploadExercise.getFilePattern());
         }
+    }
+
+    /**
+     * Asserts that the exercise exists in Weaviate and its exam date properties match the given exam.
+     * Skips if Docker is not available. Fails if Docker is available but WeaviateService is null.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param exerciseId      the ID of the exercise to verify
+     * @param exam            the exam whose dates should be reflected in Weaviate
+     */
+    public static void assertExerciseExamDatesInWeaviate(WeaviateService weaviateService, long exerciseId, Exam exam) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        var properties = queryExerciseProperties(weaviateService, exerciseId);
+        assertThat(properties).as("Exercise %d should exist in Weaviate", exerciseId).isNotNull();
+
+        assertThat(properties.get(ExerciseSchema.Properties.IS_EXAM_EXERCISE)).isEqualTo(true);
+        assertThat(((Number) properties.get(ExerciseSchema.Properties.EXAM_ID)).longValue()).isEqualTo(exam.getId());
+
+        assertDateProperty(properties, ExerciseSchema.Properties.EXAM_VISIBLE_DATE, exam.getVisibleDate());
+        assertDateProperty(properties, ExerciseSchema.Properties.EXAM_START_DATE, exam.getStartDate());
+        assertDateProperty(properties, ExerciseSchema.Properties.EXAM_END_DATE, exam.getEndDate());
+    }
+
+    /**
+     * Asserts that a Weaviate date property matches the expected ZonedDateTime value.
+     * Compares by converting both the stored value and expected value to RFC3339 format.
+     */
+    private static void assertDateProperty(Map<String, Object> properties, String propertyName, ZonedDateTime expected) {
+        if (expected == null) {
+            return;
+        }
+        String expectedFormatted = expected.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        assertThat(properties.get(propertyName)).as("Property %s should match expected date", propertyName).asString().startsWith(expectedFormatted.substring(0, 19));
     }
 
     /**
