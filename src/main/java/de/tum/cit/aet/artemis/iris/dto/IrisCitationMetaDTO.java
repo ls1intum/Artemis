@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.dto;
 
+import jakarta.validation.constraints.NotNull;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -10,5 +12,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param lectureUnitTitle the title of the lecture unit
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisCitationMetaDTO(long entityId, String lectureTitle, String lectureUnitTitle) {
+public record IrisCitationMetaDTO(long entityId, @NotNull String lectureTitle, @NotNull String lectureUnitTitle) {
 }
