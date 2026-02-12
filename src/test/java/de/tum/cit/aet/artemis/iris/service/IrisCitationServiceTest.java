@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.dto.IrisCitationMetaDTO;
+import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -35,11 +36,14 @@ class IrisCitationServiceTest {
     @Mock
     private LectureUnitRepositoryApi lectureUnitRepositoryApi;
 
+    @Mock
+    private IrisSessionRepository irisSessionRepository;
+
     private IrisCitationService citationService;
 
     @BeforeEach
     void setUp() {
-        citationService = new IrisCitationService(Optional.of(lectureUnitRepositoryApi));
+        citationService = new IrisCitationService(Optional.of(lectureUnitRepositoryApi), irisSessionRepository);
     }
 
     @Test
@@ -127,7 +131,7 @@ class IrisCitationServiceTest {
 
     @Test
     void resolveCitationInfo_returnsNullWhenRepositoryUnavailable() {
-        var serviceWithoutRepository = new IrisCitationService(Optional.empty());
+        var serviceWithoutRepository = new IrisCitationService(Optional.empty(), irisSessionRepository);
 
         assertThat(serviceWithoutRepository.resolveCitationInfo("[cite:L:1:::::]")).isNull();
     }

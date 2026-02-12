@@ -16,7 +16,9 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisCitationMetaDTO;
+import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
@@ -33,8 +35,11 @@ public class IrisCitationService {
 
     private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
-    public IrisCitationService(Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi) {
+    private final IrisSessionRepository irisSessionRepository;
+
+    public IrisCitationService(Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, IrisSessionRepository irisSessionRepository) {
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
+        this.irisSessionRepository = irisSessionRepository;
     }
 
     /**
@@ -73,6 +78,16 @@ public class IrisCitationService {
             return null;
         }
         return resolveCitationInfo(String.join("\n", contentStrings));
+    }
+
+    /**
+     * Loads the session with messages and contents, resolves citation info from the messages, and sets it on the provided session.
+     *
+     * @param session the session to enrich with citation info
+     */
+    public void enrichSessionWithCitationInfo(IrisSession session) {
+        IrisSession sessionWithContents = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
+        session.setCitationInfo(resolveCitationInfoFromMessages(sessionWithContents.getMessages()));
     }
 
     private Set<Long> extractEntityIds(String text) {

@@ -20,9 +20,7 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
-import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisTextExerciseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
@@ -59,12 +57,9 @@ public class IrisTextExerciseChatSessionResource {
 
     private final IrisCitationService irisCitationService;
 
-    private final IrisSessionRepository irisSessionRepository;
-
     protected IrisTextExerciseChatSessionResource(IrisTextExerciseChatSessionRepository irisTextExerciseChatSessionRepository, UserRepository userRepository,
             Optional<TextRepositoryApi> textRepositoryApi, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
-            IrisTextExerciseChatSessionService irisTextExerciseChatSessionService, MessageSource messageSource, IrisCitationService irisCitationService,
-            IrisSessionRepository irisSessionRepository) {
+            IrisTextExerciseChatSessionService irisTextExerciseChatSessionService, MessageSource messageSource, IrisCitationService irisCitationService) {
         this.irisTextExerciseChatSessionRepository = irisTextExerciseChatSessionRepository;
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
@@ -73,7 +68,6 @@ public class IrisTextExerciseChatSessionResource {
         this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
         this.messageSource = messageSource;
         this.irisCitationService = irisCitationService;
-        this.irisSessionRepository = irisSessionRepository;
     }
 
     /**
@@ -96,8 +90,7 @@ public class IrisTextExerciseChatSessionResource {
         if (sessionOptional.isPresent()) {
             var session = sessionOptional.get();
             irisSessionService.checkHasAccessToIrisSession(session, user);
-            IrisSession sessionWithContents = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-            session.setCitationInfo(irisCitationService.resolveCitationInfoFromMessages(sessionWithContents.getMessages()));
+            irisCitationService.enrichSessionWithCitationInfo(session);
             return ResponseEntity.ok(session);
         }
 
