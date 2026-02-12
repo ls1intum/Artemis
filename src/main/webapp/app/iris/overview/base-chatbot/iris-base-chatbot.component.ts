@@ -45,6 +45,7 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -65,6 +66,7 @@ import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-stat
         NgClass,
         SearchFilterComponent,
         IrisCitationTextComponent,
+        HtmlForMarkdownPipe,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

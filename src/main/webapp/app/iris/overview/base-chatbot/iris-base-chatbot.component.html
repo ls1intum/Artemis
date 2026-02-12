@@ -182,10 +182,10 @@
                                 @if (message.sender === IrisSender.USER) {
                                     <div class="d-flex justify-content-end align-items-center">
                                         @if (content.type === IrisMessageContentType.TEXT) {
-                                            <span
+                                            <div
                                                 class="bubble-right"
                                                 [innerHTML]="(content | as: IrisTextMessageContent).textContent! | htmlForMarkdown: [] : undefined : undefined : true"
-                                            ></span>
+                                            ></div>
                                         }
                                     </div>
                                 }
