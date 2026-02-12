@@ -938,6 +938,23 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(onEditorLoadedSpy).not.toHaveBeenCalled();
         });
 
+        it('navigateToLocation selects auxiliary repo when auxiliaryRepositoryId is 0', () => {
+            (comp as any).codeEditorContainer.selectedRepository = jest.fn().mockReturnValue(RepositoryType.TEMPLATE);
+            comp.selectAuxiliaryRepository = jest.fn();
+            const selectAuxSpy = jest.spyOn(comp, 'selectAuxiliaryRepository');
+            const onEditorLoadedSpy = jest.spyOn(comp, 'onEditorLoaded');
+
+            (comp as any).navigateToLocation({
+                targetType: CommentThreadLocationType.AUXILIARY_REPO,
+                auxiliaryRepositoryId: 0,
+                filePath: 'src/aux/D.java',
+                lineNumber: 13,
+            });
+
+            expect(selectAuxSpy).toHaveBeenCalledWith(0);
+            expect(onEditorLoadedSpy).not.toHaveBeenCalled();
+        });
+
         it('should reset showConsistencyIssuesToolbar when re-running consistency check', () => {
             comp.consistencyIssues.set(mockIssues);
             (comp as any).showConsistencyIssuesToolbar.set(true);

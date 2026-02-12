@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReviewCommentThreadWidgetComponent } from 'app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component';
+import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
@@ -42,6 +43,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         comp.onUpdate.subscribe(updateSpy);
 
         comp.editingCommentId = 7;
+        comp.editingCommentType = CommentType.USER;
         comp.editText = '  updated  ';
         comp.saveEditing();
 
@@ -55,6 +57,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         comp.onUpdate.subscribe(updateSpy);
 
         comp.editingCommentId = 4;
+        comp.editingCommentType = CommentType.USER;
         comp.editText = '   ';
         comp.saveEditing();
 
