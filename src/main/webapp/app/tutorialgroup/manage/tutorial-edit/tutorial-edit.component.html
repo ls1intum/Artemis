@@ -1,122 +1,199 @@
 <div class="frame">
-    <h3>General Information</h3>
-    <label class="field-label">Title</label>
-    <p-inputgroup class="field-control">
-        @let titleValidation = titleValidationResult();
-        <p-inputgroup-addon>
-            <i class="pi pi-language"></i>
-        </p-inputgroup-addon>
-        <input pInputText [(ngModel)]="title" placeholder="Title" [invalid]="titleValidation.status === ValidationStatus.INVALID" (blur)="titleInputTouched.set(true)" />
-        @if (titleValidation.status === ValidationStatus.INVALID) {
-            <p-inputgroup-addon [pTooltip]="titleValidation.message" tooltipPosition="bottom">
-                <i class="pi pi-info-circle danger"></i>
-            </p-inputgroup-addon>
+    <section>
+        <h3>General Information</h3>
+
+        <div class="label-and-input-row">
+            <div class="label-and-input">
+                <label>Title</label>
+                <p-inputgroup>
+                    @let titleValidation = titleValidationResult();
+                    <p-inputgroup-addon>
+                        <i class="pi pi-language"></i>
+                    </p-inputgroup-addon>
+                    <input
+                        pInputText
+                        [(ngModel)]="title"
+                        placeholder="Title"
+                        [invalid]="titleValidation.status === ValidationStatus.INVALID"
+                        (blur)="titleInputTouched.set(true)"
+                    />
+                    @if (titleValidation.status === ValidationStatus.INVALID) {
+                        <p-inputgroup-addon [pTooltip]="titleValidation.message" tooltipPosition="bottom">
+                            <i class="pi pi-info-circle danger"></i>
+                        </p-inputgroup-addon>
+                    }
+                </p-inputgroup>
+            </div>
+
+            <div class="label-and-input">
+                <label>Tutor</label>
+                <p-inputgroup class="field-control right-control">
+                    <p-inputgroup-addon><i class="pi pi-user"></i></p-inputgroup-addon>
+                    <p-select [options]="tutors()" [(ngModel)]="selectedTutor" optionLabel="name" [filter]="true" filterBy="name" placeholder="Tutor" />
+                </p-inputgroup>
+            </div>
+        </div>
+
+        <div class="label-and-input-row">
+            <div class="label-and-input">
+                <label>Language</label>
+                <p-inputgroup>
+                    @let languageValidation = languageValidationResult();
+                    <p-inputgroup-addon>
+                        <i class="pi pi-flag"></i>
+                    </p-inputgroup-addon>
+                    <!-- TODO: implement suggestions panel that includes already used languages -->
+                    <input
+                        pInputText
+                        [(ngModel)]="language"
+                        placeholder="Language"
+                        [invalid]="languageValidation.status === ValidationStatus.INVALID"
+                        (blur)="languageInputTouched.set(true)"
+                    />
+                    @if (languageValidation.status === ValidationStatus.INVALID) {
+                        <p-inputgroup-addon [pTooltip]="languageValidation.message" tooltipPosition="bottom">
+                            <i class="pi pi-info-circle danger"></i>
+                        </p-inputgroup-addon>
+                    }
+                </p-inputgroup>
+            </div>
+
+            <div class="label-and-input">
+                <label>Mode</label>
+                <p-inputgroup>
+                    <p-inputgroup-addon><i class="pi pi-compass"></i></p-inputgroup-addon>
+                    <p-select [options]="modes" [(ngModel)]="selectedMode" optionLabel="name" placeholder="Mode" />
+                </p-inputgroup>
+            </div>
+        </div>
+
+        <div class="label-and-input-row">
+            <div class="label-and-input">
+                <label>Campus</label>
+                <p-inputgroup>
+                    @let campusValidation = campusValidationResult();
+                    <p-inputgroup-addon>
+                        <i class="pi pi-building"></i>
+                    </p-inputgroup-addon>
+                    <input pInputText [(ngModel)]="campus" placeholder="Campus" [invalid]="campusValidation.status === ValidationStatus.INVALID" />
+                    @if (campusValidation.status === ValidationStatus.INVALID) {
+                        <p-inputgroup-addon [pTooltip]="campusValidation.message" tooltipPosition="bottom">
+                            <i class="pi pi-info-circle danger"></i>
+                        </p-inputgroup-addon>
+                    }
+                </p-inputgroup>
+            </div>
+
+            <div class="label-and-input">
+                <label>Capacity</label>
+                <p-inputgroup>
+                    <p-inputgroup-addon><i class="pi pi-hashtag"></i></p-inputgroup-addon>
+                    <p-inputnumber [(ngModel)]="capacity" placeholder="Capacity" [min]="1" [showButtons]="true" />
+                </p-inputgroup>
+            </div>
+        </div>
+
+        <div class="label-and-input-row">
+            <div class="label-and-input">
+                <label>Note for Students</label>
+                <p-inputgroup>
+                    <input type="text" placeholder="Note for Students" pInputText [(ngModel)]="noteForStudents" />
+                </p-inputgroup>
+            </div>
+            <div class="spacer"></div>
+        </div>
+    </section>
+
+    <section>
+        <div class="session-plan-section-header">
+            <h3>Plan Sessions</h3>
+            <p-toggleswitch [(ngModel)]="configureSessionPlan" />
+        </div>
+
+        @if (configureSessionPlan()) {
+            <div class="label-and-input-row">
+                <div class="label-and-input">
+                    <label>First Session Start</label>
+                    <p-inputgroup>
+                        @let firstSessionStartValidation = firstSessionStartValidationResult();
+                        <p-datepicker
+                            hourFormat="24"
+                            placeholder="First Session Start"
+                            [(ngModel)]="firstSessionStart"
+                            [showTime]="true"
+                            [invalid]="firstSessionStartValidation.status === ValidationStatus.INVALID"
+                            (onSelect)="firstSessionStartInputTouched.set(true)"
+                        />
+                        @if (firstSessionStartValidation.status === ValidationStatus.INVALID) {
+                            <p-inputgroup-addon [pTooltip]="firstSessionStartValidation.message" tooltipPosition="bottom">
+                                <i class="pi pi-info-circle danger"></i>
+                            </p-inputgroup-addon>
+                        }
+                    </p-inputgroup>
+                </div>
+
+                <div class="label-and-input">
+                    <label>First Session End</label>
+                    <p-inputgroup>
+                        @let firstSessionEndValidation = firstSessionEndValidationResult();
+                        <p-datepicker
+                            hourFormat="24"
+                            placeholder="First Session End"
+                            [(ngModel)]="firstSessionEnd"
+                            [showTime]="true"
+                            [invalid]="firstSessionEndValidation.status === ValidationStatus.INVALID"
+                            (onSelect)="firstSessionEndInputTouched.set(true)"
+                        />
+                        @if (firstSessionEndValidation.status === ValidationStatus.INVALID) {
+                            <p-inputgroup-addon [pTooltip]="firstSessionEndValidation.message" tooltipPosition="bottom">
+                                <i class="pi pi-info-circle danger"></i>
+                            </p-inputgroup-addon>
+                        }
+                    </p-inputgroup>
+                </div>
+            </div>
+
+            <div class="label-and-input-row">
+                <div class="label-and-input">
+                    <label>Repetition Frequency</label>
+                    <p-inputgroup>
+                        <p-inputnumber [(ngModel)]="weekFrequency" prefix="every " suffix=" week(s)" [min]="1" [showButtons]="true" />
+                    </p-inputgroup>
+                </div>
+
+                <div class="label-and-input">
+                    <label>Teaching Period End</label>
+                    <p-inputgroup>
+                        @let teachingPeriodEndValidation = teachingPeriodEndValidationResult();
+                        <p-datepicker
+                            hourFormat="24"
+                            placeholder="Teaching Period End"
+                            [(ngModel)]="teachingPeriodEnd"
+                            [showButtonBar]="true"
+                            [invalid]="teachingPeriodEndValidation.status === ValidationStatus.INVALID"
+                            (onSelect)="teachingPeriodEndInputTouched.set(true)"
+                        />
+                        @if (teachingPeriodEndValidation.status === ValidationStatus.INVALID) {
+                            <p-inputgroup-addon [pTooltip]="teachingPeriodEndValidation.message" tooltipPosition="left">
+                                <i class="pi pi-info-circle danger"></i>
+                            </p-inputgroup-addon>
+                        }
+                    </p-inputgroup>
+                </div>
+            </div>
+
+            <div class="label-and-input-row">
+                <div class="label-and-input">
+                    <label>Location</label>
+                    <p-inputgroup>
+                        <input type="text" placeholder="Location" pInputText [(ngModel)]="location" />
+                    </p-inputgroup>
+                </div>
+                <div class="spacer"></div>
+            </div>
         }
-    </p-inputgroup>
-    <label class="field-label right-label">Tutor</label>
-    <p-inputgroup class="field-control right-control">
-        <p-inputgroup-addon><i class="pi pi-user"></i></p-inputgroup-addon>
-        <p-select [options]="tutors()" [(ngModel)]="selectedTutor" optionLabel="name" [filter]="true" filterBy="name" placeholder="Tutor" />
-    </p-inputgroup>
-    <label class="field-label">Language</label>
-    <p-inputgroup class="field-control">
-        @let languageValidation = languageValidationResult();
-        <p-inputgroup-addon>
-            <i class="pi pi-flag"></i>
-        </p-inputgroup-addon>
-        <!-- TODO: implement suggestions panel that includes already used languages -->
-        <input
-            pInputText
-            [(ngModel)]="language"
-            placeholder="Language"
-            [invalid]="languageValidation.status === ValidationStatus.INVALID"
-            (blur)="languageInputTouched.set(true)"
-        />
-        @if (languageValidation.status === ValidationStatus.INVALID) {
-            <p-inputgroup-addon [pTooltip]="languageValidation.message" tooltipPosition="bottom">
-                <i class="pi pi-info-circle danger"></i>
-            </p-inputgroup-addon>
-        }
-    </p-inputgroup>
-    <label class="field-label right-label">Mode</label>
-    <p-inputgroup class="field-control right-control">
-        <p-inputgroup-addon><i class="pi pi-compass"></i></p-inputgroup-addon>
-        <p-select [options]="modes" [(ngModel)]="selectedMode" optionLabel="name" placeholder="Mode" />
-    </p-inputgroup>
-    <label class="field-label">Campus</label>
-    <p-inputgroup class="field-control">
-        @let campusValidation = campusValidationResult();
-        <p-inputgroup-addon>
-            <i class="pi pi-building"></i>
-        </p-inputgroup-addon>
-        <input pInputText [(ngModel)]="campus" placeholder="Campus" [invalid]="campusValidation.status === ValidationStatus.INVALID" />
-        @if (campusValidation.status === ValidationStatus.INVALID) {
-            <p-inputgroup-addon [pTooltip]="campusValidation.message" tooltipPosition="bottom">
-                <i class="pi pi-info-circle danger"></i>
-            </p-inputgroup-addon>
-        }
-    </p-inputgroup>
-    <label class="field-label right-label">Capacity</label>
-    <p-inputgroup class="field-control right-control">
-        <p-inputgroup-addon><i class="pi pi-hashtag"></i></p-inputgroup-addon>
-        <p-inputnumber [(ngModel)]="capacity" placeholder="Capacity" [min]="1" [showButtons]="true" />
-    </p-inputgroup>
-    <h3>Session Plan</h3>
-    <label class="field-label">First Session Start</label>
-    <p-inputgroup class="field-control">
-        @let firstSessionStartValidation = firstSessionStartValidationResult();
-        <p-datepicker
-            hourFormat="24"
-            placeholder="First Session Start"
-            [(ngModel)]="firstSessionStart"
-            [showTime]="true"
-            [invalid]="firstSessionStartValidation.status === ValidationStatus.INVALID"
-            (onSelect)="firstSessionStartInputTouched.set(true)"
-        />
-        @if (firstSessionStartValidation.status === ValidationStatus.INVALID) {
-            <p-inputgroup-addon [pTooltip]="firstSessionStartValidation.message" tooltipPosition="bottom">
-                <i class="pi pi-info-circle danger"></i>
-            </p-inputgroup-addon>
-        }
-    </p-inputgroup>
-    <label class="field-label right-label">First Session End</label>
-    <p-inputgroup class="field-control right-control">
-        @let firstSessionEndValidation = firstSessionEndValidationResult();
-        <p-datepicker
-            hourFormat="24"
-            placeholder="First Session End"
-            [(ngModel)]="firstSessionEnd"
-            [showTime]="true"
-            [invalid]="firstSessionEndValidation.status === ValidationStatus.INVALID"
-            (onSelect)="firstSessionEndInputTouched.set(true)"
-        />
-        @if (firstSessionEndValidation.status === ValidationStatus.INVALID) {
-            <p-inputgroup-addon [pTooltip]="firstSessionEndValidation.message" tooltipPosition="bottom">
-                <i class="pi pi-info-circle danger"></i>
-            </p-inputgroup-addon>
-        }
-    </p-inputgroup>
-    <label class="field-label">Repetition Frequency</label>
-    <p-inputnumber class="field-control" [(ngModel)]="weekFrequency" prefix="every " suffix=" week(s)" [min]="1" [showButtons]="true" />
-    <label class="field-label right-label">Teaching Period End</label>
-    <p-inputgroup class="field-control right-control">
-        @let teachingPeriodEndValidation = teachingPeriodEndValidationResult();
-        <p-datepicker
-            hourFormat="24"
-            placeholder="Teaching Period End"
-            [(ngModel)]="teachingPeriodEnd"
-            [showButtonBar]="true"
-            [invalid]="teachingPeriodEndValidation.status === ValidationStatus.INVALID"
-            (onSelect)="teachingPeriodEndInputTouched.set(true)"
-        />
-        @if (teachingPeriodEndValidation.status === ValidationStatus.INVALID) {
-            <p-inputgroup-addon [pTooltip]="teachingPeriodEndValidation.message" tooltipPosition="left">
-                <i class="pi pi-info-circle danger"></i>
-            </p-inputgroup-addon>
-        }
-    </p-inputgroup>
-    <label class="field-label">Location</label>
-    <input class="field-control" type="text" placeholder="Location" pInputText [(ngModel)]="location" />
+    </section>
+
     <div class="controls-footer">
         <a [routerLink]="['..']" pButton class="p-button-secondary p-button-sm" data-testid="cancel-button">Cancel</a>
         <button pButton class="p-button-primary p-button-sm" data-testid="save-button">Save</button>

@@ -20,10 +20,6 @@ type Tutor = {
     name: string;
 };
 
-type Weekday = {
-    name: string;
-};
-
 enum ValidationStatus {
     VALID = 'VALID',
     INVALID = 'INVALID',
@@ -57,37 +53,29 @@ export class TutorialEditComponent {
     title = signal('');
     titleValidationResult = computed<Validation>(() => this.computeTitleValidation());
     titleInputTouched = signal(false);
-
-    campus = signal('');
-    campusValidationResult = computed<Validation>(() => this.computeCampusValidation());
-
-    alreadyUsedLanguages = signal<string[]>([]);
+    tutors = signal<Tutor[]>([{ name: 'Ramona' }, { name: 'Florian' }]);
+    selectedTutor = signal<Tutor>({ name: 'Ramona' });
     language = signal<string>('');
     languageInputTouched = signal(false);
     languageValidationResult = computed<Validation>(() => this.computeLanguageValidation());
+    modes: Mode[] = [{ name: 'Online' }, { name: 'Offline' }];
+    selectedMode = signal<Mode>({ name: 'Online' });
+    campus = signal('');
+    campusValidationResult = computed<Validation>(() => this.computeCampusValidation());
+    capacity = signal<number | undefined>(undefined);
+    noteForStudents = signal('');
 
+    configureSessionPlan = signal(true);
     firstSessionStart = signal<Date | undefined>(undefined);
     firstSessionStartInputTouched = signal(false);
     firstSessionStartValidationResult = computed<Validation>(() => this.computeFirstSessionStartValidation());
-
     firstSessionEnd = signal<Date | undefined>(undefined);
     firstSessionEndInputTouched = signal(false);
     firstSessionEndValidationResult = computed<Validation>(() => this.computeFirstSessionEndValidation());
-
+    weekFrequency = signal<number>(1);
     teachingPeriodEnd = signal<Date | undefined>(undefined);
     teachingPeriodEndInputTouched = signal(false);
     teachingPeriodEndValidationResult = computed<Validation>(() => this.computeTeachingPeriodEndValidation());
-
-    online = signal(false);
-    modes: Mode[] = [{ name: 'Online' }, { name: 'Offline' }];
-    selectedMode = signal<Mode>({ name: 'Online' });
-    tutors = signal<Tutor[]>([{ name: 'Ramona' }, { name: 'Florian' }]);
-    selectedTutor = signal<Tutor>({ name: 'Ramona' });
-    capacity = signal<number | undefined>(undefined);
-    weekFrequency = signal<number>(1);
-    weekdays: Weekday[] = [{ name: 'Monday' }, { name: 'Thuesday' }, { name: 'Wednesday' }, { name: 'Thursday' }, { name: 'Friday' }, { name: 'Saturday' }, { name: 'Sunday' }];
-    selectedWeekday = signal<Weekday>({ name: 'Monday' });
-
     location = signal('');
 
     private computeTitleValidation(): Validation {
