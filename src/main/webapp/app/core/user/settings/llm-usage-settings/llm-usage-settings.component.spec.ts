@@ -98,6 +98,7 @@ describe('LlmUsageSettingsComponent', () => {
 
     describe('openSelectionModal', () => {
         it('should handle cloud choice', async () => {
+            component.ngOnInit();
             (llmModalService.open as jest.Mock).mockResolvedValue('cloud');
             const updateSpy = jest.spyOn(component, 'updateLLMSelectionDecision');
 
@@ -108,6 +109,7 @@ describe('LlmUsageSettingsComponent', () => {
         });
 
         it('should handle local choice', async () => {
+            component.ngOnInit();
             (llmModalService.open as jest.Mock).mockResolvedValue('local');
             const updateSpy = jest.spyOn(component, 'updateLLMSelectionDecision');
 
@@ -118,6 +120,7 @@ describe('LlmUsageSettingsComponent', () => {
         });
 
         it('should handle no_ai choice', async () => {
+            component.ngOnInit();
             (llmModalService.open as jest.Mock).mockResolvedValue('no_ai');
             const updateSpy = jest.spyOn(component, 'updateLLMSelectionDecision');
 
@@ -128,6 +131,7 @@ describe('LlmUsageSettingsComponent', () => {
         });
 
         it('should not update when choice is none', async () => {
+            component.ngOnInit();
             (llmModalService.open as jest.Mock).mockResolvedValue('none');
             const updateSpy = jest.spyOn(component, 'updateLLMSelectionDecision');
 
@@ -138,6 +142,7 @@ describe('LlmUsageSettingsComponent', () => {
         });
 
         it('should not update when choice is null', async () => {
+            component.ngOnInit();
             (llmModalService.open as jest.Mock).mockResolvedValue(null);
             const updateSpy = jest.spyOn(component, 'updateLLMSelectionDecision');
 
@@ -148,6 +153,7 @@ describe('LlmUsageSettingsComponent', () => {
         });
 
         it('should not update when choice is undefined', async () => {
+            component.ngOnInit();
             (llmModalService.open as jest.Mock).mockResolvedValue(undefined);
             const updateSpy = jest.spyOn(component, 'updateLLMSelectionDecision');
 

@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LLMSelectionChoice, LLMSelectionModalComponent } from './llm-selection-popup.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -29,12 +30,17 @@ describe('LLMSelectionModalComponent', () => {
             navigate: jest.fn(),
         };
 
+        const profileServiceMock = {
+            isLLMDeploymentEnabled: jest.fn().mockReturnValue(false),
+        };
+
         await TestBed.configureTestingModule({
             imports: [LLMSelectionModalComponent, TranslateDirective],
             providers: [
                 { provide: LLMSelectionModalService, useValue: modalServiceMock },
                 { provide: ThemeService, useValue: themeServiceMock },
                 { provide: Router, useValue: routerMock },
+                { provide: ProfileService, useValue: profileServiceMock },
             ],
         }).compileComponents();
 
