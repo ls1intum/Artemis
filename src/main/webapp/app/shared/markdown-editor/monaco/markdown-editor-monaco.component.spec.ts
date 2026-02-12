@@ -27,14 +27,14 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from 'app/shared/service/file-uploader.service';
 
-setupTestBed({ zoneless: true });
-
 describe('MarkdownEditorMonacoComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<MarkdownEditorMonacoComponent>;
     let comp: MarkdownEditorMonacoComponent;
     let fileUploaderService: FileUploaderService;
 
     beforeEach(() => {
+        global.ResizeObserver = MockResizeObserver as any;
         TestBed.configureTestingModule({
             providers: [
                 MockProvider(FileUploaderService),
@@ -43,18 +43,9 @@ describe('MarkdownEditorMonacoComponent', () => {
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-            imports: [FormsModule, NgbNavModule, MockDirective(NgbTooltip), DragDropModule],
-            declarations: [
-                MarkdownEditorMonacoComponent,
-                MockComponent(MonacoEditorComponent),
-                MockComponent(ColorSelectorComponent),
-                MockDirective(NgbTooltip),
-                MockPipe(ArtemisTranslatePipe),
-            ],
+            imports: [FormsModule, NgbNavModule, MockDirective(NgbTooltip), DragDropModule, MarkdownEditorMonacoComponent],
+            declarations: [MockComponent(MonacoEditorComponent), MockComponent(ColorSelectorComponent), MockDirective(NgbTooltip), MockPipe(ArtemisTranslatePipe)],
         }).compileComponents();
-        global.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
-            return new MockResizeObserver(callback);
-        });
         fixture = TestBed.createComponent(MarkdownEditorMonacoComponent);
         comp = fixture.componentInstance;
         comp.externalHeight = true;

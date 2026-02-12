@@ -39,9 +39,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 
-setupTestBed({ zoneless: true });
-
 describe('ProgrammingExerciseEditableInstructionComponent', () => {
+    setupTestBed({ zoneless: true });
     let comp: ProgrammingExerciseEditableInstructionComponent;
     let fixture: ComponentFixture<ProgrammingExerciseEditableInstructionComponent>;
     let debugElement: DebugElement;
@@ -78,9 +77,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip), FaIconComponent],
+            imports: [MockDirective(NgbTooltip), FaIconComponent, ProgrammingExerciseEditableInstructionComponent],
             declarations: [
-                ProgrammingExerciseEditableInstructionComponent,
                 MockComponent(ProgrammingExerciseInstructionAnalysisComponent),
                 MockComponent(MarkdownEditorMonacoComponent),
                 MockComponent(ProgrammingExerciseInstructionComponent),

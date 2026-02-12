@@ -13,9 +13,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 
-setupTestBed({ zoneless: true });
-
 describe('MonacoEditorComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<MonacoEditorComponent>;
     let comp: MonacoEditorComponent;
 
@@ -27,6 +26,7 @@ describe('MonacoEditorComponent', () => {
     const buildAnnotationArray: Annotation[] = [{ fileName: 'example.java', row: 1, column: 0, timestamp: 0, type: MonacoEditorBuildAnnotationType.ERROR, text: 'example error' }];
 
     beforeEach(() => {
+        global.ResizeObserver = MockResizeObserver as any;
         TestBed.configureTestingModule({
             imports: [MonacoEditorComponent],
             providers: [
@@ -38,9 +38,6 @@ describe('MonacoEditorComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(MonacoEditorComponent);
                 comp = fixture.componentInstance;
-                global.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
-                    return new MockResizeObserver(callback);
-                });
             });
     });
 

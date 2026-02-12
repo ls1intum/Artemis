@@ -38,8 +38,6 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 
-setupTestBed({ zoneless: true });
-
 /**
  * Creates a typed mock ProgrammingExercise for testing.
  * @param overrides Partial properties to override the default values
@@ -98,6 +96,8 @@ async function configureTestBed(additionalProviders: Provider[] = []): Promise<v
 }
 
 describe('CodeEditorInstructorAndEditorContainerComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let comp: CodeEditorInstructorAndEditorContainerComponent;
 
@@ -620,7 +620,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             const jumpSpy = vi.spyOn((comp as any).editableInstructions, 'jumpToLine');
 
             (comp as any).jumpToLocation(issue, 0); // Corrected: use (comp as any)
-            await fixture.whenStable();
+            await Promise.resolve();
 
             expect((comp as any).codeEditorContainer.selectedFile).toBe('problem_statement.md');
             expect(jumpSpy).toHaveBeenCalledWith(loc.endLine);
@@ -725,6 +725,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 });
 
 describe('CodeEditorInstructorAndEditorContainerComponent - Diff Editor', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let comp: CodeEditorInstructorAndEditorContainerComponent;
 
@@ -767,6 +769,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Diff Editor', () => 
 });
 
 describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Refinement', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let comp: CodeEditorInstructorAndEditorContainerComponent;
     let alertService: AlertService;

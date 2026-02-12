@@ -20,9 +20,9 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { ProblemStatementGenerationRequest } from 'app/openapi/model/problemStatementGenerationRequest';
 import { ProblemStatementRefinementResponse } from 'app/openapi/model/problemStatementRefinementResponse';
 
-setupTestBed({ zoneless: true });
-
 describe('ProgrammingExerciseProblemComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ProgrammingExerciseProblemComponent>;
     let comp: ProgrammingExerciseProblemComponent;
 
