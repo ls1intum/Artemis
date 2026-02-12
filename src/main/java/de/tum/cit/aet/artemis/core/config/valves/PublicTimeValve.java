@@ -20,7 +20,7 @@ public class PublicTimeValve extends ValveBase {
 
     private static final String GET = "GET";
 
-    private static final String CONTENT_TYPE = "text/plain";
+    private static final String CONTENT_TYPE = "text/plain;charset=UTF-8";
 
     @Override
     public void invoke(Request request, Response response) throws IOException, ServletException {

@@ -77,7 +77,8 @@ public class SentryConfiguration {
                     return 0.0;
                 }
                 if (url.equals("/time")) {
-                    // Time endpoint is called very frequently, and we don't want to consider it.
+                    // Defensive: /time is normally handled by PublicTimeValve before reaching Spring,
+                    // but we keep this filter in case the valve is removed or bypassed.
                     return 0.0;
                 }
                 if (url.equals("/api/iris/status")) {

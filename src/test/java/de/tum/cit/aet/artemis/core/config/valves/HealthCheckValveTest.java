@@ -8,20 +8,18 @@ import static org.mockito.Mockito.when;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.time.Instant;
 
 import org.apache.catalina.Valve;
 import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.Response;
 import org.junit.jupiter.api.Test;
 
-class PublicTimeValveTest {
+class HealthCheckValveTest {
 
     @Test
-    void invokeShouldHandleTimePathOnGetRequest() throws Exception {
+    void invokeShouldReturnPongForPingPath() throws Exception {
         var request = mock(Request.class);
-        when(request.getRequestURI()).thenReturn("/time");
-        when(request.getMethod()).thenReturn("GET");
+        when(request.getRequestURI()).thenReturn("/ping");
 
         var response = mock(Response.class);
         var responseBody = new StringWriter();
@@ -29,7 +27,7 @@ class PublicTimeValveTest {
         when(response.getWriter()).thenReturn(printWriter);
 
         var nextValve = mock(Valve.class);
-        var valve = new PublicTimeValve();
+        var valve = new HealthCheckValve();
         valve.setNext(nextValve);
 
         valve.invoke(request, response);
@@ -37,53 +35,18 @@ class PublicTimeValveTest {
 
         verify(response).setStatus(200);
         verify(response).setContentType("text/plain;charset=UTF-8");
-
-        var body = responseBody.toString();
-        assertThat(Instant.parse(body)).isNotNull();
+        assertThat(responseBody.toString()).isEqualTo("pong");
         verifyNoInteractions(nextValve);
-    }
-
-    @Test
-    void invokeShouldDelegateTimePathOnHeadRequest() throws Exception {
-        var request = mock(Request.class);
-        when(request.getRequestURI()).thenReturn("/time");
-        when(request.getMethod()).thenReturn("HEAD");
-
-        var response = mock(Response.class);
-        var nextValve = mock(Valve.class);
-        var valve = new PublicTimeValve();
-        valve.setNext(nextValve);
-
-        valve.invoke(request, response);
-
-        verify(nextValve).invoke(request, response);
     }
 
     @Test
     void invokeShouldDelegateRequestForDifferentPath() throws Exception {
         var request = mock(Request.class);
         when(request.getRequestURI()).thenReturn("/api/core/public/profile-info");
-        when(request.getMethod()).thenReturn("GET");
 
         var response = mock(Response.class);
         var nextValve = mock(Valve.class);
-        var valve = new PublicTimeValve();
-        valve.setNext(nextValve);
-
-        valve.invoke(request, response);
-
-        verify(nextValve).invoke(request, response);
-    }
-
-    @Test
-    void invokeShouldDelegateRequestForUnsupportedMethod() throws Exception {
-        var request = mock(Request.class);
-        when(request.getRequestURI()).thenReturn("/time");
-        when(request.getMethod()).thenReturn("POST");
-
-        var response = mock(Response.class);
-        var nextValve = mock(Valve.class);
-        var valve = new PublicTimeValve();
+        var valve = new HealthCheckValve();
         valve.setNext(nextValve);
 
         valve.invoke(request, response);
