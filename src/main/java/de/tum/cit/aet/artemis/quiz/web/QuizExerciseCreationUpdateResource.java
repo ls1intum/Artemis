@@ -198,8 +198,6 @@ public class QuizExerciseCreationUpdateResource {
 
         QuizExercise originalQuiz = quizExerciseService.copyFieldsForUpdate(quizBase);
 
-        quizExerciseService.mergeDTOIntoDomainObject(quizBase, quizExerciseFromEditorDTO, course);
-
         // For exam exercises: check exam lifecycle before allowing updates
         if (quizBase.isExamExercise()) {
             Exam exam = quizBase.getExerciseGroup().getExam();
@@ -212,6 +210,8 @@ public class QuizExerciseCreationUpdateResource {
                 throw new AccessForbiddenException("During the quiz, editing is not possible, you can re-evaluate after the quiz has finished");
             }
         }
+
+        quizExerciseService.mergeDTOIntoDomainObject(quizBase, quizExerciseFromEditorDTO, course);
 
         QuizExercise result = quizExerciseService.performUpdate(originalQuiz, quizBase, files, notificationText);
 

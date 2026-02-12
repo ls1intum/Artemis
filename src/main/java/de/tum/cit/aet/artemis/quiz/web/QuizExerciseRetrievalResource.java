@@ -214,8 +214,9 @@ public class QuizExerciseRetrievalResource {
     }
 
     private boolean computeEffectiveQuizEnded(QuizExercise quizExercise) {
-        if (quizExercise.isExamExercise() && examDateApi.isPresent()) {
-            ZonedDateTime latestEnd = examDateApi.get().getLatestIndividualExamEndDate(quizExercise.getExerciseGroup().getExam());
+        if (quizExercise.isExamExercise()) {
+            ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+            ZonedDateTime latestEnd = api.getLatestIndividualExamEndDate(quizExercise.getExerciseGroup().getExam());
             return latestEnd != null && ZonedDateTime.now().isAfter(latestEnd);
         }
         return quizExercise.isQuizEnded();
