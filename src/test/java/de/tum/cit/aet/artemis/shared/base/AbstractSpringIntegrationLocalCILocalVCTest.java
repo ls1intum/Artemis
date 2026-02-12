@@ -111,7 +111,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     protected static final WeaviateContainer weaviateContainer;
 
-    private static final String WEAVIATE_COLLECTION_PREFIX = "Test";
+    private static final String WEAVIATE_COLLECTION_PREFIX = "Test_";
 
     // Static initializer runs before @DynamicPropertySource, ensuring ports and containers are available when Spring context starts
     static {
