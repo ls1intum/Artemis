@@ -86,6 +86,14 @@ public class ExerciseWeaviateService {
 
         try {
             deleteExerciseFromWeaviate(exercise.getId());
+        }
+        catch (Exception e) {
+            log.debug("Failed to delete existing exercise {} from Weaviate during update, we assume the exercise did not exist in Weaviate yet: {}", exercise.getId(),
+                    e.getMessage(), e);
+            // Continue with insert attempt even if delete fails, as it might be a non-existent entry
+        }
+
+        try {
             insertExerciseIntoWeaviate(exercise);
             log.debug("Successfully updated exercise {} '{}' in Weaviate", exercise.getId(), exercise.getTitle());
         }
