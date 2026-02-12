@@ -51,7 +51,6 @@ import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
-import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateSchemas;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
@@ -119,9 +118,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         sshPort = findAvailableTcpPort();
         hazelcastPort = findAvailableTcpPort();
         weaviateContainer = WeaviateTestContainerFactory.getContainer();
-        if (weaviateContainer != null && weaviateContainer.isRunning()) {
-            preCreateCollections(weaviateContainer);
-        }
     }
 
     @DynamicPropertySource
@@ -139,27 +135,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
             registry.add("artemis.weaviate.grpc-port", () -> weaviateContainer.getMappedPort(50051));
             registry.add("artemis.weaviate.scheme", () -> "http");
             registry.add("artemis.weaviate.collection-prefix", () -> WEAVIATE_COLLECTION_PREFIX);
-        }
-    }
-
-    /**
-     * Pre-creates all Weaviate collections (without vectorizer) so that the application's
-     * WeaviateService.initializeCollections() finds them already present and does not attempt
-     * to create them with the text2vec-transformers vectorizer (which is not available in the test container).
-     */
-    private static void preCreateCollections(WeaviateContainer container) {
-        try (var client = io.weaviate.client6.v1.api.WeaviateClient
-                .connectToLocal(config -> config.host(container.getHost()).port(container.getMappedPort(8080)).grpcPort(container.getMappedPort(50051)))) {
-            for (var schema : WeaviateSchemas.ALL_SCHEMAS) {
-                String collectionName = WEAVIATE_COLLECTION_PREFIX + schema.collectionName();
-                if (!client.collections.exists(collectionName)) {
-                    client.collections.create(collectionName);
-                    log.debug("Pre-created Weaviate collection '{}'", collectionName);
-                }
-            }
-        }
-        catch (Exception e) {
-            log.warn("Failed to pre-create Weaviate collections: {}", e.getMessage());
         }
     }
 
