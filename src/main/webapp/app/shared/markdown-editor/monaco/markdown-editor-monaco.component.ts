@@ -372,10 +372,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.uniqueMarkdownEditorId = 'markdown-editor-' + window.crypto.randomUUID().toString();
 
         effect(() => {
-            this.renderEditorWidgets();
-        });
-
-        effect(() => {
             this.enableExerciseReviewComments();
             this.reviewCommentThreads();
             this.showLocationWarning();
@@ -403,7 +399,12 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
         this.monacoEditor.disposeWidgets();
         addCommentBoxes(this.monacoEditor, issues, PROBLEM_STATEMENT_FILE_PATH, CommentThreadLocationType.PROBLEM_STATEMENT, this.translateService);
-        this.getReviewCommentManager()?.renderWidgets();
+        if (this.enableExerciseReviewComments()) {
+            this.getReviewCommentManager()?.renderWidgets();
+        } else {
+            this.reviewCommentManager?.disposeAll();
+            this.monacoEditor.clearLineDecorationsHoverButton();
+        }
     }
 
     ngAfterContentInit(): void {

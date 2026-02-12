@@ -56,10 +56,12 @@
                             <span class="monaco-review-comment-menu-dots" aria-hidden="true"></span>
                         </button>
                         <div ngbDropdownMenu>
-                            <button type="button" class="dropdown-item" (click)="startEditing(commentVm.comment)">
-                                <fa-icon [icon]="faPen" class="me-2" />
-                                {{ 'artemisApp.review.editComment' | artemisTranslate }}
-                            </button>
+                            @if (isUserComment(commentVm.comment)) {
+                                <button type="button" class="dropdown-item" (click)="startEditing(commentVm.comment)">
+                                    <fa-icon [icon]="faPen" class="me-2" />
+                                    {{ 'artemisApp.review.editComment' | artemisTranslate }}
+                                </button>
+                            }
                             <button type="button" class="dropdown-item text-danger" (click)="deleteComment(commentVm.comment.id)">
                                 <fa-icon [icon]="faTrash" class="me-2" />
                                 {{ 'artemisApp.review.deleteComment' | artemisTranslate }}

@@ -676,7 +676,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     }
                     break;
                 case CommentThreadLocationType.AUXILIARY_REPO:
-                    if (this.codeEditorContainer.selectedRepository() !== RepositoryType.AUXILIARY && location.auxiliaryRepositoryId) {
+                    if (
+                        location.auxiliaryRepositoryId &&
+                        (this.codeEditorContainer.selectedRepository() !== RepositoryType.AUXILIARY || this.selectedRepositoryId !== location.auxiliaryRepositoryId)
+                    ) {
                         this.selectAuxiliaryRepository(location.auxiliaryRepositoryId);
                         return;
                     }

@@ -6,7 +6,7 @@ import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/n
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowUpRightFromSquare, faPen, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { Comment, CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
+import { Comment, CommentType, CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -39,6 +39,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     protected readonly faTriangleExclamation = faTriangleExclamation;
     showThreadBody = true;
     editingCommentId?: number;
+    editingCommentType?: CommentType;
     editText = '';
 
     private readonly destroyed$ = new Subject<void>();
@@ -68,7 +69,11 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
      * @param comment The comment to edit.
      */
     startEditing(comment: Comment): void {
+        if (!this.isUserComment(comment)) {
+            return;
+        }
         this.editingCommentId = comment.id;
+        this.editingCommentType = comment.type;
         this.editText = this.formatReviewCommentText(comment);
     }
 
@@ -77,6 +82,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
      */
     cancelEditing(): void {
         this.editingCommentId = undefined;
+        this.editingCommentType = undefined;
         this.editText = '';
     }
 
@@ -86,7 +92,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     saveEditing(): void {
         const id = this.editingCommentId;
         const trimmed = this.editText.trim();
-        if (id === undefined || !trimmed) {
+        if (id === undefined || !trimmed || this.editingCommentType !== CommentType.USER) {
             return;
         }
         this.onUpdate.emit({ commentId: id, content: { contentType: 'USER', text: trimmed } });
@@ -194,5 +200,9 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
      */
     isEditing(comment: Comment): boolean {
         return this.editingCommentId === comment.id;
+    }
+
+    isUserComment(comment: Comment): boolean {
+        return comment.type === CommentType.USER;
     }
 }
