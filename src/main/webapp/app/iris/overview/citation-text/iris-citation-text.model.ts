@@ -10,7 +10,7 @@ export const CITATION_REGEX = /\[cite:[LF]:[^:[\]]+:[^:[\]]*:[^:[\]]*:[^:[\]]*:[
  * Parsed representation of a single citation block of the form "[cite:type:entityId:page:start:end:keyword:summary]".
  */
 export type IrisCitationParsed = {
-    type: 'L' | 'F';
+    type: 'L' | 'F'; // L = lecture material and F = FAQ as underlying source
     entityId: string;
     page: string;
     start: string;

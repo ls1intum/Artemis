@@ -5,7 +5,7 @@ import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { IrisCitationParsed } from './iris-citation-text.model';
 import { escapeHtml, formatCitationLabel, getCitationLabelText, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
-import { faChevronLeft, faChevronRight, faCircleExclamation, faCircleQuestion, faFilePdf, faFileVideo } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faChevronLeft, faChevronRight, faCircleExclamation, faCircleQuestion, faFilePdf, faFileVideo } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Component that processes text containing citation markers and renders them as interactive citation bubbles.
@@ -17,7 +17,6 @@ import { faChevronLeft, faChevronRight, faCircleExclamation, faCircleQuestion, f
     styleUrls: ['./iris-citation-text.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,
-    standalone: true,
 })
 export class IrisCitationTextComponent {
     private readonly domSanitizer = inject(DomSanitizer);
@@ -27,12 +26,17 @@ export class IrisCitationTextComponent {
      * Maps citation type classes to FontAwesome icons.
      * Used for rendering citation bubbles with appropriate visual indicators.
      */
-    private readonly CITATION_TYPE_ICONS = new Map([
-        ['iris-citation--slide', faFilePdf], // Slide citations
-        ['iris-citation--video', faFileVideo], // Transcription citations
-        ['iris-citation--faq', faCircleQuestion], // FAQ citations
-        ['iris-citation--source', faCircleExclamation], // Unknown source citations
-    ]);
+    private readonly CITATION_TYPE_ICONS: Record<string, IconDefinition> = {
+        'iris-citation--slide': faFilePdf, // Slide citations
+        'iris-citation--video': faFileVideo, // Transcription citations
+        'iris-citation--faq': faCircleQuestion, // FAQ citations
+        'iris-citation--source': faCircleExclamation, // Unknown source citations
+    };
+
+    /**
+     * Padding in pixels for tooltip boundary collision detection.
+     */
+    private readonly TOOLTIP_BOUNDARY_PADDING_LEFT = 10;
 
     readonly text = input.required<string>();
     readonly citationInfo = input<IrisCitationMetaDTO[]>([]);
@@ -203,7 +207,7 @@ export class IrisCitationTextComponent {
      * Defaults to exclamation icon for unknown types.
      */
     private getIconSvg(typeClass: string): string {
-        const fontAwesomeIcon = this.CITATION_TYPE_ICONS.get(typeClass) ?? faCircleExclamation;
+        const fontAwesomeIcon = this.CITATION_TYPE_ICONS[typeClass] ?? faCircleExclamation;
         return this.generateSvg(fontAwesomeIcon);
     }
 
@@ -277,8 +281,8 @@ export class IrisCitationTextComponent {
         const summaryRect = summary.getBoundingClientRect();
 
         let shift = 0;
-        if (summaryRect.left < boundaryRect.left + 10) {
-            shift = boundaryRect.left - summaryRect.left + 10;
+        if (summaryRect.left < boundaryRect.left + this.TOOLTIP_BOUNDARY_PADDING_LEFT) {
+            shift = boundaryRect.left - summaryRect.left + this.TOOLTIP_BOUNDARY_PADDING_LEFT;
         } else if (summaryRect.right > boundaryRect.right) {
             shift = boundaryRect.right - summaryRect.right;
         }
