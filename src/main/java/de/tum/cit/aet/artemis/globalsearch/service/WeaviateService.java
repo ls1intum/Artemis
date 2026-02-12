@@ -7,11 +7,13 @@ import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.WeaviateException;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateCollectionSchema;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviatePropertyDefinition;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateReferenceDefinition;
@@ -26,8 +28,9 @@ import io.weaviate.client6.v1.api.collections.VectorConfig;
  * Infrastructure service for Weaviate vector database.
  * Handles schema initialization and provides collection access for entity-specific services.
  */
+@Lazy
 @Service
-@ConditionalOnProperty(name = "artemis.weaviate.enabled", havingValue = "true")
+@Conditional(WeaviateEnabled.class)
 public class WeaviateService {
 
     private static final Logger log = LoggerFactory.getLogger(WeaviateService.class);
