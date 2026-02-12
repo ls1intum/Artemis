@@ -17,9 +17,9 @@ class WeaviateReferenceDefinitionTest {
 
     @Test
     void recordEquality_worksCorrectly() {
-        var ref1 = WeaviateReferenceDefinition.of("ref", "Target", "desc");
-        var ref2 = new WeaviateReferenceDefinition("ref", "Target", "desc");
+        var reference1 = WeaviateReferenceDefinition.of("ref", "Target", "desc");
+        var reference2 = new WeaviateReferenceDefinition("ref", "Target", "desc");
 
-        assertThat(ref1).isEqualTo(ref2);
+        assertThat(reference1).isEqualTo(reference2);
     }
 }

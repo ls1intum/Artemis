@@ -8,38 +8,38 @@ import org.junit.jupiter.api.Test;
 
 class WeaviateCollectionSchemaTest {
 
-    private static final WeaviatePropertyDefinition PROP_A = WeaviatePropertyDefinition.filterable("id", WeaviateDataType.INT, "ID");
+    private static final WeaviatePropertyDefinition PROPERTY_A = WeaviatePropertyDefinition.filterable("id", WeaviateDataType.INT, "ID");
 
-    private static final WeaviatePropertyDefinition PROP_B = WeaviatePropertyDefinition.searchable("name", WeaviateDataType.TEXT, "Name");
+    private static final WeaviatePropertyDefinition PROPERTY_B = WeaviatePropertyDefinition.searchable("name", WeaviateDataType.TEXT, "Name");
 
     @Test
     void of_withoutReferences_createsEmptyReferencesList() {
-        var schema = WeaviateCollectionSchema.of("TestCollection", List.of(PROP_A, PROP_B));
+        var schema = WeaviateCollectionSchema.of("TestCollection", List.of(PROPERTY_A, PROPERTY_B));
 
         assertThat(schema.collectionName()).isEqualTo("TestCollection");
-        assertThat(schema.properties()).containsExactly(PROP_A, PROP_B);
+        assertThat(schema.properties()).containsExactly(PROPERTY_A, PROPERTY_B);
         assertThat(schema.references()).isEmpty();
     }
 
     @Test
     void of_withReferences_includesReferences() {
         var ref = WeaviateReferenceDefinition.of("courseRef", "Courses", "Reference to course");
-        var schema = WeaviateCollectionSchema.of("TestCollection", List.of(PROP_A), List.of(ref));
+        var schema = WeaviateCollectionSchema.of("TestCollection", List.of(PROPERTY_A), List.of(ref));
 
         assertThat(schema.references()).containsExactly(ref);
     }
 
     @Test
     void getProperty_returnsMatchingProperty() {
-        var schema = WeaviateCollectionSchema.of("TestCollection", List.of(PROP_A, PROP_B));
+        var schema = WeaviateCollectionSchema.of("TestCollection", List.of(PROPERTY_A, PROPERTY_B));
 
-        assertThat(schema.getProperty("id")).isEqualTo(PROP_A);
-        assertThat(schema.getProperty("name")).isEqualTo(PROP_B);
+        assertThat(schema.getProperty("id")).isEqualTo(PROPERTY_A);
+        assertThat(schema.getProperty("name")).isEqualTo(PROPERTY_B);
     }
 
     @Test
     void getProperty_returnsNullForUnknownName() {
-        var schema = WeaviateCollectionSchema.of("TestCollection", List.of(PROP_A));
+        var schema = WeaviateCollectionSchema.of("TestCollection", List.of(PROPERTY_A));
 
         assertThat(schema.getProperty("nonexistent")).isNull();
     }
