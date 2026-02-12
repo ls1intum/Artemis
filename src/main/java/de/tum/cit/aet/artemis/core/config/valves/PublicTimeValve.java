@@ -10,13 +10,13 @@ import org.apache.catalina.connector.Response;
 import org.apache.catalina.valves.ValveBase;
 
 /**
- * Ultra-fast public time endpoint valve that handles /time at the Tomcat level.
+ * Ultra-fast public time endpoint valve that handles /api/public/time at the Tomcat level.
  * Bypasses all Spring filters, interceptors, and MVC processing for minimal latency.
  * Used by the Artemis client to synchronize time with the server for accurate countdown timers and time-sensitive features (e.g. exam mode).
  */
 public class PublicTimeValve extends ValveBase {
 
-    private static final String TIME_PATH = "/time";
+    private static final String TIME_PATH = "/api/public/time";
 
     private static final String GET = "GET";
 

@@ -20,7 +20,7 @@ class PublicTimeValveTest {
     @Test
     void invokeShouldHandleTimePathOnGetRequest() throws Exception {
         var request = mock(Request.class);
-        when(request.getRequestURI()).thenReturn("/time");
+        when(request.getRequestURI()).thenReturn("/api/public/time");
         when(request.getMethod()).thenReturn("GET");
 
         var response = mock(Response.class);
@@ -46,7 +46,7 @@ class PublicTimeValveTest {
     @Test
     void invokeShouldDelegateTimePathOnHeadRequest() throws Exception {
         var request = mock(Request.class);
-        when(request.getRequestURI()).thenReturn("/time");
+        when(request.getRequestURI()).thenReturn("/api/public/time");
         when(request.getMethod()).thenReturn("HEAD");
 
         var response = mock(Response.class);
@@ -78,7 +78,7 @@ class PublicTimeValveTest {
     @Test
     void invokeShouldDelegateRequestForUnsupportedMethod() throws Exception {
         var request = mock(Request.class);
-        when(request.getRequestURI()).thenReturn("/time");
+        when(request.getRequestURI()).thenReturn("/api/public/time");
         when(request.getMethod()).thenReturn("POST");
 
         var response = mock(Response.class);

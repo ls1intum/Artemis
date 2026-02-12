@@ -29,7 +29,7 @@ describe('ArtemisServerDateService', () => {
     it('should request server time when sync is needed', () => {
         service.updateTime();
 
-        const req = httpMock.expectOne('time');
+        const req = httpMock.expectOne('api/public/time');
         expect(req.request.method).toBe('GET');
         expect(req.request.responseType).toBe('text');
 
@@ -47,7 +47,7 @@ describe('ArtemisServerDateService', () => {
 
         service.updateTime();
 
-        httpMock.expectNone('time');
+        httpMock.expectNone('api/public/time');
     });
 
     it('should keep only the last five offsets and client dates', () => {

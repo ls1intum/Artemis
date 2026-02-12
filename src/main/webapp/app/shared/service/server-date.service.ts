@@ -25,7 +25,7 @@ export class ArtemisServerDateService implements ServerDateService {
         const http = inject(HttpClient);
 
         this.http = http;
-        this.resourceUrl = 'time';
+        this.resourceUrl = 'api/public/time';
         this.recentOffsets = new Array<number>();
         this.recentClientDates = new Array<dayjs.Dayjs>();
     }
