@@ -8,7 +8,8 @@
 import '@angular/compiler';
 import '@angular/localize/init';
 import '@analogjs/vitest-angular/setup-snapshots';
-import { vi } from 'vitest';
+import { expect, vi } from 'vitest';
+import * as matchers from 'jest-extended';
 
 import 'app/shared/util/array.extension';
 
@@ -24,6 +25,8 @@ import minMax from 'dayjs/esm/plugin/minMax';
 import customParseFormat from 'dayjs/esm/plugin/customParseFormat';
 import isoWeek from 'dayjs/esm/plugin/isoWeek';
 import duration from 'dayjs/esm/plugin/duration';
+
+expect.extend(matchers);
 
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
