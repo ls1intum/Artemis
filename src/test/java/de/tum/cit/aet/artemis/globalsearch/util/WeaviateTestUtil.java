@@ -89,6 +89,10 @@ public final class WeaviateTestUtil {
 
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         assertThat(((Number) properties.get(ExerciseSchema.Properties.COURSE_ID)).longValue()).isEqualTo(course.getId());
+
+        assertDateProperty(properties, ExerciseSchema.Properties.RELEASE_DATE, exercise.getReleaseDate());
+        assertDateProperty(properties, ExerciseSchema.Properties.START_DATE, exercise.getStartDate());
+        assertDateProperty(properties, ExerciseSchema.Properties.DUE_DATE, exercise.getDueDate());
     }
 
     /**

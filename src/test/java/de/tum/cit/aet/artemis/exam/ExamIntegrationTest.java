@@ -722,6 +722,30 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_datesChangedReflectedInWeaviate() throws Exception {
+        var modelingExercise = examUtilService.addCourseExamExerciseGroupWithOneModelingExercise();
+        var exam = modelingExercise.getExerciseGroup().getExam();
+
+        // Insert the exercise into Weaviate with initial dates
+        if (exerciseWeaviateService != null) {
+            exerciseWeaviateService.insertExercise(modelingExercise);
+        }
+        WeaviateTestUtil.assertExerciseExamDatesInWeaviate(weaviateService, modelingExercise.getId(), exam);
+
+        // Update the exam visible, start and end dates
+        ZonedDateTime newVisibleDate = now().minusHours(10);
+        ZonedDateTime newStartDate = now().minusHours(8);
+        ZonedDateTime newEndDate = now().minusHours(6);
+        examUtilService.setVisibleStartAndEndDateOfExam(exam, newVisibleDate, newStartDate, newEndDate);
+
+        request.put("/api/exam/courses/" + exam.getCourse().getId() + "/exams", exam, HttpStatus.OK);
+
+        Exam fetchedExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
+        WeaviateTestUtil.assertExerciseExamDatesInWeaviate(weaviateService, modelingExercise.getId(), fetchedExam);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExam_asInstructor() throws Exception {
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> examRepository.findByIdElseThrow(Long.MAX_VALUE));
 
