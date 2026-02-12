@@ -87,7 +87,7 @@ public class WeaviateService {
 
             client.collections.create(collectionName, collection -> {
                 // Explicitly disable vectorization; text2vec-transformers will be added in a separate PR
-                // Configure text2vec-transformers vectorizer for automatic embeddings
+                // In a follow-up PR we will configure text2vec-transformers vectorizer for automatic embeddings
                 collection.vectorConfig(VectorConfig.selfProvided());
 
                 // Add properties
