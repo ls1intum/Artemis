@@ -153,7 +153,7 @@ public class HyperionProblemStatementRefinementService {
         validateRefinementPrerequisites(originalProblemStatementText);
 
         String sanitizedInstruction = sanitizeInput(request.instruction());
-        validateUserPrompt(sanitizedInstruction);
+        HyperionPromptSanitizer.validateUserPrompt(sanitizedInstruction, "ProblemStatementRefinement");
 
         // Build the instruction string using sanitized inputs
         String sanitizedProblemStatement = sanitizeInput(originalProblemStatementText);
