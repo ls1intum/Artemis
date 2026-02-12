@@ -1035,26 +1035,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // Check if quiz has already started or ended
+        checkQuizEditable(originalQuiz);
+
         Set<QuizBatch> batches = quizBatchRepository.findAllByQuizExercise(originalQuiz);
-        if (originalQuiz.isExamExercise()) {
-            Exam exam = originalQuiz.getExerciseGroup().getExam();
-            if (exam.getStartDate() != null && ZonedDateTime.now().isAfter(exam.getStartDate())) {
-                ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
-                ZonedDateTime latestEnd = api.getLatestIndividualExamEndDate(exam);
-                if (latestEnd != null && ZonedDateTime.now().isAfter(latestEnd)) {
-                    throw new AccessForbiddenException("After the end of the quiz working time, editing is not possible");
-                }
-                throw new AccessForbiddenException("During the quiz, editing is not possible, you can re-evaluate after the quiz has finished");
-            }
-        }
-        else {
-            if (originalQuiz.isQuizEnded()) {
-                throw new AccessForbiddenException("After the end of the quiz working time, editing is not possible");
-            }
-            if (batches.stream().anyMatch(QuizBatch::isStarted)) {
-                throw new AccessForbiddenException("During the quiz, editing is not possible, you can re-evaluate after the quiz has finished");
-            }
-        }
 
         updatedQuiz.reconnectJSONIgnoreAttributes();
 
@@ -1389,6 +1372,37 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             return false;
         }
         return !quizExercise.isQuizEnded();
+    }
+
+    /**
+     * Checks if the given quiz exercise is editable and throws an appropriate exception if not.
+     * For exam exercises, uses ExamDateApi to distinguish between "during exam" and "after exam end".
+     * For course exercises, checks quiz batches and due date.
+     *
+     * @param quizExercise the quiz exercise to check
+     * @throws AccessForbiddenException if the quiz is not editable
+     */
+    public void checkQuizEditable(QuizExercise quizExercise) {
+        if (quizExercise.isExamExercise()) {
+            Exam exam = quizExercise.getExerciseGroup().getExam();
+            if (exam.getStartDate() != null && ZonedDateTime.now().isAfter(exam.getStartDate())) {
+                ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+                ZonedDateTime latestEnd = api.getLatestIndividualExamEndDate(exam);
+                if (latestEnd != null && ZonedDateTime.now().isAfter(latestEnd)) {
+                    throw new AccessForbiddenException("After the end of the quiz working time, editing is not possible");
+                }
+                throw new AccessForbiddenException("During the quiz, editing is not possible, you can re-evaluate after the quiz has finished");
+            }
+        }
+        else {
+            Set<QuizBatch> batches = quizBatchRepository.findAllByQuizExercise(quizExercise);
+            if (quizExercise.isQuizEnded()) {
+                throw new AccessForbiddenException("After the end of the quiz working time, editing is not possible");
+            }
+            if (batches.stream().anyMatch(QuizBatch::isStarted)) {
+                throw new AccessForbiddenException("During the quiz, editing is not possible, you can re-evaluate after the quiz has finished");
+            }
+        }
     }
 
 }
