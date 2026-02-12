@@ -58,7 +58,9 @@ export class ReviewCommentWidgetManager {
      */
     updateDraftInputs(): void {
         const canSubmit = this.config.canSubmit();
-        this.draftWidgetRefs.forEach((ref) => ref.setInput('canSubmit', canSubmit));
+        this.draftWidgetRefs.forEach((ref) => {
+            ref.setInput('canSubmit', canSubmit);
+        });
     }
 
     /**
@@ -246,7 +248,9 @@ export class ReviewCommentWidgetManager {
      * Disposes all draft widget component refs.
      */
     private disposeDraftWidgets(): void {
-        this.draftWidgetRefs.forEach((ref) => ref.destroy());
+        this.draftWidgetRefs.forEach((ref) => {
+            ref.destroy();
+        });
         this.draftWidgetRefs.clear();
     }
 
@@ -254,7 +258,9 @@ export class ReviewCommentWidgetManager {
      * Disposes all thread widget component refs.
      */
     private disposeSavedWidgets(): void {
-        this.threadWidgetRefs.forEach((ref) => ref.destroy());
+        this.threadWidgetRefs.forEach((ref) => {
+            ref.destroy();
+        });
         this.threadWidgetRefs.clear();
     }
 
