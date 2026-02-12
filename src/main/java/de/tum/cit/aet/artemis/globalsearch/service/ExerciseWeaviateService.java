@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -10,8 +8,8 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -19,6 +17,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entitySchemas.ExerciseSchema;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -29,9 +28,9 @@ import io.weaviate.client6.v1.api.collections.query.Filter;
  * Service for synchronizing exercise metadata with Weaviate vector database.
  * This service handles insert, update, and delete operations for exercises in Weaviate.
  */
-@Profile(PROFILE_CORE)
 @Lazy
 @Service
+@Conditional(WeaviateEnabled.class)
 public class ExerciseWeaviateService {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseWeaviateService.class);
