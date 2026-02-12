@@ -30,7 +30,9 @@ import {
 } from 'test/helpers/sample/iris-sample-data';
 import { By } from '@angular/platform-browser';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
+import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
+import { IrisMessageContentType, IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
+import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
@@ -59,7 +61,7 @@ describe('IrisBaseChatbotComponent', () => {
         setCurrentCourse: vi.fn(),
     } as any;
     const mockLLMModalService = {
-        open: vi.fn().mockResolvedValue('cloud'),
+        open: vi.fn().mockResolvedValue('none'),
     } as any;
     const mockUserService = {
         updateLLMSelectionDecision: vi.fn().mockReturnValue(of(new HttpResponse<void>())),
@@ -132,13 +134,16 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     describe('when user has not accepted LLM usage policy', () => {
-        it('should set userAccepted to undefined', () => {
+        it('should set userAccepted to undefined', async () => {
             accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
 
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
             fixture.detectChanges();
+            // Flush the pending setTimeout from the constructor that triggers showAISelectionModal
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            await fixture.whenStable();
             expect(component.userAccepted()).toBeUndefined();
         });
     });
@@ -438,7 +443,7 @@ describe('IrisBaseChatbotComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         const sendButton = fixture.debugElement.query(By.css('#irisSendButton')).componentInstance;
 
-        expect(sendButton.disabled).toBeFalsy();
+        expect(sendButton.disabled()).toBeFalsy();
     });
 
     it('should not disable submit button if isLoading is false and error is not fatal', () => {
@@ -448,7 +453,7 @@ describe('IrisBaseChatbotComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         const sendButton = fixture.debugElement.query(By.css('#irisSendButton')).componentInstance;
 
-        expect(sendButton.disabled).toBeFalsy();
+        expect(sendButton.disabled()).toBeFalsy();
     });
 
     it('should handle suggestion click correctly', () => {
@@ -886,6 +891,8 @@ describe('IrisBaseChatbotComponent', () => {
             component = fixture.componentInstance;
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
             fixture.detectChanges();
+            // Flush the pending setTimeout from the constructor that triggers showAISelectionModal
+            await new Promise((resolve) => setTimeout(resolve, 0));
             await fixture.whenStable();
 
             expect(component.userAccepted()).toBeUndefined();
@@ -924,6 +931,8 @@ describe('IrisBaseChatbotComponent', () => {
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
             fixture.detectChanges();
 
+            // Flush the pending setTimeout from the constructor and then call directly
+            await new Promise((resolve) => setTimeout(resolve, 0));
             await component.showAISelectionModal();
 
             expect(component.userAccepted()).toBe(LLMSelectionDecision.CLOUD_AI);
@@ -1034,6 +1043,40 @@ describe('IrisBaseChatbotComponent', () => {
 
             const suggestionButtons = fixture.nativeElement.querySelectorAll('.iris-suggestion-buttons');
             expect(suggestionButtons).toHaveLength(0);
+        });
+    });
+
+    describe('processMessages newline handling', () => {
+        it('should not apply newline doubling to any messages', () => {
+            const tableMarkdown = '| Item | Details |\n|------|--------|\n| Lang | Java |';
+            const llmMessage = {
+                sender: IrisSender.LLM,
+                id: 10,
+                content: [{ type: IrisMessageContentType.TEXT, textContent: tableMarkdown } as IrisTextMessageContent],
+                sentAt: dayjs(),
+            } as IrisAssistantMessage;
+
+            const userText = 'Line1\nLine2\n\nLine3';
+            const userMessage = {
+                sender: IrisSender.USER,
+                id: 11,
+                content: [{ type: IrisMessageContentType.TEXT, textContent: userText } as IrisTextMessageContent],
+                sentAt: dayjs(),
+            } as IrisUserMessage;
+
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([userMessage, llmMessage]));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            const processedMessages = component.messages();
+            const llmContent = processedMessages[0].content![0] as IrisTextMessageContent;
+            const userContent = processedMessages[1].content![0] as IrisTextMessageContent;
+            // Neither message type should have newlines modified — line breaks are handled by markdown-it's breaks: true option
+            expect(llmContent.textContent).toBe(tableMarkdown);
+            expect(userContent.textContent).toBe(userText);
         });
     });
 });
