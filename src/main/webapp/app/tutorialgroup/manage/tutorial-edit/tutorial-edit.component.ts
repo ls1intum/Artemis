@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
@@ -11,12 +11,9 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { TooltipModule } from 'primeng/tooltip';
 import { ButtonModule } from 'primeng/button';
 import { RouterLink } from '@angular/router';
+import { TutorialGroupTutorDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 
 type Mode = {
-    name: string;
-};
-
-type Tutor = {
     name: string;
 };
 
@@ -50,11 +47,14 @@ export class TutorialEditComponent {
     private readonly titleRegex = /^[A-Za-z0-9][A-Za-z0-9: -]*$/;
     protected readonly ValidationStatus = ValidationStatus;
 
+    tutors = input.required<TutorialGroupTutorDTO[]>();
+
     title = signal('');
     titleValidationResult = computed<Validation>(() => this.computeTitleValidation());
     titleInputTouched = signal(false);
-    tutors = signal<Tutor[]>([{ name: 'Ramona' }, { name: 'Florian' }]);
-    selectedTutor = signal<Tutor>({ name: 'Ramona' });
+    selectedTutorId = signal<number | undefined>(undefined);
+    tutorValidationResult = computed<Validation>(() => this.computeTutorValidation());
+    tutorInputTouched = signal(false);
     language = signal<string>('');
     languageInputTouched = signal(false);
     languageValidationResult = computed<Validation>(() => this.computeLanguageValidation());
@@ -192,5 +192,15 @@ export class TutorialEditComponent {
             };
         }
         return { status: ValidationStatus.VALID };
+    }
+
+    private computeTutorValidation(): Validation {
+        if (!this.tutorInputTouched()) return { status: ValidationStatus.VALID };
+        const selectedTutorId = this.selectedTutorId();
+        if (selectedTutorId) return { status: ValidationStatus.VALID };
+        return {
+            status: ValidationStatus.INVALID,
+            message: 'Please choose a tutor.',
+        };
     }
 }

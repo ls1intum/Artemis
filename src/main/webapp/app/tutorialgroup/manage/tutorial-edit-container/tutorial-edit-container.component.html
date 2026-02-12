@@ -1,0 +1,9 @@
+<div>
+    @let tutorsToPass = tutors();
+    @if (tutorsToPass) {
+        <jhi-tutorial-edit [tutors]="tutorsToPass" />
+    }
+    @if (isLoading()) {
+        <jhi-loading-indicator-overlay />
+    }
+</div>

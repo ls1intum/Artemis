@@ -105,3 +105,8 @@ export interface TutorialGroupRegisterStudentDTO {
     login?: string;
     registrationNumber?: string;
 }
+
+export interface TutorialGroupTutorDTO {
+    id: number;
+    nameAndLogin: string;
+}

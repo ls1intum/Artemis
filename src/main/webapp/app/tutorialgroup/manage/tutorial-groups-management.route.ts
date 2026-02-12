@@ -72,7 +72,7 @@ export const tutorialGroupManagementRoutes: Routes = [
     },
     {
         path: ':tutorialGroupId/edit2',
-        loadComponent: () => import('app/tutorialgroup/manage/tutorial-edit/tutorial-edit.component').then((m) => m.TutorialEditComponent),
+        loadComponent: () => import('app/tutorialgroup/manage/tutorial-edit-container/tutorial-edit-container.component').then((m) => m.TutorialEditContainerComponent),
         data: {
             authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.pages.editTutorialGroup.title',

@@ -26,10 +26,27 @@
             </div>
 
             <div class="label-and-input">
+                @let tutorValidation = tutorValidationResult();
                 <label>Tutor</label>
                 <p-inputgroup class="field-control right-control">
                     <p-inputgroup-addon><i class="pi pi-user"></i></p-inputgroup-addon>
-                    <p-select [options]="tutors()" [(ngModel)]="selectedTutor" optionLabel="name" [filter]="true" filterBy="name" placeholder="Tutor" />
+                    <p-select
+                        optionLabel="nameAndLogin"
+                        optionValue="id"
+                        filterBy="nameAndLogin"
+                        placeholder="Tutor"
+                        [options]="tutors()"
+                        [(ngModel)]="selectedTutorId"
+                        [filter]="true"
+                        [invalid]="tutorValidation.status === ValidationStatus.INVALID"
+                        [showClear]="true"
+                        (onBlur)="tutorInputTouched.set(true)"
+                    />
+                    @if (tutorValidation.status === ValidationStatus.INVALID) {
+                        <p-inputgroup-addon [pTooltip]="tutorValidation.message" tooltipPosition="bottom">
+                            <i class="pi pi-info-circle danger"></i>
+                        </p-inputgroup-addon>
+                    }
                 </p-inputgroup>
             </div>
         </div>
