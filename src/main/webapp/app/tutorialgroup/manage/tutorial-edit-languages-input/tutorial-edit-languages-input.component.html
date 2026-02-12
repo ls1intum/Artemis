@@ -1,0 +1,41 @@
+<div class="label-and-input">
+    <label>Language</label>
+    <p-inputgroup>
+        @let languageValidation = languageValidationResult();
+        <p-inputgroup-addon>
+            <i class="pi pi-flag"></i>
+        </p-inputgroup-addon>
+        <input
+            #searchInput
+            pInputText
+            placeholder="Language"
+            [(ngModel)]="language"
+            [invalid]="languageValidation.status === TutorialEditValidationStatus.INVALID"
+            (blur)="onBlur()"
+            (focus)="openPanel()"
+            (keydown)="onKeyDown($event)"
+        />
+        @if (languageValidation.status === TutorialEditValidationStatus.INVALID) {
+            <p-inputgroup-addon [pTooltip]="languageValidation.message" tooltipPosition="bottom">
+                <i class="pi pi-info-circle danger"></i>
+            </p-inputgroup-addon>
+        }
+    </p-inputgroup>
+</div>
+
+<ng-template #panelTemplate>
+    <div class="suggestion-panel">
+        <div class="suggestion-panel-header">Input new language or reuse one from another group:</div>
+        <cdk-virtual-scroll-viewport class="suggestion-viewport" [itemSize]="40" minBufferPx="200" maxBufferPx="400">
+            <button
+                class="language-row"
+                *cdkVirtualFor="let suggestedLanguage of alreadyUsedLanguages(); let i = index"
+                (mouseenter)="suggestionHighlightIndex.set(i)"
+                [class.active]="suggestionHighlightIndex() === i"
+                (mousedown)="selectSuggestedLanguage(i)"
+            >
+                {{ suggestedLanguage }}
+            </button>
+        </cdk-virtual-scroll-viewport>
+    </div>
+</ng-template>

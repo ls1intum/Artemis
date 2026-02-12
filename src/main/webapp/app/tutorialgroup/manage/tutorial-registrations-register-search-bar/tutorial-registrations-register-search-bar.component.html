@@ -27,7 +27,7 @@
                 <span jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.registerSearchBar.noResultsText"></span>
             </div>
         } @else {
-            <cdk-virtual-scroll-viewport class="search-viewport" [itemSize]="36" minBufferPx="200" maxBufferPx="400">
+            <cdk-virtual-scroll-viewport class="search-viewport" [itemSize]="40" minBufferPx="200" maxBufferPx="400">
                 <button
                     class="student-row"
                     *cdkVirtualFor="let student of suggestedStudents(); let i = index; trackBy: trackStudentById"

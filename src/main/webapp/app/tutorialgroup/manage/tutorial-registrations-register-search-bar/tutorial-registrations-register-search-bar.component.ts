@@ -1,13 +1,10 @@
-import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, TemplateRef, ViewContainerRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
-import { ElementRef, OnDestroy, TemplateRef } from '@angular/core';
-import { viewChild } from '@angular/core';
 import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { ViewContainerRef } from '@angular/core';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
@@ -106,7 +103,7 @@ export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestro
             const scrollTop = viewport.measureScrollOffset();
             const viewportHeight = viewport.getViewportSize();
 
-            const ITEM_SIZE = 36;
+            const ITEM_SIZE = 40;
             const itemTop = updatedSuggestionHighlightIndex * ITEM_SIZE;
             const itemBottom = itemTop + ITEM_SIZE;
 
