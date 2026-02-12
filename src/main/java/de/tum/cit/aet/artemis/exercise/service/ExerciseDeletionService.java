@@ -70,13 +70,13 @@ public class ExerciseDeletionService {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    private final ExerciseWeaviateService exerciseWeaviateService;
+    private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
 
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ParticipationDeletionService participationDeletionService,
             ProgrammingExerciseDeletionService programmingExerciseDeletionService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, Optional<StudentExamApi> studentExamApi,
             Optional<LectureUnitApi> lectureUnitApi, Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelService channelService,
-            Optional<CompetencyProgressApi> competencyProgressApi, ExerciseWeaviateService exerciseWeaviateService) {
+            Optional<CompetencyProgressApi> competencyProgressApi, Optional<ExerciseWeaviateService> exerciseWeaviateService) {
         this.exerciseRepository = exerciseRepository;
         this.participationDeletionService = participationDeletionService;
         this.programmingExerciseDeletionService = programmingExerciseDeletionService;
@@ -183,7 +183,7 @@ public class ExerciseDeletionService {
 
         competencyProgressApi.ifPresent(api -> competencyLinks.stream().map(CompetencyExerciseLink::getCompetency).forEach(api::updateProgressByCompetencyAsync));
 
-        exerciseWeaviateService.deleteExercise(exerciseId);
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.deleteExercise(exerciseId));
     }
 
     /**

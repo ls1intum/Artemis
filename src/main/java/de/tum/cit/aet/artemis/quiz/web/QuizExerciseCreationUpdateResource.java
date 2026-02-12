@@ -74,14 +74,14 @@ public class QuizExerciseCreationUpdateResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
-    private final ExerciseWeaviateService exerciseWeaviateService;
+    private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
     public QuizExerciseCreationUpdateResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, Optional<AtlasMLApi> atlasMLApi, ExerciseVersionService exerciseVersionService,
-            ExerciseWeaviateService exerciseWeaviateService) {
+            Optional<ExerciseWeaviateService> exerciseWeaviateService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.courseService = courseService;
@@ -127,7 +127,7 @@ public class QuizExerciseCreationUpdateResource {
 
         QuizExercise result = quizExerciseService.createQuizExercise(quizExercise, files, true);
         exerciseVersionService.createExerciseVersion(result);
-        exerciseWeaviateService.insertExercise(result);
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExercise(result));
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -162,7 +162,7 @@ public class QuizExerciseCreationUpdateResource {
         notifyAtlasML(result, OperationTypeDTO.UPDATE, "quiz exercise creation");
 
         exerciseVersionService.createExerciseVersion(result);
-        exerciseWeaviateService.insertExercise(result);
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExercise(result));
 
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -202,7 +202,7 @@ public class QuizExerciseCreationUpdateResource {
         // Notify AtlasML about the quiz exercise update
         notifyAtlasML(result, OperationTypeDTO.UPDATE, "quiz exercise update");
         exerciseVersionService.createExerciseVersion(result);
-        exerciseWeaviateService.updateExercise(result);
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExercise(result));
 
         QuizExerciseWithStatisticsDTO resultDTO = QuizExerciseWithStatisticsDTO.of(result);
 

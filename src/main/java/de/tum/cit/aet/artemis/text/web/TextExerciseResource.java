@@ -110,13 +110,13 @@ public class TextExerciseResource {
 
     private final Optional<AtlasMLApi> atlasMLApi;
 
-    private final ExerciseWeaviateService exerciseWeaviateService;
+    private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, UserRepository userRepository, AuthorizationCheckService authCheckService,
             StudentParticipationRepository studentParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, CourseRepository courseRepository, ChannelRepository channelRepository,
-            Optional<ExamAccessApi> examAccessApi, Optional<AtlasMLApi> atlasMLApi, ExerciseWeaviateService exerciseWeaviateService) {
+            Optional<ExamAccessApi> examAccessApi, Optional<AtlasMLApi> atlasMLApi, Optional<ExerciseWeaviateService> exerciseWeaviateService) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.textBlockRepository = textBlockRepository;
@@ -225,7 +225,7 @@ public class TextExerciseResource {
         // NOTE: we use the exerciseDeletionService here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(textExercise, textExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseDeletionService.delete(exerciseId, false);
-        exerciseWeaviateService.deleteExercise(exerciseId);
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.deleteExercise(exerciseId));
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, textExercise.getTitle())).build();
     }
 

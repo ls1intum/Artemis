@@ -66,10 +66,11 @@ public class QuizExerciseDeletionResource {
 
     private final Optional<AtlasMLApi> atlasMLApi;
 
-    private final ExerciseWeaviateService exerciseWeaviateService;
+    private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
 
     public QuizExerciseDeletionResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, UserRepository userRepository,
-            ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, Optional<AtlasMLApi> atlasMLApi, ExerciseWeaviateService exerciseWeaviateService) {
+            ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, Optional<AtlasMLApi> atlasMLApi,
+            Optional<ExerciseWeaviateService> exerciseWeaviateService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.userRepository = userRepository;
@@ -111,7 +112,7 @@ public class QuizExerciseDeletionResource {
         quizExerciseService.cancelScheduledQuiz(quizExerciseId);
 
         FileUtil.deleteFiles(imagesToDelete);
-        exerciseWeaviateService.deleteExercise(quizExerciseId);
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.deleteExercise(quizExerciseId));
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, quizExercise.getTitle())).build();
     }

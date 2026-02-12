@@ -182,7 +182,7 @@ public class ExamResource {
 
     private final ExamUserService examUserService;
 
-    private final ExerciseWeaviateService exerciseWeaviateService;
+    private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
 
     public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamDeletionService examDeletionService,
             ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService,
@@ -190,7 +190,7 @@ public class ExamResource {
             AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, ExamImportService examImportService,
             CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository, ExerciseRepository exerciseRepository,
             ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService, ExamUserService examUserService,
-            ExerciseWeaviateService exerciseWeaviateService) {
+            Optional<ExerciseWeaviateService> exerciseWeaviateService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -313,7 +313,7 @@ public class ExamResource {
 
         boolean endDateChanged = comparator.compare(originalExam.getEndDate(), updatedExam.getEndDate()) != 0;
         if (visibleOrStartDateChanged || endDateChanged) {
-            exerciseWeaviateService.updateExamExercises(examWithExercises);
+            exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExamExercises(examWithExercises));
         }
 
         if (updatedChannel != null) {
@@ -356,7 +356,7 @@ public class ExamResource {
         examService.updateStudentExamsAndRescheduleExercises(exam, originalExamDuration, workingTimeChange);
 
         // 3. Update Weaviate exercise metadata since the exam end date changed
-        exerciseWeaviateService.updateExamExercises(exam);
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExamExercises(exam));
 
         return ResponseEntity.ok(exam);
     }

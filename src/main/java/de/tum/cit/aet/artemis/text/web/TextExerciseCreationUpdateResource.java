@@ -85,13 +85,13 @@ public class TextExerciseCreationUpdateResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
-    private final ExerciseWeaviateService exerciseWeaviateService;
+    private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
 
     public TextExerciseCreationUpdateResource(TextExerciseRepository textExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ParticipationRepository participationRepository, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, InstanceMessageSendService instanceMessageSendService, ChannelService channelService,
             ExerciseVersionService exerciseVersionService, Optional<AthenaApi> athenaApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi,
-            Optional<AtlasMLApi> atlasMLApi, ExerciseWeaviateService exerciseWeaviateService) {
+            Optional<AtlasMLApi> atlasMLApi, Optional<ExerciseWeaviateService> exerciseWeaviateService) {
         this.textExerciseRepository = textExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -156,7 +156,7 @@ public class TextExerciseCreationUpdateResource {
         notifyAtlasML(result, OperationTypeDTO.UPDATE, "text exercise creation");
 
         exerciseVersionService.createExerciseVersion(result);
-        exerciseWeaviateService.insertExercise(result);
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExercise(result));
 
         return ResponseEntity.created(new URI("/api/text/text-exercises/" + result.getId())).body(result);
     }
@@ -226,7 +226,7 @@ public class TextExerciseCreationUpdateResource {
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(textExerciseBeforeUpdate, Optional.of(textExercise)));
 
         exerciseVersionService.createExerciseVersion(updatedTextExercise);
-        exerciseWeaviateService.updateExercise(updatedTextExercise);
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExercise(updatedTextExercise));
 
         return ResponseEntity.ok(updatedTextExercise);
     }

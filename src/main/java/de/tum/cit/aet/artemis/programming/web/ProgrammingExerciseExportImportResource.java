@@ -140,7 +140,7 @@ public class ProgrammingExerciseExportImportResource {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
-    private final ExerciseWeaviateService exerciseWeaviateService;
+    private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
 
     public ProgrammingExerciseExportImportResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, ProgrammingExerciseImportService programmingExerciseImportService,
@@ -149,7 +149,7 @@ public class ProgrammingExerciseExportImportResource {
             ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService, Optional<AthenaApi> athenaApi,
             Optional<CompetencyProgressApi> competencyProgressApi, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ExerciseVersionService exerciseVersionService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, ExerciseWeaviateService exerciseWeaviateService) {
+            ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<ExerciseWeaviateService> exerciseWeaviateService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -277,7 +277,7 @@ public class ProgrammingExerciseExportImportResource {
             competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(importedProgrammingExercise));
 
             exerciseVersionService.createExerciseVersion(importedProgrammingExercise, user);
-            exerciseWeaviateService.insertExercise(importedProgrammingExercise);
+            exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExercise(importedProgrammingExercise));
             return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle()))
                     .body(importedProgrammingExercise);
 
@@ -321,7 +321,7 @@ public class ProgrammingExerciseExportImportResource {
         try {
             ProgrammingExercise importedExercise = programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(programmingExercise, zipFile, course, user);
             exerciseVersionService.createExerciseVersion(importedExercise, user);
-            exerciseWeaviateService.insertExercise(importedExercise);
+            exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExercise(importedExercise));
             return ResponseEntity.ok(importedExercise);
         }
         catch (IOException | URISyntaxException | GitAPIException e) {

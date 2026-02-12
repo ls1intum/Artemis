@@ -80,12 +80,12 @@ public class ProgrammingExerciseCreationResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
-    private final ExerciseWeaviateService exerciseWeaviateService;
+    private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
 
     public ProgrammingExerciseCreationResource(AuthorizationCheckService authCheckService, CourseService courseService,
             ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
             StaticCodeAnalysisService staticCodeAnalysisService, Optional<AthenaApi> athenaApi, ProgrammingExerciseRepository programmingExerciseRepository,
-            UserRepository userRepository, ExerciseVersionService exerciseVersionService, ExerciseWeaviateService exerciseWeaviateService) {
+            UserRepository userRepository, ExerciseVersionService exerciseVersionService, Optional<ExerciseWeaviateService> exerciseWeaviateService) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.courseService = courseService;
@@ -131,7 +131,7 @@ public class ProgrammingExerciseCreationResource {
             }
 
             exerciseVersionService.createExerciseVersion(newProgrammingExercise);
-            exerciseWeaviateService.insertExercise(newProgrammingExercise);
+            exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExercise(newProgrammingExercise));
 
             return ResponseEntity.created(new URI("/api/programming/programming-exercises/" + newProgrammingExercise.getId())).body(newProgrammingExercise);
         }

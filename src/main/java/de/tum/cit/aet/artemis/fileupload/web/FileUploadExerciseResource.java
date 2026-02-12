@@ -137,7 +137,7 @@ public class FileUploadExerciseResource {
 
     private final Optional<CompetencyApi> competencyApi;
 
-    private final ExerciseWeaviateService exerciseWeaviateService;
+    private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
 
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
@@ -145,7 +145,7 @@ public class FileUploadExerciseResource {
             ParticipationRepository participationRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             FileUploadExerciseImportService fileUploadExerciseImportService, FileUploadExerciseService fileUploadExerciseService, ChannelService channelService,
             ExerciseVersionService exerciseVersionService, ChannelRepository channelRepository, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi,
-            Optional<AtlasMLApi> atlasMLApi, Optional<CompetencyApi> competencyApi, ExerciseWeaviateService exerciseWeaviateService) {
+            Optional<AtlasMLApi> atlasMLApi, Optional<CompetencyApi> competencyApi, Optional<ExerciseWeaviateService> exerciseWeaviateService) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -213,7 +213,7 @@ public class FileUploadExerciseResource {
         });
 
         exerciseVersionService.createExerciseVersion(result);
-        exerciseWeaviateService.insertExercise(result);
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExercise(result));
 
         return ResponseEntity.created(new URI("/api/fileupload/file-upload-exercises/" + result.getId())).body(result);
     }
@@ -267,7 +267,7 @@ public class FileUploadExerciseResource {
             }
         });
         exerciseVersionService.createExerciseVersion(newFileUploadExercise);
-        exerciseWeaviateService.insertExercise(newFileUploadExercise);
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExercise(newFileUploadExercise));
 
         return ResponseEntity.created(new URI("/api/fileupload/file-upload-exercises/" + newFileUploadExercise.getId())).body(newFileUploadExercise);
     }
@@ -445,7 +445,7 @@ public class FileUploadExerciseResource {
 
         // Create a version snapshot for history tracking
         exerciseVersionService.createExerciseVersion(persistedExercise);
-        exerciseWeaviateService.updateExercise(persistedExercise);
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExercise(persistedExercise));
 
         return ResponseEntity.ok(persistedExercise);
     }
@@ -572,7 +572,7 @@ public class FileUploadExerciseResource {
         // up all lazy references correctly.
         exerciseService.logDeletion(exercise, exercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseDeletionService.delete(exerciseId, false);
-        exerciseWeaviateService.deleteExercise(exerciseId);
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.deleteExercise(exerciseId));
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exercise.getTitle())).build();
     }
 

@@ -133,7 +133,7 @@ public class ModelingExerciseResource {
 
     private final Optional<CompetencyApi> competencyApi;
 
-    private final ExerciseWeaviateService exerciseWeaviateService;
+    private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
 
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
@@ -141,7 +141,7 @@ public class ModelingExerciseResource {
             SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService, GroupNotificationScheduleService groupNotificationScheduleService,
             GradingCriterionRepository gradingCriterionRepository, ChannelService channelService, ChannelRepository channelRepository,
             ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi,
-            Optional<CompetencyApi> competencyApi, ExerciseWeaviateService exerciseWeaviateService) {
+            Optional<CompetencyApi> competencyApi, Optional<ExerciseWeaviateService> exerciseWeaviateService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -215,7 +215,7 @@ public class ModelingExerciseResource {
             }
         });
         exerciseVersionService.createExerciseVersion(result);
-        exerciseWeaviateService.insertExercise(result);
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExercise(result));
 
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId())).body(result);
     }
@@ -312,7 +312,7 @@ public class ModelingExerciseResource {
         });
 
         exerciseVersionService.createExerciseVersion(persistedExercise);
-        exerciseWeaviateService.updateExercise(persistedExercise);
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExercise(persistedExercise));
 
         return ResponseEntity.ok(persistedExercise);
     }
@@ -394,7 +394,7 @@ public class ModelingExerciseResource {
         // up all lazy references correctly.
         exerciseService.logDeletion(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseDeletionService.delete(exerciseId, false);
-        exerciseWeaviateService.deleteExercise(exerciseId);
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.deleteExercise(exerciseId));
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, modelingExercise.getTitle())).build();
     }
 
@@ -438,7 +438,7 @@ public class ModelingExerciseResource {
         // Notify AtlasML about the imported exercise
         atlasMLApi.ifPresent(api -> api.saveExerciseWithCompetencies(newModelingExercise));
         exerciseVersionService.createExerciseVersion(newModelingExercise, user);
-        exerciseWeaviateService.insertExercise(newModelingExercise);
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExercise(newModelingExercise));
 
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + newModelingExercise.getId())).body(newModelingExercise);
     }

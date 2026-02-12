@@ -85,13 +85,13 @@ public class ProgrammingExerciseUpdateResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
-    private final ExerciseWeaviateService exerciseWeaviateService;
+    private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
 
     public ProgrammingExerciseUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, Optional<AthenaApi> athenaApi, Environment environment, Optional<SlideApi> slideApi,
-            ExerciseVersionService exerciseVersionService, ExerciseWeaviateService exerciseWeaviateService) {
+            ExerciseVersionService exerciseVersionService, Optional<ExerciseWeaviateService> exerciseWeaviateService) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -216,7 +216,7 @@ public class ProgrammingExerciseUpdateResource {
         exerciseService.updatePointsInRelatedParticipantScores(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
         slideApi.ifPresent(api -> api.handleDueDateChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise));
         exerciseVersionService.createExerciseVersion(updatedProgrammingExercise, user);
-        exerciseWeaviateService.updateExercise(savedProgrammingExercise);
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExercise(savedProgrammingExercise));
 
         return ResponseEntity.ok(savedProgrammingExercise);
     }
