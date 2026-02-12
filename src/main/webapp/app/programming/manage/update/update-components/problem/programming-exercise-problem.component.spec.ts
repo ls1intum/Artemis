@@ -1,4 +1,5 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,14 +29,14 @@ describe('ProgrammingExerciseProblemComponent', () => {
     } as ActivatedRoute;
 
     const mockHyperionApiService = {
-        generateProblemStatement: jest.fn(),
-        refineProblemStatementGlobally: jest.fn(),
+        generateProblemStatement: vi.fn(),
+        refineProblemStatementGlobally: vi.fn(),
     };
 
     const mockAlertService = {
-        success: jest.fn(),
-        error: jest.fn(),
-        warning: jest.fn(),
+        success: vi.fn(),
+        error: vi.fn(),
+        warning: vi.fn(),
     };
 
     beforeEach(() => {
@@ -66,19 +67,19 @@ describe('ProgrammingExerciseProblemComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
-        jest.clearAllMocks();
+        vi.restoreAllMocks();
+        vi.clearAllMocks();
     });
 
-    it('should initialize and store exercise', fakeAsync(() => {
+    it('should initialize and store exercise', () => {
         fixture.detectChanges();
         expect(comp).not.toBeNull();
 
         const exercise = comp.programmingExercise();
         expect(exercise).toBeDefined();
-    }));
+    });
 
-    it('should generate problem statement successfully', fakeAsync(() => {
+    it('should generate problem statement successfully', () => {
         const courseId = 42;
         const userPrompt = 'Create a Java exercise about binary search trees';
         const generatedText = 'Generated draft problem statement about binary search trees';
@@ -110,7 +111,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         // Verify the exercise was updated
         expect(programmingExercise.problemStatement).toBe(generatedText);
-    }));
+    });
 
     it('should not generate when userPrompt is empty', () => {
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
@@ -134,7 +135,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         expect(mockHyperionApiService.generateProblemStatement).not.toHaveBeenCalled();
     });
 
-    it('should handle generation error', fakeAsync(() => {
+    it('should handle generation error', () => {
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.course = { id: 42 } as any;
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
@@ -146,9 +147,9 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.generationError');
         expect(comp.isGeneratingOrRefining()).toBeFalse();
-    }));
+    });
 
-    it('should handle empty generation response', fakeAsync(() => {
+    it('should handle empty generation response', () => {
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.course = { id: 42 } as any;
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
@@ -159,9 +160,9 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.generateProblemStatement();
 
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.generationError');
-    }));
+    });
 
-    it('should refine problem statement successfully', fakeAsync(() => {
+    it('should refine problem statement successfully', () => {
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.course = { id: 42 } as any;
         programmingExercise.problemStatement = 'Original problem statement';
@@ -183,14 +184,14 @@ describe('ProgrammingExerciseProblemComponent', () => {
         expect(comp.showDiff()).toBeTrue();
         expect(mockAlertService.success).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementSuccess');
         expect(comp.isGeneratingOrRefining()).toBeFalse();
-    }));
+    });
 
     it('should revert refinement and close diff', () => {
         comp.showDiff.set(true);
         // Mock editableInstructions as a callable (signal/viewChild) returning the mock
         const mockEditableInstructions = {
-            revertAll: jest.fn(),
-            getCurrentContent: jest.fn().mockReturnValue('Reverted content'),
+            revertAll: vi.fn(),
+            getCurrentContent: vi.fn().mockReturnValue('Reverted content'),
         };
         (comp as any).editableInstructions = () => mockEditableInstructions;
 
@@ -213,7 +214,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
         fixture.detectChanges();
 
-        const emitSpy = jest.spyOn(comp.problemStatementChange, 'emit');
+        const emitSpy = vi.spyOn(comp.problemStatementChange, 'emit');
 
         comp.onProblemStatementChange('New problem statement');
 
@@ -225,7 +226,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
-        const emitSpy = jest.spyOn(comp.programmingExerciseChange, 'emit');
+        const emitSpy = vi.spyOn(comp.programmingExerciseChange, 'emit');
 
         comp.onCompetencyLinksChange([{ id: 1 }] as any);
 
@@ -239,7 +240,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         programmingExercise.problemStatement = ''; // Empty, should trigger generate
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
-        const generateSpy = jest.spyOn(comp, 'generateProblemStatement');
+        const generateSpy = vi.spyOn(comp, 'generateProblemStatement');
 
         comp.userPrompt.set('Test');
         comp.handleProblemStatementAction();
@@ -258,7 +259,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp['templateLoaded'].set(true);
         comp['templateProblemStatement'].set('Different template');
 
-        const refineSpy = jest.spyOn(comp, 'refineProblemStatement');
+        const refineSpy = vi.spyOn(comp, 'refineProblemStatement');
 
         comp.userPrompt.set('Improve this');
         comp.handleProblemStatementAction();
@@ -268,7 +269,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
     it('should return translated placeholder', () => {
         const translateService = TestBed.inject(TranslateService);
-        translateService.instant = jest.fn().mockReturnValue('Translated placeholder');
+        translateService.instant = vi.fn().mockReturnValue('Translated placeholder');
 
         const result = comp.getTranslatedPlaceholder();
 
@@ -283,7 +284,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.componentRef.setInput('programmingExercise', exercise);
 
         // Mock editableInstructions to return refined content
-        const mockEditable = { getCurrentContent: jest.fn().mockReturnValue('Refined content'), revertAll: jest.fn() };
+        const mockEditable = { getCurrentContent: vi.fn().mockReturnValue('Refined content'), revertAll: vi.fn() };
         (comp as any).editableInstructions = () => mockEditable;
 
         comp.showDiff.set(true);
@@ -308,7 +309,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         expect(comp.shouldShowGenerateButton()).toBeFalse();
     });
 
-    it('should handle refinement with completely empty response', fakeAsync(() => {
+    it('should handle refinement with completely empty response', () => {
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.course = { id: 42 } as any;
         programmingExercise.problemStatement = 'Original';
@@ -322,9 +323,9 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.refineProblemStatement();
 
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementError');
-    }));
+    });
 
-    it('should handle refinement error', fakeAsync(() => {
+    it('should handle refinement error', () => {
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.course = { id: 42 } as any;
         programmingExercise.problemStatement = 'Original';
@@ -337,7 +338,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementError');
         expect(comp.isGeneratingOrRefining()).toBeFalse();
-    }));
+    });
 
     it('should not refine when userPrompt is empty', () => {
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
@@ -362,7 +363,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         expect(mockHyperionApiService.refineProblemStatementGlobally).not.toHaveBeenCalled();
     });
 
-    it('should use exerciseGroup course id when course is not set', fakeAsync(() => {
+    it('should use exerciseGroup course id when course is not set', () => {
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.exerciseGroup = { exam: { course: { id: 99 } } } as any;
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
@@ -377,10 +378,10 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp.generateProblemStatement();
 
         expect(mockHyperionApiService.generateProblemStatement).toHaveBeenCalledWith(99, expect.any(Object));
-    }));
+    });
 
     it('should cancel active subscription on cancelGeneration', () => {
-        const mockSubscription = { unsubscribe: jest.fn() };
+        const mockSubscription = { unsubscribe: vi.fn() };
         comp['currentGenerationSubscription'] = mockSubscription as any;
 
         comp.cancelGeneration();
@@ -390,7 +391,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
     });
 
     it('should unsubscribe on destroy', () => {
-        const mockSubscription = { unsubscribe: jest.fn() };
+        const mockSubscription = { unsubscribe: vi.fn() };
         comp['currentGenerationSubscription'] = mockSubscription as any;
 
         comp.ngOnDestroy();
@@ -398,7 +399,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         expect(mockSubscription.unsubscribe).toHaveBeenCalled();
     });
 
-    it('should show generate button when problem statement matches template', fakeAsync(() => {
+    it('should show generate button when problem statement matches template', () => {
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.problemStatement = 'Template content';
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
@@ -410,9 +411,9 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp['currentProblemStatement'].set('Template content');
 
         expect(comp.shouldShowGenerateButton()).toBeTrue();
-    }));
+    });
 
-    it('should show refine button when problem statement differs from template', fakeAsync(() => {
+    it('should show refine button when problem statement differs from template', () => {
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.problemStatement = 'Custom content';
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
@@ -423,9 +424,9 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp['currentProblemStatement'].set('Custom content');
 
         expect(comp.shouldShowGenerateButton()).toBeFalse();
-    }));
+    });
 
-    it('should NOT show generate button when template loading fails and existing content is present', fakeAsync(() => {
+    it('should NOT show generate button when template loading fails and existing content is present', () => {
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.problemStatement = 'Existing content';
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
@@ -435,5 +436,5 @@ describe('ProgrammingExerciseProblemComponent', () => {
         comp['currentProblemStatement'].set('Existing content');
 
         expect(comp.shouldShowGenerateButton()).toBeFalse();
-    }));
+    });
 });

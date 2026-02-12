@@ -8,7 +8,9 @@
 import '@angular/compiler';
 import '@angular/localize/init';
 import '@analogjs/vitest-angular/setup-snapshots';
-import { vi } from 'vitest';
+import { vi, expect } from 'vitest';
+import * as matchers from 'jest-extended';
+expect.extend(matchers);
 
 import 'app/shared/util/array.extension';
 

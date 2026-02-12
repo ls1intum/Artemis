@@ -165,6 +165,11 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/iris/',          // iris module
         '<rootDir>/src/main/webapp/app/core/course/manage/', // core course manage module
         '<rootDir>/src/main/webapp/app/shared/components/buttons/', // shared/buttons components
+        '<rootDir>/src/main/webapp/app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component.spec.ts',
+        '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/programming-exercise-problem.component.spec.ts',
+        '<rootDir>/src/main/webapp/app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component.spec.ts',
+        '<rootDir>/src/main/webapp/app/shared/markdown-editor/monaco/markdown-editor-monaco.component.spec.ts',
+        '<rootDir>/src/main/webapp/app/shared/monaco-editor/monaco-editor.component.spec.ts',
     ],
     testTimeout: 3000,
     testMatch: [

@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { vi } from 'vitest';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
@@ -34,45 +35,45 @@ describe('MonacoEditorComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(MonacoEditorComponent);
                 comp = fixture.componentInstance;
-                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                global.ResizeObserver = vi.fn().mockImplementation((callback: ResizeObserverCallback) => {
                     return new MockResizeObserver(callback);
                 });
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     const createMockDiffEditor = () => ({
-        dispose: jest.fn(),
-        updateOptions: jest.fn(),
-        layout: jest.fn(),
-        getModifiedEditor: jest.fn().mockReturnValue({
-            getValue: jest.fn().mockReturnValue('modified content'),
-            setValue: jest.fn(),
-            onDidChangeModelContent: jest.fn().mockReturnValue({ dispose: jest.fn() }),
-            onDidFocusEditorText: jest.fn().mockReturnValue({ dispose: jest.fn() }),
-            updateOptions: jest.fn(),
-            dispose: jest.fn(),
-            addCommand: jest.fn(),
+        dispose: vi.fn(),
+        updateOptions: vi.fn(),
+        layout: vi.fn(),
+        getModifiedEditor: vi.fn().mockReturnValue({
+            getValue: vi.fn().mockReturnValue('modified content'),
+            setValue: vi.fn(),
+            onDidChangeModelContent: vi.fn().mockReturnValue({ dispose: vi.fn() }),
+            onDidFocusEditorText: vi.fn().mockReturnValue({ dispose: vi.fn() }),
+            updateOptions: vi.fn(),
+            dispose: vi.fn(),
+            addCommand: vi.fn(),
         }),
-        getOriginalEditor: jest.fn().mockReturnValue({ getValue: jest.fn() }),
-        setModel: jest.fn(),
-        onDidUpdateDiff: jest.fn().mockReturnValue({ dispose: jest.fn() }),
-        getLineChanges: jest.fn(),
+        getOriginalEditor: vi.fn().mockReturnValue({ getValue: vi.fn() }),
+        setModel: vi.fn(),
+        onDidUpdateDiff: vi.fn().mockReturnValue({ dispose: vi.fn() }),
+        getLineChanges: vi.fn(),
     });
 
     it('should catch error during action re-registration', () => {
         fixture.detectChanges();
         // Suppress console.error as it causes test failure in this environment
-        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
         const mockAction = {
             id: 'mock-action',
-            run: jest.fn(),
-            dispose: jest.fn(),
-            register: jest.fn().mockImplementation(() => {
+            run: vi.fn(),
+            dispose: vi.fn(),
+            register: vi.fn().mockImplementation(() => {
                 throw new Error('Registration failed');
             }),
         } as any;
@@ -95,7 +96,7 @@ describe('MonacoEditorComponent', () => {
 
     it('should layout matching mode with fixed size', fakeAsync(() => {
         fixture.detectChanges();
-        const layoutSpy = jest.spyOn(comp['_editor'], 'layout');
+        const layoutSpy = vi.spyOn(comp['_editor'], 'layout');
 
         // Normal mode
         comp.layoutWithFixedSize(500, 300);
@@ -103,7 +104,7 @@ describe('MonacoEditorComponent', () => {
 
         // Diff mode
         const mockDiffEditor = createMockDiffEditor();
-        jest.spyOn(comp['monacoEditorService'], 'createStandaloneDiffEditor').mockReturnValue(mockDiffEditor as any);
+        vi.spyOn(comp['monacoEditorService'], 'createStandaloneDiffEditor').mockReturnValue(mockDiffEditor as any);
         fixture.componentRef.setInput('mode', 'diff');
         fixture.detectChanges();
         tick();
@@ -114,16 +115,16 @@ describe('MonacoEditorComponent', () => {
 
     it('should extract file path from model uri on change', fakeAsync(() => {
         fixture.detectChanges();
-        const emitSpy = jest.spyOn(comp.textChanged, 'emit');
+        const emitSpy = vi.spyOn(comp.textChanged, 'emit');
         // Ensure getText returns content, as extraction relies on it
-        jest.spyOn(comp, 'getText').mockReturnValue('content');
+        vi.spyOn(comp, 'getText').mockReturnValue('content');
 
         // Mock model with specific URI
         const mockModel = {
-            getValue: jest.fn().mockReturnValue('content'),
+            getValue: vi.fn().mockReturnValue('content'),
             uri: { toString: () => 'inmemory://model/1/path/to/file.ts', path: '/model/1/path/to/file.ts' },
         };
-        jest.spyOn(comp['_editor'], 'getModel').mockReturnValue(mockModel as any);
+        vi.spyOn(comp['_editor'], 'getModel').mockReturnValue(mockModel as any);
 
         // Trigger change
         comp['emitTextChangeEvent']();
@@ -133,7 +134,7 @@ describe('MonacoEditorComponent', () => {
     }));
 
     it('should notify when the text changes', () => {
-        const valueCallbackStub = jest.fn();
+        const valueCallbackStub = vi.fn();
         fixture.detectChanges();
         comp.textChanged.subscribe(valueCallbackStub);
         comp.setText(singleLineText);
@@ -142,7 +143,7 @@ describe('MonacoEditorComponent', () => {
 
     it('should only send a notification once per delay interval', fakeAsync(() => {
         const delay = 1000;
-        const valueCallbackStub = jest.fn();
+        const valueCallbackStub = vi.fn();
         fixture.componentRef.setInput('textChangedEmitDelay', delay);
         fixture.detectChanges();
         comp.textChanged.subscribe(valueCallbackStub);
@@ -239,7 +240,7 @@ describe('MonacoEditorComponent', () => {
     });
 
     it('should pass the current line number to the line decorations hover button when clicked', () => {
-        const clickCallbackStub = jest.fn();
+        const clickCallbackStub = vi.fn();
         const className = 'testClass';
         const monacoMouseEvent = { target: { position: { lineNumber: 1 }, element: { classList: { contains: () => true } } } };
         fixture.detectChanges();
@@ -278,12 +279,12 @@ describe('MonacoEditorComponent', () => {
         fixture.detectChanges();
         comp.setAnnotations(buildAnnotationArray);
         comp.addLineWidget(1, 'widget', document.createElement('div'));
-        comp.setLineDecorationsHoverButton('testClass', jest.fn());
+        comp.setLineDecorationsHoverButton('testClass', vi.fn());
         comp.highlightLines(1, 1);
-        const disposeAnnotationSpy = jest.spyOn(comp.buildAnnotations[0], 'dispose');
-        const disposeWidgetSpy = jest.spyOn(comp.lineWidgets[0], 'dispose');
-        const disposeHoverButtonSpy = jest.spyOn(comp.lineDecorationsHoverButton!, 'dispose');
-        const disposeLineHighlightSpy = jest.spyOn(comp.lineHighlights[0], 'dispose');
+        const disposeAnnotationSpy = vi.spyOn(comp.buildAnnotations[0], 'dispose');
+        const disposeWidgetSpy = vi.spyOn(comp.lineWidgets[0], 'dispose');
+        const disposeHoverButtonSpy = vi.spyOn(comp.lineDecorationsHoverButton!, 'dispose');
+        const disposeLineHighlightSpy = vi.spyOn(comp.lineHighlights[0], 'dispose');
         comp.ngOnDestroy();
         expect(disposeWidgetSpy).toHaveBeenCalledOnce();
         expect(disposeAnnotationSpy).toHaveBeenCalledOnce();
@@ -328,7 +329,7 @@ describe('MonacoEditorComponent', () => {
         fixture.detectChanges();
         comp.changeModel('file1', singleLineText);
         const model = comp.models[0];
-        const modelDisposeSpy = jest.spyOn(model, 'dispose');
+        const modelDisposeSpy = vi.spyOn(model, 'dispose');
         comp.ngOnDestroy();
         expect(comp.models).toBeEmpty();
         expect(modelDisposeSpy).toHaveBeenCalledOnce();
@@ -349,7 +350,7 @@ describe('MonacoEditorComponent', () => {
     it('should apply option presets to the editor', () => {
         fixture.detectChanges();
         const preset = new MonacoEditorOptionPreset({ lineNumbers: 'off' });
-        const applySpy = jest.spyOn(preset, 'apply');
+        const applySpy = vi.spyOn(preset, 'apply');
         comp.applyOptionPreset(preset);
         expect(applySpy).toHaveBeenCalledExactlyOnceWith(comp['_editor']);
     });
@@ -380,7 +381,7 @@ describe('MonacoEditorComponent', () => {
     });
 
     it('should register a listener for model content changes', () => {
-        const listenerStub = jest.fn();
+        const listenerStub = vi.fn();
         fixture.detectChanges();
         const disposable = comp.onDidChangeModelContent(listenerStub);
         comp.setText(singleLineText);
@@ -547,7 +548,7 @@ describe('MonacoEditorComponent', () => {
 
         // Mock createStandaloneDiffEditor
         const mockDiffEditor = createMockDiffEditor();
-        const createDiffSpy = jest.spyOn(comp['monacoEditorService'], 'createStandaloneDiffEditor').mockReturnValue(mockDiffEditor as any);
+        const createDiffSpy = vi.spyOn(comp['monacoEditorService'], 'createStandaloneDiffEditor').mockReturnValue(mockDiffEditor as any);
 
         fixture.componentRef.setInput('mode', 'diff');
         fixture.detectChanges();
@@ -560,11 +561,11 @@ describe('MonacoEditorComponent', () => {
     it('should dispose diff editor when leaving diff mode and sync content if needed', fakeAsync(() => {
         fixture.detectChanges();
 
-        const editorSetValueSpy = jest.spyOn(comp['_editor'], 'setValue').mockImplementation(() => {});
+        const editorSetValueSpy = vi.spyOn(comp['_editor'], 'setValue').mockImplementation(() => {});
 
         // Setup diff mode first
         const mockDiffEditor = createMockDiffEditor();
-        jest.spyOn(comp['monacoEditorService'], 'createStandaloneDiffEditor').mockReturnValue(mockDiffEditor as any);
+        vi.spyOn(comp['monacoEditorService'], 'createStandaloneDiffEditor').mockReturnValue(mockDiffEditor as any);
 
         fixture.componentRef.setInput('mode', 'diff');
         fixture.detectChanges();
@@ -587,23 +588,23 @@ describe('MonacoEditorComponent', () => {
     it('should apply diff content in diff mode', fakeAsync(() => {
         fixture.detectChanges();
 
-        const setValueSpy = jest.fn();
-        const layoutSpy = jest.fn();
+        const setValueSpy = vi.fn();
+        const layoutSpy = vi.fn();
 
         const mockDiffEditor = createMockDiffEditor();
         // Override specific spies
         mockDiffEditor.layout = layoutSpy;
         const modifiedEditorMock = {
-            getValue: jest.fn().mockReturnValue(''),
+            getValue: vi.fn().mockReturnValue(''),
             setValue: setValueSpy,
-            onDidChangeModelContent: jest.fn(),
-            onDidFocusEditorText: jest.fn(),
-            dispose: jest.fn(),
-            addCommand: jest.fn(),
+            onDidChangeModelContent: vi.fn(),
+            onDidFocusEditorText: vi.fn(),
+            dispose: vi.fn(),
+            addCommand: vi.fn(),
         };
         mockDiffEditor.getModifiedEditor.mockReturnValue(modifiedEditorMock);
 
-        jest.spyOn(comp['monacoEditorService'], 'createStandaloneDiffEditor').mockReturnValue(mockDiffEditor as any);
+        vi.spyOn(comp['monacoEditorService'], 'createStandaloneDiffEditor').mockReturnValue(mockDiffEditor as any);
 
         fixture.componentRef.setInput('mode', 'diff');
         fixture.detectChanges();
@@ -618,18 +619,18 @@ describe('MonacoEditorComponent', () => {
     it('should share the same model between normal editor and modified diff editor', fakeAsync(() => {
         fixture.detectChanges();
         const mockModel = {
-            getValue: jest.fn().mockReturnValue('shared content'),
-            getLanguageId: jest.fn().mockReturnValue('typescript'),
-            dispose: jest.fn(),
+            getValue: vi.fn().mockReturnValue('shared content'),
+            getLanguageId: vi.fn().mockReturnValue('typescript'),
+            dispose: vi.fn(),
         };
         // Ensure the normal editor returns this model
-        jest.spyOn(comp['_editor'], 'getModel').mockReturnValue(mockModel as any);
+        vi.spyOn(comp['_editor'], 'getModel').mockReturnValue(mockModel as any);
 
-        const setModelSpy = jest.fn();
+        const setModelSpy = vi.fn();
         const mockDiffEditor = createMockDiffEditor();
         mockDiffEditor.setModel = setModelSpy;
 
-        jest.spyOn(comp['monacoEditorService'], 'createStandaloneDiffEditor').mockReturnValue(mockDiffEditor as any);
+        vi.spyOn(comp['monacoEditorService'], 'createStandaloneDiffEditor').mockReturnValue(mockDiffEditor as any);
 
         fixture.componentRef.setInput('mode', 'diff');
         fixture.detectChanges();

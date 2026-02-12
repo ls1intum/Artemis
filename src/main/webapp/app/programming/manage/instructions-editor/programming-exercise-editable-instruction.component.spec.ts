@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { type MockInstance, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
@@ -46,9 +47,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let alertService: AlertService;
 
-    let subscribeForTestCaseSpy: jest.SpyInstance;
-    let getLatestResultWithFeedbacksStub: jest.SpyInstance;
-    let generateHtmlSubjectStub: jest.SpyInstance;
+    let subscribeForTestCaseSpy: MockInstance;
+    let getLatestResultWithFeedbacksStub: MockInstance;
+    let generateHtmlSubjectStub: MockInstance;
 
     const templateParticipation = new TemplateProgrammingExerciseParticipation();
     templateParticipation.id = 99;
@@ -105,9 +106,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 gradingService = TestBed.inject(ProgrammingExerciseGradingService);
                 (gradingService as MockProgrammingExerciseGradingService).initSubject([]);
                 programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
-                subscribeForTestCaseSpy = jest.spyOn(gradingService, 'subscribeForTestCases');
-                getLatestResultWithFeedbacksStub = jest.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
-                generateHtmlSubjectStub = jest.spyOn(comp.generateHtmlSubject, 'next');
+                subscribeForTestCaseSpy = vi.spyOn(gradingService, 'subscribeForTestCases');
+                getLatestResultWithFeedbacksStub = vi.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
+                generateHtmlSubjectStub = vi.spyOn(comp.generateHtmlSubject, 'next');
                 programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
                 alertService = TestBed.inject(AlertService);
             });
@@ -115,7 +116,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     afterEach(() => {
         (gradingService as MockProgrammingExerciseGradingService).initSubject([]);
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should not have any test cases if the test case service emits an empty array', fakeAsync(() => {
@@ -257,7 +258,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     }));
 
     it('should update the code editor annotations when receiving a new ProblemStatementAnalysis', fakeAsync(() => {
-        const setAnnotationsStub = jest.fn();
+        const setAnnotationsStub = vi.fn();
         // The component is mocked, so we need to set the monacoEditor property to a mock object.
         comp.markdownEditorMonaco = { monacoEditor: { setAnnotations: setAnnotationsStub } } as unknown as MarkdownEditorMonacoComponent;
 
@@ -285,7 +286,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         comp.exercise = exercise;
         comp.editMode = true;
 
-        const updateProblemStatement = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(of(new HttpResponse({ body: exercise })));
+        const updateProblemStatement = vi.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(of(new HttpResponse({ body: exercise })));
 
         comp.updateProblemStatement('new problem statement');
         comp.saveInstructions({ stopPropagation: () => {} } as Event);
@@ -294,8 +295,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     });
 
     it('should log an error on save', () => {
-        const updateProblemStatementSpy = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(throwError(() => undefined));
-        const logErrorSpy = jest.spyOn(alertService, 'error');
+        const updateProblemStatementSpy = vi.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(throwError(() => undefined));
+        const logErrorSpy = vi.spyOn(alertService, 'error');
 
         comp.exercise = exercise;
         comp.editMode = true;
@@ -306,7 +307,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     });
 
     it('should save on key commands', () => {
-        const saveInstructionsSpy = jest.spyOn(comp, 'saveInstructions');
+        const saveInstructionsSpy = vi.spyOn(comp, 'saveInstructions');
         comp.exercise = exercise;
         comp.editMode = true;
 
@@ -318,7 +319,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     });
 
     it('should have intelligence actions when Hyperion is active', () => {
-        const isModuleFeatureActiveSpy = jest.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockReturnValue(true);
+        const isModuleFeatureActiveSpy = vi.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockReturnValue(true);
 
         // Komponente erneut erzeugen, damit computed() neu berechnet wird
         fixture = TestBed.createComponent(ProgrammingExerciseEditableInstructionComponent);
