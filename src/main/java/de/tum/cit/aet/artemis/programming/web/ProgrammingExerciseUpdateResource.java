@@ -216,14 +216,7 @@ public class ProgrammingExerciseUpdateResource {
         exerciseService.updatePointsInRelatedParticipantScores(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
         slideApi.ifPresent(api -> api.handleDueDateChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise));
         exerciseVersionService.createExerciseVersion(updatedProgrammingExercise, user);
-        exerciseWeaviateService.ifPresent(weaviateService -> {
-            try {
-                weaviateService.updateExercise(savedProgrammingExercise);
-            }
-            catch (Exception e) {
-                log.error("Failed to update exercise in Weaviate: {}", e.getMessage());
-            }
-        });
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExercise(savedProgrammingExercise));
 
         return ResponseEntity.ok(savedProgrammingExercise);
     }
