@@ -22,7 +22,7 @@ import io.weaviate.client6.v1.api.WeaviateClient;
 import io.weaviate.client6.v1.api.collections.CollectionHandle;
 import io.weaviate.client6.v1.api.collections.Property;
 import io.weaviate.client6.v1.api.collections.ReferenceProperty;
-// intended comment: We will add the text2vec-transformers vectorizer configuration in a separate PR to keep the changeset manageable
+import io.weaviate.client6.v1.api.collections.VectorConfig;
 
 /**
  * Infrastructure service for Weaviate vector database.
@@ -86,9 +86,9 @@ public class WeaviateService {
             log.info("Creating collection '{}'...", collectionName);
 
             client.collections.create(collectionName, collection -> {
-                // We will add the text2vec-transformers in a separate PR to keep the changeset manageable
+                // Explicitly disable vectorization; text2vec-transformers will be added in a separate PR
                 // Configure text2vec-transformers vectorizer for automatic embeddings
-                // collection.vectorConfig(VectorConfig.text2vecTransformers());
+                collection.vectorConfig(VectorConfig.selfProvided());
 
                 // Add properties
                 for (WeaviatePropertyDefinition prop : schema.properties()) {
