@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
@@ -37,6 +39,9 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -73,11 +78,14 @@ public class QuizExerciseCreationUpdateResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
+    private final Optional<ExamDateApi> examDateApi;
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
     public QuizExerciseCreationUpdateResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
-            AuthorizationCheckService authCheckService, CourseRepository courseRepository, Optional<AtlasMLApi> atlasMLApi, ExerciseVersionService exerciseVersionService) {
+            AuthorizationCheckService authCheckService, CourseRepository courseRepository, Optional<AtlasMLApi> atlasMLApi, ExerciseVersionService exerciseVersionService,
+            Optional<ExamDateApi> examDateApi) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.courseService = courseService;
@@ -85,6 +93,7 @@ public class QuizExerciseCreationUpdateResource {
         this.courseRepository = courseRepository;
         this.atlasMLApi = atlasMLApi;
         this.exerciseVersionService = exerciseVersionService;
+        this.examDateApi = examDateApi;
     }
 
     /**
@@ -190,6 +199,20 @@ public class QuizExerciseCreationUpdateResource {
         QuizExercise originalQuiz = quizExerciseService.copyFieldsForUpdate(quizBase);
 
         quizExerciseService.mergeDTOIntoDomainObject(quizBase, quizExerciseFromEditorDTO, course);
+
+        // For exam exercises: check exam lifecycle before allowing updates
+        if (quizBase.isExamExercise()) {
+            Exam exam = quizBase.getExerciseGroup().getExam();
+            if (exam.getStartDate() != null && ZonedDateTime.now().isAfter(exam.getStartDate())) {
+                ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+                ZonedDateTime latestEnd = api.getLatestIndividualExamEndDate(exam);
+                if (latestEnd != null && ZonedDateTime.now().isAfter(latestEnd)) {
+                    throw new AccessForbiddenException("After the end of the quiz working time, editing is not possible");
+                }
+                throw new AccessForbiddenException("During the quiz, editing is not possible, you can re-evaluate after the quiz has finished");
+            }
+        }
+
         QuizExercise result = quizExerciseService.performUpdate(originalQuiz, quizBase, files, notificationText);
 
         // Notify AtlasML about the quiz exercise update

@@ -63,8 +63,6 @@ import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
-import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
-import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -147,14 +145,12 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final Optional<CourseCompetencyApi> courseCompetencyApi;
 
-    private final Optional<ExamDateApi> examDateApi;
-
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
             InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
             ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService, UserRepository userRepository, QuizBatchRepository quizBatchRepository,
             ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<SlideApi> slideApi, Optional<CourseCompetencyApi> courseCompetencyApi, Optional<ExamDateApi> examDateApi) {
+            Optional<SlideApi> slideApi, Optional<CourseCompetencyApi> courseCompetencyApi) {
         super(dragAndDropMappingRepository, shortAnswerMappingRepository);
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
@@ -171,7 +167,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
         this.courseCompetencyApi = courseCompetencyApi;
-        this.examDateApi = examDateApi;
     }
 
     /**
@@ -1036,16 +1031,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
         // Check if quiz has already started or ended
         Set<QuizBatch> batches = quizBatchRepository.findAllByQuizExercise(originalQuiz);
-        if (originalQuiz.isExamExercise()) {
-            Exam exam = originalQuiz.getExerciseGroup().getExam();
-            if (exam.getStartDate() != null && ZonedDateTime.now().isAfter(exam.getStartDate())) {
-                if (isEffectivelyQuizEnded(originalQuiz)) {
-                    throw new AccessForbiddenException("After the end of the quiz working time, editing is not possible");
-                }
-                throw new AccessForbiddenException("During the quiz, editing is not possible, you can re-evaluate after the quiz has finished");
-            }
-        }
-        else {
+        if (!originalQuiz.isExamExercise()) {
             if (originalQuiz.isQuizEnded()) {
                 throw new AccessForbiddenException("After the end of the quiz working time, editing is not possible");
             }
@@ -1389,20 +1375,4 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         return !quizExercise.isQuizEnded();
     }
 
-    /**
-     * Determines if the quiz has effectively ended, taking exam exercises into account.
-     * For exam exercises, the quiz is considered ended when the latest individual exam end date has passed.
-     * For course exercises, uses the standard {@link QuizExercise#isQuizEnded()} check based on due date.
-     *
-     * @param quizExercise the quiz exercise to check
-     * @return true if the quiz has effectively ended, false otherwise
-     */
-    public boolean isEffectivelyQuizEnded(QuizExercise quizExercise) {
-        if (quizExercise.isExamExercise()) {
-            ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
-            ZonedDateTime latestEnd = api.getLatestIndividualExamEndDate(quizExercise.getExerciseGroup().getExam());
-            return latestEnd != null && ZonedDateTime.now().isAfter(latestEnd);
-        }
-        return quizExercise.isQuizEnded();
-    }
 }
