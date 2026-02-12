@@ -119,9 +119,11 @@ public class WeaviateService {
      */
     private Property createProperty(WeaviatePropertyDefinition definition) {
         return switch (definition.dataType()) {
-            case INT -> Property.integer(definition.name(), property -> property.indexSearchable(definition.indexSearchable()).indexFilterable(definition.indexFilterable()));
+            // indexSearchable is only applicable to text properties; Weaviate ignores it for numeric types
+            // See https://docs.weaviate.io/weaviate/config-refs/indexing/inverted-index
+            case INT -> Property.integer(definition.name(), property -> property.indexFilterable(definition.indexFilterable()));
             case TEXT -> Property.text(definition.name(), property -> property.indexSearchable(definition.indexSearchable()).indexFilterable(definition.indexFilterable()));
-            case NUMBER -> Property.number(definition.name(), property -> property.indexSearchable(definition.indexSearchable()).indexFilterable(definition.indexFilterable()));
+            case NUMBER -> Property.number(definition.name(), property -> property.indexFilterable(definition.indexFilterable()));
             case BOOLEAN -> Property.bool(definition.name(), property -> property.indexFilterable(definition.indexFilterable()));
             case DATE -> Property.date(definition.name(), property -> property.indexFilterable(definition.indexFilterable()));
             case UUID -> Property.uuid(definition.name(), property -> property.indexFilterable(definition.indexFilterable()));
