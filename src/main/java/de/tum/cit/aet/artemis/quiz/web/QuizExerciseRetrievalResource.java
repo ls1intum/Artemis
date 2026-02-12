@@ -34,8 +34,9 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
+import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -73,13 +74,13 @@ public class QuizExerciseRetrievalResource {
 
     private final QuizBatchRepository quizBatchRepository;
 
-    private final ExamRepository examRepository;
+    private final Optional<ExamRepositoryApi> examRepositoryApi;
 
     private final Optional<ExamDateApi> examDateApi;
 
     public QuizExerciseRetrievalResource(QuizExerciseRepository quizExerciseRepository, QuizExerciseService quizExerciseService, UserRepository userRepository,
             AuthorizationCheckService authCheckService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
-            ChannelRepository channelRepository, QuizBatchRepository quizBatchRepository, ExamRepository examRepository, Optional<ExamDateApi> examDateApi) {
+            ChannelRepository channelRepository, QuizBatchRepository quizBatchRepository, Optional<ExamRepositoryApi> examRepositoryApi, Optional<ExamDateApi> examDateApi) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizExerciseService = quizExerciseService;
         this.userRepository = userRepository;
@@ -88,7 +89,7 @@ public class QuizExerciseRetrievalResource {
         this.quizBatchService = quizBatchService;
         this.channelRepository = channelRepository;
         this.quizBatchRepository = quizBatchRepository;
-        this.examRepository = examRepository;
+        this.examRepositoryApi = examRepositoryApi;
         this.examDateApi = examDateApi;
     }
 
@@ -124,7 +125,8 @@ public class QuizExerciseRetrievalResource {
     @EnforceAtLeastEditor
     public ResponseEntity<List<QuizExerciseForCourseDTO>> getQuizExercisesForExam(@PathVariable long examId) {
         log.debug("REST request to get all quiz exercises for the exam with id : {}", examId);
-        Exam exam = examRepository.findByIdElseThrow(examId);
+        ExamRepositoryApi examRepoApi = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
+        Exam exam = examRepoApi.findByIdElseThrow(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, exam.getCourse(), null);
 
         List<QuizExercise> quizExercises = quizExerciseRepository.findByExamId(examId);

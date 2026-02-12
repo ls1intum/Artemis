@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -59,7 +59,7 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
     protected ExamUtilService examUtilService;
 
     @Autowired
-    protected ExamRepository examRepository;
+    protected ExamTestRepository examRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
