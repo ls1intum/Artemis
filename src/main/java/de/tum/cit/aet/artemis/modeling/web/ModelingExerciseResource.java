@@ -394,7 +394,6 @@ public class ModelingExerciseResource {
         // up all lazy references correctly.
         exerciseService.logDeletion(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseDeletionService.delete(exerciseId, false);
-        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.deleteExercise(exerciseId));
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, modelingExercise.getTitle())).build();
     }
 
