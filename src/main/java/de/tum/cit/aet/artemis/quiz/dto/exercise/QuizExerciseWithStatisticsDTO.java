@@ -62,6 +62,12 @@ public record QuizExerciseWithStatisticsDTO(@JsonUnwrapped QuizExerciseWithoutQu
         return new QuizExerciseWithStatisticsDTO(dto.quizExercise, dto.quizQuestions, dto.categories, dto.quizPointStatistic, dto.competencyLinks, dto.gradingCriteria,
                 dto.channelName, dto.testRunParticipationsExist, isEditable);
     }
+
+    public static QuizExerciseWithStatisticsDTO of(QuizExercise quizExercise, Boolean isEditable, boolean effectiveQuizEnded) {
+        QuizExerciseWithStatisticsDTO dto = of(quizExercise);
+        return new QuizExerciseWithStatisticsDTO(QuizExerciseWithoutQuestionsDTO.of(quizExercise, effectiveQuizEnded), dto.quizQuestions, dto.categories, dto.quizPointStatistic,
+                dto.competencyLinks, dto.gradingCriteria, dto.channelName, dto.testRunParticipationsExist, isEditable);
+    }
 }
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

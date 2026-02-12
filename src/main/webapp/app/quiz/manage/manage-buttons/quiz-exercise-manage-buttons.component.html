@@ -40,11 +40,14 @@
                 <span class="d-none d-md-inline" jhiTranslate="entity.action.export"></span>
             </button>
         }
-        @if (quizExercise().isAtLeastEditor && !quizExercise().quizEnded) {
-            <a [class.disabled]="!quizExercise().isEditable" [routerLink]="[baseUrl, 'quiz-exercises', quizExercise().id, 'edit']" class="btn btn-warning btn-sm me-1 mb-1">
+        @if (quizExercise().isAtLeastEditor && quizExercise().isEditable) {
+            <a [routerLink]="[baseUrl, 'quiz-exercises', quizExercise().id, 'edit']" class="btn btn-warning btn-sm me-1 mb-1">
                 <fa-icon [icon]="faWrench" />
                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
             </a>
+        }
+        @if (quizExercise().isAtLeastEditor && !quizExercise().isEditable && !quizExercise().quizEnded && isDetailPage()) {
+            <span class="badge bg-info me-1 mb-1" jhiTranslate="artemisApp.quizExercise.editNotPossibleDuringQuiz"></span>
         }
         @if (quizExercise().isAtLeastInstructor && quizExercise().quizEnded) {
             <a [routerLink]="[baseUrl, 'quiz-exercises', quizExercise().id, 're-evaluate']" class="btn btn-warning btn-sm me-1 mb-1">

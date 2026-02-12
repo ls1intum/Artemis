@@ -22,7 +22,9 @@ import org.springframework.util.MultiValueMap;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -55,6 +57,9 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
 
     @Autowired
     protected ExamUtilService examUtilService;
+
+    @Autowired
+    protected ExamRepository examRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -152,6 +157,15 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
         }
 
         return quizExerciseDatabase;
+    }
+
+    protected QuizExercise createQuizOnServerForExamWithStartedExam() throws Exception {
+        QuizExercise quizExercise = createQuizOnServerForExam();
+        Exam exam = quizExercise.getExerciseGroup().getExam();
+        ZonedDateTime now = ZonedDateTime.now();
+        examUtilService.setVisibleStartAndEndDateOfExam(exam, now.minusHours(2), now.minusHours(1), now.plusHours(1));
+        examRepository.save(exam);
+        return quizExercise;
     }
 
     /**

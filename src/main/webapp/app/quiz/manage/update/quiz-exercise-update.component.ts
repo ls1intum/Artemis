@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, On
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { QuizBatch, QuizExercise, QuizMode, resetQuizForExam, resetQuizForImport } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -28,7 +28,7 @@ import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise
 import { round } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
 import { QuizExerciseValidationDirective } from 'app/quiz/manage/util/quiz-exercise-validation.directive';
-import { faExclamationCircle, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationCircle, faPlus, faWrench, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { isQuizEditable } from 'app/quiz/shared/service/quiz-manage-util.service';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
@@ -73,6 +73,7 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
         NgClass,
         JsonPipe,
         ArtemisTranslatePipe,
+        RouterLink,
     ],
 })
 export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, ComponentCanDeactivate {
@@ -132,6 +133,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     faPlus = faPlus;
     faXmark = faXmark;
     faExclamationCircle = faExclamationCircle;
+    faWrench = faWrench;
 
     readonly QuizMode = QuizMode;
     readonly documentationType: DocumentationType = 'Quiz';
@@ -206,9 +208,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             this.quizExerciseService.find(quizId).subscribe((response: HttpResponse<QuizExercise>) => {
                 this.quizExercise = response.body!;
                 this.init();
-                if (!this.quizExercise.isEditable) {
-                    this.alertService.error('error.http.403');
-                }
                 if (this.testRunExistsAndShouldNotBeIgnored()) {
                     this.alertService.warning(this.translateService.instant('artemisApp.quizExercise.edit.testRunSubmissionsExist'));
                 }
@@ -627,6 +626,24 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
      */
     previousState(): void {
         this.navigationUtilService.navigateBackFromExerciseUpdate(this.quizExercise);
+    }
+
+    get reEvaluateUrl(): string[] {
+        const groupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
+        if (this.isExamMode) {
+            return [
+                '/course-management',
+                String(this.courseId),
+                'exams',
+                String(this.examId),
+                'exercise-groups',
+                String(groupId),
+                'quiz-exercises',
+                String(this.quizExercise?.id),
+                're-evaluate',
+            ];
+        }
+        return ['/course-management', String(this.courseId), 'quiz-exercises', String(this.quizExercise?.id), 're-evaluate'];
     }
 
     /**

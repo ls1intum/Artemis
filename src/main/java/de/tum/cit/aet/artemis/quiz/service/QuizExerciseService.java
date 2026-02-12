@@ -54,6 +54,7 @@ import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -62,6 +63,9 @@ import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
@@ -143,12 +147,14 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final Optional<CourseCompetencyApi> courseCompetencyApi;
 
+    private final Optional<ExamDateApi> examDateApi;
+
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
             InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
             ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService, UserRepository userRepository, QuizBatchRepository quizBatchRepository,
             ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<SlideApi> slideApi, Optional<CourseCompetencyApi> courseCompetencyApi) {
+            Optional<SlideApi> slideApi, Optional<CourseCompetencyApi> courseCompetencyApi, Optional<ExamDateApi> examDateApi) {
         super(dragAndDropMappingRepository, shortAnswerMappingRepository);
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
@@ -165,6 +171,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
         this.courseCompetencyApi = courseCompetencyApi;
+        this.examDateApi = examDateApi;
     }
 
     /**
@@ -1027,10 +1034,24 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        // Check if quiz has already started
+        // Check if quiz has already started or ended
         Set<QuizBatch> batches = quizBatchRepository.findAllByQuizExercise(originalQuiz);
-        if (batches.stream().anyMatch(QuizBatch::isStarted)) {
-            throw new BadRequestAlertException("The quiz has already started. Use the re-evaluate endpoint to make retroactive corrections.", ENTITY_NAME, "quizHasStarted");
+        if (originalQuiz.isExamExercise()) {
+            Exam exam = originalQuiz.getExerciseGroup().getExam();
+            if (exam.getStartDate() != null && ZonedDateTime.now().isAfter(exam.getStartDate())) {
+                if (isEffectivelyQuizEnded(originalQuiz)) {
+                    throw new AccessForbiddenException("After the end of the quiz working time, editing is not possible");
+                }
+                throw new AccessForbiddenException("During the quiz, editing is not possible, you can re-evaluate after the quiz has finished");
+            }
+        }
+        else {
+            if (originalQuiz.isQuizEnded()) {
+                throw new AccessForbiddenException("After the end of the quiz working time, editing is not possible");
+            }
+            if (batches.stream().anyMatch(QuizBatch::isStarted)) {
+                throw new AccessForbiddenException("During the quiz, editing is not possible, you can re-evaluate after the quiz has finished");
+            }
         }
 
         updatedQuiz.reconnectJSONIgnoreAttributes();
@@ -1350,16 +1371,38 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     /**
      * Determines if the given quiz exercise is editable.
-     * A quiz exercise is considered editable if none of its associated quiz batches have started and the quiz has not ended.
+     * For exam exercises, the quiz is not editable once the exam has started.
+     * For course exercises, the quiz is not editable if any batch has started or the quiz has ended.
      *
      * @param quizExercise the quiz exercise to check
      * @return true if the quiz exercise is editable, false otherwise
      */
     public boolean isEditable(QuizExercise quizExercise) {
+        if (quizExercise.isExamExercise()) {
+            Exam exam = quizExercise.getExerciseGroup().getExam();
+            return exam.getStartDate() == null || ZonedDateTime.now().isBefore(exam.getStartDate());
+        }
         Set<QuizBatch> batches = quizBatchRepository.findAllByQuizExercise(quizExercise);
         if (batches.stream().anyMatch(QuizBatch::isStarted)) {
             return false;
         }
         return !quizExercise.isQuizEnded();
+    }
+
+    /**
+     * Determines if the quiz has effectively ended, taking exam exercises into account.
+     * For exam exercises, the quiz is considered ended when the latest individual exam end date has passed.
+     * For course exercises, uses the standard {@link QuizExercise#isQuizEnded()} check based on due date.
+     *
+     * @param quizExercise the quiz exercise to check
+     * @return true if the quiz has effectively ended, false otherwise
+     */
+    public boolean isEffectivelyQuizEnded(QuizExercise quizExercise) {
+        if (quizExercise.isExamExercise()) {
+            ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+            ZonedDateTime latestEnd = api.getLatestIndividualExamEndDate(quizExercise.getExerciseGroup().getExam());
+            return latestEnd != null && ZonedDateTime.now().isAfter(latestEnd);
+        }
+        return quizExercise.isQuizEnded();
     }
 }

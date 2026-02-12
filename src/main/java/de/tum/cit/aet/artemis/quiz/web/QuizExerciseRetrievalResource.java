@@ -115,12 +115,15 @@ public class QuizExerciseRetrievalResource {
     public ResponseEntity<List<QuizExerciseForCourseDTO>> getQuizExercisesForExam(@PathVariable long examId) {
         log.debug("REST request to get all quiz exercises for the exam with id : {}", examId);
         List<QuizExercise> quizExercises = quizExerciseRepository.findByExamId(examId);
+        if (quizExercises.isEmpty()) {
+            return ResponseEntity.ok(List.of());
+        }
         List<QuizExerciseForCourseDTO> quizExerciseDTOs = new ArrayList<>();
         Course course = quizExercises.getFirst().getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         for (QuizExercise quizExercise : quizExercises) {
-            boolean isEditable = false;
+            boolean isEditable = quizExerciseService.isEditable(quizExercise);
             quizExercise.setQuizBatches(null);
             quizExerciseDTOs.add(QuizExerciseForCourseDTO.of(quizExercise, isEditable));
         }
@@ -152,7 +155,8 @@ public class QuizExerciseRetrievalResource {
         }
         setQuizBatches(user, quizExercise);
         boolean isEditable = quizExerciseService.isEditable(quizExercise);
-        QuizExerciseWithStatisticsDTO quizExerciseDTO = QuizExerciseWithStatisticsDTO.of(quizExercise, isEditable);
+        boolean effectiveQuizEnded = quizExerciseService.isEffectivelyQuizEnded(quizExercise);
+        QuizExerciseWithStatisticsDTO quizExerciseDTO = QuizExerciseWithStatisticsDTO.of(quizExercise, isEditable, effectiveQuizEnded);
         return ResponseEntity.ok(quizExerciseDTO);
     }
 

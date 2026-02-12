@@ -512,14 +512,14 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateQuizExercise_startedQuizStructuralChange_badRequest() throws Exception {
+    void testUpdateQuizExercise_startedQuizStructuralChange_forbidden() throws Exception {
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().minusHours(1), null, QuizMode.SYNCHRONIZED);
 
         // Attempt to add a new question after start
         MultipleChoiceQuestion newQuestion = QuizExerciseFactory.createMultipleChoiceQuestion();
         quizExercise.getQuizQuestions().add(newQuestion);
 
-        updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.BAD_REQUEST, null);
+        updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.FORBIDDEN, null);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -574,7 +574,25 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         mc.getAnswerOptions().removeFirst();
         mc.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isCorrect(true));
 
-        QuizExercise updatedQuizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.BAD_REQUEST);
+        QuizExercise updatedQuizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.FORBIDDEN);
+        assertThat(updatedQuizExercise).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateEndedQuizExercise() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().minusHours(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
+
+        QuizExercise updatedQuizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.FORBIDDEN);
+        assertThat(updatedQuizExercise).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExamQuizExerciseAfterExamStarted() throws Exception {
+        QuizExercise quizExercise = createQuizOnServerForExamWithStartedExam();
+
+        QuizExercise updatedQuizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.FORBIDDEN);
         assertThat(updatedQuizExercise).isNull();
     }
 
@@ -1405,9 +1423,9 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         QuizExerciseForCourseDTO dtoAfter = quizzesAfter.stream().filter(q -> q.id() == quizExerciseId).findFirst().orElseThrow();
         assertThat(dtoAfter.isEditable()).isFalse();
 
-        // Attempt another structural edit after submission (should fail)
+        // Attempt another structural edit after submission (should fail with 403 because batch has started)
         updateMultipleChoice(quizExercise);
-        updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.BAD_REQUEST);
+        updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.FORBIDDEN);
     }
 
     /**

@@ -44,8 +44,11 @@
                 "saving": "Speichern...",
                 "saved": "Gespeichert!",
                 "quizHasStarted": "Das Quiz hat angefangen. Es sind keine Änderungen mehr möglich.<br><br>Nachträgliche Korrekturen können vorgenommen werden, sobald das Quiz beendet wurde. Gehe zurück zur Übersicht und klicke auf \"Re-evaluate\", sobald das Quiz beendet wurde. (\"Re-evaluate\" ist nicht für TAs verfügbar.)",
-                "testRunSubmissionsExist": "Dieses Quiz enthält Abgaben für einen der Testläufe der Klausur. Lösche den Testlauf, um die Antwortoptionen zu bearbeiten."
+                "testRunSubmissionsExist": "Dieses Quiz enthält Abgaben für einen der Testläufe der Klausur. Lösche den Testlauf, um die Antwortoptionen zu bearbeiten.",
+                "editNotPossibleDuringQuiz": "Während des Quizzes ist eine Bearbeitung nicht möglich. Nach dem Ende des Quizzes kannst du eine Re-Evaluierung durchführen.",
+                "editNotPossibleAfterEnd": "Nach dem Ende der Quiz-Bearbeitungszeit ist eine Bearbeitung nicht möglich."
             },
+            "editNotPossibleDuringQuiz": "Während des Quizzes ist eine Bearbeitung nicht möglich.",
             "saveError": "Beim Speichern ist ein Fehler ist aufgetreten. Bitte überprüfe deine Eingabe und versuche es später noch einmal.",
             "export": {
                 "title": "Alle Quizfragen zum Kurs {{ param }}",
