@@ -108,6 +108,7 @@ public final class WeaviateTestUtil {
         assertExerciseExistsInWeaviate(weaviateService, programmingExercise);
 
         var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
+        assertThat(properties).isNotNull();
         if (programmingExercise.getProgrammingLanguage() != null) {
             assertThat(properties.get(ExerciseSchema.Properties.PROGRAMMING_LANGUAGE)).isEqualTo(programmingExercise.getProgrammingLanguage().name());
         }
@@ -129,6 +130,7 @@ public final class WeaviateTestUtil {
         assertExerciseExistsInWeaviate(weaviateService, modelingExercise);
 
         var properties = queryExerciseProperties(weaviateService, modelingExercise.getId());
+        assertThat(properties).isNotNull();
         if (modelingExercise.getDiagramType() != null) {
             assertThat(properties.get(ExerciseSchema.Properties.DIAGRAM_TYPE)).isEqualTo(modelingExercise.getDiagramType().name());
         }
@@ -147,6 +149,7 @@ public final class WeaviateTestUtil {
         assertExerciseExistsInWeaviate(weaviateService, quizExercise);
 
         var properties = queryExerciseProperties(weaviateService, quizExercise.getId());
+        assertThat(properties).isNotNull();
         if (quizExercise.getQuizMode() != null) {
             assertThat(properties.get(ExerciseSchema.Properties.QUIZ_MODE)).isEqualTo(quizExercise.getQuizMode().name());
         }
@@ -168,6 +171,7 @@ public final class WeaviateTestUtil {
         assertExerciseExistsInWeaviate(weaviateService, fileUploadExercise);
 
         var properties = queryExerciseProperties(weaviateService, fileUploadExercise.getId());
+        assertThat(properties).isNotNull();
         if (fileUploadExercise.getFilePattern() != null) {
             assertThat(properties.get(ExerciseSchema.Properties.FILE_PATTERN)).isEqualTo(fileUploadExercise.getFilePattern());
         }
