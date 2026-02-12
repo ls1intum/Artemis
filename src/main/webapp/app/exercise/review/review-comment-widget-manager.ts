@@ -184,13 +184,14 @@ export class ReviewCommentWidgetManager {
         for (const thread of threads) {
             const line = this.config.getThreadLine(thread);
             const widgetId = this.buildThreadWidgetId(thread.id);
+            const showLocationWarning = this.config.showLocationWarning();
             let widgetRef = this.threadWidgetRefs.get(thread.id);
             if (!widgetRef) {
                 widgetRef = this.viewContainerRef.createComponent(ReviewCommentThreadWidgetComponent);
                 widgetRef.setInput('thread', thread);
-                widgetRef.setInput('showLocationWarning', this.config.showLocationWarning());
+                widgetRef.setInput('showLocationWarning', showLocationWarning);
                 if (!this.collapseState.has(thread.id)) {
-                    const shouldCollapse = thread.resolved || this.config.showLocationWarning();
+                    const shouldCollapse = thread.resolved || showLocationWarning;
                     this.collapseState.set(thread.id, shouldCollapse);
                 }
                 widgetRef.setInput('initialCollapsed', this.collapseState.get(thread.id) ?? false);
@@ -202,6 +203,7 @@ export class ReviewCommentWidgetManager {
                 this.threadWidgetRefs.set(thread.id, widgetRef);
             } else {
                 widgetRef.setInput('thread', thread);
+                widgetRef.setInput('showLocationWarning', showLocationWarning);
             }
             this.editor.disposeWidgetsByPrefix(widgetId);
             this.editor.addLineWidget(line + 1, widgetId, widgetRef.location.nativeElement);

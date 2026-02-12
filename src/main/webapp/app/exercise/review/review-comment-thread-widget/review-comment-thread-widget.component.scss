@@ -58,9 +58,14 @@
 }
 
 .monaco-review-comment-menu .btn-link:focus,
-.monaco-review-comment-menu .btn-link:focus-visible,
 .monaco-review-comment-menu .btn-link:active {
     outline: none;
+    box-shadow: none;
+}
+
+.monaco-review-comment-menu .btn-link:focus-visible {
+    outline: 2px solid var(--bs-primary);
+    outline-offset: 2px;
     box-shadow: none;
 }
 
@@ -183,9 +188,14 @@
 }
 
 .monaco-review-comment-thread-toggle:focus,
-.monaco-review-comment-thread-toggle:focus-visible,
 .monaco-review-comment-thread-toggle:active {
     outline: none !important;
+    box-shadow: none !important;
+}
+
+.monaco-review-comment-thread-toggle:focus-visible {
+    outline: 2px solid var(--bs-primary) !important;
+    outline-offset: 2px;
     box-shadow: none !important;
 }
 

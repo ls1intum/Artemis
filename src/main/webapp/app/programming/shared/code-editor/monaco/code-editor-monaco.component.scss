@@ -27,8 +27,7 @@
 }
 
 .monaco-add-review-comment-button:hover::before {
-    background-color: var(--link-color);
-    color: var(--white);
+    filter: brightness(0.9);
 }
 
 .monaco-add-review-comment-button::before {
