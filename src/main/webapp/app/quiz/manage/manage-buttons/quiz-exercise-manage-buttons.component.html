@@ -40,14 +40,18 @@
                 <span class="d-none d-md-inline" jhiTranslate="entity.action.export"></span>
             </button>
         }
-        @if (quizExercise().isAtLeastEditor && quizExercise().isEditable) {
-            <a [routerLink]="[baseUrl, 'quiz-exercises', quizExercise().id, 'edit']" class="btn btn-warning btn-sm me-1 mb-1">
+        @if (quizExercise().isAtLeastEditor && !quizExercise().quizEnded) {
+            <a
+                [routerLink]="quizExercise().isEditable ? [baseUrl, 'quiz-exercises', quizExercise().id, 'edit'] : null"
+                class="btn btn-warning btn-sm me-1 mb-1"
+                [class.disabled]="!quizExercise().isEditable"
+                [attr.aria-disabled]="!quizExercise().isEditable"
+                [attr.tabindex]="!quizExercise().isEditable ? -1 : null"
+                [ngbTooltip]="!quizExercise().isEditable ? ('artemisApp.quizExercise.editNotPossibleDuringQuiz' | artemisTranslate) : ''"
+            >
                 <fa-icon [icon]="faWrench" />
                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
             </a>
-        }
-        @if (quizExercise().isAtLeastEditor && !quizExercise().isEditable && !quizExercise().quizEnded && isDetailPage()) {
-            <span class="badge bg-info me-1 mb-1" jhiTranslate="artemisApp.quizExercise.editNotPossibleDuringQuiz"></span>
         }
         @if (quizExercise().isAtLeastInstructor && quizExercise().quizEnded) {
             <a [routerLink]="[baseUrl, 'quiz-exercises', quizExercise().id, 're-evaluate']" class="btn btn-warning btn-sm me-1 mb-1">
