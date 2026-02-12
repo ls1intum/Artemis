@@ -33,7 +33,7 @@ public final class WeaviateTestUtil {
      * If Docker IS available but the service is {@code null}, this method fails
      * the test with a descriptive error instead of silently skipping.
      */
-    private static boolean shouldSkipWeaviateAssertions(WeaviateService weaviateService) {
+    public static boolean shouldSkipWeaviateAssertions(WeaviateService weaviateService) {
         if (weaviateService != null) {
             return false;
         }
