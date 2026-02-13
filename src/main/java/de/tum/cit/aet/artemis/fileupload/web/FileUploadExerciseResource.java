@@ -77,7 +77,6 @@ import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository
 import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseImportService;
 import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseService;
 import de.tum.cit.aet.artemis.fileupload.service.FileUploadSubmissionExportService;
-import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 
@@ -137,15 +136,13 @@ public class FileUploadExerciseResource {
 
     private final Optional<CompetencyApi> competencyApi;
 
-    private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
-
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository,
             ParticipationRepository participationRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             FileUploadExerciseImportService fileUploadExerciseImportService, FileUploadExerciseService fileUploadExerciseService, ChannelService channelService,
             ExerciseVersionService exerciseVersionService, ChannelRepository channelRepository, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi,
-            Optional<AtlasMLApi> atlasMLApi, Optional<CompetencyApi> competencyApi, Optional<ExerciseWeaviateService> exerciseWeaviateService) {
+            Optional<AtlasMLApi> atlasMLApi, Optional<CompetencyApi> competencyApi) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -166,7 +163,6 @@ public class FileUploadExerciseResource {
         this.slideApi = slideApi;
         this.atlasMLApi = atlasMLApi;
         this.competencyApi = competencyApi;
-        this.exerciseWeaviateService = exerciseWeaviateService;
     }
 
     /**
@@ -212,8 +208,7 @@ public class FileUploadExerciseResource {
             }
         });
 
-        exerciseVersionService.createExerciseVersion(result);
-        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExercise(result));
+        exerciseVersionService.createExerciseVersionAndInsertInWeaviate(result);
 
         return ResponseEntity.created(new URI("/api/fileupload/file-upload-exercises/" + result.getId())).body(result);
     }
@@ -266,8 +261,7 @@ public class FileUploadExerciseResource {
                 log.warn("Failed to notify AtlasML about exercise creation: {}", e.getMessage());
             }
         });
-        exerciseVersionService.createExerciseVersion(newFileUploadExercise);
-        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExercise(newFileUploadExercise));
+        exerciseVersionService.createExerciseVersionAndInsertInWeaviate(newFileUploadExercise);
 
         return ResponseEntity.created(new URI("/api/fileupload/file-upload-exercises/" + newFileUploadExercise.getId())).body(newFileUploadExercise);
     }
@@ -444,8 +438,7 @@ public class FileUploadExerciseResource {
         });
 
         // Create a version snapshot for history tracking
-        exerciseVersionService.createExerciseVersion(persistedExercise);
-        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExercise(persistedExercise));
+        exerciseVersionService.createExerciseVersionAndUpdateInWeaviate(persistedExercise);
 
         return ResponseEntity.ok(persistedExercise);
     }

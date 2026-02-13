@@ -39,7 +39,6 @@ import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
-import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseCreateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
@@ -74,14 +73,11 @@ public class QuizExerciseCreationUpdateResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
-    private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
     public QuizExerciseCreationUpdateResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
-            AuthorizationCheckService authCheckService, CourseRepository courseRepository, Optional<AtlasMLApi> atlasMLApi, ExerciseVersionService exerciseVersionService,
-            Optional<ExerciseWeaviateService> exerciseWeaviateService) {
+            AuthorizationCheckService authCheckService, CourseRepository courseRepository, Optional<AtlasMLApi> atlasMLApi, ExerciseVersionService exerciseVersionService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.courseService = courseService;
@@ -89,7 +85,6 @@ public class QuizExerciseCreationUpdateResource {
         this.courseRepository = courseRepository;
         this.atlasMLApi = atlasMLApi;
         this.exerciseVersionService = exerciseVersionService;
-        this.exerciseWeaviateService = exerciseWeaviateService;
     }
 
     /**
@@ -126,8 +121,7 @@ public class QuizExerciseCreationUpdateResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         QuizExercise result = quizExerciseService.createQuizExercise(quizExercise, files, true);
-        exerciseVersionService.createExerciseVersion(result);
-        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExercise(result));
+        exerciseVersionService.createExerciseVersionAndInsertInWeaviate(result);
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -161,8 +155,7 @@ public class QuizExerciseCreationUpdateResource {
         // Notify AtlasML about the new quiz exercise
         notifyAtlasML(result, OperationTypeDTO.UPDATE, "quiz exercise creation");
 
-        exerciseVersionService.createExerciseVersion(result);
-        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExercise(result));
+        exerciseVersionService.createExerciseVersionAndInsertInWeaviate(result);
 
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -201,8 +194,7 @@ public class QuizExerciseCreationUpdateResource {
 
         // Notify AtlasML about the quiz exercise update
         notifyAtlasML(result, OperationTypeDTO.UPDATE, "quiz exercise update");
-        exerciseVersionService.createExerciseVersion(result);
-        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExercise(result));
+        exerciseVersionService.createExerciseVersionAndUpdateInWeaviate(result);
 
         QuizExerciseWithStatisticsDTO resultDTO = QuizExerciseWithStatisticsDTO.of(result);
 

@@ -70,7 +70,6 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
-import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.dto.ParticipationCommitHashDTO;
@@ -140,8 +139,6 @@ public class ProgrammingExerciseExportImportResource {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
-    private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
-
     public ProgrammingExerciseExportImportResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
@@ -149,7 +146,7 @@ public class ProgrammingExerciseExportImportResource {
             ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService, Optional<AthenaApi> athenaApi,
             Optional<CompetencyProgressApi> competencyProgressApi, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ExerciseVersionService exerciseVersionService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<ExerciseWeaviateService> exerciseWeaviateService) {
+            ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -168,7 +165,6 @@ public class ProgrammingExerciseExportImportResource {
         this.exerciseVersionService = exerciseVersionService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
-        this.exerciseWeaviateService = exerciseWeaviateService;
     }
 
     /**
@@ -276,8 +272,7 @@ public class ProgrammingExerciseExportImportResource {
 
             competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(importedProgrammingExercise));
 
-            exerciseVersionService.createExerciseVersion(importedProgrammingExercise, user);
-            exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExercise(importedProgrammingExercise));
+            exerciseVersionService.createExerciseVersionAndInsertInWeaviate(importedProgrammingExercise, user);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle()))
                     .body(importedProgrammingExercise);
 
@@ -320,8 +315,7 @@ public class ProgrammingExerciseExportImportResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
         try {
             ProgrammingExercise importedExercise = programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(programmingExercise, zipFile, course, user);
-            exerciseVersionService.createExerciseVersion(importedExercise, user);
-            exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExercise(importedExercise));
+            exerciseVersionService.createExerciseVersionAndInsertInWeaviate(importedExercise, user);
             return ResponseEntity.ok(importedExercise);
         }
         catch (IOException | URISyntaxException | GitAPIException e) {

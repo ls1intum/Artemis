@@ -67,7 +67,6 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionExportService;
-import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -133,15 +132,13 @@ public class ModelingExerciseResource {
 
     private final Optional<CompetencyApi> competencyApi;
 
-    private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
-
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, ModelingExerciseImportService modelingExerciseImportService,
             SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService, GroupNotificationScheduleService groupNotificationScheduleService,
             GradingCriterionRepository gradingCriterionRepository, ChannelService channelService, ChannelRepository channelRepository,
             ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi,
-            Optional<CompetencyApi> competencyApi, Optional<ExerciseWeaviateService> exerciseWeaviateService) {
+            Optional<CompetencyApi> competencyApi) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -162,7 +159,6 @@ public class ModelingExerciseResource {
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
         this.atlasMLApi = atlasMLApi;
-        this.exerciseWeaviateService = exerciseWeaviateService;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -214,8 +210,7 @@ public class ModelingExerciseResource {
                 log.warn("Failed to notify AtlasML about modeling exercise creation: {}", e.getMessage());
             }
         });
-        exerciseVersionService.createExerciseVersion(result);
-        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExercise(result));
+        exerciseVersionService.createExerciseVersionAndInsertInWeaviate(result);
 
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId())).body(result);
     }
@@ -311,8 +306,7 @@ public class ModelingExerciseResource {
             }
         });
 
-        exerciseVersionService.createExerciseVersion(persistedExercise);
-        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExercise(persistedExercise));
+        exerciseVersionService.createExerciseVersionAndUpdateInWeaviate(persistedExercise);
 
         return ResponseEntity.ok(persistedExercise);
     }
@@ -436,8 +430,7 @@ public class ModelingExerciseResource {
         modelingExerciseRepository.save(newModelingExercise);
         // Notify AtlasML about the imported exercise
         atlasMLApi.ifPresent(api -> api.saveExerciseWithCompetencies(newModelingExercise));
-        exerciseVersionService.createExerciseVersion(newModelingExercise, user);
-        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExercise(newModelingExercise));
+        exerciseVersionService.createExerciseVersionAndInsertInWeaviate(newModelingExercise, user);
 
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + newModelingExercise.getId())).body(newModelingExercise);
     }

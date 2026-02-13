@@ -5,11 +5,15 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertEx
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryExerciseProperties;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -19,6 +23,7 @@ import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
 /**
@@ -42,6 +47,9 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     private ProgrammingExercise programmingExercise;
 
@@ -103,6 +111,49 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
             exerciseWeaviateService.deleteExercise(programmingExercise.getId());
 
             assertExerciseNotInWeaviate(weaviateService, programmingExercise.getId());
+        }
+    }
+
+    @Nested
+    class ProgrammingExercisePartialUpdateWeaviateTests {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testUpdateProblemStatement_updatesWeaviate() throws Exception {
+            // Insert exercise into Weaviate first
+            exerciseWeaviateService.insertExercise(programmingExercise);
+            assertExerciseExistsInWeaviate(weaviateService, programmingExercise);
+
+            // Update problem statement via endpoint
+            final var newProblem = "updated problem statement for weaviate test";
+            final var endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/problem-statement";
+            request.patchWithResponseBody(endpoint, newProblem, ProgrammingExercise.class, HttpStatus.OK, MediaType.TEXT_PLAIN);
+
+            // Verify Weaviate has the updated problem statement
+            var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
+            assertThat(properties).isNotNull();
+            assertThat(properties.get(ExerciseSchema.Properties.PROBLEM_STATEMENT)).isEqualTo(newProblem);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testUpdateTimeline_updatesWeaviate() throws Exception {
+            // Insert exercise into Weaviate first
+            exerciseWeaviateService.insertExercise(programmingExercise);
+            assertExerciseExistsInWeaviate(weaviateService, programmingExercise);
+
+            // Update timeline via endpoint
+            var exerciseForUpdate = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
+            ZonedDateTime newDueDate = ZonedDateTime.now().plusDays(7);
+            exerciseForUpdate.setDueDate(newDueDate);
+
+            final var endpoint = "/api/programming/programming-exercises/timeline";
+            request.putWithResponseBody(endpoint, exerciseForUpdate, ProgrammingExercise.class, HttpStatus.OK);
+
+            // Verify Weaviate has the updated due date
+            var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
+            assertThat(properties).isNotNull();
+            assertThat(properties.get(ExerciseSchema.Properties.DUE_DATE)).isNotNull();
         }
     }
 }

@@ -21,6 +21,8 @@ import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
 import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadApi;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entitySchemas.ExerciseSchema;
+import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
 import de.tum.cit.aet.artemis.modeling.api.ModelingRepositoryApi;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -56,9 +58,12 @@ public class ExerciseVersionService {
 
     private final ExerciseReviewService exerciseReviewService;
 
+    private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
+
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
             QuizExerciseRepository quizExerciseRepository, TextExerciseRepository textExerciseRepository, Optional<ModelingRepositoryApi> modelingRepositoryApi,
-            Optional<FileUploadApi> fileUploadApi, UserRepository userRepository, ExerciseReviewService exerciseReviewService) {
+            Optional<FileUploadApi> fileUploadApi, UserRepository userRepository, ExerciseReviewService exerciseReviewService,
+            Optional<ExerciseWeaviateService> exerciseWeaviateService) {
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -68,6 +73,7 @@ public class ExerciseVersionService {
         this.fileUploadApi = fileUploadApi;
         this.userRepository = userRepository;
         this.exerciseReviewService = exerciseReviewService;
+        this.exerciseWeaviateService = exerciseWeaviateService;
     }
 
     public boolean isRepositoryTypeVersionable(RepositoryType repositoryType) {
@@ -139,6 +145,52 @@ public class ExerciseVersionService {
         catch (Exception e) {
             log.error("Error creating exercise version for exercise with id {}: {}", targetExercise.getId(), e.getMessage(), e);
         }
+    }
+
+    /**
+     * Creates an exercise version and inserts the exercise into Weaviate (if enabled).
+     * Use this for newly created or imported exercises.
+     *
+     * @param exercise The newly created or imported exercise
+     */
+    public void createExerciseVersionAndInsertInWeaviate(Exercise exercise) {
+        createExerciseVersion(exercise);
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExercise(exercise));
+    }
+
+    /**
+     * Creates an exercise version and inserts the exercise into Weaviate (if enabled).
+     * Use this for newly created or imported exercises.
+     *
+     * @param exercise The newly created or imported exercise
+     * @param author   The user who created the version
+     */
+    public void createExerciseVersionAndInsertInWeaviate(Exercise exercise, User author) {
+        createExerciseVersion(exercise, author);
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.insertExercise(exercise));
+    }
+
+    /**
+     * Creates an exercise version and updates the exercise in Weaviate (if enabled).
+     * Use this for exercises whose indexed metadata {@link ExerciseSchema} has been modified.
+     *
+     * @param exercise The updated exercise
+     */
+    public void createExerciseVersionAndUpdateInWeaviate(Exercise exercise) {
+        createExerciseVersion(exercise);
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExercise(exercise));
+    }
+
+    /**
+     * Creates an exercise version and updates the exercise in Weaviate (if enabled).
+     * Use this for exercises whose indexed metadata {@link ExerciseSchema} has been modified.
+     *
+     * @param exercise The updated exercise
+     * @param author   The user who created the version
+     */
+    public void createExerciseVersionAndUpdateInWeaviate(Exercise exercise, User author) {
+        createExerciseVersion(exercise, author);
+        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExercise(exercise));
     }
 
     /**
