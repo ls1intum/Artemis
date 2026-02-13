@@ -21,7 +21,7 @@ import { vi } from 'vitest';
             </thead>
         </table>
     `,
-    imports: [SortDirective, SortByDirective, FaIconComponent],
+    imports: [FaIconComponent, SortDirective, SortByDirective],
 })
 class TestSortByDirectiveComponent {
     predicate?: string;

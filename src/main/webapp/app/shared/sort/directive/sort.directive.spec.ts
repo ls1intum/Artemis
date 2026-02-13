@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { vi } from 'vitest';
 
 @Component({
     template: `
@@ -17,7 +18,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 class TestSortDirectiveComponent {
     predicate?: string;
     ascending?: boolean;
-    transition = jest.fn();
+    transition = vi.fn();
 }
 
 describe('Directive: SortDirective', () => {
