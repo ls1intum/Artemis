@@ -40,6 +40,7 @@ export default defineConfig({
             'src/main/webapp/app/atlas/**/*.spec.ts', // include atlas tests
             'src/main/webapp/app/iris/**/*.spec.ts', // include iris tests
             'src/main/webapp/app/shared/components/buttons/**/*.spec.ts', // include shared buttons
+            'src/main/webapp/app/shared/sort/**/*.directive.spec.ts', // include sort directives
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
