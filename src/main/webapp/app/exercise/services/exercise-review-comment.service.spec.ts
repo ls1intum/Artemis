@@ -3,8 +3,11 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 import { ExerciseReviewCommentService } from 'app/exercise/services/exercise-review-comment.service';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExerciseReviewCommentService', () => {
+    setupTestBed({ zoneless: true });
     let service: ExerciseReviewCommentService;
     let httpMock: HttpTestingController;
 
@@ -18,7 +21,7 @@ describe('ExerciseReviewCommentService', () => {
 
     afterEach(() => {
         httpMock.verify();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create a thread', () => {
@@ -129,7 +132,7 @@ describe('ExerciseReviewCommentService', () => {
         expect(req.request.body).toEqual({ resolved: true });
         req.flush({ id: 7, resolved: true });
 
-        expect(updatedThreads[0].resolved).toBeTrue();
+        expect(updatedThreads[0].resolved).toBe(true);
     });
 
     it('should update comment content', () => {
@@ -226,7 +229,7 @@ describe('ExerciseReviewCommentService', () => {
 
         const updated = result.find((t: any) => t.id === 2);
         expect(updated).toBeDefined();
-        expect(updated!.resolved).toBeTrue();
+        expect(updated!.resolved).toBe(true);
     });
 
     it('should append a new thread', () => {

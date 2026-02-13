@@ -3,8 +3,11 @@ import { ReviewCommentThreadWidgetComponent } from 'app/exercise/review/review-c
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ReviewCommentThreadWidgetComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ReviewCommentThreadWidgetComponent>;
     let comp: ReviewCommentThreadWidgetComponent;
 
@@ -20,18 +23,18 @@ describe('ReviewCommentThreadWidgetComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize collapsed state', () => {
         fixture.componentRef.setInput('initialCollapsed', true);
         fixture.componentRef.setInput('thread', { id: 2, resolved: false, comments: [] } as any);
         comp.ngOnInit();
-        expect(comp.showThreadBody).toBeFalse();
+        expect(comp.showThreadBody).toBe(false);
     });
 
     it('should emit delete on deleteComment', () => {
-        const deleteSpy = jest.fn();
+        const deleteSpy = vi.fn();
         comp.onDelete.subscribe(deleteSpy);
 
         comp.deleteComment(5);
@@ -39,7 +42,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
     });
 
     it('should emit update on saveEditing and clear editing state', () => {
-        const updateSpy = jest.fn();
+        const updateSpy = vi.fn();
         comp.onUpdate.subscribe(updateSpy);
 
         comp.editingCommentId = 7;
@@ -53,7 +56,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
     });
 
     it('should not emit update when edit text is empty', () => {
-        const updateSpy = jest.fn();
+        const updateSpy = vi.fn();
         comp.onUpdate.subscribe(updateSpy);
 
         comp.editingCommentId = 4;
@@ -65,7 +68,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
     });
 
     it('should not emit update when editing comment type is not USER', () => {
-        const updateSpy = jest.fn();
+        const updateSpy = vi.fn();
         comp.onUpdate.subscribe(updateSpy);
 
         comp.editingCommentId = 4;
@@ -77,7 +80,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
     });
 
     it('should emit reply and clear reply text', () => {
-        const replySpy = jest.fn();
+        const replySpy = vi.fn();
         comp.onReply.subscribe(replySpy);
 
         comp.replyText = '  reply  ';
@@ -88,7 +91,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
     });
 
     it('should not emit reply when reply text is empty', () => {
-        const replySpy = jest.fn();
+        const replySpy = vi.fn();
         comp.onReply.subscribe(replySpy);
 
         comp.replyText = '   ';
@@ -98,8 +101,8 @@ describe('ReviewCommentThreadWidgetComponent', () => {
     });
 
     it('should toggle resolved and collapse when resolving', () => {
-        const resolvedSpy = jest.fn();
-        const collapseSpy = jest.fn();
+        const resolvedSpy = vi.fn();
+        const collapseSpy = vi.fn();
         comp.onToggleResolved.subscribe(resolvedSpy);
         comp.onToggleCollapse.subscribe(collapseSpy);
         fixture.componentRef.setInput('thread', { id: 1, resolved: false } as any);
@@ -107,18 +110,18 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         comp.toggleResolved();
 
         expect(resolvedSpy).toHaveBeenCalledWith(true);
-        expect(comp.showThreadBody).toBeFalse();
+        expect(comp.showThreadBody).toBe(false);
         expect(collapseSpy).toHaveBeenCalledWith(true);
     });
 
     it('should toggle thread body and emit collapse state', () => {
-        const collapseSpy = jest.fn();
+        const collapseSpy = vi.fn();
         comp.onToggleCollapse.subscribe(collapseSpy);
         comp.showThreadBody = true;
 
         comp.toggleThreadBody();
 
-        expect(comp.showThreadBody).toBeFalse();
+        expect(comp.showThreadBody).toBe(false);
         expect(collapseSpy).toHaveBeenCalledWith(true);
     });
 
@@ -128,7 +131,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
             lastModifiedDate: '2024-01-02T00:00:00Z',
         } as any;
 
-        expect(comp.isEdited(comment)).toBeTrue();
+        expect(comp.isEdited(comment)).toBe(true);
     });
 
     it('should order comments by date then id', () => {

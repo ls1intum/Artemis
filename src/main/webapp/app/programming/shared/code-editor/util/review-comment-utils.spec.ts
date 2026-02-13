@@ -1,45 +1,46 @@
 import { isReviewCommentsSupportedRepository, mapRepositoryToThreadLocationType, matchesSelectedRepository } from 'app/programming/shared/code-editor/util/review-comment-utils';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 describe('matchesSelectedRepository', () => {
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should match template repository', () => {
         const thread = { targetType: CommentThreadLocationType.TEMPLATE_REPO } as any;
-        expect(matchesSelectedRepository(thread, RepositoryType.TEMPLATE)).toBeTrue();
+        expect(matchesSelectedRepository(thread, RepositoryType.TEMPLATE)).toBe(true);
     });
 
     it('should match solution repository', () => {
         const thread = { targetType: CommentThreadLocationType.SOLUTION_REPO } as any;
-        expect(matchesSelectedRepository(thread, RepositoryType.SOLUTION)).toBeTrue();
+        expect(matchesSelectedRepository(thread, RepositoryType.SOLUTION)).toBe(true);
     });
 
     it('should match test repository', () => {
         const thread = { targetType: CommentThreadLocationType.TEST_REPO } as any;
-        expect(matchesSelectedRepository(thread, RepositoryType.TESTS)).toBeTrue();
+        expect(matchesSelectedRepository(thread, RepositoryType.TESTS)).toBe(true);
     });
 
     it('should match auxiliary repository with matching id', () => {
         const thread = { targetType: CommentThreadLocationType.AUXILIARY_REPO, auxiliaryRepositoryId: 4 } as any;
-        expect(matchesSelectedRepository(thread, RepositoryType.AUXILIARY, 4)).toBeTrue();
+        expect(matchesSelectedRepository(thread, RepositoryType.AUXILIARY, 4)).toBe(true);
     });
 
     it('should reject auxiliary repository when id mismatches', () => {
         const thread = { targetType: CommentThreadLocationType.AUXILIARY_REPO, auxiliaryRepositoryId: 2 } as any;
-        expect(matchesSelectedRepository(thread, RepositoryType.AUXILIARY, 3)).toBeFalse();
+        expect(matchesSelectedRepository(thread, RepositoryType.AUXILIARY, 3)).toBe(false);
     });
 
     it('should accept auxiliary repository when no id is provided', () => {
         const thread = { targetType: CommentThreadLocationType.AUXILIARY_REPO, auxiliaryRepositoryId: 2 } as any;
-        expect(matchesSelectedRepository(thread, RepositoryType.AUXILIARY)).toBeTrue();
+        expect(matchesSelectedRepository(thread, RepositoryType.AUXILIARY)).toBe(true);
     });
 
     it('should return false for unknown repository type', () => {
         const thread = { targetType: CommentThreadLocationType.TEMPLATE_REPO } as any;
-        expect(matchesSelectedRepository(thread, undefined)).toBeFalse();
+        expect(matchesSelectedRepository(thread, undefined)).toBe(false);
     });
 });
 
@@ -67,26 +68,26 @@ describe('mapRepositoryToThreadLocationType', () => {
 
 describe('isReviewCommentsSupportedRepository', () => {
     it('should support template repository', () => {
-        expect(isReviewCommentsSupportedRepository(RepositoryType.TEMPLATE)).toBeTrue();
+        expect(isReviewCommentsSupportedRepository(RepositoryType.TEMPLATE)).toBe(true);
     });
 
     it('should support solution repository', () => {
-        expect(isReviewCommentsSupportedRepository(RepositoryType.SOLUTION)).toBeTrue();
+        expect(isReviewCommentsSupportedRepository(RepositoryType.SOLUTION)).toBe(true);
     });
 
     it('should support tests repository', () => {
-        expect(isReviewCommentsSupportedRepository(RepositoryType.TESTS)).toBeTrue();
+        expect(isReviewCommentsSupportedRepository(RepositoryType.TESTS)).toBe(true);
     });
 
     it('should support auxiliary repository', () => {
-        expect(isReviewCommentsSupportedRepository(RepositoryType.AUXILIARY)).toBeTrue();
+        expect(isReviewCommentsSupportedRepository(RepositoryType.AUXILIARY)).toBe(true);
     });
 
     it('should not support assignment repository', () => {
-        expect(isReviewCommentsSupportedRepository(RepositoryType.ASSIGNMENT)).toBeFalse();
+        expect(isReviewCommentsSupportedRepository(RepositoryType.ASSIGNMENT)).toBe(false);
     });
 
     it('should not support undefined repository', () => {
-        expect(isReviewCommentsSupportedRepository(undefined)).toBeFalse();
+        expect(isReviewCommentsSupportedRepository(undefined)).toBe(false);
     });
 });

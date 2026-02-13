@@ -2,8 +2,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReviewCommentDraftWidgetComponent } from 'app/exercise/review/review-comment-draft-widget/review-comment-draft-widget.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ReviewCommentDraftWidgetComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ReviewCommentDraftWidgetComponent>;
     let comp: ReviewCommentDraftWidgetComponent;
 
@@ -18,11 +21,11 @@ describe('ReviewCommentDraftWidgetComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should emit submit when allowed and text is non-empty', () => {
-        const submitSpy = jest.fn();
+        const submitSpy = vi.fn();
         comp.onSubmit.subscribe(submitSpy);
 
         comp.text = '  hello  ';
@@ -32,7 +35,7 @@ describe('ReviewCommentDraftWidgetComponent', () => {
     });
 
     it('should not emit submit when text is empty', () => {
-        const submitSpy = jest.fn();
+        const submitSpy = vi.fn();
         comp.onSubmit.subscribe(submitSpy);
 
         comp.text = '   ';
@@ -42,7 +45,7 @@ describe('ReviewCommentDraftWidgetComponent', () => {
     });
 
     it('should block submit when canSubmit is false', () => {
-        const submitSpy = jest.fn();
+        const submitSpy = vi.fn();
         comp.onSubmit.subscribe(submitSpy);
         fixture.componentRef.setInput('canSubmit', false);
         fixture.detectChanges();
@@ -53,12 +56,12 @@ describe('ReviewCommentDraftWidgetComponent', () => {
         expect(submitSpy).not.toHaveBeenCalled();
         const submitButton = fixture.nativeElement.querySelector('[data-testid="review-draft-submit"]');
         const errorMessage = fixture.nativeElement.querySelector('.monaco-review-comment-error');
-        expect(submitButton.disabled).toBeTrue();
+        expect(submitButton.disabled).toBe(true);
         expect(errorMessage).not.toBeNull();
     });
 
     it('should emit cancel and reset error flag', () => {
-        const cancelSpy = jest.fn();
+        const cancelSpy = vi.fn();
         comp.onCancel.subscribe(cancelSpy);
 
         comp.cancel();

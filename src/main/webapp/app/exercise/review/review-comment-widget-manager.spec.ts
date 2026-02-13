@@ -2,46 +2,47 @@ import { ReviewCommentWidgetManager, ReviewCommentWidgetManagerConfig } from 'ap
 import { ReviewCommentDraftWidgetComponent } from 'app/exercise/review/review-comment-draft-widget/review-comment-draft-widget.component';
 import { ReviewCommentThreadWidgetComponent } from 'app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component';
 import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 describe('ReviewCommentWidgetManager', () => {
     const createEditorMock = () => ({
-        setLineDecorationsHoverButton: jest.fn(),
-        clearLineDecorationsHoverButton: jest.fn(),
-        addLineWidget: jest.fn(),
-        disposeWidgetsByPrefix: jest.fn(),
+        setLineDecorationsHoverButton: vi.fn(),
+        clearLineDecorationsHoverButton: vi.fn(),
+        addLineWidget: vi.fn(),
+        disposeWidgetsByPrefix: vi.fn(),
     });
 
     const createDraftRef = () => {
         const instance: any = {
-            onSubmit: { subscribe: jest.fn((cb) => (instance._onSubmit = cb)) },
-            onCancel: { subscribe: jest.fn((cb) => (instance._onCancel = cb)) },
+            onSubmit: { subscribe: vi.fn((cb) => (instance._onSubmit = cb)) },
+            onCancel: { subscribe: vi.fn((cb) => (instance._onCancel = cb)) },
         };
         return {
             instance,
             location: { nativeElement: document.createElement('div') },
-            setInput: jest.fn(),
-            destroy: jest.fn(),
+            setInput: vi.fn(),
+            destroy: vi.fn(),
         } as any;
     };
 
     const createThreadRef = () => {
         const instance: any = {
-            onDelete: { subscribe: jest.fn((cb) => (instance._onDelete = cb)) },
-            onReply: { subscribe: jest.fn((cb) => (instance._onReply = cb)) },
-            onUpdate: { subscribe: jest.fn((cb) => (instance._onUpdate = cb)) },
-            onToggleResolved: { subscribe: jest.fn((cb) => (instance._onToggleResolved = cb)) },
-            onToggleCollapse: { subscribe: jest.fn((cb) => (instance._onToggleCollapse = cb)) },
+            onDelete: { subscribe: vi.fn((cb) => (instance._onDelete = cb)) },
+            onReply: { subscribe: vi.fn((cb) => (instance._onReply = cb)) },
+            onUpdate: { subscribe: vi.fn((cb) => (instance._onUpdate = cb)) },
+            onToggleResolved: { subscribe: vi.fn((cb) => (instance._onToggleResolved = cb)) },
+            onToggleCollapse: { subscribe: vi.fn((cb) => (instance._onToggleCollapse = cb)) },
         };
         return {
             instance,
             location: { nativeElement: document.createElement('div') },
-            setInput: jest.fn(),
-            destroy: jest.fn(),
+            setInput: vi.fn(),
+            destroy: vi.fn(),
         } as any;
     };
 
     const createViewContainerRefMock = () => {
-        const createComponent = jest.fn((componentType: any) => {
+        const createComponent = vi.fn((componentType: any) => {
             if (componentType === ReviewCommentDraftWidgetComponent) {
                 return createDraftRef();
             }
@@ -61,18 +62,18 @@ describe('ReviewCommentWidgetManager', () => {
         getThreads: () => [],
         filterThread: () => true,
         getThreadLine: (thread) => (thread.lineNumber ?? 1) - 1,
-        onAdd: jest.fn(),
-        onSubmit: jest.fn(),
-        onDelete: jest.fn(),
-        onReply: jest.fn(),
-        onUpdate: jest.fn(),
-        onToggleResolved: jest.fn(),
+        onAdd: vi.fn(),
+        onSubmit: vi.fn(),
+        onDelete: vi.fn(),
+        onReply: vi.fn(),
+        onUpdate: vi.fn(),
+        onToggleResolved: vi.fn(),
         showLocationWarning: () => false,
         ...overrides,
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should update hover button based on config', () => {
@@ -93,7 +94,7 @@ describe('ReviewCommentWidgetManager', () => {
     it('should add and remove draft widgets incrementally', () => {
         const editor = createEditorMock();
         const vcRef = createViewContainerRefMock();
-        const onAdd = jest.fn();
+        const onAdd = vi.fn();
         const config = createConfig({ onAdd });
         const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, config);
 
@@ -148,7 +149,7 @@ describe('ReviewCommentWidgetManager', () => {
     it('should submit draft and remove it', () => {
         const editor = createEditorMock();
         const vcRef = createViewContainerRefMock();
-        const onSubmit = jest.fn();
+        const onSubmit = vi.fn();
         const config = createConfig({ onSubmit });
         const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, config);
 
@@ -212,7 +213,7 @@ describe('ReviewCommentWidgetManager', () => {
 
         manager.renderWidgets();
         const updated = manager.updateThreadInputs(threads);
-        expect(updated).toBeTrue();
+        expect(updated).toBe(true);
     });
 
     it('should return false when thread widget is missing', () => {
@@ -222,6 +223,6 @@ describe('ReviewCommentWidgetManager', () => {
         const manager = new ReviewCommentWidgetManager(editor as any, vcRef as any, config);
 
         const updated = manager.updateThreadInputs([{ id: 99 } as any]);
-        expect(updated).toBeFalse();
+        expect(updated).toBe(false);
     });
 });
