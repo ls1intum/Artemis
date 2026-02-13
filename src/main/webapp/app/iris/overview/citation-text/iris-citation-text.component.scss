@@ -10,6 +10,7 @@ jhi-iris-citation-text {
     --iris-citation-nav-hover-bg: var(--iris-citation-nav-button-hover-bg);
     --iris-citation-icon-bg: var(--secondary);
     --iris-citation-source-color: var(--iris-chat-history-label-color);
+    --iris-citation-lecture-color: var(--iris-citation-lecture-text-color);
 
     .iris-citation-group {
         display: inline-flex;
@@ -120,7 +121,7 @@ jhi-iris-citation-text {
         display: block;
         font-size: 0.75rem;
         line-height: 1.2;
-        color: var(--iris-citation-meta-color);
+        color: var(--iris-citation-lecture-color);
     }
 
     .iris-citation__summary-text {
