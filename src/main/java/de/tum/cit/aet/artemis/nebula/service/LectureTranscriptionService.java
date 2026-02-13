@@ -49,6 +49,8 @@ public class LectureTranscriptionService {
 
     private final RestTemplate restTemplate;
 
+    private final Optional<RestTemplate> pyrisRestTemplate;
+
     private final String nebulaBaseUrl;
 
     private final String nebulaSecretToken;
@@ -62,12 +64,13 @@ public class LectureTranscriptionService {
     private final ConcurrentHashMap<String, Integer> failureCountMap = new ConcurrentHashMap<>();
 
     public LectureTranscriptionService(LectureTranscriptionsRepositoryApi lectureTranscriptionsRepositoryApi, LectureUnitRepositoryApi lectureUnitRepositoryApi,
-            @Qualifier("nebulaRestTemplate") RestTemplate restTemplate, @Value("${artemis.nebula.url}") String nebulaBaseUrl,
-            @Value("${artemis.nebula.secret-token}") String nebulaSecretToken, Optional<ProcessingStateCallbackApi> processingStateCallbackApi,
-            Optional<IrisTranscriptionApi> irisTranscriptionApi, @Value("${server.url}") String artemisBaseUrl) {
+            @Qualifier("nebulaRestTemplate") RestTemplate restTemplate, @Qualifier("pyrisRestTemplate") Optional<RestTemplate> pyrisRestTemplate,
+            @Value("${artemis.nebula.url}") String nebulaBaseUrl, @Value("${artemis.nebula.secret-token}") String nebulaSecretToken,
+            Optional<ProcessingStateCallbackApi> processingStateCallbackApi, Optional<IrisTranscriptionApi> irisTranscriptionApi, @Value("${server.url}") String artemisBaseUrl) {
         this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.restTemplate = restTemplate;
+        this.pyrisRestTemplate = pyrisRestTemplate;
         this.nebulaBaseUrl = nebulaBaseUrl;
         this.nebulaSecretToken = nebulaSecretToken;
         this.processingStateCallbackApi = processingStateCallbackApi;
@@ -240,13 +243,16 @@ public class LectureTranscriptionService {
             NebulaTranscriptionRequestDTO fullRequest = new NebulaTranscriptionRequestDTO(request.videoUrl(), request.lectureUnitId(), request.lectureId(), request.courseId(),
                     request.courseName(), request.lectureName(), request.lectureUnitName(), settings);
 
+            // Use pyrisRestTemplate for Pyris webhook endpoint (has correct auth interceptor)
+            RestTemplate templateToUse = pyrisRestTemplate.orElseThrow(() -> new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Pyris REST template not available"));
+
             HttpHeaders headers = new HttpHeaders();
             headers.set("Content-Type", "application/json");
-            headers.set("Authorization", nebulaSecretToken);
+            // Authorization header is automatically added by PyrisAuthorizationInterceptor
             HttpEntity<NebulaTranscriptionRequestDTO> entity = new HttpEntity<>(fullRequest, headers);
 
             String url = nebulaBaseUrl + "/api/v1/webhooks/transcription/video";
-            restTemplate.exchange(url, HttpMethod.POST, entity, Void.class);
+            templateToUse.exchange(url, HttpMethod.POST, entity, Void.class);
 
             // Create placeholder transcription with our generated token as jobId
             createEmptyTranscription(lectureId, lectureUnitId, jobToken);
