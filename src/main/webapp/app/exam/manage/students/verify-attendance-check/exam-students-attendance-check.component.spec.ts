@@ -22,6 +22,7 @@ import dayjs from 'dayjs/esm';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { vi } from 'vitest';
 
 describe('ExamStudentsAttendanceCheckComponent', () => {
     const course = { id: 1 } as Course;
@@ -63,7 +64,7 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
         fixture.destroy();
     });
 
@@ -82,7 +83,7 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
     });
 
     it('should test on sort', () => {
-        const sortServiceSpy = jest.spyOn(sortService, 'sortByProperty');
+        const sortServiceSpy = vi.spyOn(sortService, 'sortByProperty');
 
         fixture.detectChanges();
         component.sortRows();
@@ -99,7 +100,7 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
         examUserAttendanceCheckDTO.started = true;
         examUserAttendanceCheckDTO.submitted = false;
         const response: ExamUserAttendanceCheckDTO[] = [examUserAttendanceCheckDTO];
-        const examServiceStub = jest.spyOn(examManagementService, 'verifyExamUserAttendance').mockReturnValue(of(new HttpResponse({ body: response })));
+        const examServiceStub = vi.spyOn(examManagementService, 'verifyExamUserAttendance').mockReturnValue(of(new HttpResponse({ body: response })));
 
         fixture.detectChanges();
 
