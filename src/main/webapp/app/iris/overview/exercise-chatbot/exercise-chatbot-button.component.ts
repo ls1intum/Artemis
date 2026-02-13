@@ -172,7 +172,7 @@ export class IrisExerciseChatbotButtonComponent {
      */
     public checkOverflow() {
         const bubble = this.chatBubble()?.nativeElement as HTMLElement | undefined;
-        const text = bubble?.querySelector('.bubble-text') as HTMLElement | null;
+        const text = bubble?.querySelector<HTMLElement>('.bubble-text') ?? undefined;
         this.isOverflowing.set(!!text && text.scrollHeight > text.clientHeight);
     }
 

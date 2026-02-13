@@ -419,6 +419,7 @@ pre {
     flex: 0 1 auto;
 
     textarea {
+        background-color: var(--iris-secondary-background);
         flex: 1 0 auto;
         padding: 16px 56px 36px 16px;
         resize: none;
@@ -434,9 +435,9 @@ pre {
         }
 
         &:disabled {
-            opacity: 0.5;
+            opacity: 0.3;
             cursor: not-allowed;
-            background-color: var(--iris-tertiary-background);
+            background-color: var(--iris-secondary-background);
         }
     }
 

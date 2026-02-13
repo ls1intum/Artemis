@@ -16,7 +16,9 @@ export class CourseIrisComponent {
     private readonly route = inject(ActivatedRoute);
     private readonly courseChatbot = viewChild('courseChatbot', { read: CourseChatbotComponent });
 
-    private readonly courseIdParam = toSignal((this.route.parent?.paramMap ?? of(convertToParamMap({}))).pipe(map((params) => params.get('courseId'))), { initialValue: null });
+    private readonly courseIdParam = toSignal((this.route.parent?.paramMap ?? of(convertToParamMap({}))).pipe(map((params) => params.get('courseId') ?? undefined)), {
+        initialValue: undefined,
+    });
 
     readonly courseId = computed(() => {
         const value = this.courseIdParam();
