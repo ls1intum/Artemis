@@ -5,6 +5,7 @@ import { faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons'
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { vi } from 'vitest';
 
 @Component({
     template: `
@@ -24,7 +25,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 class TestSortByDirectiveComponent {
     predicate?: string;
     ascending?: boolean;
-    transition = jest.fn();
+    transition = vi.fn();
     faSort = faSort;
 }
 
@@ -54,7 +55,7 @@ describe('Directive: SortByDirective', () => {
         fixture.detectChanges();
 
         // THEN
-        expect(sortByDirective.jhiSortBy).toBe('name');
+        expect(sortByDirective.jhiSortBy()).toBe('name');
         expect(component.predicate).toBe('_score');
         expect(sortByDirective.iconComponent?.icon()).toBe(faSort);
         expect(component.transition).not.toHaveBeenCalled();
@@ -69,7 +70,7 @@ describe('Directive: SortByDirective', () => {
         fixture.detectChanges();
 
         // THEN
-        expect(sortByDirective.jhiSortBy).toBe('name');
+        expect(sortByDirective.jhiSortBy()).toBe('name');
         expect(component.predicate).toBe('id');
         expect(sortByDirective.iconComponent?.icon()).toBe(faSort);
         expect(component.transition).not.toHaveBeenCalled();
@@ -85,7 +86,7 @@ describe('Directive: SortByDirective', () => {
         fixture.detectChanges();
 
         // THEN
-        expect(sortByDirective.jhiSortBy).toBe('name');
+        expect(sortByDirective.jhiSortBy()).toBe('name');
         expect(component.predicate).toBe('name');
         expect(component.ascending).toBeTrue();
         expect(sortByDirective.iconComponent?.icon()).toBe(faSortUp);
@@ -104,7 +105,7 @@ describe('Directive: SortByDirective', () => {
         fixture.detectChanges();
 
         // THEN
-        expect(sortByDirective.jhiSortBy).toBe('name');
+        expect(sortByDirective.jhiSortBy()).toBe('name');
         expect(component.predicate).toBe('name');
         expect(component.ascending).toBeTrue();
         expect(sortByDirective.iconComponent?.icon()).toBe(faSortUp);
