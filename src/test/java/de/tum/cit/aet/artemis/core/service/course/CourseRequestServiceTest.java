@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseRequest;
 import de.tum.cit.aet.artemis.core.domain.CourseRequestStatus;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseRequestCreateDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRequestRepository;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
@@ -203,6 +205,57 @@ class CourseRequestServiceTest {
         verify(mailSendingService).buildAndSendAsync(userCaptor.capture(), anyString(), eq("mail/courseRequestRejectedEmail"), anyMap());
         assertThat(userCaptor.getValue()).isSameAs(requester);
         assertThat(userCaptor.getValue().getEmail()).isEqualTo("instructor@uni.test");
+    }
+
+    /**
+     * Verifies that createCourseRequest sends the received confirmation email with the
+     * eagerly loaded requester User, not from the post-save entity. While new entities
+     * use persist() (which preserves the association), this test ensures the defensive
+     * pattern is in place for consistency with accept/reject.
+     */
+    @Test
+    void createCourseRequestShouldSendReceivedEmailWithCorrectRequester() {
+        User requester = createRequester();
+        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(requester);
+        when(courseRepository.existsByShortNameIgnoreCase("NEW123")).thenReturn(false);
+        when(courseRequestRepository.findOneByShortNameIgnoreCase("NEW123")).thenReturn(Optional.empty());
+
+        // save() returns a new entity without requester (simulates merge behavior for defensive testing)
+        when(courseRequestRepository.save(any(CourseRequest.class))).thenAnswer(invocation -> {
+            CourseRequest original = invocation.getArgument(0);
+            CourseRequest saved = new CourseRequest();
+            saved.setId(42L);
+            saved.setTitle(original.getTitle());
+            saved.setShortName(original.getShortName());
+            saved.setSemester(original.getSemester());
+            saved.setStartDate(original.getStartDate());
+            saved.setEndDate(original.getEndDate());
+            saved.setTestCourse(original.isTestCourse());
+            saved.setReason(original.getReason());
+            saved.setStatus(original.getStatus());
+            saved.setRequester(null);
+            return saved;
+        });
+        when(courseRequestRepository.findOneWithEagerRelationshipsById(42L)).thenAnswer(invocation -> {
+            CourseRequest refetched = new CourseRequest();
+            refetched.setId(42L);
+            refetched.setTitle("New Course");
+            refetched.setShortName("NEW123");
+            refetched.setStatus(CourseRequestStatus.PENDING);
+            refetched.setRequester(requester);
+            return Optional.of(refetched);
+        });
+
+        var createDTO = new CourseRequestCreateDTO("New Course", "NEW123", "WS25", ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(10), false, "Need a course");
+        courseRequestService.createCourseRequest(createDTO);
+
+        // Verify received email was sent with the original requester, not from the saved entity
+        verify(mailSendingService).buildAndSendAsync(userCaptor.capture(), eq("email.courseRequest.received.title"), eq("mail/courseRequestReceivedEmail"), anyMap());
+        assertThat(userCaptor.getValue()).isSameAs(requester);
+        assertThat(userCaptor.getValue().getEmail()).isEqualTo("instructor@uni.test");
+
+        // Verify contact notification was also sent
+        verify(mailSendingService).buildAndSendAsync(any(User.class), eq("email.courseRequest.contact.title"), any(List.class), eq("mail/courseRequestContactEmail"), anyMap());
     }
 
     private User createRequester() {
