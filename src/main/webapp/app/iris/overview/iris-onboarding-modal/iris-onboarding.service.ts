@@ -2,6 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { IrisOnboardingModalComponent } from './iris-onboarding-modal.component';
 
+export type OnboardingResult = { action: 'finish' } | { action: 'promptSelected'; promptKey: string };
+
 const IRIS_ONBOARDING_COMPLETED_KEY = 'iris-onboarding-completed';
 
 @Injectable({
@@ -10,6 +12,7 @@ const IRIS_ONBOARDING_COMPLETED_KEY = 'iris-onboarding-completed';
 export class IrisOnboardingService {
     private modalService = inject(NgbModal);
     private modalRef: NgbModalRef | undefined;
+    private pendingResult: Promise<OnboardingResult | undefined> | undefined;
 
     private isDesktopViewport(): boolean {
         if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
@@ -42,34 +45,35 @@ export class IrisOnboardingService {
 
     /**
      * Opens the onboarding modal if the user hasn't completed it yet.
-     * @returns Promise that resolves to 'start' if user clicks "Let's get started",
-     *          'skip' if user clicks "Skip tour", or undefined if dismissed
+     * @returns Promise that resolves to an OnboardingResult or undefined if dismissed
      */
-    async showOnboardingIfNeeded(hasAvailableExercises = true): Promise<'start' | 'skip' | undefined> {
+    async showOnboardingIfNeeded(hasAvailableExercises = true): Promise<OnboardingResult | undefined> {
         if (!this.isDesktopViewport()) {
             return undefined;
         }
 
-        // TODO: Re-enable this check after development is complete
-        // if (this.hasCompletedOnboarding()) {
-        //     return undefined;
-        // }
+        if (this.hasCompletedOnboarding()) {
+            return undefined;
+        }
 
         return this.openOnboardingModal(hasAvailableExercises);
     }
 
     /**
      * Forces the onboarding modal to open regardless of completion state.
-     * @returns Promise that resolves to 'start' if user clicks "Let's get started",
-     *          'skip' if user clicks "Skip tour", or undefined if dismissed
+     * @returns Promise that resolves to an OnboardingResult or undefined if dismissed
      */
-    async openOnboardingModal(hasAvailableExercises = true): Promise<'start' | 'skip' | undefined> {
+    async openOnboardingModal(hasAvailableExercises = true): Promise<OnboardingResult | undefined> {
         if (!this.isDesktopViewport()) {
             return undefined;
         }
 
+        // If a modal is already open, return the same pending result promise.
+        // This handles the case where the chatbot component is destroyed and
+        // re-created during navigation (e.g., exercises tour steps 1-3) — the
+        // new component instance receives the modal result from the existing modal.
         if (this.modalRef) {
-            return undefined;
+            return this.pendingResult;
         }
 
         this.modalRef = this.modalService.open(IrisOnboardingModalComponent, {
@@ -81,18 +85,26 @@ export class IrisOnboardingService {
         });
         this.modalRef.componentInstance?.hasAvailableExercises?.set(hasAvailableExercises);
 
+        this.pendingResult = this.modalRef.result.then(
+            (result) => {
+                this.markOnboardingCompleted();
+                if (result && typeof result === 'object' && result.action === 'promptSelected') {
+                    return result as OnboardingResult;
+                }
+                return { action: 'finish' } as OnboardingResult;
+            },
+            () => {
+                // Modal was dismissed (e.g., clicked X button)
+                this.markOnboardingCompleted();
+                return undefined;
+            },
+        );
+
         try {
-            const result = await this.modalRef.result;
-            // TODO: Re-enable after development is complete
-            // this.markOnboardingCompleted();
-            return result as 'start' | 'skip';
-        } catch {
-            // Modal was dismissed (e.g., clicked X button)
-            // TODO: Re-enable after development is complete
-            // this.markOnboardingCompleted();
-            return undefined;
+            return await this.pendingResult;
         } finally {
             this.modalRef = undefined;
+            this.pendingResult = undefined;
         }
     }
 }

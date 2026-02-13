@@ -180,6 +180,11 @@
         opacity: 1;
         color: var(--bs-body-color);
     }
+
+    &:focus-visible {
+        outline: 2px solid var(--bs-primary);
+        outline-offset: 2px;
+    }
 }
 
 .close-button {
@@ -383,6 +388,19 @@
     .onboarding-tooltip {
         animation: none;
     }
+
+    .final-modal-enter,
+    .final-modal-backdrop {
+        animation: none;
+    }
+
+    .coach-mark {
+        animation: none;
+
+        &::before {
+            animation: none;
+        }
+    }
 }
 
 .tooltip-header {
@@ -399,13 +417,6 @@
     margin: 0;
     line-height: 1.4;
     flex: 1;
-}
-
-.close-button-small {
-    @extend %close-button-base;
-
-    font-size: 1.25rem;
-    flex-shrink: 0;
 }
 
 .tooltip-description {
@@ -565,6 +576,11 @@
         background: var(--iris-client-chat-background);
         // border-color: var(--bs-border-color);
         transform: translateY(-1px);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--bs-primary);
+        outline-offset: 2px;
     }
 
     fa-icon {

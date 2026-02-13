@@ -4,7 +4,7 @@ import { Component, computed, input } from '@angular/core';
     selector: 'jhi-stepper',
     standalone: true,
     template: `
-        <div class="stepper">
+        <div class="stepper" role="img" [attr.aria-label]="'Step ' + currentStep() + ' of ' + totalSteps()">
             @for (step of steps(); track step) {
                 <div class="step-indicator" [class.active]="step === currentStep()" [class.inactive]="step !== currentStep()"></div>
             }

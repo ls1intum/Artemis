@@ -5,6 +5,7 @@
                 "title": "Lerne Iris kennen",
                 "description": "Iris ist ein in Artemis integrierter KI-Programmier-Tutor. Sie kennt den Kontext der aktuellen Übung und deinen neuesten Code, sodass du direkt Fragen stellen kannst.",
                 "note": "Bitte beachte: Iris unterstützt nur kursbezogene Fragen und beteiligt sich nicht an themenfremden Gesprächen.",
+                "close": "Schließen",
                 "getStarted": "Zur Tour",
                 "next": "Weiter",
                 "step1": {
@@ -22,10 +23,14 @@
                     "description": "Wähle unten einen vorgeschlagenen Prompt aus, um zu beginnen.",
                     "prompts": {
                         "explainConcept": "Erkläre ein Konzept",
+                        "explainConceptStarter": "Hilf mir, das Konzept von ... zu verstehen: ",
                         "quizTopic": "Frage mich zu einem Thema ab",
-                        "studyTips": "Gib mir Lerntipps"
+                        "quizTopicStarter": "Erstelle 5 Multiple-Choice-Fragen zum Thema ",
+                        "studyTips": "Gib mir Lerntipps",
+                        "studyTipsStarter": "Gib mir 3 Tipps, um effektiv zu lernen: "
                     },
-                    "replayHint": "Klicke auf das (i) Symbol, um diese Tour erneut anzuzeigen"
+                    "replayHint": "Klicke auf das (i) Symbol, um diese Tour erneut anzuzeigen",
+                    "promptSuggestions": "Prompt-Vorschläge"
                 }
             },
             "settings": {

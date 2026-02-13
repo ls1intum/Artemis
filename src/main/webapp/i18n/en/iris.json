@@ -5,6 +5,7 @@
                 "title": "Meet Iris",
                 "description": "Iris is an AI coding tutor built into Artemis. It has the current exercise and latest code context, so you can ask questions right away.",
                 "note": "Please note: Iris only supports course-related questions and does not engage in off-topic conversations.",
+                "close": "Close",
                 "getStarted": "Take the tour",
                 "next": "Next",
                 "step1": {
@@ -22,10 +23,14 @@
                     "description": "Choose a suggested prompt below to begin.",
                     "prompts": {
                         "explainConcept": "Explain a concept",
+                        "explainConceptStarter": "Help me understand the concept of ",
                         "quizTopic": "Quiz me on a topic",
-                        "studyTips": "Give me study tips"
+                        "quizTopicStarter": "Generate 5 multiple choice questions to quiz me on the topic of ",
+                        "studyTips": "Give me study tips",
+                        "studyTipsStarter": "Give me 3 tips to be effective at learning "
                     },
-                    "replayHint": "Click the (i) icon to see this tour again"
+                    "replayHint": "Click the (i) icon to see this tour again",
+                    "promptSuggestions": "Prompt suggestions"
                 }
             },
             "settings": {

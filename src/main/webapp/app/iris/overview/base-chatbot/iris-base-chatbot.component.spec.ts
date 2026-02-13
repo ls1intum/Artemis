@@ -1012,6 +1012,52 @@ describe('IrisBaseChatbotComponent', () => {
             expect(component.userAccepted()).toBeUndefined();
         });
 
+        it('should apply prompt starter when onboarding returns promptSelected', async () => {
+            const promptKey = 'artemisApp.iris.onboarding.step4.prompts.explainConceptStarter';
+            mockOnboardingService.showOnboardingIfNeeded.mockResolvedValue({ action: 'promptSelected', promptKey });
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            component.ngAfterViewInit();
+            await fixture.whenStable();
+            // Wait for the setTimeout inside applyPromptStarter
+            await new Promise((resolve) => setTimeout(resolve, 50));
+
+            expect(component.newMessageTextContent()).toBe(promptKey);
+
+            // Reset mock for other tests
+            mockOnboardingService.showOnboardingIfNeeded.mockResolvedValue(undefined);
+        });
+
+        it('should not apply prompt starter when onboarding returns finish', async () => {
+            mockOnboardingService.showOnboardingIfNeeded.mockResolvedValue({ action: 'finish' });
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            component.ngAfterViewInit();
+            await fixture.whenStable();
+
+            expect(component.newMessageTextContent()).toBe('');
+
+            // Reset mock for other tests
+            mockOnboardingService.showOnboardingIfNeeded.mockResolvedValue(undefined);
+        });
+
+        it('should not apply prompt starter when onboarding returns undefined', async () => {
+            mockOnboardingService.showOnboardingIfNeeded.mockResolvedValue(undefined);
+
+            component.ngAfterViewInit();
+            await fixture.whenStable();
+
+            expect(component.newMessageTextContent()).toBe('');
+        });
+
         it('should not show onboarding modal when userAccepted is already set', async () => {
             const mockUser = { selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User;
             accountService.userIdentity.set(mockUser);
