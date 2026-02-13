@@ -98,7 +98,26 @@ describe('IrisOnboardingService', () => {
                     modalDialogClass: 'iris-onboarding-dialog',
                 }),
             );
-            expect(result).toBe('finish');
+            expect(result).toEqual({ action: 'finish' });
+        });
+
+        it('should return promptSelected result when modal closes with prompt selection', async () => {
+            const promptResult = { action: 'promptSelected', promptKey: 'artemisApp.iris.onboarding.step4.prompts.explainConceptStarter' };
+            const mockModalRef = { result: Promise.resolve(promptResult) } as NgbModalRef;
+            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+
+            const result = await service.openOnboardingModal();
+
+            expect(result).toEqual(promptResult);
+        });
+
+        it('should mark onboarding as completed after modal closes', async () => {
+            const mockModalRef = { result: Promise.resolve('finish') } as NgbModalRef;
+            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+
+            await service.openOnboardingModal();
+
+            expect(service.hasCompletedOnboarding()).toBeTruthy();
         });
 
         it('should pass hasAvailableExercises to the modal component', async () => {
@@ -121,24 +140,34 @@ describe('IrisOnboardingService', () => {
             const result = await service.openOnboardingModal();
 
             expect(result).toBeUndefined();
+            expect(service.hasCompletedOnboarding()).toBeTruthy();
         });
 
         it('should not open a second modal if one is already open', async () => {
-            const neverResolve = new Promise<string>(() => {});
-            const mockModalRef = { result: neverResolve } as NgbModalRef;
+            let resolveModal: (value: unknown) => void;
+            const modalPromise = new Promise((resolve) => {
+                resolveModal = resolve;
+            });
+            const mockModalRef = { result: modalPromise } as NgbModalRef;
             vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
 
-            // Start first modal (won't resolve)
+            // Start first modal (won't resolve yet)
             const firstCall = service.openOnboardingModal();
 
-            // Try opening second modal immediately
-            const secondResult = await service.openOnboardingModal();
+            // Try opening second modal — should NOT open a new modal
+            const secondCall = service.openOnboardingModal();
 
             expect(modalService.open).toHaveBeenCalledOnce();
-            expect(secondResult).toBeUndefined();
 
-            // Clean up by not awaiting the never-resolving promise
-            void firstCall;
+            // Resolve the modal with a prompt selection
+            const promptResult = { action: 'promptSelected', promptKey: 'artemisApp.iris.onboarding.step4.prompts.explainConceptStarter' };
+            resolveModal!(promptResult);
+
+            // Both calls should receive the same result
+            const firstResult = await firstCall;
+            const secondResult = await secondCall;
+            expect(firstResult).toEqual(promptResult);
+            expect(secondResult).toEqual(promptResult);
         });
 
         it('should clear modalRef after modal closes', async () => {
@@ -172,7 +201,16 @@ describe('IrisOnboardingService', () => {
             const result = await service.showOnboardingIfNeeded();
 
             expect(modalService.open).toHaveBeenCalledOnce();
-            expect(result).toBe('finish');
+            expect(result).toEqual({ action: 'finish' });
+        });
+
+        it('should return undefined and skip opening when onboarding has been completed', async () => {
+            service.markOnboardingCompleted();
+
+            const result = await service.showOnboardingIfNeeded();
+
+            expect(result).toBeUndefined();
+            expect(modalService.open).not.toHaveBeenCalled();
         });
     });
 });

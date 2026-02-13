@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import { NavigationEnd, Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -13,6 +13,7 @@ import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.compone
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { StepperComponent } from './stepper/stepper.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 function createMockElement(rect: Partial<DOMRect>): Element {
     const el = document.createElement('div');
@@ -55,6 +56,7 @@ describe('IrisOnboardingModalComponent', () => {
                 MockComponent(StepperComponent),
                 MockComponent(FaIconComponent),
                 MockDirective(TranslateDirective),
+                MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
                 MockProvider(NgbActiveModal),
@@ -134,42 +136,48 @@ describe('IrisOnboardingModalComponent', () => {
             component.close();
             expect(dismissSpy).toHaveBeenCalledOnce();
         });
+
+        it('should dismiss the modal on Escape key', () => {
+            const dismissSpy = vi.spyOn(activeModal, 'dismiss');
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+            expect(dismissSpy).toHaveBeenCalledOnce();
+        });
     });
 
     describe('selectPrompt', () => {
-        it('should close modal with selected prompt for explainConcept', () => {
+        it('should close modal with translation key for explainConcept', () => {
             const closeSpy = vi.spyOn(activeModal, 'close');
             component.selectPrompt('explainConcept');
             expect(closeSpy).toHaveBeenCalledWith({
                 action: 'promptSelected',
-                prompt: 'Can you explain a concept from this exercise?',
+                promptKey: 'artemisApp.iris.onboarding.step4.prompts.explainConceptStarter',
             });
         });
 
-        it('should close modal with selected prompt for quizTopic', () => {
+        it('should close modal with translation key for quizTopic', () => {
             const closeSpy = vi.spyOn(activeModal, 'close');
             component.selectPrompt('quizTopic');
             expect(closeSpy).toHaveBeenCalledWith({
                 action: 'promptSelected',
-                prompt: 'Can you quiz me on a topic from this exercise?',
+                promptKey: 'artemisApp.iris.onboarding.step4.prompts.quizTopicStarter',
             });
         });
 
-        it('should close modal with selected prompt for studyTips', () => {
+        it('should close modal with translation key for studyTips', () => {
             const closeSpy = vi.spyOn(activeModal, 'close');
             component.selectPrompt('studyTips');
             expect(closeSpy).toHaveBeenCalledWith({
                 action: 'promptSelected',
-                prompt: 'Can you give me study tips for this exercise?',
+                promptKey: 'artemisApp.iris.onboarding.step4.prompts.studyTipsStarter',
             });
         });
 
-        it('should close modal with undefined prompt for unknown type', () => {
+        it('should close modal with undefined promptKey for unknown type', () => {
             const closeSpy = vi.spyOn(activeModal, 'close');
             component.selectPrompt('unknown');
             expect(closeSpy).toHaveBeenCalledWith({
                 action: 'promptSelected',
-                prompt: undefined,
+                promptKey: undefined,
             });
         });
     });

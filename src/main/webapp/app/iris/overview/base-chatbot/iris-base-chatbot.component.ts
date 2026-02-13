@@ -50,7 +50,7 @@ import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service'
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
-import { IrisOnboardingService } from 'app/iris/overview/iris-onboarding-modal/iris-onboarding.service';
+import { IrisOnboardingService, OnboardingResult } from 'app/iris/overview/iris-onboarding-modal/iris-onboarding.service';
 
 // Session history time bucket boundaries (in days ago)
 const YESTERDAY_OFFSET = 1;
@@ -359,7 +359,27 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         setTimeout(() => (this.shouldAnimate = true), 500);
 
         // Show onboarding modal for first-time users
-        this.onboardingService.showOnboardingIfNeeded(this.hasAvailableExercises());
+        this.onboardingService.showOnboardingIfNeeded(this.hasAvailableExercises()).then((result?: OnboardingResult) => {
+            if (result?.action === 'promptSelected') {
+                this.applyPromptStarter(result.promptKey);
+            }
+        });
+    }
+
+    /**
+     * Inserts a translated prompt starter into the chat textarea.
+     */
+    applyPromptStarter(promptKey: string): void {
+        const text = this.translateService.instant(promptKey);
+        this.newMessageTextContent.set(text);
+        setTimeout(() => {
+            const textarea = this.messageTextarea()?.nativeElement;
+            if (textarea) {
+                textarea.focus();
+                textarea.setSelectionRange(text.length, text.length);
+            }
+            this.adjustTextareaRows();
+        });
     }
 
     checkIfUserAcceptedLLMUsage(): void {

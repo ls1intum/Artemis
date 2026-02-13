@@ -19,3 +19,9 @@
         width: 8px;
     }
 }
+
+@media (prefers-reduced-motion: reduce) {
+    .step-indicator {
+        transition: none;
+    }
+}

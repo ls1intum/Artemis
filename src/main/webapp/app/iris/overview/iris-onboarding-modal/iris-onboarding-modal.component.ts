@@ -1,7 +1,8 @@
-import { Component, OnDestroy, OnInit, WritableSignal, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, WritableSignal, computed, inject, signal } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { StepperComponent } from './stepper/stepper.component';
@@ -25,7 +26,7 @@ type PromptOptionKey = 'explainConcept' | 'quizTopic' | 'studyTips';
     standalone: true,
     templateUrl: './iris-onboarding-modal.component.html',
     styleUrls: ['./iris-onboarding-modal.component.scss'],
-    imports: [TranslateDirective, IrisLogoComponent, ButtonComponent, StepperComponent, FaIconComponent],
+    imports: [TranslateDirective, ArtemisTranslatePipe, IrisLogoComponent, ButtonComponent, StepperComponent, FaIconComponent],
 })
 export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
     private activeModal = inject(NgbActiveModal);
@@ -55,7 +56,7 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
 
     // Position for Step 2 (Iris icon)
     readonly irisIconSpotlight = signal({ top: 594, left: 944, width: 48, height: 48 });
-    readonly tooltipPosition = signal({ top: 680, left: 690 });
+    readonly tooltipPosition = signal({ top: 680 });
     readonly isStep2PositionReady = signal(false);
 
     // Position for Step 3 tooltip (aligned with Dashboard tab)
@@ -87,6 +88,11 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
         return undefined;
     });
 
+    @HostListener('document:keydown.escape')
+    onEscapeKey(): void {
+        this.close();
+    }
+
     ngOnInit(): void {
         // Monitor route changes to auto-advance steps
         this.routeSubscription = this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((event: NavigationEnd) => {
@@ -109,6 +115,10 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
                 this.isStep3PositionReady.set(false);
                 this.scheduleDashboardTabPositionCalculation();
             }
+
+            if (this.step() === 2 || this.step() === 4) {
+                this.moveFocusToModal();
+            }
         } else {
             this.finish();
         }
@@ -120,6 +130,7 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
     onStartTour(): void {
         if (!this.hasAvailableExercises()) {
             this.step.set(4);
+            this.moveFocusToModal();
             return;
         }
 
@@ -147,14 +158,14 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
      * Handles prompt selection from the final step modal.
      */
     selectPrompt(promptType: string): void {
-        const prompts: Record<PromptOptionKey, string> = {
-            explainConcept: 'Can you explain a concept from this exercise?',
-            quizTopic: 'Can you quiz me on a topic from this exercise?',
-            studyTips: 'Can you give me study tips for this exercise?',
+        const starterKeys: Record<PromptOptionKey, string> = {
+            explainConcept: 'artemisApp.iris.onboarding.step4.prompts.explainConceptStarter',
+            quizTopic: 'artemisApp.iris.onboarding.step4.prompts.quizTopicStarter',
+            studyTips: 'artemisApp.iris.onboarding.step4.prompts.studyTipsStarter',
         };
 
-        const selectedPrompt = prompts[promptType as PromptOptionKey];
-        this.activeModal.close({ action: 'promptSelected', prompt: selectedPrompt });
+        const promptKey = starterKeys[promptType as PromptOptionKey];
+        this.activeModal.close({ action: 'promptSelected', promptKey });
     }
 
     /**
@@ -198,7 +209,6 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
         }
 
         const rect = irisButton.getBoundingClientRect();
-        const tooltipRightOffset = 140;
         const highlightMargin = 8;
         const spotlightTop = Math.max(0, rect.top - highlightMargin);
         const spotlightLeft = Math.max(0, rect.left - highlightMargin);
@@ -214,18 +224,13 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
         this.irisIconSpotlight.set(spotlight);
 
         // Place tooltip close to the Iris button (to the left and slightly above it).
-        const tooltipWidth = 250;
         const tooltipHeightEstimate = 180;
         const viewportPadding = 12;
         const preferredTop = spotlight.top - tooltipHeightEstimate + spotlight.height / 2;
-        const preferredLeft = window.innerWidth - tooltipWidth - tooltipRightOffset;
         const minTop = viewportPadding;
         const maxTop = window.innerHeight - tooltipHeightEstimate - viewportPadding;
-        const minLeft = viewportPadding;
-        const maxLeft = window.innerWidth - tooltipWidth - viewportPadding;
         const tooltipPos = {
             top: Math.min(Math.max(preferredTop, minTop), maxTop),
-            left: Math.min(Math.max(preferredLeft, minLeft), maxLeft),
         };
 
         this.tooltipPosition.set(tooltipPos);
@@ -310,5 +315,15 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
 
         // Avoid trapping onboarding on a hidden step when target elements are not available.
         readinessSignal.set(true);
+    }
+
+    /**
+     * Moves focus to the first focusable element inside the current modal step.
+     */
+    private moveFocusToModal(): void {
+        setTimeout(() => {
+            const focusable = document.querySelector<HTMLElement>('.onboarding-container .close-button, .onboarding-container .prompt-chip');
+            focusable?.focus();
+        });
     }
 }

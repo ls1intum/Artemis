@@ -3,11 +3,11 @@
     @if (step() === 0) {
         <div class="full-backdrop"></div>
         <div class="centered-modal-wrapper">
-            <div class="iris-onboarding-modal-welcome">
+            <div class="iris-onboarding-modal-welcome" role="dialog" aria-modal="true" aria-labelledby="onboarding-welcome-title">
                 <!-- Left Side: Text Content -->
                 <div class="welcome-text-section">
                     <div class="text-content">
-                        <h2 class="title" jhiTranslate="artemisApp.iris.onboarding.title"></h2>
+                        <h2 id="onboarding-welcome-title" class="title" jhiTranslate="artemisApp.iris.onboarding.title"></h2>
                         <p class="description" jhiTranslate="artemisApp.iris.onboarding.description"></p>
                     </div>
 
@@ -19,11 +19,11 @@
 
                 <!-- Right Side: Iris Chat Illustration -->
                 <div class="welcome-illustration-section">
-                    <button type="button" class="close-button" (click)="close()" aria-label="Close">
+                    <button type="button" class="close-button" (click)="close()" [attr.aria-label]="'artemisApp.iris.onboarding.close' | artemisTranslate">
                         <span aria-hidden="true">&times;</span>
                     </button>
 
-                    <div class="chat-preview">
+                    <div class="chat-preview" aria-hidden="true">
                         <div class="chat-widget-preview">
                             <div class="chat-header-preview">
                                 <!-- Toolbar icons placeholder -->
@@ -52,7 +52,7 @@
 
     <!-- Steps 1 and 3: Sidebar Spotlight -->
     @if (sidebarTooltipConfig(); as sidebarStep) {
-        <div class="spotlight-backdrop">
+        <div class="spotlight-backdrop" aria-hidden="true">
             <div class="spotlight-section spotlight-top" [style.height.px]="sidebarStep.spotlight.top"></div>
             <div
                 class="spotlight-section spotlight-left"
@@ -69,7 +69,7 @@
             <div class="spotlight-section spotlight-bottom" [style.top.px]="sidebarStep.spotlight.top + sidebarStep.spotlight.height"></div>
         </div>
 
-        <div class="coach-mark" [style.top.px]="sidebarStep.coachMarkPosition.top" [style.left.px]="sidebarStep.coachMarkPosition.left"></div>
+        <div class="coach-mark" aria-hidden="true" [style.top.px]="sidebarStep.coachMarkPosition.top" [style.left.px]="sidebarStep.coachMarkPosition.left"></div>
 
         <div class="onboarding-tooltip sidebar-tooltip" [style.top.px]="sidebarStep.tooltipPosition.top" [style.left.px]="sidebarStep.tooltipPosition.left">
             <p class="tooltip-description" [jhiTranslate]="sidebarStep.descriptionTranslationKey"></p>
@@ -79,8 +79,9 @@
 
     <!-- Step 2: Iris Icon Tooltip (Exercise Page) -->
     @if (step() === 2 && isStep2PositionReady()) {
-        <div class="spotlight-click-guard"></div>
+        <div class="spotlight-click-guard" aria-hidden="true"></div>
         <div
+            aria-hidden="true"
             class="spotlight-blocker rounded-cutout"
             [style.top.px]="irisIconSpotlight().top"
             [style.left.px]="irisIconSpotlight().left"
@@ -92,9 +93,6 @@
         <div class="onboarding-tooltip tooltip-bottom-right-arrow" [style.top.px]="tooltipPosition().top" [style.right.px]="140">
             <div class="tooltip-header">
                 <p class="tooltip-header-text" jhiTranslate="artemisApp.iris.onboarding.step2.header"></p>
-                <button type="button" class="close-button-small" (click)="close()" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
             </div>
             <p class="tooltip-description" jhiTranslate="artemisApp.iris.onboarding.step2.description"></p>
             <div class="tooltip-footer">
@@ -108,20 +106,20 @@
     @if (step() === 4) {
         <div class="full-backdrop final-modal-backdrop"></div>
         <div class="centered-modal-wrapper">
-            <div class="prompt-selection-modal final-modal-enter">
-                <button type="button" class="close-button" (click)="close()" aria-label="Close">
+            <div class="prompt-selection-modal final-modal-enter" role="dialog" aria-modal="true" aria-labelledby="onboarding-prompt-title">
+                <button type="button" class="close-button" (click)="close()" [attr.aria-label]="'artemisApp.iris.onboarding.close' | artemisTranslate">
                     <span aria-hidden="true">&times;</span>
                 </button>
 
                 <div class="modal-header-section">
-                    <h2 class="title" jhiTranslate="artemisApp.iris.onboarding.step4.title"></h2>
+                    <h2 id="onboarding-prompt-title" class="title" jhiTranslate="artemisApp.iris.onboarding.step4.title"></h2>
                     <p class="description" jhiTranslate="artemisApp.iris.onboarding.step4.description"></p>
                 </div>
 
-                <div class="prompt-options">
+                <div class="prompt-options" role="group" [attr.aria-label]="'artemisApp.iris.onboarding.step4.promptSuggestions' | artemisTranslate">
                     @for (prompt of promptOptions; track prompt.type) {
                         <button type="button" class="prompt-chip" (click)="selectPrompt(prompt.type)">
-                            <fa-icon [icon]="prompt.icon" />
+                            <fa-icon [icon]="prompt.icon" aria-hidden="true" />
                             <span [jhiTranslate]="prompt.translationKey"></span>
                         </button>
                     }
