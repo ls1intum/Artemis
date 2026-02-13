@@ -1,4 +1,4 @@
-import { Component, computed, input, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
@@ -10,8 +10,12 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { TooltipModule } from 'primeng/tooltip';
 import { ButtonModule } from 'primeng/button';
 import { RouterLink } from '@angular/router';
-import { TutorialGroupTutorDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupDTO, TutorialGroupTutorDTO, UpdateTutorialGroupDTO, UpdateTutorialGroupScheduleDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialEditLanguagesInputComponent } from 'app/tutorialgroup/manage/tutorial-edit-languages-input/tutorial-edit-languages-input.component';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
+import dayjs from 'dayjs/esm';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AlertService } from 'app/shared/service/alert.service';
 
 type Mode = {
     name: string;
@@ -47,7 +51,14 @@ export class TutorialEditComponent {
     private readonly titleRegex = /^[A-Za-z0-9][A-Za-z0-9: -]*$/;
     protected readonly TutorialEditValidationStatus = TutorialEditValidationStatus;
 
+    private destroyRef = inject(DestroyRef);
+    private tutorialGroupsService = inject(TutorialGroupsService);
+    private alertService = inject(AlertService);
+
+    courseId = input.required<number>();
+    tutorialGroupId = input.required<number>();
     tutors = input.required<TutorialGroupTutorDTO[]>();
+    tutorialGroup = input<TutorialGroupDTO>();
 
     title = signal('');
     titleValidationResult = computed<TutorialEditValidation>(() => this.computeTitleValidation());
@@ -61,7 +72,7 @@ export class TutorialEditComponent {
     campus = signal('');
     campusValidationResult = computed<TutorialEditValidation>(() => this.computeCampusValidation());
     capacity = signal<number | undefined>(undefined);
-    noteForStudents = signal('');
+    additionalInformation = signal('');
 
     configureSessionPlan = signal(true);
     firstSessionStart = signal<Date | undefined>(undefined);
@@ -70,11 +81,70 @@ export class TutorialEditComponent {
     firstSessionEnd = signal<Date | undefined>(undefined);
     firstSessionEndInputTouched = signal(false);
     firstSessionEndValidationResult = computed<TutorialEditValidation>(() => this.computeFirstSessionEndValidation());
-    weekFrequency = signal<number>(1);
-    teachingPeriodEnd = signal<Date | undefined>(undefined);
-    teachingPeriodEndInputTouched = signal(false);
-    teachingPeriodEndValidationResult = computed<TutorialEditValidation>(() => this.computeTeachingPeriodEndValidation());
+    repetitionFrequency = signal<number>(1);
+    tutorialPeriodEnd = signal<Date | undefined>(undefined);
+    tutorialPeriodEndInputTouched = signal(false);
+    tutorialPeriodEndValidationResult = computed<TutorialEditValidation>(() => this.computeTeachingPeriodEndValidation());
     location = signal('');
+
+    constructor() {
+        effect(() => {
+            const tutorialGroup = this.tutorialGroup();
+            if (tutorialGroup) {
+                this.title.set(tutorialGroup.title);
+                this.selectedTutorId.set(tutorialGroup.tutorId);
+                this.language.set(tutorialGroup.language);
+                this.selectedMode.set(tutorialGroup.isOnline ? { name: 'Online' } : { name: 'Offline' });
+                if (tutorialGroup.campus) {
+                    this.campus.set(tutorialGroup.campus);
+                }
+                if (tutorialGroup.capacity) {
+                    this.capacity.set(tutorialGroup.capacity);
+                }
+                if (tutorialGroup.additionalInformation) {
+                    this.additionalInformation.set(tutorialGroup.additionalInformation);
+                }
+                // TODO: init schedule info
+            }
+        });
+    }
+
+    save() {
+        if (this.tutorialGroup()) {
+            this.update();
+        } else {
+            // TODO: create
+        }
+    }
+
+    private update() {
+        const updateTutorialGroupScheduleDTO: UpdateTutorialGroupScheduleDTO = {
+            firstSessionStart: dayjs(this.firstSessionStart()).format('YYYY-MM-DDTHH:mm:ss'),
+            firstSessionEnd: dayjs(this.firstSessionEnd()).format('YYYY-MM-DDTHH:mm:ss'),
+            repetitionFrequency: this.repetitionFrequency(),
+            tutorialPeriodEnd: dayjs(this.tutorialPeriodEnd()).format('YYYY-MM-DD'),
+            location: this.location(),
+        };
+        const updateTutorialGroupDTO: UpdateTutorialGroupDTO = {
+            title: this.title(),
+            updateChannelName: true, // TODO: add input to capture this
+            tutorId: this.selectedTutorId()!,
+            language: this.language(),
+            isOnline: this.selectedMode().name === 'Online',
+            campus: this.campus() || undefined,
+            capacity: this.capacity(),
+            additionalInformation: this.additionalInformation() || undefined,
+            updateTutorialGroupScheduleDTO: updateTutorialGroupScheduleDTO,
+        };
+        this.tutorialGroupsService
+            .update2(this.courseId(), this.tutorialGroupId(), updateTutorialGroupDTO)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                error: () => {
+                    this.alertService.addErrorAlert('Something went wrong while updating the tutorial group. Please try again.'); // TODO: create string key
+                },
+            });
+    }
 
     private computeTitleValidation(): TutorialEditValidation {
         if (!this.titleInputTouched()) return { status: TutorialEditValidationStatus.VALID };
@@ -149,8 +219,8 @@ export class TutorialEditComponent {
     }
 
     private computeTeachingPeriodEndValidation(): TutorialEditValidation {
-        if (!this.teachingPeriodEndInputTouched()) return { status: TutorialEditValidationStatus.VALID };
-        const teachingPeriodEnd = this.teachingPeriodEnd();
+        if (!this.tutorialPeriodEndInputTouched()) return { status: TutorialEditValidationStatus.VALID };
+        const teachingPeriodEnd = this.tutorialPeriodEnd();
         if (!teachingPeriodEnd) {
             return {
                 status: TutorialEditValidationStatus.INVALID,

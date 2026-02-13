@@ -1,14 +1,10 @@
 import { Component, Signal, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { onError } from 'app/shared/util/global.utils';
 import { catchError, map, of } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute } from '@angular/router';
 import { Router } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import {
     CourseTutorialGroupDetailComponent,
     DeleteTutorialGroupDetailSessionEvent,
@@ -17,6 +13,8 @@ import {
 import { TutorialGroupSessionApiService } from 'app/openapi/api/tutorialGroupSessionApi.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
+import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariableSignal';
+import { TutorialGroupService } from 'app/tutorialgroup/shared/service/tutorial-group.service';
 
 @Component({
     selector: 'jhi-management-tutorial-group-detail-container',
@@ -26,37 +24,23 @@ import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-o
 export class ManagementTutorialGroupDetailContainerComponent {
     private router = inject(Router);
     private route = inject(ActivatedRoute);
-    private tutorialGroupService = inject(TutorialGroupsService);
+    private tutorialGroupService = inject(TutorialGroupService);
     private tutorialGroupSessionApiService = inject(TutorialGroupSessionApiService);
     private tutorialGroupApiService = inject(TutorialGroupApiService);
     private alertService = inject(AlertService);
-    private tutorialGroupId = this.getTutorialGroupIdSignal();
+    private tutorialGroupId = getNumericPathVariableSignal(this.route, 'tutorialGroupId');
 
     isLoading = signal(false);
-    tutorialGroup = signal<TutorialGroupDetailGroupDTO | undefined>(undefined);
+    tutorialGroup = this.tutorialGroupService.tutorialGroup;
     course = this.getCourseSignal();
 
     constructor() {
         effect(() => {
             const courseId = this.course()?.id;
             const tutorialGroupId = this.tutorialGroupId();
-            if (!courseId || !tutorialGroupId) {
-                return;
+            if (courseId && tutorialGroupId) {
+                this.tutorialGroupService.fetchTutorialGroupDTO(courseId, tutorialGroupId);
             }
-            this.isLoading.set(true);
-            this.tutorialGroupService
-                .getTutorialGroupDetailGroupDTO(courseId, tutorialGroupId)
-                .pipe(
-                    catchError((error: HttpErrorResponse) => {
-                        this.isLoading.set(false);
-                        onError(this.alertService, error);
-                        return of(undefined);
-                    }),
-                )
-                .subscribe((tutorialGroupResult) => {
-                    this.isLoading.set(false);
-                    this.tutorialGroup.set(tutorialGroupResult ?? undefined);
-                });
         });
     }
 
@@ -101,18 +85,6 @@ export class ManagementTutorialGroupDetailContainerComponent {
                 this.router.navigate(['../'], { relativeTo: this.route });
                 this.isLoading.set(false);
             });
-    }
-
-    private getTutorialGroupIdSignal(): Signal<number | undefined> {
-        return toSignal(
-            this.route.params.pipe(
-                map((params) => {
-                    const tutorialGroupId = params?.['tutorialGroupId'];
-                    return tutorialGroupId !== undefined ? Number(tutorialGroupId) : undefined;
-                }),
-            ),
-            { initialValue: undefined },
-        );
     }
 
     private getCourseSignal(): Signal<Course | undefined> {

@@ -50,7 +50,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailGroupDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource;
 import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGroupRegistrationImportDTO;
@@ -1321,7 +1321,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     }
 
     @Nested
-    class TutorialGroupDetailGroupDTOTests {
+    class TutorialGroupDTOTests {
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -1373,13 +1373,13 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             Channel channel = tutorialGroupChannelManagementService.createChannelForTutorialGroup(group);
 
             String url = "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-group-detail/" + group.getId();
-            TutorialGroupDetailGroupDTO groupDTO = request.get(url, HttpStatus.OK, TutorialGroupDetailGroupDTO.class);
+            TutorialGroupDTO groupDTO = request.get(url, HttpStatus.OK, TutorialGroupDTO.class);
             assertThat(groupDTO.id()).isEqualTo(group.getId());
             assertThat(groupDTO.title()).isEqualTo(group.getTitle());
             assertThat(groupDTO.language()).isEqualTo(group.getLanguage());
             assertThat(groupDTO.isOnline()).isEqualTo(group.getIsOnline());
-            assertThat(groupDTO.teachingAssistantName()).isEqualTo(tutor1.getName());
-            assertThat(groupDTO.teachingAssistantLogin()).isEqualTo(tutor1.getLogin());
+            assertThat(groupDTO.tutorName()).isEqualTo(tutor1.getName());
+            assertThat(groupDTO.tutorLogin()).isEqualTo(tutor1.getLogin());
             assertThat(groupDTO.capacity()).isEqualTo(group.getCapacity());
             assertThat(groupDTO.campus()).isEqualTo(group.getCampus());
             assertThat(groupDTO.groupChannelId()).isEqualTo(channel.getId());
@@ -1417,7 +1417,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             tutorialGroupScheduleTestRepository.save(schedule);
 
             String url = "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-group-detail/" + group.getId();
-            TutorialGroupDetailGroupDTO response = request.get(url, HttpStatus.OK, TutorialGroupDetailGroupDTO.class);
+            TutorialGroupDTO response = request.get(url, HttpStatus.OK, TutorialGroupDTO.class);
             assertThat(response.tutorChatId()).isNull();
         }
 
@@ -1441,7 +1441,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             conversationParticipantRepository.saveAll(List.of(participationOfUserA, participationOfUserB));
 
             String url = "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-group-detail/" + group.getId();
-            TutorialGroupDetailGroupDTO response = request.get(url, HttpStatus.OK, TutorialGroupDetailGroupDTO.class);
+            TutorialGroupDTO response = request.get(url, HttpStatus.OK, TutorialGroupDTO.class);
             assertThat(response.tutorChatId()).isEqualTo(oneToOneChat.getId());
         }
     }

@@ -1,12 +1,6 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import {
-    RawTutorialGroupDetailGroupDTO,
-    TutorialGroup,
-    TutorialGroupDetailGroupDTO,
-    TutorialGroupRegisterStudentDTO,
-    TutorialGroupRegisteredStudentDTO,
-} from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroup, TutorialGroupRegisterStudentDTO, TutorialGroupRegisteredStudentDTO, UpdateTutorialGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Observable } from 'rxjs';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { map } from 'rxjs/operators';
@@ -49,12 +43,6 @@ export class TutorialGroupsService {
         return this.httpClient
             .get<TutorialGroup>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupResponseDatesFromServer(res)));
-    }
-
-    getTutorialGroupDetailGroupDTO(courseId: number, tutorialGroupId: number): Observable<TutorialGroupDetailGroupDTO> {
-        return this.httpClient
-            .get<RawTutorialGroupDetailGroupDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-group-detail/${tutorialGroupId}`)
-            .pipe(map((rawDto) => new TutorialGroupDetailGroupDTO(rawDto)));
     }
 
     getRegisteredStudentDTOs(courseId: number, tutorialGroupId: number): Observable<TutorialGroupRegisteredStudentDTO[]> {
@@ -108,6 +96,10 @@ export class TutorialGroupsService {
                 { observe: 'response' },
             )
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupResponseDatesFromServer(res)));
+    }
+
+    update2(courseId: number, tutorialGroupId: number, updateTutorialGroupDTO: UpdateTutorialGroupDTO): Observable<void> {
+        return this.httpClient.put<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}`, updateTutorialGroupDTO);
     }
 
     deregisterStudent(courseId: number, tutorialGroupId: number, login: string): Observable<HttpResponse<void>> {

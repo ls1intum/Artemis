@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.CreateTutorialGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
@@ -273,9 +273,9 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
      * Builds a TutorialGroupDTO for API requests (without schedule).
      * Uses the same structure as the entity but only includes required fields.
      */
-    TutorialGroupDTO buildTutorialGroupDTOWithoutSchedule(String tutorLogin) {
-        return new TutorialGroupDTO(null, // id
-                generateRandomTitle(), new TutorialGroupDTO.TeachingAssistantDTO(testPrefix + tutorLogin), null, // additionalInformation
+    CreateTutorialGroupDTO buildTutorialGroupDTOWithoutSchedule(String tutorLogin) {
+        return new CreateTutorialGroupDTO(null, // id
+                generateRandomTitle(), new CreateTutorialGroupDTO.TeachingAssistantDTO(testPrefix + tutorLogin), null, // additionalInformation
                 15, // capacity
                 false, // isOnline
                 Language.ENGLISH.name(), // language
@@ -286,16 +286,17 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     /**
      * Builds a TutorialGroupDTO with an ID set (for testing creation with ID should fail).
      */
-    TutorialGroupDTO buildTutorialGroupDTOWithId(Long id, String tutorLogin) {
-        return new TutorialGroupDTO(id, generateRandomTitle(), new TutorialGroupDTO.TeachingAssistantDTO(testPrefix + tutorLogin), null, 15, false, Language.ENGLISH.name(),
-                "Garching");
+    CreateTutorialGroupDTO buildTutorialGroupDTOWithId(Long id, String tutorLogin) {
+        return new CreateTutorialGroupDTO(id, generateRandomTitle(), new CreateTutorialGroupDTO.TeachingAssistantDTO(testPrefix + tutorLogin), null, 15, false,
+                Language.ENGLISH.name(), "Garching");
     }
 
     /**
      * Builds a TutorialGroupDTO with a specific title.
      */
-    TutorialGroupDTO buildTutorialGroupDTOWithTitle(String title, String tutorLogin) {
-        return new TutorialGroupDTO(null, title, new TutorialGroupDTO.TeachingAssistantDTO(testPrefix + tutorLogin), null, 15, false, Language.ENGLISH.name(), "Garching");
+    CreateTutorialGroupDTO buildTutorialGroupDTOWithTitle(String title, String tutorLogin) {
+        return new CreateTutorialGroupDTO(null, title, new CreateTutorialGroupDTO.TeachingAssistantDTO(testPrefix + tutorLogin), null, 15, false, Language.ENGLISH.name(),
+                "Garching");
     }
 
     TutorialGroup buildTutorialGroupWithExampleSchedule(LocalDate validFromInclusive, LocalDate validToInclusive, String tutorLogin) {

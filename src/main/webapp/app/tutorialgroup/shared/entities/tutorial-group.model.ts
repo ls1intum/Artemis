@@ -34,21 +34,23 @@ export class TutorialGroup implements BaseEntity {
     public averageAttendance?: number;
 }
 
-export class TutorialGroupDetailGroupDTO {
+export class TutorialGroupDTO {
     id: number;
     title: string;
     language: string;
     isOnline: boolean;
     sessions: TutorialGroupDetailSessionDTO[];
-    teachingAssistantName: string;
-    teachingAssistantLogin: string;
-    teachingAssistantImageUrl?: string;
+    tutorName: string;
+    tutorLogin: string;
+    tutorId: number;
+    tutorImageUrl?: string;
     capacity?: number;
     campus?: string;
+    additionalInformation?: string;
     groupChannelId?: number;
     tutorChatId?: number;
 
-    constructor(rawDto: RawTutorialGroupDetailGroupDTO) {
+    constructor(rawDto: RawTutorialGroupDTO) {
         this.id = rawDto.id;
         this.title = rawDto.title;
         this.language = rawDto.language;
@@ -67,27 +69,31 @@ export class TutorialGroupDetailGroupDTO {
                     rawSessionDto.attendanceCount,
                 ),
         );
-        this.teachingAssistantName = rawDto.teachingAssistantName;
-        this.teachingAssistantLogin = rawDto.teachingAssistantLogin;
-        this.teachingAssistantImageUrl = rawDto.teachingAssistantImageUrl;
+        this.tutorName = rawDto.tutorName;
+        this.tutorLogin = rawDto.tutorLogin;
+        this.tutorId = rawDto.tutorId;
+        this.tutorImageUrl = rawDto.tutorImageUrl;
         this.capacity = rawDto.capacity;
         this.campus = rawDto.campus;
+        this.additionalInformation = rawDto.additionalInformation;
         this.groupChannelId = rawDto.groupChannelId;
         this.tutorChatId = rawDto.tutorChatId;
     }
 }
 
-export class RawTutorialGroupDetailGroupDTO {
+export class RawTutorialGroupDTO {
     id: number;
     title: string;
     language: string;
     isOnline: boolean;
-    teachingAssistantName: string;
-    teachingAssistantLogin: string;
+    tutorName: string;
+    tutorLogin: string;
+    tutorId: number;
     sessions: RawTutorialGroupDetailSessionDTO[] | undefined;
-    teachingAssistantImageUrl?: string;
+    tutorImageUrl?: string;
     capacity?: number;
     campus?: string;
+    additionalInformation?: string;
     groupChannelId?: number;
     tutorChatId?: number;
 }
@@ -109,4 +115,24 @@ export interface TutorialGroupRegisterStudentDTO {
 export interface TutorialGroupTutorDTO {
     id: number;
     nameAndLogin: string;
+}
+
+export interface UpdateTutorialGroupDTO {
+    title: string;
+    updateChannelName: boolean;
+    tutorId: number;
+    language: string;
+    isOnline: boolean;
+    campus?: string;
+    capacity?: number;
+    additionalInformation?: string;
+    updateTutorialGroupScheduleDTO: UpdateTutorialGroupScheduleDTO;
+}
+
+export interface UpdateTutorialGroupScheduleDTO {
+    firstSessionStart: string;
+    firstSessionEnd: string;
+    repetitionFrequency: number;
+    tutorialPeriodEnd: string;
+    location?: string;
 }

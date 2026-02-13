@@ -19,7 +19,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { RawTutorialGroupDetailGroupDTO, TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { RawTutorialGroupDTO, TutorialGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 
 import { CourseTutorialGroupDetailStubComponent } from 'test/helpers/stubs/tutorialgroup/course-tutorial-group-detail-stub.component';
 
@@ -30,7 +30,7 @@ describe('CourseTutorialGroupDetailContainerComponent', () => {
     let component: CourseTutorialGroupDetailContainerComponent;
     let tutorialGroupService: TutorialGroupsService;
     let courseManagementService: CourseManagementService;
-    let tutorialGroupOfResponse: TutorialGroupDetailGroupDTO;
+    let tutorialGroupOfResponse: TutorialGroupDTO;
     let courseOfResponse: Course;
     let findStub: ReturnType<typeof vi.spyOn>;
     let findByIdStub: ReturnType<typeof vi.spyOn>;
@@ -67,21 +67,21 @@ describe('CourseTutorialGroupDetailContainerComponent', () => {
         tutorialGroupService = TestBed.inject(TutorialGroupsService);
         courseManagementService = TestBed.inject(CourseManagementService);
 
-        const raw: RawTutorialGroupDetailGroupDTO = {
+        const raw: RawTutorialGroupDTO = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
             isOnline: false,
             sessions: [],
-            teachingAssistantName: 'Marlon Nienaber',
-            teachingAssistantLogin: 'gx89tum',
-            teachingAssistantImageUrl: undefined,
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorImageUrl: undefined,
             capacity: 10,
             campus: 'Garching',
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        tutorialGroupOfResponse = new TutorialGroupDetailGroupDTO(raw);
+        tutorialGroupOfResponse = new TutorialGroupDTO(raw);
 
         courseOfResponse = { id: 2 } as Course;
 

@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegisteredStudentDTO;
-import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailGroupDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDTO;
 
 @Conditional(TutorialGroupEnabled.class)
 @Lazy
@@ -130,7 +130,7 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
     Optional<TutorialGroup> findByIdWithSessions(@Param("tutorialGroupId") long tutorialGroupId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailGroupDTO(
+            SELECT new de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDTO(
                 tutorialGroup.id,
                 tutorialGroup.title,
                 tutorialGroup.language,
@@ -139,7 +139,9 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
                 tutorialGroup.campus,
                 CONCAT(tutorialGroup.teachingAssistant.firstName, CONCAT(' ', tutorialGroup.teachingAssistant.lastName)),
                 tutorialGroup.teachingAssistant.login,
+                tutorialGroup.teachingAssistant.id,
                 tutorialGroup.teachingAssistant.imageUrl,
+                tutorialGroup.additionalInformation,
                 channel.id,
                 schedule.dayOfWeek,
                 schedule.startTime,
@@ -151,7 +153,7 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
                 LEFT JOIN tutorialGroup.tutorialGroupSchedule schedule
             WHERE tutorialGroup.id = :tutorialGroupId AND tutorialGroup.course.id = :courseId
             """)
-    Optional<RawTutorialGroupDetailGroupDTO> getTutorialGroupDetailData(@Param("tutorialGroupId") long tutorialGroupId, @Param("courseId") long courseId);
+    Optional<RawTutorialGroupDTO> getRawTutorialGroupDTO(@Param("tutorialGroupId") long tutorialGroupId, @Param("courseId") long courseId);
 
     @Query("""
                     SELECT new de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegisteredStudentDTO(

@@ -1,7 +1,14 @@
-<jhi-loading-indicator-container [isLoading]="isLoading()">
-    @if (tutorialGroup && course) {
+<div>
+    @let courseToPass = course();
+    @let tutorialGroupToPass = tutorialGroup();
+    @if (courseToPass && tutorialGroupToPass) {
         <div class="p-3 scrollable-content">
-            <jhi-course-tutorial-group-detail [tutorialGroup]="tutorialGroup" [course]="course" />
+            <jhi-course-tutorial-group-detail [course]="courseToPass" [tutorialGroup]="tutorialGroupToPass" />
         </div>
+    } @else {
+        something is not available
     }
-</jhi-loading-indicator-container>
+    @if (isLoading()) {
+        <jhi-loading-indicator-overlay />
+    }
+</div>

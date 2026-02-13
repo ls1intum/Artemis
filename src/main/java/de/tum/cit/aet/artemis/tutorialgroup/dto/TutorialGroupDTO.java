@@ -1,35 +1,22 @@
 package de.tum.cit.aet.artemis.tutorialgroup.dto;
 
-import jakarta.validation.constraints.Size;
+import java.util.List;
 
-import org.jspecify.annotations.Nullable;
+import jakarta.validation.constraints.NotNull;
+
+import org.springframework.lang.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-/**
- * DTO for creating and updating tutorial groups.
- * Mirrors the TutorialGroup entity structure but only includes required fields to minimize data transport.
- * The nested TeachingAssistantDTO allows the client to send teachingAssistant: { login: "..." } as before.
- *
- * @param id                    the id of the tutorial group (null for creation)
- * @param title                 the title of the tutorial group (max 19 characters)
- * @param teachingAssistant     the teaching assistant (only login is used)
- * @param additionalInformation additional information about the tutorial group
- * @param capacity              the capacity of the tutorial group
- * @param isOnline              whether the tutorial group is online
- * @param language              the language of the tutorial group
- * @param campus                the campus where the tutorial group is held
- */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupDTO(@Nullable Long id, @Size(min = 1, max = 19) String title, @Nullable TeachingAssistantDTO teachingAssistant, @Nullable String additionalInformation,
-        @Nullable Integer capacity, @Nullable Boolean isOnline, @Nullable String language, @Nullable String campus) {
+import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDTO;
 
-    /**
-     * Minimal DTO for the teaching assistant, only containing the login needed to look up the user.
-     *
-     * @param login the login of the teaching assistant
-     */
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TeachingAssistantDTO(@Nullable String login) {
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record TutorialGroupDTO(long id, @NotNull String title, @NotNull String language, boolean isOnline, @NotNull String tutorName, @NotNull String tutorLogin, long tutorId,
+        @Nullable String tutorImageUrl, @Nullable Integer capacity, @Nullable String campus, @Nullable String additionalInformation, @Nullable Long groupChannelId,
+        @Nullable Long tutorChatId, @NotNull List<TutorialGroupDetailSessionDTO> sessions) {
+
+    public static TutorialGroupDTO from(RawTutorialGroupDTO rawDto, List<TutorialGroupDetailSessionDTO> sessions, Long tutorChatId) {
+        return new TutorialGroupDTO(rawDto.groupId(), rawDto.title(), rawDto.language(), rawDto.isOnline(), rawDto.tutorName(), rawDto.tutorLogin(), rawDto.tutorId(),
+                rawDto.tutorImageUrl(), rawDto.capacity(), rawDto.campus(), rawDto.groupChannelId(), tutorChatId, sessions);
     }
 }

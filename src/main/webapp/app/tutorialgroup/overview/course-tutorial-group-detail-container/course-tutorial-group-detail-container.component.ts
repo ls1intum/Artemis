@@ -1,72 +1,59 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
-import { Subscription, catchError, combineLatest, forkJoin, of, switchMap, tap } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
-import { onError } from 'app/shared/util/global.utils';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { CourseTutorialGroupDetailComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail/course-tutorial-group-detail.component';
+import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariableSignal';
+import { TutorialGroupService } from 'app/tutorialgroup/shared/service/tutorial-group.service';
+import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
 
 @Component({
     selector: 'jhi-course-tutorial-group-detail-container',
     templateUrl: './course-tutorial-group-detail-container.component.html',
-    imports: [LoadingIndicatorContainerComponent, CourseTutorialGroupDetailComponent],
+    imports: [CourseTutorialGroupDetailComponent, LoadingIndicatorOverlayComponent],
 })
-export class CourseTutorialGroupDetailContainerComponent implements OnInit, OnDestroy {
+export class CourseTutorialGroupDetailContainerComponent {
     private route = inject(ActivatedRoute);
-    private tutorialGroupService = inject(TutorialGroupsService);
     private alertService = inject(AlertService);
     private courseManagementService = inject(CourseManagementService);
+    private tutorialGroupService = inject(TutorialGroupService);
+    private courseId = getNumericPathVariableSignal(this.route, 'courseId', 2);
+    private tutorialGroupId = getNumericPathVariableSignal(this.route, 'tutorialGroupId');
 
-    isLoading = signal(false);
-    tutorialGroup?: TutorialGroupDetailGroupDTO;
-    course?: Course;
-    private paramsSubscription: Subscription;
+    isTutorialGroupLoading = this.tutorialGroupService.isLoading;
+    tutorialGroup = this.tutorialGroupService.tutorialGroup;
+    isCourseLoading = signal(false);
+    course = signal<Course | undefined>(undefined);
+    isLoading = computed<boolean>(() => this.isCourseLoading() || this.isTutorialGroupLoading());
 
-    ngOnInit(): void {
-        const courseIdParams$ = this.route.parent?.parent?.params;
-        const tutorialGroupIdParams$ = this.route.params;
-        if (courseIdParams$) {
-            this.paramsSubscription = combineLatest([courseIdParams$, tutorialGroupIdParams$])
-                .pipe(
-                    switchMap(([courseIdParams, tutorialGroupIdParams]) => {
-                        this.isLoading.set(true);
-                        const tutorialGroupId = parseInt(tutorialGroupIdParams.tutorialGroupId, 10);
-                        const courseId = parseInt(courseIdParams.courseId, 10);
-                        return forkJoin({
-                            courseResult: this.courseManagementService.find(courseId),
-                            tutorialGroupResult: this.tutorialGroupService.getTutorialGroupDetailGroupDTO(courseId, tutorialGroupId),
-                        });
-                    }),
-                    tap({
-                        next: () => {
-                            this.isLoading.set(false);
-                        },
-                    }),
-                    catchError((error: HttpErrorResponse) => {
-                        this.isLoading.set(false);
-                        onError(this.alertService, error);
-                        return of(undefined);
-                    }),
-                )
-                .subscribe({
-                    next: (result) => {
-                        if (!result) {
-                            return;
+    constructor() {
+        effect(() => {
+            const courseId = this.courseId();
+            if (courseId) {
+                this.isCourseLoading.set(true);
+                this.courseManagementService.find(courseId).subscribe({
+                    next: (response) => {
+                        const course = response.body;
+                        if (course) {
+                            this.course.set(course);
                         }
-                        const { courseResult, tutorialGroupResult } = result;
-                        this.tutorialGroup = tutorialGroupResult;
-                        this.course = courseResult.body ?? undefined;
+                        this.isCourseLoading.set(false);
+                    },
+                    error: () => {
+                        this.alertService.addErrorAlert('Something went wrong while fetching the course information for the tutorial group. Please refresh the page to try again.'); // TODO: create string key
+                        this.isCourseLoading.set(false);
                     },
                 });
-        }
-    }
+            }
+        });
 
-    ngOnDestroy(): void {
-        this.paramsSubscription?.unsubscribe();
+        effect(() => {
+            const courseId = this.courseId();
+            const tutorialGroupId = this.tutorialGroupId();
+            if (courseId && tutorialGroupId) {
+                this.tutorialGroupService.fetchTutorialGroupDTO(courseId, tutorialGroupId);
+            }
+        });
     }
 }

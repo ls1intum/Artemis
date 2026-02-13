@@ -55,13 +55,13 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailGroupDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegisterStudentDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
-import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailGroupDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGroupImportErrors;
 import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGroupRegistrationImportDTO;
@@ -638,14 +638,14 @@ public class TutorialGroupService {
      * @param tutorialGroupId the ID of the tutorial group to fetch
      * @param courseId        the ID of the course of the tutorial group
      * @param courseTimeZone  the time zone of the course, used for session status evaluation
-     * @return a {@link TutorialGroupDetailGroupDTO}
+     * @return a {@link TutorialGroupDTO}
      * @throws EntityNotFoundException if no tutorial group exists with the given ID
      */
-    public TutorialGroupDetailGroupDTO getTutorialGroupDetailGroupDTO(long tutorialGroupId, long courseId, ZoneId courseTimeZone) {
-        RawTutorialGroupDetailGroupDTO rawGroupDTOs = tutorialGroupRepository.getTutorialGroupDetailData(tutorialGroupId, courseId)
+    public TutorialGroupDTO getTutorialGroupDTO(long tutorialGroupId, long courseId, ZoneId courseTimeZone) {
+        RawTutorialGroupDTO rawTutorialGroupDTO = tutorialGroupRepository.getRawTutorialGroupDTO(tutorialGroupId, courseId)
                 .orElseThrow(() -> new EntityNotFoundException("No tutorial group found with id " + tutorialGroupId + " found for course with id " + courseId + "."));
 
-        String tutorLogin = rawGroupDTOs.teachingAssistantLogin();
+        String tutorLogin = rawTutorialGroupDTO.tutorLogin();
         String currentUserLogin = userRepository.getCurrentUserLogin();
         Long tutorChatId = null;
         if (!tutorLogin.equals(currentUserLogin)) {
@@ -655,11 +655,11 @@ public class TutorialGroupService {
         List<RawTutorialGroupDetailSessionDTO> rawSessionDTOs = tutorialGroupSessionRepository.getTutorialGroupDetailSessionData(tutorialGroupId);
         List<TutorialGroupDetailSessionDTO> sessionDTOs;
         // the schedule related properties are null if and only if there is no schedule for the tutorial group
-        if (rawGroupDTOs.scheduleDayOfWeek() != null) {
-            int scheduleDayOfWeek = rawGroupDTOs.scheduleDayOfWeek();
-            LocalTime scheduleStart = LocalTime.parse(rawGroupDTOs.scheduleStartTime());
-            LocalTime scheduleEnd = LocalTime.parse(rawGroupDTOs.scheduleEndTime());
-            String scheduleLocation = rawGroupDTOs.scheduleLocation();
+        if (rawTutorialGroupDTO.scheduleDayOfWeek() != null) {
+            int scheduleDayOfWeek = rawTutorialGroupDTO.scheduleDayOfWeek();
+            LocalTime scheduleStart = LocalTime.parse(rawTutorialGroupDTO.scheduleStartTime());
+            LocalTime scheduleEnd = LocalTime.parse(rawTutorialGroupDTO.scheduleEndTime());
+            String scheduleLocation = rawTutorialGroupDTO.scheduleLocation();
             sessionDTOs = rawSessionDTOs.stream()
                     .map(data -> TutorialGroupDetailSessionDTO.from(data, scheduleDayOfWeek, scheduleStart, scheduleEnd, scheduleLocation, courseTimeZone)).toList();
         }
@@ -667,7 +667,7 @@ public class TutorialGroupService {
             sessionDTOs = rawSessionDTOs.stream().map(TutorialGroupDetailSessionDTO::from).toList();
         }
 
-        return TutorialGroupDetailGroupDTO.from(rawGroupDTOs, sessionDTOs, tutorChatId);
+        return TutorialGroupDTO.from(rawTutorialGroupDTO, sessionDTOs, tutorChatId);
     }
 
     /**

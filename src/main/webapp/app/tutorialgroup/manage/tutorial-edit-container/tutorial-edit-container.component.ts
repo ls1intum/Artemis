@@ -1,4 +1,4 @@
-import { Component, DestroyRef, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { TutorialGroupTutorDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
@@ -9,6 +9,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { User } from 'app/core/user/user.model';
 import { TutorialEditComponent } from 'app/tutorialgroup/manage/tutorial-edit/tutorial-edit.component';
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
+import { TutorialGroupService } from 'app/tutorialgroup/shared/service/tutorial-group.service';
 
 @Component({
     selector: 'jhi-tutorial-edit-container',
@@ -20,16 +21,21 @@ export class TutorialEditContainerComponent {
     private destroyRef = inject(DestroyRef);
     private activatedRoute = inject(ActivatedRoute);
     private courseManagementService = inject(CourseManagementService);
-    private courseId = getNumericPathVariableSignal(this.activatedRoute, 'courseId');
+    private tutorialGroupService = inject(TutorialGroupService);
 
-    isLoading = signal(false);
+    courseId = getNumericPathVariableSignal(this.activatedRoute, 'courseId');
+    tutorialGroupId = getNumericPathVariableSignal(this.activatedRoute, 'tutorialGroupId');
+    isTutorsLoading = signal(false);
     tutors = signal<TutorialGroupTutorDTO[]>([]);
+    isTutorialGroupLoading = this.tutorialGroupService.isLoading;
+    tutorialGroup = this.tutorialGroupService.tutorialGroup;
+    isLoading = computed<boolean>(() => this.isTutorsLoading() || this.isTutorialGroupLoading());
 
     constructor() {
         effect(() => {
             const courseId = this.courseId();
             if (courseId) {
-                this.isLoading.set(true);
+                this.isTutorsLoading.set(true);
                 this.courseManagementService
                     .getAllUsersInCourseGroup(courseId, CourseGroup.TUTORS)
                     .pipe(takeUntilDestroyed(this.destroyRef))
@@ -37,9 +43,17 @@ export class TutorialEditContainerComponent {
                         const users = response.body ?? [];
                         const tutors: TutorialGroupTutorDTO[] = users.map((user) => this.convertUserToTutorialGroupTutorDTO(user)).filter((tutor) => tutor !== undefined);
                         this.tutors.set(tutors);
-                        this.isLoading.set(false);
+                        this.isTutorsLoading.set(false);
                         // TODO: catch errors
                     });
+            }
+        });
+        effect(() => {
+            const courseId = this.courseId();
+            const tutorialGroupId = this.tutorialGroupId();
+            const tutorialGroup = this.tutorialGroup();
+            if (courseId && tutorialGroupId && !tutorialGroup) {
+                this.tutorialGroupService.fetchTutorialGroupDTO(courseId, tutorialGroupId);
             }
         });
     }

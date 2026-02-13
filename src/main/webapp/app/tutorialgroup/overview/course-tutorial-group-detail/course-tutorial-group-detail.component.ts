@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { NgClass } from '@angular/common';
 import dayjs, { Dayjs } from 'dayjs/esm';
-import { TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Course, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { addPublicFilePrefix } from 'app/app.constants';
@@ -106,11 +106,11 @@ export class CourseTutorialGroupDetailComponent {
 
     activatedRoute = inject(ActivatedRoute);
     course = input.required<Course>();
-    tutorialGroup = input.required<TutorialGroupDetailGroupDTO>();
+    tutorialGroup = input.required<TutorialGroupDTO>();
     allowManagementActions = input<boolean>(false);
     tutorialGroupSessions = computed<TutorialGroupDetailSession[]>(() => this.computeSessionsToDisplay());
     nextSession = computed<TutorialGroupDetailSession | undefined>(() => this.computeNextSessionDataUsing());
-    teachingAssistantImageUrl = computed(() => addPublicFilePrefix(this.tutorialGroup().teachingAssistantImageUrl));
+    teachingAssistantImageUrl = computed(() => addPublicFilePrefix(this.tutorialGroup().tutorImageUrl));
     tutorialGroupLanguage = computed<string>(() => this.tutorialGroup().language);
     tutorialGroupCapacity = computed<string>(() => String(this.tutorialGroup().capacity ?? '-'));
     tutorialGroupMode = computed<string>(() => (this.tutorialGroup().isOnline ? 'artemisApp.generic.online' : 'artemisApp.generic.offline'));
@@ -124,7 +124,7 @@ export class CourseTutorialGroupDetailComponent {
     messagingEnabled = computed<boolean>(() => isMessagingEnabled(this.course()));
     tutorChatLink = computed(() => this.computeTutorChatLink());
     groupChannelLink = computed(() => this.computeGroupChannelLink());
-    userIsNotTutor = computed(() => this.accountService.userIdentity()?.login !== this.tutorialGroup().teachingAssistantLogin);
+    userIsNotTutor = computed(() => this.accountService.userIdentity()?.login !== this.tutorialGroup().tutorLogin);
     deleteSession = output<DeleteTutorialGroupDetailSessionEvent>();
     deleteGroup = output<DeleteTutorialGroupEvent>();
 
@@ -139,7 +139,7 @@ export class CourseTutorialGroupDetailComponent {
 
     createTutorChat() {
         const courseId = this.course().id;
-        const tutorLogin = this.tutorialGroup().teachingAssistantLogin;
+        const tutorLogin = this.tutorialGroup().tutorLogin;
         if (courseId) {
             this.oneToOneChatService.create(courseId, tutorLogin).subscribe({
                 next: (response) => {

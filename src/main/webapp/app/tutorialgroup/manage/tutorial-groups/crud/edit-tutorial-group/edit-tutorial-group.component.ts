@@ -15,6 +15,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
+// TODO: decide whether we want to support notification in edit
 @Component({
     selector: 'jhi-edit-tutorial-group',
     templateUrl: './edit-tutorial-group.component.html',

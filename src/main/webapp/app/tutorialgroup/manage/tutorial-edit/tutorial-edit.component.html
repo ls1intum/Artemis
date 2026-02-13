@@ -91,9 +91,9 @@
 
         <div class="label-and-input-row">
             <div class="label-and-input">
-                <label>Note for Students</label>
+                <label>Additional Information</label>
                 <p-inputgroup>
-                    <input type="text" placeholder="Note for Students" pInputText [(ngModel)]="noteForStudents" />
+                    <input type="text" placeholder="Additional Information" pInputText [(ngModel)]="additionalInformation" />
                 </p-inputgroup>
             </div>
             <div class="spacer"></div>
@@ -153,24 +153,24 @@
                 <div class="label-and-input">
                     <label>Repetition Frequency</label>
                     <p-inputgroup>
-                        <p-inputnumber [(ngModel)]="weekFrequency" prefix="every " suffix=" week(s)" [min]="1" [showButtons]="true" />
+                        <p-inputnumber [(ngModel)]="repetitionFrequency" prefix="every " suffix=" week(s)" [min]="1" [showButtons]="true" />
                     </p-inputgroup>
                 </div>
 
                 <div class="label-and-input">
-                    <label>Teaching Period End</label>
+                    <label>Tutorial Period End</label>
                     <p-inputgroup>
-                        @let teachingPeriodEndValidation = teachingPeriodEndValidationResult();
+                        @let tutorialPeriodEndValidation = tutorialPeriodEndValidationResult();
                         <p-datepicker
                             hourFormat="24"
-                            placeholder="Teaching Period End"
-                            [(ngModel)]="teachingPeriodEnd"
+                            placeholder="Tutorial Period End"
+                            [(ngModel)]="tutorialPeriodEnd"
                             [showButtonBar]="true"
-                            [invalid]="teachingPeriodEndValidation.status === TutorialEditValidationStatus.INVALID"
-                            (onSelect)="teachingPeriodEndInputTouched.set(true)"
+                            [invalid]="tutorialPeriodEndValidation.status === TutorialEditValidationStatus.INVALID"
+                            (onSelect)="tutorialPeriodEndInputTouched.set(true)"
                         />
-                        @if (teachingPeriodEndValidation.status === TutorialEditValidationStatus.INVALID) {
-                            <p-inputgroup-addon [pTooltip]="teachingPeriodEndValidation.message" tooltipPosition="left">
+                        @if (tutorialPeriodEndValidation.status === TutorialEditValidationStatus.INVALID) {
+                            <p-inputgroup-addon [pTooltip]="tutorialPeriodEndValidation.message" tooltipPosition="left">
                                 <i class="pi pi-info-circle danger"></i>
                             </p-inputgroup-addon>
                         }
@@ -192,6 +192,6 @@
 
     <div class="controls-footer">
         <a [routerLink]="['..']" pButton class="p-button-secondary p-button-sm" data-testid="cancel-button">Cancel</a>
-        <button pButton class="p-button-primary p-button-sm" data-testid="save-button">Save</button>
+        <button pButton class="p-button-primary p-button-sm" data-testid="save-button" (click)="save()">Save</button>
     </div>
 </div>
