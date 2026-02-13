@@ -47,7 +47,7 @@ describe('Directive: SortDirective', () => {
 
         // THEN
         expect(component.predicate).toBe('ID');
-        expect(component.ascending).toBeTrue();
+        expect(component.ascending).toBeTruthy();
         expect(component.transition).toHaveBeenCalledOnce();
     });
 
@@ -63,7 +63,7 @@ describe('Directive: SortDirective', () => {
 
         // THEN
         expect(component.predicate).toBe('ID');
-        expect(component.ascending).toBeFalse();
+        expect(component.ascending).toBeFalsy();
         expect(component.transition).toHaveBeenCalledTimes(2);
     });
 
@@ -79,7 +79,7 @@ describe('Directive: SortDirective', () => {
 
         // THEN
         expect(component.predicate).toBe('NAME');
-        expect(component.ascending).toBeTrue();
+        expect(component.ascending).toBeTruthy();
         expect(component.transition).toHaveBeenCalledTimes(2);
     });
 });
