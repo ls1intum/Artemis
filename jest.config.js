@@ -122,8 +122,8 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/atlas/',             // atlas module uses Vitest
         '<rootDir>/src/main/webapp/app/iris/',              // iris module uses Vitest
         '<rootDir>/src/main/webapp/app/core/course/manage/', // core course manage module uses Vitest
-        '<rootDir>/src/main/webapp/app/shared/components/buttons', // buttons module uses Vitest
-        '<rootDir>/src/main/webapp/app/shared/sort/**/*.directive.spec.ts', // sort directives use Vitest
+        '<rootDir>/src/main/webapp/app/shared/components/buttons/', // buttons module uses Vitest
+        '<rootDir>/src/main/webapp/app/shared/sort/', // sort directives use Vitest
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
@@ -170,7 +170,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/iris/',          // iris module
         '<rootDir>/src/main/webapp/app/core/course/manage/', // core course manage module
         '<rootDir>/src/main/webapp/app/shared/components/buttons/', // shared/buttons components
-        '<rootDir>/src/main/webapp/app/shared/sort/**/*.directive.spec.ts', // sort directives
+        '<rootDir>/src/main/webapp/app/shared/sort/', // sort directives
 
     ],
     testTimeout: 3000,

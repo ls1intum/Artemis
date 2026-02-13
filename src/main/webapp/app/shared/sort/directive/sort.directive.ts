@@ -2,7 +2,7 @@ import { Directive, model, output } from '@angular/core';
 
 @Directive({ selector: '[jhiSort]' })
 export class SortDirective<T> {
-    predicate = model.required<T>();
+    predicate = model<T | undefined>();
     ascending = model<boolean>(false);
 
     sortChange = output<{ predicate: T; ascending: boolean }>();

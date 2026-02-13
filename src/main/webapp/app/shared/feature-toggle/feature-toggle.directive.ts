@@ -3,7 +3,7 @@ import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/f
 
 @Directive({
     selector: '[jhiFeatureToggle]',
-    host: { '[disabled]': 'disabled()' },
+    host: { '[attr.disabled]': 'disabled()' },
 })
 export class FeatureToggleDirective {
     private featureToggleService = inject(FeatureToggleService);
