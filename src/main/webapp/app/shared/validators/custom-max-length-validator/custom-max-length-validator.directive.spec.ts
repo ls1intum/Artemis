@@ -1,43 +1,82 @@
+import { Component } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormControl, FormsModule } from '@angular/forms';
+import { By } from '@angular/platform-browser';
+
 import { CustomMaxLengthDirective } from './custom-max-length-validator.directive';
-import { FormControl } from '@angular/forms';
+
+@Component({
+    template: `<input [customMaxLength]="maxLength" ngModel />`,
+    standalone: true,
+    imports: [CustomMaxLengthDirective, FormsModule],
+})
+class HostComponent {
+    maxLength = 10;
+}
 
 describe('CustomMaxLengthDirective', () => {
-    let directive: CustomMaxLengthDirective;
+    let fixture: ComponentFixture<HostComponent>;
+    let host: HostComponent;
 
-    beforeEach(() => {
-        directive = new CustomMaxLengthDirective();
+    function getDirective(): CustomMaxLengthDirective {
+        const inputDe = fixture.debugElement.query(By.css('input'));
+        return inputDe.injector.get(CustomMaxLengthDirective);
+    }
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [HostComponent],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(HostComponent);
+        host = fixture.componentInstance;
     });
 
     it('should return null if the input length is within the limit', () => {
-        directive.customMaxLength = 10;
+        host.maxLength = 10;
+        fixture.detectChanges();
+
+        const directive = getDirective();
         const control = new FormControl('12345');
         const result = directive.validate(control);
         expect(result).toBeNull();
     });
 
     it('should return an error object if the input length exceeds the limit', () => {
-        directive.customMaxLength = 5;
+        host.maxLength = 5;
+        fixture.detectChanges();
+
+        const directive = getDirective();
         const control = new FormControl('123456');
         const result = directive.validate(control);
         expect(result).toEqual({ customMaxLength: true });
     });
 
     it('should return null if the input is null', () => {
-        directive.customMaxLength = 5;
+        host.maxLength = 5;
+        fixture.detectChanges();
+
+        const directive = getDirective();
         const control = new FormControl(null);
         const result = directive.validate(control);
         expect(result).toBeNull();
     });
 
     it('should return null if the input is undefined', () => {
-        directive.customMaxLength = 5;
+        host.maxLength = 5;
+        fixture.detectChanges();
+
+        const directive = getDirective();
         const control = new FormControl(undefined);
         const result = directive.validate(control);
         expect(result).toBeNull();
     });
 
     it('should return null if the input is an empty string', () => {
-        directive.customMaxLength = 5;
+        host.maxLength = 5;
+        fixture.detectChanges();
+
+        const directive = getDirective();
         const control = new FormControl('');
         const result = directive.validate(control);
         expect(result).toBeNull();
