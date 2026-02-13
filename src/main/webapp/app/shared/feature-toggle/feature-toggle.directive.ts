@@ -1,66 +1,43 @@
-import { Directive, HostBinding, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Directive, computed, effect, inject, input, signal } from '@angular/core';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { tap } from 'rxjs/operators';
-import { Subscription } from 'rxjs';
 
-@Directive({ selector: '[jhiFeatureToggle]' })
-export class FeatureToggleDirective implements OnInit, OnDestroy {
+@Directive({
+    selector: '[jhiFeatureToggle]',
+    host: { '[disabled]': 'disabled()' },
+})
+export class FeatureToggleDirective {
     private featureToggleService = inject(FeatureToggleService);
 
-    @Input('jhiFeatureToggle') features: FeatureToggle | FeatureToggle[];
-    /**
-     * This input must be used to overwrite the disabled state given that the feature toggle is inactive.
-     * If the normal [disabled] directive of Angular would be used, the HostBinding in this directive would always enable the element if the feature is active.
-     */
-    @Input() overwriteDisabled: boolean | null;
-    /**
-     * Condition to check even before checking for the feature toggle. If true, the feature toggle won't get checked.
-     * This can be useful e.g. if you use the same button for different features (like our delete button) and only want
-     * to check the toggle for programming exercises
-     */
-    @Input() skipFeatureToggle: boolean;
-    private featureActive = true;
+    features = input<FeatureToggle | FeatureToggle[] | undefined>(undefined, { alias: 'jhiFeatureToggle' });
+    overwriteDisabled = input<boolean | null>(null);
+    skipFeatureToggle = input<boolean>(false);
 
-    private featureToggleActiveSubscription: Subscription;
+    private featureActive = signal(true);
 
-    /**
-     * Life cycle hook called by Angular to indicate that Angular is done creating the component
-     */
-    ngOnInit() {
-        // If no feature is set for the toggle, the directive does nothing.
-        if (!this.features) {
-            return;
-        }
-        const featureArray = Array.isArray(this.features) ? this.features : [this.features];
-        if (!featureArray.length) {
-            return;
-        }
-        this.featureToggleActiveSubscription = this.featureToggleService
-            .getFeatureTogglesActive(featureArray)
-            .pipe(
-                // Disable the element if any of the features is inactive.
-                tap((active) => {
-                    this.featureActive = this.skipFeatureToggle || active;
-                }),
-            )
-            .subscribe();
-    }
+    disabled = computed(() => this.overwriteDisabled() === true || !this.featureActive());
 
-    /**
-     * Life cycle hook called by Angular for cleanup just before Angular destroys the component
-     */
-    ngOnDestroy(): void {
-        if (this.featureToggleActiveSubscription) {
-            this.featureToggleActiveSubscription.unsubscribe();
-        }
-    }
+    constructor() {
+        effect((onCleanup) => {
+            const featureInput = this.features();
+            const skip = this.skipFeatureToggle();
 
-    /**
-     * This will disable the feature component (normally a button) if the specified feature flag is inactive OR
-     * if there is some other condition given as an Input, which takes higher priority (input overwriteDisabled)
-     */
-    @HostBinding('disabled')
-    get disabled(): boolean {
-        return this.overwriteDisabled || !this.featureActive;
+            // default when no feature is set
+            if (!featureInput) {
+                this.featureActive.set(true);
+                return;
+            }
+
+            const featureArray = Array.isArray(featureInput) ? featureInput : [featureInput];
+            if (featureArray.length === 0) {
+                this.featureActive.set(true);
+                return;
+            }
+
+            const sub = this.featureToggleService.getFeatureTogglesActive(featureArray).subscribe((active) => {
+                this.featureActive.set(skip || active);
+            });
+
+            onCleanup(() => sub.unsubscribe());
+        });
     }
 }
