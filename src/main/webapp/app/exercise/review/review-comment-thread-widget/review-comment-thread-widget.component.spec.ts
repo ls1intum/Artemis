@@ -64,6 +64,18 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(updateSpy).not.toHaveBeenCalled();
     });
 
+    it('should not emit update when editing comment type is not USER', () => {
+        const updateSpy = jest.fn();
+        comp.onUpdate.subscribe(updateSpy);
+
+        comp.editingCommentId = 4;
+        comp.editingCommentType = CommentType.CONSISTENCY_CHECK;
+        comp.editText = 'updated';
+        comp.saveEditing();
+
+        expect(updateSpy).not.toHaveBeenCalled();
+    });
+
     it('should emit reply and clear reply text', () => {
         const replySpy = jest.fn();
         comp.onReply.subscribe(replySpy);
@@ -155,5 +167,17 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         comp.startEditing(comment);
         expect(comp.editingCommentId).toBe(1);
         expect(comp.editText).toBe('note');
+    });
+
+    it('should ignore startEditing for non-user comments', () => {
+        const comment = {
+            id: 2,
+            type: 'CONSISTENCY_CHECK',
+            content: { contentType: 'CONSISTENCY_CHECK', text: 'system note' },
+        } as any;
+
+        comp.startEditing(comment);
+        expect(comp.editingCommentId).toBeUndefined();
+        expect(comp.editText).toBe('');
     });
 });

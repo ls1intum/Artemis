@@ -35,6 +35,7 @@ import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseReviewCommentService } from 'app/exercise/services/exercise-review-comment.service';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-base-container.component';
 
 describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
@@ -468,6 +469,39 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     });
 
     describe('Review Comments', () => {
+        it('loadExercise loads review threads when returned exercise has an id', () => {
+            const superLoadSpy = jest.spyOn(CodeEditorInstructorBaseContainerComponent.prototype, 'loadExercise').mockReturnValue(of({ id: 55 } as any));
+            reviewCommentService.loadThreads.mockReturnValue(of([]));
+
+            comp.loadExercise(55).subscribe();
+
+            expect(superLoadSpy).toHaveBeenCalledWith(55);
+            expect(reviewCommentService.loadThreads).toHaveBeenCalledWith(55);
+
+            superLoadSpy.mockRestore();
+        });
+
+        it('loadExercise does not load review threads when returned exercise has no id', () => {
+            const superLoadSpy = jest.spyOn(CodeEditorInstructorBaseContainerComponent.prototype, 'loadExercise').mockReturnValue(of({} as any));
+
+            comp.loadExercise(55).subscribe();
+
+            expect(superLoadSpy).toHaveBeenCalledWith(55);
+            expect(reviewCommentService.loadThreads).not.toHaveBeenCalled();
+
+            superLoadSpy.mockRestore();
+        });
+
+        it('onCommit does nothing when exercise id is missing', () => {
+            comp.exercise = undefined as any;
+            const clearEditorDraftsSpy = jest.spyOn((comp as any).codeEditorContainer.monacoEditor, 'clearReviewCommentDrafts');
+
+            comp.onCommit();
+
+            expect(clearEditorDraftsSpy).not.toHaveBeenCalled();
+            expect(reviewCommentService.loadThreads).not.toHaveBeenCalled();
+        });
+
         it('onCommit clears draft widgets and reloads threads', () => {
             const updatedThreads = [{ id: 1 }] as any;
             reviewCommentService.loadThreads.mockReturnValue(of(updatedThreads));
@@ -478,6 +512,16 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(clearEditorDraftsSpy).toHaveBeenCalledOnce();
             expect(reviewCommentService.loadThreads).toHaveBeenCalledWith(42);
             expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
+        });
+
+        it('onProblemStatementSaved does nothing when exercise id is missing', () => {
+            comp.exercise = undefined as any;
+            const clearInstructionDraftsSpy = jest.spyOn((comp as any).editableInstructions, 'clearReviewCommentDrafts');
+
+            comp.onProblemStatementSaved();
+
+            expect(clearInstructionDraftsSpy).not.toHaveBeenCalled();
+            expect(reviewCommentService.loadThreads).not.toHaveBeenCalled();
         });
 
         it('onProblemStatementSaved clears markdown drafts and reloads threads', () => {
@@ -509,6 +553,19 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
         });
 
+        it('onSubmitReviewComment does nothing when exercise id is missing', () => {
+            comp.exercise = undefined as any;
+
+            comp.onSubmitReviewComment({
+                targetType: CommentThreadLocationType.TEMPLATE_REPO,
+                initialFilePath: 'src/Main.java',
+                initialLineNumber: 5,
+                initialComment: { contentType: 'USER', text: 'Initial comment' } as const,
+            });
+
+            expect(reviewCommentService.createThreadWithInitialComment).not.toHaveBeenCalled();
+        });
+
         it('onSubmitReviewComment shows saveFailed error on service failure', () => {
             reviewCommentService.createThreadWithInitialComment.mockReturnValue(throwError(() => new Error('fail')));
             const errorSpy = jest.spyOn(alertService, 'error');
@@ -534,6 +591,14 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
         });
 
+        it('onDeleteReviewComment does nothing when exercise id is missing', () => {
+            comp.exercise = undefined as any;
+
+            comp.onDeleteReviewComment(99);
+
+            expect(reviewCommentService.deleteCommentFromThreads).not.toHaveBeenCalled();
+        });
+
         it('onDeleteReviewComment shows deleteFailed error on service failure', () => {
             reviewCommentService.deleteCommentFromThreads.mockReturnValue(throwError(() => new Error('fail')));
             const errorSpy = jest.spyOn(alertService, 'error');
@@ -553,6 +618,14 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             expect(reviewCommentService.addReplyToThread).toHaveBeenCalledWith(42, [{ id: 5, comments: [] }], 5, comment);
             expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
+        });
+
+        it('onReplyReviewComment does nothing when exercise id is missing', () => {
+            comp.exercise = undefined as any;
+
+            comp.onReplyReviewComment({ threadId: 5, comment: { contentType: 'USER', text: 'Reply' } as const });
+
+            expect(reviewCommentService.addReplyToThread).not.toHaveBeenCalled();
         });
 
         it('onReplyReviewComment shows saveFailed error on service failure', () => {
@@ -576,6 +649,14 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
         });
 
+        it('onUpdateReviewComment does nothing when exercise id is missing', () => {
+            comp.exercise = undefined as any;
+
+            comp.onUpdateReviewComment({ commentId: 7, content: { contentType: 'USER', text: 'Updated' } as const });
+
+            expect(reviewCommentService.updateUserCommentInThreads).not.toHaveBeenCalled();
+        });
+
         it('onUpdateReviewComment shows saveFailed error on service failure', () => {
             reviewCommentService.updateUserCommentInThreads.mockReturnValue(throwError(() => new Error('fail')));
             const errorSpy = jest.spyOn(alertService, 'error');
@@ -594,6 +675,14 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             expect(reviewCommentService.updateResolvedStateInThreads).toHaveBeenCalledWith(42, [{ id: 1, resolved: false }], 6, true);
             expect(comp.reviewCommentThreads()).toEqual(updatedThreads);
+        });
+
+        it('onToggleResolveReviewThread does nothing when exercise id is missing', () => {
+            comp.exercise = undefined as any;
+
+            comp.onToggleResolveReviewThread({ threadId: 6, resolved: true });
+
+            expect(reviewCommentService.updateResolvedStateInThreads).not.toHaveBeenCalled();
         });
 
         it('onToggleResolveReviewThread shows resolveFailed error on service failure', () => {
