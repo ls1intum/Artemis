@@ -5,6 +5,7 @@ import { faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons'
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { vi } from 'vitest';
 
 @Component({
@@ -30,6 +31,7 @@ class TestSortByDirectiveComponent {
 }
 
 describe('Directive: SortByDirective', () => {
+    setupTestBed({ zoneless: true });
     let component: TestSortByDirectiveComponent;
     let fixture: ComponentFixture<TestSortByDirectiveComponent>;
     let tableHead: DebugElement;
