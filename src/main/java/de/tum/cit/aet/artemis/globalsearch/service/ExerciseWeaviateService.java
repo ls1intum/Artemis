@@ -133,6 +133,7 @@ public class ExerciseWeaviateService {
      */
     public void updateExamExercises(Exam exam) {
         if (weaviateService.isEmpty()) {
+            log.trace("Weaviate is not enabled, skipping exercise insertion for exam with id {}", exam.getId());
             return;
         }
 
