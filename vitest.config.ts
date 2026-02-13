@@ -71,6 +71,7 @@ export default defineConfig({
                 'src/main/webapp/app/atlas/**/*.ts', // include atlas for code coverage
                 'src/main/webapp/app/iris/**/*.ts', // include iris for code coverage
                 'src/main/webapp/app/shared/components/buttons/**/*.ts', // include shared buttons for code coverage
+                'src/main/webapp/app/shared/sort/**/*.directive.spec.ts', // include sort directives for code coverage
             ],
             exclude: [
                 '**/node_modules/**',   // exclude node_modules with third-party code
