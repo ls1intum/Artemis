@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
@@ -19,11 +18,17 @@ import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 
 /**
  * Scheduler for polling Nebula transcription job status.
- * Only active when Nebula is enabled.
+ *
+ * DISABLED: This scheduler is commented out because transcription now uses webhook-based callbacks.
+ * Pyris pushes status updates to Artemis via PyrisStatusUpdateService.handleStatusUpdate().
+ *
+ * To re-enable polling (not recommended), uncomment the @Component annotation below.
+ *
+ * @deprecated Replaced by webhook-based system. See PyrisStatusUpdateService for the new implementation.
  */
 @Conditional(NebulaEnabled.class)
 @Lazy
-@Component
+// @Component // DISABLED - webhook system replaces polling
 @Profile(PROFILE_CORE_AND_SCHEDULING)
 public class NebulaTranscriptionPollingScheduler {
 
