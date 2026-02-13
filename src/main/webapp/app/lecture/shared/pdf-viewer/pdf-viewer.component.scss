@@ -1,12 +1,38 @@
 .pdf-viewer-container {
     padding: 20px 0;
 
+    .pdf-viewer-box {
+        position: relative;
+        width: 100%;
+        max-width: 900px;
+        margin: 0 auto;
+        height: 500px;
+
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        @media (max-width: 992px) {
+            height: 400px;
+        }
+
+        @media (max-width: 600px) {
+            height: 350px;
+            border-radius: 4px;
+        }
+    }
+
     .pdf-pages-container {
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 20px;
         max-width: 100%;
+        padding: 20px;
 
         .pdf-page {
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);

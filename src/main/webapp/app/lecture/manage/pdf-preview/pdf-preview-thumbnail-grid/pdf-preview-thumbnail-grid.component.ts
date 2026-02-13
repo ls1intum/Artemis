@@ -21,6 +21,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 })
 export class PdfPreviewThumbnailGridComponent implements OnChanges {
     pdfContainer = viewChild.required<ElementRef<HTMLDivElement>>('pdfContainer');
+    pdfViewerWrapper = viewChild<ElementRef<HTMLDivElement>>('pdfViewerWrapper');
+    pdfViewerBox = viewChild<ElementRef<HTMLDivElement>>('pdfViewerBox');
 
     FOREVER = dayjs('9999-12-31');
 
@@ -314,5 +316,33 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      */
     findPageBySlideId(slideId: string): OrderedPage | undefined {
         return this.orderedPages().find((page) => page.slideId === slideId);
+    }
+
+    /**
+     * Seeks to a specific page in the PDF by scrolling to it.
+     * Similar to the video player's seekTo(seconds) method.
+     *
+     * @param pageNumber The page number to seek to (1-indexed)
+     */
+    seekTo(pageNumber: number): void {
+        const containerEl = this.pdfContainer()?.nativeElement;
+        if (!containerEl || pageNumber < 1 || pageNumber > this.orderedPages().length) {
+            return;
+        }
+
+        // Find the page by its order number
+        const targetPage = this.orderedPages().find((page) => page.order === pageNumber);
+        if (!targetPage) {
+            return;
+        }
+
+        // Scroll to the page element
+        const pageElement = containerEl.querySelector(`#pdf-page-${targetPage.slideId}`) as HTMLElement | null;
+        if (pageElement) {
+            pageElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+            });
+        }
     }
 }

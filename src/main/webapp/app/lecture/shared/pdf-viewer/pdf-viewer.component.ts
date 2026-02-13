@@ -16,6 +16,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     // Signal-based APIs (Angular 21)
     pdfUrl = input.required<string>();
     pdfContainer = viewChild<ElementRef<HTMLDivElement>>('pdfContainer');
+    pdfViewerBox = viewChild<ElementRef<HTMLDivElement>>('pdfViewerBox');
 
     totalPages = signal<number>(0);
     isLoading = signal<boolean>(true);

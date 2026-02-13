@@ -11,7 +11,9 @@
             {{ error() }}
         </div>
     }
-    <div #pdfContainer class="pdf-pages-container" [class.d-none]="isLoading() || error()">
-        <!-- Canvas elements will be dynamically inserted here -->
+    <div class="pdf-viewer-box" #pdfViewerBox>
+        <div #pdfContainer class="pdf-pages-container" [class.d-none]="isLoading() || error()">
+            <!-- Canvas elements will be dynamically inserted here -->
+        </div>
     </div>
 </div>

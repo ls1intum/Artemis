@@ -1,14 +1,54 @@
+// Outer wrapper - matches video-wrapper flexbox pattern
+.pdf-viewer-wrapper {
+    display: flex;
+    width: 100%;
+    padding: 0.5rem;
+    box-sizing: border-box;
+    gap: 0;
+}
+
+// Box container - fixed-height scrollable viewing area
+.pdf-viewer-box {
+    position: relative;
+    width: 100%;
+    height: 500px; // Fixed height - shows about half a page, requires scrolling
+
+    background: #fff; // White background for PDF viewing
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 5px var(--pdf-preview-pdf-container-shadow);
+
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; // Hide overflow, scrolling handled by .pdf-container
+
+    @media (max-width: 992px) {
+        height: 400px;
+    }
+
+    @media (max-width: 600px) {
+        height: 350px;
+    }
+}
+
 .pdf-container {
     position: relative;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
     gap: 10px;
-    height: 60vh;
+
+    // Flex child that fills the box and scrolls
+    flex: 1;
+    min-height: 0; // Critical for flex scrolling to work properly
+
+    // Scrolling behavior
     overflow-y: auto;
-    border: 1px solid var(--border-color);
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch; // Smooth scrolling on iOS
+
+    // Padding
     padding: 10px;
-    margin: 10px 0;
-    box-shadow: 0 2px 5px var(--pdf-preview-pdf-container-shadow);
+
     z-index: 0;
 
     &.scroll-disabled {
