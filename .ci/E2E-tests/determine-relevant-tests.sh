@@ -101,9 +101,20 @@ done
 while IFS= read -r path; do
     if [ -n "$path" ]; then
         if [ -d "$REPO_ROOT/src/test/playwright/$path" ]; then
-            ALL_TEST_PATH_SET["$path/"]=1
+            candidate="$path/"
         else
-            ALL_TEST_PATH_SET["$path"]=1
+            candidate="$path"
+        fi
+        # Skip if mapping already has finer-grained children of this path
+        is_refined=false
+        for existing in "${!ALL_TEST_PATH_SET[@]}"; do
+            if [[ "$existing" == "$candidate"* ]] && [ "$existing" != "$candidate" ]; then
+                is_refined=true
+                break
+            fi
+        done
+        if [ "$is_refined" = "false" ]; then
+            ALL_TEST_PATH_SET["$candidate"]=1
         fi
     fi
 done < <(cd "$REPO_ROOT/src/test/playwright" && find e2e -maxdepth 1 -mindepth 1 \( -type d -o -name '*.spec.ts' \) -print)
