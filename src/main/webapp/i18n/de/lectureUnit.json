@@ -217,6 +217,11 @@
                 "noResults": "Keine Ergebnisse",
                 "noMatchingTranscript": "Kein passendes Transkript gefunden",
                 "loading": "Lädt..."
+            },
+            "pdfViewer": {
+                "loading": "PDF wird geladen...",
+                "error": "PDF konnte nicht geladen werden. Bitte versuchen Sie die Datei herunterzuladen.",
+                "noPages": "Dieses PDF enthält keine Seiten."
             }
         },
         "exerciseUnit": {

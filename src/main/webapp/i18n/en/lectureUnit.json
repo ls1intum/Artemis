@@ -217,6 +217,11 @@
                 "noResults": "No results",
                 "noMatchingTranscript": "No matching transcript found",
                 "loading": "Loading..."
+            },
+            "pdfViewer": {
+                "loading": "Loading PDF...",
+                "error": "PDF could not be loaded. Please try downloading the file.",
+                "noPages": "This PDF contains no pages."
             }
         },
         "exerciseUnit": {

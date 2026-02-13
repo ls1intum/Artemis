@@ -1,0 +1,17 @@
+<div class="pdf-viewer-container">
+    @if (isLoading()) {
+        <div class="d-flex justify-content-center p-3">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loading">Loading PDF...</span>
+            </div>
+        </div>
+    }
+    @if (error()) {
+        <div class="alert alert-danger" role="alert">
+            {{ error() }}
+        </div>
+    }
+    <div #pdfContainer class="pdf-pages-container" [class.d-none]="isLoading() || error()">
+        <!-- Canvas elements will be dynamically inserted here -->
+    </div>
+</div>
