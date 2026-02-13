@@ -69,6 +69,9 @@ class CourseRequestServiceTest {
     @Captor
     private ArgumentCaptor<CourseRequest> courseRequestCaptor;
 
+    @Captor
+    private ArgumentCaptor<User> userCaptor;
+
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(courseRequestService, "contactEmail", "contact@example.org");
@@ -119,5 +122,107 @@ class CourseRequestServiceTest {
         assertThat(result.status()).isEqualTo(CourseRequestStatus.ACCEPTED);
         assertThat(result.createdCourseId()).isEqualTo(22L);
         assertThat(courseRequestCaptor.getValue().getProcessedDate()).isNotNull();
+    }
+
+    /**
+     * Regression test: save() calls merge() for existing entities, which replaces the eagerly loaded
+     * requester User with an uninitialized lazy proxy. The email method must use the User reference
+     * captured before save(), not the one from the merged entity. Otherwise, accessing User properties
+     * on the async thread throws LazyInitializationException and the email is silently not sent.
+     */
+    @Test
+    void acceptRequestShouldSendEmailWithEagerlyLoadedRequesterNotMergedProxy() {
+        User requester = createRequester();
+        CourseRequest pendingRequest = createPendingRequest(requester);
+
+        when(courseRequestRepository.findOneWithEagerRelationshipsById(1L)).thenReturn(Optional.of(pendingRequest));
+        when(courseRepository.existsByShortNameIgnoreCase("NEW123")).thenReturn(false);
+        when(courseRequestRepository.findOneByShortNameIgnoreCase("NEW123")).thenReturn(Optional.empty());
+        doAnswer(invocation -> {
+            Course course = invocation.getArgument(0);
+            course.setStudentGroupName(course.getDefaultStudentGroupName());
+            course.setTeachingAssistantGroupName(course.getDefaultTeachingAssistantGroupName());
+            course.setEditorGroupName(course.getDefaultEditorGroupName());
+            course.setInstructorGroupName(course.getDefaultInstructorGroupName());
+            return null;
+        }).when(courseAccessService).setDefaultGroupsIfNotSet(any(Course.class));
+        when(courseRepository.save(any(Course.class))).thenAnswer(invocation -> {
+            Course course = invocation.getArgument(0);
+            course.setId(22L);
+            return course;
+        });
+        when(userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(7L)).thenReturn(requester);
+        when(resourceLoaderService.getResource(any())).thenReturn(new ByteArrayResource("code of conduct".getBytes(StandardCharsets.UTF_8)));
+
+        // Simulate merge() behavior: return a new entity where the requester association is null
+        // (in production, merge() replaces it with an uninitialized lazy proxy)
+        when(courseRequestRepository.save(any(CourseRequest.class))).thenAnswer(invocation -> {
+            CourseRequest original = invocation.getArgument(0);
+            CourseRequest merged = new CourseRequest();
+            merged.setId(original.getId());
+            merged.setTitle(original.getTitle());
+            merged.setShortName(original.getShortName());
+            merged.setStatus(original.getStatus());
+            merged.setCreatedCourseId(original.getCreatedCourseId());
+            merged.setRequester(null);
+            return merged;
+        });
+
+        courseRequestService.acceptRequest(1L);
+
+        verify(mailSendingService).buildAndSendAsync(userCaptor.capture(), anyString(), eq("mail/courseRequestAcceptedEmail"), anyMap());
+        assertThat(userCaptor.getValue()).isSameAs(requester);
+        assertThat(userCaptor.getValue().getEmail()).isEqualTo("instructor@uni.test");
+    }
+
+    /**
+     * Same regression test as above, but for the reject flow.
+     */
+    @Test
+    void rejectRequestShouldSendEmailWithEagerlyLoadedRequesterNotMergedProxy() {
+        User requester = createRequester();
+        CourseRequest pendingRequest = createPendingRequest(requester);
+
+        when(courseRequestRepository.findOneWithEagerRelationshipsById(1L)).thenReturn(Optional.of(pendingRequest));
+
+        // Simulate merge() behavior: return a new entity where the requester association is null
+        when(courseRequestRepository.save(any(CourseRequest.class))).thenAnswer(invocation -> {
+            CourseRequest original = invocation.getArgument(0);
+            CourseRequest merged = new CourseRequest();
+            merged.setId(original.getId());
+            merged.setTitle(original.getTitle());
+            merged.setShortName(original.getShortName());
+            merged.setStatus(original.getStatus());
+            merged.setDecisionReason(original.getDecisionReason());
+            merged.setRequester(null);
+            return merged;
+        });
+
+        courseRequestService.rejectRequest(1L, "Not enough justification");
+
+        verify(mailSendingService).buildAndSendAsync(userCaptor.capture(), anyString(), eq("mail/courseRequestRejectedEmail"), anyMap());
+        assertThat(userCaptor.getValue()).isSameAs(requester);
+        assertThat(userCaptor.getValue().getEmail()).isEqualTo("instructor@uni.test");
+    }
+
+    private User createRequester() {
+        User requester = new User();
+        requester.setId(7L);
+        requester.setLogin("instructor1");
+        requester.setEmail("instructor@uni.test");
+        requester.setLangKey("en");
+        return requester;
+    }
+
+    private CourseRequest createPendingRequest(User requester) {
+        CourseRequest request = new CourseRequest();
+        request.setId(1L);
+        request.setTitle("New Course");
+        request.setShortName("NEW123");
+        request.setStartDate(ZonedDateTime.now().minusDays(1));
+        request.setEndDate(ZonedDateTime.now().plusDays(10));
+        request.setStatus(CourseRequestStatus.PENDING);
+        request.setRequester(requester);
+        return request;
     }
 }

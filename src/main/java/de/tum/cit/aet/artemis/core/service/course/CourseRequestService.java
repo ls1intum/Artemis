@@ -110,7 +110,7 @@ public class CourseRequestService {
 
         courseRequest = courseRequestRepository.save(courseRequest);
         notifyContact(courseRequest);
-        sendReceivedEmail(courseRequest);
+        sendReceivedEmail(requester, courseRequest);
 
         // Re-fetch with eager loading to avoid LazyInitializationException when converting to DTO
         courseRequest = getRequestWithRequesterElseThrow(courseRequest.getId());
@@ -131,6 +131,9 @@ public class CourseRequestService {
 
         validateShortNameUniqueness(courseRequest.getShortName(), courseRequest.getTitle(), courseRequest.getSemester(), courseRequest.getId());
 
+        // Save eagerly loaded requester before save() which calls merge() and replaces the association with an uninitialized lazy proxy
+        User requester = courseRequest.getRequester();
+
         Course createdCourse = createCourseFromRequest(courseRequest);
         courseRequest.setCreatedCourseId(createdCourse.getId());
         courseRequest.setStatus(CourseRequestStatus.ACCEPTED);
@@ -139,7 +142,7 @@ public class CourseRequestService {
         courseRequest.setProcessedDate(ZonedDateTime.now());
         courseRequest = courseRequestRepository.save(courseRequest);
 
-        sendAcceptedEmail(courseRequest, createdCourse);
+        sendAcceptedEmail(requester, courseRequest, createdCourse);
         // Re-fetch with eager loading to avoid LazyInitializationException when converting to DTO
         courseRequest = getRequestWithRequesterElseThrow(courseRequest.getId());
         return toDto(courseRequest);
@@ -157,12 +160,16 @@ public class CourseRequestService {
         if (courseRequest.getStatus() != CourseRequestStatus.PENDING) {
             throw new BadRequestAlertException("The course request has already been processed", CourseRequest.ENTITY_NAME, "courseRequestProcessed");
         }
+
+        // Save eagerly loaded requester before save() which calls merge() and replaces the association with an uninitialized lazy proxy
+        User requester = courseRequest.getRequester();
+
         courseRequest.setStatus(CourseRequestStatus.REJECTED);
         courseRequest.setDecisionReason(decisionReason != null ? decisionReason.trim() : null);
         courseRequest.setProcessedDate(ZonedDateTime.now());
         courseRequest.setAdmin(SecurityUtils.getCurrentUserLogin().orElse(null));
         courseRequest = courseRequestRepository.save(courseRequest);
-        sendRejectedEmail(courseRequest);
+        sendRejectedEmail(requester, courseRequest);
 
         // Re-fetch with eager loading to avoid LazyInitializationException when converting to DTO
         courseRequest = getRequestWithRequesterElseThrow(courseRequest.getId());
@@ -371,26 +378,26 @@ public class CourseRequestService {
             String requesterName, String requesterEmail) {
     }
 
-    private void sendAcceptedEmail(CourseRequest request, Course course) {
-        if (request.getRequester() == null) {
+    private void sendAcceptedEmail(User requester, CourseRequest request, Course course) {
+        if (requester == null) {
             return;
         }
-        mailSendingService.buildAndSendAsync(request.getRequester(), "email.courseRequest.accepted.title", "mail/courseRequestAcceptedEmail",
+        mailSendingService.buildAndSendAsync(requester, "email.courseRequest.accepted.title", "mail/courseRequestAcceptedEmail",
                 Map.of("course", course, "courseRequest", request));
     }
 
-    private void sendRejectedEmail(CourseRequest request) {
-        if (request.getRequester() == null) {
+    private void sendRejectedEmail(User requester, CourseRequest request) {
+        if (requester == null) {
             return;
         }
-        mailSendingService.buildAndSendAsync(request.getRequester(), "email.courseRequest.rejected.title", "mail/courseRequestRejectedEmail", Map.of("courseRequest", request));
+        mailSendingService.buildAndSendAsync(requester, "email.courseRequest.rejected.title", "mail/courseRequestRejectedEmail", Map.of("courseRequest", request));
     }
 
-    private void sendReceivedEmail(CourseRequest request) {
-        if (request.getRequester() == null) {
+    private void sendReceivedEmail(User requester, CourseRequest request) {
+        if (requester == null) {
             return;
         }
-        mailSendingService.buildAndSendAsync(request.getRequester(), "email.courseRequest.received.title", "mail/courseRequestReceivedEmail", Map.of("courseRequest", request));
+        mailSendingService.buildAndSendAsync(requester, "email.courseRequest.received.title", "mail/courseRequestReceivedEmail", Map.of("courseRequest", request));
     }
 
     private CourseRequestDTO toDto(CourseRequest courseRequest) {
