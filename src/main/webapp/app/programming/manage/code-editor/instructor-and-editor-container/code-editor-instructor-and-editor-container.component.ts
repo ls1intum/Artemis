@@ -675,7 +675,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         return;
                     }
                     break;
-                case CommentThreadLocationType.AUXILIARY_REPO:
+                case CommentThreadLocationType.AUXILIARY_REPO: {
                     const auxiliaryRepositoryId = location.auxiliaryRepositoryId;
                     if (
                         auxiliaryRepositoryId !== undefined &&
@@ -685,6 +685,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         return;
                     }
                     break;
+                }
                 default:
             }
         } catch {

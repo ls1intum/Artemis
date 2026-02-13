@@ -2,9 +2,11 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnIni
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
+import { ButtonDirective } from 'primeng/button';
+import { MenuItem } from 'primeng/api';
+import { MenuModule } from 'primeng/menu';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faArrowUpRightFromSquare, faPen, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faEllipsisVertical, faPen, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { Comment, CommentType, CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
@@ -19,7 +21,7 @@ import { takeUntil } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,
     standalone: true,
-    imports: [FormsModule, ArtemisTranslatePipe, ArtemisDatePipe, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, FaIconComponent],
+    imports: [FormsModule, ButtonDirective, MenuModule, ArtemisTranslatePipe, ArtemisDatePipe, FaIconComponent],
 })
 export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly thread = input.required<CommentThread>();
@@ -33,14 +35,16 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly onToggleCollapse = output<boolean>();
 
     replyText = '';
-    protected readonly faTrash = faTrash;
-    protected readonly faPen = faPen;
-    protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
     protected readonly faTriangleExclamation = faTriangleExclamation;
+    protected readonly faEllipsisVertical = faEllipsisVertical;
+    protected readonly faPen = faPen;
+    protected readonly faTrash = faTrash;
     showThreadBody = true;
     editingCommentId?: number;
     editingCommentType?: CommentType;
     editText = '';
+    readonly userCommentMenuItems: MenuItem[] = [{ id: 'edit' }, { id: 'delete' }];
+    readonly nonUserCommentMenuItems: MenuItem[] = [{ id: 'delete' }];
 
     private readonly destroyed$ = new Subject<void>();
     private readonly translateService = inject(TranslateService);

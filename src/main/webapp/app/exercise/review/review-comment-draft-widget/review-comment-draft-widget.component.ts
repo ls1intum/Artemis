@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, ViewEncapsulation, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ButtonDirective } from 'primeng/button';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
@@ -9,7 +10,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,
     standalone: true,
-    imports: [FormsModule, ArtemisTranslatePipe],
+    imports: [FormsModule, ButtonDirective, ArtemisTranslatePipe],
 })
 export class ReviewCommentDraftWidgetComponent {
     readonly canSubmit = input<boolean>(true);

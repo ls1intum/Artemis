@@ -5,10 +5,10 @@
         @if (!canSubmit()) {
             <span class="monaco-review-comment-error">{{ 'artemisApp.review.submitBeforeComment' | artemisTranslate }}</span>
         }
-        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancel()">
+        <button pButton type="button" severity="secondary" size="small" (click)="cancel()">
             {{ 'artemisApp.review.addCommentCancel' | artemisTranslate }}
         </button>
-        <button type="button" class="btn btn-primary btn-sm" [disabled]="!canSubmit()" (click)="submit()">
+        <button pButton data-testid="review-draft-submit" type="button" size="small" [disabled]="!canSubmit()" (click)="submit()">
             {{ 'artemisApp.review.addCommentSubmit' | artemisTranslate }}
         </button>
     </div>

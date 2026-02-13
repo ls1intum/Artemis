@@ -20,7 +20,7 @@
                 </span>
             }
         </div>
-        <button type="button" class="btn btn-link p-0 monaco-review-comment-thread-toggle" (click)="toggleThreadBody()">
+        <button pButton type="button" text size="small" class="monaco-review-comment-thread-toggle" (click)="toggleThreadBody()">
             <span class="monaco-review-comment-thread-toggle-icon" [class.monaco-review-comment-thread-toggle--collapsed]="!showThreadBody" aria-hidden="true"></span>
         </button>
     </div>
@@ -45,37 +45,58 @@
                             </div>
                         }
                     </div>
-                    <div class="monaco-review-comment-menu" ngbDropdown>
+                    <div class="monaco-review-comment-menu">
                         <button
+                            pButton
                             type="button"
-                            class="btn btn-link p-0"
-                            ngbDropdownToggle
+                            text
+                            size="small"
+                            class="monaco-review-comment-menu-trigger"
                             [attr.aria-label]="'artemisApp.review.commentMenu' | artemisTranslate"
                             [title]="'artemisApp.review.commentMenu' | artemisTranslate"
+                            [disabled]="commentVm.comment.id === undefined"
+                            aria-haspopup="true"
+                            (click)="commentMenu.toggle($event)"
                         >
-                            <span class="monaco-review-comment-menu-dots" aria-hidden="true"></span>
+                            <fa-icon [icon]="faEllipsisVertical" />
                         </button>
-                        <div ngbDropdownMenu>
-                            @if (isUserComment(commentVm.comment)) {
-                                <button type="button" class="dropdown-item" (click)="startEditing(commentVm.comment)">
-                                    <fa-icon [icon]="faPen" class="me-2" />
-                                    {{ 'artemisApp.review.editComment' | artemisTranslate }}
+                        <p-menu
+                            #commentMenu
+                            [popup]="true"
+                            appendTo="body"
+                            styleClass="monaco-review-comment-menu-overlay"
+                            [model]="isUserComment(commentVm.comment) ? userCommentMenuItems : nonUserCommentMenuItems"
+                        >
+                            <ng-template #item let-item>
+                                <button
+                                    pButton
+                                    type="button"
+                                    text
+                                    size="small"
+                                    class="monaco-review-comment-menu-item"
+                                    [class.monaco-review-comment-menu-item-delete]="item.id === 'delete'"
+                                    [attr.aria-label]="(item.id === 'edit' ? 'artemisApp.review.editComment' : 'artemisApp.review.deleteComment') | artemisTranslate"
+                                    (click)="item.id === 'edit' ? startEditing(commentVm.comment) : deleteComment(commentVm.comment.id!); commentMenu.hide()"
+                                >
+                                    @if (item.id === 'edit') {
+                                        <fa-icon [icon]="faPen" />
+                                        <span>{{ 'artemisApp.review.editComment' | artemisTranslate }}</span>
+                                    } @else {
+                                        <fa-icon [icon]="faTrash" />
+                                        <span>{{ 'artemisApp.review.deleteComment' | artemisTranslate }}</span>
+                                    }
                                 </button>
-                            }
-                            <button type="button" class="dropdown-item text-danger" (click)="deleteComment(commentVm.comment.id)">
-                                <fa-icon [icon]="faTrash" class="me-2" />
-                                {{ 'artemisApp.review.deleteComment' | artemisTranslate }}
-                            </button>
-                        </div>
+                            </ng-template>
+                        </p-menu>
                     </div>
                 </div>
                 @if (editingCommentId === commentVm.comment.id) {
                     <textarea class="monaco-review-comment-textarea" [(ngModel)]="editText"></textarea>
                     <div class="monaco-review-comment-actions">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancelEditing()">
+                        <button pButton type="button" severity="secondary" size="small" (click)="cancelEditing()">
                             {{ 'artemisApp.review.editCancel' | artemisTranslate }}
                         </button>
-                        <button type="button" class="btn btn-primary btn-sm" (click)="saveEditing()">
+                        <button pButton type="button" size="small" (click)="saveEditing()">
                             {{ 'artemisApp.review.editSubmit' | artemisTranslate }}
                         </button>
                     </div>
@@ -93,14 +114,14 @@
                 rows="1"
             ></textarea>
             <div class="monaco-review-comment-actions">
-                <button type="button" class="btn btn-outline-secondary btn-sm" (click)="toggleResolved()">
+                <button pButton type="button" severity="secondary" size="small" (click)="toggleResolved()">
                     @if (thread()?.resolved) {
                         {{ 'artemisApp.review.unresolveThread' | artemisTranslate }}
                     } @else {
                         {{ 'artemisApp.review.resolveThread' | artemisTranslate }}
                     }
                 </button>
-                <button type="button" class="btn btn-primary btn-sm" (click)="submitReply()">
+                <button pButton type="button" size="small" (click)="submitReply()">
                     {{ 'artemisApp.review.replySubmit' | artemisTranslate }}
                 </button>
             </div>

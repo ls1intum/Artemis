@@ -51,7 +51,7 @@ describe('ReviewCommentDraftWidgetComponent', () => {
         comp.submit();
 
         expect(submitSpy).not.toHaveBeenCalled();
-        const submitButton = fixture.nativeElement.querySelector('.btn.btn-primary');
+        const submitButton = fixture.nativeElement.querySelector('[data-testid="review-draft-submit"]');
         const errorMessage = fixture.nativeElement.querySelector('.monaco-review-comment-error');
         expect(submitButton.disabled).toBeTrue();
         expect(errorMessage).not.toBeNull();
