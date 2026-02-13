@@ -121,15 +121,16 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/atlas/',             // atlas module uses Vitest
         '<rootDir>/src/main/webapp/app/iris/',              // iris module uses Vitest
         '<rootDir>/src/main/webapp/app/core/course/manage/', // core course manage module uses Vitest
+        '<rootDir>/src/main/webapp/app/shared/components/buttons', // buttons module uses Vitest
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
     coverageThreshold: {
         global: {
-            statements: 89.4,
+            statements: 89.3,
             branches: 73.5,
             functions: 83.3,
-            lines: 89.5,
+            lines: 89.3,
         },
     },
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
@@ -166,6 +167,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/atlas/',         // atlas module
         '<rootDir>/src/main/webapp/app/iris/',          // iris module
         '<rootDir>/src/main/webapp/app/core/course/manage/', // core course manage module
+        '<rootDir>/src/main/webapp/app/shared/components/buttons/', // shared/buttons components
     ],
     testTimeout: 3000,
     testMatch: [

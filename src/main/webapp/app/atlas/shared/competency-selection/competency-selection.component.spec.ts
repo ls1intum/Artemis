@@ -226,7 +226,7 @@ describe('CompetencySelection', () => {
             expect(btnDe).not.toBeNull();
             // Disabled state is controlled by input binding
             const cmp = btnDe.componentInstance;
-            expect(cmp.disabled).toBeFalsy();
+            expect(cmp.disabled()).toBeFalsy();
         });
 
         it('should disable lightbulb button when no exercise description', () => {
@@ -235,7 +235,7 @@ describe('CompetencySelection', () => {
 
             const btnDe = fixture.debugElement.query(By.css('jhi-button'));
             const cmp = btnDe.componentInstance;
-            expect(cmp.disabled).toBeTruthy();
+            expect(cmp.disabled()).toBeTruthy();
         });
 
         it('should call API and show suggestions when lightbulb button is clicked', () => {
@@ -356,14 +356,14 @@ describe('CompetencySelection', () => {
 
             const btnDe = fixture.debugElement.query(By.css('jhi-button'));
             const cmp = btnDe.componentInstance;
-            expect(cmp.disabled).toBeTruthy();
+            expect(cmp.disabled()).toBeTruthy();
         });
 
         it('should show lightbulb tooltip', () => {
             fixture.changeDetectorRef.detectChanges();
             const btnDe = fixture.debugElement.query(By.css('jhi-button'));
             const cmp = btnDe.componentInstance;
-            expect(cmp.tooltip).toBe('artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
+            expect(cmp.tooltip()).toBe('artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
         });
 
         it('should show AI suggested competency tooltip', () => {

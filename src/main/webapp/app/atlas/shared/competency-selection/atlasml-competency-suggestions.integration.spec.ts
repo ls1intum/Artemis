@@ -106,7 +106,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
             const btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
             expect(btnDe).toBeTruthy();
             const btn = btnDe.componentInstance as ButtonComponent;
-            expect(btn.disabled).toBeFalsy();
+            expect(btn.disabled()).toBeFalsy();
         });
 
         it('should hide lightbulb button when AtlasML feature is disabled', () => {
@@ -121,7 +121,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
         it('should show proper tooltip for lightbulb button', () => {
             const btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
             const btn = btnDe.componentInstance as ButtonComponent;
-            expect(btn.tooltip).toBe('artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
+            expect(btn.tooltip()).toBe('artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
         });
 
         it('should disable lightbulb button when exercise description is empty', () => {
@@ -308,21 +308,21 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
 
                 let btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
                 let btn = btnDe.componentInstance as ButtonComponent;
-                expect(btn.disabled).toBeFalsy();
+                expect(btn.disabled()).toBeFalsy();
 
                 component.suggestCompetencies();
                 fixture.detectChanges();
 
                 btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
                 btn = btnDe.componentInstance as ButtonComponent;
-                expect(btn.disabled).toBeTruthy();
+                expect(btn.disabled()).toBeTruthy();
 
                 vi.advanceTimersByTime(100);
                 fixture.detectChanges();
 
                 btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
                 btn = btnDe.componentInstance as ButtonComponent;
-                expect(btn.disabled).toBeFalsy();
+                expect(btn.disabled()).toBeFalsy();
             } finally {
                 vi.useRealTimers();
             }

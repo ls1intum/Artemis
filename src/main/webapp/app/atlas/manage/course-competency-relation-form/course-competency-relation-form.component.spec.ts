@@ -351,9 +351,9 @@ describe('CourseCompetencyRelationFormComponent', () => {
             expect(allButtons.length).toBeGreaterThan(0);
 
             // Find the button with the correct tooltip
-            const btn = allButtons.find((de) => de.componentInstance?.tooltip === 'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
+            const btn = allButtons.find((de) => de.componentInstance?.tooltip() === 'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
             expect(btn).toBeTruthy();
-            expect(btn?.componentInstance?.disabled).toBeFalsy();
+            expect(btn?.componentInstance?.disabled()).toBeFalsy();
         });
 
         it('should disable lightbulb button when loading suggestions', async () => {
@@ -364,8 +364,8 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
             const btn = fixture.debugElement
                 .queryAll(By.css('jhi-button'))
-                .find((de) => de.componentInstance?.tooltip === 'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
-            expect(btn?.componentInstance?.disabled).toBeTruthy();
+                .find((de) => de.componentInstance?.tooltip() === 'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
+            expect(btn?.componentInstance?.disabled()).toBeTruthy();
             expect(component.isLoadingSuggestions()).toBeTruthy();
         });
 
