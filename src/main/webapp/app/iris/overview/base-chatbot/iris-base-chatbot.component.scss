@@ -435,7 +435,7 @@ pre {
         }
 
         &:disabled {
-            opacity: 0.3;
+            opacity: 0.25;
             cursor: not-allowed;
             background-color: var(--iris-secondary-background);
         }
@@ -682,6 +682,11 @@ pre {
 
         &:hover .svg-inline--fa {
             transform: rotate(45deg);
+        }
+
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
     }
 
