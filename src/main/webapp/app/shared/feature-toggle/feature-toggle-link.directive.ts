@@ -1,4 +1,4 @@
-import { Directive, effect, inject, input, signal } from '@angular/core';
+import { Directive, computed, effect, inject, input, signal } from '@angular/core';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Directive({
@@ -13,24 +13,20 @@ export class FeatureToggleLinkDirective {
     skipFeatureToggle = input<boolean>(false);
 
     private featureActive = signal(true);
-    disabled = signal(false);
-
+    disabled = computed(() => this.overwriteDisabled() === true || !this.featureActive());
     constructor() {
         effect((onCleanup) => {
             const featureInput = this.feature();
             const skip = this.skipFeatureToggle();
-            const overwrite = this.overwriteDisabled();
 
             // default when no feature is set
             if (!featureInput) {
                 this.featureActive.set(true);
-                this.disabled.set(overwrite === true || false);
                 return;
             }
             const sub = this.featureToggleService.getFeatureToggleActive(featureInput).subscribe((active) => {
                 const effectiveActive = skip || active;
                 this.featureActive.set(effectiveActive);
-                this.disabled.set(overwrite === true || !effectiveActive);
             });
             onCleanup(() => sub.unsubscribe());
         });
