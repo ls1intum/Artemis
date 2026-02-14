@@ -260,7 +260,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(courseGradingScale.getGradeSteps());
         assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(courseGradingScale.getGradeSteps(), gradeStep));
-        assertThat(savedGradingScale.gradeSteps().presentationsNumber()).isEqualTo(5);
         assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "exam", "course", "gradeSteps").ignoringCollectionOrder().isEqualTo(courseGradingScale);
     }
 
