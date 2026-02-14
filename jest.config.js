@@ -103,6 +103,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/atlas/**',          // atlas module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/iris/**',           // iris module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/core/course/manage/**', // core course manage module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exam/manage/students/**', // exam manage students module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/sort/**', // sort directives use vitest (see vitest.config.ts)
     ],
     coveragePathIgnorePatterns: [
@@ -122,6 +123,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/atlas/',             // atlas module uses Vitest
         '<rootDir>/src/main/webapp/app/iris/',              // iris module uses Vitest
         '<rootDir>/src/main/webapp/app/core/course/manage/', // core course manage module uses Vitest
+        '<rootDir>/src/main/webapp/app/exam/manage/students/', // exam manage students module uses Vitest
         '<rootDir>/src/main/webapp/app/shared/components/buttons/', // buttons module uses Vitest
         '<rootDir>/src/main/webapp/app/shared/sort/', // sort directives use Vitest
     ],
@@ -169,6 +171,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/atlas/',         // atlas module
         '<rootDir>/src/main/webapp/app/iris/',          // iris module
         '<rootDir>/src/main/webapp/app/core/course/manage/', // core course manage module
+        '<rootDir>/src/main/webapp/app/exam/manage/students/', // exam manage students module
         '<rootDir>/src/main/webapp/app/shared/components/buttons/', // shared/buttons components
         '<rootDir>/src/main/webapp/app/shared/sort/', // sort directives
 

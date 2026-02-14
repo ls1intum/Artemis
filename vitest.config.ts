@@ -39,6 +39,7 @@ export default defineConfig({
             'src/main/webapp/app/modeling/**/*.spec.ts', // include modeling tests
             'src/main/webapp/app/atlas/**/*.spec.ts', // include atlas tests
             'src/main/webapp/app/iris/**/*.spec.ts', // include iris tests
+            'src/main/webapp/app/exam/manage/students/**/*.spec.ts', // include exam manage students tests
             'src/main/webapp/app/shared/components/buttons/**/*.spec.ts', // include shared buttons
             'src/main/webapp/app/shared/sort/**/*.directive.spec.ts', // include sort directives
         ],
@@ -70,6 +71,7 @@ export default defineConfig({
                 'src/main/webapp/app/modeling/**/*.ts', // include modeling for code coverage
                 'src/main/webapp/app/atlas/**/*.ts', // include atlas for code coverage
                 'src/main/webapp/app/iris/**/*.ts', // include iris for code coverage
+                'src/main/webapp/app/exam/manage/students/**/*.ts', // include exam manage students for code coverage
                 'src/main/webapp/app/shared/components/buttons/**/*.ts', // include shared buttons for code coverage
                 'src/main/webapp/app/shared/sort/**/*.directive.ts', // include sort directives for code coverage
             ],

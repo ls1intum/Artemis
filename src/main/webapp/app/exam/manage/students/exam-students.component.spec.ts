@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -34,6 +36,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 class UsersImportButtonStubComponent {}
 
 describe('ExamStudentsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     const course = { id: 1 } as Course;
     const user1 = { id: 1, name: 'name', login: 'login' } as User;
     const user2 = { id: 2, login: 'user2' } as User;
@@ -97,7 +101,7 @@ describe('ExamStudentsComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
         fixture.destroy();
     });
 
@@ -110,7 +114,7 @@ describe('ExamStudentsComponent', () => {
     });
 
     it('should handle auto-complete for user without login', () => {
-        const callbackSpy = jest.fn();
+        const callbackSpy = vi.fn();
         fixture.detectChanges();
 
         component.onAutocompleteSelect(user1, callbackSpy);
@@ -122,10 +126,10 @@ describe('ExamStudentsComponent', () => {
     it('should handle auto-complete for unregistered user', () => {
         const user3 = { id: 3, login: 'user3' } as User;
         const student3 = { login: 'user3', firstName: 'student2', lastName: 'student2', registrationNumber: '1234567' } as ExamUserDTO;
-        const callbackSpy = jest.fn();
-        const flashSpy = jest.spyOn(component, 'flashRowClass');
-        const reloadSpy = jest.spyOn(component, 'reloadExamWithRegisteredUsers');
-        const examServiceStub = jest.spyOn(examManagementService, 'addStudentToExam').mockReturnValue(of(new HttpResponse({ body: student3 })));
+        const callbackSpy = vi.fn();
+        const flashSpy = vi.spyOn(component, 'flashRowClass');
+        const reloadSpy = vi.spyOn(component, 'reloadExamWithRegisteredUsers');
+        const examServiceStub = vi.spyOn(examManagementService, 'addStudentToExam').mockReturnValue(of(new HttpResponse({ body: student3 })));
         fixture.detectChanges();
 
         component.onAutocompleteSelect(user3, callbackSpy);
@@ -140,7 +144,7 @@ describe('ExamStudentsComponent', () => {
     });
 
     it('should search for users', () => {
-        const userServiceStub = jest.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [user2] })));
+        const userServiceStub = vi.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [user2] })));
         fixture.detectChanges();
 
         const search = component.searchAllUsers(of({ text: user2.login!, entities: [user2] }));
@@ -163,7 +167,7 @@ describe('ExamStudentsComponent', () => {
             id: 2,
             examUsers: [{ didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 } as ExamUser],
         };
-        const examServiceStub = jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithOneUser })));
+        const examServiceStub = vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithOneUser })));
         fixture.detectChanges();
 
         component.reloadExamWithRegisteredUsers();
@@ -177,7 +181,7 @@ describe('ExamStudentsComponent', () => {
     });
 
     it('should remove users from the exam', () => {
-        const examServiceStub = jest.spyOn(examManagementService, 'removeStudentFromExam').mockReturnValue(of(new HttpResponse<void>()));
+        const examServiceStub = vi.spyOn(examManagementService, 'removeStudentFromExam').mockReturnValue(of(new HttpResponse<void>()));
         fixture.detectChanges();
         component.allRegisteredUsers = [
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
@@ -197,13 +201,13 @@ describe('ExamStudentsComponent', () => {
     });
 
     it('should register all enrolled students of the course to the exam', () => {
-        const examServiceStubAddAll = jest.spyOn(examManagementService, 'addAllStudentsOfCourseToExam').mockReturnValue(of(new HttpResponse<void>()));
+        const examServiceStubAddAll = vi.spyOn(examManagementService, 'addAllStudentsOfCourseToExam').mockReturnValue(of(new HttpResponse<void>()));
         const examWithOneUser = {
             course,
             id: 2,
             examUsers: [{ didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 } as ExamUser],
         };
-        const examServiceStub = jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithOneUser })));
+        const examServiceStub = vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithOneUser })));
         fixture.detectChanges();
 
         component.exam = examWithCourse;
@@ -217,7 +221,7 @@ describe('ExamStudentsComponent', () => {
     });
 
     it('should remove all users from the exam', () => {
-        const examServiceStub = jest.spyOn(examManagementService, 'removeAllStudentsFromExam').mockReturnValue(of(new HttpResponse<void>()));
+        const examServiceStub = vi.spyOn(examManagementService, 'removeAllStudentsFromExam').mockReturnValue(of(new HttpResponse<void>()));
         fixture.detectChanges();
         component.allRegisteredUsers = [
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
@@ -232,7 +236,7 @@ describe('ExamStudentsComponent', () => {
     });
 
     it('should remove all users from the exam with participaations', () => {
-        const examServiceStub = jest.spyOn(examManagementService, 'removeAllStudentsFromExam').mockReturnValue(of(new HttpResponse<void>()));
+        const examServiceStub = vi.spyOn(examManagementService, 'removeAllStudentsFromExam').mockReturnValue(of(new HttpResponse<void>()));
         fixture.detectChanges();
         component.allRegisteredUsers = [
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },

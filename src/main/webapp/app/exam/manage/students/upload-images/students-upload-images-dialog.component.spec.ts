@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
@@ -19,6 +21,8 @@ import { Router } from '@angular/router';
 import { of } from 'rxjs';
 
 describe('StudentsUploadImagesDialogComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<StudentsUploadImagesDialogComponent>;
     let component: StudentsUploadImagesDialogComponent;
     let examManagementService: ExamManagementService;
@@ -56,7 +60,7 @@ describe('StudentsUploadImagesDialogComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should reset dialog when selecting pdf file', async () => {
@@ -70,13 +74,13 @@ describe('StudentsUploadImagesDialogComponent', () => {
     });
 
     it('should call the function to cancel the dialog', () => {
-        const spyModalClose = jest.spyOn(ngbModal, 'dismiss');
+        const spyModalClose = vi.spyOn(ngbModal, 'dismiss');
         component.clear();
         expect(spyModalClose).toHaveBeenCalledOnce();
     });
 
     it('should call the function onFinish and then close the dialog', () => {
-        const spyModalClose = jest.spyOn(ngbModal, 'close');
+        const spyModalClose = vi.spyOn(ngbModal, 'close');
         component.onFinish();
         expect(spyModalClose).toHaveBeenCalledOnce();
     });
@@ -88,7 +92,7 @@ describe('StudentsUploadImagesDialogComponent', () => {
             numberOfImagesSaved: 10,
             listOfExamUserRegistrationNumbers: ['12345678'],
         };
-        const examServiceStub = jest.spyOn(examManagementService, 'saveImages').mockReturnValue(of(new HttpResponse({ body: response })));
+        const examServiceStub = vi.spyOn(examManagementService, 'saveImages').mockReturnValue(of(new HttpResponse({ body: response })));
         component.parsePDFFile();
 
         expect(examServiceStub).toHaveBeenCalledOnce();

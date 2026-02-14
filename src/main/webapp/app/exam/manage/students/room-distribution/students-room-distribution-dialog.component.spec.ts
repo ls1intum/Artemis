@@ -1,5 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpClient } from '@angular/common/http';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -14,7 +16,6 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
-import { fakeAsync, tick } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 import { StudentsRoomDistributionDialogComponent } from 'app/exam/manage/students/room-distribution/students-room-distribution-dialog.component';
@@ -30,6 +31,8 @@ function dispatchInputEvent(inputElement: HTMLInputElement, value: string) {
 }
 
 describe('StudentsRoomDistributionDialogComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: StudentsRoomDistributionDialogComponent;
     let fixture: ComponentFixture<StudentsRoomDistributionDialogComponent>;
     let service: StudentsRoomDistributionService | MockStudentsRoomDistributionService;
@@ -63,7 +66,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         fixture.componentRef.setInput('exam', exam);
         service = TestBed.inject(StudentsRoomDistributionService) as unknown as MockStudentsRoomDistributionService;
 
-        jest.spyOn(service, 'loadRoomData').mockImplementation(() => {
+        vi.spyOn(service, 'loadRoomData').mockImplementation(() => {
             (service as MockStudentsRoomDistributionService).availableRooms.set(rooms);
         });
 
@@ -71,7 +74,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should close the dialog on pressing the close button', () => {
@@ -125,7 +128,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     });
 
     it('should call distributeStudentsAcrossRooms with default arguments and close modal on finish', () => {
-        const distributeSpy = jest.spyOn(service, 'distributeStudentsAcrossRooms');
+        const distributeSpy = vi.spyOn(service, 'distributeStudentsAcrossRooms');
 
         component.pickSelectedRoom({ item: rooms[0] });
         fixture.changeDetectorRef.detectChanges();
@@ -200,16 +203,16 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     });
 
     it('should select all text when the input gains focus', () => {
-        jest.useFakeTimers();
+        vi.useFakeTimers();
         const input = document.createElement('input');
         input.value = '42';
-        const selectSpy = jest.spyOn(input, 'select');
+        const selectSpy = vi.spyOn(input, 'select');
 
         component.selectAllTextAndOpenDropdown({ target: input } as unknown as FocusEvent);
-        jest.runAllTimers();
+        vi.runAllTimers();
 
         expect(selectSpy).toHaveBeenCalled();
-        jest.useRealTimers();
+        vi.useRealTimers();
     });
 
     it('should toggle use narrow layouts when switch is pressed', () => {
@@ -258,7 +261,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     });
 
     it('should pre-select all used rooms on second distribution', () => {
-        jest.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of([rooms[0], rooms[1]] as RoomForDistributionDTO[]));
+        vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of([rooms[0], rooms[1]] as RoomForDistributionDTO[]));
 
         component.openDialog();
         fixture.changeDetectorRef.detectChanges();

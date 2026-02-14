@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -12,6 +14,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 
 describe('StudentsReseatingDialogComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: StudentsReseatingDialogComponent;
     let fixture: ComponentFixture<StudentsReseatingDialogComponent>;
     let service: StudentsRoomDistributionService;
@@ -57,11 +61,11 @@ describe('StudentsReseatingDialogComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should request used rooms on creation', () => {
-        const loadSpy = jest.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
+        const loadSpy = vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
         fixture.detectChanges();
 
         expect(loadSpy).toHaveBeenCalledExactlyOnceWith(course.id, exam.id);
@@ -79,7 +83,7 @@ describe('StudentsReseatingDialogComponent', () => {
     });
 
     it('openDialog() should fallback to empty rooms list on error', () => {
-        jest.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(throwError(() => new Error('fail')));
+        vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(throwError(() => new Error('fail')));
 
         component.openDialog(examUser);
         fixture.detectChanges();
@@ -99,8 +103,8 @@ describe('StudentsReseatingDialogComponent', () => {
         const userA = { ...examUser, id: 20, plannedRoom: rooms[0].roomNumber, plannedSeat: 'A1' };
         const userB = { ...examUser, id: 30, plannedRoom: rooms[1].roomNumber, plannedSeat: 'B2' };
 
-        const loadUsedRoomsSpy = jest.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
-        const loadSeatsInSelectedRoomSpy = jest.spyOn(service, 'loadSeatsOfExamRoom');
+        const loadUsedRoomsSpy = vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
+        const loadSeatsInSelectedRoomSpy = vi.spyOn(service, 'loadSeatsOfExamRoom');
 
         component.openDialog(userA);
         fixture.detectChanges();
@@ -119,8 +123,8 @@ describe('StudentsReseatingDialogComponent', () => {
     });
 
     it('should call reseatStudent with correct values', () => {
-        jest.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
-        const reseatSpy = jest.spyOn(service, 'reseatStudent').mockReturnValue(of());
+        vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
+        const reseatSpy = vi.spyOn(service, 'reseatStudent').mockReturnValue(of());
 
         component.openDialog(examUser);
         fixture.detectChanges();
@@ -133,8 +137,8 @@ describe('StudentsReseatingDialogComponent', () => {
     });
 
     it('should show if location is known', () => {
-        jest.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
-        jest.spyOn(service, 'loadSeatsOfExamRoom').mockReturnValue(of({ seats: ['A1', 'A2', 'A3', 'A4'] }));
+        vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
+        vi.spyOn(service, 'loadSeatsOfExamRoom').mockReturnValue(of({ seats: ['A1', 'A2', 'A3', 'A4'] }));
 
         component.openDialog(examUser);
         fixture.detectChanges();
@@ -163,7 +167,7 @@ describe('StudentsReseatingDialogComponent', () => {
     });
 
     it('should find correct rooms', fakeAsync(() => {
-        jest.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
+        vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
         fixture.detectChanges();
         tick();
 
@@ -180,8 +184,8 @@ describe('StudentsReseatingDialogComponent', () => {
     }));
 
     it('should find correct seats', fakeAsync(() => {
-        jest.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
-        jest.spyOn(service, 'loadSeatsOfExamRoom').mockReturnValue(of({ seats: ['A1', 'A2', 'B1', 'B2', '1, 2', '1, 3'] }));
+        vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
+        vi.spyOn(service, 'loadSeatsOfExamRoom').mockReturnValue(of({ seats: ['A1', 'A2', 'B1', 'B2', '1, 2', '1, 3'] }));
 
         component.openDialog(examUser);
         fixture.detectChanges();
