@@ -14,27 +14,45 @@ import de.tum.cit.aet.artemis.assessment.domain.Bonus;
 import de.tum.cit.aet.artemis.assessment.domain.BonusStrategy;
 import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 /**
- * Represents a grading scale with the relevant parameters.
+ * DTO representing a {@link GradingScale}.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record GradingScaleDTO(Long id, @NotNull GradeStepsDTO gradeSteps, @NotNull BonusStrategy bonusStrategy, @NotNull Set<BonusDTO> bonusFrom) {
+public record GradingScaleDTO(@NotNull Long id, @NotNull GradeStepsDTO gradeSteps, BonusStrategy bonusStrategy, Set<BonusDTO> bonusFrom) {
 
     public GradingScaleDTO {
         bonusFrom = bonusFrom == null ? Set.of() : bonusFrom;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record BonusDTO(Long id, double weight, Long sourceGradingScaleId) {
+    public record BonusDTO(@NotNull Long id, double weight, @NotNull Long sourceGradingScaleId) {
 
+        /**
+         * Creates a {@link BonusDTO} from a {@link Bonus} entity.
+         *
+         * @param bonus the entity to convert
+         * @return a DTO representation of the bonus
+         */
         public static BonusDTO of(Bonus bonus) {
-            return new BonusDTO(bonus.getId(), bonus.getWeight(), bonus.getSourceGradingScale() != null ? bonus.getSourceGradingScale().getId() : null);
+            Objects.requireNonNull(bonus, "bonus must exist");
+
+            if (bonus.getSourceGradingScale() == null || bonus.getSourceGradingScale().getId() == null) {
+                throw new BadRequestAlertException("Bonus source grading scale must exist", "Bonus", "invalidSourceGradingScale");
+            }
+            return new BonusDTO(bonus.getId(), bonus.getWeight(), bonus.getSourceGradingScale().getId());
         }
     }
 
+    /**
+     * Creates a {@link GradingScaleDTO} from a {@link GradingScale} entity.
+     *
+     * @param scale the grading scale entity
+     * @return a DTO representing the given grading scale
+     */
     public static GradingScaleDTO of(GradingScale scale) {
-        Objects.requireNonNull(scale);
+        Objects.requireNonNull(scale, "grading scale must exist");
 
         Set<GradeStep> gradeSteps = Set.of();
         if (scale.getGradeSteps() != null && Hibernate.isInitialized(scale.getGradeSteps())) {
