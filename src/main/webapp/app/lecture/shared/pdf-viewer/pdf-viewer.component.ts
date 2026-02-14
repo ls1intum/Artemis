@@ -25,6 +25,8 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     private pdfDocument: PDFDocumentProxy | undefined;
     private readonly translateService = inject(TranslateService);
     private viewInitialized = signal<boolean>(false);
+    private resizeObserver: ResizeObserver | undefined;
+    private isRendering = false;
 
     constructor() {
         // Using legacy build with proper worker configuration
@@ -50,11 +52,32 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     ngAfterViewInit(): void {
         // eslint-disable-next-line no-undef
         console.log('[PDF Viewer] ngAfterViewInit called, container:', this.pdfContainer());
+
+        // Set up ResizeObserver to re-render PDF when viewer box size changes
+        const viewerBoxRef = this.pdfViewerBox();
+        if (viewerBoxRef) {
+            this.resizeObserver = new ResizeObserver(() => {
+                // Only re-render if PDF is already loaded and not currently rendering
+                if (this.pdfDocument && !this.isLoading() && !this.error() && !this.isRendering) {
+                    // eslint-disable-next-line no-undef
+                    console.log('[PDF Viewer] Box resized, re-rendering PDF...');
+                    this.reRenderPdf();
+                }
+            });
+            this.resizeObserver.observe(viewerBoxRef.nativeElement);
+        }
+
         // Signal that view is ready
         this.viewInitialized.set(true);
     }
 
     ngOnDestroy(): void {
+        // Cleanup ResizeObserver
+        if (this.resizeObserver) {
+            this.resizeObserver.disconnect();
+            this.resizeObserver = undefined;
+        }
+
         // Cleanup PDF document
         if (this.pdfDocument) {
             this.pdfDocument.destroy();
@@ -118,10 +141,22 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
             // eslint-disable-next-line no-undef
             console.log('[PDF Viewer] Rendering', numPages, 'pages...');
-            // Render all pages
+
+            // Use viewer box width (more stable) and account for padding
+            const viewerBoxRef = this.pdfViewerBox();
+            const boxWidth = viewerBoxRef?.nativeElement.clientWidth || 800;
+            // Subtract padding from container (20px left + 20px right = 40px total)
+            const availableWidth = boxWidth - 40;
+            const targetWidth = availableWidth * 0.9; // 90% to ensure it fits
+            // eslint-disable-next-line no-undef
+            console.log('[PDF Viewer] boxWidth:', boxWidth, 'availableWidth:', availableWidth, 'targetWidth:', targetWidth);
+
+            // Render all pages with same target width
+            this.isRendering = true;
             for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-                await this.renderPage(pageNum, container);
+                await this.renderPage(pageNum, container, targetWidth);
             }
+            this.isRendering = false;
 
             // eslint-disable-next-line no-undef
             console.log('[PDF Viewer] All pages rendered successfully');
@@ -140,7 +175,45 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         }
     }
 
-    private async renderPage(pageNum: number, container: HTMLDivElement): Promise<void> {
+    private async reRenderPdf(): Promise<void> {
+        if (!this.pdfDocument || this.isRendering) {
+            return;
+        }
+
+        this.isRendering = true;
+
+        try {
+            const containerRef = this.pdfContainer();
+            if (!containerRef) {
+                return;
+            }
+            const container = containerRef.nativeElement;
+
+            // Clear previous content
+            container.innerHTML = '';
+
+            // Use viewer box width (more stable) and account for padding
+            const viewerBoxRef = this.pdfViewerBox();
+            const boxWidth = viewerBoxRef?.nativeElement.clientWidth || 800;
+            // Subtract padding from container (20px left + 20px right = 40px total)
+            const availableWidth = boxWidth - 40;
+            const targetWidth = availableWidth * 0.9; // 90% to ensure it fits
+
+            // Re-render all pages with new dimensions
+            const numPages = this.pdfDocument.numPages;
+            // eslint-disable-next-line no-undef
+            console.log('[PDF Viewer] Re-rendering', numPages, 'pages - boxWidth:', boxWidth, 'availableWidth:', availableWidth, 'targetWidth:', targetWidth);
+            for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+                await this.renderPage(pageNum, container, targetWidth);
+            }
+            // eslint-disable-next-line no-undef
+            console.log('[PDF Viewer] Re-rendering complete!');
+        } finally {
+            this.isRendering = false;
+        }
+    }
+
+    private async renderPage(pageNum: number, container: HTMLDivElement, targetWidth: number): Promise<void> {
         if (!this.pdfDocument) {
             return;
         }
@@ -148,11 +221,13 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         try {
             const page = await this.pdfDocument.getPage(pageNum);
 
-            // Calculate scale to fit container width
-            const containerWidth = container.clientWidth || 800;
+            // Calculate scale based on the pre-calculated target width
             const viewport = page.getViewport({ scale: 1 });
-            const scale = containerWidth / viewport.width;
+            const scale = targetWidth / viewport.width;
             const scaledViewport = page.getViewport({ scale });
+
+            // eslint-disable-next-line no-undef
+            console.log('[PDF Viewer] Page', pageNum, '- targetWidth:', targetWidth, 'pdfWidth:', viewport.width, 'scale:', scale, 'scaledWidth:', scaledViewport.width);
 
             // Create canvas element
             const canvas = document.createElement('canvas');
