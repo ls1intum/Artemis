@@ -64,7 +64,7 @@ For detailed information about passkey authentication, configuration, and the ap
   Both "if in course" and "if enrolled" require the user to be associated with the specific course - platform-wide roles alone are not sufficient.
 </Callout>
 
-## Navigation
+## Navigation (manually managed - to be migrated)
 
 [//]: # (Refers to CourseManagementResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/core/web/course/CourseManagementResource.java)
 [//]: # (Refers to CourseOverviewResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/core/web/course/CourseOverviewResource.java)
@@ -82,6 +82,14 @@ For detailed information about passkey authentication, configuration, and the ap
 | Manage Non-Admin Users   | ✔           | ✔     |            |        |                    |         |
 | Manage Admin Users       | ✔           |       |            |        |                    |         |
 | Approve Passkeys         | ✔           |       |            |        |                    |         |
+
+## Navigation
+
+<!-- GENERATED:Navigation -->
+| Feature         | Super Admin | Admin | Instructor | Editor | Teaching Assistant | Student                   |
+|-----------------|-------------|-------|------------|--------|--------------------|---------------------------|
+| Course Overview | ✔           | ✔     | ✔          | ✔      | ✔                  | ✔ (if enrolled + started) |
+<!-- /GENERATED:Navigation -->
 
 ## Course
 

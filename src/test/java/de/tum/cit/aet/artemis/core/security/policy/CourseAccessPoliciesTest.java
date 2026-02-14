@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.security.policy;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -134,5 +135,29 @@ class CourseAccessPoliciesTest {
         Course course = createCourse(ZonedDateTime.now().plusDays(30));
 
         assertThat(policyEngine.isAllowed(policy, ta, course)).isTrue();
+    }
+
+    // -- Documentation metadata tests --
+
+    @Test
+    void testCourseVisibilityPolicyHasSectionAndFeature() {
+        assertThat(policy.getSection()).isEqualTo("Navigation");
+        assertThat(policy.getFeature()).isEqualTo("Course Overview");
+    }
+
+    @Test
+    void testCourseVisibilityPolicyHasDocumentedRoles() {
+        List<PolicyRule<Course>> rules = policy.getRules();
+        assertThat(rules).hasSize(2);
+
+        // First rule: staff + admins
+        PolicyRule<Course> staffRule = rules.get(0);
+        assertThat(staffRule.documentedRoles()).containsExactlyInAnyOrder(Role.SUPER_ADMIN, Role.ADMIN, Role.INSTRUCTOR, Role.EDITOR, Role.TEACHING_ASSISTANT);
+        assertThat(staffRule.note()).isNull();
+
+        // Second rule: students with note
+        PolicyRule<Course> studentRule = rules.get(1);
+        assertThat(studentRule.documentedRoles()).containsExactly(Role.STUDENT);
+        assertThat(studentRule.note()).isEqualTo("if enrolled + started");
     }
 }

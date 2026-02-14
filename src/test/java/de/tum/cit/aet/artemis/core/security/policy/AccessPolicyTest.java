@@ -8,6 +8,7 @@ import static de.tum.cit.aet.artemis.core.security.policy.Conditions.memberOfGro
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -227,5 +228,62 @@ class AccessPolicyTest {
         PolicyCondition<String> condition = isAdmin();
 
         assertThat(condition.test(user, "resource")).isFalse();
+    }
+
+    // -- Documentation metadata tests --
+
+    @Test
+    void testPolicyRuleDocumentedFor() {
+        PolicyCondition<String> alwaysTrue = Conditions.always();
+        PolicyRule<String> rule = when(alwaysTrue).thenAllow().documentedFor(Role.ADMIN, Role.INSTRUCTOR);
+
+        assertThat(rule.documentedRoles()).containsExactlyInAnyOrder(Role.ADMIN, Role.INSTRUCTOR);
+        assertThat(rule.note()).isNull();
+        assertThat(rule.effect()).isEqualTo(PolicyEffect.ALLOW);
+    }
+
+    @Test
+    void testPolicyRuleWithNote() {
+        PolicyCondition<String> alwaysTrue = Conditions.always();
+        PolicyRule<String> rule = when(alwaysTrue).thenAllow().documentedFor(Role.STUDENT).withNote("if enrolled");
+
+        assertThat(rule.documentedRoles()).containsExactly(Role.STUDENT);
+        assertThat(rule.note()).isEqualTo("if enrolled");
+    }
+
+    @Test
+    void testPolicyRuleDefaultDocMetadata() {
+        PolicyCondition<String> alwaysTrue = Conditions.always();
+        PolicyRule<String> rule = when(alwaysTrue).thenAllow();
+
+        assertThat(rule.documentedRoles()).isEmpty();
+        assertThat(rule.note()).isNull();
+    }
+
+    @Test
+    void testPolicySectionAndFeature() {
+        AccessPolicy<String> policy = AccessPolicy.forResource(String.class).named("test").section("Navigation").feature("Course Overview").denyByDefault();
+
+        assertThat(policy.getSection()).isEqualTo("Navigation");
+        assertThat(policy.getFeature()).isEqualTo("Course Overview");
+    }
+
+    @Test
+    void testPolicySectionAndFeatureDefaultNull() {
+        AccessPolicy<String> policy = AccessPolicy.forResource(String.class).named("test").denyByDefault();
+
+        assertThat(policy.getSection()).isNull();
+        assertThat(policy.getFeature()).isNull();
+    }
+
+    @Test
+    void testGetRulesReturnsAllRules() {
+        PolicyCondition<String> alwaysTrue = Conditions.always();
+        AccessPolicy<String> policy = AccessPolicy.forResource(String.class).named("test").rule(when(alwaysTrue).thenAllow()).rule(when(alwaysTrue).thenDeny()).denyByDefault();
+
+        List<PolicyRule<String>> rules = policy.getRules();
+        assertThat(rules).hasSize(2);
+        assertThat(rules.get(0).effect()).isEqualTo(PolicyEffect.ALLOW);
+        assertThat(rules.get(1).effect()).isEqualTo(PolicyEffect.DENY);
     }
 }

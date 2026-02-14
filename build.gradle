@@ -571,6 +571,19 @@ tasks.named("dependencyUpdates").configure {
     }
 }
 
+// Access rights documentation generation from policy definitions
+tasks.register('generateAccessDocs', JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'de.tum.cit.aet.artemis.core.security.policy.docs.PolicyDocGenerator'
+    args = [file('documentation/docs/admin/access-rights.mdx').absolutePath]
+}
+
+tasks.register('checkAccessDocs', JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'de.tum.cit.aet.artemis.core.security.policy.docs.PolicyDocGenerator'
+    args = [file('documentation/docs/admin/access-rights.mdx').absolutePath, '--check']
+}
+
 // Available commands:
 //
 // 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar

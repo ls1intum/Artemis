@@ -15,8 +15,10 @@ import de.tum.cit.aet.artemis.core.domain.User;
  *
  * <pre>{@code
  *
- * AccessPolicy<Course> policy = AccessPolicy.forResource(Course.class).named("course-visibility").rule(when(memberOfGroup(Course::getInstructorGroupName)).thenAllow())
- *         .rule(when(memberOfGroup(Course::getStudentGroupName).and(hasStarted(Course::getStartDate))).thenAllow()).denyByDefault();
+ * AccessPolicy<Course> policy = AccessPolicy.forResource(Course.class).named("course-visibility").section("Navigation").feature("Course Overview")
+ *         .rule(when(memberOfGroup(Course::getInstructorGroupName)).thenAllow().documentedFor(INSTRUCTOR))
+ *         .rule(when(memberOfGroup(Course::getStudentGroupName).and(hasStarted(Course::getStartDate))).thenAllow().documentedFor(STUDENT).withNote("if enrolled + started"))
+ *         .denyByDefault();
  * }</pre>
  *
  * @param <T> the type of resource being protected
@@ -27,13 +29,19 @@ public final class AccessPolicy<T> {
 
     private final String name;
 
+    private final String section;
+
+    private final String feature;
+
     private final List<PolicyRule<T>> rules;
 
     private final PolicyEffect defaultEffect;
 
-    private AccessPolicy(Class<T> resourceType, String name, List<PolicyRule<T>> rules, PolicyEffect defaultEffect) {
+    private AccessPolicy(Class<T> resourceType, String name, String section, String feature, List<PolicyRule<T>> rules, PolicyEffect defaultEffect) {
         this.resourceType = resourceType;
         this.name = name;
+        this.section = section;
+        this.feature = feature;
         this.rules = List.copyOf(rules);
         this.defaultEffect = defaultEffect;
     }
@@ -92,6 +100,27 @@ public final class AccessPolicy<T> {
     }
 
     /**
+     * @return the documentation section this policy belongs to (e.g. "Navigation"), or null if not set
+     */
+    public String getSection() {
+        return section;
+    }
+
+    /**
+     * @return the feature label for documentation tables (e.g. "Course Overview"), or null if not set
+     */
+    public String getFeature() {
+        return feature;
+    }
+
+    /**
+     * @return an unmodifiable list of the rules in evaluation order
+     */
+    public List<PolicyRule<T>> getRules() {
+        return rules;
+    }
+
+    /**
      * Builder for constructing an {@link AccessPolicy}.
      *
      * @param <T> the resource type
@@ -101,6 +130,10 @@ public final class AccessPolicy<T> {
         private final Class<T> resourceType;
 
         private String name = "unnamed";
+
+        private String section;
+
+        private String feature;
 
         private final List<PolicyRule<T>> rules = new ArrayList<>();
 
@@ -116,6 +149,28 @@ public final class AccessPolicy<T> {
          */
         public Builder<T> named(String name) {
             this.name = name;
+            return this;
+        }
+
+        /**
+         * Sets the documentation section heading this policy belongs to.
+         *
+         * @param section the section name (maps to ## heading in access-rights.mdx)
+         * @return this builder
+         */
+        public Builder<T> section(String section) {
+            this.section = section;
+            return this;
+        }
+
+        /**
+         * Sets the feature label for the documentation table row.
+         *
+         * @param feature the feature name (row label in the generated table)
+         * @return this builder
+         */
+        public Builder<T> feature(String feature) {
+            this.feature = feature;
             return this;
         }
 
@@ -136,7 +191,7 @@ public final class AccessPolicy<T> {
          * @return the built policy
          */
         public AccessPolicy<T> denyByDefault() {
-            return new AccessPolicy<>(resourceType, name, rules, PolicyEffect.DENY);
+            return new AccessPolicy<>(resourceType, name, section, feature, rules, PolicyEffect.DENY);
         }
 
         /**
@@ -145,7 +200,7 @@ public final class AccessPolicy<T> {
          * @return the built policy
          */
         public AccessPolicy<T> allowByDefault() {
-            return new AccessPolicy<>(resourceType, name, rules, PolicyEffect.ALLOW);
+            return new AccessPolicy<>(resourceType, name, section, feature, rules, PolicyEffect.ALLOW);
         }
     }
 

@@ -1,6 +1,12 @@
 package de.tum.cit.aet.artemis.core.security.policy.definitions;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.security.Role.ADMIN;
+import static de.tum.cit.aet.artemis.core.security.Role.EDITOR;
+import static de.tum.cit.aet.artemis.core.security.Role.INSTRUCTOR;
+import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
+import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
+import static de.tum.cit.aet.artemis.core.security.Role.TEACHING_ASSISTANT;
 import static de.tum.cit.aet.artemis.core.security.policy.AccessPolicy.when;
 import static de.tum.cit.aet.artemis.core.security.policy.Conditions.hasStarted;
 import static de.tum.cit.aet.artemis.core.security.policy.Conditions.isAdmin;
@@ -32,9 +38,10 @@ public class CourseAccessPolicies {
      */
     @Bean
     public AccessPolicy<Course> courseVisibilityPolicy() {
-        return AccessPolicy
-                .forResource(Course.class).named("course-visibility").rule(when(memberOfGroup(Course::getTeachingAssistantGroupName).or(memberOfGroup(Course::getEditorGroupName))
-                        .or(memberOfGroup(Course::getInstructorGroupName)).or(isAdmin())).thenAllow())
-                .rule(when(memberOfGroup(Course::getStudentGroupName).and(hasStarted(Course::getStartDate))).thenAllow()).denyByDefault();
+        return AccessPolicy.forResource(Course.class).named("course-visibility").section("Navigation").feature("Course Overview")
+                .rule(when(memberOfGroup(Course::getTeachingAssistantGroupName).or(memberOfGroup(Course::getEditorGroupName)).or(memberOfGroup(Course::getInstructorGroupName))
+                        .or(isAdmin())).thenAllow().documentedFor(SUPER_ADMIN, ADMIN, INSTRUCTOR, EDITOR, TEACHING_ASSISTANT))
+                .rule(when(memberOfGroup(Course::getStudentGroupName).and(hasStarted(Course::getStartDate))).thenAllow().documentedFor(STUDENT).withNote("if enrolled + started"))
+                .denyByDefault();
     }
 }
