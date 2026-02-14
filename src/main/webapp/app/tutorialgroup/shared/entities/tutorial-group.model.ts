@@ -126,13 +126,13 @@ export interface UpdateTutorialGroupDTO {
     campus?: string;
     capacity?: number;
     additionalInformation?: string;
-    updateTutorialGroupScheduleDTO: UpdateTutorialGroupScheduleDTO;
+    tutorialGroupScheduleDTO: TutorialGroupScheduleDTO;
 }
 
-export interface UpdateTutorialGroupScheduleDTO {
+export interface TutorialGroupScheduleDTO {
     firstSessionStart: string;
     firstSessionEnd: string;
     repetitionFrequency: number;
     tutorialPeriodEnd: string;
-    location?: string;
+    location: string;
 }

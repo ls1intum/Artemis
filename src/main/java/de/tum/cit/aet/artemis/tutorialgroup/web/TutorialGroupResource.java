@@ -78,10 +78,11 @@ import de.tum.cit.aet.artemis.tutorialgroup.dto.CreateTutorialGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegisterStudentDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegisteredStudentDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupScheduleDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.UpdateTutorialGroupDTO;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.UpdateTutorialGroupScheduleDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupScheduleRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupScheduleService;
@@ -121,11 +122,13 @@ public class TutorialGroupResource {
 
     private final TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
 
+    private final TutorialGroupScheduleRepository tutorialGroupScheduleRepository;
+
     public TutorialGroupResource(AuthorizationCheckService authorizationCheckService, UserRepository userRepository, CourseRepository courseRepository,
             TutorialGroupService tutorialGroupService, TutorialGroupRepository tutorialGroupRepository, TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository,
             TutorialGroupScheduleService tutorialGroupScheduleService, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
             CourseNotificationService courseNotificationService, TutorialGroupRegistrationApi tutorialGroupRegistrationApi,
-            TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository) {
+            TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, TutorialGroupScheduleRepository tutorialGroupScheduleRepository) {
         this.tutorialGroupService = tutorialGroupService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
@@ -137,6 +140,7 @@ public class TutorialGroupResource {
         this.courseNotificationService = courseNotificationService;
         this.tutorialGroupRegistrationApi = tutorialGroupRegistrationApi;
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
+        this.tutorialGroupScheduleRepository = tutorialGroupScheduleRepository;
     }
 
     /**
@@ -239,15 +243,29 @@ public class TutorialGroupResource {
      */
     @GetMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/dto")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<TutorialGroupDTO> getTutorialGroupDetailGroupDTO(@PathVariable long courseId, @PathVariable long tutorialGroupId) {
+    public ResponseEntity<TutorialGroupDTO> getTutorialGroupDTO(@PathVariable long courseId, @PathVariable long tutorialGroupId) {
         log.debug("REST request to get tutorial group: {} of course: {}", tutorialGroupId, courseId);
         Optional<String> timeZoneString = courseRepository.getTimeZoneOfCourseById(courseId);
         if (timeZoneString.isEmpty()) {
             throw new InternalServerErrorException("The course of the tutorial group has an invalid timezone value. This should never happen when tutorial groups exist.");
         }
+        if (!tutorialGroupRepository.existsByIdAndCourse_Id(tutorialGroupId, courseId)) {
+            throw new BadRequestException("There exists no tutorial group with the given tutorialGroupId for the course with the given courseId.");
+        }
         ZoneId timeZone = ZoneId.of(timeZoneString.get());
         TutorialGroupDTO tutorialGroupDTO = tutorialGroupService.getTutorialGroupDTO(tutorialGroupId, courseId, timeZone);
         return ResponseEntity.ok().body(tutorialGroupDTO);
+    }
+
+    @GetMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/schedule")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<TutorialGroupScheduleDTO> getTutorialGroupScheduleDTO(@PathVariable long courseId, @PathVariable long tutorialGroupId) {
+        log.debug("REST request to get tutorial group schedule: {} of course: {}", tutorialGroupId, courseId);
+        if (!tutorialGroupRepository.existsByIdAndCourse_Id(tutorialGroupId, courseId)) {
+            throw new EntityNotFoundException("There exists no tutorial group with the given tutorialGroupId for the course with the given courseId.");
+        }
+        Optional<TutorialGroupSchedule> scheduleOptional = tutorialGroupScheduleRepository.findByTutorialGroup_Id(tutorialGroupId);
+        return scheduleOptional.map(schedule -> ResponseEntity.ok(TutorialGroupScheduleDTO.toTutorialGroupScheduleDTO((schedule)))).orElse(ResponseEntity.noContent().build());
     }
 
     /**
@@ -501,9 +519,9 @@ public class TutorialGroupResource {
         tutorialGroup.setCampus(updateTutorialGroupDTO.campus());
         tutorialGroup = tutorialGroupRepository.save(tutorialGroup);
 
-        UpdateTutorialGroupScheduleDTO updateTutorialGroupScheduleDTO = updateTutorialGroupDTO.updateTutorialGroupScheduleDTO();
+        TutorialGroupScheduleDTO tutorialGroupScheduleDTO = updateTutorialGroupDTO.tutorialGroupScheduleDTO();
         TutorialGroupSchedule oldSchedule = tutorialGroup.getTutorialGroupSchedule();
-        TutorialGroupSchedule newSchedule = UpdateTutorialGroupScheduleDTO.toTutorialGroupSchedule(updateTutorialGroupScheduleDTO);
+        TutorialGroupSchedule newSchedule = TutorialGroupScheduleDTO.toTutorialGroupSchedule(tutorialGroupScheduleDTO);
         tutorialGroupScheduleService.updateScheduleIfChanged(configuration, tutorialGroup, Optional.ofNullable(oldSchedule), Optional.ofNullable(newSchedule));
 
         if (titleChanges && configuration.getUseTutorialGroupChannels() && updateTutorialGroupDTO.updateChannelName()) {

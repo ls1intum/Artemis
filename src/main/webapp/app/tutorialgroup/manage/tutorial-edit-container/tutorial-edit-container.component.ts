@@ -1,5 +1,5 @@
 import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
-import { TutorialGroupTutorDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupScheduleDTO, TutorialGroupTutorDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariableSignal';
@@ -10,6 +10,8 @@ import { User } from 'app/core/user/user.model';
 import { TutorialEditComponent } from 'app/tutorialgroup/manage/tutorial-edit/tutorial-edit.component';
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
 import { TutorialGroupService } from 'app/tutorialgroup/shared/service/tutorial-group.service';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 @Component({
     selector: 'jhi-tutorial-edit-container',
@@ -22,6 +24,8 @@ export class TutorialEditContainerComponent {
     private activatedRoute = inject(ActivatedRoute);
     private courseManagementService = inject(CourseManagementService);
     private tutorialGroupService = inject(TutorialGroupService);
+    private tutorialGroupsService = inject(TutorialGroupsService);
+    private alertService = inject(AlertService);
 
     courseId = getNumericPathVariableSignal(this.activatedRoute, 'courseId');
     tutorialGroupId = getNumericPathVariableSignal(this.activatedRoute, 'tutorialGroupId');
@@ -29,31 +33,18 @@ export class TutorialEditContainerComponent {
     tutors = signal<TutorialGroupTutorDTO[]>([]);
     isTutorialGroupLoading = this.tutorialGroupService.isLoading;
     tutorialGroup = this.tutorialGroupService.tutorialGroup;
-    isLoading = computed<boolean>(() => this.isTutorsLoading() || this.isTutorialGroupLoading());
+    isScheduleLoading = signal(false);
+    schedule = signal<TutorialGroupScheduleDTO | undefined>(undefined);
+    isLoading = computed<boolean>(() => this.isTutorsLoading() || this.isTutorialGroupLoading() || this.isScheduleLoading());
 
     constructor() {
-        effect(() => {
-            const courseId = this.courseId();
-            if (courseId) {
-                this.isTutorsLoading.set(true);
-                this.courseManagementService
-                    .getAllUsersInCourseGroup(courseId, CourseGroup.TUTORS)
-                    .pipe(takeUntilDestroyed(this.destroyRef))
-                    .subscribe((response: HttpResponse<User[]>) => {
-                        const users = response.body ?? [];
-                        const tutors: TutorialGroupTutorDTO[] = users.map((user) => this.convertUserToTutorialGroupTutorDTO(user)).filter((tutor) => tutor !== undefined);
-                        this.tutors.set(tutors);
-                        this.isTutorsLoading.set(false);
-                        // TODO: catch errors
-                    });
-            }
-        });
+        effect(() => this.loadTutors());
         effect(() => {
             const courseId = this.courseId();
             const tutorialGroupId = this.tutorialGroupId();
-            const tutorialGroup = this.tutorialGroup();
-            if (courseId && tutorialGroupId && !tutorialGroup) {
-                this.tutorialGroupService.fetchTutorialGroupDTO(courseId, tutorialGroupId);
+            if (courseId && tutorialGroupId) {
+                this.loadGroupIfNecessary(courseId, tutorialGroupId);
+                this.loadSchedule(courseId, tutorialGroupId);
             }
         });
     }
@@ -76,5 +67,50 @@ export class TutorialEditContainerComponent {
             id: id,
             nameAndLogin: nameAndLogin,
         };
+    }
+
+    private loadTutors() {
+        const courseId = this.courseId();
+        if (courseId) {
+            this.isTutorsLoading.set(true);
+            this.courseManagementService
+                .getAllUsersInCourseGroup(courseId, CourseGroup.TUTORS)
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe({
+                    next: (response: HttpResponse<User[]>) => {
+                        const users = response.body ?? [];
+                        const tutors: TutorialGroupTutorDTO[] = users.map((user) => this.convertUserToTutorialGroupTutorDTO(user)).filter((tutor) => tutor !== undefined);
+                        this.tutors.set(tutors);
+                        this.isTutorsLoading.set(false);
+                    },
+                    error: () => {
+                        // TODO: create string key
+                        this.alertService.addErrorAlert('Something went wrong while loading the tutor options for the tutorial group. Please try again by refreshing the page.');
+                        this.isTutorsLoading.set(false);
+                    },
+                });
+        }
+    }
+
+    private loadSchedule(courseId: number, tutorialGroupId: number) {
+        this.isScheduleLoading.set(true);
+        this.tutorialGroupsService.getTutorialGroupScheduleDTO(courseId, tutorialGroupId).subscribe({
+            next: (schedule) => {
+                this.schedule.set(schedule);
+                this.isScheduleLoading.set(false);
+            },
+            error: () => {
+                // TODO: create string key
+                this.alertService.addErrorAlert('Something went wrong while loading the schedule for the tutorial group. Please try again by refreshing the page.');
+                this.isScheduleLoading.set(false);
+            },
+        });
+    }
+
+    private loadGroupIfNecessary(courseId: number, tutorialGroupId: number) {
+        const tutorialGroup = this.tutorialGroup();
+        if (!tutorialGroup) {
+            this.tutorialGroupService.fetchTutorialGroupDTO(courseId, tutorialGroupId);
+        }
     }
 }

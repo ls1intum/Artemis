@@ -182,7 +182,20 @@
                 <div class="label-and-input">
                     <label>Location</label>
                     <p-inputgroup>
-                        <input type="text" placeholder="Location" pInputText [(ngModel)]="location" />
+                        @let locationValidation = locationValidationResult();
+                        <input
+                            type="text"
+                            placeholder="Location"
+                            pInputText
+                            [(ngModel)]="location"
+                            [invalid]="locationValidation.status === TutorialEditValidationStatus.INVALID"
+                            (blur)="locationInputTouched.set(true)"
+                        />
+                        @if (locationValidation.status === TutorialEditValidationStatus.INVALID) {
+                            <p-inputgroup-addon [pTooltip]="locationValidation.message" tooltipPosition="left">
+                                <i class="pi pi-info-circle danger"></i>
+                            </p-inputgroup-addon>
+                        }
                     </p-inputgroup>
                 </div>
                 <div class="spacer"></div>

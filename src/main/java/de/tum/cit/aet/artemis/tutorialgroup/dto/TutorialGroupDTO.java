@@ -17,6 +17,6 @@ public record TutorialGroupDTO(long id, @NotNull String title, @NotNull String l
 
     public static TutorialGroupDTO from(RawTutorialGroupDTO rawDto, List<TutorialGroupDetailSessionDTO> sessions, Long tutorChatId) {
         return new TutorialGroupDTO(rawDto.groupId(), rawDto.title(), rawDto.language(), rawDto.isOnline(), rawDto.tutorName(), rawDto.tutorLogin(), rawDto.tutorId(),
-                rawDto.tutorImageUrl(), rawDto.capacity(), rawDto.campus(), rawDto.groupChannelId(), tutorChatId, sessions);
+                rawDto.tutorImageUrl(), rawDto.capacity(), rawDto.campus(), rawDto.additionalInformation(), rawDto.groupChannelId(), tutorChatId, sessions);
     }
 }

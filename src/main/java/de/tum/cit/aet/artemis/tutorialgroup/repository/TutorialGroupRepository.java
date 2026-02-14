@@ -85,6 +85,8 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
 
     boolean existsByTitleAndCourse(String title, Course course);
 
+    boolean existsByIdAndCourse_Id(Long id, Long courseId);
+
     @Query("""
             SELECT tutorialGroup
             FROM TutorialGroup tutorialGroup

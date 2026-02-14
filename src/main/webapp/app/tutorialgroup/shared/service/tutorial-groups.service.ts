@@ -1,6 +1,12 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { TutorialGroup, TutorialGroupRegisterStudentDTO, TutorialGroupRegisteredStudentDTO, UpdateTutorialGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import {
+    TutorialGroup,
+    TutorialGroupRegisterStudentDTO,
+    TutorialGroupRegisteredStudentDTO,
+    TutorialGroupScheduleDTO,
+    UpdateTutorialGroupDTO,
+} from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Observable } from 'rxjs';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { map } from 'rxjs/operators';
@@ -45,23 +51,7 @@ export class TutorialGroupsService {
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupResponseDatesFromServer(res)));
     }
 
-    getRegisteredStudentDTOs(courseId: number, tutorialGroupId: number): Observable<TutorialGroupRegisteredStudentDTO[]> {
-        return this.httpClient.get<TutorialGroupRegisteredStudentDTO[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/registered-students`);
-    }
-
-    getUnregisteredStudentDTOs(
-        courseId: number,
-        tutorialGroupId: number,
-        loginOrName: string,
-        pageIndex: number,
-        pageSize: number,
-    ): Observable<TutorialGroupRegisteredStudentDTO[]> {
-        const params = new HttpParams().set('loginOrName', loginOrName).set('pageIndex', pageIndex).set('pageSize', pageSize);
-        return this.httpClient.get<TutorialGroupRegisteredStudentDTO[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/unregistered-students`, {
-            params,
-        });
-    }
-
+    // TODO: remove again?
     moveStudentToOtherGroup(courseId: number, tutorialGroupId: number, studentId: number, otherTutorialGroupId: number): Observable<void> {
         return this.httpClient.patch<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/registered-students/${studentId}`, null, {
             params: {
@@ -102,6 +92,33 @@ export class TutorialGroupsService {
         return this.httpClient.put<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}`, updateTutorialGroupDTO);
     }
 
+    delete(courseId: number, tutorialGroupId: number): Observable<HttpResponse<void>> {
+        return this.tutorialGroupApiService.delete(courseId, tutorialGroupId, 'response');
+    }
+
+    getTutorialGroupScheduleDTO(courseId: number, tutorialGroupId: number): Observable<TutorialGroupScheduleDTO | undefined> {
+        return this.httpClient
+            .get<TutorialGroupScheduleDTO | null>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/schedule`)
+            .pipe(map((dto) => dto ?? undefined));
+    }
+
+    getRegisteredStudentDTOs(courseId: number, tutorialGroupId: number): Observable<TutorialGroupRegisteredStudentDTO[]> {
+        return this.httpClient.get<TutorialGroupRegisteredStudentDTO[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/registered-students`);
+    }
+
+    getUnregisteredStudentDTOs(
+        courseId: number,
+        tutorialGroupId: number,
+        loginOrName: string,
+        pageIndex: number,
+        pageSize: number,
+    ): Observable<TutorialGroupRegisteredStudentDTO[]> {
+        const params = new HttpParams().set('loginOrName', loginOrName).set('pageIndex', pageIndex).set('pageSize', pageSize);
+        return this.httpClient.get<TutorialGroupRegisteredStudentDTO[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/unregistered-students`, {
+            params,
+        });
+    }
+
     deregisterStudent(courseId: number, tutorialGroupId: number, login: string): Observable<HttpResponse<void>> {
         return this.tutorialGroupApiService.deregisterStudent(courseId, tutorialGroupId, login, 'response');
     }
@@ -126,10 +143,6 @@ export class TutorialGroupsService {
 
     import(courseId: number, tutorialGroups: TutorialGroupRegistrationImport[]): Observable<HttpResponse<Array<TutorialGroupRegistrationImport>>> {
         return this.tutorialGroupApiService.importRegistrations(courseId, tutorialGroups, 'response');
-    }
-
-    delete(courseId: number, tutorialGroupId: number): Observable<HttpResponse<void>> {
-        return this.tutorialGroupApiService.delete(courseId, tutorialGroupId, 'response');
     }
 
     convertTutorialGroupArrayDatesFromServer(tutorialGroups: TutorialGroup[]): TutorialGroup[] {

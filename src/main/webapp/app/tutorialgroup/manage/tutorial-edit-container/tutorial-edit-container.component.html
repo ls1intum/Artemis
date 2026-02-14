@@ -1,9 +1,8 @@
 <div>
     @let courseIdToPass = courseId();
     @let tutorialGroupIdToPass = tutorialGroupId();
-    @let tutorsToPass = tutors();
-    @if (courseIdToPass && tutorialGroupIdToPass && tutorsToPass) {
-        <jhi-tutorial-edit [courseId]="courseIdToPass" [tutorialGroupId]="tutorialGroupIdToPass" [tutors]="tutorsToPass" />
+    @if (courseIdToPass && tutorialGroupIdToPass) {
+        <jhi-tutorial-edit [courseId]="courseIdToPass" [tutorialGroupId]="tutorialGroupIdToPass" [tutors]="tutors()" [schedule]="schedule()" />
     }
     @if (isLoading()) {
         <jhi-loading-indicator-overlay />

@@ -10,7 +10,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { TooltipModule } from 'primeng/tooltip';
 import { ButtonModule } from 'primeng/button';
 import { RouterLink } from '@angular/router';
-import { TutorialGroupDTO, TutorialGroupTutorDTO, UpdateTutorialGroupDTO, UpdateTutorialGroupScheduleDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupDTO, TutorialGroupScheduleDTO, TutorialGroupTutorDTO, UpdateTutorialGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialEditLanguagesInputComponent } from 'app/tutorialgroup/manage/tutorial-edit-languages-input/tutorial-edit-languages-input.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import dayjs from 'dayjs/esm';
@@ -59,6 +59,7 @@ export class TutorialEditComponent {
     tutorialGroupId = input.required<number>();
     tutors = input.required<TutorialGroupTutorDTO[]>();
     tutorialGroup = input<TutorialGroupDTO>();
+    schedule = input<TutorialGroupScheduleDTO>();
 
     title = signal('');
     titleValidationResult = computed<TutorialEditValidation>(() => this.computeTitleValidation());
@@ -86,6 +87,8 @@ export class TutorialEditComponent {
     tutorialPeriodEndInputTouched = signal(false);
     tutorialPeriodEndValidationResult = computed<TutorialEditValidation>(() => this.computeTeachingPeriodEndValidation());
     location = signal('');
+    locationInputTouched = signal(false);
+    locationValidationResult = computed<TutorialEditValidation>(() => this.computeLocationValidation());
 
     constructor() {
         effect(() => {
@@ -107,6 +110,17 @@ export class TutorialEditComponent {
                 // TODO: init schedule info
             }
         });
+        effect(() => {
+            const schedule = this.schedule();
+            if (schedule) {
+                this.configureSessionPlan.set(true);
+                this.firstSessionStart.set(dayjs(schedule.firstSessionStart).toDate());
+                this.firstSessionEnd.set(dayjs(schedule.firstSessionEnd).toDate());
+                this.repetitionFrequency.set(schedule.repetitionFrequency);
+                this.tutorialPeriodEnd.set(dayjs(schedule.tutorialPeriodEnd).toDate());
+                this.location.set(schedule.location);
+            }
+        });
     }
 
     save() {
@@ -118,7 +132,7 @@ export class TutorialEditComponent {
     }
 
     private update() {
-        const updateTutorialGroupScheduleDTO: UpdateTutorialGroupScheduleDTO = {
+        const updateTutorialGroupScheduleDTO: TutorialGroupScheduleDTO = {
             firstSessionStart: dayjs(this.firstSessionStart()).format('YYYY-MM-DDTHH:mm:ss'),
             firstSessionEnd: dayjs(this.firstSessionEnd()).format('YYYY-MM-DDTHH:mm:ss'),
             repetitionFrequency: this.repetitionFrequency(),
@@ -134,7 +148,7 @@ export class TutorialEditComponent {
             campus: this.campus() || undefined,
             capacity: this.capacity(),
             additionalInformation: this.additionalInformation() || undefined,
-            updateTutorialGroupScheduleDTO: updateTutorialGroupScheduleDTO,
+            tutorialGroupScheduleDTO: updateTutorialGroupScheduleDTO,
         };
         this.tutorialGroupsService
             .update2(this.courseId(), this.tutorialGroupId(), updateTutorialGroupDTO)
@@ -252,5 +266,17 @@ export class TutorialEditComponent {
             status: TutorialEditValidationStatus.INVALID,
             message: 'Please choose a tutor.',
         };
+    }
+
+    private computeLocationValidation(): TutorialEditValidation {
+        if (!this.locationInputTouched()) return { status: TutorialEditValidationStatus.VALID };
+        const location = this.location();
+        if (!location) {
+            return {
+                status: TutorialEditValidationStatus.INVALID,
+                message: 'Please choose a location.',
+            };
+        }
+        return { status: TutorialEditValidationStatus.VALID };
     }
 }
