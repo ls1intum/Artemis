@@ -11,10 +11,14 @@ export class FeatureToggleDirective {
     features = input<FeatureToggle | FeatureToggle[] | undefined>(undefined, { alias: 'jhiFeatureToggle' });
     overwriteDisabled = input<boolean | null>(null);
     skipFeatureToggle = input<boolean>(false);
-
     private featureActive = signal(true);
-
-    disabled = computed(() => this.overwriteDisabled() || !this.featureActive());
+    disabled = computed(() => {
+        const overwrite = this.overwriteDisabled();
+        if (overwrite !== null) {
+            return overwrite;
+        }
+        return !this.featureActive();
+    });
 
     constructor() {
         effect((onCleanup) => {
