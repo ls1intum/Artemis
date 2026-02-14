@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.core.security.policy.AccessPolicy;
 import de.tum.cit.aet.artemis.core.security.policy.PolicyEffect;
 import de.tum.cit.aet.artemis.core.security.policy.PolicyRule;
 import de.tum.cit.aet.artemis.core.security.policy.definitions.CourseAccessPolicies;
+import de.tum.cit.aet.artemis.core.security.policy.definitions.ProgrammingExerciseAccessPolicies;
 
 /**
  * Standalone documentation generator that produces markdown tables from access policy definitions.
@@ -56,6 +57,8 @@ public final class PolicyDocGenerator {
         List<AccessPolicy<?>> policies = new ArrayList<>();
         CourseAccessPolicies courseConfig = new CourseAccessPolicies();
         policies.add(courseConfig.courseVisibilityPolicy());
+        ProgrammingExerciseAccessPolicies progConfig = new ProgrammingExerciseAccessPolicies();
+        policies.add(progConfig.programmingExerciseVisibilityPolicy());
         return policies;
     }
 

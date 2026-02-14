@@ -164,4 +164,11 @@ class PolicyDocGeneratorTest {
         assertThat(policies).isNotEmpty();
         assertThat(policies).anyMatch(p -> "course-visibility".equals(p.getName()));
     }
+
+    @Test
+    void testCollectPoliciesReturnsProgrammingExercisePolicy() {
+        List<AccessPolicy<?>> policies = PolicyDocGenerator.collectPolicies();
+
+        assertThat(policies).anyMatch(p -> "programming-exercise-visibility".equals(p.getName()));
+    }
 }
