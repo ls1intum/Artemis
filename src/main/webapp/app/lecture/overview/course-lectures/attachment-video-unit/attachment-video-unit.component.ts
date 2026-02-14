@@ -62,18 +62,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     readonly isPdf = computed(() => {
         const link = this.lectureUnit().attachment?.link;
-        const result = link && link.toLowerCase().endsWith('.pdf');
-        // eslint-disable-next-line no-undef
-        console.log('[AttachmentVideoUnit] isPdf computed - link:', link, 'result:', result);
-        return result;
+        return link ? link.toLowerCase().endsWith('.pdf') : false;
     });
 
-    readonly hasPdf = computed(() => {
-        const result = this.hasAttachment() && this.isPdf();
-        // eslint-disable-next-line no-undef
-        console.log('[AttachmentVideoUnit] hasPdf computed - hasAttachment:', this.hasAttachment(), 'isPdf:', this.isPdf(), 'result:', result);
-        return result;
-    });
+    readonly hasPdf = computed(() => this.hasAttachment() && this.isPdf());
 
     // TODO: This must use a server configuration to make it compatible with deployments other than TUM
     private readonly videoUrlAllowList = [RegExp('^https://(?:live\\.rbg\\.tum\\.de|tum\\.live)/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1')];
@@ -112,7 +104,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         if (!isCollapsed) {
             this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
-            // reset stale state
+            // Reset stale state
             this.transcriptSegments.set([]);
             this.playlistUrl.set(undefined);
             this.pdfUrl.set(undefined);
@@ -123,7 +115,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             if (src) {
                 this.isLoading.set(true);
 
-                // Try to resolve a .m3u8 playlist URL from the server
                 this.attachmentVideoUnitService
                     .getPlaylistUrl(src)
                     .pipe(takeUntilDestroyed(this.destroyRef))
@@ -136,7 +127,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                             this.isLoading.set(false);
                         },
                         error: () => {
-                            // Failed to resolve playlist URL, will fall back to iframe
                             this.playlistUrl.set(undefined);
                             this.isLoading.set(false);
                         },
@@ -145,16 +135,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 this.isLoading.set(false);
             }
 
-            // Handle PDF (load independently)
-            // eslint-disable-next-line no-undef
-            console.log('[AttachmentVideoUnit] hasPdf():', this.hasPdf(), 'isPdf():', this.isPdf(), 'hasAttachment():', this.hasAttachment());
+            // Handle PDF
             if (this.hasPdf()) {
-                // eslint-disable-next-line no-undef
-                console.log('[AttachmentVideoUnit] Calling loadPdf()');
                 this.loadPdf();
-            } else {
-                // eslint-disable-next-line no-undef
-                console.log('[AttachmentVideoUnit] NOT calling loadPdf because hasPdf() is false');
             }
         }
     }
@@ -186,64 +169,26 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     private loadPdf(): void {
-        // eslint-disable-next-line no-undef
-        console.log('[AttachmentVideoUnit] loadPdf called');
-        // eslint-disable-next-line no-undef
-        console.log('[AttachmentVideoUnit] Setting isPdfLoading to TRUE');
         this.isPdfLoading.set(true);
 
-        // Use the same link as download - works for both student and instructor versions
         const link = addPublicFilePrefix(this.lectureUnit().attachment!.studentVersion || this.fileService.createStudentLink(this.lectureUnit().attachment!.link!));
 
         if (!link) {
-            // eslint-disable-next-line no-undef
-            console.error('[AttachmentVideoUnit] No link available for PDF');
-            // eslint-disable-next-line no-undef
-            console.log('[AttachmentVideoUnit] Setting isPdfLoading to FALSE (no link)');
             this.isPdfLoading.set(false);
             return;
         }
 
-        // eslint-disable-next-line no-undef
-        console.log('[AttachmentVideoUnit] Fetching PDF from link:', link);
-
-        // Fetch the PDF as blob using HttpClient with proper typing
         this.httpClient
-            .get(link, {
-                responseType: 'blob',
-                observe: 'response',
-            })
+            .get(link, { responseType: 'blob' })
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-                next: (response) => {
-                    const blob = response.body;
-                    if (!blob) {
-                        // eslint-disable-next-line no-undef
-                        console.error('[AttachmentVideoUnit] No blob in response');
-                        // eslint-disable-next-line no-undef
-                        console.log('[AttachmentVideoUnit] Setting isPdfLoading to FALSE (no blob)');
-                        this.isPdfLoading.set(false);
-                        return;
+                next: (blob) => {
+                    if (blob) {
+                        this.pdfUrl.set(URL.createObjectURL(blob));
                     }
-                    // eslint-disable-next-line no-undef
-                    console.log('[AttachmentVideoUnit] PDF blob received, size:', blob.size);
-                    const url = URL.createObjectURL(blob);
-                    // eslint-disable-next-line no-undef
-                    console.log('[AttachmentVideoUnit] Object URL created:', url);
-                    // eslint-disable-next-line no-undef
-                    console.log('[AttachmentVideoUnit] Setting pdfUrl to:', url);
-                    this.pdfUrl.set(url);
-                    // eslint-disable-next-line no-undef
-                    console.log('[AttachmentVideoUnit] Setting isPdfLoading to FALSE (success)');
                     this.isPdfLoading.set(false);
-                    // eslint-disable-next-line no-undef
-                    console.log('[AttachmentVideoUnit] FINAL STATE - isPdfLoading:', this.isPdfLoading(), 'pdfUrl:', this.pdfUrl());
                 },
-                error: (err) => {
-                    // eslint-disable-next-line no-undef
-                    console.error('[AttachmentVideoUnit] Error loading PDF:', err);
-                    // eslint-disable-next-line no-undef
-                    console.log('[AttachmentVideoUnit] Setting isPdfLoading to FALSE (HTTP error)');
+                error: () => {
                     this.pdfUrl.set(undefined);
                     this.isPdfLoading.set(false);
                 },
