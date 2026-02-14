@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { AccountService } from 'app/core/auth/account.service';
 import { IrisOnboardingService } from './iris-onboarding.service';
 
 describe('IrisOnboardingService', () => {
@@ -11,7 +12,8 @@ describe('IrisOnboardingService', () => {
     let modalService: NgbModal;
     let matchMediaMock: ReturnType<typeof vi.spyOn>;
 
-    const STORAGE_KEY = 'iris-onboarding-completed';
+    const MOCK_USER_ID = 42;
+    const STORAGE_KEY = `iris-onboarding-completed-${MOCK_USER_ID}`;
 
     const setDesktopViewport = (isDesktop: boolean) => {
         matchMediaMock.mockImplementation((query: string) => {
@@ -34,7 +36,11 @@ describe('IrisOnboardingService', () => {
         setDesktopViewport(true);
 
         TestBed.configureTestingModule({
-            providers: [IrisOnboardingService, { provide: NgbModal, useValue: { open: vi.fn() } }],
+            providers: [
+                IrisOnboardingService,
+                { provide: NgbModal, useValue: { open: vi.fn() } },
+                { provide: AccountService, useValue: { userIdentity: () => ({ id: MOCK_USER_ID }) } },
+            ],
         });
 
         service = TestBed.inject(IrisOnboardingService);

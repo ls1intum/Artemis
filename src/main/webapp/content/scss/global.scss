@@ -876,6 +876,18 @@ Course Info Bar
     margin: 0 !important;
 }
 
+// Cross-component button styling for onboarding modal (replaces ::ng-deep)
+.iris-onboarding-modal-window .actions jhi-button button {
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+}
+
+.iris-onboarding-modal-window .tooltip-footer jhi-button button {
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    padding: 0.3rem 0.75rem;
+}
+
 .connection-status {
     font-size: 14px;
     color: $connection-status;

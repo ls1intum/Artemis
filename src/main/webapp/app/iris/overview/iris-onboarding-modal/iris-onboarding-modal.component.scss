@@ -234,11 +234,6 @@
     width: 100%;
 }
 
-:host ::ng-deep .actions jhi-button button {
-    border-radius: var(--onboarding-radius);
-    padding: 0.5rem 1rem;
-}
-
 // Spotlight overlay styles
 .spotlight-backdrop {
     @extend %absolute-fill;
@@ -435,12 +430,6 @@
     margin-top: 0.5rem;
 }
 
-:host ::ng-deep .tooltip-footer jhi-button button {
-    border-radius: 0.25rem;
-    font-size: 0.75rem;
-    padding: 0.3rem 0.75rem;
-}
-
 // Coach mark for Steps 1 and 3
 .coach-mark {
     position: absolute;
@@ -574,7 +563,6 @@
 
     &:hover {
         background: var(--iris-client-chat-background);
-        // border-color: var(--bs-border-color);
         transform: translateY(-1px);
     }
 

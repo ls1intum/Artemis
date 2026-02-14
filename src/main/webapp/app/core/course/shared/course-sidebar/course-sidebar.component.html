@@ -194,7 +194,8 @@
             [routerLinkActiveOptions]="sidebarItem?.isPrefix ? { exact: true } : { exact: false }"
             [jhiFeatureToggleHide]="sidebarItem.featureToggle"
             [title]="sidebarItem.title"
-            (click)="onSidebarItemClick(sidebarItem); itemsDrop?.close()"
+            [attr.data-sidebar-item]="sidebarItem.title"
+            (click)="itemsDrop?.close()"
         >
             <ng-template *ngTemplateOutlet="iconTextTemplate; context: { $implicit: sidebarItem }" />
         </a>

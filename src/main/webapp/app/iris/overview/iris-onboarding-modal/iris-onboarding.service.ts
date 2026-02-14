@@ -1,18 +1,25 @@
 import { Injectable, inject } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { AccountService } from 'app/core/auth/account.service';
 import { IrisOnboardingModalComponent } from './iris-onboarding-modal.component';
 
 export type OnboardingResult = { action: 'finish' } | { action: 'promptSelected'; promptKey: string };
 
-const IRIS_ONBOARDING_COMPLETED_KEY = 'iris-onboarding-completed';
+const IRIS_ONBOARDING_KEY_PREFIX = 'iris-onboarding-completed';
 
 @Injectable({
     providedIn: 'root',
 })
 export class IrisOnboardingService {
     private modalService = inject(NgbModal);
+    private accountService = inject(AccountService);
     private modalRef: NgbModalRef | undefined;
     private pendingResult: Promise<OnboardingResult | undefined> | undefined;
+
+    private getStorageKey(): string {
+        const userId = this.accountService.userIdentity()?.id;
+        return userId ? `${IRIS_ONBOARDING_KEY_PREFIX}-${userId}` : IRIS_ONBOARDING_KEY_PREFIX;
+    }
 
     private isDesktopViewport(): boolean {
         if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
@@ -26,21 +33,21 @@ export class IrisOnboardingService {
      * @returns true if onboarding was completed, false otherwise
      */
     hasCompletedOnboarding(): boolean {
-        return localStorage.getItem(IRIS_ONBOARDING_COMPLETED_KEY) === 'true';
+        return localStorage.getItem(this.getStorageKey()) === 'true';
     }
 
     /**
      * Marks the onboarding as completed.
      */
     markOnboardingCompleted(): void {
-        localStorage.setItem(IRIS_ONBOARDING_COMPLETED_KEY, 'true');
+        localStorage.setItem(this.getStorageKey(), 'true');
     }
 
     /**
      * Resets the onboarding state (useful for testing).
      */
     resetOnboarding(): void {
-        localStorage.removeItem(IRIS_ONBOARDING_COMPLETED_KEY);
+        localStorage.removeItem(this.getStorageKey());
     }
 
     /**

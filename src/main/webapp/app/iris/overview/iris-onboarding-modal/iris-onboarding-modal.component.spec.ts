@@ -14,6 +14,7 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
 import { StepperComponent } from './stepper/stepper.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { WritableSignal } from '@angular/core';
 
 function createMockElement(rect: Partial<DOMRect>): Element {
     const el = document.createElement('div');
@@ -35,6 +36,10 @@ function createMockElement(rect: Partial<DOMRect>): Element {
     return el;
 }
 
+function navigateTo(subject: Subject<NavigationEnd>, url: string): void {
+    subject.next(new NavigationEnd(1, url, url));
+}
+
 describe('IrisOnboardingModalComponent', () => {
     setupTestBed({ zoneless: true });
 
@@ -42,6 +47,11 @@ describe('IrisOnboardingModalComponent', () => {
     let fixture: ComponentFixture<IrisOnboardingModalComponent>;
     let activeModal: NgbActiveModal;
     let routerEventsSubject: Subject<NavigationEnd>;
+
+    async function detectChanges(): Promise<void> {
+        fixture.detectChanges();
+        await fixture.whenStable();
+    }
 
     beforeEach(async () => {
         routerEventsSubject = new Subject<NavigationEnd>();
@@ -145,39 +155,17 @@ describe('IrisOnboardingModalComponent', () => {
     });
 
     describe('selectPrompt', () => {
-        it('should close modal with translation key for explainConcept', () => {
+        it.each([
+            ['explainConcept', 'artemisApp.iris.onboarding.step4.prompts.explainConceptStarter'],
+            ['quizTopic', 'artemisApp.iris.onboarding.step4.prompts.quizTopicStarter'],
+            ['studyTips', 'artemisApp.iris.onboarding.step4.prompts.studyTipsStarter'],
+            ['unknown', undefined],
+        ])('should close modal with correct promptKey for %s', (promptType, expectedKey) => {
             const closeSpy = vi.spyOn(activeModal, 'close');
-            component.selectPrompt('explainConcept');
+            component.selectPrompt(promptType);
             expect(closeSpy).toHaveBeenCalledWith({
                 action: 'promptSelected',
-                promptKey: 'artemisApp.iris.onboarding.step4.prompts.explainConceptStarter',
-            });
-        });
-
-        it('should close modal with translation key for quizTopic', () => {
-            const closeSpy = vi.spyOn(activeModal, 'close');
-            component.selectPrompt('quizTopic');
-            expect(closeSpy).toHaveBeenCalledWith({
-                action: 'promptSelected',
-                promptKey: 'artemisApp.iris.onboarding.step4.prompts.quizTopicStarter',
-            });
-        });
-
-        it('should close modal with translation key for studyTips', () => {
-            const closeSpy = vi.spyOn(activeModal, 'close');
-            component.selectPrompt('studyTips');
-            expect(closeSpy).toHaveBeenCalledWith({
-                action: 'promptSelected',
-                promptKey: 'artemisApp.iris.onboarding.step4.prompts.studyTipsStarter',
-            });
-        });
-
-        it('should close modal with undefined promptKey for unknown type', () => {
-            const closeSpy = vi.spyOn(activeModal, 'close');
-            component.selectPrompt('unknown');
-            expect(closeSpy).toHaveBeenCalledWith({
-                action: 'promptSelected',
-                promptKey: undefined,
+                promptKey: expectedKey,
             });
         });
     });
@@ -185,38 +173,20 @@ describe('IrisOnboardingModalComponent', () => {
     describe('route navigation handling', () => {
         it('should advance from step 1 to step 2 on exercise page navigation', () => {
             component.step.set(1);
-            routerEventsSubject.next(new NavigationEnd(1, '/courses/1/exercises/42', '/courses/1/exercises/42'));
+            navigateTo(routerEventsSubject, '/courses/1/exercises/42');
             expect(component.step()).toBe(2);
         });
 
         it('should not advance from step 1 on non-exercise navigation', () => {
             component.step.set(1);
-            routerEventsSubject.next(new NavigationEnd(1, '/courses/1/lectures', '/courses/1/lectures'));
+            navigateTo(routerEventsSubject, '/courses/1/lectures');
             expect(component.step()).toBe(1);
         });
 
-        it('should advance from step 3 on dashboard navigation', () => {
+        it.each(['/courses/1/dashboard', '/courses/1', '/courses'])('should advance from step 3 on navigation to %s', (url) => {
             vi.useFakeTimers();
             component.step.set(3);
-            routerEventsSubject.next(new NavigationEnd(1, '/courses/1/dashboard', '/courses/1/dashboard'));
-            vi.advanceTimersByTime(200);
-            expect(component.step()).toBe(4);
-            vi.useRealTimers();
-        });
-
-        it('should advance from step 3 on course root navigation', () => {
-            vi.useFakeTimers();
-            component.step.set(3);
-            routerEventsSubject.next(new NavigationEnd(1, '/courses/1', '/courses/1'));
-            vi.advanceTimersByTime(200);
-            expect(component.step()).toBe(4);
-            vi.useRealTimers();
-        });
-
-        it('should advance from step 3 on /courses navigation', () => {
-            vi.useFakeTimers();
-            component.step.set(3);
-            routerEventsSubject.next(new NavigationEnd(1, '/courses', '/courses'));
+            navigateTo(routerEventsSubject, url);
             vi.advanceTimersByTime(200);
             expect(component.step()).toBe(4);
             vi.useRealTimers();
@@ -225,7 +195,7 @@ describe('IrisOnboardingModalComponent', () => {
         it('should not advance from step 3 on non-dashboard navigation', () => {
             vi.useFakeTimers();
             component.step.set(3);
-            routerEventsSubject.next(new NavigationEnd(1, '/courses/1/exercises/5', '/courses/1/exercises/5'));
+            navigateTo(routerEventsSubject, '/courses/1/exercises/5');
             vi.advanceTimersByTime(200);
             expect(component.step()).toBe(3);
             vi.useRealTimers();
@@ -233,26 +203,26 @@ describe('IrisOnboardingModalComponent', () => {
 
         it('should not react to navigation on step 0', () => {
             component.step.set(0);
-            routerEventsSubject.next(new NavigationEnd(1, '/courses/1/exercises/42', '/courses/1/exercises/42'));
+            navigateTo(routerEventsSubject, '/courses/1/exercises/42');
             expect(component.step()).toBe(0);
         });
 
         it('should not react to navigation on step 2', () => {
             vi.useFakeTimers();
             component.step.set(2);
-            routerEventsSubject.next(new NavigationEnd(1, '/courses/1/dashboard', '/courses/1/dashboard'));
+            navigateTo(routerEventsSubject, '/courses/1/dashboard');
             vi.advanceTimersByTime(200);
             expect(component.step()).toBe(2);
             vi.useRealTimers();
         });
     });
 
-    describe('ngOnDestroy', () => {
-        it('should unsubscribe from router events', () => {
-            component.ngOnDestroy();
+    describe('component destroy', () => {
+        it('should unsubscribe from router events on destroy', () => {
+            fixture.destroy();
             // After destroy, navigation events should not affect the step
             component.step.set(1);
-            routerEventsSubject.next(new NavigationEnd(1, '/courses/1/exercises/42', '/courses/1/exercises/42'));
+            navigateTo(routerEventsSubject, '/courses/1/exercises/42');
             expect(component.step()).toBe(1);
         });
     });
@@ -260,89 +230,39 @@ describe('IrisOnboardingModalComponent', () => {
     describe('template rendering', () => {
         it('should render welcome modal at step 0', async () => {
             component.step.set(0);
-            fixture.detectChanges();
-            await fixture.whenStable();
+            await detectChanges();
 
             const welcomeModal = fixture.nativeElement.querySelector('.iris-onboarding-modal-welcome');
             expect(welcomeModal).toBeTruthy();
         });
 
-        it('should render spotlight backdrop at step 1', async () => {
-            component.step.set(1);
-            component.isStep1PositionReady.set(true);
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            const spotlight = fixture.nativeElement.querySelector('.spotlight-backdrop');
-            expect(spotlight).toBeTruthy();
-            const coachMark = fixture.nativeElement.querySelector('.coach-mark');
-            expect(coachMark).toBeTruthy();
+        it.each([
+            [1, 'isStep1PositionReady', '.spotlight-backdrop', '.coach-mark'],
+            [2, 'isStep2PositionReady', '.tooltip-bottom-right-arrow', '.spotlight-blocker'],
+            [3, 'isStep3PositionReady', '.spotlight-backdrop', '.coach-mark'],
+        ])('should render step %i elements when position is ready', async (step, readySignal, selector1, selector2) => {
+            component.step.set(step as number);
+            (component[readySignal as keyof typeof component] as WritableSignal<boolean>).set(true);
+            await detectChanges();
+            expect(fixture.nativeElement.querySelector(selector1)).toBeTruthy();
+            expect(fixture.nativeElement.querySelector(selector2)).toBeTruthy();
         });
 
-        it('should not render step 1 spotlight when position is not ready', async () => {
-            component.step.set(1);
-            component.isStep1PositionReady.set(false);
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            const spotlight = fixture.nativeElement.querySelector('.spotlight-backdrop');
-            const coachMark = fixture.nativeElement.querySelector('.coach-mark');
-            expect(spotlight).toBeFalsy();
-            expect(coachMark).toBeFalsy();
-        });
-
-        it('should render iris icon tooltip at step 2', async () => {
-            component.step.set(2);
-            component.isStep2PositionReady.set(true);
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            const tooltip = fixture.nativeElement.querySelector('.tooltip-bottom-right-arrow');
-            expect(tooltip).toBeTruthy();
-            const blocker = fixture.nativeElement.querySelector('.spotlight-blocker');
-            expect(blocker).toBeTruthy();
-        });
-
-        it('should not render iris icon tooltip at step 2 when spotlight position is not ready', async () => {
-            component.step.set(2);
-            component.isStep2PositionReady.set(false);
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            const tooltip = fixture.nativeElement.querySelector('.tooltip-bottom-right-arrow');
-            const blocker = fixture.nativeElement.querySelector('.spotlight-blocker');
-            expect(tooltip).toBeFalsy();
-            expect(blocker).toBeFalsy();
-        });
-
-        it('should render dashboard spotlight at step 3', async () => {
-            component.step.set(3);
-            component.isStep3PositionReady.set(true);
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            const spotlight = fixture.nativeElement.querySelector('.spotlight-backdrop');
-            expect(spotlight).toBeTruthy();
-            const coachMark = fixture.nativeElement.querySelector('.coach-mark');
-            expect(coachMark).toBeTruthy();
-        });
-
-        it('should not render step 3 spotlight when position is not ready', async () => {
-            component.step.set(3);
-            component.isStep3PositionReady.set(false);
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            const spotlight = fixture.nativeElement.querySelector('.spotlight-backdrop');
-            const coachMark = fixture.nativeElement.querySelector('.coach-mark');
-            expect(spotlight).toBeFalsy();
-            expect(coachMark).toBeFalsy();
+        it.each([
+            [1, 'isStep1PositionReady', '.spotlight-backdrop', '.coach-mark'],
+            [2, 'isStep2PositionReady', '.tooltip-bottom-right-arrow', '.spotlight-blocker'],
+            [3, 'isStep3PositionReady', '.spotlight-backdrop', '.coach-mark'],
+        ])('should not render step %i elements when position is not ready', async (step, readySignal, selector1, selector2) => {
+            component.step.set(step as number);
+            (component[readySignal as keyof typeof component] as WritableSignal<boolean>).set(false);
+            await detectChanges();
+            expect(fixture.nativeElement.querySelector(selector1)).toBeFalsy();
+            expect(fixture.nativeElement.querySelector(selector2)).toBeFalsy();
         });
 
         it('should render prompt selection modal at step 4', async () => {
             component.step.set(4);
-            fixture.detectChanges();
-            await fixture.whenStable();
+            await detectChanges();
 
             const promptModal = fixture.nativeElement.querySelector('.prompt-selection-modal');
             expect(promptModal).toBeTruthy();
@@ -352,8 +272,7 @@ describe('IrisOnboardingModalComponent', () => {
 
         it('should not render any step content for invalid step', async () => {
             component.step.set(99);
-            fixture.detectChanges();
-            await fixture.whenStable();
+            await detectChanges();
 
             const welcomeModal = fixture.nativeElement.querySelector('.iris-onboarding-modal-welcome');
             const spotlight = fixture.nativeElement.querySelector('.spotlight-backdrop');
@@ -399,15 +318,12 @@ describe('IrisOnboardingModalComponent', () => {
             });
         });
 
-        it('should return undefined when step is 1 but position is not ready', () => {
-            component.step.set(1);
-            component.isStep1PositionReady.set(false);
-            expect(component.sidebarTooltipConfig()).toBeUndefined();
-        });
-
-        it('should return undefined when step is 3 but position is not ready', () => {
-            component.step.set(3);
-            component.isStep3PositionReady.set(false);
+        it.each([
+            [1, 'isStep1PositionReady'],
+            [3, 'isStep3PositionReady'],
+        ])('should return undefined when step is %i but position is not ready', (step, readySignal) => {
+            component.step.set(step as number);
+            (component[readySignal as keyof typeof component] as WritableSignal<boolean>).set(false);
             expect(component.sidebarTooltipConfig()).toBeUndefined();
         });
 
@@ -443,14 +359,14 @@ describe('IrisOnboardingModalComponent', () => {
         it('should reset step 2 readiness on exercise page navigation at step 1', () => {
             component.step.set(1);
             component.isStep2PositionReady.set(true);
-            routerEventsSubject.next(new NavigationEnd(1, '/courses/1/exercises/42', '/courses/1/exercises/42'));
+            navigateTo(routerEventsSubject, '/courses/1/exercises/42');
             expect(component.isStep2PositionReady()).toBe(false);
         });
 
         it('should not advance from step 3 if step changes before setTimeout fires', () => {
             vi.useFakeTimers();
             component.step.set(3);
-            routerEventsSubject.next(new NavigationEnd(1, '/courses/1/dashboard', '/courses/1/dashboard'));
+            navigateTo(routerEventsSubject, '/courses/1/dashboard');
             component.step.set(0);
             vi.advanceTimersByTime(200);
             expect(component.step()).toBe(0);
@@ -476,7 +392,7 @@ describe('IrisOnboardingModalComponent', () => {
             Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true });
 
             component.step.set(1);
-            routerEventsSubject.next(new NavigationEnd(1, '/courses/1/exercises/42', '/courses/1/exercises/42'));
+            navigateTo(routerEventsSubject, '/courses/1/exercises/42');
 
             expect(component.isStep2PositionReady()).toBe(false);
             rafCallback!(0);
@@ -500,7 +416,7 @@ describe('IrisOnboardingModalComponent', () => {
             const querySpy = vi.spyOn(document, 'querySelector').mockReturnValue(null);
 
             component.step.set(1);
-            routerEventsSubject.next(new NavigationEnd(1, '/courses/1/exercises/42', '/courses/1/exercises/42'));
+            navigateTo(routerEventsSubject, '/courses/1/exercises/42');
 
             rafCallback!(0);
             expect(component.isStep2PositionReady()).toBe(false);
@@ -514,7 +430,7 @@ describe('IrisOnboardingModalComponent', () => {
         it('should calculate exercise tab position when sidebar link is found', () => {
             vi.useFakeTimers();
             vi.spyOn(document, 'querySelector').mockImplementation((selector: string) => {
-                if (selector === "jhi-course-sidebar a.nav-link-sidebar[title='Exercises']") {
+                if (selector === "jhi-course-sidebar a.nav-link-sidebar[data-sidebar-item='Exercises']") {
                     return createMockElement({ top: 130, left: 0, width: 220, height: 44 });
                 }
                 return null;
@@ -537,7 +453,7 @@ describe('IrisOnboardingModalComponent', () => {
         it('should calculate dashboard tab position when sidebar link is found', () => {
             vi.useFakeTimers();
             vi.spyOn(document, 'querySelector').mockImplementation((selector: string) => {
-                if (selector === "jhi-course-sidebar a.nav-link-sidebar[title='Dashboard']") {
+                if (selector === "jhi-course-sidebar a.nav-link-sidebar[data-sidebar-item='Dashboard']") {
                     return createMockElement({ top: 58, left: 0, width: 220, height: 44 });
                 }
                 return null;
@@ -564,7 +480,7 @@ describe('IrisOnboardingModalComponent', () => {
             const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation(() => 0);
 
             component.step.set(1);
-            routerEventsSubject.next(new NavigationEnd(1, '/courses/1/exercises/42', '/courses/1/exercises/42'));
+            navigateTo(routerEventsSubject, '/courses/1/exercises/42');
 
             expect(rafSpy).toHaveBeenCalled();
         });
@@ -578,7 +494,7 @@ describe('IrisOnboardingModalComponent', () => {
             Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true });
 
             component.step.set(1);
-            routerEventsSubject.next(new NavigationEnd(1, '/courses/1/exercises/42', '/courses/1/exercises/42'));
+            navigateTo(routerEventsSubject, '/courses/1/exercises/42');
 
             expect(component.isStep2PositionReady()).toBe(false);
             vi.advanceTimersByTime(0);
