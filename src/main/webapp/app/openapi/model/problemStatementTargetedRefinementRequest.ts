@@ -30,12 +30,12 @@ export interface ProblemStatementTargetedRefinementRequest {
      */
     startColumn?: number;
     /**
-     * End column within end line (1-indexed, inclusive, optional for character-level targeting)
+     * End column within end line (1-indexed, exclusive — points after the last selected character, optional for character-level targeting)
      */
     endColumn?: number;
     /**
      * Instruction describing what should change
      */
-    instruction?: string;
+    instruction: string;
 }
 

@@ -203,14 +203,14 @@ public class HyperionProblemStatementRefinementService {
         if (singleLine) {
             if (request.hasColumnRange()) {
                 String selectedText = extractSelectedText(request, lines);
-                return String.format("Line %d, columns %d-%d (modify ONLY the text: \"%s\")", request.startLine(), request.startColumn(), request.endColumn(), selectedText);
+                return String.format("Line %d, columns %d-%d (modify ONLY the text: \"%s\")", request.startLine(), request.startColumn(), request.endColumn() - 1, selectedText);
             }
             return "Line " + request.startLine();
         }
         else {
             if (request.hasColumnRange()) {
                 return String.format("Lines %d-%d, from column %d on line %d to column %d on line %d", request.startLine(), request.endLine(), request.startColumn(),
-                        request.startLine(), request.endColumn(), request.endLine());
+                        request.startLine(), request.endColumn() - 1, request.endLine());
             }
             return "Lines " + request.startLine() + "-" + request.endLine();
         }
@@ -277,10 +277,14 @@ public class HyperionProblemStatementRefinementService {
     }
 
     /**
-     * Converts a 1-indexed nullable column to a clamped end column.
+     * Converts a 1-indexed exclusive nullable column to a 0-indexed exclusive end column suitable for {@link String#substring(int, int)}.
+     * When colObj is null, defaults to the full line length.
      */
     private int resolveEndColumn(Integer colObj, int lineLength) {
-        return Math.min(lineLength, colObj != null ? colObj : DEFAULT_COLUMN_ONE_INDEXED);
+        if (colObj == null) {
+            return lineLength;
+        }
+        return Math.min(lineLength, colObj - ONE_INDEXED_TO_ZERO_INDEXED_OFFSET);
     }
 
     /**

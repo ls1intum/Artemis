@@ -527,11 +527,11 @@ components:
             start line (1-indexed, optional for character-level targeting)', maximum: 10000,
           minimum: 1}
         endColumn: {type: integer, format: int32, description: 'End column within
-            end line (1-indexed, inclusive, optional for character-level targeting)',
-          maximum: 10000, minimum: 1}
+            end line (1-indexed, exclusive — points after the last selected character,
+            optional for character-level targeting)', maximum: 10000, minimum: 1}
         instruction: {type: string, description: Instruction describing what should
             change, maxLength: 500, minLength: 0}
-      required: [endLine, problemStatementText, startLine]
+      required: [endLine, instruction, problemStatementText, startLine]
     CodeGenerationRequest:
       type: object
       properties:

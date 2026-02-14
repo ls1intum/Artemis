@@ -19,12 +19,15 @@ const CARRIAGE_RETURN_PATTERN = /\r\n?/g;
 
 /**
  * Event structure for inline refinement requests from the editor.
+ * Column values follow Monaco conventions: 1-indexed, with endColumn being exclusive
+ * (pointing to the character after the last selected character).
  */
 export interface InlineRefinementEvent {
     instruction: string;
     startLine: number;
     endLine: number;
     startColumn: number;
+    /** Exclusive end column (1-indexed) — points after the last selected character. */
     endColumn: number;
 }
 
