@@ -14,6 +14,7 @@ import static de.tum.cit.aet.artemis.core.security.policy.Conditions.memberOfGro
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -37,6 +38,7 @@ public class CourseAccessPolicies {
      * @return the course visibility access policy
      */
     @Bean
+    @Lazy
     public AccessPolicy<Course> courseVisibilityPolicy() {
         return AccessPolicy.forResource(Course.class).named("course-visibility").section("Navigation").feature("Course Overview")
                 .rule(when(memberOfGroup(Course::getTeachingAssistantGroupName).or(memberOfGroup(Course::getEditorGroupName)).or(memberOfGroup(Course::getInstructorGroupName))
