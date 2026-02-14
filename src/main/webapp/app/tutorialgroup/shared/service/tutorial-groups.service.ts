@@ -89,7 +89,7 @@ export class TutorialGroupsService {
     }
 
     update2(courseId: number, tutorialGroupId: number, updateTutorialGroupDTO: UpdateTutorialGroupDTO): Observable<void> {
-        return this.httpClient.put<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}`, updateTutorialGroupDTO);
+        return this.httpClient.put<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups2/${tutorialGroupId}`, updateTutorialGroupDTO);
     }
 
     delete(courseId: number, tutorialGroupId: number): Observable<HttpResponse<void>> {

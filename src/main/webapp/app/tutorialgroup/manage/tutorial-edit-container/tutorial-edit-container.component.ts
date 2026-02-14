@@ -1,13 +1,13 @@
 import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { TutorialGroupScheduleDTO, TutorialGroupTutorDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { HttpResponse } from '@angular/common/http';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariableSignal';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { CourseGroup } from 'app/core/course/shared/entities/course.model';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { User } from 'app/core/user/user.model';
-import { TutorialEditComponent } from 'app/tutorialgroup/manage/tutorial-edit/tutorial-edit.component';
+import { TutorialEditComponent, UpdateTutorialGroupEvent } from 'app/tutorialgroup/manage/tutorial-edit/tutorial-edit.component';
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
 import { TutorialGroupService } from 'app/tutorialgroup/shared/service/tutorial-group.service';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
@@ -26,6 +26,7 @@ export class TutorialEditContainerComponent {
     private tutorialGroupService = inject(TutorialGroupService);
     private tutorialGroupsService = inject(TutorialGroupsService);
     private alertService = inject(AlertService);
+    private router = inject(Router);
 
     courseId = getNumericPathVariableSignal(this.activatedRoute, 'courseId');
     tutorialGroupId = getNumericPathVariableSignal(this.activatedRoute, 'tutorialGroupId');
@@ -47,6 +48,27 @@ export class TutorialEditContainerComponent {
                 this.loadSchedule(courseId, tutorialGroupId);
             }
         });
+    }
+
+    updateTutorialGroup(updateTutorialGroupEvent: UpdateTutorialGroupEvent) {
+        this.isTutorialGroupLoading.set(true);
+        const courseId = updateTutorialGroupEvent.courseId;
+        const tutorialGroupId = updateTutorialGroupEvent.tutorialGroupId;
+        const updateTutorialGroupDTO = updateTutorialGroupEvent.updateTutorialGroupDTO;
+        this.tutorialGroupsService
+            .update2(courseId, tutorialGroupId, updateTutorialGroupDTO)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => {
+                    this.isTutorialGroupLoading.set(false);
+                    this.tutorialGroupService.fetchTutorialGroupDTO(courseId, tutorialGroupId);
+                    this.router.navigate(['..'], { relativeTo: this.activatedRoute });
+                },
+                error: () => {
+                    this.alertService.addErrorAlert('Something went wrong while updating the tutorial group. Please try again.'); // TODO: create string key
+                    this.isTutorialGroupLoading.set(false);
+                },
+            });
     }
 
     private convertUserToTutorialGroupTutorDTO(user: User): TutorialGroupTutorDTO | undefined {

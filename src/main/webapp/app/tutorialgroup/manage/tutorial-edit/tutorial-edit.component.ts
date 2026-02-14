@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
@@ -12,10 +12,7 @@ import { ButtonModule } from 'primeng/button';
 import { RouterLink } from '@angular/router';
 import { TutorialGroupDTO, TutorialGroupScheduleDTO, TutorialGroupTutorDTO, UpdateTutorialGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialEditLanguagesInputComponent } from 'app/tutorialgroup/manage/tutorial-edit-languages-input/tutorial-edit-languages-input.component';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import dayjs from 'dayjs/esm';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AlertService } from 'app/shared/service/alert.service';
 
 type Mode = {
     name: string;
@@ -27,6 +24,12 @@ export enum TutorialEditValidationStatus {
 }
 
 export type TutorialEditValidation = { status: TutorialEditValidationStatus.INVALID; message: string } | { status: TutorialEditValidationStatus.VALID };
+
+export interface UpdateTutorialGroupEvent {
+    courseId: number;
+    tutorialGroupId: number;
+    updateTutorialGroupDTO: UpdateTutorialGroupDTO;
+}
 
 @Component({
     selector: 'jhi-tutorial-edit',
@@ -50,10 +53,6 @@ export type TutorialEditValidation = { status: TutorialEditValidationStatus.INVA
 export class TutorialEditComponent {
     private readonly titleRegex = /^[A-Za-z0-9][A-Za-z0-9: -]*$/;
     protected readonly TutorialEditValidationStatus = TutorialEditValidationStatus;
-
-    private destroyRef = inject(DestroyRef);
-    private tutorialGroupsService = inject(TutorialGroupsService);
-    private alertService = inject(AlertService);
 
     courseId = input.required<number>();
     tutorialGroupId = input.required<number>();
@@ -90,6 +89,8 @@ export class TutorialEditComponent {
     locationInputTouched = signal(false);
     locationValidationResult = computed<TutorialEditValidation>(() => this.computeLocationValidation());
 
+    onUpdate = output<UpdateTutorialGroupEvent>();
+
     constructor() {
         effect(() => {
             const tutorialGroup = this.tutorialGroup();
@@ -107,7 +108,6 @@ export class TutorialEditComponent {
                 if (tutorialGroup.additionalInformation) {
                     this.additionalInformation.set(tutorialGroup.additionalInformation);
                 }
-                // TODO: init schedule info
             }
         });
         effect(() => {
@@ -125,13 +125,18 @@ export class TutorialEditComponent {
 
     save() {
         if (this.tutorialGroup()) {
-            this.update();
+            const updateTutorialGroupDTO = this.assembleUpdateTutorialGroupDTO();
+            this.onUpdate.emit({
+                courseId: this.courseId(),
+                tutorialGroupId: this.tutorialGroupId(),
+                updateTutorialGroupDTO: updateTutorialGroupDTO,
+            });
         } else {
             // TODO: create
         }
     }
 
-    private update() {
+    private assembleUpdateTutorialGroupDTO(): UpdateTutorialGroupDTO {
         const updateTutorialGroupScheduleDTO: TutorialGroupScheduleDTO = {
             firstSessionStart: dayjs(this.firstSessionStart()).format('YYYY-MM-DDTHH:mm:ss'),
             firstSessionEnd: dayjs(this.firstSessionEnd()).format('YYYY-MM-DDTHH:mm:ss'),
@@ -139,7 +144,7 @@ export class TutorialEditComponent {
             tutorialPeriodEnd: dayjs(this.tutorialPeriodEnd()).format('YYYY-MM-DD'),
             location: this.location(),
         };
-        const updateTutorialGroupDTO: UpdateTutorialGroupDTO = {
+        return {
             title: this.title(),
             updateChannelName: true, // TODO: add input to capture this
             tutorId: this.selectedTutorId()!,
@@ -150,14 +155,6 @@ export class TutorialEditComponent {
             additionalInformation: this.additionalInformation() || undefined,
             tutorialGroupScheduleDTO: updateTutorialGroupScheduleDTO,
         };
-        this.tutorialGroupsService
-            .update2(this.courseId(), this.tutorialGroupId(), updateTutorialGroupDTO)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-                error: () => {
-                    this.alertService.addErrorAlert('Something went wrong while updating the tutorial group. Please try again.'); // TODO: create string key
-                },
-            });
     }
 
     private computeTitleValidation(): TutorialEditValidation {
