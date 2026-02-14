@@ -126,7 +126,7 @@ export interface UpdateTutorialGroupDTO {
     campus?: string;
     capacity?: number;
     additionalInformation?: string;
-    tutorialGroupScheduleDTO: TutorialGroupScheduleDTO;
+    tutorialGroupScheduleDTO?: TutorialGroupScheduleDTO;
 }
 
 export interface TutorialGroupScheduleDTO {

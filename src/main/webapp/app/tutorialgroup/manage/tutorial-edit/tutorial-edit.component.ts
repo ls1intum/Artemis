@@ -31,6 +31,7 @@ export interface UpdateTutorialGroupEvent {
     updateTutorialGroupDTO: UpdateTutorialGroupDTO;
 }
 
+// TODO: add warning when changing schedule (all existing sessions will be overwritten)
 @Component({
     selector: 'jhi-tutorial-edit',
     imports: [
@@ -119,6 +120,8 @@ export class TutorialEditComponent {
                 this.repetitionFrequency.set(schedule.repetitionFrequency);
                 this.tutorialPeriodEnd.set(dayjs(schedule.tutorialPeriodEnd).toDate());
                 this.location.set(schedule.location);
+            } else {
+                this.configureSessionPlan.set(false);
             }
         });
     }
@@ -137,13 +140,15 @@ export class TutorialEditComponent {
     }
 
     private assembleUpdateTutorialGroupDTO(): UpdateTutorialGroupDTO {
-        const updateTutorialGroupScheduleDTO: TutorialGroupScheduleDTO = {
-            firstSessionStart: dayjs(this.firstSessionStart()).format('YYYY-MM-DDTHH:mm:ss'),
-            firstSessionEnd: dayjs(this.firstSessionEnd()).format('YYYY-MM-DDTHH:mm:ss'),
-            repetitionFrequency: this.repetitionFrequency(),
-            tutorialPeriodEnd: dayjs(this.tutorialPeriodEnd()).format('YYYY-MM-DD'),
-            location: this.location(),
-        };
+        const updateTutorialGroupScheduleDTO: TutorialGroupScheduleDTO | undefined = this.configureSessionPlan()
+            ? {
+                  firstSessionStart: dayjs(this.firstSessionStart()).format('YYYY-MM-DDTHH:mm:ss'),
+                  firstSessionEnd: dayjs(this.firstSessionEnd()).format('YYYY-MM-DDTHH:mm:ss'),
+                  repetitionFrequency: this.repetitionFrequency(),
+                  tutorialPeriodEnd: dayjs(this.tutorialPeriodEnd()).format('YYYY-MM-DD'),
+                  location: this.location(),
+              }
+            : undefined;
         return {
             title: this.title(),
             updateChannelName: true, // TODO: add input to capture this
