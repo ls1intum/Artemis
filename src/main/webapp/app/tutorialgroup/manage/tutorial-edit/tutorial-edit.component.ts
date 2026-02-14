@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
@@ -13,6 +13,8 @@ import { RouterLink } from '@angular/router';
 import { TutorialGroupDTO, TutorialGroupScheduleDTO, TutorialGroupTutorDTO, UpdateTutorialGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialEditLanguagesInputComponent } from 'app/tutorialgroup/manage/tutorial-edit-languages-input/tutorial-edit-languages-input.component';
 import dayjs from 'dayjs/esm';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 
 type Mode = {
     name: string;
@@ -47,13 +49,16 @@ export interface UpdateTutorialGroupEvent {
         ButtonModule,
         RouterLink,
         TutorialEditLanguagesInputComponent,
+        ConfirmDialogModule,
     ],
+    providers: [ConfirmationService],
     templateUrl: './tutorial-edit.component.html',
     styleUrl: './tutorial-edit.component.scss',
 })
 export class TutorialEditComponent {
     private readonly titleRegex = /^[A-Za-z0-9][A-Za-z0-9: -]*$/;
     protected readonly TutorialEditValidationStatus = TutorialEditValidationStatus;
+    private confirmationService = inject(ConfirmationService);
 
     courseId = input.required<number>();
     tutorialGroupId = input.required<number>();
@@ -89,6 +94,7 @@ export class TutorialEditComponent {
     location = signal('');
     locationInputTouched = signal(false);
     locationValidationResult = computed<TutorialEditValidation>(() => this.computeLocationValidation());
+    scheduleChangeOverwritesSessions = computed<boolean>(() => this.computeIfScheduleChangeOverwritesSessions());
 
     onUpdate = output<UpdateTutorialGroupEvent>();
 
@@ -128,15 +134,29 @@ export class TutorialEditComponent {
 
     save() {
         if (this.tutorialGroup()) {
+            const courseId = this.courseId();
+            const tutorialGroupId = this.tutorialGroupId();
             const updateTutorialGroupDTO = this.assembleUpdateTutorialGroupDTO();
-            this.onUpdate.emit({
-                courseId: this.courseId(),
-                tutorialGroupId: this.tutorialGroupId(),
-                updateTutorialGroupDTO: updateTutorialGroupDTO,
-            });
+            if (this.scheduleChangeOverwritesSessions()) {
+                this.confirmScheduleChangingSave(courseId, tutorialGroupId, updateTutorialGroupDTO);
+            } else {
+                this.onUpdate.emit({ courseId: courseId, tutorialGroupId: tutorialGroupId, updateTutorialGroupDTO: updateTutorialGroupDTO });
+            }
         } else {
             // TODO: create
         }
+    }
+
+    private confirmScheduleChangingSave(courseId: number, tutorialGroupId: number, updateTutorialGroupDTO: UpdateTutorialGroupDTO) {
+        this.confirmationService.confirm({
+            header: 'Confirm Save',
+            message: 'You made changes to the schedule. If you save, this will overwrite all existing sessions.',
+            acceptLabel: 'Save and Overwrite',
+            rejectLabel: 'Cancel',
+            acceptButtonStyleClass: 'p-button-danger',
+            rejectButtonStyleClass: 'p-button-secondary',
+            accept: () => this.onUpdate.emit({ courseId, tutorialGroupId, updateTutorialGroupDTO }),
+        });
     }
 
     private assembleUpdateTutorialGroupDTO(): UpdateTutorialGroupDTO {
@@ -280,5 +300,20 @@ export class TutorialEditComponent {
             };
         }
         return { status: TutorialEditValidationStatus.VALID };
+    }
+
+    private computeIfScheduleChangeOverwritesSessions(): boolean {
+        const schedule = this.schedule();
+        if (!schedule) return false;
+        const configureSessionPlan = this.configureSessionPlan();
+        if (schedule && configureSessionPlan) {
+            const firstSessionStartChanged = dayjs(this.firstSessionStart()).format('YYYY-MM-DDTHH:mm:ss') !== schedule.firstSessionStart;
+            const firstSessionEndChanged = dayjs(this.firstSessionEnd()).format('YYYY-MM-DDTHH:mm:ss') !== schedule.firstSessionEnd;
+            const repetitionFrequencyChanged = this.repetitionFrequency() !== schedule.repetitionFrequency;
+            const tutorialPeriodEndChanged = dayjs(this.tutorialPeriodEnd()).format('YYYY-MM-DD') !== schedule.tutorialPeriodEnd;
+            const locationChanged = this.location() !== schedule.location;
+            return firstSessionStartChanged || firstSessionEndChanged || repetitionFrequencyChanged || tutorialPeriodEndChanged || locationChanged;
+        }
+        return true;
     }
 }
