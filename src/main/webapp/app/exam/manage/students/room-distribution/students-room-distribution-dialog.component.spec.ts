@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpClient } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -47,8 +47,14 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FaIconComponent, FormsModule],
-            declarations: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent)],
+            imports: [
+                FaIconComponent,
+                FormsModule,
+                StudentsRoomDistributionDialogComponent,
+                MockDirective(TranslateDirective),
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(HelpIconComponent),
+            ],
             providers: [
                 MockProvider(NgbActiveModal),
                 MockProvider(HttpClient),
@@ -150,7 +156,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         expect(formatted).toBe('A (Alt) – 101 (102) - [B]');
     });
 
-    it('should find correct rooms', fakeAsync(() => {
+    it('should find correct rooms', () => {
         (service as MockStudentsRoomDistributionService).availableRooms.set(rooms);
 
         let searchResult: RoomForDistributionDTO[] = [];
@@ -158,14 +164,14 @@ describe('StudentsRoomDistributionDialogComponent', () => {
             searchResult = rooms;
         });
 
-        tick(200);
+        vi.advanceTimersByTime(200);
 
         expect(searchResult).toHaveLength(2);
         expect(searchResult).toContainEqual(rooms[1]);
         expect(searchResult).toContainEqual(rooms[2]);
-    }));
+    });
 
-    it('should update reserve percentage when typing valid numbers', async () => {
+    it('should update reserve percentage when typing valid numbers', () => {
         fixture.detectChanges();
         const input: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#reserveFactor');
 

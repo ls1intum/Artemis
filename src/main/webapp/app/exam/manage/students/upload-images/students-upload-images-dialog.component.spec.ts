@@ -34,8 +34,14 @@ describe('StudentsUploadImagesDialogComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [FaIconComponent, FormsModule],
-            declarations: [StudentsUploadImagesDialogComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent)],
+            imports: [
+                FaIconComponent,
+                FormsModule,
+                StudentsUploadImagesDialogComponent,
+                MockDirective(TranslateDirective),
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(HelpIconComponent),
+            ],
             providers: [
                 MockProvider(NgbActiveModal),
                 MockProvider(AlertService),

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -47,7 +47,7 @@ describe('StudentsReseatingDialogComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FaIconComponent],
+            imports: [FaIconComponent, StudentsReseatingDialogComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: StudentsRoomDistributionService, useClass: MockStudentsRoomDistributionService },
@@ -166,43 +166,43 @@ describe('StudentsReseatingDialogComponent', () => {
         expect(formatted).toBe('A (Alt) – 101 (102) - [B]');
     });
 
-    it('should find correct rooms', fakeAsync(() => {
+    it('should find correct rooms', () => {
         vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
         fixture.detectChanges();
-        tick();
+        vi.advanceTimersByTime(0);
 
         let searchResult: RoomForDistributionDTO[] = [];
         component['roomSearch'](of('t')).subscribe((rooms) => {
             searchResult = rooms;
         });
 
-        tick(200);
+        vi.advanceTimersByTime(200);
 
         expect(searchResult).toHaveLength(2);
         expect(searchResult).toContainEqual(rooms[1]);
         expect(searchResult).toContainEqual(rooms[2]);
-    }));
+    });
 
-    it('should find correct seats', fakeAsync(() => {
+    it('should find correct seats', () => {
         vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
         vi.spyOn(service, 'loadSeatsOfExamRoom').mockReturnValue(of({ seats: ['A1', 'A2', 'B1', 'B2', '1, 2', '1, 3'] }));
 
         component.openDialog(examUser);
         fixture.detectChanges();
-        tick();
+        vi.advanceTimersByTime(0);
 
         let searchResult: string[] = [];
         component['examSeatSearch'](of('2')).subscribe((rooms) => {
             searchResult = rooms;
         });
 
-        tick(200);
+        vi.advanceTimersByTime(200);
 
         expect(searchResult).toHaveLength(3);
         expect(searchResult).toContainEqual('A2');
         expect(searchResult).toContainEqual('B2');
         expect(searchResult).toContainEqual('1, 2');
-    }));
+    });
 
     it('should close the dialog on pressing the close button', () => {
         component.openDialog(examUser);

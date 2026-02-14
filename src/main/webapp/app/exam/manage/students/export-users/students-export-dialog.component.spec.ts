@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -49,8 +49,7 @@ describe('StudentsExportDialogComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FormsModule, FaIconComponent, DialogModule, ButtonModule],
-            declarations: [MockDirective(TranslateDirective)],
+            imports: [FormsModule, FaIconComponent, DialogModule, ButtonModule, StudentsExportDialogComponent, MockDirective(TranslateDirective)],
             providers: [MockProvider(ExamManagementService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
@@ -93,7 +92,8 @@ describe('StudentsExportDialogComponent', () => {
         expect(exportSpy).toHaveBeenCalledWith(course.id, exam.id);
     });
 
-    it('should download CSV and close dialog on successful export', fakeAsync(() => {
+    it('should download CSV and close dialog on successful export', () => {
+        vi.useFakeTimers();
         vi.spyOn(examManagementService, 'exportExamUsers').mockReturnValue(of(exportUsers));
 
         const downloadSpy = vi.spyOn(component as any, 'downloadBlob').mockImplementation(() => {});
@@ -101,13 +101,13 @@ describe('StudentsExportDialogComponent', () => {
 
         component.exportUsers();
 
-        tick();
+        vi.advanceTimersByTime(0);
         fixture.detectChanges();
 
         expect(downloadSpy).toHaveBeenCalledOnce();
         expect(downloadSpy.mock.calls[0][1]).toBe(`exam-${exam.id}-students.csv`);
         expect(closeSpy).toHaveBeenCalled();
-    }));
+    });
 
     it('should set error flag when export fails', () => {
         vi.spyOn(examManagementService, 'exportExamUsers').mockReturnValue(throwError(() => new Error('boom')));

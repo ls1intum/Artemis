@@ -75,8 +75,10 @@ describe('ExamStudentsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgxDatatableModule, FaIconComponent, UsersImportButtonStubComponent],
-            declarations: [
+            imports: [
+                NgxDatatableModule,
+                FaIconComponent,
+                UsersImportButtonStubComponent,
                 ExamStudentsComponent,
                 MockComponent(StudentsUploadImagesButtonComponent),
                 MockComponent(DataTableComponent),

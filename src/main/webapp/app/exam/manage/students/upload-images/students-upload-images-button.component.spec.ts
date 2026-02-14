@@ -20,8 +20,7 @@ describe('StudentsUploadImagesButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbModule), TranslateModule.forRoot()],
-            declarations: [StudentsUploadImagesButtonComponent, MockComponent(ButtonComponent)],
+            imports: [MockModule(NgbModule), TranslateModule.forRoot(), StudentsUploadImagesButtonComponent, MockComponent(ButtonComponent)],
             providers: [MockProvider(AlertService)],
         })
             .compileComponents()
