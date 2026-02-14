@@ -7,12 +7,12 @@
 .step-indicator {
     height: 8px;
     border-radius: 16px;
-    background: #dee2e6;
+    background: var(--bs-secondary-bg);
     transition: all 0.3s ease;
 
     &.active {
         width: 20px;
-        background: var(--bs-primary, #3e8acc);
+        background: var(--bs-primary);
     }
 
     &.inactive {

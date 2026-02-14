@@ -163,7 +163,7 @@
                                     @if (clickedSuggestion() === suggestion) {
                                         <fa-icon [icon]="faCircleNotch" animation="spin" />
                                     } @else {
-                                        <span [innerHTML]="suggestion"></span>
+                                        <span>{{ suggestion }}</span>
                                     }
                                 </button>
                             }

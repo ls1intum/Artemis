@@ -1,4 +1,5 @@
-import { Component, HostListener, OnDestroy, OnInit, WritableSignal, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, HostListener, WritableSignal, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -8,7 +9,6 @@ import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/butto
 import { StepperComponent } from './stepper/stepper.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBook, faLightbulb, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
 type SidebarTooltipConfig = {
@@ -28,9 +28,10 @@ type PromptOptionKey = 'explainConcept' | 'quizTopic' | 'studyTips';
     styleUrls: ['./iris-onboarding-modal.component.scss'],
     imports: [TranslateDirective, ArtemisTranslatePipe, IrisLogoComponent, ButtonComponent, StepperComponent, FaIconComponent],
 })
-export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
+export class IrisOnboardingModalComponent {
     private activeModal = inject(NgbActiveModal);
     private router = inject(Router);
+    private destroyRef = inject(DestroyRef);
 
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly ButtonType = ButtonType;
@@ -40,13 +41,13 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
         { type: 'studyTips', icon: faLightbulb, translationKey: 'artemisApp.iris.onboarding.step4.prompts.studyTips' },
     ];
 
+    // Timer cleanup
+    private readonly pendingTimers = new Set<ReturnType<typeof setTimeout>>();
+
     // Step management
     readonly step = signal(0);
     readonly totalSteps = 5;
     readonly hasAvailableExercises = signal(true);
-
-    // Router subscription
-    private routeSubscription?: Subscription;
 
     // Position for Step 1 tooltip (aligned with Exercises tab)
     readonly exerciseTooltipPosition = signal({ top: 172, left: 232 });
@@ -88,20 +89,36 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
         return undefined;
     });
 
-    @HostListener('document:keydown.escape')
-    onEscapeKey(): void {
-        this.close();
-    }
-
-    ngOnInit(): void {
+    constructor() {
         // Monitor route changes to auto-advance steps
-        this.routeSubscription = this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((event: NavigationEnd) => {
-            this.handleNavigationChange(event.url);
+        this.router.events
+            .pipe(
+                filter((event) => event instanceof NavigationEnd),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((event: NavigationEnd) => {
+                this.handleNavigationChange(event.url);
+            });
+
+        this.destroyRef.onDestroy(() => {
+            for (const timer of this.pendingTimers) {
+                clearTimeout(timer);
+            }
+            this.pendingTimers.clear();
         });
     }
 
-    ngOnDestroy(): void {
-        this.routeSubscription?.unsubscribe();
+    private safeTimeout(callback: () => void, delay?: number): void {
+        const timer = setTimeout(() => {
+            this.pendingTimers.delete(timer);
+            callback();
+        }, delay);
+        this.pendingTimers.add(timer);
+    }
+
+    @HostListener('document:keydown.escape')
+    onEscapeKey(): void {
+        this.close();
     }
 
     /**
@@ -190,7 +207,7 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
             const isDashboard = url.match(/^\/courses\/\d+(\/dashboard)?\/?$/) !== null || url === '/courses';
             if (isDashboard) {
                 // Small handoff delay makes the transition from tooltip to modal feel smoother.
-                setTimeout(() => {
+                this.safeTimeout(() => {
                     if (this.step() === 3) {
                         this.next();
                     }
@@ -242,7 +259,7 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
             window.requestAnimationFrame(() => this.resolveStepPosition(2, this.isStep2PositionReady, () => this.calculateIrisIconPosition(), 20, 300));
             return;
         }
-        setTimeout(() => this.resolveStepPosition(2, this.isStep2PositionReady, () => this.calculateIrisIconPosition(), 20, 300), 0);
+        this.safeTimeout(() => this.resolveStepPosition(2, this.isStep2PositionReady, () => this.calculateIrisIconPosition(), 20, 300), 0);
     }
 
     /**
@@ -274,7 +291,7 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
 
     private calculateExerciseTabCoachMarkPosition(): boolean {
         return this.calculateSidebarTabPositions(
-            "jhi-course-sidebar a.nav-link-sidebar[title='Exercises']",
+            "jhi-course-sidebar a.nav-link-sidebar[data-sidebar-item='Exercises']",
             this.exerciseTabSpotlight,
             this.exerciseTabCoachMarkPosition,
             this.exerciseTooltipPosition,
@@ -283,7 +300,7 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
 
     private calculateDashboardTabCoachMarkPosition(): boolean {
         return this.calculateSidebarTabPositions(
-            "jhi-course-sidebar a.nav-link-sidebar[title='Dashboard']",
+            "jhi-course-sidebar a.nav-link-sidebar[data-sidebar-item='Dashboard']",
             this.dashboardTabSpotlight,
             this.dashboardTabCoachMarkPosition,
             this.dashboardTooltipPosition,
@@ -309,7 +326,7 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
         }
 
         if (retries > 0) {
-            setTimeout(() => this.resolveStepPosition(expectedStep, readinessSignal, calculatePosition, retries - 1, retryDelayMs), retryDelayMs);
+            this.safeTimeout(() => this.resolveStepPosition(expectedStep, readinessSignal, calculatePosition, retries - 1, retryDelayMs), retryDelayMs);
             return;
         }
 
@@ -321,7 +338,7 @@ export class IrisOnboardingModalComponent implements OnInit, OnDestroy {
      * Moves focus to the first focusable element inside the current modal step.
      */
     private moveFocusToModal(): void {
-        setTimeout(() => {
+        this.safeTimeout(() => {
             const focusable = document.querySelector<HTMLElement>('.onboarding-container .close-button, .onboarding-container .prompt-chip');
             focusable?.focus();
         });
