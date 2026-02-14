@@ -37,6 +37,7 @@ import { LoadingNotificationComponent } from 'app/core/loading-notification/load
 import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ServerAdministrationComponent } from 'app/core/navbar/server-administration/server-administration.component';
+import { GlobalSearchNavbarComponent } from 'app/core/navbar/global-search/global-search-navbar';
 
 @Component({
     selector: 'jhi-navbar',
@@ -64,6 +65,7 @@ import { ServerAdministrationComponent } from 'app/core/navbar/server-administra
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
         ServerAdministrationComponent,
+        GlobalSearchNavbarComponent,
     ],
 })
 export class NavbarComponent implements OnInit, OnDestroy {

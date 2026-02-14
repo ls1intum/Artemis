@@ -1,0 +1,5 @@
+<span class="search-trigger" role="button" tabindex="0" (click)="openSearch()" (keydown.enter)="openSearch()" (keydown.space)="openSearch()">
+    <fa-icon [icon]="faSearch" />
+    <span class="search-text">Search</span>
+    <kbd class="keyboard-hint">{{ actionKeyLabel() }}{{ isMac() ? 'K' : '+K' }}</kbd>
+</span>

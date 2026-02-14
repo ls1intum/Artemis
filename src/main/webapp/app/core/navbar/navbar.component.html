@@ -122,6 +122,11 @@
     <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed">
         <ul class="navbar-nav ms-auto" [class.vertical]="isNavbarNavVertical">
             @if (currAccount && !isExamActive && !isExamStarted) {
+                <li class="nav-item d-flex align-items-center">
+                    <jhi-global-search-navbar />
+                </li>
+            }
+            @if (currAccount && !isExamActive && !isExamStarted) {
                 <li class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
                     <a class="nav-link py-0" routerLink="/courses" (click)="collapseNavbar()" id="overview-menu">
                         <span>
