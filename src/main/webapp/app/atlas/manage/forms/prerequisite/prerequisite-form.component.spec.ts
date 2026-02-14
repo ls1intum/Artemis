@@ -1,5 +1,7 @@
+import { vi } from 'vitest';
+import type { Mocked } from 'vitest';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
@@ -24,16 +26,24 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('PrerequisiteFormComponent', () => {
+    setupTestBed({ zoneless: true });
     let prerequisiteFormComponentFixture: ComponentFixture<PrerequisiteFormComponent>;
     let prerequisiteFormComponent: PrerequisiteFormComponent;
 
     let translateService: TranslateService;
-    const prerequisiteServiceMock = { getAllForCourse: jest.fn() } as unknown as PrerequisiteService;
-    const courseCompetencyServiceMock = { getCourseCompetencyTitles: jest.fn() } as unknown as CourseCompetencyService;
+    const prerequisiteServiceMock = { getAllForCourse: vi.fn() } as unknown as PrerequisiteService;
+    const courseCompetencyServiceMock: Mocked<Pick<CourseCompetencyService, 'getCourseCompetencyTitles'>> = {
+        getCourseCompetencyTitles: vi.fn(),
+    };
+    let originalResizeObserver: typeof ResizeObserver | undefined;
 
     beforeEach(() => {
+        originalResizeObserver = globalThis.ResizeObserver;
+        courseCompetencyServiceMock.getCourseCompetencyTitles.mockReturnValue(of(new HttpResponse({ body: [] })));
+
         TestBed.configureTestingModule({
             imports: [CompetencyFormComponent, ReactiveFormsModule, NgbDropdownModule, OwlNativeDateTimeModule],
             providers: [
@@ -51,13 +61,12 @@ describe('PrerequisiteFormComponent', () => {
         prerequisiteFormComponent = prerequisiteFormComponentFixture.componentInstance;
         prerequisiteFormComponentFixture.componentRef.setInput('prerequisite', new Prerequisite());
         translateService = TestBed.inject(TranslateService);
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-            return new MockResizeObserver(callback);
-        });
+        globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        globalThis.ResizeObserver = originalResizeObserver as typeof ResizeObserver;
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -65,50 +74,54 @@ describe('PrerequisiteFormComponent', () => {
         expect(prerequisiteFormComponent).toBeDefined();
     });
 
-    it('should submit valid form', fakeAsync(() => {
-        // stubbing prerequisite service for asynchronous validator
-        const getCourseCompetencyTitlesSpy = jest
-            .spyOn(courseCompetencyServiceMock, 'getCourseCompetencyTitles')
-            .mockReturnValue(of(new HttpResponse({ body: ['test'], status: 200 })));
+    it('should submit valid form', () => {
+        vi.useFakeTimers();
+        try {
+            // stubbing prerequisite service for asynchronous validator
+            const getCourseCompetencyTitlesSpy = vi
+                .spyOn(courseCompetencyServiceMock, 'getCourseCompetencyTitles')
+                .mockReturnValue(of(new HttpResponse({ body: ['test'], status: 200 })));
 
-        const competencyOfResponse: Prerequisite = { id: 1, title: 'test' };
+            const competencyOfResponse: Prerequisite = { id: 1, title: 'test' };
 
-        const response: HttpResponse<Prerequisite[]> = new HttpResponse({
-            body: [competencyOfResponse],
-            status: 200,
-        });
+            const response: HttpResponse<Prerequisite[]> = new HttpResponse({
+                body: [competencyOfResponse],
+                status: 200,
+            });
 
-        jest.spyOn(prerequisiteServiceMock, 'getAllForCourse').mockReturnValue(of(response));
+            vi.spyOn(prerequisiteServiceMock, 'getAllForCourse').mockReturnValue(of(response));
 
-        prerequisiteFormComponentFixture.detectChanges();
+            prerequisiteFormComponentFixture.detectChanges();
 
-        const exampleTitle = 'uniqueName';
-        prerequisiteFormComponent.titleControl!.setValue(exampleTitle);
-        const exampleDescription = 'lorem ipsum';
-        prerequisiteFormComponent.descriptionControl!.setValue(exampleDescription);
-        const exampleLectureUnit = new TextUnit();
-        exampleLectureUnit.id = 1;
+            const exampleTitle = 'uniqueName';
+            prerequisiteFormComponent.titleControl!.setValue(exampleTitle);
+            const exampleDescription = 'lorem ipsum';
+            prerequisiteFormComponent.descriptionControl!.setValue(exampleDescription);
+            const exampleLectureUnit = new TextUnit();
+            exampleLectureUnit.id = 1;
 
-        const exampleLecture = new Lecture();
-        exampleLecture.id = 1;
-        exampleLecture.lectureUnits = [exampleLectureUnit];
+            const exampleLecture = new Lecture();
+            exampleLecture.id = 1;
+            exampleLecture.lectureUnits = [exampleLectureUnit];
 
-        prerequisiteFormComponentFixture.detectChanges();
-        tick(250); // async validator fires after 250ms and fully filled in form should now be valid!
-        expect(prerequisiteFormComponent.form.valid).toBeTrue();
-        expect(getCourseCompetencyTitlesSpy).toHaveBeenCalledOnce();
-        const submitFormSpy = jest.spyOn(prerequisiteFormComponent, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(prerequisiteFormComponent.formSubmitted, 'emit');
+            prerequisiteFormComponentFixture.detectChanges();
+            vi.advanceTimersByTime(250); // async validator fires after 250ms and fully filled in form should now be valid!
+            expect(prerequisiteFormComponent.form.valid).toBeTruthy();
+            expect(getCourseCompetencyTitlesSpy).toHaveBeenCalledOnce();
+            const submitFormSpy = vi.spyOn(prerequisiteFormComponent, 'submitForm');
+            const submitFormEventSpy = vi.spyOn(prerequisiteFormComponent.formSubmitted, 'emit');
 
-        const submitButton = prerequisiteFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
-        submitButton.click();
-        prerequisiteFormComponentFixture.detectChanges();
+            const submitButton = prerequisiteFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
+            submitButton.click();
+            prerequisiteFormComponentFixture.detectChanges();
 
-        flush();
-        expect(submitFormSpy).toHaveBeenCalledOnce();
-        expect(submitFormEventSpy).toHaveBeenCalledOnce();
-        discardPeriodicTasks();
-    }));
+            vi.runOnlyPendingTimers();
+            expect(submitFormSpy).toHaveBeenCalledOnce();
+            expect(submitFormEventSpy).toHaveBeenCalledOnce();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
 
     it('should correctly set form values in edit mode', () => {
         prerequisiteFormComponentFixture.componentRef.setInput('isEditMode', true);
@@ -135,7 +148,7 @@ describe('PrerequisiteFormComponent', () => {
         prerequisiteFormComponentFixture.detectChanges();
 
         const commonCourseCompetencyFormComponent = prerequisiteFormComponentFixture.debugElement.query(By.directive(CommonCourseCompetencyFormComponent)).componentInstance;
-        const suggestTaxonomySpy = jest.spyOn(commonCourseCompetencyFormComponent, 'suggestTaxonomies');
+        const suggestTaxonomySpy = vi.spyOn(commonCourseCompetencyFormComponent, 'suggestTaxonomies');
         const translateSpy = createTranslateSpy();
 
         const titleInput = prerequisiteFormComponentFixture.nativeElement.querySelector('#title');
@@ -154,7 +167,7 @@ describe('PrerequisiteFormComponent', () => {
         prerequisiteFormComponentFixture.detectChanges();
 
         const commonCourseCompetencyFormComponent = prerequisiteFormComponentFixture.debugElement.query(By.directive(CommonCourseCompetencyFormComponent)).componentInstance;
-        const suggestTaxonomySpy = jest.spyOn(commonCourseCompetencyFormComponent, 'suggestTaxonomies');
+        const suggestTaxonomySpy = vi.spyOn(commonCourseCompetencyFormComponent, 'suggestTaxonomies');
         const translateSpy = createTranslateSpy();
 
         prerequisiteFormComponent.updateDescriptionControl('Building a tool: create a plan and implement something!');
@@ -167,41 +180,44 @@ describe('PrerequisiteFormComponent', () => {
         ]);
     });
 
-    it('validator should verify title is unique', fakeAsync(() => {
-        const existingTitles = ['nameExisting'];
-        jest.spyOn(courseCompetencyServiceMock, 'getCourseCompetencyTitles').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: existingTitles,
-                    status: 200,
-                }),
-            ),
-        );
-        prerequisiteFormComponentFixture.componentRef.setInput('isEditMode', true);
-        prerequisiteFormComponentFixture.componentRef.setInput('formData', { title: 'initialName' } as CourseCompetencyFormData);
-        prerequisiteFormComponentFixture.detectChanges();
+    it('validator should verify title is unique', () => {
+        vi.useFakeTimers();
+        try {
+            const existingTitles = ['nameExisting'];
+            vi.spyOn(courseCompetencyServiceMock, 'getCourseCompetencyTitles').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: existingTitles,
+                        status: 200,
+                    }),
+                ),
+            );
+            prerequisiteFormComponentFixture.componentRef.setInput('isEditMode', true);
+            prerequisiteFormComponentFixture.componentRef.setInput('formData', { title: 'initialName' } as CourseCompetencyFormData);
+            prerequisiteFormComponentFixture.detectChanges();
 
-        const titleControl = prerequisiteFormComponent.titleControl!;
-        tick(250);
-        expect(titleControl.errors?.titleUnique).toBeUndefined();
+            const titleControl = prerequisiteFormComponent.titleControl!;
+            vi.advanceTimersByTime(250);
+            expect(titleControl.errors?.titleUnique).toBeUndefined();
 
-        titleControl.setValue('anotherName');
-        tick(250);
-        expect(titleControl.errors?.titleUnique).toBeUndefined();
+            titleControl.setValue('anotherName');
+            vi.advanceTimersByTime(250);
+            expect(titleControl.errors?.titleUnique).toBeUndefined();
 
-        titleControl.setValue('');
-        tick(250);
-        expect(titleControl.errors?.titleUnique).toBeUndefined();
+            titleControl.setValue('');
+            vi.advanceTimersByTime(250);
+            expect(titleControl.errors?.titleUnique).toBeUndefined();
 
-        titleControl.setValue('nameExisting');
-        tick(250);
-        expect(titleControl.errors?.titleUnique).toBeDefined();
-        tick();
-        discardPeriodicTasks();
-    }));
+            titleControl.setValue('nameExisting');
+            vi.advanceTimersByTime(250);
+            expect(titleControl.errors?.titleUnique).toBeDefined();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
 
     function createTranslateSpy() {
-        return jest.spyOn(translateService, 'instant').mockImplementation((key) => {
+        return vi.spyOn(translateService, 'instant').mockImplementation((key) => {
             switch (key) {
                 case 'artemisApp.courseCompetency.keywords.REMEMBER':
                     return 'Something';
